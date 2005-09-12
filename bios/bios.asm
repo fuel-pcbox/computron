@@ -449,11 +449,6 @@ vga_clear:
 	pop		es
 	ret
 
-; vga_putc
-; Called by INT 10,9
-;
-; XXX: Corrupts CX, is this ok?
-
 vga_putc:
 	push	es
 	push	dx
