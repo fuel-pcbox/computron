@@ -854,7 +854,13 @@ _bios_interrupt14:
 .end:
     iret
 
+; INT 15 - System BIOS Services
+;
+; 24	A20 gate control		(not supported)
+
 _bios_interrupt15:
+	cmp		ah, 0x24
+	je		.controlA20
     cmp     ah, 0xc0
     je      .fn0xc0
     cmp     ah, 0x41
@@ -868,6 +874,10 @@ _bios_interrupt15:
     out     0x00, ax				; VM call 0x00 - What the fuck is up?
     pop     ax						; AL = INT, AH = function
     jmp     .end
+.controlA20:
+	stc
+	mov		ah, 0x86
+	jmp		.end
 .fn0x88:
 	stc								; This call is only valid on 286/386 machines
 	xor		ax, ax
