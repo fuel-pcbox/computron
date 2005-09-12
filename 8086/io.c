@@ -27,7 +27,7 @@ void
 cpu_out (word port, word data, byte bits) {
 	#ifdef VM_DEBUG
 		if((iopeek)){
-			sprintf(tmp, "cpu_out: %04X --> %04X\n", data, port);
+			sprintf(tmp, "[%04X:%04X] cpu_out: %04X --> %04X\n", BCS, BIP, data, port);
 			vm_out(tmp, VM_IOMSG);
 		}
 	#endif
@@ -50,7 +50,7 @@ word
 cpu_in (word port, byte bits) {
 	#ifdef VM_DEBUG
 		if((iopeek)&&((port<0x60)||(port>0x6F))) {
-			sprintf(tmp, "cpu_in: %04X\n", port);
+			sprintf(tmp, "[%04X:%04X] cpu_in: %04X\n", BCS, BIP, port);
 			vm_out(tmp, VM_IOMSG);
 		}
 	#endif
