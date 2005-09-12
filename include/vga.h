@@ -8,6 +8,7 @@
 	void	vga_selreg(word, byte);
 	void	vga_setreg(word, byte);
 	word	vga_getreg(byte);
+	word	vga_status(byte);
 
 	byte	vga_reg[0x1F];
 	void	vga_scrollup(byte, byte, byte, byte, byte, byte);

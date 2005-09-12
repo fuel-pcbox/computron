@@ -17,6 +17,7 @@ vga_init()
 	}
 	vm_listen( 0x3d4, vm_ioh_nin, vga_selreg );
 	vm_listen( 0x3d5, vga_getreg, vga_setreg );
+	vm_listen( 0x3da, vga_status, vm_ioh_nout );
 	vga_mem = mem_space + 0xB8000;
 	vga_cols = 80;
 	vga_rows = 25;
@@ -65,6 +66,25 @@ vga_getreg( byte bits )
 {
 	(void) bits;
 	return (word) vga_reg[vga_curreg];
+}
+
+/*
+ * 6845 - Port 3DA Status Register
+ *
+ *  |7|6|5|4|3|2|1|0|  3DA Status Register
+ *  | | | | | | | `---- 1 = display enable, RAM access is OK
+ *  | | | | | | `----- 1 = light pen trigger set
+ *  | | | | | `------ 0 = light pen on, 1 = light pen off
+ *  | | | | `------- 1 = vertical retrace, RAM access OK for next 1.25ms
+ *  `-------------- unused
+ *
+ */
+
+word
+vga_status( byte bits )
+{
+	(void) bits;
+	return 0x0D;	/* 0000 1101 */
 }
 
 void
