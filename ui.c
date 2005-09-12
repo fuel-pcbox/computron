@@ -75,8 +75,9 @@ kbd_getc() {
 int
 kbd_hit() {
 	int c = getch();
-	if (c != ERR)
-		ungetch(c);
+	if (c == ERR)
+		return 0;
+	ungetch(c);
 	return c;
 }
 
