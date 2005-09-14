@@ -48,18 +48,18 @@ _REP()
 
 	/* If not CMPS or SCAS -- REP, else REPE */
 	if ((rop!=0xA6)&&(rop!=0xA7)&&(rop!=0xAE)&&(rop!=0xAF)) {
-		while(CX!=0) {	/* REP	*/
+		while(CX != 0) {	/* REP	*/
 			CurrentSegment = segpfx;
 			cpu_optable[rop]();
 			--CX;
-			if ( CX == 0 ) break;
 		}
 	} else {
 		while ( CX!=0 ) {	/* REPE/REPZ	*/
 			CurrentSegment = segpfx;
 			cpu_optable[rop]();
 			--CX;
-			if ( !ZF || CX == 0 ) break;
+			if ( !ZF )
+				break;
 		}
 	}
 }
@@ -78,6 +78,7 @@ _REPNE()
 		CurrentSegment = segpfx;
 		cpu_optable[rop]();
 		--CX;
-		if ( ZF || CX == 0 ) break;
+		if ( ZF )
+			break;
 	}
 }
