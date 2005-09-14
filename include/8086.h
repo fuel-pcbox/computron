@@ -44,7 +44,6 @@
 	void cpu_pfq_flush();
 	void cpu_modrm_init();
 	void cpu_jump(word,word);
-	byte cpu_parity(byte);
 	void cpu_setflags(word);
 	void cpu_updflags(word, byte);
 	word cpu_getflags();
