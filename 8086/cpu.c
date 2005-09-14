@@ -416,25 +416,26 @@ void cpu_addinstruction(int lowop, int highop, void (*function)(), char *mnemoni
 	return;
 }
 
-byte cpu_evaluate(byte c) {
-	switch(c) {
-		case  0: return OF; break;							/* O			*/
-		case  1: return !OF; break;							/* NO           */
-		case  2: return CF; break;							/* B, C, NAE    */
-		case  3: return !CF; break;							/* NB, NC, AE   */
-		case  4: return ZF; break;							/* E, Z         */
-		case  5: return !ZF; break;							/* NE, NZ       */
-		case  6: return (CF | ZF); break;					/* BE, NA       */
-		case  7: return ((!CF)&&(!ZF)); break;				/* NBE, A       */
-		case  8: return SF; break;							/* S            */
-		case  9: return !SF; break;							/* NS           */
-		case 10: return PF; break;							/* P, PE        */
-		case 11: return !PF; break;							/* NP, PO       */
-		case 12: return (SF!=OF); break;					/* L, NGE		*/
-		case 13: return (SF==OF); break;					/* NL, GE		*/
-		case 14: return (ZF || (SF != OF)); break;			/* LE, NG		*/
-		case 15: return ((!ZF)&&(SF==OF)); break;			/* NLE, G		*/
-		default: return 0; break;
+byte
+cpu_evaluate( byte condition )
+{
+	switch ( condition ) {
+		case  0: return OF;                       /* O          */
+		case  1: return !OF;                      /* NO         */
+		case  2: return CF;                       /* B, C, NAE  */
+		case  3: return !CF;                      /* NB, NC, AE */
+		case  4: return ZF;                       /* E, Z       */
+		case  5: return !ZF;                      /* NE, NZ     */
+		case  6: return ( CF | ZF );              /* BE, NA     */
+		case  7: return !( CF | ZF );             /* NBE, A     */
+		case  8: return SF;                       /* S          */
+		case  9: return !SF;                      /* NS         */
+		case 10: return PF;                       /* P, PE      */
+		case 11: return !PF;                      /* NP, PO     */
+		case 12: return ( SF ^ OF );              /* L, NGE     */
+		case 13: return !( SF ^ OF );             /* NL, GE     */
+		case 14: return ( SF ^ OF ) | ZF;         /* LE, NG     */
+		case 15: return !( ( SF ^ OF ) | ZF );    /* NLE, G     */
 	}
 	return 0;
 }
