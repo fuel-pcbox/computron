@@ -416,10 +416,10 @@ void cpu_addinstruction(int lowop, int highop, void (*function)(), char *mnemoni
 	return;
 }
 
-byte
+bool
 cpu_evaluate( byte condition )
 {
-	switch ( condition ) {
+	switch ( condition & 0x0F ) {
 		case  0: return OF;                       /* O          */
 		case  1: return !OF;                      /* NO         */
 		case  2: return CF;                       /* B, C, NAE  */

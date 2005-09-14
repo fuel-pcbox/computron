@@ -56,7 +56,7 @@
 	byte cpu_inbyte(word);
 	word cpu_inword(word);
 	word cpu_in(word, byte);
-	byte cpu_evaluate(byte);
+	bool cpu_evaluate(byte);
 
 	void cpu_setZF(dword);
 	void cpu_setSF(dword, byte);
