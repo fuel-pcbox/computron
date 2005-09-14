@@ -134,6 +134,51 @@ safe_putString:
 	pop     ds
 	ret
 
+; print_integer
+;
+;    Prints a 16-bit unsigned integer in decimal with leading zeros.
+;
+; Parameters:
+;
+;    AX = Integer to print
+;
+
+print_integer:
+	push	ax
+	push	bx
+	push	cx
+	push	dx
+
+	mov		bx, 0x0002			; Page 0, green text
+	mov		cx, 10000			; Start with 10K digit
+
+.loop:
+	xor		dx, dx
+	div		cx
+	add		al, '0'
+
+	pushf
+	push	cs
+	call	vga_ttyecho			; vga_ttyecho returns via IRET
+
+	push	dx					; Store away remainder
+	xor		dx, dx
+	mov		ax, cx
+	mov		cx, 10
+	div		cx
+	mov		cx, ax				; CX /= 10
+	pop		ax					; AX = remainder
+	
+	jcxz	.end
+	jmp		.loop
+
+.end:
+	pop		dx
+	pop		cx
+	pop		bx
+	pop		ax
+	ret
+
 _bios_setup_ints:
 	push    ds
 
@@ -265,8 +310,7 @@ _bios_init_data:
 	jmp		.cCend
 
 .checkMem:
-	clc					; NC = 10 base number
-	out		0x61, ax		; print word
+	call	print_integer
 	mov		si, szBaseMemory
 	call		safe_putString
 		
