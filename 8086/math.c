@@ -7,17 +7,17 @@
 
 inline void
 cpu_mathflags (dword result, word dest, word src, byte bits) {
-	if(bits==8) {
-		CF = (result>>8)&1;
-		SF = (result>>7)&1;
-		ZF = ((result&0x00FF)==0);
+	if ( bits == 8 ) {
+		CF = ( result >> 8 ) & 1;
+		SF = ( result >> 7 ) & 1;
+		ZF = ( result & 0x00FF ) == 0;
 	} else {
-		CF = (result>>16)&1;
-		SF = (result>>15)&1;
-		ZF = ((result&0xFFFF)==0);
+		CF = ( result >> 16 ) & 1;
+		SF = ( result >> 15 ) & 1;
+		ZF = ( result & 0xFFFF ) == 0;
 	}
-	cpu_setPF(result);
-	cpu_setAF(result, dest, src);
+	cpu_setPF( result );
+	cpu_setAF( result, dest, src );
 }
 
 inline void
