@@ -17,7 +17,7 @@
 	#define VM_BREAKMSG		107
 	#define VM_LOGMSG		108
 	#define VM_IOMSG		109
-	#define VM_UNIMP		110
+	#define VM_ALERT		110
 	#define VM_OTHER		111
 	#define VM_OUTPUT		112
 	#define VM_DISKLOG		113

@@ -49,7 +49,7 @@ vm_out( char *msg_text, int msg_type ) {
 		case VM_IOMSG:
 			fputs("[   I/O]  ", fplog);
 			break;
-		case VM_UNIMP:
+		case VM_ALERT:
 			fputs("[ ALERT]  ", fplog);
 			break;
 		case VM_PRNLOG:

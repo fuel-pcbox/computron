@@ -60,7 +60,7 @@ vm_call16 (word port, word data)
 	case 0x00:
 #ifdef VM_DEBUG
 		sprintf(tmp, "Interrupt %02X, function %02X requested.\n", *treg8[REG_AL], *treg8[REG_AH]);
-		vm_out(tmp, VM_UNIMP);
+		vm_out(tmp, VM_ALERT);
 #endif
 		break;
 	case 0x61:
