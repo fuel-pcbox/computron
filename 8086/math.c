@@ -77,7 +77,7 @@ cpu_mul (word acc, word multi, byte bits) {
 
 	OF = CF = ( result & ( bits == 8 ? 0xFF00 : 0xFFFF0000 ) ) != 0;
 
-	/* 8086 CPUs clears ZF on nonzero result */
+	/* 8086 CPUs set ZF on zero result */
 	if ( cpu_type == 0 ) {
 		ZF = ( result == 0 );
 	}
