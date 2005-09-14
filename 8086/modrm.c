@@ -269,10 +269,12 @@ calcEA (byte b) {	/* LEA address fetcher*/
             }
             break;
 		case 192:
-			#ifdef VM_DEBUG
-				vm_out("Wacky LEA instruction, bailing out!\n", VM_ERRORMSG);
-				vm_exit(1);
-			#endif
+#ifdef VM_DEBUG
+			vm_out( "LEA with register source!\n", VM_ALERT );
+#endif
+			/* LEA with register source, an invalid instruction.
+			 * Call INT6 (invalid opcode exception) */
+			int_call( 6 );
 			break;
 	}
     return retv;
