@@ -531,6 +531,7 @@ vga_putc:
 	iret
 
 vga_ttyecho:
+	push	bx
 	push	dx
 	push	ds
 	push	di
@@ -681,6 +682,7 @@ vga_ttyecho:
 	pop		di
 	pop		ds
 	pop		dx
+	pop		bx
 	
 	;out		0x60, al				; keep it in for now
 	iret
