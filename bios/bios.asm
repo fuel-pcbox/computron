@@ -744,7 +744,6 @@ vga_getcur:
 	ret
 
 vga_readchr:
-	push	ax
 	push	es
 	push	dx
 	push	bx
@@ -772,9 +771,6 @@ vga_readchr:
 	pop		dx
 	pop		es
 
-	
-
-	pop		ax
 	iret
 
 _bios_interrupt11:
