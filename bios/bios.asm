@@ -72,6 +72,10 @@ _bios_post:							; Power On Self-Test ;-)
 	mov		ax, 0x9000
 	mov		ss, ax
 
+	call	vga_clear				; Clear screen and move cursor to
+	xor		ax, ax					; upper left corner.
+	call	vga_store_cursor
+
 	mov     si, szVersion
 	call    safe_putString			; Print BIOS Version string
 
