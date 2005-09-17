@@ -450,8 +450,7 @@ _bios_interrupt10:					; BIOS Video Interrupt
 .outCharStill:
 	jmp		vga_putc
 .setVideoMode:
-	call	vga_clear
-	jmp		.end
+	jmp		vga_set_mode
 .setCursor:
 	call	vga_setcur
 	jmp		.end
@@ -479,6 +478,41 @@ _bios_interrupt10:					; BIOS Video Interrupt
 	out		0x66, ax
 .end:
     iret
+
+; vga_set_mode
+;
+;    Sets the VGA mode
+;    Called by INT 10,00
+;
+; Parameters:
+;
+;    AL = Video mode
+;
+
+vga_set_mode:
+
+	push	ds
+	push	bx
+	push	ax
+
+	mov		ah, al
+	and		al, 0x80				; AL bit 7=1 prevents EGA,MCGA & VGA
+									; from clearing display.
+	jnz		.noClear
+	call	vga_clear
+.noClear:
+
+	xor		bx, bx
+	mov		ds, bx
+	mov		[0x449], ah				; Store new video mode in BDA
+
+	and		byte [0x487], 0x7f		; Update the video mode options
+	or		[0x487], al				; (AND to clear, OR to set)
+
+	pop		ax
+	pop		bx
+	pop		ds
+	iret
 
 vga_clear:
 	push	es
