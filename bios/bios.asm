@@ -530,33 +530,36 @@ vga_putc:
 	pop		es
 	iret
 
+; vga_ttyecho
+;
+;    Prints a character to screen and advances cursor.
+;    Handles CR, NL, TAB and backspace.
+;    Scrolls video viewport if cursor position overflows.
+;
+;    Called by POST routines and INT 10,0E
+;
+;    TODO: remove BX usage.
+;
+; Parameters:
+;
+;    AL = Character to write
+;    BL = Foreground pixel color
+;    BH = Page number ( not implemented )
+;
+
 vga_ttyecho:
 	push	bx
 	push	dx
-	push	ds
+	push	es
 	push	di
 	
 	push	ax
 
-	mov		ax, 0xb800
-	mov		ds, ax					; point DS to VGA memory
-	
-	mov		dx, 0x3d4
-	mov		al, 0x0e
-	out		dx, al					; select cursor MSB
-	
-	mov		dx, 0x3d5
-	in		al, dx					; retrieve
+	mov		ax, 0xb800				; Point ES to video memory for STOS access.
+	mov		es, ax
 
-	xchg	al, ah					; tricky swap to avoid using temps :)
-
-	mov		dx, 0x3d4
-	mov		al, 0x0f
-	out		dx, al					; select cursor LSB
+	call	vga_load_cursor
 	
-	mov		dx, 0x3d5
-	in		al, dx					; retrieve
-
 	shl		ax, 1
 	mov		di, ax					; DI = offset*2
 	
@@ -575,18 +578,8 @@ vga_ttyecho:
 	cmp		al, 0x09
 	je		.tab
 .regular:
-	mov		word [di], ax
-	mov		dx, 0x3d4
-	mov		al, 0x0e
-	out		dx, al					; select 0e
-	inc		dx
-	in		al, dx					; get
-	xchg	al, ah					; swap
-	dec		dx
-	mov		al, 0x0f
-	out		dx, al					; select 0f
-	inc		dx
-	in		al, dx					; get
+	stosw
+	call	vga_load_cursor
 	inc		ax						; advance
 	call	.locate
 	
@@ -619,10 +612,10 @@ vga_ttyecho:
 	jmp		.end
 .tab:
 	mov		al, 0x20
-	mov		word [di], ax
-	mov		word [di+2], ax
-	mov		word [di+3], ax
-	mov		word [di+4], ax
+	stosw
+	stosw
+	stosw
+	stosw
 	mov		ax, di
 	shr		ax, 1
 	add		ax, 4
@@ -650,14 +643,13 @@ vga_ttyecho:
 	out		dx, al					; store MSB
 	ret
 .roll:
-	push	es	
+	push	ds
 	push	si
 	push	cx
-	push	ax
 
-	push	ds
-	pop		es
-	
+	push	es
+	pop		ds
+
 	xor		di, di
 	mov		si, 160
 	mov		cx, (80*24)
@@ -668,10 +660,9 @@ vga_ttyecho:
 	mov		di, (4000-160)
 	rep		stosw
 	
-	pop		ax
 	pop		cx
 	pop		si
-	pop		es
+	pop		ds
 
 	mov		ax, (80*24)
 	jmp		.doloc
@@ -680,12 +671,38 @@ vga_ttyecho:
 	pop		ax
 
 	pop		di
-	pop		ds
+	pop		es
 	pop		dx
 	pop		bx
 	
-	;out		0x60, al				; keep it in for now
 	iret
+
+; vga_load_cursor
+;
+;    Reads the current VGA cursor location from 6845.
+;    Breaks DX.
+;
+;    6845 registers are read in reverse order and XCHG:ed to save
+;    space and time.
+;
+; Returns:
+;
+;    AX = Cursor location
+;
+
+vga_load_cursor:
+	mov		dx, 0x3d4			; Select register
+	mov		al, 0x0e			; (Cursor MSB)
+	out		dx, al
+	inc		dx					; Read register
+	in		al, dx
+	xchg	al, ah
+	dec		dx					; Select register
+	mov		al, 0x0f			; (Cursor LSB)
+	out		dx, al
+	inc		dx
+	in		al, dx
+	ret
 
 vga_setcur:
 	push	dx
@@ -720,19 +737,7 @@ vga_setcur:
 	
 vga_getcur:
 	push	ax
-	mov		dx, 0x3d4
-	mov		al, 0x0e
-	out		dx, al
-	inc		dx
-	
-	in		al, dx
-	xchg	al, ah
-	
-	dec		dx
-	mov		al, 0x0f
-	out		dx, al
-	inc		dx
-	in		al, dx
+	call	vga_load_cursor
 	
 	mov		cl, 80
 	div		cl
@@ -744,32 +749,22 @@ vga_getcur:
 	ret
 
 vga_readchr:
-	push	es
+	push	ds
 	push	dx
-	push	bx
+	push	si
 
-	mov		dx, 0x3d4
-	mov		al, 0x0e
-	out		dx, al
-	inc		dx
-	in		al, dx
-	xchg	al, ah
-	dec		dx
-	mov		al, 0x0f
-	out		dx, al
-	inc		dx
-	in		al, dx
+	call	vga_load_cursor
 
 	shl		ax, 1
-	mov		bx, ax
+	mov		si, ax
 	
 	mov		ax, 0xb800
-	mov		es, ax
-	mov		ax, word [es:bx]
+	mov		ds, ax
+	lodsw
 
-	pop		bx
+	pop		si
 	pop		dx
-	pop		es
+	pop		ds
 
 	iret
 
@@ -779,7 +774,6 @@ _bios_interrupt11:
     mov     ds, ax
     mov     ax, [0x0410]
     pop     ds
-.end:
     iret
 
 _bios_interrupt12:
@@ -788,7 +782,6 @@ _bios_interrupt12:
 	mov		ds, ax
 	mov		ax, [0x413]
 	pop		ds
-.end:
     iret
 
 _bios_interrupt13:
