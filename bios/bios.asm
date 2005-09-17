@@ -538,8 +538,6 @@ vga_putc:
 ;
 ;    Called by POST routines and INT 10,0E
 ;
-;    TODO: remove BX usage.
-;
 ; Parameters:
 ;
 ;    AL = Character to write
@@ -548,11 +546,9 @@ vga_putc:
 ;
 
 vga_ttyecho:
-	push	bx
 	push	dx
 	push	es
 	push	di
-	
 	push	ax
 
 	mov		ax, 0xb800				; Point ES to video memory for STOS access.
@@ -582,34 +578,32 @@ vga_ttyecho:
 	call	vga_load_cursor
 	inc		ax						; advance
 	call	.locate
-	
 	jmp		.end
 
 .cr:
 	mov		ax, di
 	shr		ax, 1
-	cmp		ax, 0
-	jz		.zero
+	jz		.zero				; XXX: Necessary? Why not straight to .end?
 	xor		dx, dx
-	mov		bx, 80
-	div		word bx
-	mov		bx, 80
-	mul		word bx
+	mov		di, 80
+	div		word di
+	mov		di, 80
+	mul		word di
 .zero:
 	call	.locate
 	jmp		.end
 .lf:
-	shr		di, 1					; DI = DI / 2 (normal offset)
-	add		di, 80
 	mov		ax, di
+	shr		ax, 1				; AX = Normal offset
+	add		ax, 80				; One row down
 	call	.locate
 	jmp		.end
 .bs:
 	mov		ax, di
 	shr		ax, 1
 	dec		ax
-	call	.locate
-	jmp		.end
+	push	.end				; Backspace isn't going to overflow the cursor,
+	jmp		vga_store_cursor	; so we walk around .locate (v_s_c RETs for us)
 .tab:
 	mov		al, 0x20
 	stosw
@@ -622,27 +616,10 @@ vga_ttyecho:
 	call 	.locate
 	jmp		.end
 
-
-.locate:							; move cursor to AX
+.locate:						; Move cursor to AX
 	cmp		ax, 2000
-	jge		.roll
-.doloc:
-	mov		di, ax
-	mov		dx, 0x3d4
-	mov		al, 0x0f
-	out		dx, al
-	inc		dx
-	mov		ax, di
-	out		dx, al					; store LSB
-	dec		dx
-	mov		al, 0x0e
-	out		dx, al					; select 0e
-	inc		dx
-	mov		ax, di
-	xchg	al, ah					; swap
-	out		dx, al					; store MSB
-	ret
-.roll:
+	jl		vga_store_cursor	; If cursor doesn't overflow, no need to scroll
+
 	push	ds
 	push	si
 	push	cx
@@ -650,7 +627,7 @@ vga_ttyecho:
 	push	es
 	pop		ds
 
-	xor		di, di
+	xor		di, di				; Scroll the contents of videomemory one row up
 	mov		si, 160
 	mov		cx, (80*24)
 	rep		movsw
@@ -664,16 +641,14 @@ vga_ttyecho:
 	pop		si
 	pop		ds
 
-	mov		ax, (80*24)
-	jmp		.doloc
+	mov		ax, (80*24)			; Go to last row, first column.
+	jmp		vga_store_cursor	; vga_store_cursor will RET for us.
 
 .end:
 	pop		ax
-
 	pop		di
 	pop		es
 	pop		dx
-	pop		bx
 	
 	iret
 
@@ -704,34 +679,42 @@ vga_load_cursor:
 	in		al, dx
 	ret
 
+; vga_store_cursor
+;
+;    Writes AL/AH to the VGA cursor location registers.
+;    Breaks DX.
+;
+
+vga_store_cursor:
+	push	ax
+	mov		dx, 0x3d4			; Select register
+	mov		al, 0x0f			; (Cursor LSB)
+	out		dx, al
+	inc		dx					; Write register
+	pop		ax
+	out		dx, al
+	dec		dx					; Select register
+	mov		al, 0x0e			; (Cursor MSB)
+	out		dx, al
+	inc		dx					; Write register
+	xchg	al, ah
+	out		dx, al
+	ret
+
 vga_setcur:
 	push	dx
-	push	cx
 	push	ax
-	
+
 	xor		ah, ah
 	mov		al, dh
-	mov		cl, 80
-	mul		byte cl
-	mov		cx, ax		; CX = row offset
+	mov		dh, 80
+	mul		byte dh				; AX = row offset
 	xor		dh, dh
-	add		cx, dx
+	add		ax, dx
 
-	mov		dx, 0x3d4
-	mov		al, 0x0f
-	out		dx, al		; select LSB
-	inc		dx
-	mov		al, cl
-	out		dx, al		; store LSB
-	dec		dx
-	mov		al, 0x0e
-	out		dx, al		; select MSB
-	inc		dx
-	mov		al, ch
-	out		dx, al		; store MSB
+	call	vga_store_cursor
 	
 	pop		ax
-	pop		cx
 	pop		dx
 	ret
 	
@@ -743,6 +726,10 @@ vga_getcur:
 	div		cl
 	mov		dh, al
 	mov		dl, ah
+
+	; CH/CL is supposed to hold cursor scanlines.
+	; We return 0 for now.
+	xor		cx, cx
 
 	pop		ax
 	
