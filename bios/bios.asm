@@ -1055,7 +1055,6 @@ _bios_interrupt1a:
 ; DATA
 
     szVersion       db  "VOMIT Virtual Machine", 0x0d, 0x0a
-					db	"Development version", 0x0d, 0x0a
 					db	"(C) Copyright Andreas Kling 2003-2005", 0x0d, 0x0a, 0x0d, 0x0a, 0
 
 	sz8086			db	"8086", 0
