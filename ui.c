@@ -1,5 +1,7 @@
 /* ui.c
  * User interface functions
+ *
+ * This is a mess.
  */
 
 #include "vomit.h"
@@ -17,10 +19,18 @@ extern word g_last_nonbios_CS;
 extern word g_last_nonbios_IP;
 #endif
 
-WINDOW *mywin;
+static WINDOW *s_statusbar;
 
 static bool ui_visible = false;
-static char * statusbar;
+
+static void __ui_init();
+
+static void
+ui_resize() {
+	ui_kill();
+	__ui_init();
+	ui_sync();
+}
 
 void
 vm_out( char *msg_text, int msg_type ) {
@@ -66,15 +76,26 @@ vm_out( char *msg_text, int msg_type ) {
 	return;
 }
 
+static int
+__getch()
+{
+	int c = getch();
+	if ( c == KEY_RESIZE ) {
+		ui_resize();
+		return ERR;
+	}
+	return c;
+}
+
 int
 kbd_getc() {
-	int c = getch();
+	int c = __getch();
 	return (c == ERR) ? 0 : c;
 }
 
 int
 kbd_hit() {
-	int c = getch();
+	int c = __getch();
 	if (c == ERR)
 		return 0;
 	ungetch(c);
@@ -82,68 +103,64 @@ kbd_hit() {
 }
 
 static void
-handle_winch( int signal ) {
-	(void) signal;
-	endwin();
-	statusbar = realloc( statusbar, COLS + 1);
-	memset( statusbar, ' ', COLS );
-	ui_sync();
-}
-
-void
-ui_init() {
+__ui_init()
+{
 	int f, b;
-#ifdef VM_DEBUG
-	FILE *fplog = fopen("log.txt", "w");	/* TRUNCATE FUCKLOG */
-	fclose(fplog);
-#endif
-	mywin = initscr();
+
+	if ( !initscr() ) {
+		vm_out( "initscr() failed, dying.", VM_KILLMSG );
+		exit( 1 );
+	}
 	cbreak();
 	noecho();
 	nonl();
-	nodelay(mywin, TRUE);
+	nodelay( stdscr, true );
 	start_color();
 	for ( b = 0; b < 8; ++b ) {
 		for ( f = 0; f < 8; ++f ) {
 			init_pair( b * 8 + f, f, b );
 		}
 	}
-	signal( SIGWINCH, handle_winch );
-	statusbar = malloc( COLS + 1 );
-	memset( statusbar, ' ', COLS );
+	s_statusbar = newwin( 1, COLS, LINES - 1, 0 );
+	wbkgd( s_statusbar, COLOR_PAIR( 56 ) );
 	ui_visible = true;
+}
+
+void
+ui_init() {
+#ifdef VM_DEBUG
+	FILE *fplog = fopen("log.txt", "w");	/* TRUNCATE FUCKLOG */
+	fclose(fplog);
+#endif
+	__ui_init();
 }
 
 static void
 __ui_statusbar() {
-	char *p, buf[64];
+	char *p, buf[80];
 	static int break_timeout = 0;
-	attron( COLOR_PAIR( 56 ) );
-	mvaddstr( LINES - 1, 0, statusbar );
-	move( LINES - 1, 0 );
+	wmove( s_statusbar, 0, 0 );
 	p = buf;
 	p += sprintf( p, "[80%s86] ", cpu_type == 1 ? "1" : "" );
 #ifdef VM_DEBUG
 	p += sprintf( p, "%04X:%04X", g_last_nonbios_CS, g_last_nonbios_IP );
 #endif
-	addstr( buf );
+	waddstr( s_statusbar, buf );
 	if ( g_break_pressed ) {
 		break_timeout = 3;
 	}
 	if ( break_timeout ) {
-		addstr( " [BREAK]" );
+		waddstr( s_statusbar, " [BREAK]" );
 		--break_timeout;
 	}
-	attrset( 0 );
+	wnoutrefresh( s_statusbar );
 }
 
 void
 ui_statusbar() {
-	int y, x;
-	getyx( stdscr, y, x );
 	__ui_statusbar();
-	move( y, x );
-	refresh();
+	wrefresh( s_statusbar );
+	doupdate();
 }
 
 void
@@ -161,8 +178,10 @@ ui_sync() {
 			             | VGA_ATTR(mem_getbyte(0xB800, (y*160)+(x<<1)+1)));
 		}
 	__ui_statusbar();
-	move(ny, nx);
 	refresh();
+	wbkgd( s_statusbar, COLOR_PAIR( 56 ) );
+	move(ny, nx);
+	wrefresh( s_statusbar );
 }
 
 void
@@ -170,18 +189,14 @@ ui_show()
 {
 	if ( ui_visible )
 		return;
-	statusbar = malloc( COLS + 1 );
-	memset( statusbar, ' ', COLS );
-	refresh();
 	ui_visible = true;
+	ui_sync();
 }
 
 void
 ui_kill()
 {
-	if ( !ui_visible )
-		return;
-	free( statusbar );
+	delwin( s_statusbar );
 	endwin();
 	ui_visible = false;
 }
