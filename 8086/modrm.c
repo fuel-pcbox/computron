@@ -169,7 +169,10 @@ void *_rm21() {
 }
 void *_rm22() {
     word segment, offset = BasePointer+cpu_pfq_getword();
-    segment = *CurrentSegment;
+    if(CurrentSegment==&SegmentPrefix)
+        segment = *CurrentSegment;
+    else
+        segment = SS;
     return (void *)mem_space+(segment<<4)+offset;
 }
 void *_rm23() {
