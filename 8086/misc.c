@@ -18,7 +18,7 @@ void
 _HLT() {		/* Put the CPU in halt state. Await interrupt. */
 	cpu_state = CPU_HALTED;
 #ifdef VM_DEBUG
-		if(verbose) printf("cpu: CPU halted. Awaiting interrupt...\n");
+		vm_out( "cpu: CPU halted. Awaiting interrupt...\n", VM_ALERT );
 #endif
 	while ( cpu_state == CPU_HALTED ) {
 #ifdef VM_UNIX
