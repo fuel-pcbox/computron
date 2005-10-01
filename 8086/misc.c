@@ -53,7 +53,9 @@ _CS() {
 	opcode = cpu_pfq_getbyte();
 	cpu_optable[opcode]();
 	CurrentSegment = &DS;
-	return;
+	if ( TF && IF ) {
+		int_call( 1 );
+	}
 }
 void
 _DS() {
@@ -63,7 +65,9 @@ _DS() {
 	opcode = cpu_pfq_getbyte();
 	cpu_optable[opcode]();
 	CurrentSegment = &DS;
-	return;
+	if ( TF && IF ) {
+		int_call( 1 );
+	}
 }
 void
 _ES() {
@@ -73,7 +77,9 @@ _ES() {
 	opcode = cpu_pfq_getbyte();
 	cpu_optable[opcode]();
 	CurrentSegment = &DS;
-	return;
+	if ( TF && IF ) {
+		int_call( 1 );
+	}
 }
 void
 _SS() {
@@ -83,7 +89,9 @@ _SS() {
 	opcode = cpu_pfq_getbyte();
 	cpu_optable[opcode]();
 	CurrentSegment = &DS;
-	return;
+	if ( TF && IF ) {
+		int_call( 1 );
+	}
 }
 
 void
