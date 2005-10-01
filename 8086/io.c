@@ -10,8 +10,8 @@
 	char tmp[40];
 #endif
 
-tintab vm_ioh_in[0x1000];		/* make me ffff */
-touttab vm_ioh_out[0x1000];		/* me too.		*/
+tintab vm_ioh_in[0xFFFF];		/* make me ffff */
+touttab vm_ioh_out[0xFFFF];		/* me too.		*/
 
 void _OUT_imm8_AL() { cpu_out(cpu_pfq_getbyte(), *treg8[REG_AL], 8); }
 void _OUT_imm8_AX() { cpu_out(cpu_pfq_getbyte(), AX, 16); }
@@ -26,7 +26,7 @@ void _IN_AX_DX() { AX = cpu_in(DX, 16); }
 void
 cpu_out (word port, word data, byte bits) {
 	#ifdef VM_DEBUG
-		if((iopeek)){
+		if((iopeek)&&(port<0x60 || port>0x6F) && port != 0x3D4 && port != 0x3D5 && port != 0) {
 			sprintf(tmp, "[%04X:%04X] cpu_out: %04X --> %04X\n", BCS, BIP, data, port);
 			vm_out(tmp, VM_IOMSG);
 		}
@@ -49,7 +49,7 @@ cpu_out (word port, word data, byte bits) {
 word
 cpu_in (word port, byte bits) {
 	#ifdef VM_DEBUG
-		if((iopeek)&&((port<0x60)||(port>0x6F))) {
+		if((iopeek)&&(port<0x60 || port>0x6F) && port != 0x3D4 && port != 0x3D5 && port != 0) {
 			sprintf(tmp, "[%04X:%04X] cpu_in: %04X\n", BCS, BIP, port);
 			vm_out(tmp, VM_IOMSG);
 		}

@@ -75,7 +75,7 @@ void vm_init() {
 	#endif
 	ui_init();
 
-	for ( i = 0; i < 0x1000; ++i )
+	for ( i = 0; i < 0xffff; ++i )
 		vm_listen( i, &vm_ioh_nin, &vm_ioh_nout );
 
 	vga_init();
