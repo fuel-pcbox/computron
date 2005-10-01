@@ -12,14 +12,16 @@
 #include <signal.h>
 
 #define VGA_ATTR(a) COLOR_PAIR( (((a)>>4)&7)*8 |  ((a)&7))
-#define PRINTABLE(c) ((c < 32) ? ' ' : c)
+#define PRINTABLE(c) ((c < 32 || c > 250) ? ' ' : c)
 
 #ifdef VM_DEBUG
 extern word g_last_nonbios_CS;
 extern word g_last_nonbios_IP;
 #endif
 
+#ifdef VOMIT_STATUSBAR
 static WINDOW *s_statusbar;
+#endif /* VOMIT_STATUSBAR */
 
 static bool ui_visible = false;
 
@@ -121,8 +123,10 @@ __ui_init()
 			init_pair( b * 8 + f, f, b );
 		}
 	}
+#ifdef VOMIT_STATUSBAR
 	s_statusbar = newwin( 1, COLS, LINES - 1, 0 );
 	wbkgd( s_statusbar, COLOR_PAIR( 56 ) );
+#endif /* VOMIT_STATUSBAR */
 	ui_visible = true;
 }
 
@@ -135,6 +139,7 @@ ui_init() {
 	__ui_init();
 }
 
+#ifdef VOMIT_STATUSBAR
 static void
 __ui_statusbar() {
 	char *p, buf[80];
@@ -148,10 +153,16 @@ __ui_statusbar() {
 	waddstr( s_statusbar, buf );
 	if ( g_break_pressed ) {
 		break_timeout = 3;
+		ui_kill();
+		vm_debug();
+		ui_show();
+		return;
 	}
 	if ( break_timeout ) {
-		waddstr( s_statusbar, " [BREAK]" );
-		--break_timeout;
+		if ( --break_timeout )
+			waddstr( s_statusbar, " [BREAK]" );
+		else
+			waddstr( s_statusbar, "        " );
 	}
 	wnoutrefresh( s_statusbar );
 }
@@ -160,8 +171,8 @@ void
 ui_statusbar() {
 	__ui_statusbar();
 	wrefresh( s_statusbar );
-	doupdate();
 }
+#endif /* VOMIT_STATUSBAR */
 
 void
 ui_sync() {
@@ -177,11 +188,18 @@ ui_sync() {
 			mvaddch(y, x, PRINTABLE(mem_getbyte(0xB800, (y*160)+(x<<1)))
 			             | VGA_ATTR(mem_getbyte(0xB800, (y*160)+(x<<1)+1)));
 		}
-	__ui_statusbar();
+
+	move( ny, nx );
 	refresh();
+
+#ifdef VOMIT_STATUSBAR
+	__ui_statusbar();
+	wnoutrefresh( stdscr );
 	wbkgd( s_statusbar, COLOR_PAIR( 56 ) );
 	move(ny, nx);
-	wrefresh( s_statusbar );
+	wnoutrefresh( s_statusbar );
+	doupdate();
+#endif /* VOMIT_STATUSBAR */
 }
 
 void
@@ -196,7 +214,9 @@ ui_show()
 void
 ui_kill()
 {
+#ifdef VOMIT_STATUSBAR
 	delwin( s_statusbar );
+#endif /* VOMIT_STATUSBAR */
 	endwin();
 	ui_visible = false;
 }
