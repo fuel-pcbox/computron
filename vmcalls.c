@@ -244,8 +244,10 @@ vm_handle66 (word data)
 
 	case 0x1700:	/* INT 17, 00: Print character on LPT */
 		#ifdef VM_DEBUG
-			sprintf(tmp, "PRN%d <-- %02X\n", DX, *treg8[REG_AL]);
-			vm_out(tmp, VM_PRNLOG);
+			sprintf( tmp, "prn%d.txt", DX );
+			fpdrv = fopen( tmp, "a" );
+			fputc( *treg8[REG_CL], fpdrv );
+			fclose( fpdrv );
 		#endif
 		break;
 
