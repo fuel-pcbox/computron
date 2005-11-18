@@ -313,7 +313,9 @@ void cpu_main() {					/* Main CPU loop */
 #endif
 #ifdef VM_BREAK
 		if ( g_break_pressed ) {
+#ifdef VOMIT_STATUSBAR
 			ui_statusbar();
+#endif
 			g_break_pressed = false;
 			int_call( 9 );
 			continue;
