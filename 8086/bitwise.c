@@ -62,8 +62,9 @@ _CWD() {
 }
 
 void
-_SALC() {
-	*treg8[REG_AL] = CF << 7;
+_SALC()
+{
+	*treg8[REG_AL] = CF * 0xFF;
 }
 
 dword cpu_or(word dest, word src, byte bits) {

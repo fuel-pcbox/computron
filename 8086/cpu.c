@@ -243,6 +243,7 @@ cpu_genmap() {
 	cpu_addinstruction(0xD3, 0xD3, &_wrap_0xD3,			"0xD3",			0x00);
 	cpu_addinstruction(0xD4, 0xD4, &_AAM,				"aam",			0x00);
 	cpu_addinstruction(0xD5, 0xD5, &_AAD,				"aad",			0x00);
+	cpu_addinstruction(0xD6, 0xD6, &_SALC,				"salc",			0x00);
 	cpu_addinstruction(0xD7, 0xD7, &_XLAT,				"xlat",			0x00);
 	cpu_addinstruction(0xDB, 0xDB, &_FNINIT,			"fninit",		0x70);
 	cpu_addinstruction(0xE0, 0xE0, &_LOOPNE_imm8,		"loopne",		0x00);
