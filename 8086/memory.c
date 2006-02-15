@@ -26,7 +26,7 @@ inline byte
 mem_getbyte( word seg, word off ) {
 	#ifdef VM_DEBUG
 		if(mempeek)
-			printf("mem_peek: %04X:%04X reading   BYTE at %08X\n", BCS, BIP, seg*16+off);
+			fprintf( stderr, "mem_peek: %04X:%04X reading   BYTE at %08X\n", BCS, BIP, seg*16+off );
 	#endif
 	return mem_space[(seg<<4)+off];
 }
@@ -34,7 +34,7 @@ inline word
 mem_getword( word seg, word off ) {
 	#ifdef VM_DEBUG
 		if(mempeek)
-			printf("mem_peek: %04X:%04X reading   WORD at %08X\n", BCS, BIP, seg*16+off);
+			fprintf( stderr, "mem_peek: %04X:%04X reading   WORD at %08X\n", BCS, BIP, seg*16+off );
 	#endif
 	#ifndef VM_EXPENDABLE
 		if(off==0xffff)
@@ -48,7 +48,7 @@ inline void
 mem_setbyte( word seg, word off, byte b ) {
 	#ifdef VM_DEBUG
 		if(mempeek)
-			printf("mem_peek: %04X:%04X writing   BYTE at %08X\n", BCS, BIP, seg*16+off);
+			fprintf( stderr, "mem_peek: %04X:%04X writing   BYTE at %08X\n", BCS, BIP, seg*16+off );
 	#endif
 	mem_space[(seg<<4)+off]=b;
 }
@@ -56,7 +56,7 @@ inline void
 mem_setword( word seg, word off, word w ) {
 	#ifdef VM_DEBUG
 		if(mempeek)
-			printf("mem_peek: %04X:%04X writing   WORD at %08X\n", BCS, BIP, seg*16+off);
+			fprintf( stderr, "mem_peek: %04X:%04X writing   WORD at %08X\n", BCS, BIP, seg*16+off );
 	#endif
 	#ifndef VM_EXPENDABLE
 		if(off==0xFFFF) {
