@@ -1,0 +1,8 @@
+asm
+	std
+	cld
+_asm
+
+result
+	DF=0
+_result

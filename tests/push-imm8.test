@@ -1,0 +1,11 @@
+asm
+	push byte 1
+	pop ax
+	push byte -1
+	pop bx
+_asm
+
+result
+	AX=0001
+	BX=FFFF
+_result

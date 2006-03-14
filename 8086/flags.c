@@ -22,13 +22,13 @@ cpu_flags_init()
 	CF = DF = TF = PF = AF = ZF = SF = IF = OF = 0;
 }
 
-inline void
+void
 cpu_setZF( dword ans )
 {
 	ZF = ( ans == 0 );
 }
 
-inline void
+void
 cpu_setSF( dword ans, byte bits )
 {
 	if ( bits == 16 )
@@ -37,13 +37,13 @@ cpu_setSF( dword ans, byte bits )
 		SF = ( ans >> 7 ) & 1;
 }
 
-inline void
+void
 cpu_setPF( dword ans )
 {
     PF = parity_table[ans & 0xFF];
 }
 
-inline void
+void
 cpu_setAF( dword ans, word src, word dest )
 {
 	AF = ( ( ( ans ^ ( src ^ dest ) ) & 0x10 ) >> 4) & 1;

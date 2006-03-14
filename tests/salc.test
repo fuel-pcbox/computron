@@ -1,0 +1,9 @@
+asm
+	stc
+	salc
+_asm
+
+result
+	CF=1
+	AX=00FF
+_result

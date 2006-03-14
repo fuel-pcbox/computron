@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "vomit.h"
+#include "debug.h"
 
 byte cpu_state, cpu_type;
 dword cpu_ips, cpu_ii;
@@ -42,24 +43,23 @@ char *cpu_opmnemonic[0x100];
 
 word segment_dummy; /* The black hole of 386 segment selectors. */
 
-void _OpOverride() {
-#ifdef VM_DEBUG
-	vm_out("Operation size override detected!\n", VM_LOGMSG);
-#endif
+void
+_OpOverride()
+{
+	vlog( VM_LOGMSG, "Operation size override detected!" );
 }
 
-void _FNINIT() {
-	cpu_pfq_getbyte(); /* skip second stuffing */
-#ifdef VM_DEBUG
-	vm_out("FPU initalization attempt detected!\n", VM_LOGMSG);
-#endif
+void
+_FNINIT()
+{
+	vlog( VM_LOGMSG, "FPU initalization attempt detected!" );
+	/* skip second stuffing */
+	cpu_pfq_getbyte();
 }
 
-void cpu_init() {
-#ifdef VM_DEBUG
-	if(verbose) vm_out("cpu: Allocating CPU data.\n", VM_INITMSG);
-#endif
-
+void
+cpu_init()
+{
 	treg16[REG_AX] = &AX; treg16[REG_BX] = &BX;
 	treg16[REG_CX] = &CX; treg16[REG_DX] = &DX;
 	treg16[REG_StackPointer] = &StackPointer; treg16[REG_BasePointer] = &BasePointer;
@@ -88,7 +88,7 @@ void cpu_init() {
 	cpu_modrm_init();
 	cpu_flags_init();
 
-	cpu_ips = 90000;	/* FUCK WITH CARE */
+	cpu_ips = 40000;	/* FUCK WITH CARE */
 	cpu_ii = 0;
 
 }
@@ -277,13 +277,17 @@ cpu_genmap() {
 	cpu_addinstruction(0xFF, 0xFF, &_wrap_0xFF,			"0xFF",			0x00);
 }
 
-void cpu_kill() {
+void
+cpu_kill()
+{
 #ifndef VM_NOPFQ
-	free(cpu_pfq);
+	free( cpu_pfq );
 #endif
 }
 
-void cpu_main() {					/* Main CPU loop */
+void
+cpu_main()
+{
 #ifndef VM_NOPFQ
 	cpu_pfq_flush();
 #endif
@@ -314,12 +318,15 @@ void cpu_main() {					/* Main CPU loop */
 #endif
 #ifdef VM_BREAK
 		if ( g_break_pressed ) {
-#ifdef VOMIT_STATUSBAR
-			ui_statusbar();
-#endif
+			g_command_mode = !g_command_mode;
 			g_break_pressed = false;
-			int_call( 9 );
+			/* TODO: int_call( 9 ); */
 			continue;
+		}
+
+		if( g_command_mode )
+		{
+			ui_command_mode();
 		}
 #endif
 		if( ++cpu_ii == cpu_ips ) {
@@ -389,7 +396,6 @@ void cpu_setflags(word flags) {		/* probably optimizeable */
 	IF = (flags & 0x0200) > 0;
 	DF = (flags & 0x0400) > 0;
 	OF = (flags & 0x0800) > 0;
-	return;
 }
 
 word cpu_getflags() {
@@ -453,7 +459,12 @@ void
 _UNSUPP()
 {
 	ui_kill();
-	printf( "\n%04X:%04X: Opcode %02X not supported.\n", CS, IP, cpu_opcode );
+	vlog( VM_ALERT, "%04X:%04X: Opcode %02X not supported", CS, IP, cpu_opcode );
+	if( g_try_run )
+	{
+		dump_try();
+		vm_exit( 1 );
+	}
 #ifdef VM_DEBUG
 	vm_debug();
 	ui_show();

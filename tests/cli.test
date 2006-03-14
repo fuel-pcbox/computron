@@ -1,0 +1,8 @@
+asm
+	sti
+	cli
+_asm
+
+result
+	IF=0
+_result

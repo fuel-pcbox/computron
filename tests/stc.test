@@ -1,0 +1,7 @@
+asm
+	stc
+_asm
+
+result
+	CF=1
+_result

@@ -1,0 +1,17 @@
+asm
+	mov ah, 0x12
+	mov al, 0x34
+	mov bh, 0x56
+	mov bl, 0x78
+	mov ch, 0x9A
+	mov cl, 0xBC
+	mov dh, 0xDE
+	mov dl, 0xF0
+_asm
+
+result
+	AX=1234
+	BX=5678
+	CX=9ABC
+	DX=DEF0
+_result

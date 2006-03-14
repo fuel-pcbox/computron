@@ -35,8 +35,17 @@ word chs2lba(byte drive, word cyl, byte head, word sector) {
 
 byte floppy_read(byte drive, word cylinder, word head, word sector, word count, word segment, word offset) {
 	FILE *fpdrv;
+
 	word lba = chs2lba(drive, cylinder, head, sector);
 	byte *fderr = (byte *)mem_space + 0x441;		/* fd status in bda */
+
+	g_last_diskaction.type = DISKACTION_READ;
+	g_last_diskaction.drive = drive;
+	g_last_diskaction.cylinder = cylinder;
+	g_last_diskaction.head = head;
+	g_last_diskaction.sector = sector;
+	g_last_diskaction.count = count;
+
 	if(!drv_status[drive]) {
 		#ifdef VM_DEBUG
 			if(disklog) { sprintf(tmp, "Drive %02X not ready.\n", drive); vm_out(tmp, VM_DISKLOG); }
@@ -79,6 +88,14 @@ byte floppy_write(byte drive, word cylinder, word head, word sector, word count,
     FILE *fpdrv;
     word lba = chs2lba(drive, cylinder, head, sector);
     byte *fderr = (byte *)mem_space + 0x441;        /* fd status in bda */
+
+	g_last_diskaction.type = DISKACTION_WRITE;
+	g_last_diskaction.drive = drive;
+	g_last_diskaction.cylinder = cylinder;
+	g_last_diskaction.head = head;
+	g_last_diskaction.sector = sector;
+	g_last_diskaction.count = count;
+
     if(!drv_status[drive]) {
         #ifdef VM_DEBUG
             if(disklog) { sprintf(tmp, "Drive %02X not ready.\n", drive); vm_out(tmp, VM_DISKLOG); }
@@ -164,6 +181,14 @@ byte floppy_verify(byte drive, word cylinder, word head, word sector, word count
 	byte *fderr = (byte *)mem_space + 0x441;		/* fd status in bda */
 	(void) segment;
 	(void) offset;
+
+	g_last_diskaction.type = DISKACTION_VERIFY;
+	g_last_diskaction.drive = drive;
+	g_last_diskaction.cylinder = cylinder;
+	g_last_diskaction.head = head;
+	g_last_diskaction.sector = sector;
+	g_last_diskaction.count = count;
+
 	if(!drv_status[drive]) {
 		#ifdef VM_DEBUG
 			if(disklog) { sprintf(tmp, "Drive %02X not ready.\n", drive); vm_out(tmp, VM_DISKLOG); }

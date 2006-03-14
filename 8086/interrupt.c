@@ -31,8 +31,12 @@ _INTO() {
 }
 
 void
-_IRET() {
-	int_return();
+_IRET()
+{
+	word nip = mem_pop();
+	word ncs = mem_pop();
+	cpu_jump( ncs, nip );
+	cpu_setflags( mem_pop() );
 }
 
 void
@@ -44,6 +48,11 @@ int_call( byte isr ) {
 			vm_out(tmp, VM_LOGMSG);
 		}
 	#endif
+	if( isr == 0x10 )
+	{
+		bios_interrupt10();
+		return;
+	}
 	mem_push(cpu_getflags());
 	IF = 0;
 	TF = 0;
@@ -61,12 +70,3 @@ int_call( byte isr ) {
 	}
 #endif
 }
-
-void
-int_return() {
-	word nip = mem_pop();
-	word ncs = mem_pop();
-	cpu_jump(ncs, nip);
-	cpu_setflags(mem_pop());
-}
-

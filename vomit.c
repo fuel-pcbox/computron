@@ -3,18 +3,20 @@
  *
  */
 
-#include "vomit.h"
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include "vomit.h"
+#include "debug.h"
 
 bool	verbose,
 		disklog, trapint, rmpeek,
 		iopeek, mempeek,
 		callpeek, iplog;
 
+bool g_try_run = false;
 bool g_break_pressed = false;
 
 static bool exiting = 0;
@@ -23,34 +25,71 @@ static bool exiting = 0;
 	word BCS, BIP;
 #endif
 
+#define FLAGARG( a, b ) else if( !strcmp( argv[1], a )) { b = true; argc--; argv++; }
+
 int
 main( int argc, char **argv )
 {
-	int i;
-	if( argc > 1 )
-		for( i = 1; i < argc; ++i ) {
-			#ifdef VM_DEBUG
-				if ( !strcmp( argv[i], "--verbose" ) ) verbose = true;
-				if ( !strcmp( argv[i], "--iplog" ) ) iplog = true;
-				if ( !strcmp( argv[i], "--disklog" ) ) disklog = true;
-				if ( !strcmp( argv[i], "--trapint" ) ) trapint = true;
-				if ( !strcmp( argv[i], "--rmpeek" ) ) rmpeek = true;
-				if ( !strcmp( argv[i], "--iopeek" ) ) iopeek = true;
-				if ( !strcmp( argv[i], "--mempeek" ) ) mempeek = true;
-				if ( !strcmp( argv[i], "--callpeek" ) ) callpeek = true;
-			#endif
-        }
+	const char *try_path = 0L;
+
+	while( argc > 1 )
+	{
+		if( 0 ) {}
+		#ifdef VM_DEBUG
+		FLAGARG( "--callpeek", callpeek )
+		FLAGARG( "--verbose",  verbose )
+		FLAGARG( "--disklog",  disklog )
+		FLAGARG( "--trapint",  trapint )
+		FLAGARG( "--mempeek",  mempeek )
+		FLAGARG( "--rmpeek",   rmpeek )
+		FLAGARG( "--iopeek",   iopeek )
+		FLAGARG( "--iplog",    iplog )
+		#endif
+
+		else if( argc > 2 && !strcmp( argv[1], "--try" ))
+		{
+			try_path = argv[2];
+			g_try_run = true;
+			argc -= 2, argv += 2;
+		}
+		else
+		{
+			fprintf( stderr, "Unknown option: %s\n", argv[1] );
+			return 1;
+		}
+	}
 
 	vm_init();
 	vm_loadconf();
 	cpu_genmap();
 
+	vlog( VM_INITMSG, "Registering SIGINT handler" );
 	signal( SIGINT, vm_cbreak );
-#if defined( VM_DEBUG ) && defined( VM_BREAK )
-	if ( verbose ) vm_out( "Ctrl-C mapped to INT 3\n", VM_INITMSG );
-#endif
 
 	cpu_state = CPU_ALIVE;
+
+	if( g_try_run )
+	{
+		FILE *fp = fopen( try_path, "rb" );
+		if( !fp )
+		{
+			perror( try_path );
+			return 1;
+		}
+
+		printf( "Loading %s into 1000:0000.\n", try_path );
+
+		/* Read up to MAX_FILESIZE bytes into 1000:0000. */
+		int x = fread( mem_space + 0x10000, 1, MAX_FILESIZE, fp );
+		printf( "%d bytes read.\n", x );
+
+		fclose( fp );
+
+		IF = 0;
+		CS = 0x1000;
+		IP = 0x0000;
+		StackPointer = 0x1000;
+	}
 
 	cpu_main();
 
@@ -61,19 +100,15 @@ main( int argc, char **argv )
 
 void vm_init() {
 	dword i;
-	#ifdef VM_DEBUG
-		if(verbose) vm_out("Initializing memory.\n", VM_INITMSG);
-	#endif
+	vlog( VM_INITMSG, "Initializing memory" );
     mem_init();
-	#ifdef VM_DEBUG
-		if(verbose) vm_out("Initializing cpu.\n", VM_INITMSG);
-	#endif
+	vlog( VM_INITMSG, "Initializing CPU" );
     cpu_init();
 	int_init();
-	#ifdef VM_DEBUG
-		if(verbose) vm_out("vomit: Initializing ui.\n", VM_INITMSG);
-	#endif
+	vlog( VM_INITMSG, "Initializing user interface" );
 	ui_init();
+
+	memset( &g_last_diskaction, 0, sizeof(diskaction_t) );
 
 	for ( i = 0; i < 0xffff; ++i )
 		vm_listen( i, &vm_ioh_nin, &vm_ioh_nout );
@@ -84,6 +119,7 @@ void vm_init() {
 void
 vm_kill()
 {
+	vlog( VM_KILLMSG, "Killing VM" );
 	vga_kill();
 	cpu_kill();
 	mem_kill();
@@ -97,7 +133,6 @@ vm_exit( int ec )
 #ifdef VM_DEBUG
 	if( verbose ) {
 		dump_all();
-		vm_out( "Killing VM.\n", VM_KILLMSG );
 		/* No "--verbose" messages while exiting. */
 		verbose = false;
 	}

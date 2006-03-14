@@ -26,6 +26,15 @@ dump_cpu()
 #endif
 }
 
+void
+dump_try()
+{
+	printf("AX=%04X\nBX=%04X\nCX=%04X\nDX=%04X\n", AX, BX, CX, DX );
+	printf("SP=%04X\nBP=%04X\nSI=%04X\nDI=%04X\n", StackPointer, BasePointer, SI, DI);
+	printf("CS=%04X\nDS=%04X\nES=%04X\nSS=%04X\n", CS, DS, ES, SS);
+	printf("CF=%x\nPF=%x\nAF=%x\nZF=%x\nSF=%x\nIF=%x\nDF=%x\nOF=%x\nTF=%x\n", CF, PF, AF, ZF, SF, IF, DF, OF, TF);
+}
+
 void dump_all() {
 	word *stacky = (void *)mem_space + (SS*16)+StackPointer;
 #ifndef VM_NOPFQ

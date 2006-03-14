@@ -1,0 +1,23 @@
+asm
+	mov ax, 0x1234
+	mov bx, 0x5678
+	mov cx, 0x9ABC
+	mov dx, 0xDEF0
+
+	mov si, 0x1122
+	mov di, 0x3344
+	mov bp, 0x5566
+	mov sp, 0x7788
+_asm
+
+result
+	AX=1234
+	BX=5678
+	CX=9ABC
+	DX=DEF0
+
+	SI=1122
+	DI=3344
+	BP=5566
+	SP=7788
+_result

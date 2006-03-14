@@ -4,6 +4,46 @@
  *
  */
 
+#include "vomit.h"
+#include <stdarg.h>
+#include <stdio.h>
+
+void
+vlog( int category, const char *format, ... )
+{
+	va_list ap;
+	const char *prefix = 0L;
+	FILE *logfile = fopen( "log.txt", "a" );
+
+	if( !logfile )
+		return;
+
+	switch( category )
+	{
+		case VM_INITMSG: prefix = "init"; break;
+		case VM_DISKLOG: prefix = "disk"; break;
+		case VM_KILLMSG: prefix = "kill"; break;
+		case VM_IOMSG:   prefix = "i/o"; break;
+		case VM_ALERT:   prefix = "alert"; break;
+		case VM_PRNLOG:  prefix = "lpt"; break;
+		case VM_VIDEOMSG: prefix = "video"; break;
+		case VM_CONFIGMSG: prefix = "config"; break;
+	}
+
+	if( prefix )
+	{
+		fprintf( logfile, "(%5s) ", prefix );
+	}
+
+	va_start( ap, format );
+	vfprintf( logfile, format, ap );
+	va_end( ap );
+
+	fputc( '\n', logfile );
+
+	fclose( logfile );
+}
+
 #ifdef VM_DEBUG
 
 #include "vomit.h"

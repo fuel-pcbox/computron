@@ -1,0 +1,7 @@
+asm
+	sti
+_asm
+
+result
+	IF=1
+_result

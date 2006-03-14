@@ -9,6 +9,8 @@
 	#include <unistd.h>
 #endif
 
+#include <stdlib.h>
+
 void
 _NOP() {						/* Do nothing. Yay. */
 	return;
@@ -20,6 +22,12 @@ _HLT() {		/* Put the CPU in halt state. Await interrupt. */
 #ifdef VM_DEBUG
 		vm_out( "cpu: CPU halted. Awaiting interrupt...\n", VM_ALERT );
 #endif
+	if( g_try_run )
+	{
+		vm_kill();
+		dump_try();
+		exit( 0 );
+	}
 	while ( cpu_state == CPU_HALTED ) {
 #ifdef VM_UNIX
 			usleep(100);                /* Sleep for 100ms when halted. Prevents resource sucking. */

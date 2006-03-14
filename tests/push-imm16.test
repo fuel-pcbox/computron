@@ -1,0 +1,11 @@
+asm
+	push word 0x4444
+	pop ax
+	push word 0x9999
+	pop bx
+_asm
+
+result
+	AX=4444
+	BX=9999
+_result

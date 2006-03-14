@@ -5,7 +5,7 @@
 
 #include "vomit.h"
 
-inline void
+void
 cpu_mathflags (dword result, word dest, word src, byte bits) {
 	if ( bits == 8 ) {
 		CF = ( result >> 8 ) & 1;
@@ -20,7 +20,7 @@ cpu_mathflags (dword result, word dest, word src, byte bits) {
 	cpu_setAF( result, dest, src );
 }
 
-inline void
+void
 cpu_cmpflags (dword result, word dest, word src, byte bits) {
 	cpu_mathflags(result, dest, src, bits);
 	OF =	((
@@ -397,8 +397,8 @@ _MUL_RM16()
 	byte rm = cpu_rmbyte;
 	word *p = cpu_rmptr( rm, 16 );
 	dword result = cpu_mul( AX, *p, 16 );
-	AX = (word)result;
-	DX = (word)( result >> 16 );
+	AX = result & 0xFFFF;
+	DX = (result >> 16) & 0xFFFF;
 }
 
 void
@@ -457,7 +457,7 @@ void
 _IDIV_RM8() {
 	byte rm = cpu_rmbyte;
 	word offend = IP;
-	sigbyte *p = cpu_rmptr(rm, 8);
+	sigbyte *p = cpu_rmptr( rm, 8 );
 	sigword tAX = (sigword)AX;
 	if( (*p==0) ) {
 		IP = offend-2;		/* Exceptions return to offending IP */
@@ -470,10 +470,10 @@ _IDIV_RM8() {
 }
 
 void
-_IDIV_RM16() {
-	byte rm = cpu_rmbyte;
+_IDIV_RM16()
+{
 	word offend = IP;
-	sigword *p = cpu_rmptr(rm, 16);
+	sigword *p = cpu_rmptr( cpu_rmbyte, 16 );
 	sigdword tDXAX = (sigword)(AX + (DX << 16));
 	if( (*p==0) ) {
 		IP = offend-2;				/* See above. */

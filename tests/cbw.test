@@ -1,0 +1,8 @@
+asm
+	mov al, 0xFF
+	cbw
+_asm
+
+result
+	AX=FFFF
+_result

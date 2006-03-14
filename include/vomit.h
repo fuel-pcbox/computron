@@ -23,6 +23,8 @@
 	#define VM_DISKLOG		113
 	#define VM_PRNLOG		114
 	#define VM_VIDEOMSG		115
+	#define VM_KEYMSG		116
+	#define VM_CONFIGMSG	117
 
 	typedef unsigned char byte;
 	typedef unsigned short int word;
@@ -38,6 +40,22 @@
 	extern tfunctab cpu_optable[0x100];
 	extern char *cpu_opmnemonic[0x100];
 	extern byte cpu_opgen[0x100];
+
+	#define DISKACTION_NONE 0
+	#define DISKACTION_READ 1
+	#define DISKACTION_WRITE 2
+	#define DISKACTION_VERIFY 3
+
+	typedef struct {
+		byte type;
+		byte drive;
+		word cylinder;
+		byte head;
+		word sector;
+		word count;
+	} diskaction_t;
+
+	diskaction_t g_last_diskaction;
 
 	void vm_listen(word, word (*) (byte), void (*) (word, byte));
 	word vm_ioh_nin(byte);
@@ -60,21 +78,21 @@
 	void ui_show();
 	void ui_sync();
 	void ui_statusbar();
-	int kbd_hit();
-	int kbd_getc();
-
-	int set_tty_raw();
-	int set_tty_cooked();
-	int kbhit();
+	void ui_command_mode();
+	word kbd_hit();
+	word kbd_getc();
 
 	void dump_cpu();
 	void dump_all();
+	void dump_try();
 	void dump_bin();
 	void dump_ivt();
 	void dump_mem(word,word,byte);
 
 	extern bool verbose, iplog, disklog, debug, trapint, rmpeek, iopeek, mempeek, callpeek;
 
+	extern bool g_command_mode;
+	extern bool g_try_run;
 	extern bool g_debug_step;
 	extern bool g_break_pressed;
 

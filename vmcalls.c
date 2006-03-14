@@ -93,15 +93,14 @@ vm_handle66 (word data)
 
 	switch (data) {
 	case 0x1601:
-		if ( g_break_pressed ) {
-			ZF = 0;
-			AX = 0x0000;
-			break;
-		}
-		if (kbd_hit() != 0) {
+		if( !g_command_mode && kbd_hit() )
+		{
 			AX = kbd_hit();
 			ZF = 0;
-		} else {
+		}
+		else
+		{
+			AX = 0x0000;
 			ZF = 1;
 		}
 		break;
@@ -173,7 +172,7 @@ vm_handle66 (word data)
 			CX = (word)tracks; /* Tracks */
 			*treg8[REG_CL] = drv_spt[drive]; /* Sectors per Track */
 			*treg8[REG_DH] = drv_heads[drive] - 1; /* Sides */
-			*treg8[REG_DL] = 2;    /* 1 drive */
+			*treg8[REG_DL] = drv_status[0] + drv_status[1] + drv_status[2] + drv_status[3];
 
 			/* WACKY SHIT about to take place. */
 			*treg8[REG_CH] = tracks & 0xFF;
@@ -209,37 +208,41 @@ vm_handle66 (word data)
 			}
 			CF = 0;
 		}
-		else { CF = 1; }
+		else
+		{
+			/* Drive not present. */
+			*treg8[REG_AH] = 0x00;
+			CF = 1;
+		}
 		break;
 	case 0x1318:
 		drive = *treg8[REG_DL];
 		if(drive >= 0x80) drive = drive - 0x80 + 2;
-		if(drv_status[drive]!=0) {
-			#ifdef VM_DEBUG
-				sprintf(tmp, "Setting media type for drive %d:\n", drive);
-				vm_out(tmp, VM_DISKLOG);
-				sprintf(tmp, "%d sectors per track\n", *treg8[REG_CL] & 63 );
-				vm_out(tmp, VM_DISKLOG);
-				sprintf(tmp, "%d tracks\n", ((*treg8[REG_CH]) | (*treg8[REG_CL]&0xC0)<<2)+1);
-				vm_out(tmp, VM_DISKLOG);
-			#endif
-			/*if(( (*treg8[REG_CL]&63) != drv_spt[drive] ) || (((*treg8[REG_CH])|(*treg8[REG_CL]<<2))+1) != (drv_sectors[drive]/drv_spt[drive]/drv_heads[drive]) ) {
-				printf("GEOMETRY MISMATCH!\n");
-				printf("spt: %d vs. %d\n", *treg8[REG_CL]&63, drv_spt[drive]);
-				printf("trk: %d vs. %d\n", (((*treg8[REG_CH])|(*treg8[REG_CL]&0xC0)<<2)+1), drv_sectors[drive]/drv_spt[drive]/drv_heads[drive]);
-				*treg8[REG_AH] = 0x0C;		// unsupported or unknown
-				CF = 1;
-			} else {*/
-				*treg8[REG_AH] = 0x00;
-				CF = 0;
-			/*}*/
+		if( drv_status[drive] )
+		{
+#ifdef VM_DEBUG
+			sprintf(tmp, "Setting media type for drive %d:\n", drive);
+			vm_out(tmp, VM_DISKLOG);
+			sprintf(tmp, "%d sectors per track\n", *treg8[REG_CL] & 63 );
+			vm_out(tmp, VM_DISKLOG);
+			sprintf(tmp, "%d tracks\n", ((*treg8[REG_CH]) | (*treg8[REG_CL]&0xC0)<<2)+1);
+			vm_out(tmp, VM_DISKLOG);
+#endif
+
+			/* Wacky DBT. */
+			ES = 0x820E; DI = 0x0503;
+			*treg8[REG_AH] = 0x00;
+			CF = 0;
 		} else {
 			CF = 1;
 			*treg8[REG_AH] = 0x80;			/* No media in drive */
 		}
 		break;
 	case 0x1600:
-		AX = kbd_getc();
+		if( !g_command_mode )
+			AX = kbd_getc();
+		else
+			AX = 0x0000;
 		break;
 
 	case 0x1700:	/* INT 17, 00: Print character on LPT */

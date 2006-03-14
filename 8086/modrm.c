@@ -6,37 +6,17 @@
 #include <stdio.h>
 #include <string.h>
 #include "vomit.h"
+#include "debug.h"
 
-word calcEA(byte);
-
-tvptrfunctab cpu_modrmtable[0x100];
-
-byte cpu_rmbits;
-
-#ifdef VM_DEBUG
-	char tmp[120];
-#endif
+static word calcEA(byte);
+static tvptrfunctab cpu_modrmtable[0x100];
+static byte cpu_rmbits;
 
 void
 *cpu_rmptr (byte b, byte bits) {
 	void *p;
 	cpu_rmbits = bits;
 	p = cpu_modrmtable[b] ();
-	#ifdef VM_DEBUG
-		if(rmpeek) {
-			if(bits==8) {
-				if((b&0xC0)!=0xC0) {
-					sprintf(tmp, "mrm_peek: %04X:%04X requested BYTE at %08X\n", BCS, BIP, (unsigned int)p-(unsigned int)mem_space);
-					vm_out(tmp, VM_LOGMSG);
-				}
-			} else {
-				if((b&0xC0)!=0xC0) {
-					sprintf(tmp, "mrm_peek: %04X:%04X requested WORD at %08X\n", BCS, BIP, (unsigned int)p-(unsigned int)mem_space);
-					vm_out(tmp, VM_LOGMSG);
-				}
-			}
-		}
-	#endif
 	return p;
 }
 
@@ -222,10 +202,10 @@ cpu_modrm_init() {
 }
 
 void
-_LEA_reg16_mem16() {
+_LEA_reg16_mem16()
+{
 	byte rm = cpu_pfq_getbyte();
-	*treg16[rmreg(rm)] = calcEA(rm);
-	return;
+	*treg16[rmreg( rm )] = calcEA( rm );
 }
 
 word
@@ -272,9 +252,7 @@ calcEA (byte b) {	/* LEA address fetcher*/
             }
             break;
 		case 192:
-#ifdef VM_DEBUG
-			vm_out( "LEA with register source!\n", VM_ALERT );
-#endif
+			vlog( VM_ALERT, "LEA with register source!" );
 			/* LEA with register source, an invalid instruction.
 			 * Call INT6 (invalid opcode exception) */
 			int_call( 6 );
