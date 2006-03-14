@@ -1,5 +1,5 @@
 ; VOMIT ROM-BIOS
-; (C) Andreas Kling 2003-2005
+; (C) Andreas Kling 2003-2006
 ;
 ;
 
@@ -966,8 +966,16 @@ _bios_interrupt16:
 	je		.kbhit
 	cmp		ah, 0x10
 	je		.waitKey
+	cmp		ah, 0x11
+	je		.kbhit
 	cmp		ah, 0x02
 	je		.getFlags
+	cmp		ah, 0x22
+	je		.getEFlags
+	cmp		ah, 0x92
+	je		.checkCapa10
+	cmp		ah, 0xA2
+	je		.checkCapa20
     push    ax
     mov     al, 0x16
     out     0x00, ax                ; VM call 0x00 - What the fuck is up?
@@ -977,14 +985,24 @@ _bios_interrupt16:
 	push	ds
 	xor		ax, ax
 	mov		ds, ax
-	mov		ax, [0x417]
+	mov		al, [0x417]
 	pop		ds
     jmp		.end
+.getEFlags:
+	push	ds
+	xor		ax, ax
+	mov		ds, ax
+	mov		al, [0x417]
+	mov     ah, [0x418]
+	pop		ds
+    jmp		.end
+.checkCapa10:
+	mov     ah, 0x80                ; Functions 0x10, 0x11 and 0x12 supported
+	jmp     .end
+.checkCapa20:
+	jmp		.end					; Functions 0x20, 0x21 and 0x22 NOT supported
 .waitKey:
 	sti								; Allow clock fucking during this.
-	mov		ax, 0x1601
-	out		0x66, ax
-	jz		.waitKey
     mov     ax, 0x1600
     out     0x66, ax                ; Send 0x1600 to port 0x66, VM handler of assorted crap.
 	jmp		.end
