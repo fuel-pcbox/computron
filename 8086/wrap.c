@@ -188,6 +188,20 @@ _wrap_0xD3() {
 }
 
 void
+_wrap_0xD9() {
+	byte rm = cpu_pfq_getbyte();
+	word *p = cpu_rmptr(rm, 16);
+	switch(rmreg(rm)) {
+		case 7: /* FNSTCW */ break;
+		default:
+			#ifdef VM_DEBUG
+				printf("Bad opcode: %02X /%d\n", cpu_opcode, rmreg(rm));
+			#endif
+			break;
+	}
+}
+
+void
 _wrap_0xF6() {
 	cpu_rmbyte = cpu_pfq_getbyte();
 	switch(rmreg(cpu_rmbyte)) {
