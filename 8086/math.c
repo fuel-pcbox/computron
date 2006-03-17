@@ -71,15 +71,17 @@ cpu_sbb (word dest, word src, byte bits) {
 }
 
 dword
-cpu_mul (word acc, word multi, byte bits) {
+cpu_mul( word acc, word multi, byte bits )
+{
 	dword result = acc * multi;
 	cpu_mathflags( result, acc, multi, bits );
 
 	OF = CF = ( result & ( bits == 8 ? 0xFF00 : 0xFFFF0000 ) ) != 0;
 
 	/* 8086 CPUs set ZF on zero result */
-	if ( cpu_type == 0 ) {
-		ZF = ( result == 0 );
+	if( cpu_type == INTEL_8086 )
+	{
+		ZF = (result == 0);
 	}
 	return result;
 }

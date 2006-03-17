@@ -5,6 +5,9 @@
 #define CPU_ALIVE			1
 #define CPU_HALTED			2
 
+#define INTEL_8086          0
+#define INTEL_80186         1
+
 #define CPU_STATIC_FLAGS	0x7002
 
 #define rmreg(b) (b>>3&7)	/* Extracts RegID from RM byte. */

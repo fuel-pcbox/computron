@@ -5,6 +5,8 @@
  *
  */
 
+#define MASK_ITN_IF_80186 if( cpu_type == INTEL_80186 ) { itn &= 0x1F; }
+
 #include "vomit.h"
 #include "templates.h"
 
@@ -91,6 +93,7 @@ dword cpu_and(word dest, word src, byte bits) {
 dword cpu_shl(word data, byte itn, byte bits) {
 	register int i;
 	dword result = (dword)data;
+	MASK_ITN_IF_80186;
 	if(bits==8) {
 		for(i=0;i<itn;i++) {
 			CF = (result>>7) & 1;
@@ -112,6 +115,7 @@ dword cpu_shl(word data, byte itn, byte bits) {
 dword cpu_shr(word data, byte itn, byte bits) {
 	register int i;
 	dword result = (dword)data;
+	MASK_ITN_IF_80186;
 	if(bits==8) {
 		for(i=0;i<itn;i++) {
 			CF = result & 1;
@@ -134,6 +138,7 @@ dword cpu_sar(word data, byte itn, byte bits) {
 	register int i;
 	dword result = (dword)data;
 	word n;
+	MASK_ITN_IF_80186;
 	if(bits==8) {
 		for(i=0;i<itn;i++) {
 			n = result;
@@ -157,6 +162,7 @@ dword cpu_sar(word data, byte itn, byte bits) {
 dword cpu_rol(word data, byte itn, byte bits) {
 	register int i;
 	dword result = (dword)data;
+	MASK_ITN_IF_80186;
 	if(bits==8) {
 		for(i=0;i<itn;i++) {
 			CF = (result>>7)&1;
@@ -177,6 +183,7 @@ dword cpu_rol(word data, byte itn, byte bits) {
 dword cpu_ror(word data, byte itn, byte bits) {
 	register int i;
 	dword result = (dword)data;
+	MASK_ITN_IF_80186;
 	if(bits==8) {
 		for(i=0;i<itn;i++) {
 			CF = result & 1;
@@ -199,6 +206,7 @@ dword cpu_rcl(word data, byte itn, byte bits) {
 	register int i;
 	dword result = (dword)data;
 	word n;
+	MASK_ITN_IF_80186;
 	if(bits==8) {
 		for(i=0;i<itn;i++) {
 			n = result;
@@ -222,6 +230,7 @@ dword cpu_rcr(word data, byte itn, byte bits) {
 	register int i;
 	dword result = (dword)data;
 	word n;
+	MASK_ITN_IF_80186;
 	if(bits==8) {
 		for(i=0;i<itn;i++) {
 			n = result;
