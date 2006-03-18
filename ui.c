@@ -567,7 +567,7 @@ ui_sync() {
 			sdl_kill();
 		}
 #endif /* VOMIT_SDL */
-		off = ((vga_reg[0x0E] << 8) + vga_reg[0x0F]);
+		off = ((vga_read_register(0x0E) << 8) + vga_read_register(0x0F));
 		ny = off / 80;
 		nx = off - (ny * 80);
 		for (y=0; y<25; y++)
