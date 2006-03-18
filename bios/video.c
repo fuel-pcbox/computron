@@ -293,8 +293,8 @@ rows()
 void
 store_cursor( word cursor )
 {
-	vga_reg[0x0E] = cursor >> 8;
-	vga_reg[0x0F] = cursor & 0xFF;
+	vga_write_register(0x0E, cursor >> 8 );
+	vga_write_register(0x0F, cursor & 0xFF );
 
 	mem_space[0x450] = cursor / columns();
 	mem_space[0x451] = cursor % columns();
@@ -303,7 +303,7 @@ store_cursor( word cursor )
 void
 load_cursor( byte *row, byte *column )
 {
-	word cursor = vga_reg[0x0E] << 8 | vga_reg[0x0F];
+	word cursor = vga_read_register(0x0E) << 8 | vga_read_register(0x0F);
 
 	*row = cursor / columns();
 	*column = cursor % columns();
@@ -315,5 +315,5 @@ load_cursor( byte *row, byte *column )
 word
 load_cursor_word()
 {
-	return vga_reg[0x0E] << 8 | vga_reg[0x0F];
+	return vga_read_register(0x0E) << 8 | vga_read_register(0x0F);
 }

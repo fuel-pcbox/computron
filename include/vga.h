@@ -1,17 +1,11 @@
-#ifndef __VGA_H__
-#define __VGA_H__
+#ifndef __vga_h__
+#define __vga_h__
 
-	void	vga_init();
-	void	vga_kill();
-	void	vga_dump();
+void vga_init();
+void vga_kill();
 
-	void	vga_selreg(word, byte);
-	void	vga_setreg(word, byte);
-	word	vga_getreg(byte);
-	word	vga_status(byte);
+byte vga_read_register( byte index );
+void vga_write_register( byte index, byte value );
+void vga_scrollup(byte, byte, byte, byte, byte, byte);
 
-	byte	vga_reg[0x1F];
-	void	vga_scrollup(byte, byte, byte, byte, byte, byte);
-
-#endif
-
+#endif /* __vga_h__ */

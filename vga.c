@@ -1,26 +1,34 @@
 #include "vomit.h"
 #include <stdio.h>
+#include <string.h>
+#include <assert.h>
 
-byte vga_curreg = 0;
+static byte current_register = 0;
 
-byte vga_reg[0x1F];		/* there are only 0x12, but let's avoid segfaults. */
+/* there are only 0x12, but let's avoid segfaults. */
+static byte io_register[0x20];
 
-byte *vga_mem;
-byte vga_cols, vga_rows;
+static byte *video_memory;
+static byte columns;
+static byte rows;
+
+static void vga_selreg( word, byte );
+static void vga_setreg( word, byte );
+static word vga_getreg( byte );
+static word vga_status( byte );
 
 void
 vga_init()
 {
-	int i;
-	for( i = 0; i < ( 80 * 25 * 2 ); i += 2 ) {
-		mem_setbyte( 0xB800, i, ' ' );
-	}
 	vm_listen( 0x3d4, vm_ioh_nin, vga_selreg );
 	vm_listen( 0x3d5, vga_getreg, vga_setreg );
 	vm_listen( 0x3da, vga_status, vm_ioh_nout );
-	vga_mem = mem_space + 0xB8000;
-	vga_cols = 80;
-	vga_rows = 25;
+
+	columns = 80;
+	rows = 25;
+
+	video_memory = mem_space + 0xB8000;
+	memset( video_memory, 0, columns * rows * 2 );
 }
 
 #ifdef VM_DEBUG
@@ -51,21 +59,22 @@ void
 vga_selreg( word data, byte bits )
 {
 	(void) bits;
-	vga_curreg = (byte) ( data & 0x1F );	/* mask off unused bits */
+	/* mask off unused bits */
+	current_register = (byte)( data & 0x1F );
 }
 
 void
 vga_setreg( word data, byte bits )
 {
 	(void) bits;
-	vga_reg[vga_curreg] = (byte) data;
+	io_register[current_register] = (byte) data;
 }
 
 word
 vga_getreg( byte bits )
 {
 	(void) bits;
-	return (word) vga_reg[vga_curreg];
+	return (word)io_register[current_register];
 }
 
 /*
@@ -84,19 +93,19 @@ word
 vga_status( byte bits )
 {
 	(void) bits;
-	return 0x0D;	/* 0000 1101 */
+	/* 0000 1101 */
+	return 0x0D;
 }
 
+/* TODO: move this to bios/video.c */
 void
 vga_scrollup (byte x1, byte y1, byte x2, byte y2, byte num, byte attr) {
 	byte x, y, i;
-/*	byte width = x2-x1;
-	byte height = y2-y1; */
-	if ( (num == 0 ) || ( num > vga_rows ) ) {
+	if ( (num == 0 ) || ( num > rows ) ) {
 		for( y = y1; y <= y2; ++y ) {
 			for( x = x1; x < x2; ++x) {
-				vga_mem[( y * 160 + x * 2 ) + 0] = 0x20;
-				vga_mem[( y * 160 + x * 2 ) + 1] = attr;
+				video_memory[( y * 160 + x * 2 ) + 0] = 0x20;
+				video_memory[( y * 160 + x * 2 ) + 1] = attr;
 			}
 		}
 		return;
@@ -104,17 +113,28 @@ vga_scrollup (byte x1, byte y1, byte x2, byte y2, byte num, byte attr) {
 	for ( i = 0; i < num; ++i ) {
 		for ( y = y1; y < y2; ++y ) {
 			for ( x = x1; x < x2; ++x ) {
-				vga_mem[( y * 160 + x * 2 ) + 0] = vga_mem[(((y+1)*160)+x*2)+0];
-				vga_mem[( y * 160 + x * 2 ) + 1] = vga_mem[(((y+1)*160)+x*2)+1];
+				video_memory[( y * 160 + x * 2 ) + 0] = video_memory[(((y+1)*160)+x*2)+0];
+				video_memory[( y * 160 + x * 2 ) + 1] = video_memory[(((y+1)*160)+x*2)+1];
 			}
 		}
 		for ( x = x1; x < x2; ++x ) {
-			vga_mem[( y2 * 160 + x * 2 ) + 0] = 0x20;
-			vga_mem[( y2 * 160 + x * 2 ) + 1] = attr;
+			video_memory[( y2 * 160 + x * 2 ) + 0] = 0x20;
+			video_memory[( y2 * 160 + x * 2 ) + 1] = attr;
 		}
 		y2--;
-
 	}
-	return;
 }
 
+byte
+vga_read_register( byte index )
+{
+	assert( index <= 0x12 );
+	return io_register[index];
+}
+
+void
+vga_write_register( byte index, byte value )
+{
+	assert( index <= 0x12 );
+	io_register[index] = value;
+}
