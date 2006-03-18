@@ -4,14 +4,14 @@
  */
 
 #include "vomit.h"
-#include <stdio.h>
+#include "debug.h"
+
+tintab vm_ioh_in[0xFFFF];
+touttab vm_ioh_out[0xFFFF];
 
 #ifdef VM_DEBUG
-	char tmp[40];
+static word s_port;
 #endif
-
-tintab vm_ioh_in[0xFFFF];		/* make me ffff */
-touttab vm_ioh_out[0xFFFF];		/* me too.		*/
 
 void _OUT_imm8_AL() { cpu_out(cpu_pfq_getbyte(), *treg8[REG_AL], 8); }
 void _OUT_imm8_AX() { cpu_out(cpu_pfq_getbyte(), AX, 16); }
@@ -25,12 +25,13 @@ void _IN_AX_DX() { AX = cpu_in(DX, 16); }
 
 void
 cpu_out (word port, word data, byte bits) {
-	#ifdef VM_DEBUG
-		if((iopeek)&&(port<0x60 || port>0x6F) && port != 0x3D4 && port != 0x3D5 && port != 0) {
-			sprintf(tmp, "[%04X:%04X] cpu_out: %04X --> %04X\n", BCS, BIP, data, port);
-			vm_out(tmp, VM_IOMSG);
-		}
-	#endif
+#ifdef VM_DEBUG
+	if( iopeek )
+	{
+		vlog( VM_IOMSG, "[%04X:%04X] cpu_out: %04X --> %04X", BCS, BIP, data, port );
+	}
+	s_port = port;
+#endif
 	switch(port) {
 		default:
 			if(((port>0x5F)&&(port<0x70))||(port==0x00)) {
@@ -42,43 +43,44 @@ cpu_out (word port, word data, byte bits) {
 				break;
 			}
 			vm_ioh_out[port] (data, bits);
-			break;		
-	}
-}
-
-word
-cpu_in (word port, byte bits) {
-	#ifdef VM_DEBUG
-		if((iopeek)&&(port<0x60 || port>0x6F) && port != 0x3D4 && port != 0x3D5 && port != 0) {
-			sprintf(tmp, "[%04X:%04X] cpu_in: %04X\n", BCS, BIP, port);
-			vm_out(tmp, VM_IOMSG);
-		}
-	#endif
-	switch(port) {
-		default:
-			return vm_ioh_in[port] (bits);
 			break;
 	}
-	return 0;
-}
-
-void
-vm_listen (word port, word (*ioh_in) (byte), void (*ioh_out) (word, byte)) {
-	vm_ioh_in[port] = ioh_in;
-	vm_ioh_out[port] = ioh_out;
-	return;
-}
-
-void
-vm_ioh_nout (word port, byte bits) {
-	(void) port;
-	(void) bits;
-	return;
 }
 
 word
-vm_ioh_nin (byte bits) {
-	(void) bits;
+cpu_in( word port, byte bits )
+{
+#ifdef VM_DEBUG
+	if( iopeek )
+	{
+		vlog( VM_IOMSG, "[%04X:%04X] cpu_in: %04X", BCS, BIP, port );
+	}
+#endif
+	return vm_ioh_in[port]( bits );
+}
+
+void
+vm_listen( word port, word (*ioh_in) (byte), void (*ioh_out) (word, byte) )
+{
+	if( ioh_out != vm_ioh_nout && ioh_in != vm_ioh_nin )
+	{
+		vlog( VM_IOMSG, "Adding listeners for port %04X", port );
+	}
+
+	vm_ioh_in[port] = ioh_in;
+	vm_ioh_out[port] = ioh_out;
+}
+
+void
+vm_ioh_nout( word data, byte bits )
+{
+	vlog( VM_IOMSG, "Write port %04X, data %04X (%d bits)", s_port, data, bits );
+}
+
+word
+vm_ioh_nin( byte bits )
+{
+	vlog( VM_IOMSG, "Read port %04X (%d bits)", s_port, bits );
 	return 0;
 }
 

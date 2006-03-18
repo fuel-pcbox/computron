@@ -3,12 +3,6 @@
 #include "debug.h"
 #include <string.h>
 
-static byte s_current_mode = 3;
-static byte s_rows = 25;
-static byte s_columns = 80;
-
-byte get_video_mode() { return s_current_mode; }
-
 static void set_video_mode();
 static void select_active_display_page();
 static void get_video_state();
@@ -21,33 +15,24 @@ static void write_character_and_attribute_at_cursor();
 static void write_text_in_teletype_mode();
 static void scroll_active_page_up();
 static void video_subsystem_configuration();
+static word columns();
+static byte rows();
+static void store_cursor( word cursor );
+static void load_cursor( byte *row, byte *column );
+static word load_cursor_word();
 
-static void
-store_cursor( word cursor )
+void
+video_bios_init()
 {
-	vga_reg[0x0E] = cursor >> 8;
-	vga_reg[0x0F] = cursor & 0xFF;
+	/* Mode 3 - 80x25 16 color text */
+	mem_space[0x449] = 3;
 
-	mem_setbyte( 0x0040, 0x0050, cursor / s_columns );
-	mem_setbyte( 0x0040, 0x0051, cursor % s_columns );
-}
+	/* 80 columns */
+	mem_space[0x44A] = 80;
+	mem_space[0x44B] = 0;
 
-static void
-load_cursor( byte *row, byte *column )
-{
-	word cursor = vga_reg[0x0E] << 8 | vga_reg[0x0F];
-
-	*row = cursor / s_columns;
-	*column = cursor % s_columns;
-
-	mem_setbyte( 0x0040, 0x0050, cursor / s_columns );
-	mem_setbyte( 0x0040, 0x0051, cursor % s_columns );
-}
-
-static word
-load_cursor_word()
-{
-	return vga_reg[0x0E] << 8 | vga_reg[0x0F];
+	/* 25 rows */
+	mem_space[0x484] = 25;
 }
 
 void
@@ -91,7 +76,7 @@ set_cursor_position()
 	byte row = *treg8[REG_DH];
 	byte column = *treg8[REG_DL];
 
-	word cursor = row * s_columns + column;
+	word cursor = row * columns() + column;
 
 	store_cursor( cursor );
 }
@@ -105,9 +90,9 @@ get_cursor_position()
 	/* XXX: Cursor scanlines are not actually implemented. */
 
 	/* Starting (top) scanline. */
-	*treg8[REG_CH] = mem_getbyte( 0x0040, 0x0061 );
+	*treg8[REG_CH] = mem_space[0x461];
 	/* Ending (bottom) scanline. */
-	*treg8[REG_CL] = mem_getbyte( 0x0040, 0x0060 );
+	*treg8[REG_CL] = mem_space[0x460];
 }
 
 void
@@ -124,7 +109,7 @@ write_character_at_cursor()
 		return;
 
 	load_cursor( &row, &column );
-	cursor = row * s_columns + column;
+	cursor = row * columns() + column;
 
 	/* XXX: 0xB800 is hard-coded for now. */
 	mem_setbyte( 0xB800, cursor << 1, *treg8[REG_AL] );
@@ -138,6 +123,7 @@ read_character_and_attribute_at_cursor()
 
 	word cursor = load_cursor_word();
 
+	/* XXX: 0xB800 is hard-coded for now. */
 	*treg8[REG_AH] = mem_getbyte( 0xB800, (cursor << 1) + 1 );
 	*treg8[REG_AL] = mem_getbyte( 0xB800, cursor << 1 );
 }
@@ -154,7 +140,7 @@ write_character_and_attribute_at_cursor()
 		return;
 
 	load_cursor( &row, &column );
-	cursor = row * s_columns + column;
+	cursor = row * columns() + column;
 
 	/* XXX: 0xB800 is hard-coded for now. */
 	mem_setbyte( 0xB800, cursor << 1, *treg8[REG_AL] );
@@ -173,17 +159,17 @@ write_text_in_teletype_mode()
 	byte attr = *treg8[REG_BL];
 
 	load_cursor( &row, &column );
-	cursor = row * s_columns + column;
+	cursor = row * columns() + column;
 
 	switch( ch )
 	{
 		case 0x0d:
 			row++;
-			cursor = row * s_columns + column;
+			cursor = row * columns() + column;
 			break;
 		case 0x0a:
 			column = 0;
-			cursor = row * s_columns + column;
+			cursor = row * columns() + column;
 			break;
 		case 0x08:
 			cursor--;
@@ -203,16 +189,21 @@ write_text_in_teletype_mode()
 			mem_setbyte( 0xB800, (cursor << 1) + 1, attr );
 			cursor++;
 	}
-	if( cursor >= (s_rows * s_columns) )
+	if( columns() == 0 || rows() == 0 )
+	{
+		/* Something has burninated the BDA screen size data. */
+		vlog( VM_VIDEOMSG, "BDA screen size is corrupted." );
+	}
+	else if( cursor >= (rows() * columns()) )
 	{
 		int i;
-		memmove( mem_space + 0xB8000, mem_space + 0xB8000 + s_columns * 2, (s_columns * (s_rows - 1))*2 );
-		for( i = 0; i < s_columns * 2; i += 2 )
+		memmove( mem_space + 0xB8000, mem_space + 0xB8000 + columns() * 2, (columns() * (rows() - 1))*2 );
+		for( i = 0; i < columns() * 2; i += 2 )
 		{
 			mem_space[0xB8000 + 4000 - 160 + i] = 0x20;
 			mem_space[0xB8000 + 4000 - 160 + i + 1] = attr;
 		}
-		cursor = s_columns * (s_rows - 1);
+		cursor = columns() * (rows() - 1);
 	}
 	store_cursor( cursor );
 }
@@ -229,11 +220,9 @@ set_video_mode()
 	byte mode = *treg8[REG_AL];
 	byte temp;
 
-	s_current_mode = mode;
+	mem_space[0x449] = mode;
 
-	mem_setbyte( 0x0040, 0x0049, mode );
-
-	temp = mem_getbyte( 0x0040, 0x0087 );
+	temp = mem_space[0x487];
 	temp &= 0x7F;
 	temp |= mode & 0x80;
 
@@ -244,13 +233,13 @@ void
 get_video_state()
 {
 	/* Screen columns. */
-	*treg8[REG_AH] = s_columns;
+	*treg8[REG_AH] = columns();
 
 	/* Active page. */
 	*treg8[REG_BH] = 0;
 
 	/* Current video mode. */
-	*treg8[REG_AL] = s_current_mode;
+	*treg8[REG_AL] = mem_space[0x449];
 }
 
 void
@@ -281,4 +270,50 @@ void
 set_cursor_type()
 {
 	vlog( VM_VIDEOMSG, "Cursor set: %u to %u%s", *treg8[REG_CH], *treg8[REG_CL], CX == 0x2000 ? " (disabled)" : "" );
+}
+
+byte
+get_video_mode()
+{
+	return mem_space[0x449];
+}
+
+word
+columns()
+{
+	return mem_getword( 0x0040, 0x004A );
+}
+
+byte
+rows()
+{
+	return mem_space[0x484];
+}
+
+void
+store_cursor( word cursor )
+{
+	vga_reg[0x0E] = cursor >> 8;
+	vga_reg[0x0F] = cursor & 0xFF;
+
+	mem_space[0x450] = cursor / columns();
+	mem_space[0x451] = cursor % columns();
+}
+
+void
+load_cursor( byte *row, byte *column )
+{
+	word cursor = vga_reg[0x0E] << 8 | vga_reg[0x0F];
+
+	*row = cursor / columns();
+	*column = cursor % columns();
+
+	mem_space[0x450] = cursor / columns();
+	mem_space[0x451] = cursor % columns();
+}
+
+word
+load_cursor_word()
+{
+	return vga_reg[0x0E] << 8 | vga_reg[0x0F];
 }
