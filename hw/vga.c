@@ -20,9 +20,9 @@ static word vga_status( byte );
 void
 vga_init()
 {
-	vm_listen( 0x3d4, vm_ioh_nin, vga_selreg );
+	vm_listen( 0x3d4, 0L, vga_selreg );
 	vm_listen( 0x3d5, vga_getreg, vga_setreg );
-	vm_listen( 0x3da, vga_status, vm_ioh_nout );
+	vm_listen( 0x3da, vga_status, 0L );
 
 	columns = 80;
 	rows = 25;

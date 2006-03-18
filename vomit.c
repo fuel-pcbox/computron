@@ -114,7 +114,7 @@ void vm_init() {
 	memset( &g_last_diskaction, 0, sizeof(diskaction_t) );
 
 	for ( i = 0; i < 0xffff; ++i )
-		vm_listen( i, &vm_ioh_nin, &vm_ioh_nout );
+		vm_listen( i, 0L, 0L );
 
 	vga_init();
 }

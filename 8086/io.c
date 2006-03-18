@@ -62,13 +62,13 @@ cpu_in( word port, byte bits )
 void
 vm_listen( word port, word (*ioh_in) (byte), void (*ioh_out) (word, byte) )
 {
-	if( ioh_out != vm_ioh_nout && ioh_in != vm_ioh_nin )
+	if( ioh_out || ioh_in )
 	{
 		vlog( VM_IOMSG, "Adding listeners for port %04X", port );
 	}
 
-	vm_ioh_in[port] = ioh_in;
-	vm_ioh_out[port] = ioh_out;
+	vm_ioh_in[port] = ioh_in ? ioh_in : vm_ioh_nin;
+	vm_ioh_out[port] = ioh_out ? ioh_out : vm_ioh_nout;
 }
 
 void
