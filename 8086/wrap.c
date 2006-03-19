@@ -188,15 +188,17 @@ _wrap_0xD3() {
 }
 
 void
-_wrap_0xD9() {
+_wrap_0xD9()
+{
 	byte rm = cpu_pfq_getbyte();
-	word *p = cpu_rmptr(rm, 16);
-	switch(rmreg(rm)) {
-		case 7: /* FNSTCW */ break;
+	switch( rmreg(rm) )
+	{
+		case 7:
+			/* FNSTCW */
+			vlog( VM_FPUMSG, "No FPU -- swallowing FNSTCW" );
+			break;
 		default:
-			#ifdef VM_DEBUG
-				printf("Bad opcode: %02X /%d\n", cpu_opcode, rmreg(rm));
-			#endif
+			vlog( VM_ALERT, "Bad opcode: %02X /%d", cpu_opcode, rmreg(rm) );
 			break;
 	}
 }
