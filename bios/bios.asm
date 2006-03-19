@@ -22,13 +22,13 @@ _cpux_singlestep:                   ; Interrupt 0x01 - Single step
 ;_cpux_nmi:							; Interrupt 0x02 - NMI
 ;	push	ax						; Preserve AX
 ;	mov		ax, 1					; AX = 1
-;	out		0x68, al				; Set cpu_state=CPU_ALIVE (exit halt)
+;	out		0xE8, al				; Set cpu_state=CPU_ALIVE (exit halt)
 ;	pop		ax						; Restore AX
 
 _cpux_breakpoint:					; Interrupt 0x03 - Breakpoint
 	push	ax						; Preserve AX
 	mov		ax, 0x0300				; VM call 0x0300: Show debug prompt
-	out		0x66, ax
+	out		0xE6, ax
 	pop		ax						; Restore AX
 
 _cpux_overflow:						; Interrupt 0x04 - Overflow
@@ -46,7 +46,7 @@ _cpux_invalidop:
 	hlt
 
 _cpu_TIMER:
-	out		0x6A, ax				; BDA TIMER UPDATE. CONDITIONLESS.
+	out		0xEA, ax				; BDA TIMER UPDATE. CONDITIONLESS.
 	int		0x1C
 	iret
 
@@ -114,7 +114,7 @@ _bios_post:							; Power On Self-Test ;-)
 	mov		si, szBootLoadFail
 	call	safe_putString
 	mov		ax, 0x0000
-	out		0x66, ax
+	out		0xE6, ax
 	hlt
 
 safe_putString:
@@ -294,7 +294,7 @@ _bios_init_data:
     xor		ax, ax
     mov		ds, ax
 	inc		ax									; VM call 66:0001 - Get VM info
-	out		0x66, ax							; (AX receives it)
+	out		0xE6, ax							; (AX receives it)
 .checkCPU:
 	cmp		bl, 0x00							; Check CPU type
 	je		.print8086
@@ -335,13 +335,13 @@ _bios_init_data:
 	xor		bp, bp
 	mov		dl, 0x00
 	mov		ax, 0x1300
-	out		0x66, ax
+	out		0xE6, ax
 	cmp		ah, 0x00
 	jz		.setDisk00
 .check01:	
 	mov		dl, 0x01
 	mov		ax, 0x1300
-	out		0x66, ax
+	out		0xE6, ax
 	cmp		ah, 0x00
 	jz		.setDisk01
 .check80:										; We'll skip this for now.
@@ -372,19 +372,19 @@ _bios_init_data:
 _bios_find_bootdrv:
 	mov		dl, 0x00
 	mov		ax, 0x1301
-	out		0x66, ax
+	out		0xE6, ax
 	jnc		.end
 	mov		dl, 0x01
 	mov		ax, 0x1301
-	out		0x66, ax
+	out		0xE6, ax
 	jnc		.end
 	mov		dl, 0x80
 	mov		ax, 1301
-	out		0x66, ax
+	out		0xE6, ax
 	jnc		.end
 	mov		dl, 0x81
 	mov		ax, 1301
-	out		0x66, ax
+	out		0xE6, ax
 	jnc		.end
 .error:
 	ret
@@ -398,7 +398,7 @@ _bios_load_bootsector:
 	xor		bx, bx
 	mov		es, bx
 	mov		bx, 0x7C00
-	out		0x62, al
+	out		0xE2, al
 	jc		.end
 	cmp		word [es:0x7dfe], 0xaa55
 	jne		.noboot
@@ -434,13 +434,13 @@ _bios_interrupt10:					; BIOS Video Interrupt
 	je		.selectPage				; Nah. Paging? Pahh.
 	push	ax
 	mov		al, 0x10
-	out		0x00, ax				; VM call 0xA0 - What the fuck is up?
+	out		0xE0, ax				; VM call 0xA0 - What the fuck is up?
 	pop		ax						; AL = INT, AH = function
 	jmp		.end
 .putString:
 	push	ax
 	mov		ax, 0x1013
-	out		0x66, ax
+	out		0xE6, ax
 	pop		ax
 	jmp		.end
 .readChar:
@@ -471,11 +471,11 @@ _bios_interrupt10:					; BIOS Video Interrupt
 	add		sp, 2
 	iret	; we want to return in AX
 .scrollWindow
-	out		0x67, al
+	out		0xE7, al
 	jmp		.end
 .selectPage:
 	mov		ax, 0x1005
-	out		0x66, ax
+	out		0xE6, ax
 .end:
     iret
 
@@ -830,12 +830,12 @@ _bios_interrupt13:
 	je		.setMediaType
     push	ax
     mov		al, 0x13
-    out		0x00, ax				; VM call 0x00 - What the fuck is up?
+    out		0xE0, ax				; VM call 0x00 - What the fuck is up?
     pop		ax						; AL = INT, AH = function
     jmp		.end
 .resetDisk:
     mov		ax, 0x1300
-	out		0x66, ax
+	out		0xE6, ax
 	jmp     .end
 .getDiskStatus:
     push	ds
@@ -845,36 +845,36 @@ _bios_interrupt13:
 	pop		ds
     jmp     .end
 .readSectors:
-	out     0x62, al                ; VM call 0x62 - int13h clone (al is dummy)
+	out     0xE2, al                ; VM call 0xE2 - int13h clone (al is dummy)
 	jmp     .end
 .verifySectors:
-	out		0x64, al
+	out		0xE4, al
 	jmp		.end
 .writeSectors:
-	out		0x63, al
+	out		0xE3, al
 	jmp		.end
 .getDriveParams:
 	mov		byte [cs:temp], al
     mov     ax, 0x1308
-    out     0x66, ax
+    out     0xE6, ax
 	mov		al, byte [cs:temp]
     jmp     .end
 .readDASDType:
 	mov		byte [cs:temp], al
     mov     ax, 0x1315
-    out     0x66, ax
+    out     0xE6, ax
 	mov		al, byte [cs:temp]
     jmp     .end
 .setMediaType:
 	mov		byte [cs:temp], al
 	mov		ax, 0x1318
-	out		0x66, ax
+	out		0xE6, ax
 	mov		al, byte [cs:temp]
 	jmp		.end
 .formatTrack:
 	mov		byte [cs:temp], al
 	mov		ax, 0x1305
-	out		0x66, ax
+	out		0xE6, ax
 	mov		al, byte [cs:temp]
 	jmp		.end
 	; no jmp .end here ;-)
@@ -897,7 +897,7 @@ _bios_interrupt14:
 	je		.fn0x03
     push    ax
     mov     al, 0x14
-    out     0x00, ax                ; VM call 0x00 - What the fuck is up?
+    out     0xE0, ax                ; VM call 0x00 - What the fuck is up?
     pop     ax                      ; AL = INT, AH = function
     jmp     .end
 .fn0x00:
@@ -926,7 +926,7 @@ _bios_interrupt15:
 	je		.fn0xc1
     push    ax
     mov     al, 0x15
-    out     0x00, ax				; VM call 0x00 - What the fuck is up?
+    out     0xE0, ax				; VM call 0x00 - What the fuck is up?
     pop     ax						; AL = INT, AH = function
     jmp     .end
 .controlA20:
@@ -978,7 +978,7 @@ _bios_interrupt16:
 	je		.checkCapa20
     push    ax
     mov     al, 0x16
-    out     0x00, ax                ; VM call 0x00 - What the fuck is up?
+    out     0xE0, ax                ; VM call 0x00 - What the fuck is up?
     pop     ax                      ; AL = INT, AH = function
     jmp     .end
 .getFlags:
@@ -1004,11 +1004,11 @@ _bios_interrupt16:
 .waitKey:
 	sti								; Allow clock fucking during this.
     mov     ax, 0x1600
-    out     0x66, ax                ; Send 0x1600 to port 0x66, VM handler of assorted crap.
+    out     0xE6, ax                ; Send 0x1600 to port 0xE6, VM handler of assorted crap.
 	jmp		.end
 .kbhit:
 	mov		ax, 0x1601
-	out		0x66, ax
+	out		0xE6, ax
 	push	bp
 	mov		bp, sp					; This whole mekk can be optimized
 	jz		.zero					; to make DOS run speedier.
@@ -1030,14 +1030,14 @@ _bios_interrupt17:
     je      .fn0x02
     push    ax
     mov     al, 0x17
-    out     0x00, ax                ; VM call 0x00 - What the fuck is up?
+    out     0xE0, ax                ; VM call 0x00 - What the fuck is up?
     pop     ax                      ; AL = INT, AH = function
     jmp     .end
 .printChar:
 	push	cx
 	mov		cl, al
 	mov		ax, 0x1700
-	out		0x66, ax
+	out		0xE6, ax
 	pop		cx
 	jmp		.end
 .fn0x01:
@@ -1063,14 +1063,14 @@ _bios_interrupt1a:
 	je		.vmcall
     push    ax
     mov     al, 0x1a
-    out     0x00, ax                ; VM call 0x00 - What the fuck is up?
+    out     0xE0, ax                ; VM call 0x00 - What the fuck is up?
     pop     ax                      ; AL = INT, AH = function
     jmp     .end
 .vmcall:
 	push	ax
 	xchg	al, ah
 	mov		ah, 0x1A
-	out		0x66, ax
+	out		0xE6, ax
 	pop		ax						; there used to be a 'jmp .end' here. phwa.
 .end:
     push	bp
@@ -1085,7 +1085,7 @@ _bios_interrupt1a:
     iret
 .getticks:							; This thingie is placed separately for
 	mov		ax, 0x1A00				; optimization. DOS calls it all the time
-	out		0x66, ax				; and a speed boost can't hurt :-)
+	out		0xE6, ax				; and a speed boost can't hurt :-)
 	iret
 	
 ; DATA

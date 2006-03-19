@@ -23,27 +23,22 @@ vm_call8 (word port, byte data)
 {
 	(void) data;
 
-	switch(port) {
-	case 0x60:
-	case 0x61:
-		break;
-	case 0x62:	/* (VM) int13h-style disk read */
+	switch(port & 0xF) {
+	case 0x2:	/* (VM) int13h-style disk read */
 		bios_readsectors();
 		break;
-	case 0x63:
+	case 0x3:
 		bios_writesectors();
 		break;
-	case 0x64:
+	case 0x4:
 		bios_verifysectors();
 		break;
-	case 0x67:
+	case 0x7:
 		vga_scrollup(*treg8[REG_CL], *treg8[REG_CH], *treg8[REG_DL], *treg8[REG_DH], *treg8[REG_AL], *treg8[REG_BH]);
-		break;
-	case 0x69:
 		break;
 	default:
 #ifdef VM_DEBUG
-		if(callpeek) printf("vm_call8:  %04X -> %04X\n", data, port);
+		if(callpeek) printf("vm_call8:  %02X -> %04X\n", data, port);
 #endif
 		break;
     }
@@ -53,17 +48,13 @@ vm_call8 (word port, byte data)
 void
 vm_call16 (word port, word data)
 {
-	switch(port) {
-	case 0x66:	/* (VM) Handler of all sorts of crap. */
-		vm_handle66(data);
+	switch( port )
+	{
+	case 0xE6:	/* (VM) Handler of all sorts of crap. */
+		vm_handleE6(data);
 		break;
-	case 0x00:
-#ifdef VM_DEBUG
-		sprintf(tmp, "Interrupt %02X, function %02X requested.\n", *treg8[REG_AL], *treg8[REG_AH]);
-		vm_out(tmp, VM_ALERT);
-#endif
-		break;
-	case 0x61:
+	case 0xE0:
+		vlog( VM_ALERT, "Interrupt %02X, function %02X requested.\n", *treg8[REG_AL], *treg8[REG_AH] );
 		break;
 	default:
 #ifdef VM_DEBUG
@@ -78,7 +69,7 @@ vm_call16 (word port, word data)
 }
 
 void
-vm_handle66 (word data)
+vm_handleE6 (word data)
 {
 	struct	tm *t;
 	time_t	curtime;
