@@ -28,11 +28,12 @@ vlog( int category, const char *format, ... )
 		case VM_PRNLOG:  prefix = "lpt"; break;
 		case VM_VIDEOMSG: prefix = "video"; break;
 		case VM_CONFIGMSG: prefix = "config"; break;
+		case VM_CPUMSG:  prefix = "cpu"; break;
 	}
 
 	if( prefix )
 	{
-		fprintf( logfile, "(%5s) ", prefix );
+		fprintf( logfile, "(%8s) ", prefix );
 	}
 
 	va_start( ap, format );

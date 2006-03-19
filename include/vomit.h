@@ -13,7 +13,7 @@
 	#define VM_EXITMSG		103
 	#define VM_LOADMSG		104
 	#define VM_DUMPMSG		105
-	#define VM_HELPMSG		106
+	#define VM_CPUMSG       106
 	#define VM_BREAKMSG		107
 	#define VM_LOGMSG		108
 	#define VM_IOMSG		109
