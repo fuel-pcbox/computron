@@ -417,7 +417,7 @@ void cpu_addint(byte n, word segment, word offset) {
 
 void cpu_addinstruction( byte opcode_range_start, byte opcode_range_end, void (*handler)() )
 {
-	byte i;
+	word i;
 	for( i = opcode_range_start; i <= opcode_range_end; ++i )
 	{
 		cpu_optable[i] = handler;
