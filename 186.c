@@ -10,15 +10,15 @@ void
 _wrap_0x0F()
 {
 	byte op = cpu_pfq_getbyte();
-	switch ( op ) {
-	case 0xFF:		/* UD0 */
-	case 0xB9:		/* UD1 */
-	case 0x0B:		/* UD2 */
-		int_call( 6 );	/* Undefined opcode */
-		break;
-	default:
-		int_call( 6 );
-		break;
+	switch( op )
+	{
+		case 0xFF:		/* UD0 */
+		case 0xB9:		/* UD1 */
+		case 0x0B:		/* UD2 */
+		default:
+			vlog( VM_ALERT, "Undefinded opcode 0F %02X", op );
+			int_call( 6 );
+			break;
 	}
 }
 
