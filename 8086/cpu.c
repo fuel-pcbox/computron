@@ -462,17 +462,8 @@ _WAIT()
 void
 _UNSUPP()
 {
-	ui_kill();
-	vlog( VM_ALERT, "%04X:%04X: Opcode %02X not supported", CS, IP, cpu_opcode );
-	if( g_try_run )
-	{
-		dump_try();
-		vm_exit( 1 );
-	}
-#ifdef VM_DEBUG
-	vm_debug();
-	ui_show();
-#endif
-	vm_exit( 1 );
+	/* We've come across an unsupported instruction, log it,
+	 * then vector to the "illegal instruction" ISR. */
+	vlog( VM_ALERT, "%04X:%04X: Unsupported opcode %02X", BCS, BIP, cpu_opcode );
+	int_call( 6 );
 }
-
