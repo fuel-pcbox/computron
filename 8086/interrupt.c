@@ -7,13 +7,6 @@
 #include <stdio.h>
 
 void
-int_init() {
-	int i;
-	for(i=0;i<0x100;i++)
-		cpu_addint(i, 0x0000, 0x0000);
-}
-
-void
 _INT_imm8() {
 	byte imm = cpu_pfq_getbyte();
 	int_call(imm);

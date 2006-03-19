@@ -104,7 +104,6 @@ void vm_init() {
     mem_init();
 	vlog( VM_INITMSG, "Initializing CPU" );
     cpu_init();
-	int_init();
 	vlog( VM_INITMSG, "Initializing video BIOS" );
 	video_bios_init();
 

@@ -95,8 +95,6 @@ inline word mem_getword(word, word);
 inline void mem_setbyte(word, word, byte);
 inline void mem_setword(word, word, word);
 
-void int_init();
-void int_kill();
 void int_call(byte);
 
 word signext(byte);
