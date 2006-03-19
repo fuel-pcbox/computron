@@ -50,7 +50,7 @@ void cpu_setflags(word);
 void cpu_updflags(word, byte);
 word cpu_getflags();
 void cpu_addint(byte,word,word);
-void cpu_addinstruction(int,int,void (*) (),char*,byte);
+void cpu_addinstruction( byte opcode_range_start, byte opcode_range_end, void (*handler)() );
 void *cpu_rmptr(byte, byte);
 void cpu_outbyte(word, byte);
 void cpu_outword(word, word);
