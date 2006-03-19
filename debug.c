@@ -29,6 +29,7 @@ vlog( int category, const char *format, ... )
 		case VM_VIDEOMSG: prefix = "video"; break;
 		case VM_CONFIGMSG: prefix = "config"; break;
 		case VM_CPUMSG:  prefix = "cpu"; break;
+		case VM_MEMORYMSG: prefix = "memory"; break;
 	}
 
 	if( prefix )
