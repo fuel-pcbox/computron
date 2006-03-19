@@ -3,8 +3,9 @@
  *
  */
 
-#include "vomit.h"
 #include <stdio.h>
+#include "vomit.h"
+#include "debug.h"
 
 void
 _wrap_0x80() {
