@@ -4,34 +4,32 @@
  */
 
 #include "vomit.h"
-
-#ifdef VM_UNIX
-	#include <unistd.h>
-#endif
-
+#include <unistd.h>
 #include <stdlib.h>
 
 void
-_NOP() {						/* Do nothing. Yay. */
-	return;
+_NOP()
+{
 }
 
 void
-_HLT() {		/* Put the CPU in halt state. Await interrupt. */
+_HLT()
+{
+	/* XXX: When halted, we're not really waiting for an interrupt.
+	 *      We should, though. */
 	cpu_state = CPU_HALTED;
-#ifdef VM_DEBUG
-		vm_out( "cpu: CPU halted. Awaiting interrupt...\n", VM_ALERT );
-#endif
+	vlog( VM_ALERT, "CPU halted. Awaiting interrupt..." );
 	if( g_try_run )
 	{
 		vm_kill();
 		dump_try();
 		exit( 0 );
 	}
-	while ( cpu_state == CPU_HALTED ) {
-#ifdef VM_UNIX
-			usleep(100);                /* Sleep for 100ms when halted. Prevents resource sucking. */
-#endif
+	while( cpu_state == CPU_HALTED )
+	{
+		/* Sleep for 100ms when halted. Prevents resource sucking. */
+		usleep( 100 );
+		ui_sync();
 	}
 }
 
