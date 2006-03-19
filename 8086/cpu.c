@@ -333,7 +333,12 @@ cpu_main()
 		if( ++cpu_ii == cpu_ips ) {
 			cpu_ii = 0;
 			ui_sync();
-			int_call(8);		/* Call timer interrupt. */
+
+			if( IF == 1 )
+			{
+				/* Call the PIT ISR. This is ugly, to say the least, and I'm sorry. */
+				int_call( 8 );
+			}
 		}
     }
 }
