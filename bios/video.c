@@ -15,6 +15,7 @@ static void write_character_and_attribute_at_cursor();
 static void write_text_in_teletype_mode();
 static void scroll_active_page_up();
 static void video_subsystem_configuration();
+static void video_display_combination();
 static word columns();
 static byte rows();
 static void store_cursor( word cursor );
@@ -63,6 +64,7 @@ bios_interrupt10()
 		case 0x0e: write_text_in_teletype_mode(); break;
 		case 0x0f: get_video_state(); break;
 		case 0x12: video_subsystem_configuration(); break;
+		case 0x1a: video_display_combination(); break;
 		default:
 			vlog( VM_VIDEOMSG, "Interrupt 10, function %02X requested", *treg8[REG_AH] );
 	}
@@ -316,4 +318,20 @@ word
 load_cursor_word()
 {
 	return vga_read_register(0x0E) << 8 | vga_read_register(0x0F);
+}
+
+void
+video_display_combination()
+{
+	if( *treg8[REG_AL] == 0 )
+	{
+		*treg8[REG_BL] = 0x08;
+		*treg8[REG_BH] = 0x00;
+		*treg8[REG_AL] = 0x1A;
+		vlog( VM_VIDEOMSG, "Video display combination requested." );
+	}
+	else
+	{
+		vlog( VM_VIDEOMSG, "Video display combination overwrite requested." );
+	}
 }
