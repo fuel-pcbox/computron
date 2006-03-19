@@ -559,7 +559,7 @@ ui_sync() {
 
 	byte mode = get_video_mode();
 
-	if( mode == 0x03 )
+	if( (mode&0x7F) == 0x03 )
 	{
 #ifdef VOMIT_SDL
 		if( s_surface )
