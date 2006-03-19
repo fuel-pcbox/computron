@@ -12,10 +12,10 @@ static byte *video_memory;
 static byte columns;
 static byte rows;
 
-static void vga_selreg( word, byte );
-static void vga_setreg( word, byte );
-static word vga_getreg( byte );
-static word vga_status( byte );
+static void vga_selreg( word, word, byte );
+static void vga_setreg( word, word, byte );
+static word vga_getreg( word, byte );
+static word vga_status( word, byte );
 
 void
 vga_init()
@@ -56,23 +56,26 @@ vga_kill()
 }
 
 void
-vga_selreg( word data, byte bits )
+vga_selreg( word port, word data, byte bits )
 {
+	(void) port;
 	(void) bits;
 	/* mask off unused bits */
 	current_register = (byte)( data & 0x1F );
 }
 
 void
-vga_setreg( word data, byte bits )
+vga_setreg( word port, word data, byte bits )
 {
+	(void) port;
 	(void) bits;
 	io_register[current_register] = (byte) data;
 }
 
 word
-vga_getreg( byte bits )
+vga_getreg( word port, byte bits )
 {
+	(void) port;
 	(void) bits;
 	return (word)io_register[current_register];
 }
@@ -90,8 +93,9 @@ vga_getreg( byte bits )
  */
 
 word
-vga_status( byte bits )
+vga_status( word port, byte bits )
 {
+	(void) port;
 	(void) bits;
 	/* 0000 1101 */
 	return 0x0D;

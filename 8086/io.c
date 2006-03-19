@@ -9,10 +9,6 @@
 tintab vm_ioh_in[0xFFFF];
 touttab vm_ioh_out[0xFFFF];
 
-#ifdef VM_DEBUG
-static word s_port;
-#endif
-
 void _OUT_imm8_AL() { cpu_out(cpu_pfq_getbyte(), *treg8[REG_AL], 8); }
 void _OUT_imm8_AX() { cpu_out(cpu_pfq_getbyte(), AX, 16); }
 void _OUT_DX_AL() { cpu_out(DX, *treg8[REG_AL], 8); }
@@ -30,11 +26,10 @@ cpu_out (word port, word data, byte bits) {
 	{
 		vlog( VM_IOMSG, "[%04X:%04X] cpu_out: %04X --> %04X", BCS, BIP, data, port );
 	}
-	s_port = port;
 #endif
 	switch(port) {
 		default:
-			if(((port>0x5F)&&(port<0x70))||(port==0x00)) {
+			if( port >= 0xE0 && port <= 0xEF ) {
 				if(bits==8) {
 					vm_call8(port, (byte)data);
 				} else {
@@ -42,7 +37,7 @@ cpu_out (word port, word data, byte bits) {
 				}
 				break;
 			}
-			vm_ioh_out[port] (data, bits);
+			vm_ioh_out[port] (port, data, bits);
 			break;
 	}
 }
@@ -56,11 +51,11 @@ cpu_in( word port, byte bits )
 		vlog( VM_IOMSG, "[%04X:%04X] cpu_in: %04X", BCS, BIP, port );
 	}
 #endif
-	return vm_ioh_in[port]( bits );
+	return vm_ioh_in[port]( port, bits );
 }
 
 void
-vm_listen( word port, word (*ioh_in) (byte), void (*ioh_out) (word, byte) )
+vm_listen( word port, word (*ioh_in) (word, byte), void (*ioh_out) (word, word, byte) )
 {
 	if( ioh_out || ioh_in )
 	{
@@ -72,15 +67,15 @@ vm_listen( word port, word (*ioh_in) (byte), void (*ioh_out) (word, byte) )
 }
 
 void
-vm_ioh_nout( word data, byte bits )
+vm_ioh_nout( word port, word data, byte bits )
 {
-	vlog( VM_IOMSG, "Write port %04X, data %04X (%d bits)", s_port, data, bits );
+	vlog( VM_IOMSG, "Write port %04X, data %04X (%d bits)", port, data, bits );
 }
 
 word
-vm_ioh_nin( byte bits )
+vm_ioh_nin( word port, byte bits )
 {
-	vlog( VM_IOMSG, "Read port %04X (%d bits)", s_port, bits );
+	vlog( VM_IOMSG, "Read port %04X (%d bits)", port, bits );
 	return 0;
 }
 

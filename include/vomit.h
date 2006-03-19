@@ -35,8 +35,8 @@
 
 	typedef void (*tfunctab) ();
 	typedef void *(*tvptrfunctab) ();
-	typedef word (*tintab) (byte);
-	typedef void (*touttab) (word, byte);
+	typedef word (*tintab) (word, byte);
+	typedef void (*touttab) (word, word, byte);
 	extern tfunctab cpu_optable[0x100];
 	extern char *cpu_opmnemonic[0x100];
 	extern byte cpu_opgen[0x100];
@@ -57,9 +57,9 @@
 
 	diskaction_t g_last_diskaction;
 
-	void vm_listen(word, word (*) (byte), void (*) (word, byte));
-	word vm_ioh_nin(byte);
-	void vm_ioh_nout(word, byte);
+	void vm_listen(word, word (*) (word, byte), void (*) (word, word, byte));
+	word vm_ioh_nin(word, byte);
+	void vm_ioh_nout(word, word, byte);
 
 	void vm_out(char *, int);
 	void vm_exit(int);
@@ -68,7 +68,7 @@
 	void vm_debug();
 	void vm_call8(word, byte);
 	void vm_call16(word, word);
-	void vm_handle66(word);
+	void vm_handleE6(word);
 
 	void vm_init();
 	void vm_kill();
