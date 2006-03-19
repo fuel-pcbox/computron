@@ -7,6 +7,7 @@
  */
 
 #include "vomit.h"
+#include "debug.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,16 +15,13 @@
 #include <time.h>
 #include <sys/time.h>
 
-#ifdef VM_DEBUG
-	char	tmp[80];
-#endif
-
 void
 vm_call8 (word port, byte data)
 {
 	(void) data;
 
-	switch(port & 0xF) {
+	switch( port & 0xF )
+	{
 	case 0x2:	/* (VM) int13h-style disk read */
 		bios_readsectors();
 		break;
@@ -37,9 +35,10 @@ vm_call8 (word port, byte data)
 		vga_scrollup(*treg8[REG_CL], *treg8[REG_CH], *treg8[REG_DL], *treg8[REG_DH], *treg8[REG_AL], *treg8[REG_BH]);
 		break;
 	default:
-#ifdef VM_DEBUG
-		if(callpeek) printf("vm_call8:  %02X -> %04X\n", data, port);
-#endif
+		if( callpeek )
+		{
+			vlog( VM_IOMSG, "vm_call8: Unhandled write, %02X -> %04X", data, port);
+		}
 		break;
     }
     return;
@@ -54,15 +53,13 @@ vm_call16 (word port, word data)
 		vm_handleE6(data);
 		break;
 	case 0xE0:
-		vlog( VM_ALERT, "Interrupt %02X, function %02X requested.\n", *treg8[REG_AL], *treg8[REG_AH] );
+		vlog( VM_ALERT, "Interrupt %02X, function %02X requested", *treg8[REG_AL], *treg8[REG_AH] );
 		break;
 	default:
-#ifdef VM_DEBUG
-		if (callpeek) {
-			sprintf(tmp, "vm_call16: %04X -> %04X\n", data, port);
-			vm_out(tmp, VM_LOGMSG);
+		if( callpeek )
+		{
+			vlog( VM_IOMSG, "vm_call16: Unhandled write, %04X -> %04X", data, port );
 		}
-#endif
 		break;
 	}
 	return;
@@ -105,12 +102,6 @@ vm_handleE6 (word data)
 		CX = tick_count >> 16;
 		DX = tick_count & 0xFFFF;
 		break;
-	case 0x1005:
-#ifdef VM_DEBUG
-		sprintf(tmp, "Request for video page %d\n", *treg8[REG_AL]);
-		vm_out(tmp, VM_VIDEOMSG);
-#endif
-		break;
 	case 0x1300:
 		drive = *treg8[REG_DL];
 		if (drive >= 0x80)
@@ -131,14 +122,12 @@ vm_handleE6 (word data)
 		if (drv_status[drive] != 0) {
 			track = (*treg8[REG_CH] | ((*treg8[REG_CL] & 0xC0) << 2)) + 1;
 			head = *treg8[REG_DH];
-#ifdef VM_DEBUG
-			sprintf(tmp, "Drive %d: Formatting track %lu, head %d.\n", drive, track, head);
-			vm_out(tmp, VM_DISKLOG);
-#endif
+			vlog( VM_DISKLOG, "Drive %d: Formatting track %lu, head %d.", drive, track, head );
 			fpdrv = fopen(drv_imgfile[drive], "rb+");
-			if (fpdrv == NULL) {
-				printf("\nPANIC! Could not access drive %d image.\n", drive);
-				vm_exit(1);
+			if( !fpdrv )
+			{
+				vlog( VM_DISKLOG, "PANIC! Could not access drive %d image.", drive );
+				vm_exit( 1 );
 			}
 			fseek(fpdrv, (head + 1) * (track * drv_spt[drive] * drv_sectsize[drive]), SEEK_SET);
 			fdata = malloc(drv_spt[drive] * drv_sectsize[drive]);
@@ -211,14 +200,9 @@ vm_handleE6 (word data)
 		if(drive >= 0x80) drive = drive - 0x80 + 2;
 		if( drv_status[drive] )
 		{
-#ifdef VM_DEBUG
-			sprintf(tmp, "Setting media type for drive %d:\n", drive);
-			vm_out(tmp, VM_DISKLOG);
-			sprintf(tmp, "%d sectors per track\n", *treg8[REG_CL] & 63 );
-			vm_out(tmp, VM_DISKLOG);
-			sprintf(tmp, "%d tracks\n", ((*treg8[REG_CH]) | (*treg8[REG_CL]&0xC0)<<2)+1);
-			vm_out(tmp, VM_DISKLOG);
-#endif
+			vlog( VM_DISKLOG, "Setting media type for drive %d:", drive );
+			vlog( VM_DISKLOG, "%d sectors per track", *treg8[REG_CL] & 63 );
+			vlog( VM_DISKLOG, "%d tracks", ((*treg8[REG_CH]) | (*treg8[REG_CL]&0xC0)<<2)+1 );
 
 			/* Wacky DBT. */
 			ES = 0x820E; DI = 0x0503;
@@ -237,19 +221,17 @@ vm_handleE6 (word data)
 		break;
 
 	case 0x1700:	/* INT 17, 00: Print character on LPT */
-		#ifdef VM_DEBUG
+		{
+			char tmp[80];
 			sprintf( tmp, "prn%d.txt", DX );
 			fpdrv = fopen( tmp, "a" );
 			fputc( *treg8[REG_CL], fpdrv );
 			fclose( fpdrv );
-		#endif
+		}
 		break;
 
 	case 0x1A01:	/* INT 1A, 01: Set tick count */
-		#ifdef VM_DEBUG
-			sprintf(tmp, "int1a: Attempt to set tick counter to %lu\n", (dword)(CX<<16)|DX);
-			vm_out(tmp, VM_LOGMSG);
-		#endif
+		vlog( VM_ALERT, "INT 1A,01: Attempt to set tick counter to %lu", (dword)(CX<<16)|DX );
 		break;
 
 	case 0x1A02:    /* INT 1A, 02: Get BCD current time */
@@ -281,30 +263,18 @@ vm_handleE6 (word data)
 		CF = 0;
 		break;
 
-#ifdef VM_DEBUG
 	case 0x1A05:
-		sprintf(tmp, "int1a05: Attempt to set BIOS date to %02X-%02X-%04X\n", *treg8[REG_DH], *treg8[REG_DL], CX);
-		vm_out(tmp, VM_LOGMSG);
+		vlog( VM_ALERT, "INT 1A,05: Attempt to set BIOS date to %02X-%02X-%04X\n", *treg8[REG_DH], *treg8[REG_DL], CX );
 		break;
-
-	case 0x0300:
-		ui_kill();
-		printf( "\nBreak triggered at %04X:%04X\n", BCS, BIP );
-		vm_debug();
-		if ( !g_debug_step )
-			ui_show();
-		break;
-#endif
 
 	case 0x0000:
-		printf("vomit: VM call 0000 received. Shutting down.\n");
+		vlog( VM_KILLMSG, "VM call 0 received -- shutting down" );
 		vm_exit( 0 );
 		break;
+
 	case 0x0001:
 		AX = mem_avail;
 		*treg8[REG_BL] = cpu_type;
 		break;
 	}
-	return;
 }
-
