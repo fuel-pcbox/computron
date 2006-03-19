@@ -25,6 +25,7 @@
 	#define VM_VIDEOMSG		115
 	#define VM_KEYMSG		116
 	#define VM_CONFIGMSG	117
+	#define VM_MEMORYMSG    118
 
 	typedef unsigned char byte;
 	typedef unsigned short int word;
