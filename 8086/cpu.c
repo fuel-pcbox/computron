@@ -309,14 +309,6 @@ cpu_main()
 			ui_show();
 		}
 #endif
-#ifdef VM_TRAPFLAG
-		if ( TF ) {
-			cpu_opcode = cpu_pfq_getbyte();
-			cpu_optable[cpu_opcode]();
-			int_call( 1 );
-			continue;
-		}
-#endif
 #ifdef VM_BREAK
 		if ( g_break_pressed ) {
 			g_command_mode = !g_command_mode;
@@ -330,6 +322,19 @@ cpu_main()
 			ui_command_mode();
 		}
 #endif
+
+		if( TF )
+		{
+			/* The Trap Flag is set, so we'll execute one instruction and
+			 * call INT 1 as soon as it's finished. */
+			cpu_opcode = cpu_pfq_getbyte();
+			cpu_optable[cpu_opcode]();
+
+			/* NOTE: The PIT ISR won't be called below, since int_call()
+			 *       clears IF. Phew. */
+			int_call( 1 );
+		}
+
 		if( ++cpu_ii == cpu_ips ) {
 			cpu_ii = 0;
 			ui_sync();
