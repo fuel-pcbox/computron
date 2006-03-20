@@ -86,8 +86,7 @@ main( int argc, char **argv )
 		fclose( fp );
 
 		IF = 0;
-		CS = 0x1000;
-		IP = 0x0000;
+		cpu_jump( 0x1000, 0x0000 );
 		StackPointer = 0x1000;
 	}
 
@@ -107,8 +106,11 @@ void vm_init() {
 	vlog( VM_INITMSG, "Initializing video BIOS" );
 	video_bios_init();
 
-	vlog( VM_INITMSG, "Initializing user interface" );
-	ui_init();
+	if( !g_try_run )
+	{
+		vlog( VM_INITMSG, "Initializing user interface" );
+		ui_init();
+	}
 
 	memset( &g_last_diskaction, 0, sizeof(diskaction_t) );
 
@@ -125,7 +127,8 @@ vm_kill()
 	vga_kill();
 	cpu_kill();
 	mem_kill();
-	ui_kill();
+	if( !g_try_run )
+		ui_kill();
 }
 
 void

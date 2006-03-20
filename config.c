@@ -97,6 +97,7 @@ void vm_loadconf() {
                 CS = (word)strtol(curtok, NULL, 16);
                 curtok = strtok(NULL, " \t\n");
                 IP = (word)strtol(curtok, NULL, 16);
+				cpu_jump( CS, IP );
             }
 			else if(strcmp(curtok,"addint")==0) {
                 lnum = (byte)strtol(strtok(NULL, " \t\n"), NULL, 16);

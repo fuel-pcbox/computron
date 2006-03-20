@@ -17,6 +17,10 @@ dword cpu_ips, cpu_ii;
 byte cpu_opcode; /* Opcodes are no longer passed as handler arguments!! */
 byte cpu_rmbyte; /* Me neither. */
 
+
+/* This points to the base of CS for fast opcode fetches. */
+static byte *code_memory;
+
 #ifndef VM_NOPFQ
 byte *cpu_pfq;
 byte cpu_pfq_current;
@@ -77,6 +81,8 @@ cpu_init()
 	BasePointer = 0; StackPointer = 0; SI = 0; DI = 0;
 	DS = 0; ES = 0; SS = 0;
 	CS = 0xF000; IP = 0x0000;
+
+	cpu_jump( CS, IP );
 
     CurrentSegment = &DS;
 
@@ -340,7 +346,8 @@ cpu_main()
 
 		if( ++cpu_ii == cpu_ips ) {
 			cpu_ii = 0;
-			ui_sync();
+			if( !g_try_run )
+				ui_sync();
 
 			if( IF == 1 )
 			{
@@ -353,7 +360,7 @@ cpu_main()
 
 byte cpu_pfq_getbyte() { /* Get byte from prefetch queue and let new ops in. Modifies IP+1 */
 #ifdef VM_NOPFQ
-	return mem_getbyte(CS, IP++);
+	return code_memory[IP++];
 #else
 	byte b = cpu_pfq[cpu_pfq_current];
 	cpu_pfq[cpu_pfq_current] = mem_space[(CS<<4) + IP + CPU_PFQ_SIZE];
@@ -365,8 +372,9 @@ byte cpu_pfq_getbyte() { /* Get byte from prefetch queue and let new ops in. Mod
 
 word cpu_pfq_getword() { /* Get word from prefetch queue... same as above, but word and IP+2 */
 #ifdef VM_NOPFQ
-	word w = mem_getword(CS, IP);
-	IP += 2;
+	word w;
+	w = code_memory[IP++];
+	w |= (code_memory[IP++]) << 8;
 	return w;
 #else
 	word w = (word)cpu_pfq[cpu_pfq_current];
@@ -395,6 +403,8 @@ cpu_pfq_flush()
 void cpu_jump(word seg, word off) { /* Jump to specified location. */
 	CS = seg;
 	IP = off;
+
+	code_memory = mem_space + (CS << 4);
 #ifndef VM_NOPFQ
 	cpu_pfq_flush();
 #endif
