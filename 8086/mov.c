@@ -21,19 +21,31 @@ _MOV_RM16_imm16() {
 }
 
 void
-_MOV_RM16_seg() {
+_MOV_RM16_seg()
+{
 	byte rm  = cpu_pfq_getbyte();
-	word *p = cpu_rmptr(rm, 16);
-	assert( rmreg( rm ) >= 0 && rmreg( rm ) <= 3 );
+	word *p = cpu_rmptr( rm, 16 );
+	assert( rmreg(rm) >= 0 && rmreg(rm) <= 5 );
 	*p = *tseg[rmreg(rm)];
+
+	if( rmreg(rm) == REG_FS && rmreg(rm) == REG_GS )
+	{
+		vlog( VM_CPUMSG, "%04X:%04X: Read from 80386 segment register" );
+	}
 }
 
 void
-_MOV_seg_RM16() {
+_MOV_seg_RM16()
+{
 	byte rm = cpu_pfq_getbyte();
-	word *p = cpu_rmptr(rm, 16);
-	assert( rmreg( rm ) >= 0 && rmreg( rm ) <= 3 );
+	word *p = cpu_rmptr( rm, 16 );
+	assert( rmreg(rm) >= 0 && rmreg(rm) <= 5 );
 	*tseg[rmreg(rm)] = *p;
+
+	if( rmreg(rm) == REG_FS && rmreg(rm) == REG_GS )
+	{
+		vlog( VM_CPUMSG, "%04X:%04X: Write to 80386 segment register" );
+	}
 }
 
 void

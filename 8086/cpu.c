@@ -29,7 +29,7 @@ word g_last_nonbios_IP;
 #endif
 
 word *treg16[8]; byte *treg8[8]; word *tseg[8];
-word *CurrentSegment, SegmentPrefix; word CS, DS, ES, SS;
+word *CurrentSegment, SegmentPrefix; word CS, DS, ES, SS, FS, GS;
 word AX, BX, CX, DX, BasePointer, StackPointer, SI, DI, IP;
 byte CF, DF, TF, PF, AF, ZF, SF, IF, OF;
 
@@ -64,10 +64,12 @@ cpu_init()
 	treg8[REG_AL] = (byte *)&AX; treg8[REG_BL] = (byte *)&BX;
 	treg8[REG_CL] = (byte *)&CX; treg8[REG_DL] = (byte *)&DX;
 
-	tseg[REG_CS] = &CS; tseg[REG_DS] = &DS;
-	tseg[REG_ES] = &ES; tseg[REG_SS] = &SS;
-	tseg[4] = &segment_dummy;
-	tseg[5] = &segment_dummy;
+	tseg[REG_CS] = &CS;
+	tseg[REG_DS] = &DS;
+	tseg[REG_ES] = &ES;
+	tseg[REG_SS] = &SS;
+	tseg[REG_FS] = &FS;
+	tseg[REG_GS] = &GS;
 	tseg[6] = &segment_dummy;
 	tseg[7] = &segment_dummy;
 

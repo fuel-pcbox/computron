@@ -28,7 +28,7 @@ extern byte cpu_rmbyte;
 extern byte *mem_space;
 extern word mem_avail;
 
-extern word CS, DS, ES, SS, SegmentPrefix, *CurrentSegment;
+extern word CS, DS, ES, SS, FS, GS, SegmentPrefix, *CurrentSegment;
 extern word AX, BX, CX, DX, BasePointer, StackPointer, SI, DI, IP;
 extern byte CF, DF, TF, PF, AF, ZF, SF, IF, OF;
 
@@ -122,6 +122,8 @@ dword signext32(word);
 #define REG_CS  1
 #define REG_SS  2
 #define REG_DS  3
+#define REG_FS  4
+#define REG_GS  5
 
 void	_UNSUPP				();
 
