@@ -40,7 +40,6 @@ void cpu_init();
 void cpu_genmap();
 void cpu_kill();
 void cpu_main();
-void cpu_flags_init();
 byte cpu_pfq_getbyte();
 word cpu_pfq_getword();
 void cpu_pfq_flush();

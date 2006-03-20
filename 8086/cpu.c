@@ -80,9 +80,10 @@ cpu_init()
 
     CurrentSegment = &DS;
 
+	CF = DF = TF = PF = AF = ZF = SF = IF = OF = 0;
+
     cpu_setflags(0x0200 | CPU_STATIC_FLAGS);
 	cpu_modrm_init();
-	cpu_flags_init();
 
 	cpu_ips = 40000;	/* FUCK WITH CARE */
 	cpu_ii = 0;
