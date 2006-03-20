@@ -92,12 +92,6 @@ void vm_loadconf() {
 				mem_avail = (word)(strtol(curtok, NULL, 10));
 				vlog( VM_INITMSG, "Memory size: %d kilobytes", mem_avail );
 			}
-			else if(strcmp(curtok,"setstack")==0) {
-                curtok = strtok(NULL, ": \t\n");
-                SS = (word)strtol(curtok, NULL, 16);
-                curtok = strtok(NULL, " \t\n");
-                StackPointer = (word)strtol(curtok, NULL, 16);
-            }
 			else if(strcmp(curtok,"entry")==0) {
                 curtok = strtok(NULL, ": \t\n");
                 CS = (word)strtol(curtok, NULL, 16);
