@@ -115,8 +115,6 @@ void vm_init() {
 		ui_init();
 	}
 
-	memset( &g_last_diskaction, 0, sizeof(diskaction_t) );
-
 	for ( i = 0; i <= 0xFFFF; ++i )
 		vm_listen( i, 0L, 0L );
 

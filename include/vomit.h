@@ -38,24 +38,6 @@
 	typedef word (*tintab) (word, byte);
 	typedef void (*touttab) (word, word, byte);
 	extern tfunctab cpu_optable[0x100];
-	extern char *cpu_opmnemonic[0x100];
-	extern byte cpu_opgen[0x100];
-
-	#define DISKACTION_NONE 0
-	#define DISKACTION_READ 1
-	#define DISKACTION_WRITE 2
-	#define DISKACTION_VERIFY 3
-
-	typedef struct {
-		byte type;
-		byte drive;
-		word cylinder;
-		byte head;
-		word sector;
-		word count;
-	} diskaction_t;
-
-	diskaction_t g_last_diskaction;
 
 	void vm_listen(word, word (*) (word, byte), void (*) (word, word, byte));
 	word vm_ioh_nin(word, byte);
@@ -92,10 +74,7 @@
 	extern bool g_debug_step;
 	extern bool g_break_pressed;
 
-	#ifdef VM_DEBUG
-		extern word BCS, BIP;
-		void dump_ops();
-	#endif
+	extern word BCS, BIP;
 
 	#include "8086.h"
 	#include "186.h"

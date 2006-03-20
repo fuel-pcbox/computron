@@ -34,13 +34,6 @@ byte floppy_read(byte drive, word cylinder, word head, word sector, word count, 
 	word lba = chs2lba(drive, cylinder, head, sector);
 	byte *fderr = (byte *)mem_space + 0x441;		/* fd status in bda */
 
-	g_last_diskaction.type = DISKACTION_READ;
-	g_last_diskaction.drive = drive;
-	g_last_diskaction.cylinder = cylinder;
-	g_last_diskaction.head = head;
-	g_last_diskaction.sector = sector;
-	g_last_diskaction.count = count;
-
 	if(!drv_status[drive]) {
 		if(disklog)
 		{
@@ -90,13 +83,6 @@ byte floppy_write(byte drive, word cylinder, word head, word sector, word count,
     word lba = chs2lba(drive, cylinder, head, sector);
     byte *fderr = (byte *)mem_space + 0x441;        /* fd status in bda */
 
-	g_last_diskaction.type = DISKACTION_WRITE;
-	g_last_diskaction.drive = drive;
-	g_last_diskaction.cylinder = cylinder;
-	g_last_diskaction.head = head;
-	g_last_diskaction.sector = sector;
-	g_last_diskaction.count = count;
-
     if(!drv_status[drive]) {
 		if( disklog )
 		{
@@ -141,8 +127,10 @@ byte floppy_write(byte drive, word cylinder, word head, word sector, word count,
 }
 
 void bios_readsectors() {
-	word cyl = *treg8[REG_CH] | ((*treg8[REG_CL] << 2) & 0x300);
-    word sect = *treg8[REG_CL] & 63;
+	//word cyl = *treg8[REG_CH] | ((*treg8[REG_CL] << 2) & 0x300);
+    //word sect = *treg8[REG_CL] & 63;
+	word cyl = *treg8[REG_CH];
+    word sect = *treg8[REG_CL];
 	byte drive = *treg8[REG_DL];
 
 	if(drive>=0x80) drive = drive - 0x80 + 2;
@@ -187,13 +175,6 @@ byte floppy_verify(byte drive, word cylinder, word head, word sector, word count
 	byte *fderr = (byte *)mem_space + 0x441;		/* fd status in bda */
 	(void) segment;
 	(void) offset;
-
-	g_last_diskaction.type = DISKACTION_VERIFY;
-	g_last_diskaction.drive = drive;
-	g_last_diskaction.cylinder = cylinder;
-	g_last_diskaction.head = head;
-	g_last_diskaction.sector = sector;
-	g_last_diskaction.count = count;
 
 	if(!drv_status[drive]) {
 		if( disklog )
