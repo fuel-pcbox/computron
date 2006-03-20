@@ -130,15 +130,15 @@ vga_scrollup (byte x1, byte y1, byte x2, byte y2, byte num, byte attr) {
 }
 
 byte
-vga_read_register( byte index )
+vga_read_register( byte number )
 {
-	assert( index <= 0x12 );
-	return io_register[index];
+	assert( number <= 0x12 );
+	return io_register[number];
 }
 
 void
-vga_write_register( byte index, byte value )
+vga_write_register( byte number, byte value )
 {
-	assert( index <= 0x12 );
-	io_register[index] = value;
+	assert( number <= 0x12 );
+	io_register[number] = value;
 }
