@@ -154,4 +154,6 @@ vm_cbreak( int sig )
 {
 	(void) sig;
 	g_break_pressed = true;
+
+	signal( SIGINT, vm_cbreak );
 }
