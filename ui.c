@@ -86,53 +86,6 @@ ui_resize() {
 	ui_sync();
 }
 
-void
-vm_out( char *msg_text, int msg_type ) {
-	#ifndef VM_DEBUG
-		(void) msg_text;
-		(void) msg_type;
-	#else
-		FILE *fplog;
-		fplog = fopen("log.txt", "a+");
-		if (fplog == NULL)
-			return;
-
-		if (iplog && msg_type != 0)
-			fprintf(fplog, "%04X:%04X ", BCS, BIP);
-
-		switch(msg_type) {
-		case VM_INITMSG:
-			fputs("[  INIT]  ", fplog);
-			break;
-		case VM_DISKLOG:
-			fputs("[  DISK]  ", fplog);
-			break;
-		case VM_KILLMSG:
-			fputs("[  KILL]  ", fplog);
-			break;
-		case VM_IOMSG:
-			fputs("[   I/O]  ", fplog);
-			break;
-		case VM_ALERT:
-			fputs("[ ALERT]  ", fplog);
-			break;
-		case VM_PRNLOG:
-			fputs("[   LPT]  ", fplog);
-			break;
-		case VM_VIDEOMSG:
-			fputs("[ VIDEO]  ", fplog);
-			break;
-		case VM_KEYMSG:
-			fputs("[ KEYBD]  ", fplog);
-			break;
-		}
-
-		fputs(msg_text, fplog);
-		fclose(fplog);
-	#endif
-	return;
-}
-
 static word
 to_scancode( int c )
 {
@@ -194,8 +147,9 @@ __ui_init()
 	int f, b;
 	int doscolors[8] = { COLOR_BLACK, COLOR_BLUE, COLOR_GREEN, COLOR_CYAN, COLOR_RED, COLOR_MAGENTA, COLOR_YELLOW, COLOR_WHITE };
 
-	if ( !initscr() ) {
-		vm_out( "initscr() failed, dying.", VM_KILLMSG );
+	if( !initscr() )
+	{
+		vlog( VM_KILLMSG, "initscr() failed, dying." );
 		exit( 1 );
 	}
 	cbreak();
@@ -445,6 +399,27 @@ ui_exec_command()
 						break;
 				}
 			}
+	}
+	else if( !strcasecmp( list[0], "swapfd" ))
+	{
+		byte tmp_status = drv_status[0];
+		byte tmp_type = drv_type[0];
+		word tmp_spt = drv_spt[0];
+		word tmp_heads = drv_heads[0];
+		word tmp_sectors = drv_sectors[0];
+		word tmp_sectsize = drv_sectsize[0];
+
+		drv_status[0] = drv_status[1];
+		drv_type[0] = drv_type[1];
+		drv_spt[0] = drv_spt[1];
+		drv_heads[0] = drv_heads[1];
+		drv_sectors[0] = drv_sectors[1];
+		drv_sectsize[0] = drv_sectors[1];
+
+		char tmp_imgfile[MAX_FN_LENGTH];
+		strcpy( tmp_imgfile, drv_imgfile[0] );
+
+		strcpy( drv_imgfile[0], drv_imgfile[1] );
 	}
 	else if( !strcasecmp( list[0], "reboot" ))
 	{

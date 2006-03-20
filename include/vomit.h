@@ -62,7 +62,6 @@
 	word vm_ioh_nin(word, byte);
 	void vm_ioh_nout(word, word, byte);
 
-	void vm_out(char *, int);
 	void vm_exit(int);
 	void vm_loadconf();
 	void vm_cbreak(int);

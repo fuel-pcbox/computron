@@ -60,6 +60,13 @@ _kbd_interrupt:
 _bios_ctrl_break:
 	iret
 
+_unimplemented_isr:
+	push    si
+	mov     si, szUnimplemented
+	call    safe_putString
+	pop     si
+	iret
+
 _bios_post:							; Power On Self-Test ;-)
 	cli
 	mov		ax, 0x0030				; actual default
@@ -101,7 +108,12 @@ _bios_post:							; Power On Self-Test ;-)
 	sti
 
 ;	jmp		0xC000:0x0000
-	jmp		0x0000:0x7C00			; JMP to software entry
+	;jmp		0x0000:0x7C00			; JMP to software entry
+
+	mov ax, 0x7c0
+	mov ds, ax
+	mov es, ax
+	jmp		0x07C0:0x0000			; JMP to software entry
 
 	hlt								; Unreachable HLT for safety.
 
@@ -185,6 +197,13 @@ print_integer:
 
 _bios_setup_ints:
 	push    ds
+
+	mov     dx, _unimplemented_isr
+	xor     al, al
+.loop:
+	call    .install
+	inc     al
+	jnz     .loop
 
 	mov     al, 0x00
 	mov     dx, _cpux_dividebyzero
@@ -272,6 +291,7 @@ _bios_setup_ints:
 	ret
 
 .install:
+	push    ax
 	mov		cl, 4
 	mul		byte cl
 	xor		bx, bx
@@ -280,6 +300,7 @@ _bios_setup_ints:
 	mov		ax, cs
 	mov		word [bx], dx
 	mov		word [bx+2], ax
+	pop     ax
 	ret
 
 ; INITALIZE BIOS DATA AREA -----------------------------
@@ -1005,6 +1026,8 @@ _bios_interrupt16:
 	sti								; Allow clock fucking during this.
     mov     ax, 0x1600
     out     0xE6, ax                ; Send 0x1600 to port 0xE6, VM handler of assorted crap.
+	cmp		ax, 0
+	jz		.waitKey
 	jmp		.end
 .kbhit:
 	mov		ax, 0x1601
@@ -1108,6 +1131,8 @@ _bios_interrupt1a:
     szOutOfBounds   db  "Array index out of bounds.", 0x0d, 0x0a, 0
     szOverflow      db  "Overflow.", 0x0d, 0x0a, 0
 	szInvalidOpcode	db	"Invalid opcode.", 0x0d, 0x0a, 0
+
+	szUnimplemented db  "Unimplemented ISR.", 0x0d, 0x0a, 0
 
     szNoBootDrive   db  "No bootable media found.", 0x0d, 0x0a, 0
     szNotBootable   db  "Warning: Boot signature missing.", 0x0d, 0x0a, 0

@@ -13,12 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef VM_DEBUG
-	char tmp[80];
-#endif
-
 char drv_imgfile[4][MAX_FN_LENGTH];
-char tmpchar[4];
 char drv_title[4][MAX_DRV_TITLESIZE+1];
 byte drv_status[4], drv_type[4];
 word drv_spt[4], drv_heads[4], drv_sectors[4], drv_sectsize[4];
@@ -47,34 +42,40 @@ byte floppy_read(byte drive, word cylinder, word head, word sector, word count, 
 	g_last_diskaction.count = count;
 
 	if(!drv_status[drive]) {
-		#ifdef VM_DEBUG
-			if(disklog) { sprintf(tmp, "Drive %02X not ready.\n", drive); vm_out(tmp, VM_DISKLOG); }
-		#endif
+		if(disklog)
+		{
+			vlog( VM_DISKLOG, "Drive %02X not ready.", drive );
+		}
 		if(drive<2) *fderr = FD_CHANGED_OR_REMOVED;
 		else if(drive>1) *fderr = FD_TIMEOUT;
 		return *fderr;
 	}
 	if((sector>drv_spt[drive])||(head>=drv_heads[drive])) {
-		#ifdef VM_DEBUG
-            if(disklog) { sprintf(tmp, "Drive %d request out of geometrical bounds (%d/%d/%d)\n", drive, cylinder, head, sector); vm_out(tmp, VM_DISKLOG); }
-		#endif
+		if( disklog )
+		{
+			extern word g_last_nonbios_CS, g_last_nonbios_IP;
+			vlog( VM_DISKLOG, "%04X:%04X Drive %d read request out of geometrical bounds (%d/%d/%d)", g_last_nonbios_CS, g_last_nonbios_IP, drive, cylinder, head, sector );
+		}
 		*fderr = FD_TIMEOUT;
 		return *fderr;
 	}
 	if(lba>drv_sectors[drive]) {
-		#ifdef VM_DEBUG
-			if(disklog) { sprintf(tmp, "Drive %d bogus sector request (LBA %d).\n", drive, lba); vm_out(tmp, VM_DISKLOG); }
-		#endif
+		if( disklog )
+		{
+			vlog( VM_DISKLOG, "Drive %d bogus sector request (LBA %d).\n", drive, lba );
+		}
 		*fderr = FD_TIMEOUT;
 		return *fderr;
 	}
-	#ifdef VM_DEBUG
-		if(disklog) { sprintf(tmp, "Drive %d reading %d sectors at %d/%d/%d (LBA %d) to %04X:%04X\n", drive, count, cylinder, head, sector, lba, segment, offset); vm_out(tmp, VM_DISKLOG); }
-	#endif
+	if( disklog )
+	{
+		vlog( VM_DISKLOG, "Drive %d reading %d sectors at %d/%d/%d (LBA %d) to %04X:%04X", drive, count, cylinder, head, sector, lba, segment, offset );
+	}
 	fpdrv = fopen(drv_imgfile[drive], "rb");
-	if(fpdrv==NULL) {
-		printf("\nPANIC: Could not access Drive %d image!\n", drive);
-		vm_exit(1);
+	if( !fpdrv )
+	{
+		vlog( VM_DISKLOG, "PANIC: Could not access drive %d image!", drive );
+		vm_exit( 1 );
 	}
 	fflush(fpdrv);
 	fseek(fpdrv, lba*drv_sectsize[drive], SEEK_SET);
@@ -97,34 +98,39 @@ byte floppy_write(byte drive, word cylinder, word head, word sector, word count,
 	g_last_diskaction.count = count;
 
     if(!drv_status[drive]) {
-        #ifdef VM_DEBUG
-            if(disklog) { sprintf(tmp, "Drive %02X not ready.\n", drive); vm_out(tmp, VM_DISKLOG); }
-        #endif
+		if( disklog )
+		{
+			vlog( VM_DISKLOG, "Drive %02X not ready", drive);
+		}
         if(drive<2) *fderr = FD_CHANGED_OR_REMOVED;
         else if(drive>1) *fderr = FD_TIMEOUT;
         return *fderr;
     }
     if((sector>drv_spt[drive])||(head>=drv_heads[drive])) {
-        #ifdef VM_DEBUG
-            if(disklog) { sprintf(tmp, "Drive %d request out of geometrical bounds (%d/%d/%d)\n", drive, cylinder, head, sector); vm_out(tmp, VM_DISKLOG); }
-        #endif
+		if( disklog )
+		{
+			vlog( VM_DISKLOG, "Drive %d write request out of geometrical bounds (%d/%d/%d)", drive, cylinder, head, sector);
+		}
         *fderr = FD_TIMEOUT;
         return *fderr;
     }
     if(lba>drv_sectors[drive]) {
-        #ifdef VM_DEBUG
-            if(disklog) { sprintf(tmp, "Drive %d bogus sector request (LBA %d).\n", drive, lba); vm_out(tmp, VM_DISKLOG); }
-        #endif
+		if( disklog )
+		{
+			vlog( VM_DISKLOG, "Drive %d bogus sector request (LBA %d)", drive, lba );
+		}
         *fderr = FD_TIMEOUT;
 		return *fderr;
     }
-    #ifdef VM_DEBUG
-        if(disklog) { sprintf(tmp, "Drive %d writing %d sectors at %d/%d/%d (LBA %d) from %04X:%04X\n", drive, count, cylinder, head, sector, lba, segment, offset); vm_out(tmp, VM_DISKLOG); }
-    #endif
+	if( disklog )
+	{
+		vlog( VM_DISKLOG, "Drive %d writing %d sectors at %d/%d/%d (LBA %d) from %04X:%04X", drive, count, cylinder, head, sector, lba, segment, offset );
+	}
     fpdrv = fopen(drv_imgfile[drive], "rb+");
-    if(fpdrv==NULL) {
-        printf("\nPANIC: Could not access drive %d image!\n", drive);
-        vm_exit(1);
+    if( !fpdrv )
+	{
+        vlog( VM_DISKLOG, "PANIC: Could not access drive %d image!" );
+        vm_exit( 1 );
     }
     fseek(fpdrv, lba*drv_sectsize[drive], SEEK_SET);
     fwrite(mem_space+(segment<<4)+offset, drv_sectsize[drive], count, fpdrv);
@@ -190,43 +196,46 @@ byte floppy_verify(byte drive, word cylinder, word head, word sector, word count
 	g_last_diskaction.count = count;
 
 	if(!drv_status[drive]) {
-		#ifdef VM_DEBUG
-			if(disklog) { sprintf(tmp, "Drive %02X not ready.\n", drive); vm_out(tmp, VM_DISKLOG); }
-		#endif
+		if( disklog )
+		{
+			vlog( VM_DISKLOG, "Drive %02X not ready", drive );
+		}
 		if(drive<2) *fderr = FD_CHANGED_OR_REMOVED;
 		else if(drive>1) *fderr = FD_TIMEOUT;
 		return *fderr;
 	}
 	if((sector>drv_spt[drive])||(head>=drv_heads[drive])) {
-		#ifdef VM_DEBUG
-			if(disklog) { sprintf(tmp, "Drive %d request out of geometrical bounds.\n", drive); vm_out(tmp, VM_DISKLOG); }
-		#endif
+		if( disklog )
+		{
+			vlog( VM_DISKLOG, "Drive %d verify request out of geometrical bounds", drive );
+		}
 		*fderr = FD_BAD_COMMAND;
 		return *fderr;
 	}
 	if(lba>drv_sectors[drive]) {
-		#ifdef VM_DEBUG
-			if(disklog) { sprintf(tmp, "Drive %d bogus sector request (LBA %d).\n", drive, lba); vm_out(tmp, VM_DISKLOG); }
-		#endif
+		if( disklog )
+		{
+			vlog( VM_DISKLOG, "Drive %d bogus sector request (LBA %d)", drive, lba );
+		}
 		*fderr = FD_BAD_COMMAND;
 		return *fderr;
 	}
-	#ifdef VM_DEBUG
-		if(disklog) {
-			sprintf(tmp, "Drive %d verifying %d sectors at %d/%d/%d (LBA %d)\n", drive, count, cylinder, head, sector, lba);
-			vm_out(tmp, VM_DISKLOG);
-		}
-	#endif
+	if( disklog )
+	{
+		vlog( VM_DISKLOG, "Drive %d verifying %d sectors at %d/%d/%d (LBA %d)", drive, count, cylinder, head, sector, lba );
+	}
 	fpdrv = fopen(drv_imgfile[drive], "rb");
-	if(fpdrv==NULL) {
-		printf("\nPANIC: Could not access drive %d image!\n", drive);
-		vm_exit(1);
+	if( !fpdrv )
+	{
+		vlog( VM_DISKLOG, "PANIC: Could not access drive %d image!", drive );
+		vm_exit( 1 );
 	}
 	fflush(fpdrv);
 	fseek(fpdrv, lba * drv_sectsize[drive], SEEK_SET);
 
 	dummy = malloc(count * drv_sectsize[drive] * sizeof(byte));
 		veri = fread(dummy, drv_sectsize[drive], count, fpdrv);
+		/* XXX: Eh? */
 		if(veri!=count) printf("EYY!\n");
 	free(dummy);
 	fclose(fpdrv);

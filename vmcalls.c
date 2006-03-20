@@ -147,16 +147,19 @@ vm_handleE6 (word data)
 		if(drive>=0x80) drive = drive - 0x80 + 2;
 		if(drv_status[drive]!=0) {
 			tracks = (drv_sectors[drive] / drv_spt[drive] / drv_heads[drive]) - 1;
+			*treg8[REG_AL] = 0;
 			*treg8[REG_AH] = FD_NO_ERROR;
 			*treg8[REG_BL] = drv_type[drive];
-			CX = (word)tracks; /* Tracks */
+			*treg8[REG_BH] = 0;
+			*treg8[REG_CH] = tracks; /* Tracks */
 			*treg8[REG_CL] = drv_spt[drive]; /* Sectors per Track */
 			*treg8[REG_DH] = drv_heads[drive] - 1; /* Sides */
+			// TODO: count only drives of selected type (floppy/fixed)
 			*treg8[REG_DL] = drv_status[0] + drv_status[1] + drv_status[2] + drv_status[3];
 
 			/* WACKY SHIT about to take place. */
-			*treg8[REG_CH] = tracks & 0xFF;
-			*treg8[REG_CL] = *treg8[REG_CL] | ((tracks & 0x00030000) >> 10);
+			//*treg8[REG_CH] = tracks & 0xFF;
+			//*treg8[REG_CL] = *treg8[REG_CL] | ((tracks & 0x00030000) >> 10);
 
 			/* ES:DI points to wacky Disk Base Table */
 			if(drive<2) {
