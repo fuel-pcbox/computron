@@ -2,7 +2,6 @@
 #define __VOMIT_H__
 
 #include <stdbool.h>
-#include <stdio.h>
 
 	#define MAX_FILESIZE	524288		/* 512kB is max "loadfile" size */
 	#define MAX_FN_LENGTH	128
@@ -77,8 +76,6 @@
 	void ui_kill();
 	void ui_show();
 	void ui_sync();
-	void ui_statusbar();
-	void ui_command_mode();
 	word kbd_hit();
 	word kbd_getc();
 
@@ -91,7 +88,6 @@
 
 	extern bool verbose, iplog, disklog, debug, trapint, rmpeek, iopeek, mempeek, callpeek;
 
-	extern bool g_command_mode;
 	extern bool g_try_run;
 	extern bool g_debug_step;
 	extern bool g_break_pressed;

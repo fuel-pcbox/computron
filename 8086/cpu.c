@@ -27,10 +27,8 @@ byte cpu_pfq_current;
 byte CPU_PFQ_SIZE;
 #endif
 
-#ifdef VM_DEBUG
 word g_last_nonbios_CS;
 word g_last_nonbios_IP;
-#endif
 
 word *treg16[8]; byte *treg8[8]; word *tseg[8];
 word *CurrentSegment, SegmentPrefix; word CS, DS, ES, SS, FS, GS;
@@ -304,33 +302,29 @@ cpu_main()
 	for(;;) {
 		cpu_opcode = cpu_pfq_getbyte();
 		cpu_optable[cpu_opcode]();	/* Call instruction handler. */
-#ifdef VM_DEBUG
+
 		BCS = CS; BIP = IP - 1;
 		if ( BCS != 0xF000 ) {
 			g_last_nonbios_CS = BCS;
 			g_last_nonbios_IP = BIP;
 		}
-		if ( g_debug_step ) {
-			ui_kill();
+		if( g_debug_step )
+		{
 			vm_debug();
-			if ( g_debug_step )
+			if( g_debug_step )
 				continue;
 			ui_show();
 		}
-#endif
-#ifdef VM_BREAK
-		if ( g_break_pressed ) {
-			g_command_mode = !g_command_mode;
+
+		if( g_break_pressed )
+		{
+			ui_kill();
+			vm_debug();
+			if( !g_debug_step )
+				ui_show();
 			g_break_pressed = false;
 			/* TODO: int_call( 9 ); */
-			continue;
 		}
-
-		if( g_command_mode )
-		{
-			ui_command_mode();
-		}
-#endif
 
 		if( TF )
 		{

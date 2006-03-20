@@ -81,7 +81,7 @@ vm_handleE6 (word data)
 
 	switch (data) {
 	case 0x1601:
-		if( !g_command_mode && kbd_hit() )
+		if( kbd_hit() )
 		{
 			AX = kbd_hit();
 			ZF = 0;
@@ -154,7 +154,7 @@ vm_handleE6 (word data)
 			*treg8[REG_CH] = tracks; /* Tracks */
 			*treg8[REG_CL] = drv_spt[drive]; /* Sectors per Track */
 			*treg8[REG_DH] = drv_heads[drive] - 1; /* Sides */
-			// TODO: count only drives of selected type (floppy/fixed)
+			/* TODO: count only drives of selected type (floppy/fixed) */
 			*treg8[REG_DL] = drv_status[0] + drv_status[1] + drv_status[2] + drv_status[3];
 
 			/* WACKY SHIT about to take place. */
@@ -217,10 +217,7 @@ vm_handleE6 (word data)
 		}
 		break;
 	case 0x1600:
-		if( !g_command_mode )
-			AX = kbd_getc();
-		else
-			AX = 0x0000;
+		AX = kbd_getc();
 		break;
 
 	case 0x1700:	/* INT 17, 00: Print character on LPT */

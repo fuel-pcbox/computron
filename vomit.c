@@ -59,6 +59,9 @@ main( int argc, char **argv )
 		}
 	}
 
+	FILE *fplog = fopen( "log.txt", "w" );
+	fclose( fplog );
+
 	vm_init();
 	vm_loadconf();
 	cpu_genmap();
@@ -150,10 +153,5 @@ void
 vm_cbreak( int sig )
 {
 	(void) sig;
-#ifdef VM_BREAK
 	g_break_pressed = true;
-#endif
-#ifndef VM_DEBUG
-	vm_exit(0x66);
-#endif
 }

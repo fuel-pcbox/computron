@@ -1,12 +1,16 @@
 /* debug.c
  * MS Debug-like VM interface
- *
+ * + home of vlog()
  *
  */
 
 #include "vomit.h"
 #include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
+
+bool g_debug_step = false;
 
 void
 vlog( int category, const char *format, ... )
@@ -46,45 +50,39 @@ vlog( int category, const char *format, ... )
 	fclose( logfile );
 }
 
-#ifdef VM_DEBUG
-
-#include "vomit.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-bool g_debug_step = false;
-
 void
 vm_debug()
 {
-	bool cont = true;
 	char curcmd[256], *curtok;
 	word mseg, moff;
 
-	if ( g_debug_step ) {
+	if( g_debug_step )
+	{
 		dump_all();
+		g_debug_step = false;
 	}
-	g_debug_step = false;
 
-	while ( cont ) {
+	while( true )
+	{
 		printf( "vomit> " );
 		fflush( stdout );
 		fgets( curcmd, sizeof( curcmd ), stdin );
 		curtok = strtok( curcmd, " \n" );
 		if ( curtok ) {
-			if ( !strcmp( curtok, "g" ) )
-				cont = false;
-			else if ( !strcmp( curtok, "c" ) )
+			if( !strcmp( curtok, "g" ))
+				break;
+			if( !strcmp( curtok, "s" ))
+			{
+				g_debug_step = true;
+				break;
+			}
+
+			if ( !strcmp( curtok, "c" ) )
 				dump_cpu();
 			else if ( !strcmp( curtok, "r" ) )
 				dump_all();
 			else if ( !strcmp( curtok, "i" ) )
 				dump_ivt();
-			else if ( !strcmp( curtok, "s" ) ) {
-				g_debug_step = true;
-				return;
-			}
 			else if ( curtok[0] == 'd' ) {
 				curtok = strtok(NULL, ": \n");
 				if(curtok!=0) {
@@ -117,5 +115,3 @@ vm_debug()
 		}
 	}
 }
-
-#endif /* VM_DEBUG */
