@@ -66,7 +66,6 @@
 	void dump_cpu();
 	void dump_all();
 	void dump_try();
-	void dump_bin();
 	void dump_ivt();
 	void dump_mem(word,word,byte);
 

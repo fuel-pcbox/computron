@@ -3,9 +3,8 @@
  *
  */
 
-#ifdef VM_DEBUG
-	#include <stdio.h>
-	#include "vomit.h"
+#include <stdio.h>
+#include "vomit.h"
 
 void
 dump_cpu()
@@ -15,12 +14,6 @@ dump_cpu()
 	printf( "Prefetch queue: " );
 #ifndef VM_NOPFQ
 	printf( "%d bytes\n", CPU_PFQ_SIZE );
-#else
-	printf( "off\n" );
-#endif
-	printf( "Trap Flag: " );
-#ifdef VM_TRAPFLAG
-	printf( "on\n" );
 #else
 	printf( "off\n" );
 #endif
@@ -35,12 +28,41 @@ dump_try()
 	printf("CF=%x\nPF=%x\nAF=%x\nZF=%x\nSF=%x\nIF=%x\nDF=%x\nOF=%x\nTF=%x\n", CF, PF, AF, ZF, SF, IF, DF, OF, TF);
 }
 
+void
+dump_disasm( word segment, word offset )
+{
+	char disasm[64];
+	int width, i;
+	byte *opcode;
+
+	opcode = mem_space + (segment << 4) + offset;
+	width = insn_width( opcode );
+	disassemble( opcode, offset, disasm, sizeof(disasm) );
+
+	printf( "%04X:%04X ", segment, offset );
+
+	for( i = 0; i < (width ? width : 7); ++i )
+	{
+		printf( "%02X", opcode[i] );
+	}
+	for( i = 0; i < (14-((width?width:7)*2)); ++i )
+	{
+		printf( " " );
+	}
+
+	printf( " %s\n", disasm );
+
+	/* Recurse if this is a prefix instruction. */
+	if( *opcode == 0x26 || *opcode == 0x2E || *opcode == 0x36 || *opcode == 0x3E || *opcode == 0xF2 || *opcode == 0xF3 )
+		dump_disasm( CS, IP + width );
+}
+
 void dump_all() {
 	word *stacky = (void *)mem_space + (SS*16)+StackPointer;
+
 #ifndef VM_NOPFQ
 	byte x = (byte)cpu_pfq_current;
 	byte dpfq[6];
-	byte i;
 
 	for(i=0;i<CPU_PFQ_SIZE;i++) {
 		dpfq[i] = cpu_pfq[x++];
@@ -48,19 +70,19 @@ void dump_all() {
 	}
 #endif
 
-	printf("\nAX=%04X BX=%04X CX=%04X DX=%04X  -  CS:IP=%04X:%04X", AX, BX, CX, DX, CS, IP);
-	printf("\nSP=%04X BP=%04X SI=%04X DI=%04X  -  CurrentSeg=%04X", StackPointer, BasePointer, SI, DI, *CurrentSegment);
-	printf("\nCS=%04X DS=%04X ES=%04X SS=%04X", CS, DS, ES, SS);
+	printf( "\nAX=%04X BX=%04X CX=%04X DX=%04X     SP=> %04X", AX, BX, CX, DX, *(stacky++) );
+	printf( "\nSP=%04X BP=%04X SI=%04X DI=%04X          %04X", StackPointer, BasePointer, SI, DI, *(stacky++) );
+	printf( "\nCS=%04X DS=%04X ES=%04X SS=%04X          %04X", CS, DS, ES, SS, *(stacky++) );
+	printf( "\nC=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u          %04X", CF, PF, AF, ZF, SF, IF, DF, OF, *(stacky++) );
+
 #ifndef VM_NOPFQ
 	printf("  -  [%02X %02X%02X%02X%02X%02X]\n", dpfq[0], dpfq[1], dpfq[2], dpfq[3], dpfq[4], dpfq[5]);
 #else
 	printf("\n");
 #endif
-	printf("\nC=%x P=%x A=%x Z=%x S=%x I=%x D=%x O=%x  -  T=%x DISASM", CF, PF, AF, ZF, SF, IF, DF, OF, TF);
-	printf("\nStack: %04X %04X %04X %04X %04X\n", *stacky, *(stacky+1), *(stacky+2), *(stacky+3), *(stacky+4));
-	stacky += 5;
-	printf("       %04X %04X %04X %04X %04X\n",   *stacky, *(stacky+1), *(stacky+2), *(stacky+3), *(stacky+4));
-	return;
+
+	printf( "\n" );
+	dump_disasm( CS, IP );
 }
 
 byte n(byte b) {					/* Nice it up for printing.		*/
@@ -100,34 +122,3 @@ void dump_ivt() {
 			i+4, _iseg(i+4), _ioff(i+4));
 	}
 }
-
-void w2b(word w, char *rs) {
-	rs[17] = 0;
-	rs[16] = '0' + ((w&1)>0);
-	rs[15] = '0' + ((w&2)>0);
-	rs[14] = '0' + ((w&4)>0);
-	rs[13] = '0' + ((w&8)>0);
-	rs[12] = '0' + ((w&16)>0);
-	rs[11] = '0' + ((w&32)>0);
-	rs[10] = '0' + ((w&64)>0);
-	rs[9] = '0' + ((w&128)>0);
-	rs[8] = '\'';
-	rs[7] = '0' + ((w&256)>0);
-	rs[6] = '0' + ((w&512)>0);
-	rs[5] = '0' + ((w&1024)>0);
-	rs[4] = '0' + ((w&2048)>0);
-	rs[3] = '0' + ((w&4096)>0);
-	rs[2] = '0' + ((w&8192)>0);
-	rs[1] = '0' + ((w&16384)>0);
-	rs[0] = '0' + ((w&32768)>0);
-}
-
-void dump_bin() {
-	char sa[18]; char sb[18]; char sc[18]; char sd[18];
-	w2b(AX, sa); w2b(BX, sb);
-	w2b(CX, sc); w2b(DX, sd);
-	printf("\nAX=%s BX=%s    CF=%1X\n", sa, sb, CF);
-	printf("CX=%s DX=%s\n", sc, sd);
-}
-
-#endif
