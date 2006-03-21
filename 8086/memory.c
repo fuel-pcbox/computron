@@ -14,13 +14,13 @@ word mem_avail = 640;
 void
 mem_init()
 {
-    mem_space = malloc( 1048576 );
+    mem_space = malloc( 1048576 + 65536 );
     if( !mem_space )
 	{
 		vlog( VM_INITMSG, "Insufficient memory available." );
 		vm_exit( 1 );
 	}
-	memset( mem_space, 0, 1048576 );
+	memset( mem_space, 0, 1048576 + 65536 );
 }
 
 void
