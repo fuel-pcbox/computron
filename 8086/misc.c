@@ -29,6 +29,18 @@ _HLT()
 	{
 		/* Sleep for 100ms when halted. Prevents resource sucking. */
 		usleep( 100 );
+
+		/* TODO: This is a clone of code in cpu_main(). Me no likey. */
+		if( g_break_pressed )
+		{
+			ui_kill();
+			vm_debug();
+			if( !g_debug_step )
+				ui_show();
+			g_break_pressed = false;
+			/* TODO: int_call( 9 ); */
+		}
+
 		ui_sync();
 	}
 }
