@@ -67,6 +67,11 @@ vm_debug()
 		printf( "vomit> " );
 		fflush( stdout );
 		fgets( curcmd, sizeof( curcmd ), stdin );
+		if( feof( stdin ))
+		{
+			vlog( VM_KILLMSG, "EOF on stdin, exiting." );
+			vm_exit( 0 );
+		}
 		curtok = strtok( curcmd, " \n" );
 		if ( curtok ) {
 			if( !strcmp( curtok, "g" ))
