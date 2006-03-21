@@ -14,6 +14,7 @@ static void read_character_and_attribute_at_cursor();
 static void write_character_and_attribute_at_cursor();
 static void write_text_in_teletype_mode();
 static void scroll_active_page_up();
+static void scroll_active_page_down();
 static void video_subsystem_configuration();
 static void video_display_combination();
 static word columns();
@@ -50,9 +51,7 @@ bios_interrupt10()
 #endif
 		case 0x05: select_active_display_page(); break;
 		case 0x06: scroll_active_page_up(); break;
-#if 0
 		case 0x07: scroll_active_page_down(); break;
-#endif
 		case 0x08: read_character_and_attribute_at_cursor(); break;
 		case 0x09: write_character_and_attribute_at_cursor(); break;
 		case 0x0a: write_character_at_cursor(); break;
@@ -208,6 +207,12 @@ write_text_in_teletype_mode()
 		cursor = columns() * (rows() - 1);
 	}
 	store_cursor( cursor );
+}
+
+void
+scroll_active_page_down()
+{
+	vlog( VM_VIDEOMSG, "Come on (and implement scroll_active_page_down())" );
 }
 
 void
