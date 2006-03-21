@@ -264,7 +264,7 @@ vm_handleE6 (word data)
 		break;
 
 	case 0x1A05:
-		vlog( VM_ALERT, "INT 1A,05: Attempt to set BIOS date to %02X-%02X-%04X\n", *treg8[REG_DH], *treg8[REG_DL], CX );
+		vlog( VM_ALERT, "INT 1A,05: Attempt to set BIOS date to %02X-%02X-%04X", *treg8[REG_DH], *treg8[REG_DL], CX );
 		break;
 
 	case 0x0000:
