@@ -9,30 +9,32 @@
 void
 _LOOP_imm8()
 {
-	byte disp = cpu_pfq_getbyte();
+	sigbyte disp = cpu_pfq_getbyte();
 	CX--;
-	if ( CX ) {
-		cpu_jump( CS, IP + (sigbyte)disp );
+	if( CX )
+	{
+		cpu_jump_relative8( disp );
 	}
 }
 
 void
 _LOOPE_imm8()						/* both LOOPE and LOOPZ     */
 {
-    byte disp = cpu_pfq_getbyte();
+    sigbyte disp = cpu_pfq_getbyte();
 	CX--;
-    if ( CX && ZF ) {
-		cpu_jump( CS, IP + (sigbyte)disp );
+    if( CX && ZF )
+	{
+		cpu_jump_relative8( disp );
 	}
 }
 
 void
 _LOOPNE_imm8()						/* both LOOPNE and LOOPNZ   */
 {
-    byte disp = cpu_pfq_getbyte();
+    sigbyte disp = cpu_pfq_getbyte();
 	CX--;
     if ( CX && !ZF ) {
-		cpu_jump( CS, IP + (sigbyte)disp );
+		cpu_jump_relative8( disp );
 	}
 }
 

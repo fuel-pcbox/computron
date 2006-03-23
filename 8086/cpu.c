@@ -394,6 +394,24 @@ cpu_pfq_flush()
 }
 #endif
 
+void
+cpu_jump_relative8( sigbyte displacement )
+{
+	IP += displacement;
+}
+
+void
+cpu_jump_relative16( sigword displacement )
+{
+	IP += displacement;
+}
+
+void
+cpu_jump_absolute16( word address )
+{
+	IP = address;
+}
+
 void cpu_jump(word seg, word off) { /* Jump to specified location. */
 	CS = seg;
 	IP = off;
