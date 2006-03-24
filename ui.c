@@ -22,6 +22,15 @@ extern word g_last_nonbios_IP;
 static WINDOW *s_screen;
 static bool ui_visible;
 
+static byte *video_memory = 0L;
+static byte last_video[4000];
+
+typedef union {
+	struct { byte c; byte a; } b;
+	word w;
+} ca;
+
+
 static word
 to_scancode( int c )
 {
@@ -107,6 +116,8 @@ ui_init()
 
 	werase( stdscr );
 	wnoutrefresh( stdscr );
+
+	video_memory = mem_space + 0xB8000;
 }
 
 #ifdef VOMIT_SDL
@@ -160,10 +171,12 @@ to_rgb( byte color )
 void
 ui_sync() {
 	int x, y, off, nx = 0, ny = 0;
+	byte mode = get_video_mode();
+	ca *vcur, *vlast;
+
+	/* TODO: Move this, I guess. */
 	if ( !ui_visible )
 		return;
-
-	byte mode = get_video_mode();
 
 	if( (mode&0x7F) == 0x03 )
 	{
@@ -176,10 +189,17 @@ ui_sync() {
 		off = ((vga_read_register(0x0E) << 8) + vga_read_register(0x0F));
 		ny = off / 80;
 		nx = off - (ny * 80);
+		vcur = (ca *)video_memory;
+		vlast = (ca *)last_video;
 		for (y=0; y<25; y++)
 			for (x=0; x<80; x++) {
-				mvwaddch( s_screen, y+1, x+1, PRINTABLE(mem_getbyte(0xB800, (y*160)+(x<<1)))
-				                            | VGA_ATTR(mem_getbyte(0xB800, (y*160)+(x<<1)+1)));
+				if( vcur->w != vlast->w )
+				{
+					mvwaddch( s_screen, y+1, x+1, PRINTABLE(vcur->b.c) | VGA_ATTR(vcur->b.a) );
+					vlast->w = vcur->w;
+				}
+				vcur ++;
+				vlast ++;
 			}
 	}
 #ifdef VOMIT_SDL
@@ -193,15 +213,13 @@ ui_sync() {
 		if( SDL_MUSTLOCK( s_surface ))
 			SDL_LockSurface( s_surface );
 
-		byte *video = mem_space + 0xB8000;
-
 		for( y = 0; y < 200; y += 2 )
 		{
 			for( x = 0; x < 320; x += 4 )
 			{
 				word offset = (y*40) + (x>>2);
 
-				byte data = video[offset];
+				byte data = video_memory[offset];
 
 				byte p4 = (data) & 3;
 				byte p3 = (data >> 2) & 3;
@@ -213,7 +231,7 @@ ui_sync() {
 				putpixel( x+2, y, to_rgb( p3 ));
 				putpixel( x+3, y, to_rgb( p4 ));
 
-				data = video[0x2000 + offset];
+				data = video_memory[0x2000 + offset];
 				p4 = (data) & 3;
 				p3 = (data >> 2) & 3;
 				p2 = (data >> 4) & 3;
@@ -240,8 +258,7 @@ ui_sync() {
 	box( s_screen, ACS_VLINE, ACS_HLINE );
 
 	wmove( s_screen, ny + 1, nx + 1);
-	wnoutrefresh( s_screen );
-	doupdate();
+	wrefresh( s_screen );
 }
 
 void
