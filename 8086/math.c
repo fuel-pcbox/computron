@@ -4,6 +4,7 @@
  */
 
 #include "vomit.h"
+#include "templates.h"
 
 void
 cpu_mathflags( dword result, word dest, word src, byte bits )
@@ -85,8 +86,6 @@ cpu_mul( word acc, word multi, byte bits )
 	dword result = acc * multi;
 	cpu_mathflags( result, acc, multi, bits );
 
-	cpu.OF = cpu.CF = ( result & ( bits == 8 ? 0xFF00 : 0xFFFF0000 ) ) != 0;
-
 	/* 8086 CPUs set ZF on zero result */
 	if( cpu_type == INTEL_8086 )
 	{
@@ -102,297 +101,55 @@ cpu_imul (word acc, word multi, byte bits) {
 	return result;
 }
 
-/* --------- ADD --------- */
+DEFAULT_RM8_reg8( cpu_add, _ADD_RM8_reg8 )
+DEFAULT_RM16_reg16( cpu_add, _ADD_RM16_reg16 )
+DEFAULT_reg8_RM8( cpu_add, _ADD_reg8_RM8 )
+DEFAULT_reg16_RM16( cpu_add, _ADD_reg16_RM16 )
+DEFAULT_RM8_imm8( cpu_add, _ADD_RM8_imm8 )
+DEFAULT_RM16_imm16( cpu_add, _ADD_RM16_imm16 )
+DEFAULT_RM16_imm8( cpu_add, _ADD_RM16_imm8 )
+DEFAULT_AL_imm8( cpu_add, _ADD_AL_imm8 )
+DEFAULT_AX_imm16( cpu_add, _ADD_AX_imm16 )
 
-void
-_ADD_RM8_reg8() {
-	byte rm = cpu_pfq_getbyte();
-	byte *p = cpu_rmptr(rm, 8);
-	*p = cpu_add(*p, *treg8[rmreg(rm)], 8);
-}
-void
-_ADD_RM16_reg16() {
-	byte rm = cpu_pfq_getbyte();
-	word *p = cpu_rmptr(rm, 16);
-	*p = cpu_add(*p, *treg16[rmreg(rm)], 16);
-}
-void
-_ADD_reg8_RM8() {
-	byte rm = cpu_pfq_getbyte();
-	byte *p = cpu_rmptr(rm, 8);
-	*treg8[rmreg(rm)] = cpu_add(*treg8[rmreg(rm)], *p, 8);
-}
-void
-_ADD_reg16_RM16() {
-	byte rm = cpu_pfq_getbyte();
-	word *p = cpu_rmptr(rm, 16);
-	*treg16[rmreg(rm)] = cpu_add(*treg16[rmreg(rm)], *p, 16);
-}
-void
-_ADD_AL_imm8() {
-	byte imm = cpu_pfq_getbyte();
-	cpu.regs.B.AL = cpu_add( cpu.regs.B.AL, imm, 8 );
-}
-void
-_ADD_AX_imm16() {
-	word imm = cpu_pfq_getword();
-	cpu.regs.W.AX = cpu_add( cpu.regs.W.AX, imm, 16 );
-}
-void
-_ADD_RM8_imm8() {
-	byte rm = cpu_rmbyte;
-	byte *p = cpu_rmptr(rm, 8);
-	byte imm = cpu_pfq_getbyte();
-	*p = cpu_add(*p, imm, 8);
-}
-void
-_ADD_RM16_imm16() {
-	byte rm = cpu_rmbyte;
-	word *p = cpu_rmptr(rm, 16);
-	word imm = cpu_pfq_getword();
-	*p = cpu_add(*p, imm, 16);
-}
-void
-_ADD_RM16_imm8() {
-	byte rm = cpu_rmbyte;
-	word *p = cpu_rmptr(rm, 16);
-	word imm = signext(cpu_pfq_getbyte());
-	*p = cpu_add(*p, imm, 16);
-}
+DEFAULT_RM8_reg8( cpu_adc, _ADC_RM8_reg8 )
+DEFAULT_RM16_reg16( cpu_adc, _ADC_RM16_reg16 )
+DEFAULT_reg8_RM8( cpu_adc, _ADC_reg8_RM8 )
+DEFAULT_reg16_RM16( cpu_adc, _ADC_reg16_RM16 )
+DEFAULT_RM8_imm8( cpu_adc, _ADC_RM8_imm8 )
+DEFAULT_RM16_imm16( cpu_adc, _ADC_RM16_imm16 )
+DEFAULT_RM16_imm8( cpu_adc, _ADC_RM16_imm8 )
+DEFAULT_AL_imm8( cpu_adc, _ADC_AL_imm8 )
+DEFAULT_AX_imm16( cpu_adc, _ADC_AX_imm16 )
 
-/* --------- ADC --------- */
+DEFAULT_RM8_reg8( cpu_sub, _SUB_RM8_reg8 )
+DEFAULT_RM16_reg16( cpu_sub, _SUB_RM16_reg16 )
+DEFAULT_reg8_RM8( cpu_sub, _SUB_reg8_RM8 )
+DEFAULT_reg16_RM16( cpu_sub, _SUB_reg16_RM16 )
+DEFAULT_RM8_imm8( cpu_sub, _SUB_RM8_imm8 )
+DEFAULT_RM16_imm16( cpu_sub, _SUB_RM16_imm16 )
+DEFAULT_RM16_imm8( cpu_sub, _SUB_RM16_imm8 )
+DEFAULT_AL_imm8( cpu_sub, _SUB_AL_imm8 )
+DEFAULT_AX_imm16( cpu_sub, _SUB_AX_imm16 )
 
-void
-_ADC_RM8_reg8() {
-    byte rm = cpu_pfq_getbyte();
-    byte *p = cpu_rmptr(rm, 8);
-    *p = cpu_adc(*p, *treg8[rmreg(rm)], 8);
-}
-void
-_ADC_RM16_reg16() {
-    byte rm = cpu_pfq_getbyte();
-    word *p = cpu_rmptr(rm, 16);
-    *p = cpu_adc(*p, *treg16[rmreg(rm)], 16);
-}
-void
-_ADC_reg8_RM8() {
-    byte rm = cpu_pfq_getbyte();
-    byte *p = cpu_rmptr(rm, 8);
-    *treg8[rmreg(rm)] = cpu_adc(*treg8[rmreg(rm)], *p, 8);
-}
-void
-_ADC_reg16_RM16() {
-    byte rm = cpu_pfq_getbyte();
-    word *p = cpu_rmptr(rm, 16);
-    *treg16[rmreg(rm)] = cpu_adc(*treg16[rmreg(rm)], *p, 16);
-}
-void
-_ADC_AL_imm8() {
-	byte imm = cpu_pfq_getbyte();
-	cpu.regs.B.AL = cpu_adc( cpu.regs.B.AL, imm, 8 );
-}
-void
-_ADC_AX_imm16() {
-	word imm = cpu_pfq_getword();
-	cpu.regs.W.AX = cpu_adc( cpu.regs.W.AX, imm, 16 );
-}
-void
-_ADC_RM8_imm8() {
-	byte rm = cpu_rmbyte;
-	byte *p = cpu_rmptr(rm, 8);
-	byte imm = cpu_pfq_getbyte();
-	*p = cpu_adc(*p, imm, 8);
-}
-void
-_ADC_RM16_imm16() {
-	byte rm = cpu_rmbyte;
-	word *p = cpu_rmptr(rm, 16);
-	word imm = cpu_pfq_getword();
-	*p = cpu_adc(*p, imm, 16);
-}
-void
-_ADC_RM16_imm8() {
-	byte rm = cpu_rmbyte;
-	word *p = cpu_rmptr(rm, 16);
-	word imm = signext(cpu_pfq_getbyte());
-	*p = cpu_adc(*p, imm, 16);
-}
+DEFAULT_RM8_reg8( cpu_sbb, _SBB_RM8_reg8 )
+DEFAULT_RM16_reg16( cpu_sbb, _SBB_RM16_reg16 )
+DEFAULT_reg8_RM8( cpu_sbb, _SBB_reg8_RM8 )
+DEFAULT_reg16_RM16( cpu_sbb, _SBB_reg16_RM16 )
+DEFAULT_RM8_imm8( cpu_sbb, _SBB_RM8_imm8 )
+DEFAULT_RM16_imm16( cpu_sbb, _SBB_RM16_imm16 )
+DEFAULT_RM16_imm8( cpu_sbb, _SBB_RM16_imm8 )
+DEFAULT_AL_imm8( cpu_sbb, _SBB_AL_imm8 )
+DEFAULT_AX_imm16( cpu_sbb, _SBB_AX_imm16 )
 
-/* --------- SUB --------- */
-
-void
-_SUB_RM8_reg8() {
-	byte rm = cpu_pfq_getbyte();
-	byte *p = cpu_rmptr(rm, 8);
-	*p = cpu_sub(*p, *treg8[rmreg(rm)], 8);
-}
-void
-_SUB_RM16_reg16() {
-	byte rm = cpu_pfq_getbyte();
-	word *p = cpu_rmptr(rm, 16);
-	*p = cpu_sub(*p, *treg16[rmreg(rm)], 16);
-}
-void
-_SUB_reg8_RM8() {
-	byte rm = cpu_pfq_getbyte();
-	byte *p = cpu_rmptr(rm, 8);
-	*treg8[rmreg(rm)] = cpu_sub(*treg8[rmreg(rm)], *p, 8);
-}
-void
-_SUB_reg16_RM16() {
-	byte rm = cpu_pfq_getbyte();
-	word *p = cpu_rmptr(rm, 16);
-	*treg16[rmreg(rm)] = cpu_sub(*treg16[rmreg(rm)], *p, 16);
-}
-void
-_SUB_AL_imm8() {
-	byte imm = cpu_pfq_getbyte();
-	cpu.regs.B.AL = cpu_sub( cpu.regs.B.AL, imm, 8 );
-}
-void
-_SUB_AX_imm16() {
-	word imm = cpu_pfq_getword();
-	cpu.regs.W.AX = cpu_sub( cpu.regs.W.AX, imm, 16 );
-}
-void
-_SUB_RM8_imm8() {
-	byte rm = cpu_rmbyte;
-	byte *p = cpu_rmptr(rm, 8);
-	byte imm = cpu_pfq_getbyte();
-	*p = cpu_sub(*p, imm, 8);
-}
-void
-_SUB_RM16_imm16() {
-	byte rm = cpu_rmbyte;
-	word *p = cpu_rmptr(rm, 16);
-	word imm = cpu_pfq_getword();
-	*p = cpu_sub(*p, imm, 16);
-}
-void
-_SUB_RM16_imm8() {
-	byte rm = cpu_rmbyte;
-	word *p = cpu_rmptr(rm, 16);
-	word imm = signext(cpu_pfq_getbyte());
-	*p = cpu_sub(*p, imm, 16);
-}
-
-/* --------- SBB --------- */
-
-void
-_SBB_RM8_reg8() {
-	byte rm = cpu_pfq_getbyte();
-	byte *p = cpu_rmptr(rm, 8);
-	*p = cpu_sbb(*p, *treg8[rmreg(rm)], 8);
-}
-void
-_SBB_RM16_reg16() {
-	byte rm = cpu_pfq_getbyte();
-	word *p = cpu_rmptr(rm, 16);
-	*p = cpu_sbb(*p, *treg16[rmreg(rm)], 16);
-}
-void
-_SBB_reg8_RM8() {
-	byte rm = cpu_pfq_getbyte();
-	byte *p = cpu_rmptr(rm, 8);
-	*treg8[rmreg(rm)] = cpu_sbb(*treg8[rmreg(rm)], *p, 8);
-}
-void
-_SBB_reg16_RM16() {
-	byte rm = cpu_pfq_getbyte();
-	word *p = cpu_rmptr(rm, 16);
-	*treg16[rmreg(rm)] = cpu_sbb(*treg16[rmreg(rm)], *p, 16);
-}
-void
-_SBB_AL_imm8() {
-	byte imm = cpu_pfq_getbyte();
-	cpu.regs.B.AL = cpu_sbb( cpu.regs.B.AL, imm, 8 );
-}
-void
-_SBB_AX_imm16() {
-	word imm = cpu_pfq_getword();
-	cpu.regs.W.AX = cpu_sbb( cpu.regs.W.AX, imm, 16 );
-}
-void
-_SBB_RM8_imm8() {
-	byte rm = cpu_rmbyte;
-	byte *p = cpu_rmptr(rm, 8);
-	byte imm = cpu_pfq_getbyte();
-	*p = cpu_sbb(*p, imm, 8);
-}
-void
-_SBB_RM16_imm16() {
-	byte rm = cpu_rmbyte;
-	word *p = cpu_rmptr(rm, 16);
-	word imm = cpu_pfq_getword();
-	*p = cpu_sbb(*p, imm, 16);
-}
-void
-_SBB_RM16_imm8() {
-	byte rm = cpu_rmbyte;
-	word *p = cpu_rmptr(rm, 16);
-	word imm = signext(cpu_pfq_getbyte());
-	*p = cpu_sbb(*p, imm, 16);
-}
-
-/* --------- CMP --------- */
-
-void
-_CMP_RM8_reg8() {
-	byte rm = cpu_pfq_getbyte();
-	byte *p = cpu_rmptr(rm, 8);
-	cpu_sub(*p, *treg8[rmreg(rm)], 8);
-}
-void
-_CMP_RM16_reg16() {
-	byte rm = cpu_pfq_getbyte();
-	word *p = cpu_rmptr(rm, 16);
-	cpu_sub(*p, *treg16[rmreg(rm)], 16);
-}
-void
-_CMP_reg8_RM8() {
-	byte rm = cpu_pfq_getbyte();
-	byte *p = cpu_rmptr(rm, 8);
-	cpu_sub(*treg8[rmreg(rm)], *p, 8);
-}
-void
-_CMP_reg16_RM16() {
-	byte rm = cpu_pfq_getbyte();
-	word *p = cpu_rmptr(rm, 16);
-	cpu_sub(*treg16[rmreg(rm)], *p, 16);
-}
-void
-_CMP_AL_imm8() {
-	byte imm = cpu_pfq_getbyte();
-	cpu_sub( cpu.regs.B.AL, imm, 8 );
-}
-void
-_CMP_AX_imm16() {
-	word imm = cpu_pfq_getword();
-	cpu_sub( cpu.regs.W.AX, imm, 16 );
-}
-void
-_CMP_RM8_imm8() {
-	byte rm = cpu_rmbyte;
-	byte *p = cpu_rmptr(rm, 8);
-	byte imm = cpu_pfq_getbyte();
-	cpu_sub(*p, imm, 8);
-}
-void
-_CMP_RM16_imm16() {
-	byte rm = cpu_rmbyte;
-	word *p = cpu_rmptr(rm, 16);
-	word imm = cpu_pfq_getword();
-	cpu_sub(*p, imm, 16);
-}
-void
-_CMP_RM16_imm8() {
-	byte rm = cpu_rmbyte;
-	word *p = cpu_rmptr(rm, 16);
-	word imm = signext(cpu_pfq_getbyte());
-	cpu_sub(*p, imm, 16);
-}
-
-/* -------- MUL --------- */
+READONLY_RM8_reg8( cpu_sub, _CMP_RM8_reg8 )
+READONLY_RM16_reg16( cpu_sub, _CMP_RM16_reg16 )
+READONLY_reg8_RM8( cpu_sub, _CMP_reg8_RM8 )
+READONLY_reg16_RM16( cpu_sub, _CMP_reg16_RM16 )
+READONLY_RM8_imm8( cpu_sub, _CMP_RM8_imm8 )
+READONLY_RM16_imm16( cpu_sub, _CMP_RM16_imm16 )
+READONLY_RM16_imm8( cpu_sub, _CMP_RM16_imm8 )
+READONLY_AL_imm8( cpu_sub, _CMP_AL_imm8 )
+READONLY_AX_imm16( cpu_sub, _CMP_AX_imm16 )
 
 void
 _MUL_RM8()
@@ -400,6 +157,17 @@ _MUL_RM8()
 	byte rm = cpu_rmbyte;
 	byte *p = cpu_rmptr( rm, 8 );
 	cpu.regs.W.AX = cpu_mul( cpu.regs.B.AL, *p, 8 );
+
+	if( cpu.regs.B.AH == 0x00 )
+	{
+		cpu.CF = 0;
+		cpu.OF = 0;
+	}
+	else
+	{
+		cpu.CF = 1;
+		cpu.OF = 1;
+	}
 }
 
 void
@@ -410,6 +178,17 @@ _MUL_RM16()
 	dword result = cpu_mul( cpu.regs.W.AX, *p, 16 );
 	cpu.regs.W.AX = result & 0xFFFF;
 	cpu.regs.W.DX = (result >> 16) & 0xFFFF;
+
+	if( cpu.regs.W.DX == 0x0000 )
+	{
+		cpu.CF = 0;
+		cpu.OF = 0;
+	}
+	else
+	{
+		cpu.CF = 1;
+		cpu.OF = 1;
+	}
 }
 
 void
@@ -418,7 +197,17 @@ _IMUL_RM8()
 	byte rm = cpu_rmbyte;
 	sigbyte *p = cpu_rmptr( rm, 8 );
 	cpu.regs.W.AX = (sigword) cpu_imul( cpu.regs.B.AL, *p, 8 );
-	cpu.OF = cpu.CF = ( (sigbyte)cpu.regs.B.AL != cpu.regs.W.AX );
+
+	if( cpu.regs.B.AH == 0x00 || cpu.regs.B.AH == 0xFF )
+	{
+		cpu.CF = 0;
+		cpu.OF = 0;
+	}
+	else
+	{
+		cpu.CF = 1;
+		cpu.OF = 1;
+	}
 }
 
 void
@@ -429,7 +218,17 @@ _IMUL_RM16()
 	sigdword result = (sigdword) cpu_imul( cpu.regs.W.AX, *p, 16 );
 	cpu.regs.W.AX = result;
 	cpu.regs.W.DX = result >> 16;
-	cpu.OF = cpu.CF = ( signext32( cpu.regs.W.AX ) != (dword)result );
+
+	if( cpu.regs.W.DX == 0x0000 || cpu.regs.W.DX == 0xFFFF )
+	{
+		cpu.CF = 0;
+		cpu.OF = 0;
+	}
+	else
+	{
+		cpu.CF = 1;
+		cpu.OF = 1;
+	}
 }
 
 void
