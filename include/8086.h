@@ -44,6 +44,8 @@ typedef struct {
 	word CS, DS, ES, SS, FS, GS, SegmentPrefix, *CurrentSegment;
 	bool CF, DF, TF, PF, AF, ZF, SF, IF, OF;
 	word IP;
+	byte type;
+	byte state;
 } vomit_cpu_t;
 
 extern vomit_cpu_t cpu;

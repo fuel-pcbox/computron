@@ -274,7 +274,7 @@ vm_handleE6 (word data)
 
 	case 0x0001:
 		cpu.regs.W.AX = mem_avail;
-		cpu.regs.B.BL = cpu_type;
+		cpu.regs.B.BL = cpu.type;
 		break;
 	}
 }

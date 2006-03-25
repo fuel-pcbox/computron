@@ -13,7 +13,6 @@
 
 vomit_cpu_t cpu;
 
-byte cpu_state, cpu_type;
 dword cpu_ips, cpu_ii;
 
 byte cpu_opcode; /* Opcodes are no longer passed as handler arguments!! */
@@ -267,7 +266,7 @@ cpu_genmap()
 	cpu_addinstruction( 0xFE, 0xFE, _wrap_0xFE        );
 	cpu_addinstruction( 0xFF, 0xFF, _wrap_0xFF        );
 
-	if( cpu_type >= INTEL_80186 )
+	if( cpu.type >= INTEL_80186 )
 	{
 		cpu_addinstruction( 0x0F, 0x0F, _wrap_0x0F  );
 		cpu_addinstruction( 0x60, 0x60, _PUSHA      );

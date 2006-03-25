@@ -136,8 +136,8 @@ void vm_loadconf() {
             }
 			else if(strcmp(curtok,"cpu")==0) {
 				curtok = strtok(NULL, " \t\n");
-				cpu_type = (word)(strtol(curtok, NULL, 10));
-				vlog( VM_INITMSG, "Setting CPU type to %d", cpu_type );
+				cpu.type = (word)(strtol(curtok, NULL, 10));
+				vlog( VM_INITMSG, "Setting CPU type to %d", cpu.type );
 			}
 			else if(strcmp(curtok,"memory")==0) {
 				curtok = strtok(NULL, " \t\n");

@@ -87,7 +87,7 @@ cpu_mul( word acc, word multi, byte bits )
 	cpu_mathflags( result, acc, multi, bits );
 
 	/* 8086 CPUs set ZF on zero result */
-	if( cpu_type == INTEL_8086 )
+	if( cpu.type == INTEL_8086 )
 	{
 		cpu.ZF = (result == 0);
 	}

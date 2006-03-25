@@ -9,7 +9,7 @@
 void
 dump_cpu()
 {
-	printf( "CPU is an Intel %s\n", cpu_type == 0 ? "8086" : "80186" );
+	printf( "CPU is an Intel %s\n", cpu.type == 0 ? "8086" : "80186" );
 	printf( "Memory size: %dK\n", mem_avail );
 	printf( "Prefetch queue: " );
 #ifndef VM_NOPFQ

@@ -59,7 +59,7 @@ main( int argc, char **argv )
 	vlog( VM_INITMSG, "Registering SIGINT handler" );
 	signal( SIGINT, vm_cbreak );
 
-	cpu_state = CPU_ALIVE;
+	cpu.state = CPU_ALIVE;
 
 	if( g_try_run )
 	{
