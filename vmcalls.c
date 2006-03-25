@@ -163,9 +163,9 @@ vm_handleE6 (word data)
 
 			/* ES:DI points to wacky Disk Base Table */
 			if(drive<2) {
-				cpu.ES = 0x820E; cpu.DI = 0x0503;
+				cpu.ES = 0x820E; cpu.regs.W.DI = 0x0503;
 			} else {
-				cpu.ES = 0x820E; cpu.DI = 0x04F8;
+				cpu.ES = 0x820E; cpu.regs.W.DI = 0x04F8;
 			}
 
 			cpu.CF = 0;
@@ -208,7 +208,7 @@ vm_handleE6 (word data)
 			vlog( VM_DISKLOG, "%d tracks", cpu.regs.B.CH );
 
 			/* Wacky DBT. */
-			cpu.ES = 0x820E; cpu.DI = 0x0503;
+			cpu.ES = 0x820E; cpu.regs.W.DI = 0x0503;
 			cpu.regs.B.AH = 0x00;
 			cpu.CF = 0;
 		} else {

@@ -80,7 +80,7 @@ main( int argc, char **argv )
 
 		cpu.IF = 0;
 		cpu_jump( 0x1000, 0x0000 );
-		cpu.SP = 0x1000;
+		cpu.regs.W.SP = 0x1000;
 	}
 
 	cpu_main();

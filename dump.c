@@ -23,7 +23,7 @@ void
 dump_try()
 {
 	printf( "AX=%04X\nBX=%04X\nCX=%04X\nDX=%04X\n", cpu.regs.W.AX, cpu.regs.W.BX, cpu.regs.W.CX, cpu.regs.W.DX );
-	printf( "SP=%04X\nBP=%04X\nSI=%04X\nDI=%04X\n", cpu.SP, cpu.BP, cpu.SI, cpu.DI );
+	printf( "SP=%04X\nBP=%04X\nSI=%04X\nDI=%04X\n", cpu.regs.W.SP, cpu.regs.W.BP, cpu.regs.W.SI, cpu.regs.W.DI );
 	printf( "CS=%04X\nDS=%04X\nES=%04X\nSS=%04X\n", cpu.CS, cpu.DS, cpu.ES, cpu.SS );
 	printf( "CF=%x\nPF=%x\nAF=%x\nZF=%x\nSF=%x\nIF=%x\nDF=%x\nOF=%x\nTF=%x\n", cpu.CF, cpu.PF, cpu.AF, cpu.ZF, cpu.SF, cpu.IF, cpu.DF, cpu.OF, cpu.TF );
 }
@@ -58,7 +58,7 @@ dump_disasm( word segment, word offset )
 }
 
 void dump_all() {
-	word *stacky = (void *)mem_space + (cpu.SS<<4)+cpu.SP;
+	word *stacky = (void *)mem_space + (cpu.SS<<4)+cpu.regs.W.SP;
 
 #ifndef VM_NOPFQ
 	byte x = (byte)cpu_pfq_current;
@@ -72,7 +72,7 @@ void dump_all() {
 #endif
 
 	printf( "\nAX=%04X BX=%04X CX=%04X DX=%04X     SP=> %04X", cpu.regs.W.AX, cpu.regs.W.BX, cpu.regs.W.CX, cpu.regs.W.DX, *(stacky++) );
-	printf( "\nSP=%04X BP=%04X SI=%04X DI=%04X          %04X", cpu.SP, cpu.BP, cpu.SI, cpu.DI, *(stacky++) );
+	printf( "\nSP=%04X BP=%04X SI=%04X DI=%04X          %04X", cpu.regs.W.SP, cpu.regs.W.BP, cpu.regs.W.SI, cpu.regs.W.DI, *(stacky++) );
 	printf( "\nCS=%04X DS=%04X ES=%04X SS=%04X          %04X", cpu.CS, cpu.DS, cpu.ES, cpu.SS, *(stacky++) );
 	printf( "\nC=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u          %04X", cpu.CF, cpu.PF, cpu.AF, cpu.ZF, cpu.SF, cpu.IF, cpu.DF, cpu.OF, *(stacky++) );
 

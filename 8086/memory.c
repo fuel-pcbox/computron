@@ -94,15 +94,15 @@ mem_setword( word seg, word off, word w )
 void
 mem_push( word w )
 {
-	cpu.SP -= 2;
-	mem_setword( cpu.SS, cpu.SP, w );
+	cpu.regs.W.SP -= 2;
+	mem_setword( cpu.SS, cpu.regs.W.SP, w );
 }
 
 word
 mem_pop()
 {
-	word w = mem_getword( cpu.SS, cpu.SP );
-	cpu.SP += 2;
+	word w = mem_getword( cpu.SS, cpu.regs.W.SP );
+	cpu.regs.W.SP += 2;
 	return w;
 }
 

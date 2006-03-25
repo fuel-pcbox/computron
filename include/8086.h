@@ -33,14 +33,67 @@ extern word mem_avail;
 
 typedef struct {
 	union {
-		struct { word AX, BX, CX, DX; } W;
+		struct {
+			dword EAX, EBX, ECX, EDX;
+			dword EBP, ESP, ESI, EDI;
+			dword EIP;
+		} D;
 #ifdef BIG_ENDIAN
-		struct { byte AH, AL, BH, BL, CH, CL, DH, DL; } B;
+		struct {
+			word __EAX_high_word, AX;
+			word __EBX_high_word, BX;
+			word __ECX_high_word, CX;
+			word __EDX_high_word, DX;
+			word __EBP_high_word, BP;
+			word __ESP_high_word, SP;
+			word __ESI_high_word, SI;
+			word __EDI_high_word, DI;
+			word __EIP_high_word, IP;
+		} W;
+		struct {
+			word __EAX_high_word;
+			byte AH, AL;
+			word __EBX_high_word;
+			byte BH, BL;
+			word __ECX_high_word;
+			byte CH, CL;
+			word __EDX_high_word;
+			byte DH, DL;
+			dword EBP;
+			dword ESP;
+			dword ESI;
+			dword EDI;
+			dword EIP;
+		} B;
 #else
-		struct { byte AL, AH, BL, BH, CL, CH, DL, DH; } B;
+		struct {
+			word AX, __EAX_high_word;
+			word BX, __EBX_high_word;
+			word CX, __ECX_high_word;
+			word DX, __EDX_high_word;
+			word BP, __EBP_high_word;
+			word SP, __ESP_high_word;
+			word SI, __ESI_high_word;
+			word DI, __EDI_high_word;
+			word IP, __EIP_high_word;
+		} W;
+		struct {
+			byte AL, AH;
+			word __EAX_high_word;
+			byte BL, BH;
+			word __EBX_high_word;
+			byte CL, CH;
+			word __ECX_high_word;
+			byte DL, DH;
+			word __EDX_high_word;
+			dword EBP;
+			dword ESP;
+			dword ESI;
+			dword EDI;
+			dword EIP;
+		} B;
 #endif
 	} regs;
-	word BP, SP, SI, DI;
 	word CS, DS, ES, SS, FS, GS, SegmentPrefix, *CurrentSegment;
 	bool CF, DF, TF, PF, AF, ZF, SF, IF, OF;
 	word IP;

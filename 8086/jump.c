@@ -117,7 +117,7 @@ _RET_imm16()
 {
 	word imm = cpu_pfq_getword();
 	cpu_jump_absolute16( mem_pop() );
-	cpu.SP += imm;
+	cpu.regs.W.SP += imm;
 }
 
 void
@@ -133,5 +133,5 @@ _RETF_imm16()
 	word nip = mem_pop();
 	word imm = cpu_pfq_getword();
 	cpu_jump(mem_pop(), nip);
-	cpu.SP += imm;
+	cpu.regs.W.SP += imm;
 }

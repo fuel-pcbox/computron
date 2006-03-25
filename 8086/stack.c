@@ -8,6 +8,7 @@
 void
 _PUSH_reg16()
 {
+	/* TODO: PUSH SP differs between 8086 and later processors. */
 	mem_push( *treg16[cpu_opcode & 7] );
 }
 

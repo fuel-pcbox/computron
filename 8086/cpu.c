@@ -58,10 +58,10 @@ cpu_init()
 	treg16[REG_BX] = &cpu.regs.W.BX;
 	treg16[REG_CX] = &cpu.regs.W.CX;
 	treg16[REG_DX] = &cpu.regs.W.DX;
-	treg16[REG_SP] = &cpu.SP;
-	treg16[REG_BP] = &cpu.BP;
-	treg16[REG_SI] = &cpu.SI;
-	treg16[REG_DI] = &cpu.DI;
+	treg16[REG_SP] = &cpu.regs.W.SP;
+	treg16[REG_BP] = &cpu.regs.W.BP;
+	treg16[REG_SI] = &cpu.regs.W.SI;
+	treg16[REG_DI] = &cpu.regs.W.DI;
 
 	treg8[REG_AH] = &cpu.regs.B.AH;
 	treg8[REG_BH] = &cpu.regs.B.BH;
