@@ -49,50 +49,50 @@ _ENTER()
 	word Size = cpu_pfq_getword();
 	byte NestingLevel = cpu_pfq_getbyte() % 32;
 	word FrameTemp, i;
-	mem_push( BasePointer );
-	FrameTemp = StackPointer;
+	mem_push( cpu.BP );
+	FrameTemp = cpu.SP;
 	if ( NestingLevel != 0 ) {
 		for ( i = 1; i <= ( NestingLevel - 1 ); ++i ) {
-			BasePointer -= 2;
-			mem_push( mem_getword( SS, BasePointer ) );
+			cpu.BP -= 2;
+			mem_push( mem_getword( cpu.SS, cpu.BP ) );
 		}
 	}
 	mem_push( FrameTemp );
-	BasePointer = FrameTemp;
-	StackPointer = BasePointer - Size;
+	cpu.BP = FrameTemp;
+	cpu.SP = cpu.BP - Size;
 }
 
 void
 _LEAVE()
 {
-	StackPointer = BasePointer;
-	BasePointer = mem_pop();
+	cpu.SP = cpu.BP;
+	cpu.BP = mem_pop();
 }
 
 void
 _PUSHA()
 {
-	word oldsp = StackPointer;
-	mem_push(AX);
-	mem_push(BX);
-	mem_push(CX);
-	mem_push(DX);
-	mem_push(BasePointer);
-	mem_push(oldsp);
-	mem_push(SI);
-	mem_push(DI);
+	word oldsp = cpu.SP;
+	mem_push( cpu.regs.W.AX );
+	mem_push( cpu.regs.W.BX );
+	mem_push( cpu.regs.W.CX );
+	mem_push( cpu.regs.W.DX );
+	mem_push( cpu.BP );
+	mem_push( oldsp );
+	mem_push( cpu.SI );
+	mem_push( cpu.DI );
 }
 
 void
 _POPA()
 {
-	DI = mem_pop();
-	SI = mem_pop();
+	cpu.DI = mem_pop();
+	cpu.SI = mem_pop();
 	(void) mem_pop();
-	BasePointer = mem_pop();
-	DX = mem_pop();
-	CX = mem_pop();
-	BX = mem_pop();
-	AX = mem_pop();
+	cpu.BP = mem_pop();
+	cpu.regs.W.DX = mem_pop();
+	cpu.regs.W.CX = mem_pop();
+	cpu.regs.W.BX = mem_pop();
+	cpu.regs.W.AX = mem_pop();
 }
 
