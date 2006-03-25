@@ -359,7 +359,7 @@ byte cpu_pfq_getbyte() { /* Get byte from prefetch queue and let new ops in. Mod
 	return code_memory[cpu.IP++];
 #else
 	byte b = cpu_pfq[cpu_pfq_current];
-	cpu_pfq[cpu_pfq_current] = mem_space[(CS<<4) + cpu.IP + CPU_PFQ_SIZE];
+	cpu_pfq[cpu_pfq_current] = mem_space[(cpu.CS<<4) + cpu.IP + CPU_PFQ_SIZE];
 	if(++cpu_pfq_current==CPU_PFQ_SIZE) cpu_pfq_current=0;
 	++cpu.IP;
 	return b;
@@ -374,10 +374,10 @@ word cpu_pfq_getword() { /* Get word from prefetch queue... same as above, but w
 	return w;
 #else
 	word w = (word)cpu_pfq[cpu_pfq_current];
-	cpu_pfq[cpu_pfq_current] = mem_space[(CS<<4) + cpu.IP + CPU_PFQ_SIZE];
+	cpu_pfq[cpu_pfq_current] = mem_space[(cpu.CS<<4) + cpu.IP + CPU_PFQ_SIZE];
 	if(++cpu_pfq_current==CPU_PFQ_SIZE) cpu_pfq_current=0;
 	w += (word)(cpu_pfq[cpu_pfq_current]) << 8;
-	cpu_pfq[cpu_pfq_current] = mem_space[(CS<<4) + (++cpu.IP) + CPU_PFQ_SIZE];
+	cpu_pfq[cpu_pfq_current] = mem_space[(cpu.CS<<4) + (++cpu.IP) + CPU_PFQ_SIZE];
 	if(++cpu_pfq_current==CPU_PFQ_SIZE) cpu_pfq_current=0;
 	++cpu.IP;
 	return w;
@@ -400,18 +400,21 @@ void
 cpu_jump_relative8( sigbyte displacement )
 {
 	cpu.IP += displacement;
+	cpu_pfq_flush();
 }
 
 void
 cpu_jump_relative16( sigword displacement )
 {
 	cpu.IP += displacement;
+	cpu_pfq_flush();
 }
 
 void
 cpu_jump_absolute16( word address )
 {
 	cpu.IP = address;
+	cpu_pfq_flush();
 }
 
 void cpu_jump(word seg, word off) { /* Jump to specified location. */
@@ -419,9 +422,7 @@ void cpu_jump(word seg, word off) { /* Jump to specified location. */
 	cpu.IP = off;
 
 	code_memory = mem_space + (cpu.CS << 4);
-#ifndef VM_NOPFQ
 	cpu_pfq_flush();
-#endif
 }
 
 void

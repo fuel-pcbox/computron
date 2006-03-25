@@ -16,6 +16,9 @@
 extern byte CPU_PFQ_SIZE;
 extern byte cpu_pfq_current;
 extern byte *cpu_pfq;
+void cpu_pfq_flush();
+#else
+#define cpu_pfq_flush()
 #endif
 
 extern byte cpu_state;
@@ -55,7 +58,6 @@ void cpu_kill();
 void cpu_main();
 byte cpu_pfq_getbyte();
 word cpu_pfq_getword();
-void cpu_pfq_flush();
 void cpu_modrm_init();
 void cpu_jump(word,word);
 void cpu_jump_relative8( sigbyte );
