@@ -10,6 +10,27 @@
 #include "vomit.h"
 #include "debug.h"
 
+typedef struct
+{
+	char *name;
+	word sectors_per_track;
+	word heads;
+	dword sectors;
+	word bytes_per_sector;
+	byte media_type;
+} disk_type_t;
+
+static disk_type_t floppy_types[] =
+{
+	{ "1.44M", 18, 2, 2880, 512, 4 },
+	{ "720kB",  9, 2, 1440, 512, 3 },
+	{ "1.2M",  15, 2, 2400, 512, 2 },
+	{ "360kB",  9, 2,  720, 512, 1 },
+	{ "320kB",  8, 2,  640, 512, 0 },
+	{ "160kB",  8, 1,  320, 512, 0 },
+	{ 0L,       0, 0,    0,   0, 0 }
+};
+
 void vm_loadconf() {
 	FILE *fconf, *ftmp;
 	char curline[256], *curtok; char lfname[MAX_FN_LENGTH];
@@ -59,6 +80,37 @@ void vm_loadconf() {
                 }
                 curtok=curline;
             }
+			else if( !strcmp( curtok, "floppy" ))
+			{
+				char type[32];
+				disk_type_t *dt;
+
+				ldrv = strtol( strtok( 0L, " \t\n" ), 0L, 10 );
+                strcpy( type, strtok( 0L, " \t\n" ));
+                strcpy( lfname, strtok( 0L, " \t\n" ));
+
+				for( dt = floppy_types; dt->name; ++dt )
+				{
+					if( !strcmp( type, dt->name ))
+						break;
+				}
+
+				if( !dt->name )
+				{
+					vlog( VM_INITMSG, "Invalid floppy type: \"%s\"", type );
+					continue;
+				}
+
+                strcpy(drv_imgfile[ldrv], lfname);
+                drv_spt[ldrv] = dt->sectors_per_track;
+                drv_heads[ldrv] = dt->heads;
+                drv_sectors[ldrv] = dt->sectors;
+                drv_sectsize[ldrv] = dt->bytes_per_sector;
+				drv_type[ldrv] = dt->media_type;
+                drv_status[ldrv] = 1;
+
+				vlog( VM_INITMSG, "Floppy %d: %s (%dspt, %dh, %ds (%db))", ldrv, lfname, dt->sectors_per_track, dt->heads, dt->sectors, dt->bytes_per_sector );
+			}
 			else if(strcmp(curtok,"drive")==0) {	/* segfaults ahead! */
                 ldrv = strtol(strtok(NULL, " \t\n"), NULL, 16);
                 strcpy(lfname, strtok(NULL, " \t\n"));
@@ -109,6 +161,4 @@ void vm_loadconf() {
         }
     }
     fclose(fconf);
-    return;
 }
-
