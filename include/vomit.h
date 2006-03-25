@@ -69,7 +69,7 @@ void dump_try();
 void dump_ivt();
 void dump_mem(word,word,byte);
 
-extern bool verbose, iplog, disklog, debug, trapint, rmpeek, iopeek, mempeek, callpeek;
+extern bool disklog, trapint, iopeek, mempeek, callpeek;
 
 extern bool g_try_run;
 extern bool g_debug_step;

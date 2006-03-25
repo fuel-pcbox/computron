@@ -11,19 +11,14 @@
 #include "vomit.h"
 #include "debug.h"
 
-bool	verbose,
-		disklog, trapint, rmpeek,
-		iopeek, mempeek,
-		callpeek, iplog;
+bool disklog, trapint, iopeek, mempeek, callpeek;
 
 bool g_try_run = false;
 bool g_break_pressed = false;
 
 static bool exiting = 0;
 
-#ifdef VM_DEBUG
-	word BCS, BIP;
-#endif
+word BCS, BIP;
 
 #define FLAGARG( a, b ) else if( !strcmp( argv[1], a )) { b = true; argc--; argv++; }
 
@@ -35,16 +30,11 @@ main( int argc, char **argv )
 	while( argc > 1 )
 	{
 		if( 0 ) {}
-		#ifdef VM_DEBUG
 		FLAGARG( "--callpeek", callpeek )
-		FLAGARG( "--verbose",  verbose )
 		FLAGARG( "--disklog",  disklog )
 		FLAGARG( "--trapint",  trapint )
 		FLAGARG( "--mempeek",  mempeek )
-		FLAGARG( "--rmpeek",   rmpeek )
 		FLAGARG( "--iopeek",   iopeek )
-		FLAGARG( "--iplog",    iplog )
-		#endif
 
 		else if( argc > 2 && !strcmp( argv[1], "--try" ))
 		{
@@ -138,13 +128,6 @@ void
 vm_exit( int ec )
 {
 	exiting = true;
-#ifdef VM_DEBUG
-	if( verbose ) {
-		dump_all();
-		/* No "--verbose" messages while exiting. */
-		verbose = false;
-	}
-#endif
 	vm_kill();
 	exit( ec );
 }
