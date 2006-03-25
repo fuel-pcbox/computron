@@ -57,13 +57,8 @@ _wrap_0x8F() {
 	cpu_rmbyte = cpu_pfq_getbyte();
 	switch(rmreg(cpu_rmbyte)) {
 		case 0: _POP_RM16(); break;
-		default:
-			#ifdef VM_DEBUG
-				printf("0x8F: ALERT!\n");
-			#endif
-			break;
+		default: vlog( VM_ALERT, "8F /%d not wrapped", rmreg( cpu_rmbyte ));
 	}
-
 }
 
 void
@@ -79,11 +74,7 @@ _wrap_0xC0() {
 		case 4: *p = cpu_shl(*p, imm, 8); break;
 		case 5: *p = cpu_shr(*p, imm, 8); break;
 		case 7: *p = cpu_sar(*p, imm, 8); break;
-    		default:
-			#ifdef VM_DEBUG
-				printf("Bad opcode: %02X /%d\n", cpu_opcode, rmreg(rm));
-			#endif
-			break;
+		default: vlog( VM_ALERT, "C0 /%d not wrapped", rmreg( cpu_rmbyte ));
 	}
 }
 
@@ -100,11 +91,7 @@ _wrap_0xC1() {
 		case 4: *p = cpu_shl(*p, imm, 16); break;
 		case 5: *p = cpu_shr(*p, imm, 16); break;
 		case 7: *p = cpu_sar(*p, imm, 16); break;
-		default:
-			#ifdef VM_DEBUG
-				printf("Bad opcode: %02X /%d\n", cpu_opcode, rmreg(rm));
-			#endif
-			break;
+		default: vlog( VM_ALERT, "C1 /%d not wrapped", rmreg( cpu_rmbyte ));
 	}
 }
 
@@ -120,11 +107,7 @@ _wrap_0xD0() {
 		case 4: *p = cpu_shl(*p, 1, 8); break;
 		case 5: *p = cpu_shr(*p, 1, 8); break;
 		case 7: *p = cpu_sar(*p, 1, 8); break;
-	 	default:
-			#ifdef VM_DEBUG
-				printf("Bad opcode: %02X /%d\n", cpu_opcode, rmreg(rm));
-			#endif
-			break;
+		default: vlog( VM_ALERT, "D0 /%d not wrapped", rmreg( cpu_rmbyte ));
 	}
 }
 
@@ -140,11 +123,7 @@ _wrap_0xD1() {
 		case 4: *p = cpu_shl(*p, 1, 16); break;
 		case 5: *p = cpu_shr(*p, 1, 16); break;
 		case 7: *p = cpu_sar(*p, 1, 16); break;
-		default:
-			#ifdef VM_DEBUG
-				printf("Bad opcode: %02X /%d\n", cpu_opcode, rmreg(rm));
-			#endif
-			break;
+		default: vlog( VM_ALERT, "D1 /%d not wrapped", rmreg( cpu_rmbyte ));
 	}
 }
 
@@ -160,11 +139,7 @@ _wrap_0xD2() {
 		case 4: *p = cpu_shl(*p, cpu.regs.B.CL, 8); break;
 		case 5: *p = cpu_shr(*p, cpu.regs.B.CL, 8); break;
 		case 7: *p = cpu_sar(*p, cpu.regs.B.CL, 8); break;
-		default:
-			#ifdef VM_DEBUG
-				printf("Bad opcode: %02X /%d\n", cpu_opcode, rmreg(rm));
-			#endif
-			break;
+		default: vlog( VM_ALERT, "D2 /%d not wrapped", rmreg( cpu_rmbyte ));
 	}
 }
 
@@ -180,11 +155,7 @@ _wrap_0xD3() {
 		case 4: *p = cpu_shl(*p, cpu.regs.B.CL, 16); break;
 		case 5: *p = cpu_shr(*p, cpu.regs.B.CL, 16); break;
 		case 7: *p = cpu_sar(*p, cpu.regs.B.CL, 16); break;
-		default:
-			#ifdef VM_DEBUG
-				printf("Bad opcode: %02X /%d\n", cpu_opcode, rmreg(rm));
-			#endif
-			break;
+		default: vlog( VM_ALERT, "D3 /%d not wrapped", rmreg( cpu_rmbyte ));
 	}
 }
 
@@ -198,9 +169,7 @@ _wrap_0xD9()
 			/* FNSTCW */
 			vlog( VM_FPUMSG, "No FPU -- swallowing FNSTCW" );
 			break;
-		default:
-			vlog( VM_ALERT, "Bad opcode: %02X /%d", cpu_opcode, rmreg(rm) );
-			break;
+		default: vlog( VM_ALERT, "D9 /%d not wrapped", rmreg( cpu_rmbyte ));
 	}
 }
 
@@ -215,11 +184,7 @@ _wrap_0xF6() {
 		case 5: _IMUL_RM8(); break;
 		case 6: _DIV_RM8(); break;
 		case 7: _IDIV_RM8(); break;
-		default:
-			#ifdef VM_DEBUG
-				printf("0xF6: ALERT! %02X not wrapped.\n", rmreg(cpu_rmbyte));
-			#endif
-			break;
+		default: vlog( VM_ALERT, "F6 /%d not wrapped", rmreg( cpu_rmbyte ));
 	}
 }
 
@@ -234,11 +199,7 @@ _wrap_0xF7() {
 		case 5: _IMUL_RM16(); break;
 		case 6: _DIV_RM16(); break;
 		case 7: _IDIV_RM16(); break;
-		default:
-			#ifdef VM_DEBUG
-				printf("0xF7: ALERT! %02X not wrapped.\n", rmreg(cpu_rmbyte));
-			#endif
-			break;
+		default: vlog( VM_ALERT, "F7 /%d not wrapped", rmreg( cpu_rmbyte ));
 	}
 }
 
@@ -266,6 +227,8 @@ _wrap_0xFE() {
 			cpu_updflags(i, 8);
 			*p = i;
 			break;
+		default:
+			vlog( VM_ALERT, "FE /%d not wrapped", rmreg( cpu_rmbyte ));
 	}
 }
 
@@ -280,5 +243,6 @@ _wrap_0xFF() {
 		case 4: _JMP_RM16();			break;
 		case 5: _JMP_FAR_mem16();		break;
 		case 6: _PUSH_RM16();			break;
+		case 7: vlog( VM_ALERT, "FF /%d not wrapped", rmreg( cpu_rmbyte ));
 	}
 }
