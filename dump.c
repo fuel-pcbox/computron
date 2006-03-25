@@ -63,6 +63,7 @@ void dump_all() {
 #ifndef VM_NOPFQ
 	byte x = (byte)cpu_pfq_current;
 	byte dpfq[6];
+	byte i;
 
 	for(i=0;i<CPU_PFQ_SIZE;i++) {
 		dpfq[i] = cpu_pfq[x++];
