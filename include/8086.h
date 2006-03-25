@@ -111,7 +111,6 @@ void mem_setword(word, word, word);
 void int_call(byte);
 
 word signext(byte);
-dword signext32(word);
 
 #define REG_AL  0
 #define REG_CL  1

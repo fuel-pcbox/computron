@@ -231,13 +231,3 @@ signext (byte b) {
 	else
 		return (w & 0x00ff);
 }
-
-dword
-signext32 (word w) {
-	dword d = 0x00000000 + w;
-	if ((d&0x8000)>0)
-		return (d | 0xffff0000);
-	else
-		return (d & 0x0000ffff);
-}
-
