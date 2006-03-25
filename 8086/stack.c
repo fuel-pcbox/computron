@@ -34,25 +34,25 @@ _POP_RM16()
 void
 _PUSH_CS()
 {
-	mem_push( CS );
+	mem_push( cpu.CS );
 }
 
 void
 _PUSH_DS()
 {
-	mem_push( DS );
+	mem_push( cpu.DS );
 }
 
 void
 _PUSH_ES()
 {
-	mem_push( ES );
+	mem_push( cpu.ES );
 }
 
 void
 _PUSH_SS()
 {
-	mem_push( SS );
+	mem_push( cpu.SS );
 }
 
 void
@@ -63,19 +63,19 @@ _POP_CS()
 void
 _POP_DS()
 {
-	DS = mem_pop();
+	cpu.DS = mem_pop();
 }
 
 void
 _POP_ES()
 {
-	ES = mem_pop();
+	cpu.ES = mem_pop();
 }
 
 void
 _POP_SS()
 {
-	SS = mem_pop();
+	cpu.SS = mem_pop();
 }
 
 void

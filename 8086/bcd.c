@@ -7,85 +7,128 @@
 
 #include "vomit.h"
 
-void _AAA() {
-	if(((*treg8[REG_AL] & 0x0F)>9) || (AF==1)) {
-		*treg8[REG_AL] += 6;
-		*treg8[REG_AH] += 1;
-		AF = 1;
-		CF = 1;
-	} else {
-		AF = 0;
-		CF = 0;
+void
+_AAA()
+{
+	if( ((cpu.regs.B.AL & 0x0F)>9) || cpu.AF )
+	{
+		cpu.regs.B.AL += 6;
+		cpu.regs.B.AH += 1;
+		cpu.AF = 1;
+		cpu.CF = 1;
 	}
-	*treg8[REG_AL] = *treg8[REG_AL] & 0x0F;
+	else
+	{
+		cpu.AF = 0;
+		cpu.CF = 0;
+	}
+	cpu.regs.B.AL &= 0x0F;
 }
 
-void _AAM() {
-	word offend = IP;				/* security bloat */
-	byte tempAL = *treg8[REG_AL];
+void
+_AAM()
+{
+	byte tempAL;
 	byte imm = cpu_pfq_getbyte();
-    if(imm==0) {
-        IP = --offend;              /* Exceptions return to offending IP */
-        int_call(0x00);
+
+    if( imm == 0 )
+	{
+		/* Exceptions return to offending IP */
+        cpu.IP--;
+        int_call( 0 );
         return;
     }
-	*treg8[REG_AH] = tempAL / imm;
-	*treg8[REG_AL] = tempAL % imm;
-	cpu_updflags(*treg8[REG_AL], 8);
+
+	tempAL = cpu.regs.B.AL;
+
+	cpu.regs.B.AH = tempAL / imm;
+	cpu.regs.B.AL = tempAL % imm;
+	cpu_updflags( cpu.regs.B.AL, 8 );
 }
 
-void _AAD() {
-	byte tempAL = *treg8[REG_AL];
-	byte tempAH = *treg8[REG_AH];
+void
+_AAD()
+{
+	byte tempAL = cpu.regs.B.AL;
+	byte tempAH = cpu.regs.B.AH;
 	byte imm = cpu_pfq_getbyte();
-	*treg8[REG_AL] = (tempAL + (tempAH * imm)) & 0xFF;
-	*treg8[REG_AH] = 0x00;
-	cpu_updflags(*treg8[REG_AL], 8);
+
+	cpu.regs.B.AL = (tempAL + (tempAH * imm)) & 0xFF;
+	cpu.regs.B.AH = 0x00;
+	cpu_updflags( cpu.regs.B.AL, 8 );
 }
 
-void _AAS() {
-	if(((*treg8[REG_AL] & 0x0F) > 9) || (AF == 1) ) {
-		*treg8[REG_AL] -= 6;
-		*treg8[REG_AH] -= 1;
-		AF = 1;
-		CF = 1;
-	} else {
-		AF = 0;
-		CF = 0;
+void
+_AAS()
+{
+	if( ((cpu.regs.B.AL & 0x0F) > 9) || cpu.AF )
+	{
+		cpu.regs.B.AL -= 6;
+		cpu.regs.B.AH -= 1;
+		cpu.AF = 1;
+		cpu.CF = 1;
+	}
+	else
+	{
+		cpu.AF = 0;
+		cpu.CF = 0;
 	}
 }
 
-void _DAS() {
-    byte oldcf = CF;
-	byte oldal = *treg8[REG_AL];
-	CF = 0;
-    if(( (*treg8[REG_AL]&0x0F) > 0x09 ) || AF==1) {
-		CF = ((*treg8[REG_AL]-6) >> 8) & 1;
-        *treg8[REG_AL] -= 0x06;
-        CF = oldcf | CF;
-        AF = 1;
-    } else { AF = 0; }
-    if((oldal>0x99) || oldcf==1) {
-        *treg8[REG_AL] -= 0x60;
-        CF = 1;
-    } else { CF = 0; }
+void
+_DAS()
+{
+    byte oldcf = cpu.CF;
+	byte oldal = cpu.regs.B.AL;
+	cpu.CF = 0;
+    if( ((cpu.regs.B.AL & 0x0F) > 0x09) || cpu.AF )
+	{
+		/* TODO: eh? */
+		cpu.CF = ((cpu.regs.B.AL-6) >> 8) & 1;
+        cpu.regs.B.AL -= 0x06;
+        cpu.CF = oldcf | cpu.CF;
+        cpu.AF = 1;
+    }
+	else
+	{
+		cpu.AF = 0;
+	}
+    if( (oldal>0x99) || oldcf==1 )
+	{
+        cpu.regs.B.AL -= 0x60;
+        cpu.CF = 1;
+    }
+	else
+	{
+		cpu.CF = 0;
+	}
 }
 
-void _DAA() {
-	byte oldcf = CF;
-	byte oldal = *treg8[REG_AL];
-	CF = 0;
-	if(( (*treg8[REG_AL]&0x0F) > 0x09) || AF==1) {
-		CF = ((*treg8[REG_AL]+6) >> 8) & 1;
-		*treg8[REG_AL] += 6;
-		CF = oldcf | CF;
-		AF = 1;
-	} else {
-		AF = 0;
+void
+_DAA()
+{
+	byte oldcf = cpu.CF;
+	byte oldal = cpu.regs.B.AL;
+	cpu.CF = 0;
+	if( ((cpu.regs.B.AL & 0x0F) > 0x09) || cpu.AF )
+	{
+		cpu.CF = ((cpu.regs.B.AL+6) >> 8) & 1;
+		cpu.regs.B.AL += 6;
+		cpu.CF = oldcf | cpu.CF;
+		cpu.AF = 1;
 	}
-	if((oldal>0x99) || oldcf==1) {
-		*treg8[REG_AL] += 0x60;
-		CF = 1;
-	} else { CF = 0; }
+	else
+	{
+		cpu.AF = 0;
+	}
+	if( (oldal>0x99) || oldcf==1 )
+	{
+		cpu.regs.B.AL += 0x60;
+		cpu.CF = 1;
+	}
+	else
+	{
+		cpu.CF = 0;
+	}
 }
 

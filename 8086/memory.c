@@ -94,30 +94,31 @@ mem_setword( word seg, word off, word w )
 void
 mem_push( word w )
 {
-	StackPointer = StackPointer - 2;
-	mem_setword( SS, StackPointer, w );
+	cpu.SP -= 2;
+	mem_setword( cpu.SS, cpu.SP, w );
 }
 
 word
 mem_pop()
 {
-	word w = mem_getword(SS,StackPointer);
-	StackPointer += 2;
+	word w = mem_getword( cpu.SS, cpu.SP );
+	cpu.SP += 2;
 	return w;
 }
 
 void
-_LDS_reg16_mem16() {
+_LDS_reg16_mem16()
+{
 	byte rm = cpu_pfq_getbyte();
-	word *p = cpu_rmptr(rm, 16);
+	word *p = cpu_rmptr( rm, 16 );
 	*treg16[rmreg(rm)] = *p;
-	DS = *(p+1);
+	cpu.DS = *(p+1);
 }
 void
-_LES_reg16_mem16() {
+_LES_reg16_mem16()
+{
 	byte rm = cpu_pfq_getbyte();
 	word *p = cpu_rmptr(rm, 16);
 	*treg16[rmreg(rm)] = *p;
-	ES = *(p+1);
+	cpu.ES = *(p+1);
 }
-

@@ -10,7 +10,7 @@ _JCXZ_imm8()
 {
 	sigbyte imm = cpu_pfq_getbyte();
 
-	if( CX == 0 )
+	if( cpu.regs.W.CX == 0 )
 	{
 		cpu_jump_relative8( imm );
 	}
@@ -34,7 +34,7 @@ void
 _JMP_short_imm8()
 {
 	sigbyte imm = cpu_pfq_getbyte();
-	cpu_jump_relative8( imm);
+	cpu_jump_relative8( imm );
 }
 
 void
@@ -70,7 +70,7 @@ void
 _CALL_imm16()
 {
 	sigword imm = cpu_pfq_getword();
-	mem_push( IP );
+	mem_push( cpu.IP );
 	cpu_jump_relative16( imm );
 }
 
@@ -79,8 +79,8 @@ _CALL_imm16_imm16()
 {
 	word newip = cpu_pfq_getword();
 	word segment = cpu_pfq_getword();
-	mem_push(CS);
-	mem_push(IP);
+	mem_push( cpu.CS );
+	mem_push( cpu.IP );
 	cpu_jump(segment, newip);
 }
 
@@ -92,8 +92,8 @@ _CALL_FAR_mem16()
 	word *p = cpu_rmptr(rm, 16);
 	nip = *(p++);
 	ncs = *p;
-	mem_push(CS);
-	mem_push(IP);
+	mem_push( cpu.CS );
+	mem_push( cpu.IP );
 	cpu_jump(ncs, nip);
 }
 
@@ -102,7 +102,7 @@ _CALL_RM16()
 {
 	byte rm = cpu_rmbyte;
 	word *p = cpu_rmptr(rm, 16);
-	mem_push(IP);
+	mem_push( cpu.IP );
 	cpu_jump_absolute16( *p );
 }
 
@@ -117,7 +117,7 @@ _RET_imm16()
 {
 	word imm = cpu_pfq_getword();
 	cpu_jump_absolute16( mem_pop() );
-	StackPointer += imm;
+	cpu.SP += imm;
 }
 
 void
@@ -133,5 +133,5 @@ _RETF_imm16()
 	word nip = mem_pop();
 	word imm = cpu_pfq_getword();
 	cpu_jump(mem_pop(), nip);
-	StackPointer += imm;
+	cpu.SP += imm;
 }

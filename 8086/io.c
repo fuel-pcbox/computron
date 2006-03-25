@@ -9,15 +9,15 @@
 tintab vm_ioh_in[0xFFFF];
 touttab vm_ioh_out[0xFFFF];
 
-void _OUT_imm8_AL() { cpu_out(cpu_pfq_getbyte(), *treg8[REG_AL], 8); }
-void _OUT_imm8_AX() { cpu_out(cpu_pfq_getbyte(), AX, 16); }
-void _OUT_DX_AL() { cpu_out(DX, *treg8[REG_AL], 8); }
-void _OUT_DX_AX() { cpu_out(DX, AX, 16); }
+void _OUT_imm8_AL() { cpu_out( cpu_pfq_getbyte(), cpu.regs.B.AL, 8); }
+void _OUT_imm8_AX() { cpu_out( cpu_pfq_getbyte(), cpu.regs.W.AX, 16); }
+void _OUT_DX_AL() { cpu_out( cpu.regs.W.DX, cpu.regs.B.AL, 8 ); }
+void _OUT_DX_AX() { cpu_out( cpu.regs.W.DX, cpu.regs.W.AX, 16 ); }
 
-void _IN_AL_imm8() { *treg8[REG_AL] = cpu_in(cpu_pfq_getbyte(), 8); }
-void _IN_AX_imm8() { AX = cpu_in(cpu_pfq_getbyte(), 16); }
-void _IN_AL_DX() { *treg8[REG_AL] = cpu_in(DX, 8); }
-void _IN_AX_DX() { AX = cpu_in(DX, 16); }
+void _IN_AL_imm8() { cpu.regs.B.AL = cpu_in( cpu_pfq_getbyte(), 8 ); }
+void _IN_AX_imm8() { cpu.regs.W.AX = cpu_in( cpu_pfq_getbyte(), 16 ); }
+void _IN_AL_DX() { cpu.regs.B.AL = cpu_in( cpu.regs.W.DX, 8 ); }
+void _IN_AX_DX() { cpu.regs.W.AX = cpu_in( cpu.regs.W.DX, 16 ); }
 
 void
 cpu_out (word port, word data, byte bits) {

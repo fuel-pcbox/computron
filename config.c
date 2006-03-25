@@ -94,10 +94,10 @@ void vm_loadconf() {
 			}
 			else if(strcmp(curtok,"entry")==0) {
                 curtok = strtok(NULL, ": \t\n");
-                CS = (word)strtol(curtok, NULL, 16);
+                cpu.CS = (word)strtol(curtok, NULL, 16);
                 curtok = strtok(NULL, " \t\n");
-                IP = (word)strtol(curtok, NULL, 16);
-				cpu_jump( CS, IP );
+                cpu.IP = (word)strtol(curtok, NULL, 16);
+				cpu_jump( cpu.CS, cpu.IP );
             }
 			else if(strcmp(curtok,"addint")==0) {
                 lnum = (byte)strtol(strtok(NULL, " \t\n"), NULL, 16);

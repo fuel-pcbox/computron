@@ -88,9 +88,9 @@ main( int argc, char **argv )
 
 		fclose( fp );
 
-		IF = 0;
+		cpu.IF = 0;
 		cpu_jump( 0x1000, 0x0000 );
-		StackPointer = 0x1000;
+		cpu.SP = 0x1000;
 	}
 
 	cpu_main();

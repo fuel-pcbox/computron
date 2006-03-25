@@ -11,6 +11,8 @@
 #include "vomit.h"
 #include "debug.h"
 
+vomit_cpu_t cpu;
+
 byte cpu_state, cpu_type;
 dword cpu_ips, cpu_ii;
 
@@ -31,9 +33,6 @@ word g_last_nonbios_CS;
 word g_last_nonbios_IP;
 
 word *treg16[8]; byte *treg8[8]; word *tseg[8];
-word *CurrentSegment, SegmentPrefix; word CS, DS, ES, SS, FS, GS;
-word AX, BX, CX, DX, BasePointer, StackPointer, SI, DI, IP;
-byte CF, DF, TF, PF, AF, ZF, SF, IF, OF;
 
 tfunctab cpu_optable[0x100];
 
@@ -56,40 +55,43 @@ _FNINIT()
 void
 cpu_init()
 {
-	treg16[REG_AX] = &AX; treg16[REG_BX] = &BX;
-	treg16[REG_CX] = &CX; treg16[REG_DX] = &DX;
-	treg16[REG_StackPointer] = &StackPointer; treg16[REG_BasePointer] = &BasePointer;
-	treg16[REG_SI] = &SI; treg16[REG_DI] = &DI;
+	treg16[REG_AX] = &cpu.regs.W.AX;
+	treg16[REG_BX] = &cpu.regs.W.BX;
+	treg16[REG_CX] = &cpu.regs.W.CX;
+	treg16[REG_DX] = &cpu.regs.W.DX;
+	treg16[REG_SP] = &cpu.SP;
+	treg16[REG_BP] = &cpu.BP;
+	treg16[REG_SI] = &cpu.SI;
+	treg16[REG_DI] = &cpu.DI;
 
-	treg8[REG_AH] = (byte *)&AX+1; treg8[REG_BH] = (byte *)&BX+1;
-	treg8[REG_CH] = (byte *)&CX+1; treg8[REG_DH] = (byte *)&DX+1;
-	treg8[REG_AL] = (byte *)&AX; treg8[REG_BL] = (byte *)&BX;
-	treg8[REG_CL] = (byte *)&CX; treg8[REG_DL] = (byte *)&DX;
+	treg8[REG_AH] = &cpu.regs.B.AH;
+	treg8[REG_BH] = &cpu.regs.B.BH;
+	treg8[REG_CH] = &cpu.regs.B.CH;
+	treg8[REG_DH] = &cpu.regs.B.DH;
+	treg8[REG_AL] = &cpu.regs.B.AL;
+	treg8[REG_BL] = &cpu.regs.B.BL;
+	treg8[REG_CL] = &cpu.regs.B.CL;
+	treg8[REG_DL] = &cpu.regs.B.DL;
 
-	tseg[REG_CS] = &CS;
-	tseg[REG_DS] = &DS;
-	tseg[REG_ES] = &ES;
-	tseg[REG_SS] = &SS;
-	tseg[REG_FS] = &FS;
-	tseg[REG_GS] = &GS;
+	tseg[REG_CS] = &cpu.CS;
+	tseg[REG_DS] = &cpu.DS;
+	tseg[REG_ES] = &cpu.ES;
+	tseg[REG_SS] = &cpu.SS;
+	tseg[REG_FS] = &cpu.FS;
+	tseg[REG_GS] = &cpu.GS;
 	tseg[6] = &segment_dummy;
 	tseg[7] = &segment_dummy;
 
-	AX = 0; BX = 0; CX = 0; DX = 0;
-	BasePointer = 0; StackPointer = 0; SI = 0; DI = 0;
-	DS = 0; ES = 0; SS = 0;
-	CS = 0xF000; IP = 0x0000;
+	memset( &cpu, 0, sizeof( cpu ));
 
-	cpu_jump( CS, IP );
+    cpu.CurrentSegment = &cpu.DS;
 
-    CurrentSegment = &DS;
+	cpu_jump( 0xF000, 0x0000 );
 
-	CF = DF = TF = PF = AF = ZF = SF = IF = OF = 0;
-
-    cpu_setflags(0x0200 | CPU_STATIC_FLAGS);
+    cpu_setflags( 0x0200 | CPU_STATIC_FLAGS );
 	cpu_modrm_init();
 
-	cpu_ips = 40000;	/* FUCK WITH CARE */
+	cpu_ips = 30000;	/* FUCK WITH CARE */
 	cpu_ii = 0;
 
 }
@@ -303,7 +305,7 @@ cpu_main()
 		cpu_opcode = cpu_pfq_getbyte();
 		cpu_optable[cpu_opcode]();	/* Call instruction handler. */
 
-		BCS = CS; BIP = IP - 1;
+		BCS = cpu.CS; BIP = cpu.IP - 1;
 		if ( BCS != 0xF000 ) {
 			g_last_nonbios_CS = BCS;
 			g_last_nonbios_IP = BIP;
@@ -326,7 +328,7 @@ cpu_main()
 			/* TODO: int_call( 9 ); */
 		}
 
-		if( TF )
+		if( cpu.TF )
 		{
 			/* The Trap Flag is set, so we'll execute one instruction and
 			 * call INT 1 as soon as it's finished. */
@@ -343,7 +345,7 @@ cpu_main()
 			if( !g_try_run )
 				ui_sync();
 
-			if( IF == 1 )
+			if( cpu.IF == 1 )
 			{
 				/* Call the PIT ISR. This is ugly, to say the least, and I'm sorry. */
 				int_call( 8 );
@@ -354,12 +356,12 @@ cpu_main()
 
 byte cpu_pfq_getbyte() { /* Get byte from prefetch queue and let new ops in. Modifies IP+1 */
 #ifdef VM_NOPFQ
-	return code_memory[IP++];
+	return code_memory[cpu.IP++];
 #else
 	byte b = cpu_pfq[cpu_pfq_current];
-	cpu_pfq[cpu_pfq_current] = mem_space[(CS<<4) + IP + CPU_PFQ_SIZE];
+	cpu_pfq[cpu_pfq_current] = mem_space[(CS<<4) + cpu.IP + CPU_PFQ_SIZE];
 	if(++cpu_pfq_current==CPU_PFQ_SIZE) cpu_pfq_current=0;
-	++IP;
+	++cpu.IP;
 	return b;
 #endif
 }
@@ -367,17 +369,17 @@ byte cpu_pfq_getbyte() { /* Get byte from prefetch queue and let new ops in. Mod
 word cpu_pfq_getword() { /* Get word from prefetch queue... same as above, but word and IP+2 */
 #ifdef VM_NOPFQ
 	word w;
-	w = code_memory[IP++];
-	w |= (code_memory[IP++]) << 8;
+	w = code_memory[cpu.IP++];
+	w |= (code_memory[cpu.IP++]) << 8;
 	return w;
 #else
 	word w = (word)cpu_pfq[cpu_pfq_current];
-	cpu_pfq[cpu_pfq_current] = mem_space[(CS<<4) + IP + CPU_PFQ_SIZE];
+	cpu_pfq[cpu_pfq_current] = mem_space[(CS<<4) + cpu.IP + CPU_PFQ_SIZE];
 	if(++cpu_pfq_current==CPU_PFQ_SIZE) cpu_pfq_current=0;
 	w += (word)(cpu_pfq[cpu_pfq_current]) << 8;
-	cpu_pfq[cpu_pfq_current] = mem_space[(CS<<4) + (++IP) + CPU_PFQ_SIZE];
+	cpu_pfq[cpu_pfq_current] = mem_space[(CS<<4) + (++cpu.IP) + CPU_PFQ_SIZE];
 	if(++cpu_pfq_current==CPU_PFQ_SIZE) cpu_pfq_current=0;
-	++IP;
+	++cpu.IP;
 	return w;
 #endif
 }
@@ -390,54 +392,56 @@ cpu_pfq_flush()
 	int i;
 	cpu_pfq_current = 0;
 	for ( i = 0; i < CPU_PFQ_SIZE; ++i )
-		cpu_pfq[i] = mem_space[( CS << 4 ) + ( IP + i )];
+		cpu_pfq[i] = mem_space[( cpu.CS << 4 ) + ( cpu.IP + i )];
 }
 #endif
 
 void
 cpu_jump_relative8( sigbyte displacement )
 {
-	IP += displacement;
+	cpu.IP += displacement;
 }
 
 void
 cpu_jump_relative16( sigword displacement )
 {
-	IP += displacement;
+	cpu.IP += displacement;
 }
 
 void
 cpu_jump_absolute16( word address )
 {
-	IP = address;
+	cpu.IP = address;
 }
 
 void cpu_jump(word seg, word off) { /* Jump to specified location. */
-	CS = seg;
-	IP = off;
+	cpu.CS = seg;
+	cpu.IP = off;
 
-	code_memory = mem_space + (CS << 4);
+	code_memory = mem_space + (cpu.CS << 4);
 #ifndef VM_NOPFQ
 	cpu_pfq_flush();
 #endif
 }
 
-void cpu_setflags(word flags) {		/* probably optimizeable */
-	CF = (flags & 0x0001) > 0;
-	PF = (flags & 0x0004) > 0;
-	AF = (flags & 0x0010) > 0;
-	ZF = (flags & 0x0040) > 0;
-	SF = (flags & 0x0080) > 0;
-	TF = (flags & 0x0100) > 0;
-	IF = (flags & 0x0200) > 0;
-	DF = (flags & 0x0400) > 0;
-	OF = (flags & 0x0800) > 0;
+void
+cpu_setflags( word flags )
+{
+	cpu.CF = (flags & 0x0001) > 0;
+	cpu.PF = (flags & 0x0004) > 0;
+	cpu.AF = (flags & 0x0010) > 0;
+	cpu.ZF = (flags & 0x0040) > 0;
+	cpu.SF = (flags & 0x0080) > 0;
+	cpu.TF = (flags & 0x0100) > 0;
+	cpu.IF = (flags & 0x0200) > 0;
+	cpu.DF = (flags & 0x0400) > 0;
+	cpu.OF = (flags & 0x0800) > 0;
 }
 
-word cpu_getflags() {
-	word r=	(CF) | (PF << 2) | (AF << 4) | (ZF << 6) | (SF << 7) |
-			(TF << 8) | (IF << 9) | (DF << 10) | (OF << 11) | CPU_STATIC_FLAGS;
-	return r;
+word
+cpu_getflags()
+{
+	return (cpu.CF) | (cpu.PF << 2) | (cpu.AF << 4) | (cpu.ZF << 6) | (cpu.SF << 7) | (cpu.TF << 8) | (cpu.IF << 9) | (cpu.DF << 10) | (cpu.OF << 11) | CPU_STATIC_FLAGS;
 }
 
 void cpu_addint(byte n, word segment, word offset) {
@@ -458,22 +462,22 @@ bool
 cpu_evaluate( byte condition )
 {
 	switch ( condition ) {
-		case  0: return OF;                       /* O          */
-		case  1: return !OF;                      /* NO         */
-		case  2: return CF;                       /* B, C, NAE  */
-		case  3: return !CF;                      /* NB, NC, AE */
-		case  4: return ZF;                       /* E, Z       */
-		case  5: return !ZF;                      /* NE, NZ     */
-		case  6: return ( CF | ZF );              /* BE, NA     */
-		case  7: return !( CF | ZF );             /* NBE, A     */
-		case  8: return SF;                       /* S          */
-		case  9: return !SF;                      /* NS         */
-		case 10: return PF;                       /* P, PE      */
-		case 11: return !PF;                      /* NP, PO     */
-		case 12: return ( SF ^ OF );              /* L, NGE     */
-		case 13: return !( SF ^ OF );             /* NL, GE     */
-		case 14: return ( SF ^ OF ) | ZF;         /* LE, NG     */
-		case 15: return !( ( SF ^ OF ) | ZF );    /* NLE, G     */
+		case  0: return cpu.OF;                            /* O          */
+		case  1: return !cpu.OF;                           /* NO         */
+		case  2: return cpu.CF;                            /* B, C, NAE  */
+		case  3: return !cpu.CF;                           /* NB, NC, AE */
+		case  4: return cpu.ZF;                            /* E, Z       */
+		case  5: return !cpu.ZF;                           /* NE, NZ     */
+		case  6: return ( cpu.CF | cpu.ZF );               /* BE, NA     */
+		case  7: return !( cpu.CF | cpu.ZF );              /* NBE, A     */
+		case  8: return cpu.SF;                            /* S          */
+		case  9: return !cpu.SF;                           /* NS         */
+		case 10: return cpu.PF;                            /* P, PE      */
+		case 11: return !cpu.PF;                           /* NP, PO     */
+		case 12: return ( cpu.SF ^ cpu.OF );               /* L, NGE     */
+		case 13: return !( cpu.SF ^ cpu.OF );              /* NL, GE     */
+		case 14: return ( cpu.SF ^ cpu.OF ) | cpu.ZF;      /* LE, NG     */
+		case 15: return !( ( cpu.SF ^ cpu.OF ) | cpu.ZF ); /* NLE, G     */
 	}
 	return 0;
 }

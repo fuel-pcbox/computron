@@ -40,7 +40,7 @@ video_bios_init()
 void
 bios_interrupt10()
 {
-	switch( *treg8[REG_AH] )
+	switch( cpu.regs.B.AH )
 	{
 		case 0x00: set_video_mode(); break;
 		case 0x01: set_cursor_type(); break;
@@ -65,7 +65,7 @@ bios_interrupt10()
 		case 0x12: video_subsystem_configuration(); break;
 		case 0x1a: video_display_combination(); break;
 		default:
-			vlog( VM_VIDEOMSG, "Interrupt 10, function %02X requested", *treg8[REG_AH] );
+			vlog( VM_VIDEOMSG, "Interrupt 10, function %02X requested", cpu.regs.B.AH );
 	}
 }
 
@@ -74,8 +74,8 @@ set_cursor_position()
 {
 	/* BH is page# */
 
-	byte row = *treg8[REG_DH];
-	byte column = *treg8[REG_DL];
+	byte row = cpu.regs.B.DH;
+	byte column = cpu.regs.B.DL;
 
 	word cursor = row * columns() + column;
 
@@ -86,14 +86,14 @@ void
 get_cursor_position()
 {
 	/* Cursor row and column. */
-	load_cursor( treg8[REG_DH], treg8[REG_DL] );
+	load_cursor( &cpu.regs.B.DH, &cpu.regs.B.DL );
 
 	/* XXX: Cursor scanlines are not actually implemented. */
 
 	/* Starting (top) scanline. */
-	*treg8[REG_CH] = mem_space[0x461];
+	cpu.regs.B.CH = mem_space[0x461];
 	/* Ending (bottom) scanline. */
-	*treg8[REG_CL] = mem_space[0x460];
+	cpu.regs.B.CL = mem_space[0x460];
 }
 
 void
@@ -106,14 +106,14 @@ write_character_at_cursor()
 	word cursor;
 
 	/* Check count of characters to write. */
-	if( CX == 0 )
+	if( cpu.regs.W.CX == 0 )
 		return;
 
 	load_cursor( &row, &column );
 	cursor = row * columns() + column;
 
 	/* XXX: 0xB800 is hard-coded for now. */
-	mem_setbyte( 0xB800, cursor << 1, *treg8[REG_AL] );
+	mem_setbyte( 0xB800, cursor << 1, cpu.regs.B.AL );
 }
 
 void
@@ -125,8 +125,8 @@ read_character_and_attribute_at_cursor()
 	word cursor = load_cursor_word();
 
 	/* XXX: 0xB800 is hard-coded for now. */
-	*treg8[REG_AH] = mem_getbyte( 0xB800, (cursor << 1) + 1 );
-	*treg8[REG_AL] = mem_getbyte( 0xB800, cursor << 1 );
+	cpu.regs.B.AH = mem_getbyte( 0xB800, (cursor << 1) + 1 );
+	cpu.regs.B.AL = mem_getbyte( 0xB800, cursor << 1 );
 }
 
 void
@@ -137,15 +137,15 @@ write_character_and_attribute_at_cursor()
 	word cursor;
 
 	/* Check count of characters to write. */
-	if( CX == 0 )
+	if( cpu.regs.W.CX == 0 )
 		return;
 
 	load_cursor( &row, &column );
 	cursor = row * columns() + column;
 
 	/* XXX: 0xB800 is hard-coded for now. */
-	mem_setbyte( 0xB800, cursor << 1, *treg8[REG_AL] );
-	mem_setbyte( 0xB800, (cursor << 1) + 1, *treg8[REG_BL] );
+	mem_setbyte( 0xB800, cursor << 1, cpu.regs.B.AL );
+	mem_setbyte( 0xB800, (cursor << 1) + 1, cpu.regs.B.BL );
 }
 
 void
@@ -156,8 +156,8 @@ write_text_in_teletype_mode()
 	byte row, column;
 	word cursor;
 
-	byte ch = *treg8[REG_AL];
-	byte attr = *treg8[REG_BL];
+	byte ch = cpu.regs.B.AL;
+	byte attr = cpu.regs.B.BL;
 
 	load_cursor( &row, &column );
 	cursor = row * columns() + column;
@@ -218,13 +218,13 @@ scroll_active_page_down()
 void
 scroll_active_page_up()
 {
-	vga_scrollup(*treg8[REG_CL], *treg8[REG_CH], *treg8[REG_DL], *treg8[REG_DH], *treg8[REG_AL], *treg8[REG_BH]);
+	vga_scrollup( cpu.regs.B.CL, cpu.regs.B.CH, cpu.regs.B.DL, cpu.regs.B.DH, cpu.regs.B.AL, cpu.regs.B.BH );
 }
 
 void
 set_video_mode()
 {
-	byte mode = *treg8[REG_AL];
+	byte mode = cpu.regs.B.AL;
 	byte temp;
 
 	mem_space[0x449] = mode;
@@ -240,19 +240,19 @@ void
 get_video_state()
 {
 	/* Screen columns. */
-	*treg8[REG_AH] = columns();
+	cpu.regs.B.AH = columns();
 
 	/* Active page. */
-	*treg8[REG_BH] = 0;
+	cpu.regs.B.BH = 0;
 
 	/* Current video mode. */
-	*treg8[REG_AL] = mem_space[0x449];
+	cpu.regs.B.AL = mem_space[0x449];
 }
 
 void
 select_active_display_page()
 {
-	vlog( VM_VIDEOMSG, "Page %d selected (not handled!)", *treg8[REG_AL] );
+	vlog( VM_VIDEOMSG, "Page %d selected (not handled!)", cpu.regs.B.AL );
 
 	/* XXX: Note that nothing actually happens here ;-) */
 }
@@ -260,23 +260,23 @@ select_active_display_page()
 void
 video_subsystem_configuration()
 {
-	vlog( VM_VIDEOMSG, "INT 10,12 with BL=%02X", *treg8[REG_BL] );
+	vlog( VM_VIDEOMSG, "INT 10,12 with BL=%02X", cpu.regs.B.BL );
 
 	/* Report "color mode" in effect. */
-	*treg8[REG_BH] = 0x00;
+	cpu.regs.B.BH = 0x00;
 
 #if 0
 	/* Report 256k of EGA memory. */
-	*treg8[REG_BL] = 0x00;
+	cpu.regs.B.BL = 0x00;
 
-	CX = 0;
+	cpu.regs.W.CX = 0;
 #endif
 }
 
 void
 set_cursor_type()
 {
-	vlog( VM_VIDEOMSG, "Cursor set: %u to %u%s", *treg8[REG_CH], *treg8[REG_CL], CX == 0x2000 ? " (disabled)" : "" );
+	vlog( VM_VIDEOMSG, "Cursor set: %u to %u%s", cpu.regs.B.CH, cpu.regs.B.CL, cpu.regs.W.CX == 0x2000 ? " (disabled)" : "" );
 }
 
 byte
@@ -328,11 +328,11 @@ load_cursor_word()
 void
 video_display_combination()
 {
-	if( *treg8[REG_AL] == 0 )
+	if( cpu.regs.B.AL == 0 )
 	{
-		*treg8[REG_BL] = 0x08;
-		*treg8[REG_BH] = 0x00;
-		*treg8[REG_AL] = 0x1A;
+		cpu.regs.B.BL = 0x08;
+		cpu.regs.B.BH = 0x00;
+		cpu.regs.B.AL = 0x1A;
 		vlog( VM_VIDEOMSG, "Video display combination requested." );
 	}
 	else

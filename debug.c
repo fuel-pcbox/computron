@@ -97,10 +97,10 @@ vm_debug()
 						moff = strtol(curtok,NULL,16);
 						dump_mem(mseg, moff, 16);
 					} else {
-						dump_mem(CS, mseg, 16);
+						dump_mem( cpu.CS, mseg, 16 );
 					}
 				} else {
-					dump_mem(CS, (IP&0xFFF0), 16);
+					dump_mem( cpu.CS, (cpu.IP&0xFFF0), 16 );
 					curtok = &curcmd[0];
 				}
 			}

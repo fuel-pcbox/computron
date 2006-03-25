@@ -53,83 +53,95 @@ cpu_updflags (word data, byte bits) {
 	cpu_setSF((dword)data, bits);
 }
 
-void _STC() { CF = 1; } void _STD() { DF = 1; } void _STI() { IF = 1; }
-void _CLC() { CF = 0; } void _CLD() { DF = 0; } void _CLI() { IF = 0; }
-void _CMC() { CF = !CF; }
+void _STC() { cpu.CF = 1; } void _STD() { cpu.DF = 1; } void _STI() { cpu.IF = 1; }
+void _CLC() { cpu.CF = 0; } void _CLD() { cpu.DF = 0; } void _CLI() { cpu.IF = 0; }
+void _CMC() { cpu.CF = !cpu.CF; }
 
 void
 _XLAT() {
-	*treg8[REG_AL] = mem_getbyte(*CurrentSegment, BX+*treg8[REG_AL]);
-	return;
+	cpu.regs.B.AL = mem_getbyte( *(cpu.CurrentSegment), cpu.regs.W.BX + cpu.regs.B.AL );
 }
 
 void
-_CS() {
+_CS()
+{
 	byte opcode;
-	SegmentPrefix = CS;
-	CurrentSegment = &SegmentPrefix;
+	cpu.SegmentPrefix = cpu.CS;
+	cpu.CurrentSegment = &cpu.SegmentPrefix;
 	opcode = cpu_pfq_getbyte();
 	cpu_optable[opcode]();
-	CurrentSegment = &DS;
-	if ( TF && IF ) {
+	cpu.CurrentSegment = &cpu.DS;
+	if( cpu.TF && cpu.IF )
+	{
 		int_call( 1 );
 	}
 }
+
 void
-_DS() {
+_DS()
+{
 	byte opcode;
-	SegmentPrefix = DS;
-	CurrentSegment = &SegmentPrefix;
+	cpu.SegmentPrefix = cpu.DS;
+	cpu.CurrentSegment = &cpu.SegmentPrefix;
 	opcode = cpu_pfq_getbyte();
 	cpu_optable[opcode]();
-	CurrentSegment = &DS;
-	if ( TF && IF ) {
+	cpu.CurrentSegment = &cpu.DS;
+	if( cpu.TF && cpu.IF )
+	{
 		int_call( 1 );
 	}
 }
+
 void
-_ES() {
+_ES()
+{
 	byte opcode;
-	SegmentPrefix = ES;
-	CurrentSegment = &SegmentPrefix;
+	cpu.SegmentPrefix = cpu.ES;
+	cpu.CurrentSegment = &cpu.SegmentPrefix;
 	opcode = cpu_pfq_getbyte();
 	cpu_optable[opcode]();
-	CurrentSegment = &DS;
-	if ( TF && IF ) {
+	cpu.CurrentSegment = &cpu.DS;
+	if( cpu.TF && cpu.IF )
+	{
 		int_call( 1 );
 	}
 }
+
 void
 _SS() {
 	byte opcode;
-	SegmentPrefix = SS;
-	CurrentSegment = &SegmentPrefix;
+	cpu.SegmentPrefix = cpu.SS;
+	cpu.CurrentSegment = &cpu.SegmentPrefix;
 	opcode = cpu_pfq_getbyte();
 	cpu_optable[opcode]();
-	CurrentSegment = &DS;
-	if ( TF && IF ) {
+	cpu.CurrentSegment = &cpu.DS;
+	if( cpu.TF && cpu.IF )
+	{
 		int_call( 1 );
 	}
 }
 
 void
-_LAHF() {
-	*treg8[REG_AH] = CF*1+PF*4+AF*16+ZF*64+SF*128+2;
+_LAHF()
+{
+	cpu.regs.B.AH = cpu.CF | (cpu.PF * 4) | (cpu.AF * 16) | (cpu.ZF * 64) | (cpu.SF * 128) | 2;
 }
 
 void
-_SAHF() {
-	CF = ((*treg8[REG_AH] & 1)>0);
-	PF = ((*treg8[REG_AH] & 4)>0);
-	AF = ((*treg8[REG_AH] & 16)>0);
-	ZF = ((*treg8[REG_AH] & 64)>0);
-	SF = ((*treg8[REG_AH] & 128)>0);
+_SAHF()
+{
+	cpu.CF = (cpu.regs.B.AH & 0x01) != 0;
+	cpu.PF = (cpu.regs.B.AH & 0x04) != 0;
+	cpu.AF = (cpu.regs.B.AH & 0x10) != 0;
+	cpu.ZF = (cpu.regs.B.AH & 0x40) != 0;
+	cpu.SF = (cpu.regs.B.AH & 0x80) != 0;
 }
 
 void
-_XCHG_AX_reg16() {
-	word tmpax = AX;
-	AX = *treg16[cpu_opcode & 7];
+_XCHG_AX_reg16()
+{
+	word tmpax = cpu.regs.W.AX;
+	cpu.regs.W.AX = *treg16[cpu_opcode & 7];
 	*treg16[cpu_opcode & 7] = tmpax;
 }
 
@@ -152,50 +164,63 @@ _XCHG_reg16_RM16() {
 }
 
 void
-_DEC_reg16() {
+_DEC_reg16()
+{
 	dword i = *treg16[cpu_opcode & 7];
-	OF = i != 0 ? 0 : 1; 
+
+	/* Overflow if we'll wrap. */
+	cpu.OF = (i == 0);
+
 	i--;
 	cpu_setAF(i, *treg16[cpu_opcode & 7], 1);
 	cpu_updflags(i, 16);
 	--*treg16[cpu_opcode & 7];
-	return;
 }
+
 void
-_INC_reg16() {
+_INC_reg16()
+{
 	dword i = *treg16[cpu_opcode & 7];
-	OF = i != 32767 ? 0 : 1;
+
+	/* Overflow if we'll wrap. */
+	cpu.OF = (i == 32767);
+
 	i++;
 	cpu_setAF(i,*treg16[cpu_opcode & 7],1);
 	cpu_updflags(i, 16);
 	++*treg16[cpu_opcode & 7];
-	return;
 }
 
 void
-_INC_RM16() {
+_INC_RM16()
+{
 	byte rm = cpu_rmbyte;
 	word *p = cpu_rmptr(rm, 16);
 	dword i = *p;
-	OF = i != 32767 ? 0 : 1;
+
+	/* Overflow if we'll wrap. */
+	cpu.OF = (i == 32767);
+
 	i++;
 	cpu_setAF(i,*p,1);
 	cpu_updflags(i, 16);
 	++*p;
-	return;
 }
 
 void
-_DEC_RM16() {
+_DEC_RM16()
+{
 	byte rm = cpu_rmbyte;
 	word *p = cpu_rmptr(rm, 16);
 	dword i = *p;
-	OF = i != 0 ? 0 : 1;
+
+	/* Overflow if we'll wrap. */
+	cpu.OF = (i == 0);
+
 	i--;
 	cpu_setAF(i,*p,1);
 	cpu_updflags(i, 16);
 	--*p;
-	return;
 }
 
 word

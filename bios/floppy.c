@@ -126,48 +126,48 @@ byte floppy_write(byte drive, word cylinder, word head, word sector, word count,
     return FD_NO_ERROR;
 }
 
-void bios_readsectors() {
-	//word cyl = *treg8[REG_CH] | ((*treg8[REG_CL] << 2) & 0x300);
-    //word sect = *treg8[REG_CL] & 63;
-	word cyl = *treg8[REG_CH];
-    word sect = *treg8[REG_CL];
-	byte drive = *treg8[REG_DL];
+void
+bios_readsectors()
+{
+	word cyl = cpu.regs.B.CH;
+    word sect = cpu.regs.B.CL;
+	byte drive = cpu.regs.B.DL;
 
 	if(drive>=0x80) drive = drive - 0x80 + 2;
 
-	*treg8[REG_AH] = floppy_read(drive, cyl, *treg8[REG_DH], sect, *treg8[REG_AL], ES, BX);
+	cpu.regs.B.AH = floppy_read( drive, cyl, cpu.regs.B.DH, sect, cpu.regs.B.AL, cpu.ES, cpu.regs.W.BX );
 
-	if(*treg8[REG_AH]==0x00)
-		CF = 0;
+	if( cpu.regs.B.AH == 0x00 )
+		cpu.CF = 0;
 	else {
-		CF = 1;
-		*treg8[REG_AL] = 0x00;
+		cpu.CF = 1;
+		cpu.regs.B.AL = 0x00;
 	}
-
-	return;
 }
 
-void bios_writesectors() {
-    word cyl = *treg8[REG_CH] | ((*treg8[REG_CL] << 2) & 0x300);
-    word sect = *treg8[REG_CL] & 63;
-	byte drive = *treg8[REG_DL];
+void
+bios_writesectors()
+{
+    word cyl = cpu.regs.B.CH;
+    word sect = cpu.regs.B.CL;
+	byte drive = cpu.regs.B.DL;
 
 	if(drive>=0x80) drive = drive - 0x80 + 2;
 
-	*treg8[REG_AH] = floppy_write(drive, cyl, *treg8[REG_DH], sect, *treg8[REG_AL], ES, BX);
+	cpu.regs.B.AH = floppy_write( drive, cyl, cpu.regs.B.DH, sect, cpu.regs.B.AL, cpu.ES, cpu.regs.W.BX );
 
-	if(*treg8[REG_AH]==0x00)
-		CF = 0;
+	if( cpu.regs.B.AH ==0x00 )
+		cpu.CF = 0;
 	else {
-		CF = 1;
-		*treg8[REG_AL] = 0x00;
+		cpu.CF = 1;
+		cpu.regs.B.AL = 0x00;
 	}
-
-	return;
 }
 
 
-byte floppy_verify(byte drive, word cylinder, word head, word sector, word count, word segment, word offset) {
+byte
+floppy_verify( byte drive, word cylinder, word head, word sector, word count, word segment, word offset )
+{
 	FILE *fpdrv;
 	byte *dummy;
 	word lba = chs2lba(drive, cylinder, head, sector);
@@ -224,21 +224,21 @@ byte floppy_verify(byte drive, word cylinder, word head, word sector, word count
 	return FD_NO_ERROR;
 }
 
-void bios_verifysectors() {
-	word cyl = *treg8[REG_CH] | ((*treg8[REG_CL] << 2) & 0x300);
-	word sect = *treg8[REG_CL] & 63;
-	byte drive = *treg8[REG_DL];
+void
+bios_verifysectors()
+{
+	word cyl = cpu.regs.B.CH;
+	word sect = cpu.regs.B.CL;
+	byte drive = cpu.regs.B.DL;
 
 	if(drive>=0x80) drive = drive - 0x80 + 2;
 
-	*treg8[REG_AH] = floppy_verify(drive, cyl, *treg8[REG_DH], sect, *treg8[REG_AL], ES, BX);
+	cpu.regs.B.AH = floppy_verify( drive, cyl, cpu.regs.B.DH, sect, cpu.regs.B.AL, cpu.ES, cpu.regs.W.BX );
 
-	if(*treg8[REG_AH]==0x00)
-		CF = 0;
+	if( cpu.regs.B.AH == 0x00 )
+		cpu.CF = 0;
 	else {
-		CF = 1;
-		*treg8[REG_AL]=0x00;
+		cpu.CF = 1;
+		cpu.regs.B.AL = 0x00;
 	}
-
-	return;
 }

@@ -24,7 +24,7 @@ _INTO()
 	/* XXX: I've never seen this used, so it's probably good to log it. */
 	vlog( VM_ALERT, "INTO used, can you believe it?" );
 
-	if( OF == 1 )
+	if( cpu.OF == 1 )
 	{
 		int_call( 4 );
 	}
@@ -45,7 +45,7 @@ int_call( byte isr )
 #ifdef VM_DEBUG
 	if( trapint )
 	{
-		vlog( VM_CPUMSG, "%04X:%04X Interrupt %02X,%02X trapped", BCS, BIP, isr, *treg8[REG_AH] );
+		vlog( VM_CPUMSG, "%04X:%04X Interrupt %02X,%02X trapped", BCS, BIP, isr, cpu.regs.B.AH );
 	}
 #endif
 
@@ -58,10 +58,10 @@ int_call( byte isr )
 	}
 
 	mem_push( cpu_getflags() );
-	IF = 0;
-	TF = 0;
-	mem_push( CS );
-	mem_push( IP );
+	cpu.IF = 0;
+	cpu.TF = 0;
+	mem_push( cpu.CS );
+	mem_push( cpu.IP );
 
 	/* TODO: Get rid of this ugly mess. */
 #ifdef VM_DEBUG

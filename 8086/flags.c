@@ -30,26 +30,26 @@ static byte parity_table[0x100] = {
 void
 cpu_setZF( dword ans )
 {
-	ZF = ( ans == 0 );
+	cpu.ZF = ( ans == 0 );
 }
 
 void
 cpu_setSF( dword ans, byte bits )
 {
-	if ( bits == 16 )
-		SF = ( ans >> 15 ) & 1;
+	if( bits == 16 )
+		cpu.SF = ( ans >> 15 ) & 1;
 	else
-		SF = ( ans >> 7 ) & 1;
+		cpu.SF = ( ans >> 7 ) & 1;
 }
 
 void
 cpu_setPF( dword ans )
 {
-    PF = parity_table[ans & 0xFF];
+    cpu.PF = parity_table[ans & 0xFF];
 }
 
 void
 cpu_setAF( dword ans, word src, word dest )
 {
-	AF = ( ( ( ans ^ ( src ^ dest ) ) & 0x10 ) >> 4) & 1;
+	cpu.AF = ( ( ( ans ^ ( src ^ dest ) ) & 0x10 ) >> 4) & 1;
 }

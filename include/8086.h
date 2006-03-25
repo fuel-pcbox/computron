@@ -28,9 +28,22 @@ extern byte cpu_rmbyte;
 extern byte *mem_space;
 extern word mem_avail;
 
-extern word CS, DS, ES, SS, FS, GS, SegmentPrefix, *CurrentSegment;
-extern word AX, BX, CX, DX, BasePointer, StackPointer, SI, DI, IP;
-extern byte CF, DF, TF, PF, AF, ZF, SF, IF, OF;
+typedef struct {
+	union {
+		struct { word AX, BX, CX, DX; } W;
+#ifdef BIG_ENDIAN
+		struct { byte AH, AL, BH, BL, CH, CL, DH, DL; } B;
+#else
+		struct { byte AL, AH, BL, BH, CL, CH, DL, DH; } B;
+#endif
+	} regs;
+	word BP, SP, SI, DI;
+	word CS, DS, ES, SS, FS, GS, SegmentPrefix, *CurrentSegment;
+	bool CF, DF, TF, PF, AF, ZF, SF, IF, OF;
+	word IP;
+} vomit_cpu_t;
+
+extern vomit_cpu_t cpu;
 
 extern byte *treg8[];
 extern word *treg16[];
@@ -115,8 +128,8 @@ dword signext32(word);
 #define REG_CX  1
 #define REG_DX  2
 #define REG_BX  3
-#define REG_StackPointer  4
-#define REG_BasePointer  5
+#define REG_SP  4
+#define REG_BP  5
 #define REG_SI  6
 #define REG_DI  7
 

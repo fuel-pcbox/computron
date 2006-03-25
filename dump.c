@@ -22,10 +22,10 @@ dump_cpu()
 void
 dump_try()
 {
-	printf("AX=%04X\nBX=%04X\nCX=%04X\nDX=%04X\n", AX, BX, CX, DX );
-	printf("SP=%04X\nBP=%04X\nSI=%04X\nDI=%04X\n", StackPointer, BasePointer, SI, DI);
-	printf("CS=%04X\nDS=%04X\nES=%04X\nSS=%04X\n", CS, DS, ES, SS);
-	printf("CF=%x\nPF=%x\nAF=%x\nZF=%x\nSF=%x\nIF=%x\nDF=%x\nOF=%x\nTF=%x\n", CF, PF, AF, ZF, SF, IF, DF, OF, TF);
+	printf( "AX=%04X\nBX=%04X\nCX=%04X\nDX=%04X\n", cpu.regs.W.AX, cpu.regs.W.BX, cpu.regs.W.CX, cpu.regs.W.DX );
+	printf( "SP=%04X\nBP=%04X\nSI=%04X\nDI=%04X\n", cpu.SP, cpu.BP, cpu.SI, cpu.DI );
+	printf( "CS=%04X\nDS=%04X\nES=%04X\nSS=%04X\n", cpu.CS, cpu.DS, cpu.ES, cpu.SS );
+	printf( "CF=%x\nPF=%x\nAF=%x\nZF=%x\nSF=%x\nIF=%x\nDF=%x\nOF=%x\nTF=%x\n", cpu.CF, cpu.PF, cpu.AF, cpu.ZF, cpu.SF, cpu.IF, cpu.DF, cpu.OF, cpu.TF );
 }
 
 void
@@ -54,11 +54,11 @@ dump_disasm( word segment, word offset )
 
 	/* Recurse if this is a prefix instruction. */
 	if( *opcode == 0x26 || *opcode == 0x2E || *opcode == 0x36 || *opcode == 0x3E || *opcode == 0xF2 || *opcode == 0xF3 )
-		dump_disasm( CS, IP + width );
+		dump_disasm( cpu.CS, cpu.IP + width );
 }
 
 void dump_all() {
-	word *stacky = (void *)mem_space + (SS*16)+StackPointer;
+	word *stacky = (void *)mem_space + (cpu.SS<<4)+cpu.SP;
 
 #ifndef VM_NOPFQ
 	byte x = (byte)cpu_pfq_current;
@@ -70,10 +70,10 @@ void dump_all() {
 	}
 #endif
 
-	printf( "\nAX=%04X BX=%04X CX=%04X DX=%04X     SP=> %04X", AX, BX, CX, DX, *(stacky++) );
-	printf( "\nSP=%04X BP=%04X SI=%04X DI=%04X          %04X", StackPointer, BasePointer, SI, DI, *(stacky++) );
-	printf( "\nCS=%04X DS=%04X ES=%04X SS=%04X          %04X", CS, DS, ES, SS, *(stacky++) );
-	printf( "\nC=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u          %04X", CF, PF, AF, ZF, SF, IF, DF, OF, *(stacky++) );
+	printf( "\nAX=%04X BX=%04X CX=%04X DX=%04X     SP=> %04X", cpu.regs.W.AX, cpu.regs.W.BX, cpu.regs.W.CX, cpu.regs.W.DX, *(stacky++) );
+	printf( "\nSP=%04X BP=%04X SI=%04X DI=%04X          %04X", cpu.SP, cpu.BP, cpu.SI, cpu.DI, *(stacky++) );
+	printf( "\nCS=%04X DS=%04X ES=%04X SS=%04X          %04X", cpu.CS, cpu.DS, cpu.ES, cpu.SS, *(stacky++) );
+	printf( "\nC=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u          %04X", cpu.CF, cpu.PF, cpu.AF, cpu.ZF, cpu.SF, cpu.IF, cpu.DF, cpu.OF, *(stacky++) );
 
 #ifndef VM_NOPFQ
 	printf("  -  [%02X %02X%02X%02X%02X%02X]\n", dpfq[0], dpfq[1], dpfq[2], dpfq[3], dpfq[4], dpfq[5]);
@@ -82,7 +82,7 @@ void dump_all() {
 #endif
 
 	printf( "\n" );
-	dump_disasm( CS, IP );
+	dump_disasm( cpu.CS, cpu.IP );
 }
 
 byte n(byte b) {					/* Nice it up for printing.		*/

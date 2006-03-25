@@ -153,13 +153,13 @@ _wrap_0xD2() {
 	byte rm = cpu_pfq_getbyte();
 	byte *p = cpu_rmptr(rm, 8);
 	switch(rmreg(rm)) {
-		case 0: *p = cpu_rol(*p, *treg8[REG_CL], 8); break;
-		case 1: *p = cpu_ror(*p, *treg8[REG_CL], 8); break;
-		case 2: *p = cpu_rcl(*p, *treg8[REG_CL], 8); break;
-		case 3: *p = cpu_rcr(*p, *treg8[REG_CL], 8); break;
-		case 4: *p = cpu_shl(*p, *treg8[REG_CL], 8); break;
-		case 5: *p = cpu_shr(*p, *treg8[REG_CL], 8); break;
-		case 7: *p = cpu_sar(*p, *treg8[REG_CL], 8); break;
+		case 0: *p = cpu_rol(*p, cpu.regs.B.CL, 8); break;
+		case 1: *p = cpu_ror(*p, cpu.regs.B.CL, 8); break;
+		case 2: *p = cpu_rcl(*p, cpu.regs.B.CL, 8); break;
+		case 3: *p = cpu_rcr(*p, cpu.regs.B.CL, 8); break;
+		case 4: *p = cpu_shl(*p, cpu.regs.B.CL, 8); break;
+		case 5: *p = cpu_shr(*p, cpu.regs.B.CL, 8); break;
+		case 7: *p = cpu_sar(*p, cpu.regs.B.CL, 8); break;
 		default:
 			#ifdef VM_DEBUG
 				printf("Bad opcode: %02X /%d\n", cpu_opcode, rmreg(rm));
@@ -173,13 +173,13 @@ _wrap_0xD3() {
 	byte rm = cpu_pfq_getbyte();
 	word *p = cpu_rmptr(rm, 16);
 	switch(rmreg(rm)) {
-		case 0: *p = cpu_rol(*p, *treg8[REG_CL], 16); break;
-		case 1: *p = cpu_ror(*p, *treg8[REG_CL], 16); break;
-		case 2: *p = cpu_rcl(*p, *treg8[REG_CL], 16); break;
-		case 3: *p = cpu_rcr(*p, *treg8[REG_CL], 16); break;
-		case 4: *p = cpu_shl(*p, *treg8[REG_CL], 16); break;
-		case 5: *p = cpu_shr(*p, *treg8[REG_CL], 16); break;
-		case 7: *p = cpu_sar(*p, *treg8[REG_CL], 16); break;
+		case 0: *p = cpu_rol(*p, cpu.regs.B.CL, 16); break;
+		case 1: *p = cpu_ror(*p, cpu.regs.B.CL, 16); break;
+		case 2: *p = cpu_rcl(*p, cpu.regs.B.CL, 16); break;
+		case 3: *p = cpu_rcr(*p, cpu.regs.B.CL, 16); break;
+		case 4: *p = cpu_shl(*p, cpu.regs.B.CL, 16); break;
+		case 5: *p = cpu_shr(*p, cpu.regs.B.CL, 16); break;
+		case 7: *p = cpu_sar(*p, cpu.regs.B.CL, 16); break;
 		default:
 			#ifdef VM_DEBUG
 				printf("Bad opcode: %02X /%d\n", cpu_opcode, rmreg(rm));
@@ -253,23 +253,20 @@ _wrap_0xFE() {
 	i = *p;
 	switch(rmreg(rm)) {
 		case 0:
-			OF = i != 255 ? 0 : 1;
+			cpu.OF = i != 255 ? 0 : 1;
 			i++;
 			cpu_setAF(i,*p,1);
 			cpu_updflags(i, 8);
 			*p = i;
 			break;
 		case 1:
-			OF = i != 0 ? 0 : 1;
+			cpu.OF = i != 0 ? 0 : 1;
 			i--;
 			cpu_setAF(i,*p,1);
 			cpu_updflags(i, 8);
 			*p = i;
 			break;
-		default:
-			break;
 	}
-	return;
 }
 
 void
@@ -283,9 +280,5 @@ _wrap_0xFF() {
 		case 4: _JMP_RM16();			break;
 		case 5: _JMP_FAR_mem16();		break;
 		case 6: _PUSH_RM16();			break;
-		default: break;
 	}
-	return;
 }
-
-

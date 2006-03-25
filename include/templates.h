@@ -49,12 +49,12 @@
 
 #define DEFAULT_AL_imm8( helper, name ) \
 	void name() { \
-		*treg8[REG_AL] = helper( *treg8[REG_AL], cpu_pfq_getbyte(), 8 ); \
+		cpu.regs.B.AL = helper( cpu.regs.B.AL, cpu_pfq_getbyte(), 8 ); \
 	}
 
 #define DEFAULT_AX_imm16( helper, name ) \
 	void name() { \
-		AX = helper( AX, cpu_pfq_getword(), 16 ); \
+		cpu.regs.W.AX = helper( cpu.regs.W.AX, cpu_pfq_getword(), 16 ); \
 	}
 
 #define READONLY_RM8_reg8( helper, name ) \
@@ -105,12 +105,12 @@
 
 #define READONLY_AL_imm8( helper, name ) \
 	void name() { \
-		helper( *treg8[REG_AL], cpu_pfq_getbyte(), 8 ); \
+		helper( cpu.regs.B.AL, cpu_pfq_getbyte(), 8 ); \
 	}
 
 #define READONLY_AX_imm16( helper, name ) \
 	void name() { \
-		helper( AX, cpu_pfq_getword(), 16 ); \
+		helper( cpu.regs.W.AX, cpu_pfq_getword(), 16 ); \
 	}
 
 #endif /* __templates_h__ */

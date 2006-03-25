@@ -28,7 +28,7 @@ _MOV_RM16_seg()
 	assert( rmreg(rm) >= 0 && rmreg(rm) <= 5 );
 	*p = *tseg[rmreg(rm)];
 
-	if( rmreg(rm) == REG_FS && rmreg(rm) == REG_GS )
+	if( rmreg(rm) == REG_FS || rmreg(rm) == REG_GS )
 	{
 		vlog( VM_CPUMSG, "%04X:%04X: Read from 80386 segment register" );
 	}
@@ -42,7 +42,7 @@ _MOV_seg_RM16()
 	assert( rmreg(rm) >= 0 && rmreg(rm) <= 5 );
 	*tseg[rmreg(rm)] = *p;
 
-	if( rmreg(rm) == REG_FS && rmreg(rm) == REG_GS )
+	if( rmreg(rm) == REG_FS || rmreg(rm) == REG_GS )
 	{
 		vlog( VM_CPUMSG, "%04X:%04X: Write to 80386 segment register" );
 	}
@@ -79,8 +79,8 @@ _MOV_reg16_RM16() {
 
 void _MOV_reg8_imm8() { *treg8[cpu_opcode&7] = cpu_pfq_getbyte(); }
 void _MOV_reg16_imm16() { *treg16[cpu_opcode&7] = cpu_pfq_getword(); }
-void _MOV_AL_moff8() { *treg8[REG_AL] = mem_getbyte(*CurrentSegment, cpu_pfq_getword()); return; }
-void _MOV_AX_moff16() { AX = mem_getword(*CurrentSegment, cpu_pfq_getword()); return; }
-void _MOV_moff8_AL() { mem_setbyte(*CurrentSegment, cpu_pfq_getword(), *treg8[REG_AL]); return; }
-void _MOV_moff16_AX() { mem_setword(*CurrentSegment, cpu_pfq_getword(), AX); return; }
+void _MOV_AL_moff8() { cpu.regs.B.AL = mem_getbyte( *(cpu.CurrentSegment), cpu_pfq_getword() ); }
+void _MOV_AX_moff16() { cpu.regs.W.AX = mem_getword( *(cpu.CurrentSegment), cpu_pfq_getword() ); }
+void _MOV_moff8_AL() { mem_setbyte( *(cpu.CurrentSegment), cpu_pfq_getword(), cpu.regs.B.AL ); }
+void _MOV_moff16_AX() { mem_setword( *(cpu.CurrentSegment), cpu_pfq_getword(), cpu.regs.W.AX ); }
 

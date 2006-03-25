@@ -6,89 +6,120 @@
 #include "vomit.h"
 
 void
-_LODSB() {
-	*treg8[REG_AL] = mem_getbyte(*CurrentSegment, SI);	/* Load byte at CurSeg:SI into AL */
-	if(DF==0)											/* Increment or decrement SI  */
-		++SI;											/* depending on the value of  */
-	else												/* the Direction Flag.        */
-		--SI;
-	return;
-}
+_LODSB()
+{
+	/* Load byte at CurSeg:SI into AL */
+	cpu.regs.B.AL = mem_getbyte( *(cpu.CurrentSegment), cpu.SI );
 
-void
-_LODSW() {
-	AX = mem_getword(*CurrentSegment, SI);				/* Load word at CurSeg:SI into AX */
-	if(DF==0)											/* Increment or decrement SI, */
-		SI+=2;											/* etc, etc...                */
+	/* Modify SI according to DF */
+	if( cpu.DF == 0 )
+		++cpu.SI;
 	else
-		SI-=2;
-	return;
+		--cpu.SI;
 }
 
 void
-_STOSB() {
-	mem_setbyte(ES, DI, *treg8[REG_AL]);
-	if(DF==0)
-		++DI;
+_LODSW()
+{
+	/* Load word at CurSeg:SI into AX */
+	cpu.regs.W.AX = mem_getword( *(cpu.CurrentSegment), cpu.SI );
+
+	/* Modify SI according to DF */
+	if( cpu.DF == 0 )
+		cpu.SI += 2;
 	else
-		--DI;
-	return;
+		cpu.SI -= 2;
 }
 
 void
-_STOSW() {
-	mem_setword(ES, DI, AX);
-	if(DF==0)
-		DI += 2;
+_STOSB()
+{
+	mem_setbyte( cpu.ES, cpu.DI, cpu.regs.B.AL );
+
+	if( cpu.DF == 0 )
+		++cpu.DI;
 	else
-		DI -= 2;
-	return;
+		--cpu.DI;
 }
 
 void
-_CMPSB() {
-	byte src = mem_getbyte(*CurrentSegment, SI);
-	byte dest = mem_getbyte(ES, DI);
-	cpu_cmpflags(src-dest, src, dest, 8);
-	if(DF==0) {++DI;++SI;} else {--DI;--SI;}
-	return;
+_STOSW()
+{
+	mem_setword( cpu.ES, cpu.DI, cpu.regs.W.AX );
+
+	if( cpu.DF == 0 )
+		cpu.DI += 2;
+	else
+		cpu.DI -= 2;
 }
 
 void
-_CMPSW() {
-	word src = mem_getword(*CurrentSegment, SI);
-	word dest = mem_getword(ES, DI);
-	cpu_cmpflags(src-dest, src, dest, 16);
-	if(DF==0) {DI+=2;SI+=2;} else {DI-=2;SI-=2;}
-	return;
+_CMPSB()
+{
+	byte src = mem_getbyte( *(cpu.CurrentSegment), cpu.SI );
+	byte dest = mem_getbyte( cpu.ES, cpu.DI );
+	cpu_cmpflags( src - dest, src, dest, 8 );
+	if( cpu.DF == 0 )
+		++cpu.DI, ++cpu.SI;
+	else
+		--cpu.DI, --cpu.SI;
 }
 
 void
-_SCASB() {
-	byte dest = mem_getbyte(ES, DI);
-	cpu_cmpflags(*treg8[REG_AL]-dest, dest, *treg8[REG_AL], 8);
-	if(DF==0) {++DI;} else {--DI;}
-	return;
+_CMPSW()
+{
+	word src = mem_getword( *(cpu.CurrentSegment), cpu.SI );
+	word dest = mem_getword( cpu.ES, cpu.DI );
+	cpu_cmpflags( src - dest, src, dest, 16 );
+	if( cpu.DF == 0 )
+		cpu.DI += 2, cpu.SI += 2;
+	else
+		cpu.DI -= 2, cpu.SI -= 2;
 }
 
 void
-_SCASW() {
-	word dest = mem_getword(ES, DI);
-	cpu_cmpflags(AX-dest, dest, AX, 16);
-	if(DF==0) {DI+=2;} else {DI-=2;}
-	return;
+_SCASB()
+{
+	byte dest = mem_getbyte( cpu.ES, cpu.DI );
+	cpu_cmpflags( cpu.regs.B.AL - dest, dest, cpu.regs.B.AL, 8 );
+
+	if( cpu.DF == 0 )
+		++cpu.DI;
+	else
+		--cpu.DI;
 }
 
 void
-_MOVSB() {
-	byte tmpb = mem_getbyte(*CurrentSegment, SI);
-	mem_setbyte(ES, DI, tmpb);
-	if(DF==0) { ++SI; ++DI; } else { --SI; --DI; }
-}
-void
-_MOVSW() {
-	word tmpw = mem_getword(*CurrentSegment, SI);
-	mem_setword(ES, DI, tmpw);
-	if(DF==0) { SI+=2; DI+=2; } else { SI-=2; DI-=2; }
+_SCASW()
+{
+	word dest = mem_getword( cpu.ES, cpu.DI );
+	cpu_cmpflags( cpu.regs.W.AX - dest, dest, cpu.regs.W.AX, 16 );
+
+	if( cpu.DF == 0 )
+		cpu.DI += 2;
+	else
+		cpu.DI -= 2;
 }
 
+void
+_MOVSB()
+{
+	byte tmpb = mem_getbyte( *(cpu.CurrentSegment), cpu.SI );
+	mem_setbyte( cpu.ES, cpu.DI, tmpb );
+
+	if( cpu.DF == 0 )
+		++cpu.SI, ++cpu.DI;
+	else
+		--cpu.SI, --cpu.DI;
+}
+void
+_MOVSW()
+{
+	word tmpw = mem_getword( *(cpu.CurrentSegment), cpu.SI );
+	mem_setword( cpu.ES, cpu.DI, tmpw );
+
+	if( cpu.DF == 0 )
+		cpu.SI += 2, cpu.DI += 2;
+	else
+		cpu.SI -= 2, cpu.DI -= 2;
+}
