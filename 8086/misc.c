@@ -18,7 +18,7 @@ _HLT()
 	/* XXX: When halted, we're not really waiting for an interrupt.
 	 *      We should, though. */
 	cpu.state = CPU_HALTED;
-	vlog( VM_ALERT, "CPU halted. Awaiting interrupt..." );
+	vlog( VM_CPUMSG, "%04X:%04X Halted", BCS, BIP );
 	if( g_try_run )
 	{
 		vm_kill();
@@ -29,6 +29,14 @@ _HLT()
 	{
 		/* Sleep for 100ms when halted. Prevents resource sucking. */
 		usleep( 100 );
+
+		if( g_debug_step )
+		{
+			vm_debug();
+			if( g_debug_step )
+				continue;
+			ui_show();
+		}
 
 		/* TODO: This is a clone of code in cpu_main(). Me no likey. */
 		if( g_break_pressed )
