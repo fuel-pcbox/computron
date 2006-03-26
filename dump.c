@@ -108,18 +108,24 @@ void dump_mem(word seg, word off, byte rows) {
 	}
 }
 
-word _iseg(byte isr) { return mem_getword(0x0000, (isr*4)+2); }
-word _ioff(byte isr) { return mem_getword(0x0000, (isr*4)); }
+static word iseg(byte isr) { return mem_getword(0x0000, (isr*4)+2); }
+static word ioff(byte isr) { return mem_getword(0x0000, (isr*4)); }
 
-void dump_ivt() {
-	register int i;
-	for(i=0;i<0xFF;i+=5) {
+void
+dump_ivt()
+{
+	word i;
+
+	/* XXX: For alignment reasons, we're skipping INT FF */
+	for( i = 0; i < 0xFF; i += 5 )
+	{
 		printf(
 			"%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X\n",
-			i, _iseg(i), _ioff(i),
-			i+1, _iseg(i+1), _ioff(i+1),
-			i+2, _iseg(i+2), _ioff(i+2),
-			i+3, _iseg(i+3), _ioff(i+3),
-			i+4, _iseg(i+4), _ioff(i+4));
+			i, iseg(i), ioff(i),
+			i+1, iseg(i+1), ioff(i+1),
+			i+2, iseg(i+2), ioff(i+2),
+			i+3, iseg(i+3), ioff(i+3),
+			i+4, iseg(i+4), ioff(i+4)
+		);
 	}
 }
