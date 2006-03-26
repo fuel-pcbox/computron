@@ -42,12 +42,12 @@ _IRET()
 void
 int_call( byte isr )
 {
-#ifdef VM_DEBUG
+	word segment, offset;
+
 	if( trapint )
 	{
 		vlog( VM_CPUMSG, "%04X:%04X Interrupt %02X,%02X trapped", BCS, BIP, isr, cpu.regs.B.AH );
 	}
-#endif
 
 	/* XXX: VGA BIOS is currently residing in C land for... convenience.
 	 *      I realize this breaks anything that relies on hooking. */
@@ -63,19 +63,8 @@ int_call( byte isr )
 	mem_push( cpu.CS );
 	mem_push( cpu.IP );
 
-	/* TODO: Get rid of this ugly mess. */
-#ifdef VM_DEBUG
-	if( !mempeek )
-	{
-		cpu_jump(mem_getword(0, isr*4+2), mem_getword(0, isr*4));
-	}
-	else
-	{
-		mempeek = 0;
-#endif
-		cpu_jump(mem_getword(0, isr*4+2), mem_getword(0, isr*4));
-#ifdef VM_DEBUG
-		mempeek = 1;
-	}
-#endif
+	segment = (mem_space[isr * 4 + 3] << 8) | mem_space[isr * 4 + 2];
+	offset = (mem_space[isr * 4 + 1] << 8) | mem_space[isr * 4];
+
+	cpu_jump( segment, offset );
 }
