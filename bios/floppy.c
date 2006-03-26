@@ -18,14 +18,12 @@ char drv_title[4][MAX_DRV_TITLESIZE+1];
 byte drv_status[4], drv_type[4];
 word drv_spt[4], drv_heads[4], drv_sectors[4], drv_sectsize[4];
 
-word chs2lba(byte drive, word cyl, byte head, word sector) {
-	register word lba;
-
-	lba =	(sector - 1) +
-			(head * drv_spt[drive]) +
-			(cyl * drv_spt[drive] * drv_heads[drive]);
-
-    return lba;
+word
+chs2lba( byte drive, word cyl, byte head, word sector )
+{
+	return (sector - 1) +
+	       (head * drv_spt[drive]) +
+	       (cyl * drv_spt[drive] * drv_heads[drive]);
 }
 
 byte floppy_read(byte drive, word cylinder, word head, word sector, word count, word segment, word offset) {
