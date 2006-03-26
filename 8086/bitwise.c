@@ -158,9 +158,11 @@ cpu_shr( word data, byte steps, byte bits )
 		}
 	}
 
-	if( steps == 1 ) {
+	if( steps == 1 )
+	{
 		cpu.OF = (data >> ( bits - 1 )) & 1;
 	}
+
 	cpu_updflags( result, bits );
 	return result;
 }
@@ -168,70 +170,103 @@ cpu_shr( word data, byte steps, byte bits )
 dword
 cpu_sar( word data, byte steps, byte bits )
 {
-	register int i;
+	unsigned int i;
 	dword result = (dword)data;
 	word n;
+
 	MASK_STEPS_IF_80186;
-	if(bits==8) {
-		for(i=0;i<steps;i++) {
+
+	if( bits == 8 )
+	{
+		for( i = 0; i < steps; ++i )
+		{
 			n = result;
 			result = (result>>1) | (n&0x80);
-			cpu.CF = n&1;
+			cpu.CF = n & 1;
 		}
-	} else {
-		for(i=0;i<steps;i++) {
+	}
+	else
+	{
+		for( i = 0; i < steps; ++i )
+		{
 			n = result;
 			result = (result>>1) | (n&0x8000);
-			cpu.CF = n&1;
+			cpu.CF = n & 1;
 		}
 	}
-	if ( steps == 1 ) {
+
+	if( steps == 1 )
+	{
 		cpu.OF = 0;
 	}
+
 	cpu_updflags( result, bits );
 	return result;
 }
 
-dword cpu_rol(word data, byte steps, byte bits) {
-	register int i;
+dword
+cpu_rol( word data, byte steps, byte bits )
+{
+	unsigned int i;
 	dword result = (dword)data;
+
 	MASK_STEPS_IF_80186;
-	if(bits==8) {
-		for(i=0;i<steps;i++) {
-			cpu.CF = (result>>7)&1;
-			result = (result<<1) | cpu.CF;
-		}
-	} else {
-		for(i=0;i<steps;i++) {
-			cpu.CF = (result>>15)&1;
+
+	if( bits == 8 )
+	{
+		for( i = 0; i < steps; ++i )
+		{
+			cpu.CF = (result>>7) & 1;
 			result = (result<<1) | cpu.CF;
 		}
 	}
-	if ( steps == 1 ) {
+	else
+	{
+		for( i = 0; i < steps; ++i )
+		{
+			cpu.CF = (result>>15) & 1;
+			result = (result<<1) | cpu.CF;
+		}
+	}
+
+	if( steps == 1 )
+	{
 		cpu.OF = ( ( result >> ( bits - 1 ) ) & 1 ) ^ cpu.CF;
 	}
+
 	return result;
 }
 
-dword cpu_ror(word data, byte steps, byte bits) {
-	register int i;
+dword
+cpu_ror( word data, byte steps, byte bits )
+{
+	unsigned int i;
 	dword result = (dword)data;
+
 	MASK_STEPS_IF_80186;
-	if(bits==8) {
-		for(i=0;i<steps;i++) {
+
+	if( bits == 8 )
+	{
+		for( i = 0; i < steps; ++i )
+		{
 			cpu.CF = result & 1;
 			result = (result>>1) | (cpu.CF<<7);
 		}
-	} else {
-		for(i=0;i<steps;i++) {
+	}
+	else
+	{
+		for( i = 0; i < steps; ++i )
+		{
 			cpu.CF = result & 1;
 			result = (result>>1) | (cpu.CF<<15);
 		}
 	}
-	if ( steps == 1 ) {
-		cpu.OF = ( result >> ( bits - 1 ) )
-		   ^ ( ( result >> ( bits - 2 ) & 1 ) );
+
+	if( steps == 1 )
+	{
+		cpu.OF = (result >> (bits - 1)) ^ ((result >> (bits - 2) & 1));
 	}
+
 	return result;
 }
 
@@ -246,26 +281,34 @@ cpu_rcl( word data, byte steps, byte bits )
 
 	if( bits == 8 )
 	{
-		for(i=0;i<steps;i++) {
+		for( i = 0; i < steps; ++i )
+		{
 			n = result;
-			result = ((result<<1)&0xFF) | cpu.CF;
-			cpu.CF = (n>>7)&1;
-		}
-	} else {
-		for(i=0;i<steps;i++) {
-			n = result;
-			result = ((result<<1)&0xFFFF) | cpu.CF;
-			cpu.CF = (n>>15)&1;
+			result = ((result<<1) & 0xFF) | cpu.CF;
+			cpu.CF = (n>>7) & 1;
 		}
 	}
-	if ( steps == 1 ) {
-		cpu.OF = ( result >> ( bits - 1 ) ) ^ cpu.CF;
+	else
+	{
+		for( i = 0; i < steps; ++i )
+		{
+			n = result;
+			result = ((result<<1) & 0xFFFF) | cpu.CF;
+			cpu.CF = (n>>15) & 1;
+		}
 	}
+
+	if( steps == 1 )
+	{
+		cpu.OF = (result >> (bits - 1)) ^ cpu.CF;
+	}
+
 	return result;
 }
 
 dword
-cpu_rcr(word data, byte steps, byte bits) {
+cpu_rcr( word data, byte steps, byte bits )
+{
 	unsigned int i;
 	dword result = (dword)data;
 	word n;
@@ -290,10 +333,12 @@ cpu_rcr(word data, byte steps, byte bits) {
 			cpu.CF = n & 1;
 		}
 	}
-	if( steps == 1 ) {
-		cpu.OF = ( result >> ( bits - 1 ) )
-		   ^ ( ( result >> ( bits - 2 ) & 1 ) );
+
+	if( steps == 1 )
+	{
+		cpu.OF = (result >> (bits - 1)) ^ ((result >> (bits - 2) & 1));
 	}
+
 	return result;
 }
 
