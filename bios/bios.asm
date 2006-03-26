@@ -45,9 +45,22 @@ _cpux_invalidop:
 	pop		si
 	hlt
 
-_cpu_TIMER:
-	out		0xEA, ax				; BDA TIMER UPDATE. CONDITIONLESS.
-	int		0x1C
+; INT 08 - PIT interrupt
+;
+; Increments DWORD at BDA:6C, which should be 0 at midnight (a TODO.)
+
+_cpu_timer:
+	push    ds
+	push    bx
+	xor     bx, bx
+	mov     ds, bx
+	inc     word [0x46c]
+	jnz     .skipHighWord
+	inc     word [0x46e]
+.skipHighWord:
+	pop     bx
+	pop     ds
+	int     0x1C
 	iret
 
 _cpu_default_softtimer:
@@ -231,7 +244,7 @@ _bios_setup_ints:
 	call	.install
 
 	mov		al, 0x08
-	mov		dx, _cpu_TIMER
+	mov		dx, _cpu_timer
 	call	.install
 
 	mov		al, 0x09
