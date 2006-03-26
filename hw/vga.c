@@ -1,4 +1,5 @@
 #include "vomit.h"
+#include "debug.h"
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -31,7 +32,6 @@ vga_init()
 	memset( video_memory, 0, columns * rows * 2 );
 }
 
-#ifdef VM_DEBUG
 void
 vga_dump()
 {
@@ -45,14 +45,11 @@ vga_dump()
 	}
 	fclose( scrot );
 }
-#endif
 
 void
 vga_kill()
 {
-#ifdef VM_DEBUG
 	vga_dump();
-#endif
 }
 
 void
@@ -80,25 +77,35 @@ vga_getreg( word port, byte bits )
 	return (word)io_register[current_register];
 }
 
-/*
- * 6845 - Port 3DA Status Register
- *
- *  |7|6|5|4|3|2|1|0|  3DA Status Register
- *  | | | | | | | `---- 1 = display enable, RAM access is OK
- *  | | | | | | `----- 1 = light pen trigger set
- *  | | | | | `------ 0 = light pen on, 1 = light pen off
- *  | | | | `------- 1 = vertical retrace, RAM access OK for next 1.25ms
- *  `-------------- unused
- *
- */
-
 word
 vga_status( word port, byte bits )
 {
+	static bool last_bit0 = 0;
+	word data;
+
 	(void) port;
 	(void) bits;
-	/* 0000 1101 */
-	return 0x0D;
+
+	/*
+	 * 6845 - Port 3DA Status Register
+	 *
+		 *  |7|6|5|4|3|2|1|0|  3DA Status Register
+	 *  | | | | | | | `---- 1 = display enable, RAM access is OK
+	 *  | | | | | | `----- 1 = light pen trigger set
+	 *  | | | | | `------ 0 = light pen on, 1 = light pen off
+	 *  | | | | `------- 1 = vertical retrace, RAM access OK for next 1.25ms
+	 *  `-------------- unused
+	 *
+	 */
+
+	/* 0000 1100 */
+	data = 0x0C;
+
+	/* Microsoft DEFRAG expects bit 0 to "blink", so we'll flip it between reads. */
+	last_bit0 = !last_bit0;
+	data |= last_bit0;
+
+	return data;
 }
 
 /* TODO: move this to bios/video.c */
