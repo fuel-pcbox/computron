@@ -38,7 +38,7 @@ typedef struct {
 			dword EBP, ESP, ESI, EDI;
 			dword EIP;
 		} D;
-#ifdef BIG_ENDIAN
+#ifdef VOMIT_BIG_ENDIAN
 		struct {
 			word __EAX_high_word, AX;
 			word __EBX_high_word, BX;
