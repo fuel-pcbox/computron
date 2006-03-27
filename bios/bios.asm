@@ -109,9 +109,6 @@ _bios_post:							; Power On Self-Test ;-)
 	mov		si, szCrLf
 	call	safe_putString
 
-	mov		ah, 0x09
-	mov		cx, 1	
-
 	call    _bios_find_bootdrv      ; Find a boot drive 
 	jc      .nobootdrv
 
@@ -1119,7 +1116,7 @@ _bios_interrupt1a:
 ; DATA
 
     szVersion       db  "VOMIT Virtual Machine", 0x0d, 0x0a
-					db	"(C) Copyright Andreas Kling 2003-2005", 0x0d, 0x0a, 0x0d, 0x0a, 0
+					db	"(C) Copyright Andreas Kling 2003-2006", 0x0d, 0x0a, 0x0d, 0x0a, 0
 
 	sz8086			db	"8086", 0
 	sz80186			db	"80186", 0
