@@ -193,8 +193,8 @@ word signext(byte);
 #define REG_GS  5
 
 void _UNSUPP();
+void _ESCAPE();
 
-void _WAIT();
 void _NOP();
 void _HLT();
 void _INT_imm8();
@@ -437,7 +437,6 @@ void _wrap_0xD0();
 void _wrap_0xD1();
 void _wrap_0xD2();
 void _wrap_0xD3();
-void _wrap_0xD9();
 void _wrap_0xF6();
 void _wrap_0xF7();
 void _wrap_0xFE();
