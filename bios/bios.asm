@@ -120,15 +120,7 @@ _bios_post:							; Power On Self-Test ;-)
 
 	sti
 
-;	jmp		0xC000:0x0000
-	;jmp		0x0000:0x7C00			; JMP to software entry
-
-	mov ax, 0x7c0
-	mov ds, ax
-	mov es, ax
-	jmp		0x07C0:0x0000			; JMP to software entry
-
-	hlt								; Unreachable HLT for safety.
+	jmp     0x0000:0x7C00           ; JMP to software entry
 
 .nobootdrv:    
 	mov		si, szNoBootDrive
