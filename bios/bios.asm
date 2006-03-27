@@ -99,9 +99,6 @@ _bios_post:							; Power On Self-Test ;-)
 	mov     si, szVersion
 	call    safe_putString			; Print BIOS Version string
 
-	mov		si, szCrLf
-	call	safe_putString
-	
 	call    _bios_setup_ints		; Install BIOS Interrupts
 	
 	call    _bios_init_data			; Initialize BIOS data area (0040:0000)
