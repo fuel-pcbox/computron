@@ -160,20 +160,6 @@ _wrap_0xD3() {
 }
 
 void
-_wrap_0xD9()
-{
-	byte rm = cpu_pfq_getbyte();
-	switch( rmreg(rm) )
-	{
-		case 7:
-			/* FNSTCW */
-			vlog( VM_FPUMSG, "No FPU -- swallowing FNSTCW" );
-			break;
-		default: vlog( VM_ALERT, "D9 /%d not wrapped", rmreg( cpu_rmbyte ));
-	}
-}
-
-void
 _wrap_0xF6() {
 	cpu_rmbyte = cpu_pfq_getbyte();
 	switch(rmreg(cpu_rmbyte)) {

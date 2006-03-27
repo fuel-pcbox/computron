@@ -44,14 +44,6 @@ _OpOverride()
 }
 
 void
-_FNINIT()
-{
-	vlog( VM_LOGMSG, "FPU initalization attempt detected!" );
-	/* skip second stuffing */
-	cpu_pfq_getbyte();
-}
-
-void
 cpu_init()
 {
 	treg16[REG_AX] = &cpu.regs.W.AX;
@@ -235,7 +227,6 @@ cpu_genmap()
 	cpu_addinstruction( 0xD5, 0xD5, _AAD              );
 	cpu_addinstruction( 0xD6, 0xD6, _SALC             );
 	cpu_addinstruction( 0xD7, 0xD7, _XLAT             );
-	cpu_addinstruction( 0xD9, 0xD9, _wrap_0xD9        );
 	cpu_addinstruction( 0xE0, 0xE0, _LOOPNE_imm8      );
 	cpu_addinstruction( 0xE1, 0xE1, _LOOPE_imm8       );
 	cpu_addinstruction( 0xE2, 0xE2, _LOOP_imm8        );
@@ -281,9 +272,11 @@ cpu_genmap()
 	}
 
 	/* Some cheap solutions. */
-	cpu_addinstruction( 0x9B, 0x9B, _WAIT       );
 	cpu_addinstruction( 0x66, 0x66, _OpOverride );
-	cpu_addinstruction( 0xDB, 0xDB, _FNINIT     );
+
+	/* There is no FPU. */
+	cpu_addinstruction( 0x9B, 0x9B, _ESCAPE     );
+	cpu_addinstruction( 0xD8, 0xDF, _ESCAPE     );
 }
 
 void
