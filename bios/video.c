@@ -225,13 +225,9 @@ void
 set_video_mode()
 {
 	byte mode = cpu.regs.B.AL;
-	byte temp;
 
 	mem_space[0x449] = mode;
-
-	temp = mem_space[0x487];
-	temp &= 0x7F;
-	temp |= mode & 0x80;
+	mem_space[0x487] |= mode & 0x80;
 
 	vlog( VM_VIDEOMSG, "Mode %d selected", mode );
 }
