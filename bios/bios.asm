@@ -134,7 +134,6 @@ safe_putString:
 	pop     ds
 	push    ax
 	push	bx
-	mov		bl, 0x02
 .nextchar:
 	lodsb
 	or      al, 0x00
@@ -151,7 +150,7 @@ safe_putString:
 
 ; print_integer
 ;
-;    Prints a 16-bit unsigned integer in decimal with leading zeros.
+;    Prints a 16-bit unsigned integer in decimal.
 ;
 ; Parameters:
 ;
@@ -159,39 +158,60 @@ safe_putString:
 ;
 
 print_integer:
-	push	ax
-	push	bx
-	push	cx
-	push	dx
+	push    ax
+	push    bx
 
-	mov		bx, 0x0002			; Page 0, green text
-	mov		cx, 10000			; Start with 10K digit
+	or      ax, 0               ; If AX == 0, no need to loop through the digits
+	jnz     .nonZero
+
+	mov     al, '0'
+	pushf
+	push    cs
+	call    vga_ttyecho         ; vga_ttyecho returns via IRET
+
+	pop     bx
+	pop     ax
+	ret
+
+.nonZero:
+	push    cx
+	push    dx
+	push    bp
+
+	xor     bp, bp              ; BP keeps track of whether we've started output
+	mov     cx, 10000           ; Start with 10K digit
 
 .loop:
-	xor		dx, dx
-	div		cx
-	add		al, '0'
+	xor     dx, dx
+	div     cx
+
+	or      bp, ax              ; OR result into BP
+	jz      .nextDigit          ; If BP == 0, skip printing this digit
+	
+	add     al, '0'
 
 	pushf
-	push	cs
-	call	vga_ttyecho			; vga_ttyecho returns via IRET
+	push    cs
+	call    vga_ttyecho         ; vga_ttyecho returns via IRET
 
-	push	dx					; Store away remainder
-	xor		dx, dx
-	mov		ax, cx
-	mov		cx, 10
-	div		cx
-	mov		cx, ax				; CX /= 10
-	pop		ax					; AX = remainder
+.nextDigit:
+	push    dx                  ; Store away remainder
+	xor     dx, dx
+	mov     ax, cx
+	mov     cx, 10
+	div     cx
+	mov     cx, ax              ; CX /= 10
+	pop     ax                  ; AX = remainder
 	
-	jcxz	.end
-	jmp		.loop
+	jcxz    .end
+	jmp     .loop
 
 .end:
-	pop		dx
-	pop		cx
-	pop		bx
-	pop		ax
+	pop     bp
+	pop     dx
+	pop     cx
+	pop     bx
+	pop     ax
 	ret
 
 _bios_setup_ints:
@@ -599,15 +619,18 @@ vga_putc:
 ; Parameters:
 ;
 ;    AL = Character to write
-;    BL = Foreground pixel color
 ;    BH = Page number ( not implemented )
 ;
+; Overrides:
+;    BL = Foreground pixel color, always 2(green) to indicate BIOS output
 
 vga_ttyecho:
 	push	dx
 	push	es
 	push	di
 	push	ax
+
+	mov     bl, 0x02
 
 	mov		ax, 0xb800				; Point ES to video memory for STOS access.
 	mov		es, ax
