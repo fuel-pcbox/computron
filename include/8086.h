@@ -8,8 +8,6 @@
 #define INTEL_8086          0
 #define INTEL_80186         1
 
-#define CPU_STATIC_FLAGS	0x7002
-
 #define rmreg(b) (b>>3&7)	/* Extracts RegID from RM byte. */
 
 #ifndef VM_NOPFQ
@@ -127,6 +125,7 @@ void *cpu_rmptr(byte, byte);
 void cpu_out(word, word, byte);
 word cpu_in(word, byte);
 bool cpu_evaluate(byte);
+word cpu_static_flags();
 
 void cpu_setZF(dword);
 void cpu_setSF(dword, byte);

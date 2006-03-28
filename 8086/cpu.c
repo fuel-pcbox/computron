@@ -79,7 +79,7 @@ cpu_init()
 
 	cpu_jump( 0xF000, 0x0000 );
 
-    cpu_setflags( 0x0200 | CPU_STATIC_FLAGS );
+    cpu_setflags( 0x0200 | cpu_static_flags() );
 	cpu_modrm_init();
 
 	cpu_ips = 30000;	/* FUCK WITH CARE */
@@ -435,7 +435,7 @@ cpu_setflags( word flags )
 word
 cpu_getflags()
 {
-	return (cpu.CF) | (cpu.PF << 2) | (cpu.AF << 4) | (cpu.ZF << 6) | (cpu.SF << 7) | (cpu.TF << 8) | (cpu.IF << 9) | (cpu.DF << 10) | (cpu.OF << 11) | CPU_STATIC_FLAGS;
+	return (cpu.CF) | (cpu.PF << 2) | (cpu.AF << 4) | (cpu.ZF << 6) | (cpu.SF << 7) | (cpu.TF << 8) | (cpu.IF << 9) | (cpu.DF << 10) | (cpu.OF << 11) | cpu_static_flags();
 }
 
 void cpu_addint(byte n, word segment, word offset) {
