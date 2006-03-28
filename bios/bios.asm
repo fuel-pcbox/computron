@@ -412,17 +412,17 @@ _bios_init_data:
 	mov		dl, 0x00
 	mov		ax, 0x1300
 	out		0xE6, ax
-	cmp		ah, 0x00
+	or      ah, 0x00
 	jz		.setDisk00
 .check01:	
 	mov		dl, 0x01
 	mov		ax, 0x1300
 	out		0xE6, ax
-	cmp		ah, 0x00
+	or      ah, 0x00
 	jz		.setDisk01
 .check80:										; We'll skip this for now.
-	cmp		bp, 0x00
-	je		.noFloppies
+	or      bp, 0x0000
+	jz		.noFloppies
 	mov		word [0x410], cx
 .end:
 	pop		ds
@@ -498,8 +498,8 @@ _bios_interrupt10:					; BIOS Video Interrupt
 	je		.setCursor
 	cmp		ah, 0x03
 	je		.getCursor
-	cmp		ah, 0x00
-	je		.setVideoMode
+	or      ah, 0x00
+	jz      .setVideoMode
 	cmp		ah, 0x06
 	je		.scrollWindow
 	cmp		ah, 0x0f
@@ -889,8 +889,8 @@ _bios_interrupt12:
     iret
 
 _bios_interrupt13:
-    cmp     ah, 0x00
-    je      .resetDisk
+    or      ah, 0x00
+    jz      .resetDisk
     cmp     ah, 0x01
     je      .getDiskStatus
     cmp     ah, 0x02
@@ -970,8 +970,8 @@ _bios_interrupt13:
     iret
 
 _bios_interrupt14:
-    cmp     ah, 0x00
-    je      .fn0x00
+    or      ah, 0x00
+    jz      .fn0x00
 	cmp		ah, 0x03
 	je		.fn0x03
     push    ax
@@ -1039,8 +1039,8 @@ _bios_interrupt15:
     iret
 
 _bios_interrupt16:
-    cmp     ah, 0x00
-    je      .waitKey
+    or      ah, 0x00
+    jz      .waitKey
 	cmp		ah, 0x01
 	je		.kbhit
 	cmp		ah, 0x10
@@ -1103,8 +1103,8 @@ _bios_interrupt16:
 	iret
 
 _bios_interrupt17:
-	cmp		ah, 0x00
-	je		.printChar				; echo $c > prn (!)
+	or      ah, 0x00
+	jz      .printChar				; echo $c > prn (!)
     cmp     ah, 0x01
     je      .fn0x01
     cmp     ah, 0x02
