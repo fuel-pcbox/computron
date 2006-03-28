@@ -8,12 +8,22 @@
 
     jmp     0xF000:_bios_post
 
+reboot_on_any_key:
+	mov     si, szAnyKeyPlease
+	call    safe_putString
+.loop:
+	mov     ax, 0x1600
+	out     0xE6, ax
+	or      ax, 0
+	jz      .loop
+	jmp     0xF000:0
+
 _cpux_dividebyzero:                 ; Interrupt 0x00 - Divide by zero
-    push    si                      ; Preserve SI
-    mov     si, szDivideByZero      ;
-    call    safe_putString          ; Print Error message to screen
-    pop     si                      ; Restore SI
-    hlt                             ; Halt CPU
+    push    si
+    mov     si, szDivideByZero
+    call    safe_putString
+    pop     si
+	jmp     reboot_on_any_key
 
 _cpux_singlestep:                   ; Interrupt 0x01 - Single step
     iret                            ; IRET. Write your own handler.
@@ -32,18 +42,18 @@ _cpux_breakpoint:					; Interrupt 0x03 - Breakpoint
 	pop		ax						; Restore AX
 
 _cpux_overflow:						; Interrupt 0x04 - Overflow
-	push	si						; Preserve SI
-	mov		si, szOverflow			;
-	call	safe_putString			; Print Error message to screen
-	pop		si						; Restore SI
-	hlt								; Halt CPU
+	push    si
+	mov     si, szOverflow
+	call    safe_putString
+	pop     si
+	jmp     reboot_on_any_key
 
 _cpux_invalidop:
-	push	si
-	mov		si, szInvalidOpcode
-	call	safe_putString
-	pop		si
-	hlt
+	push    si
+	mov     si, szInvalidOpcode
+	call    safe_putString
+	pop     si
+	jmp     reboot_on_any_key
 
 ; INT 08 - PIT interrupt
 ;
@@ -1185,6 +1195,8 @@ _bios_interrupt1a:
     szNoBootDrive   db  "No bootable media found.", 0x0d, 0x0a, 0
     szNotBootable   db  "Warning: Boot signature missing.", 0x0d, 0x0a, 0
     szBootLoadFail  db  "Could not load boot sector.", 0x0d, 0x0a, 0
+
+	szAnyKeyPlease  db  "Hit any key to reboot.", 0x0d, 0x0a, 0
 
 	szCrLf          db  0x0d, 0x0a, 0
 
