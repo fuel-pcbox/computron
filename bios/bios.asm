@@ -1178,7 +1178,6 @@ _bios_interrupt1a:
 	szNoFloppies	db	"No floppy drives present.", 0x0d, 0x0a, 0
 
     szDivideByZero  db  "Divide by zero.", 0x0d, 0x0a, 0
-    szOutOfBounds   db  "Array index out of bounds.", 0x0d, 0x0a, 0
     szOverflow      db  "Overflow.", 0x0d, 0x0a, 0
 	szInvalidOpcode	db	"Invalid opcode.", 0x0d, 0x0a, 0
 
