@@ -211,6 +211,28 @@ _IMUL_RM8()
 }
 
 void
+_IMUL_reg16_RM16_imm8()
+{
+	byte rm = cpu_pfq_getbyte();
+	byte imm = cpu_pfq_getbyte();
+	sigword *p = cpu_rmptr( rm, 16 );
+	word *dest = treg16[rmreg(rm)];
+
+	*dest = (sigword) cpu_imul( *p, imm, 16 );
+
+	if( (*dest & 0xFF00) == 0x00 || (*dest & 0xFF00) == 0xFF )
+	{
+		cpu.CF = 0;
+		cpu.OF = 0;
+	}
+	else
+	{
+		cpu.CF = 1;
+		cpu.OF = 1;
+	}
+}
+
+void
 _IMUL_RM16()
 {
 	byte rm = cpu_rmbyte;

@@ -265,6 +265,7 @@ cpu_genmap()
 		cpu_addinstruction( 0x62, 0x62, _BOUND      );
 		cpu_addinstruction( 0x68, 0x68, _PUSH_imm16 );
 		cpu_addinstruction( 0x6A, 0x6A, _PUSH_imm8  );
+		cpu_addinstruction( 0x6B, 0x6B, _IMUL_reg16_RM16_imm8 );
 		cpu_addinstruction( 0xC0, 0xC0, _wrap_0xC0  );
 		cpu_addinstruction( 0xC1, 0xC1, _wrap_0xC1  );
 		cpu_addinstruction( 0xC8, 0xC8, _ENTER      );
