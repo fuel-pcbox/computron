@@ -32,7 +32,8 @@ vga_init()
 	memset( video_memory, 0, columns * rows * 2 );
 }
 
-void
+#ifdef VOMIT_DEBUG_VGA
+static void
 vga_dump()
 {
 	int i, j;
@@ -45,11 +46,14 @@ vga_dump()
 	}
 	fclose( scrot );
 }
+#endif
 
 void
 vga_kill()
 {
+#ifdef VOMIT_DEBUG_VGA
 	vga_dump();
+#endif
 }
 
 void
