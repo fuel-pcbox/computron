@@ -130,10 +130,6 @@ void vm_loadconf() {
 				drv_type[ldrv] = ltype;
                 drv_status[ldrv] = 1;
             }
-			else if(strcmp(curtok,"setflags")==0) {
-                curtok = strtok(NULL, " \t\n");
-                cpu_setflags((word)strtol(curtok, NULL, 16));
-            }
 			else if(strcmp(curtok,"cpu")==0) {
 				curtok = strtok(NULL, " \t\n");
 				cpu.type = (word)(strtol(curtok, NULL, 10));
