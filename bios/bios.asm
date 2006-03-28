@@ -455,11 +455,11 @@ _bios_find_bootdrv:
 	out		0xE6, ax
 	jnc		.end
 	mov		dl, 0x80
-	mov		ax, 1301
+	mov		ax, 0x1301
 	out		0xE6, ax
 	jnc		.end
 	mov		dl, 0x81
-	mov		ax, 1301
+	mov		ax, 0x1301
 	out		0xE6, ax
 	jnc		.end
 .error:
