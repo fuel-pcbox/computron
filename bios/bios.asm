@@ -1130,18 +1130,10 @@ _bios_interrupt17:
     iret
 
 _bios_interrupt1a:
-    cmp     ah, 0x00
+    or      ah, 0x00
     je      .getticks
-	cmp		ah, 0x01
-	je		.vmcall
-    cmp     ah, 0x02
-    je      .vmcall
-	cmp		ah, 0x03
-	je		.vmcall
-    cmp     ah, 0x04
-    je      .vmcall
-	cmp		ah, 0x05
-	je		.vmcall
+	cmp     ah, 0x05
+	jle     .vmcall
     push    ax
     mov     al, 0x1a
     out     0xE0, ax                ; VM call 0x00 - What the fuck is up?
