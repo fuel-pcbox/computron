@@ -322,6 +322,26 @@ _bios_setup_ints:
 	pop     ax
 	ret
 
+check_for_8086:
+	mov     al, 0xff
+	mov     cl, 0x80
+	shr     al, cl
+	ret
+
+check_for_80186:
+	pushf
+	pop    ax
+	and    ah, 0x0f
+	push   ax
+	popf
+	pushf
+	pop    ax
+	not    ah
+	test   ah, 0xf0
+	ret
+	
+	
+
 ; INITALIZE BIOS DATA AREA -----------------------------
 ;
 ;    This section sets various values in the BDA,
@@ -330,38 +350,44 @@ _bios_setup_ints:
 ;
 
 _bios_init_data:
-    push	ds
-    xor		ax, ax
-    mov		ds, ax
-	inc		ax									; VM call 66:0001 - Get VM info
-	out		0xE6, ax							; (AX receives it)
-.checkCPU:
-	cmp		bl, 0x00							; Check CPU type
-	je		.print8086
-	cmp		bl, 0x01
-	je		.print80186
-	mov		si, szUnknownCPU
+	push    ds
+	xor     ax, ax
+	mov     ds, ax
+
+	call    check_for_8086
+	je      .print8086
+
+	call    check_for_80186
+	je      .print80186
+
+	mov     si, szUnknownCPU
 .cCend:
-	call	safe_putString
-	mov		si, szCPU
-	call	safe_putString
-	jmp		.checkMem
+	call    safe_putString
+	mov     si, szCPU
+	call    safe_putString
+	jmp     .checkMem
+
 .print8086:
-	mov		si, sz8086
-	jmp		.cCend
+	mov     si, sz8086
+	jmp     .cCend
 .print80186:
-	mov		si, sz80186
-	jmp		.cCend
+	mov     si, sz80186
+	jmp     .cCend
 
 .checkMem:
-	call	print_integer
-	mov		si, szBaseMemory
-	call		safe_putString
+	mov     ax, 0x0001          ; Get the amount of memory in kB
+	out     0xE6, ax
+
+	call    print_integer
+
+	mov     si, szBaseMemory
+	call    safe_putString
 		
-	mov		word [0x0413], ax	; Store it.
-	mov		byte [0x0496], 0x0E	; 0x0E = CTRL & ALT depressed;
-						; 101/102 ext. kbd.
-	mov		byte [0x0417], 0x8F
+	mov     word [0x0413], ax   ; Store it.
+
+	mov     byte [0x0496], 0x0E ; 0x0E = CTRL & ALT depressed;
+	                            ; 101/102 ext. kbd.
+	mov     byte [0x0417], 0x8F
 
 ; EQUIPMENT LIST ---------------------------------------
 ;			                      v DMA (1 if not)
