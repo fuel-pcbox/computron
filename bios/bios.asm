@@ -544,7 +544,6 @@ _bios_interrupt10:					; BIOS Video Interrupt
 .getconf:
 	mov		bh, 0					; color mode
 	mov		bl, 0					; 64k EGA mem
-	add		sp, 2
 	iret	; we want to return in AX
 .scrollWindow
 	out		0xE7, al
