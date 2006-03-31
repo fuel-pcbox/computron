@@ -24,7 +24,7 @@ cpu_out (word port, word data, byte bits) {
 #ifdef VM_DEBUG
 	if( iopeek )
 	{
-		vlog( VM_IOMSG, "[%04X:%04X] cpu_out: %04X --> %04X", BCS, BIP, data, port );
+		vlog( VM_IOMSG, "[%04X:%04X] cpu_out: %04X --> %04X", cpu.base_CS, cpu.base_IP, data, port );
 	}
 #endif
 	switch(port) {
@@ -48,7 +48,7 @@ cpu_in( word port, byte bits )
 #ifdef VM_DEBUG
 	if( iopeek )
 	{
-		vlog( VM_IOMSG, "[%04X:%04X] cpu_in: %04X", BCS, BIP, port );
+		vlog( VM_IOMSG, "[%04X:%04X] cpu_in: %04X", cpu.base_CS, cpu.base_IP, port );
 	}
 #endif
 	return vm_ioh_in[port]( port, bits );

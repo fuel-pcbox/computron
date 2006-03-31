@@ -83,8 +83,6 @@ extern bool g_try_run;
 extern bool g_debug_step;
 extern bool g_break_pressed;
 
-extern word BCS, BIP;
-
 #include "8086.h"
 #include "186.h"
 #include "floppy.h"

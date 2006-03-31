@@ -4,6 +4,7 @@
  */
 
 #include "vomit.h"
+#include "debug.h"
 #include <unistd.h>
 #include <stdlib.h>
 
@@ -18,7 +19,7 @@ _HLT()
 	/* XXX: When halted, we're not really waiting for an interrupt.
 	 *      We should, though. */
 	cpu.state = CPU_HALTED;
-	vlog( VM_CPUMSG, "%04X:%04X Halted", BCS, BIP );
+	vlog( VM_CPUMSG, "%04X:%04X Halted", cpu.base_CS, cpu.base_IP );
 	if( g_try_run )
 	{
 		vm_kill();

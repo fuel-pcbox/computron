@@ -4,7 +4,6 @@
  */
 
 #include <stdlib.h>
-#include <stdio.h>
 
 #include "vomit.h"
 
@@ -35,7 +34,7 @@ mem_getbyte( word seg, word off )
 #ifdef VM_DEBUG
 	if( mempeek )
 	{
-		vlog( VM_MEMORYMSG, "%04X:%04X reading   BYTE at %08X", BCS, BIP, seg*16+off );
+		vlog( VM_MEMORYMSG, "%04X:%04X reading   BYTE at %08X", cpu.base_CS, cpu.base_IP, seg*16+off );
 	}
 #endif
 	return mem_space[(seg<<4)+off];
@@ -46,7 +45,7 @@ mem_getword( word seg, word off )
 #ifdef VM_DEBUG
 	if( mempeek )
 	{
-		vlog( VM_MEMORYMSG, "%04X:%04X reading   WORD at %08X", BCS, BIP, seg*16+off );
+		vlog( VM_MEMORYMSG, "%04X:%04X reading   WORD at %08X", cpu.base_CS, cpu.base_IP, seg*16+off );
 	}
 #endif
 #ifndef VM_EXPENDABLE
@@ -63,7 +62,7 @@ mem_setbyte( word seg, word off, byte b )
 #ifdef VM_DEBUG
 	if( mempeek )
 	{
-		vlog( VM_MEMORYMSG, "%04X:%04X writing   BYTE at %08X", BCS, BIP, seg*16+off );
+		vlog( VM_MEMORYMSG, "%04X:%04X writing   BYTE at %08X", cpu.base_CS, cpu.base_IP, seg*16+off );
 	}
 #endif
 	mem_space[(seg<<4)+off]=b;
@@ -74,7 +73,7 @@ mem_setword( word seg, word off, word w )
 #ifdef VM_DEBUG
 	if( mempeek )
 	{
-		vlog( VM_MEMORYMSG, "%04X:%04X writing   WORD at %08X", BCS, BIP, seg*16+off );
+		vlog( VM_MEMORYMSG, "%04X:%04X writing   WORD at %08X", cpu.base_CS, cpu.base_IP, seg*16+off );
 	}
 #endif
 #ifndef VM_EXPENDABLE

@@ -4,6 +4,7 @@
  */
 
 #include "vomit.h"
+#include "debug.h"
 
 void
 _INT_imm8()
@@ -46,7 +47,7 @@ int_call( byte isr )
 
 	if( trapint )
 	{
-		vlog( VM_CPUMSG, "%04X:%04X Interrupt %02X,%02X trapped", BCS, BIP, isr, cpu.regs.B.AH );
+		vlog( VM_CPUMSG, "%04X:%04X Interrupt %02X,%02X trapped", cpu.base_CS, cpu.base_IP, isr, cpu.regs.B.AH );
 	}
 
 	mem_push( cpu_getflags() );

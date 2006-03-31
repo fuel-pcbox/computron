@@ -97,6 +97,10 @@ typedef struct {
 	word IP;
 	byte type;
 	byte state;
+
+	word base_CS;
+	word base_IP;
+
 } vomit_cpu_t;
 
 extern vomit_cpu_t cpu;

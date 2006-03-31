@@ -16,7 +16,7 @@ _ESCAPE()
 	byte rm = cpu_pfq_getbyte();
 	(void) cpu_rmptr( rm, 16 );
 
-	vlog( VM_CPUMSG, "%04X:%04X FPU escape via %02X /%u", BCS, BIP, cpu_opcode, rmreg( rm ));
+	vlog( VM_CPUMSG, "%04X:%04X FPU escape via %02X /%u", cpu.base_CS, cpu.base_IP, cpu_opcode, rmreg( rm ));
 
 #if 0
 	/* 80286+: Coprocessor not available exception. */

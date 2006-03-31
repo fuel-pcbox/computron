@@ -4,6 +4,7 @@
  */
 
 #include "vomit.h"
+#include "debug.h"
 
 void
 _PUSH_reg16()
@@ -59,7 +60,7 @@ _PUSH_SS()
 void
 _POP_CS()
 {
-	vlog( VM_ALERT, "%04X:%04X Attempted either POP CS or 286+ instruction.", BCS, BIP );
+	vlog( VM_ALERT, "%04X:%04X Attempted either POP CS or 286+ instruction.", cpu.base_CS, cpu.base_IP );
 }
 void
 _POP_DS()

@@ -18,8 +18,6 @@ bool g_break_pressed = false;
 
 static bool exiting = 0;
 
-word BCS, BIP;
-
 #define FLAGARG( a, b ) else if( !strcmp( argv[1], a )) { b = true; argc--; argv++; }
 
 int

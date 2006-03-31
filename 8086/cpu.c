@@ -298,10 +298,13 @@ cpu_main()
 	for(;;) {
 #endif
 kontinue:
-		BCS = cpu.CS; BIP = cpu.IP;
-		if ( BCS != 0xF000 ) {
-			g_last_nonbios_CS = BCS;
-			g_last_nonbios_IP = BIP;
+		cpu.base_CS = cpu.CS;
+		cpu.base_IP = cpu.IP;
+
+		if( cpu.base_CS != 0xF000 )
+		{
+			g_last_nonbios_CS = cpu.base_CS;
+			g_last_nonbios_IP = cpu.base_IP;
 		}
 
 		cpu_opcode = cpu_pfq_getbyte();
@@ -496,6 +499,6 @@ _UNSUPP()
 {
 	/* We've come across an unsupported instruction, log it,
 	 * then vector to the "illegal instruction" ISR. */
-	vlog( VM_ALERT, "%04X:%04X: Unsupported opcode %02X", BCS, BIP, cpu_opcode );
+	vlog( VM_ALERT, "%04X:%04X: Unsupported opcode %02X", cpu.base_CS, cpu.base_IP, cpu_opcode );
 	int_call( 6 );
 }
