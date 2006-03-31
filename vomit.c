@@ -22,7 +22,7 @@ word BCS, BIP;
 
 #define FLAGARG( a, b ) else if( !strcmp( argv[1], a )) { b = true; argc--; argv++; }
 
-void
+int
 vomit_init( int argc, char **argv )
 {
 	const char *try_path = 0L;
@@ -82,6 +82,7 @@ vomit_init( int argc, char **argv )
 		cpu_jump( 0x1000, 0x0000 );
 		cpu.regs.W.SP = 0x1000;
 	}
+	return 0;
 }
 
 void vm_init() {
