@@ -144,6 +144,8 @@ safe_putString:
 	pop     ds
 	push    ax
 	push	bx
+
+	mov     bl, 0x02
 .nextchar:
 	lodsb
 	or      al, 0x00
@@ -188,6 +190,7 @@ print_integer:
 	push    dx
 	push    bp
 
+	mov     bx, 0x0002          ; Green on black
 	xor     bp, bp              ; BP keeps track of whether we've started output
 	mov     cx, 10000           ; Start with 10K digit
 
@@ -498,6 +501,8 @@ _bios_interrupt10:					; BIOS Video Interrupt
 	je		.setCursor
 	cmp		ah, 0x03
 	je		.getCursor
+	cmp     ah, 0x01
+	jz      .setCursorType
 	or      ah, 0x00
 	jz      .setVideoMode
 	cmp		ah, 0x06
@@ -527,6 +532,8 @@ _bios_interrupt10:					; BIOS Video Interrupt
 	jmp		vga_putc
 .setVideoMode:
 	jmp		vga_set_mode
+.setCursorType:
+	jmp     vga_set_cursor_type
 .setCursor:
 	call	vga_setcur
 	jmp		.end
@@ -655,17 +662,13 @@ vga_putc:
 ;
 ;    AL = Character to write
 ;    BH = Page number ( not implemented )
-;
-; Overrides:
-;    BL = Foreground pixel color, always 2(green) to indicate BIOS output
+;    BL = Foreground pixel color
 
 vga_ttyecho:
 	push	dx
 	push	es
 	push	di
 	push	ax
-
-	mov     bl, 0x02
 
 	mov		ax, 0xb800				; Point ES to video memory for STOS access.
 	mov		es, ax
@@ -768,6 +771,55 @@ vga_ttyecho:
 	
 	iret
 
+; INT 10,01 - Set cursor type
+;
+;    Sets the starting and ending scanline of the cursor
+;
+; Parameters:
+;
+;    CH = cursor starting scan line (cursor top) (low order 5 bits)
+;    CL = cursor ending scan line (cursor bottom) (low order 5 bits)
+;
+; BDA information:
+;
+;    Writes CX to BDA:60
+
+vga_set_cursor_type:
+
+	push    ax
+	push    cx
+	push    dx
+
+	and     cx, 0x1f1f                      ; Mask 5 LSB's of CH and CL
+
+	mov     dx, 0x3d4                       ; Select register
+	mov     al, 0x0a                        ; Starting scanline
+	out     dx, al
+
+	inc     dx
+	mov     al, ch
+	out     dx, al
+
+	dec     dx                              ; Select register
+	mov     al, 0x0b                        ; End scanline
+	out     dx, al
+
+	inc     dx
+	mov     al, cl
+	out     dx, al
+
+	mov     ax, ds
+	xor     dx, dx
+	mov     ds, dx
+	mov     word [0x460], cx
+	mov     ds, ax
+
+	pop     dx
+	pop     cx
+	pop     ax
+
+	iret
+
 ; vga_load_cursor
 ;
 ;    Reads the current VGA cursor location from 6845.
@@ -818,36 +870,41 @@ vga_store_cursor:
 	ret
 
 vga_setcur:
-	push	dx
-	push	ax
+	push    ax
+	push    dx
 
-	xor		ah, ah
-	mov		al, dh
-	mov		dh, 80
-	mul		byte dh				; AX = row offset
-	xor		dh, dh
-	add		ax, dx
+	xor     ah, ah
+	mov     al, dh
+	mov     dh, 80
+	mul     byte dh				; AX = row offset
+	xor     dh, dh
+	add     ax, dx
 
-	call	vga_store_cursor
+	call    vga_store_cursor
 	
-	pop		ax
-	pop		dx
+	pop     dx
+	pop     ax
 	ret
 	
 vga_getcur:
-	push	ax
-	call	vga_load_cursor
+	push    ax
+	call    vga_load_cursor
 	
-	mov		cl, 80
-	div		cl
-	mov		dh, al
-	mov		dl, ah
+	mov     cl, 80
+	div     cl
+	mov     dh, al
+	mov     dl, ah
 
-	; CH/CL is supposed to hold cursor scanlines.
-	; We return 0 for now.
-	xor		cx, cx
+	mul     byte dh                 ; AX = row offset
 
-	pop		ax
+	mov     ax, ds                  ; Point DS to BIOS Data Area
+	xor     cx, cx
+	mov     ds, cx
+
+	mov     cx, [0x460]             ; Get cursor size from BDA:60
+	mov     ds, ax
+
+	pop     ax
 	
 	ret
 
@@ -917,9 +974,9 @@ _bios_interrupt13:
 	jmp     .end
 .getDiskStatus:
     push	ds
-	mov     ax, 0x0040
+	xor     ax, ax
 	mov		ds, ax
-	mov		al, [0x0041]
+	mov		al, [0x0441]
 	pop		ds
     jmp     .end
 .readSectors:
