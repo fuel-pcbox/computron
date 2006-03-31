@@ -20,8 +20,8 @@ static void video_display_combination();
 static word columns();
 static byte rows();
 static void store_cursor( word cursor );
-static void load_cursor( byte *row, byte *column );
 static word load_cursor_word();
+void load_cursor( byte *row, byte *column );
 
 void
 video_bios_init()
@@ -35,6 +35,13 @@ video_bios_init()
 
 	/* 25 rows */
 	mem_space[0x484] = 25;
+
+	/* Cursor type */
+	mem_space[0x460] = 0x0E;
+	mem_space[0x461] = 0x0D;
+
+	vga_write_register( 0x0A, 0x0D );
+	vga_write_register( 0x0B, 0x0E );
 }
 
 void
@@ -272,7 +279,18 @@ video_subsystem_configuration()
 void
 set_cursor_type()
 {
-	vlog( VM_VIDEOMSG, "Cursor set: %u to %u%s", cpu.regs.B.CH, cpu.regs.B.CL, cpu.regs.W.CX == 0x2000 ? " (disabled)" : "" );
+	byte start, end;
+
+	start = cpu.regs.B.CH & 0x1F;
+	end = cpu.regs.B.CL & 0x1F;
+
+	vlog( VM_VIDEOMSG, "Cursor set: %u to %u%s", start, end, cpu.regs.W.CX == 0x2000 ? " (disabled)" : "" );
+
+	vga_write_register( 0x0A, start );
+	vga_write_register( 0x0B, end );
+
+	mem_space[0x460] = end;
+	mem_space[0x461] = start;
 }
 
 byte
