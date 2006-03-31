@@ -69,6 +69,14 @@ void dump_try();
 void dump_ivt();
 void dump_mem(word,word,byte);
 
+void dma_init();
+void fdc_init();
+
+void video_bios_init();
+void load_cursor( byte *row, byte *column );
+
+int vomit_init( int, char ** );
+
 extern bool disklog, trapint, iopeek, mempeek, callpeek;
 
 extern bool g_try_run;

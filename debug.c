@@ -39,13 +39,16 @@ vlog( int category, const char *format, ... )
 	if( prefix )
 	{
 		fprintf( logfile, "(%8s) ", prefix );
+		printf( "(%8s) ", prefix );
 	}
 
 	va_start( ap, format );
 	vfprintf( logfile, format, ap );
+	vprintf( format, ap );
 	va_end( ap );
 
 	fputc( '\n', logfile );
+	puts( "" );
 
 	fclose( logfile );
 }

@@ -6,6 +6,8 @@
 
 #include "vomit.h"
 
+#ifdef VOMIT_CURSES
+
 #include <string.h>
 #include <stdlib.h>
 #include <curses.h>
@@ -278,3 +280,11 @@ ui_kill()
 	ui_visible = false;
 }
 
+#else
+
+void ui_init() {}
+void ui_show() {}
+void ui_kill() {}
+void ui_sync() {}
+
+#endif

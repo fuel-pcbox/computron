@@ -294,32 +294,39 @@ cpu_main()
 #ifndef VM_NOPFQ
 	cpu_pfq_flush();
 #endif
+#ifdef VOMIT_FOREVER
 	for(;;) {
-		cpu_opcode = cpu_pfq_getbyte();
-		cpu_optable[cpu_opcode]();	/* Call instruction handler. */
-
-		BCS = cpu.CS; BIP = cpu.IP - 1;
+#endif
+kontinue:
+		BCS = cpu.CS; BIP = cpu.IP;
 		if ( BCS != 0xF000 ) {
 			g_last_nonbios_CS = BCS;
 			g_last_nonbios_IP = BIP;
 		}
+
+		cpu_opcode = cpu_pfq_getbyte();
+		cpu_optable[cpu_opcode]();	/* Call instruction handler. */
+
 		if( g_debug_step )
 		{
 			vm_debug();
 			if( g_debug_step )
-				continue;
-			ui_show();
+				goto kontinue;
+//			ui_show();
 		}
 
+#if 0
 		if( g_break_pressed )
 		{
 			ui_kill();
+			vm_exit( 0 );
 			vm_debug();
 			if( !g_debug_step )
 				ui_show();
 			g_break_pressed = false;
 			/* TODO: int_call( 9 ); */
 		}
+#endif
 
 		if( cpu.TF )
 		{
@@ -344,7 +351,9 @@ cpu_main()
 				int_call( 8 );
 			}
 		}
+#ifdef VOMIT_FOREVER
     }
+#endif
 }
 
 byte cpu_pfq_getbyte() { /* Get byte from prefetch queue and let new ops in. Modifies IP+1 */
