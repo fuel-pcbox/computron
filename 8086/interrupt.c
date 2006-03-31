@@ -49,14 +49,6 @@ int_call( byte isr )
 		vlog( VM_CPUMSG, "%04X:%04X Interrupt %02X,%02X trapped", BCS, BIP, isr, cpu.regs.B.AH );
 	}
 
-	/* XXX: VGA BIOS is currently residing in C land for... convenience.
-	 *      I realize this breaks anything that relies on hooking. */
-	if( isr == 0x10 )
-	{
-		bios_interrupt10();
-		return;
-	}
-
 	mem_push( cpu_getflags() );
 	cpu.IF = 0;
 	cpu.TF = 0;
