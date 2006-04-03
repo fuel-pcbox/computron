@@ -60,7 +60,6 @@ cpu_static_flags()
 	switch( cpu.type )
 	{
 		case INTEL_8086:
-			return 0x7002;
 		case INTEL_80186:
 			return 0xF002;
 	}
