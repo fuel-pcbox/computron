@@ -22,7 +22,7 @@ private:
 	Keyboard();
 	~Keyboard();
 
-	static Keyboard *s_instance;
+	static Keyboard *s_self;
 	void keyPressEvent( QKeyEvent *e );
 	void keyReleaseEvent( QKeyEvent *e );
 

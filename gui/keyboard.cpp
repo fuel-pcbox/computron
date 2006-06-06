@@ -2,7 +2,7 @@
 
 #include "keyboard.h"
 
-Keyboard *Keyboard::s_instance = 0L;
+Keyboard *Keyboard::s_self = 0L;
 
 QMap<int, word> normals;
 QMap<int, word> shifts;
@@ -21,12 +21,12 @@ addKey( int key, word normal, word shift, word ctrl, word alt )
 void
 Keyboard::init()
 {
-	if( s_instance != 0L )
+	if( s_self != 0L )
 	{
 		return;
 	}
 
-	s_instance = new Keyboard;
+	s_self = new Keyboard;
 
 	addKey( Qt::Key_A, 0x1E61, 0x1E41, 0x1E01, 0x1E00 );
 	addKey( Qt::Key_B, 0x3062, 0x3042, 0x3002, 0x3000 );
@@ -98,7 +98,7 @@ Keyboard::init()
 	addKey( Qt::Key_PageUp, 0x4900, 0x4B34, 0x7300, 0x9B00 );
 	addKey( Qt::Key_PageDown, 0x5100, 0x5133, 0x7600, 0xA100 );
 
-	s_instance->grabKeyboard();
+	s_self->grabKeyboard();
 }
 
 word
@@ -143,8 +143,8 @@ Keyboard::keyReleaseEvent( QKeyEvent *e )
 word
 Keyboard::nextKey()
 {
-	if( !s_instance->m_keyQueue.isEmpty() )
-		return s_instance->m_keyQueue.dequeue();
+	if( !s_self->m_keyQueue.isEmpty() )
+		return s_self->m_keyQueue.dequeue();
 
 	return 0;
 }
@@ -152,8 +152,8 @@ Keyboard::nextKey()
 word
 Keyboard::peekKey()
 {
-	if( !s_instance->m_keyQueue.isEmpty() )
-		return s_instance->m_keyQueue.head();
+	if( !s_self->m_keyQueue.isEmpty() )
+		return s_self->m_keyQueue.head();
 
 	return 0;
 }
