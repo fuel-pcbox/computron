@@ -1,6 +1,7 @@
 #ifndef __vomit_h__
 #define __vomit_h__
 
+#include <stdint.h>
 #include <stdbool.h>
 
 #define MAX_FILESIZE	524288		/* 512kB is max "loadfile" size */
@@ -28,12 +29,12 @@
 #define VM_DMAMSG       119
 #define VM_FDCMSG       120
 
-typedef unsigned char byte;
-typedef unsigned short int word;
-typedef unsigned long int dword;
-typedef signed char sigbyte;
-typedef signed short int sigword;
-typedef signed long int sigdword;
+typedef uint8_t byte;
+typedef uint16_t word;
+typedef uint32_t dword;
+typedef int8_t sigbyte;
+typedef int16_t sigword;
+typedef int32_t sigdword;
 
 typedef void (*tfunctab) ();
 typedef void *(*tvptrfunctab) ();
