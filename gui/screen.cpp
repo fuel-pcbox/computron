@@ -1,5 +1,6 @@
 #include "screen.h"
 #include <QPainter>
+#include <QApplication>
 
 typedef struct {
   byte data[16];
@@ -49,6 +50,8 @@ Screen::putCharacter( QPainter &p, int row, int column, byte color, byte c )
 
 	p.setBackground( m_brush[color >> 4] );
 
+	p.eraseRect( x, y, m_characterWidth, m_characterHeight );
+
 	// Text
 	p.setPen( m_color[color & 0xF] );
 	p.drawPixmap( x, y, m_character[c] );
@@ -59,8 +62,6 @@ Screen::paintEvent( QPaintEvent *e )
 {
 	(void) e;
 	QPainter p( this );
-
-	p.setBackgroundMode( Qt::OpaqueMode );
 
 	//synchronizeFont();
 
