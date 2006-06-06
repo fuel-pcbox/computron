@@ -44,6 +44,8 @@ vlog( int category, const char *format, ... )
 
 	va_start( ap, format );
 	vfprintf( logfile, format, ap );
+	va_end( ap );
+	va_start( ap, format );
 	vprintf( format, ap );
 	va_end( ap );
 
