@@ -34,27 +34,9 @@ _POP_RM16()
 }
 
 void
-_PUSH_CS()
+_PUSH_seg()
 {
-	mem_push( cpu.CS );
-}
-
-void
-_PUSH_DS()
-{
-	mem_push( cpu.DS );
-}
-
-void
-_PUSH_ES()
-{
-	mem_push( cpu.ES );
-}
-
-void
-_PUSH_SS()
-{
-	mem_push( cpu.SS );
+	mem_push( *tseg[rmreg(cpu_opcode)] );
 }
 
 void
@@ -63,21 +45,9 @@ _POP_CS()
 	vlog( VM_ALERT, "%04X:%04X Attempted either POP CS or 286+ instruction.", cpu.base_CS, cpu.base_IP );
 }
 void
-_POP_DS()
+_POP_seg()
 {
-	cpu.DS = mem_pop();
-}
-
-void
-_POP_ES()
-{
-	cpu.ES = mem_pop();
-}
-
-void
-_POP_SS()
-{
-	cpu.SS = mem_pop();
+	*tseg[rmreg(cpu_opcode)] = mem_pop();
 }
 
 void

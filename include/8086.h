@@ -323,17 +323,12 @@ void _TEST_AX_imm16();
 void _TEST_AL_imm8();
 
 void _PUSH_reg16();
-void _PUSH_CS();
-void _PUSH_DS();
-void _PUSH_ES();
-void _PUSH_SS();
+void _PUSH_seg();
 void _PUSHF();
 
 void _POP_reg16();
+void _POP_seg();
 void _POP_CS();
-void _POP_DS();
-void _POP_ES();
-void _POP_SS();
 void _POPF();
 
 void _LAHF();
