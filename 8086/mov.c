@@ -74,7 +74,6 @@ _MOV_reg16_RM16() {
 	byte rm = cpu_pfq_getbyte();
 	word *p = cpu_rmptr(rm, 16);
 	*treg16[rmreg(rm)] = *p;
-	return;
 }
 
 void _MOV_reg8_imm8() { *treg8[cpu_opcode&7] = cpu_pfq_getbyte(); }

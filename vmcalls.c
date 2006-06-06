@@ -41,7 +41,6 @@ vm_call8 (word port, byte data)
 		}
 		break;
     }
-    return;
 }
 
 void
@@ -62,7 +61,6 @@ vm_call16 (word port, word data)
 		}
 		break;
 	}
-	return;
 }
 
 void
