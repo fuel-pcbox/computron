@@ -8,7 +8,7 @@
 
 #include "vomit.h"
 
-static byte parity_table[0x100] = {
+static const byte parity_table[0x100] = {
 	1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
 	0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
 	0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
@@ -63,4 +63,5 @@ cpu_static_flags()
 		case INTEL_80186:
 			return 0xF002;
 	}
+	return 0x0000;
 }
