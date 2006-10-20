@@ -1,5 +1,6 @@
 #include "vomit.h"
 #include "debug.h"
+#include <stdlib.h>
 
 #define DEFAULT_TO_SS if( cpu.CurrentSegment == &cpu.SegmentPrefix ) { segment = *cpu.CurrentSegment; } else { segment = cpu.SS; }
 static void *s_last_modrm_ptr = 0L;
@@ -59,14 +60,14 @@ modrm_resolve( byte rmbyte, byte bits )
 		case 0xC0:
 			switch( rmbyte & 0x07 )
 			{
-				case 0: s_last_modrm_ptr = (bits == 8) ? &cpu.regs.B.AL : &cpu.regs.W.AX; break;
-				case 1: s_last_modrm_ptr = (bits == 8) ? &cpu.regs.B.CL : &cpu.regs.W.CX; break;
-				case 2: s_last_modrm_ptr = (bits == 8) ? &cpu.regs.B.DL : &cpu.regs.W.DX; break;
-				case 3: s_last_modrm_ptr = (bits == 8) ? &cpu.regs.B.BL : &cpu.regs.W.BX; break;
-				case 4: s_last_modrm_ptr = (bits == 8) ? &cpu.regs.B.AH : &cpu.regs.W.SP; break;
-				case 5: s_last_modrm_ptr = (bits == 8) ? &cpu.regs.B.CH : &cpu.regs.W.BP; break;
-				case 6: s_last_modrm_ptr = (bits == 8) ? &cpu.regs.B.DH : &cpu.regs.W.SI; break;
-				case 7: s_last_modrm_ptr = (bits == 8) ? &cpu.regs.B.BH : &cpu.regs.W.DI; break;
+				case 0: s_last_modrm_ptr = (bits == 8) ? (void *)&cpu.regs.B.AL : &cpu.regs.W.AX; break;
+				case 1: s_last_modrm_ptr = (bits == 8) ? (void *)&cpu.regs.B.CL : &cpu.regs.W.CX; break;
+				case 2: s_last_modrm_ptr = (bits == 8) ? (void *)&cpu.regs.B.DL : &cpu.regs.W.DX; break;
+				case 3: s_last_modrm_ptr = (bits == 8) ? (void *)&cpu.regs.B.BL : &cpu.regs.W.BX; break;
+				case 4: s_last_modrm_ptr = (bits == 8) ? (void *)&cpu.regs.B.AH : &cpu.regs.W.SP; break;
+				case 5: s_last_modrm_ptr = (bits == 8) ? (void *)&cpu.regs.B.CH : &cpu.regs.W.BP; break;
+				case 6: s_last_modrm_ptr = (bits == 8) ? (void *)&cpu.regs.B.DH : &cpu.regs.W.SI; break;
+				case 7: s_last_modrm_ptr = (bits == 8) ? (void *)&cpu.regs.B.BH : &cpu.regs.W.DI; break;
 			}
 			break;
 	}
