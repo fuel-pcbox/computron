@@ -346,14 +346,14 @@ void
 _NOT_RM8()
 {
 	byte value = modrm_read8( cpu_rmbyte );
-	modrm_update8( cpu_rmbyte, ~value );
+	modrm_update8( ~value );
 }
 
 void
 _NOT_RM16()
 {
 	word value = modrm_read16( cpu_rmbyte );
-	modrm_update16( cpu_rmbyte, ~value );
+	modrm_update16( ~value );
 }
 
 void
@@ -362,7 +362,7 @@ _NEG_RM8()
 	byte value = modrm_read8( cpu_rmbyte );
 	byte old = value;
 	value = -value;
-	modrm_update8( cpu_rmbyte, value );
+	modrm_update8( value );
 	cpu.CF = ( old != 0 );
 	cpu_updflags( value, 8 );
 	cpu.OF = ((
@@ -378,7 +378,7 @@ _NEG_RM16()
 	word value = modrm_read16( cpu_rmbyte );
 	word old = value;
 	value = -value;
-	modrm_update16( cpu_rmbyte, value );
+	modrm_update16( value );
 	cpu.CF = ( old != 0 );
 	cpu_updflags( value, 16 );
 	cpu.OF = ((

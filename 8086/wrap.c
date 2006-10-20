@@ -70,13 +70,13 @@ _wrap_0xC0()
 
 	switch( rmreg(rm) )
 	{
-		case 0: modrm_update8( rm, cpu_rol( value, imm, 8 )); break;
-		case 1: modrm_update8( rm, cpu_ror( value, imm, 8 )); break;
-		case 2: modrm_update8( rm, cpu_rcl( value, imm, 8 )); break;
-		case 3: modrm_update8( rm, cpu_rcr( value, imm, 8 )); break;
-		case 4: modrm_update8( rm, cpu_shl( value, imm, 8 )); break;
-		case 5: modrm_update8( rm, cpu_shr( value, imm, 8 )); break;
-		case 7: modrm_update8( rm, cpu_sar( value, imm, 8 )); break;
+		case 0: modrm_update8( cpu_rol( value, imm, 8 )); break;
+		case 1: modrm_update8( cpu_ror( value, imm, 8 )); break;
+		case 2: modrm_update8( cpu_rcl( value, imm, 8 )); break;
+		case 3: modrm_update8( cpu_rcr( value, imm, 8 )); break;
+		case 4: modrm_update8( cpu_shl( value, imm, 8 )); break;
+		case 5: modrm_update8( cpu_shr( value, imm, 8 )); break;
+		case 7: modrm_update8( cpu_sar( value, imm, 8 )); break;
 		default: vlog( VM_ALERT, "C0 /%d not wrapped", rmreg( rm ));
 	}
 }
@@ -90,13 +90,13 @@ _wrap_0xC1()
 
 	switch( rmreg(rm) )
 	{
-		case 0: modrm_update16( rm, cpu_rol( value, imm, 16)); break;
-		case 1: modrm_update16( rm, cpu_ror( value, imm, 16)); break;
-		case 2: modrm_update16( rm, cpu_rcl( value, imm, 16)); break;
-		case 3: modrm_update16( rm, cpu_rcr( value, imm, 16)); break;
-		case 4: modrm_update16( rm, cpu_shl( value, imm, 16)); break;
-		case 5: modrm_update16( rm, cpu_shr( value, imm, 16)); break;
-		case 7: modrm_update16( rm, cpu_sar( value, imm, 16)); break;
+		case 0: modrm_update16( cpu_rol( value, imm, 16)); break;
+		case 1: modrm_update16( cpu_ror( value, imm, 16)); break;
+		case 2: modrm_update16( cpu_rcl( value, imm, 16)); break;
+		case 3: modrm_update16( cpu_rcr( value, imm, 16)); break;
+		case 4: modrm_update16( cpu_shl( value, imm, 16)); break;
+		case 5: modrm_update16( cpu_shr( value, imm, 16)); break;
+		case 7: modrm_update16( cpu_sar( value, imm, 16)); break;
 		default: vlog( VM_ALERT, "C1 /%d not wrapped", rmreg( rm ));
 	}
 }
@@ -109,13 +109,13 @@ _wrap_0xD0()
 
 	switch( rmreg(rm) )
 	{
-		case 0: modrm_update8( rm, cpu_rol( value, 1, 8 )); break;
-		case 1: modrm_update8( rm, cpu_ror( value, 1, 8 )); break;
-		case 2: modrm_update8( rm, cpu_rcl( value, 1, 8 )); break;
-		case 3: modrm_update8( rm, cpu_rcr( value, 1, 8 )); break;
-		case 4: modrm_update8( rm, cpu_shl( value, 1, 8 )); break;
-		case 5: modrm_update8( rm, cpu_shr( value, 1, 8 )); break;
-		case 7: modrm_update8( rm, cpu_sar( value, 1, 8 )); break;
+		case 0: modrm_update8( cpu_rol( value, 1, 8 )); break;
+		case 1: modrm_update8( cpu_ror( value, 1, 8 )); break;
+		case 2: modrm_update8( cpu_rcl( value, 1, 8 )); break;
+		case 3: modrm_update8( cpu_rcr( value, 1, 8 )); break;
+		case 4: modrm_update8( cpu_shl( value, 1, 8 )); break;
+		case 5: modrm_update8( cpu_shr( value, 1, 8 )); break;
+		case 7: modrm_update8( cpu_sar( value, 1, 8 )); break;
 		default: vlog( VM_ALERT, "D0 /%d not wrapped", rmreg( rm ));
 	}
 }
@@ -128,13 +128,13 @@ _wrap_0xD1()
 
 	switch( rmreg(rm) )
 	{
-		case 0: modrm_update16( rm, cpu_rol( value, 1, 16 )); break;
-		case 1: modrm_update16( rm, cpu_ror( value, 1, 16 )); break;
-		case 2: modrm_update16( rm, cpu_rcl( value, 1, 16 )); break;
-		case 3: modrm_update16( rm, cpu_rcr( value, 1, 16 )); break;
-		case 4: modrm_update16( rm, cpu_shl( value, 1, 16 )); break;
-		case 5: modrm_update16( rm, cpu_shr( value, 1, 16 )); break;
-		case 7: modrm_update16( rm, cpu_sar( value, 1, 16 )); break;
+		case 0: modrm_update16( cpu_rol( value, 1, 16 )); break;
+		case 1: modrm_update16( cpu_ror( value, 1, 16 )); break;
+		case 2: modrm_update16( cpu_rcl( value, 1, 16 )); break;
+		case 3: modrm_update16( cpu_rcr( value, 1, 16 )); break;
+		case 4: modrm_update16( cpu_shl( value, 1, 16 )); break;
+		case 5: modrm_update16( cpu_shr( value, 1, 16 )); break;
+		case 7: modrm_update16( cpu_sar( value, 1, 16 )); break;
 		default: vlog( VM_ALERT, "D1 /%d not wrapped", rmreg( rm ));
 	}
 }
@@ -147,13 +147,13 @@ _wrap_0xD2()
 
 	switch( rmreg(rm) )
 	{
-		case 0: modrm_update8( rm, cpu_rol( value, cpu.regs.B.CL, 8 )); break;
-		case 1: modrm_update8( rm, cpu_ror( value, cpu.regs.B.CL, 8 )); break;
-		case 2: modrm_update8( rm, cpu_rcl( value, cpu.regs.B.CL, 8 )); break;
-		case 3: modrm_update8( rm, cpu_rcr( value, cpu.regs.B.CL, 8 )); break;
-		case 4: modrm_update8( rm, cpu_shl( value, cpu.regs.B.CL, 8 )); break;
-		case 5: modrm_update8( rm, cpu_shr( value, cpu.regs.B.CL, 8 )); break;
-		case 7: modrm_update8( rm, cpu_sar( value, cpu.regs.B.CL, 8 )); break;
+		case 0: modrm_update8( cpu_rol( value, cpu.regs.B.CL, 8 )); break;
+		case 1: modrm_update8( cpu_ror( value, cpu.regs.B.CL, 8 )); break;
+		case 2: modrm_update8( cpu_rcl( value, cpu.regs.B.CL, 8 )); break;
+		case 3: modrm_update8( cpu_rcr( value, cpu.regs.B.CL, 8 )); break;
+		case 4: modrm_update8( cpu_shl( value, cpu.regs.B.CL, 8 )); break;
+		case 5: modrm_update8( cpu_shr( value, cpu.regs.B.CL, 8 )); break;
+		case 7: modrm_update8( cpu_sar( value, cpu.regs.B.CL, 8 )); break;
 		default: vlog( VM_ALERT, "D2 /%d not wrapped", rmreg( rm ));
 	}
 }
@@ -166,13 +166,13 @@ _wrap_0xD3()
 
 	switch( rmreg(rm) )
 	{
-		case 0: modrm_update16( rm, cpu_rol( value, cpu.regs.B.CL, 16 )); break;
-		case 1: modrm_update16( rm, cpu_ror( value, cpu.regs.B.CL, 16 )); break;
-		case 2: modrm_update16( rm, cpu_rcl( value, cpu.regs.B.CL, 16 )); break;
-		case 3: modrm_update16( rm, cpu_rcr( value, cpu.regs.B.CL, 16 )); break;
-		case 4: modrm_update16( rm, cpu_shl( value, cpu.regs.B.CL, 16 )); break;
-		case 5: modrm_update16( rm, cpu_shr( value, cpu.regs.B.CL, 16 )); break;
-		case 7: modrm_update16( rm, cpu_sar( value, cpu.regs.B.CL, 16 )); break;
+		case 0: modrm_update16( cpu_rol( value, cpu.regs.B.CL, 16 )); break;
+		case 1: modrm_update16( cpu_ror( value, cpu.regs.B.CL, 16 )); break;
+		case 2: modrm_update16( cpu_rcl( value, cpu.regs.B.CL, 16 )); break;
+		case 3: modrm_update16( cpu_rcr( value, cpu.regs.B.CL, 16 )); break;
+		case 4: modrm_update16( cpu_shl( value, cpu.regs.B.CL, 16 )); break;
+		case 5: modrm_update16( cpu_shr( value, cpu.regs.B.CL, 16 )); break;
+		case 7: modrm_update16( cpu_sar( value, cpu.regs.B.CL, 16 )); break;
 		default: vlog( VM_ALERT, "D3 /%d not wrapped", rmreg( rm ));
 	}
 }
@@ -230,14 +230,14 @@ _wrap_0xFE()
 			i++;
 			cpu_setAF( i, value, 1 );
 			cpu_updflags(i, 8);
-			modrm_update8( rm, value + 1 );
+			modrm_update8( value + 1 );
 			break;
 		case 1:
 			cpu.OF = i == 0;
 			i--;
 			cpu_setAF( i, value, 1 );
 			cpu_updflags(i, 8);
-			modrm_update8( rm, value - 1 );
+			modrm_update8( value - 1 );
 			break;
 		default:
 			vlog( VM_ALERT, "FE /%d not wrapped", rmreg( rm ));

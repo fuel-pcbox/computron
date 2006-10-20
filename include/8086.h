@@ -167,8 +167,8 @@ word modrm_read16( byte );
 dword modrm_read32( byte );
 void modrm_write8( byte, byte );
 void modrm_write16( byte, word );
-void modrm_update8( byte, byte );
-void modrm_update16( byte, word );
+void modrm_update8( byte );
+void modrm_update16( word );
 
 void mem_init();
 void mem_kill();

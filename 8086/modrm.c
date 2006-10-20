@@ -4,12 +4,14 @@
 
 #define DEFAULT_TO_SS if( cpu.CurrentSegment == &cpu.SegmentPrefix ) { segment = *cpu.CurrentSegment; } else { segment = cpu.SS; }
 static void *s_last_modrm_ptr = 0L;
+static byte s_last_rmbyte;
 
 void *
 modrm_resolve( byte rmbyte, byte bits )
 {
 	word segment = *cpu.CurrentSegment;
 	word offset = 0x0000;
+	s_last_rmbyte = rmbyte;
 
 	switch( rmbyte & 0xC0 )
 	{
@@ -109,10 +111,10 @@ modrm_read8( byte rmbyte )
 }
 
 void
-modrm_update16( byte rmbyte, word data )
+modrm_update16( word data )
 {
 	byte *rmp = s_last_modrm_ptr;
-	if( MODRM_ISREG( rmbyte ))
+	if( MODRM_ISREG( s_last_rmbyte ))
 	{
 		*((word *)rmp) = data;
 		return;
@@ -122,12 +124,8 @@ modrm_update16( byte rmbyte, word data )
 }
 
 void
-modrm_update8( byte rmbyte, byte data )
+modrm_update8( byte data )
 {
-	/* FIXME: We don't really need rmbyte here. But it'd look weird
-	 *        with different semantics for update8 and update16.
-	 *        Macro it away? */
-	(void) rmbyte;
 	*((byte *)s_last_modrm_ptr) = data;
 }
 

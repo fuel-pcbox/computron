@@ -162,7 +162,7 @@ _XCHG_reg8_RM8()
 	byte value = modrm_read8( rm );
 	byte tmp = *treg8[rmreg(rm)];
 	*treg8[rmreg(rm)] = value;
-	modrm_update8( rm, tmp );
+	modrm_update8( tmp );
 }
 
 void
@@ -173,7 +173,7 @@ _XCHG_reg16_RM16()
 	word value = modrm_read16( rm );
 	word tmp = *treg16[rmreg(rm)];
 	*treg16[rmreg(rm)] = value;
-	modrm_update16( rm, tmp );
+	modrm_update16( tmp );
 }
 
 void
@@ -217,7 +217,7 @@ _INC_RM16()
 	i++;
 	cpu_setAF( i, value, 1 );
 	cpu_updflags(i, 16);
-	modrm_update16( cpu_rmbyte, value + 1 );
+	modrm_update16( value + 1 );
 }
 
 void
@@ -233,7 +233,7 @@ _DEC_RM16()
 	i--;
 	cpu_setAF( i, value, 1 ); // XXX: i can be (dword)(-1)...
 	cpu_updflags(i, 16);
-	modrm_update16( cpu_rmbyte, value - 1 );
+	modrm_update16( value - 1 );
 }
 
 word
