@@ -9,8 +9,8 @@
 typedef byte (*tintab) (word);
 typedef void (*touttab) (word, byte);
 
-tintab vm_ioh_in[0xFFFF];
-touttab vm_ioh_out[0xFFFF];
+tintab vm_ioh_in[0x10000];
+touttab vm_ioh_out[0x10000];
 
 void
 _OUT_imm8_AL()
