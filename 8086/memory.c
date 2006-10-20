@@ -48,10 +48,10 @@ mem_getword( word seg, word off )
 		vlog( VM_MEMORYMSG, "%04X:%04X reading   WORD at %08X", cpu.base_CS, cpu.base_IP, seg*16+off );
 	}
 #endif
-#ifndef VM_EXPENDABLE
-	if( off == 0xffff )
+
+#ifdef VOMIT_CORRECTNESS
+	if( off == 0xFFFF )
 		return mem_space[(seg<<4)+off] + (mem_space[seg<<4]<<8);
-	else
 #endif
 	return mem_space[(seg<<4)+off] + (mem_space[(seg<<4)+off+1]<<8);
 }
@@ -76,18 +76,15 @@ mem_setword( word seg, word off, word w )
 		vlog( VM_MEMORYMSG, "%04X:%04X writing   WORD at %08X", cpu.base_CS, cpu.base_IP, seg*16+off );
 	}
 #endif
-#ifndef VM_EXPENDABLE
-	if( off==0xFFFF )
+
+#ifdef VOMIT_CORRECTNESS
+	if( off == 0xFFFF )
 	{
 		mem_space[(seg<<4)+off]=(byte)w; mem_space[seg<<4]=(byte)(w>>8);
+		return;
 	}
-	else
-	{
 #endif
 	mem_space[(seg<<4)+off]=(byte)w; mem_space[(seg<<4)+off+1]=(byte)(w>>8);
-#ifndef VM_EXPENDABLE
-	}
-#endif
 }
 
 void
