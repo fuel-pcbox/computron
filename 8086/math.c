@@ -277,9 +277,9 @@ _DIV_RM16()
 
 	if( value == 0 )
 	{
-		/* See above. */
+		/* Exceptions return to offending IP */
 		cpu.IP = offend - 2;
-		int_call(0x00);
+		int_call( 0 );
 		return;
 	}
 	cpu.regs.W.AX = (word)(tDXAX / value); /* Quote      */
@@ -292,6 +292,7 @@ _IDIV_RM8()
 	word offend = cpu.IP;
 	sigbyte value = (sigbyte)modrm_read8( cpu_rmbyte );
 	sigword tAX = (sigword)cpu.regs.W.AX;
+
 	if( value == 0 )
 	{
 		/* Exceptions return to offending IP */
@@ -312,7 +313,7 @@ _IDIV_RM16()
 
 	if( value == 0 )
 	{
-		/* See above. */
+		/* Exceptions return to offending IP */
 		cpu.IP = offend - 2;
 		int_call( 0 );
 		return;
