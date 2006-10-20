@@ -207,7 +207,6 @@ _INC_reg16()
 void
 _INC_RM16()
 {
-	/* TODO: Is this implementation really correct? (wrt flags) */
 	word value = modrm_read16( cpu_rmbyte );
 	dword i = value;
 
@@ -223,7 +222,6 @@ _INC_RM16()
 void
 _DEC_RM16()
 {
-	/* TODO: Is this implementation really correct? (wrt flags) */
 	word value = modrm_read16( cpu_rmbyte );
 	dword i = value;
 

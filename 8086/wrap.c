@@ -217,7 +217,6 @@ _wrap_0xF7()
 void
 _wrap_0xFE()
 {
-	/* TODO: Is this really correct? Really? */
 	byte rm = cpu_pfq_getbyte();
 	byte value = modrm_read8( rm );
 
