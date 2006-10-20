@@ -13,10 +13,10 @@ static byte *video_memory;
 static byte columns;
 static byte rows;
 
-static void vga_selreg( word, word, byte );
-static void vga_setreg( word, word, byte );
-static word vga_getreg( word, byte );
-static word vga_status( word, byte );
+static void vga_selreg( word, byte );
+static void vga_setreg( word, byte );
+static byte vga_getreg( word );
+static byte vga_status( word );
 
 void
 vga_init()
@@ -57,38 +57,34 @@ vga_kill()
 }
 
 void
-vga_selreg( word port, word data, byte bits )
+vga_selreg( word port, byte data )
 {
 	(void) port;
-	(void) bits;
 	/* mask off unused bits */
-	current_register = (byte)( data & 0x1F );
+	current_register = data & 0x1F;
 }
 
 void
-vga_setreg( word port, word data, byte bits )
+vga_setreg( word port, byte data )
 {
 	(void) port;
-	(void) bits;
-	io_register[current_register] = (byte) data;
+	io_register[current_register] = data;
 }
 
-word
-vga_getreg( word port, byte bits )
+byte
+vga_getreg( word port )
 {
 	(void) port;
-	(void) bits;
-	return (word)io_register[current_register];
+	return io_register[current_register];
 }
 
-word
-vga_status( word port, byte bits )
+byte
+vga_status( word port )
 {
 	static bool last_bit0 = 0;
-	word data;
+	byte data;
 
 	(void) port;
-	(void) bits;
 
 	/*
 	 * 6845 - Port 3DA Status Register

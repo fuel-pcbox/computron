@@ -131,8 +131,8 @@ void cpu_updflags(word, byte);
 word cpu_getflags();
 void cpu_addint(byte,word,word);
 void cpu_addinstruction( byte opcode_range_start, byte opcode_range_end, void (*handler)() );
-void cpu_out(word, word, byte);
-word cpu_in(word, byte);
+void cpu_out( word, byte );
+byte cpu_in( word );
 bool cpu_evaluate(byte);
 word cpu_static_flags();
 

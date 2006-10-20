@@ -38,13 +38,11 @@ typedef int32_t sigdword;
 
 typedef void (*tfunctab) ();
 typedef void *(*tvptrfunctab) ();
-typedef word (*tintab) (word, byte);
-typedef void (*touttab) (word, word, byte);
 extern tfunctab cpu_optable[0x100];
 
-void vm_listen(word, word (*) (word, byte), void (*) (word, word, byte));
-word vm_ioh_nin(word, byte);
-void vm_ioh_nout(word, word, byte);
+void vm_listen(word, byte (*)(word), void (*)(word, byte));
+byte vm_ioh_nin( word );
+void vm_ioh_nout( word, byte );
 
 void vm_exit(int);
 void vm_loadconf();

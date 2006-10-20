@@ -5,11 +5,12 @@
  */
 
 #include "vomit.h"
+#include "debug.h"
 
-static word fdc_status_a( word, byte );
-static word fdc_status_b( word, byte );
-static word fdc_main_status( word, byte );
-static void fdc_digital_output( word, word, byte );
+static byte fdc_status_a( word );
+static byte fdc_status_b( word );
+static byte fdc_main_status( word );
+static void fdc_digital_output( word, byte );
 
 static byte current_drive;
 static bool fdc_enabled;
@@ -36,11 +37,10 @@ fdc_init()
 	motor[3] = false;
 }
 
-word
-fdc_status_a( word port, byte bits )
+byte
+fdc_status_a( word port )
 {
 	byte data = 0x00;
-	(void) bits;
 
 	if( drv_status[1] != 0 )
 	{
@@ -52,26 +52,24 @@ fdc_status_a( word port, byte bits )
 	return data;
 }
 
-word
-fdc_status_b( word port, byte bits )
+byte
+fdc_status_b( word port )
 {
-	(void) bits;
 	vlog( VM_FDCMSG, "Reading FDC status register B" );
 	return 0;
 }
 
-word
-fdc_main_status( word port, byte bits )
+byte
+fdc_main_status( word port )
 {
-	(void) bits;
 	vlog( VM_FDCMSG, "Reading FDC main status register" );
 	return 0;
 }
 
 void
-fdc_digital_output( word port, word data, byte bits )
+fdc_digital_output( word port, byte data )
 {
-	vlog( VM_FDCMSG, "Writing to FDC digital output, data: %04X (%d bits)", data, bits );
+	vlog( VM_FDCMSG, "Writing to FDC digital output, data: %02X", data );
 
 	current_drive = data & 3;
 	fdc_enabled = (data & 0x04) != 0;

@@ -22,10 +22,10 @@ typedef struct
 dma_channel_t dma1_channel[DMA_CHANNELS];
 dma_channel_t dma2_channel[DMA_CHANNELS];
 
-static void dma_ch_count_write( word port, word data, byte bits );
-static word dma_ch_count_read( word port, byte bits );
-static void dma_ch_address_write( word port, word data, byte bits );
-static word dma_ch_address_read( word port, byte bits );
+static void dma_ch_count_write( word port, byte data );
+static byte dma_ch_count_read( word port );
+static void dma_ch_address_write( word port, byte data );
+static byte dma_ch_address_read( word port );
 
 void
 dma_init()
@@ -42,7 +42,7 @@ dma_init()
 }
 
 void
-dma_ch_count_write( word port, word data, byte bits )
+dma_ch_count_write( word port, byte data )
 {
 	dma_channel_t *c;
 	byte channel, chip;
@@ -67,8 +67,8 @@ dma_ch_count_write( word port, word data, byte bits )
 	c->next_count_write_is_msb = !c->next_count_write_is_msb;
 }
 
-word
-dma_ch_count_read( word port, byte bits )
+byte
+dma_ch_count_read( word port )
 {
 	dma_channel_t *c;
 	byte data;
@@ -96,7 +96,7 @@ dma_ch_count_read( word port, byte bits )
 }
 
 void
-dma_ch_address_write( word port, word data, byte bits )
+dma_ch_address_write( word port, byte data )
 {
 	dma_channel_t *c;
 	byte channel, chip;
@@ -121,8 +121,8 @@ dma_ch_address_write( word port, word data, byte bits )
 	c->next_address_write_is_msb = !c->next_address_write_is_msb;
 }
 
-word
-dma_ch_address_read( word port, byte bits )
+byte
+dma_ch_address_read( word port )
 {
 	dma_channel_t *c;
 	byte data;
