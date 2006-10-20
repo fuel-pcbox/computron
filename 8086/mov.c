@@ -11,14 +11,14 @@ void
 _MOV_RM8_imm8()
 {
 	byte rm = cpu_pfq_getbyte();
-	(void) modrm_resolve( rm );
+	(void) modrm_resolve8( rm );
 	modrm_update8( cpu_pfq_getbyte() );
 }
 
 void
 _MOV_RM16_imm16() {
 	byte rm = cpu_pfq_getbyte();
-	(void) modrm_resolve( rm );
+	(void) modrm_resolve16( rm );
 	modrm_update16( cpu_pfq_getword() );
 }
 
