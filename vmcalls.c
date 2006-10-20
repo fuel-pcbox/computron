@@ -16,55 +16,49 @@
 #include <sys/time.h>
 
 void
-vm_call8 (word port, byte data)
+vm_call8( word port, byte data )
 {
-	(void) data;
-
 	switch( port & 0xF )
 	{
-	case 0x2:	/* (VM) int13h-style disk read */
-		bios_readsectors();
-		break;
-	case 0x3:
-		bios_writesectors();
-		break;
-	case 0x4:
-		bios_verifysectors();
-		break;
-	case 0x7:
-		vga_scrollup( cpu.regs.B.CL, cpu.regs.B.CH, cpu.regs.B.DL, cpu.regs.B.DH, cpu.regs.B.AL, cpu.regs.B.BH );
-		break;
-	default:
-		if( callpeek )
-		{
-			vlog( VM_IOMSG, "vm_call8: Unhandled write, %02X -> %04X", data, port);
-		}
-		break;
+		case 0x2:	/* (VM) int13h-style disk read */
+			bios_readsectors();
+			break;
+		case 0x3:
+			bios_writesectors();
+			break;
+		case 0x4:
+			bios_verifysectors();
+			break;
+		case 0x7:
+			vga_scrollup( cpu.regs.B.CL, cpu.regs.B.CH, cpu.regs.B.DL, cpu.regs.B.DH, cpu.regs.B.AL, cpu.regs.B.BH );
+			break;
+		default:
+			if( callpeek )
+				vlog( VM_IOMSG, "vm_call8: Unhandled write, %02X -> %04X", data, port);
+			break;
     }
 }
 
 void
-vm_call16 (word port, word data)
+vm_call16( word port, word data )
 {
 	switch( port )
 	{
-	case 0xE6:	/* (VM) Handler of all sorts of crap. */
-		vm_handleE6(data);
-		break;
-	case 0xE0:
-		vlog( VM_ALERT, "Interrupt %02X, function %02X requested", cpu.regs.B.AL, cpu.regs.B.AH );
-		break;
-	default:
-		if( callpeek )
-		{
-			vlog( VM_IOMSG, "vm_call16: Unhandled write, %04X -> %04X", data, port );
-		}
-		break;
+		case 0xE6:	/* (VM) Handler of all sorts of crap. */
+			vm_handleE6( data );
+			break;
+		case 0xE0:
+			vlog( VM_ALERT, "Interrupt %02X, function %02X requested", cpu.regs.B.AL, cpu.regs.B.AH );
+			break;
+		default:
+			if( callpeek )
+				vlog( VM_IOMSG, "vm_call16: Unhandled write, %04X -> %04X", data, port );
+			break;
 	}
 }
 
 void
-vm_handleE6 (word data)
+vm_handleE6(word data)
 {
 	struct	tm *t;
 	time_t	curtime;
