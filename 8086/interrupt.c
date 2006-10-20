@@ -26,9 +26,7 @@ _INTO()
 	vlog( VM_ALERT, "INTO used, can you believe it?" );
 
 	if( cpu.OF == 1 )
-	{
 		int_call( 4 );
-	}
 }
 
 void
@@ -45,15 +43,10 @@ int_call( byte isr )
 {
 	word segment, offset;
 
-	if( isr == 1 )
-	{
-		isr = 1;
-	}
-
+#ifdef VM_DEBUG
 	if( trapint )
-	{
 		vlog( VM_CPUMSG, "%04X:%04X Interrupt %02X,%02X trapped", cpu.base_CS, cpu.base_IP, isr, cpu.regs.B.AH );
-	}
+#endif
 
 	mem_push( cpu_getflags() );
 	cpu.IF = 0;
