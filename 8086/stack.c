@@ -22,15 +22,13 @@ _POP_reg16()
 void
 _PUSH_RM16()
 {
-	word *p = cpu_rmptr( cpu_rmbyte, 16 );
-	mem_push( *p );
+	mem_push( modrm_read16( cpu_rmbyte ));
 }
 
 void
 _POP_RM16()
 {
-	word *p = cpu_rmptr( cpu_rmbyte, 16 );
-	*p = mem_pop();
+	modrm_write16( cpu_rmbyte, mem_pop() );
 }
 
 void

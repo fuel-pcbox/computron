@@ -9,6 +9,13 @@
 #define INTEL_80186         1
 
 #define rmreg(b) (b>>3&7)	/* Extracts RegID from RM byte. */
+#define MODRM_ISREG(b) (((b)&0xC0)==0xC0)
+
+#define LSW(d) ((d)&0xFFFF)
+#define MSW(d) (((d)&0xFFFF0000)>>16)
+
+#define LSB(w) ((w)&0xFF)
+#define MSB(w) (((w)&0xFF00)>>8)
 
 #ifndef VM_NOPFQ
 extern byte CPU_PFQ_SIZE;
@@ -115,7 +122,6 @@ void cpu_kill();
 void cpu_main();
 byte cpu_pfq_getbyte();
 word cpu_pfq_getword();
-void cpu_modrm_init();
 void cpu_jump(word,word);
 void cpu_jump_relative8( sigbyte );
 void cpu_jump_relative16( sigword );
@@ -125,7 +131,6 @@ void cpu_updflags(word, byte);
 word cpu_getflags();
 void cpu_addint(byte,word,word);
 void cpu_addinstruction( byte opcode_range_start, byte opcode_range_end, void (*handler)() );
-void *cpu_rmptr(byte, byte);
 void cpu_out(word, word, byte);
 word cpu_in(word, byte);
 bool cpu_evaluate(byte);
@@ -156,6 +161,14 @@ dword cpu_rcl(word, byte, byte);
 dword cpu_rcr(word, byte, byte);
 dword cpu_rol(word, byte, byte);
 dword cpu_ror(word, byte, byte);
+
+byte modrm_read8( byte );
+word modrm_read16( byte );
+dword modrm_read32( byte );
+void modrm_write8( byte, byte );
+void modrm_write16( byte, word );
+void modrm_update8( byte, byte );
+void modrm_update16( byte, word );
 
 void mem_init();
 void mem_kill();

@@ -154,9 +154,8 @@ READONLY_AX_imm16( cpu_sub, _CMP_AX_imm16 )
 void
 _MUL_RM8()
 {
-	byte rm = cpu_rmbyte;
-	byte *p = cpu_rmptr( rm, 8 );
-	cpu.regs.W.AX = cpu_mul( cpu.regs.B.AL, *p, 8 );
+	byte value = modrm_read8( cpu_rmbyte );
+	cpu.regs.W.AX = cpu_mul( cpu.regs.B.AL, value, 8 );
 
 	if( cpu.regs.B.AH == 0x00 )
 	{
@@ -173,9 +172,8 @@ _MUL_RM8()
 void
 _MUL_RM16()
 {
-	byte rm = cpu_rmbyte;
-	word *p = cpu_rmptr( rm, 16 );
-	dword result = cpu_mul( cpu.regs.W.AX, *p, 16 );
+	word value = modrm_read16( cpu_rmbyte );
+	dword result = cpu_mul( cpu.regs.W.AX, value, 16 );
 	cpu.regs.W.AX = result & 0xFFFF;
 	cpu.regs.W.DX = (result >> 16) & 0xFFFF;
 
@@ -195,8 +193,8 @@ void
 _IMUL_RM8()
 {
 	byte rm = cpu_rmbyte;
-	sigbyte *p = cpu_rmptr( rm, 8 );
-	cpu.regs.W.AX = (sigword) cpu_imul( cpu.regs.B.AL, *p, 8 );
+	sigbyte value = (sigbyte)modrm_read8( rm );
+	cpu.regs.W.AX = (sigword) cpu_imul( cpu.regs.B.AL, value, 8 );
 
 	if( cpu.regs.B.AH == 0x00 || cpu.regs.B.AH == 0xFF )
 	{
@@ -215,12 +213,12 @@ _IMUL_reg16_RM16_imm8()
 {
 	byte rm = cpu_pfq_getbyte();
 	byte imm = cpu_pfq_getbyte();
-	sigword *p = cpu_rmptr( rm, 16 );
-	word *dest = treg16[rmreg(rm)];
+	sigword value = (sigword)modrm_read16( rm );
+	sigword result = cpu_imul( value, imm, 16 );
 
-	*dest = (sigword) cpu_imul( *p, imm, 16 );
+	*treg16[rmreg(rm)] = result;
 
-	if( (*dest & 0xFF00) == 0x00 || (*dest & 0xFF00) == 0xFF )
+	if( (result & 0xFF00) == 0x00 || (result & 0xFF00) == 0xFF )
 	{
 		cpu.CF = 0;
 		cpu.OF = 0;
@@ -235,9 +233,8 @@ _IMUL_reg16_RM16_imm8()
 void
 _IMUL_RM16()
 {
-	byte rm = cpu_rmbyte;
-	sigword *p = cpu_rmptr(rm, 16);
-	sigdword result = (sigdword) cpu_imul( cpu.regs.W.AX, *p, 16 );
+	sigword value = (sigword)modrm_read16( cpu_rmbyte );
+	sigdword result = (sigdword) cpu_imul( cpu.regs.W.AX, value, 16 );
 	cpu.regs.W.AX = result;
 	cpu.regs.W.DX = result >> 16;
 
@@ -256,73 +253,70 @@ _IMUL_RM16()
 void
 _DIV_RM8()
 {
-	byte rm = cpu_rmbyte;
 	word offend = cpu.IP;
-	byte *p = cpu_rmptr( rm, 8 );
+	byte value = modrm_read8( cpu_rmbyte );
 	word tAX = cpu.regs.W.AX;
 
-	if( *p == 0 )
+	if( value == 0 )
 	{
 		/* Exceptions return to offending IP */
 		cpu.IP = offend - 2;
 		int_call( 0 );
 		return;
 	}
-	cpu.regs.B.AL = (byte)(tAX / *p); /* Quote        */
-	cpu.regs.B.AH = (byte)(tAX % *p); /* Remainder    */
+	cpu.regs.B.AL = (byte)(tAX / value); /* Quote        */
+	cpu.regs.B.AH = (byte)(tAX % value); /* Remainder    */
 }
 
 void
 _DIV_RM16()
 {
-	byte rm = cpu_rmbyte;
 	word offend = cpu.IP;
-	word *p = cpu_rmptr( rm, 16 );
+	word value = modrm_read16( cpu_rmbyte );
 	dword tDXAX = cpu.regs.W.AX + (cpu.regs.W.DX << 16);
 
-	if( *p == 0 )
+	if( value == 0 )
 	{
 		/* See above. */
 		cpu.IP = offend - 2;
 		int_call(0x00);
 		return;
 	}
-	cpu.regs.W.AX = (word)(tDXAX / *p); /* Quote      */
-	cpu.regs.W.DX = (word)(tDXAX % *p); /* Remainder  */
+	cpu.regs.W.AX = (word)(tDXAX / value); /* Quote      */
+	cpu.regs.W.DX = (word)(tDXAX % value); /* Remainder  */
 }
 
 void
 _IDIV_RM8()
 {
-	byte rm = cpu_rmbyte;
 	word offend = cpu.IP;
-	sigbyte *p = cpu_rmptr( rm, 8 );
+	sigbyte value = (sigbyte)modrm_read8( cpu_rmbyte );
 	sigword tAX = (sigword)cpu.regs.W.AX;
-	if( *p == 0 )
+	if( value == 0 )
 	{
 		/* Exceptions return to offending IP */
 		cpu.IP = offend - 2;
 		int_call( 0 );
 		return;
 	}
-	cpu.regs.B.AL = (sigbyte)(tAX / *p); /* Quote        */
-	cpu.regs.B.AH = (sigbyte)(tAX % *p); /* Remainder    */
+	cpu.regs.B.AL = (sigbyte)(tAX / value); /* Quote        */
+	cpu.regs.B.AH = (sigbyte)(tAX % value); /* Remainder    */
 }
 
 void
 _IDIV_RM16()
 {
 	word offend = cpu.IP;
-	sigword *p = cpu_rmptr( cpu_rmbyte, 16 );
+	sigword value = (sigword)modrm_read16( cpu_rmbyte );
 	sigdword tDXAX = (sigword)(cpu.regs.W.AX + (cpu.regs.W.DX << 16));
 
-	if( *p == 0 )
+	if( value == 0 )
 	{
 		/* See above. */
 		cpu.IP = offend - 2;
 		int_call( 0 );
 		return;
 	}
-	cpu.regs.W.AX = (sigword)(tDXAX / *p); /* Quote      */
-	cpu.regs.W.DX = (sigword)(tDXAX % *p); /* Remainder  */
+	cpu.regs.W.AX = (sigword)(tDXAX / value); /* Quote      */
+	cpu.regs.W.DX = (sigword)(tDXAX % value); /* Remainder  */
 }

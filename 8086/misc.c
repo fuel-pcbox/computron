@@ -155,21 +155,25 @@ _XCHG_AX_reg16()
 }
 
 void
-_XCHG_reg8_RM8() {
+_XCHG_reg8_RM8()
+{
+	/* FIXME: Yuck... */
 	byte rm = cpu_pfq_getbyte();
-	byte *p = cpu_rmptr(rm, 8);
-	byte tmpreg = *treg8[rmreg(rm)];
-	*treg8[rmreg(rm)] = *p;
-	*p = tmpreg;
+	byte value = modrm_read8( rm );
+	byte tmp = *treg8[rmreg(rm)];
+	*treg8[rmreg(rm)] = value;
+	modrm_update8( rm, tmp );
 }
 
 void
-_XCHG_reg16_RM16() {
+_XCHG_reg16_RM16()
+{
+	/* FIXME: Yuck... */
 	byte rm = cpu_pfq_getbyte();
-	word *p = cpu_rmptr(rm, 16);
-	word tmpreg = *treg16[rmreg(rm)];
-	*treg16[rmreg(rm)] = *p;
-	*p = tmpreg;
+	word value = modrm_read16( rm );
+	word tmp = *treg16[rmreg(rm)];
+	*treg16[rmreg(rm)] = value;
+	modrm_update16( rm, tmp );
 }
 
 void
@@ -203,33 +207,33 @@ _INC_reg16()
 void
 _INC_RM16()
 {
-	byte rm = cpu_rmbyte;
-	word *p = cpu_rmptr(rm, 16);
-	dword i = *p;
+	/* TODO: Is this implementation really correct? (wrt flags) */
+	word value = modrm_read16( cpu_rmbyte );
+	dword i = value;
 
 	/* Overflow if we'll wrap. */
 	cpu.OF = (i == 32767);
 
 	i++;
-	cpu_setAF(i,*p,1);
+	cpu_setAF( i, value, 1 );
 	cpu_updflags(i, 16);
-	++*p;
+	modrm_update16( cpu_rmbyte, value + 1 );
 }
 
 void
 _DEC_RM16()
 {
-	byte rm = cpu_rmbyte;
-	word *p = cpu_rmptr(rm, 16);
-	dword i = *p;
+	/* TODO: Is this implementation really correct? (wrt flags) */
+	word value = modrm_read16( cpu_rmbyte );
+	dword i = value;
 
 	/* Overflow if we'll wrap. */
 	cpu.OF = (i == 0);
 
 	i--;
-	cpu_setAF(i,*p,1);
+	cpu_setAF( i, value, 1 ); // XXX: i can be (dword)(-1)...
 	cpu_updflags(i, 16);
-	--*p;
+	modrm_update16( cpu_rmbyte, value - 1 );
 }
 
 word

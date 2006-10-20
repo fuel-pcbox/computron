@@ -45,6 +45,11 @@ int_call( byte isr )
 {
 	word segment, offset;
 
+	if( isr == 1 )
+	{
+		isr = 1;
+	}
+
 	if( trapint )
 	{
 		vlog( VM_CPUMSG, "%04X:%04X Interrupt %02X,%02X trapped", cpu.base_CS, cpu.base_IP, isr, cpu.regs.B.AH );

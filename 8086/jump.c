@@ -40,20 +40,14 @@ _JMP_short_imm8()
 void
 _JMP_RM16()
 {
-	byte rm = cpu_rmbyte;
-	word *p = cpu_rmptr(rm, 16);
-	cpu_jump_absolute16( *p );
+	cpu_jump_absolute16( modrm_read16( cpu_rmbyte ));
 }
 
 void
 _JMP_FAR_mem16()
 {
-	byte rm = cpu_rmbyte;
-	word nip, ncs;
-	word *p = cpu_rmptr(rm, 16);
-	nip = *(p++);
-	ncs = *p;
-	cpu_jump(ncs, nip);
+	dword value = modrm_read32( cpu_rmbyte );
+	cpu_jump( MSW(value), LSW(value) );
 }
 
 void
@@ -87,23 +81,18 @@ _CALL_imm16_imm16()
 void
 _CALL_FAR_mem16()
 {
-	word nip, ncs;
-	byte rm = cpu_rmbyte;
-	word *p = cpu_rmptr(rm, 16);
-	nip = *(p++);
-	ncs = *p;
+	dword value = modrm_read32( cpu_rmbyte );
 	mem_push( cpu.CS );
 	mem_push( cpu.IP );
-	cpu_jump(ncs, nip);
+	cpu_jump( MSW(value), LSW(value) );
 }
 
 void
 _CALL_RM16()
 {
-	byte rm = cpu_rmbyte;
-	word *p = cpu_rmptr(rm, 16);
+	word value = modrm_read16( cpu_rmbyte );
 	mem_push( cpu.IP );
-	cpu_jump_absolute16( *p );
+	cpu_jump_absolute16( value );
 }
 
 void

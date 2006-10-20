@@ -62,107 +62,128 @@ _wrap_0x8F() {
 }
 
 void
-_wrap_0xC0() {
+_wrap_0xC0()
+{
 	byte rm = cpu_pfq_getbyte();
-	byte *p = cpu_rmptr(rm, 8);
+	byte value = modrm_read8( rm );
 	byte imm = cpu_pfq_getbyte();
-	switch(rmreg(rm)) {
-		case 0: *p = cpu_rol(*p, imm, 8); break;
-		case 1: *p = cpu_ror(*p, imm, 8); break;
-		case 2: *p = cpu_rcl(*p, imm, 8); break;
-		case 3: *p = cpu_rcr(*p, imm, 8); break;
-		case 4: *p = cpu_shl(*p, imm, 8); break;
-		case 5: *p = cpu_shr(*p, imm, 8); break;
-		case 7: *p = cpu_sar(*p, imm, 8); break;
-		default: vlog( VM_ALERT, "C0 /%d not wrapped", rmreg( cpu_rmbyte ));
+
+	switch( rmreg(rm) )
+	{
+		case 0: modrm_update8( rm, cpu_rol( value, imm, 8 )); break;
+		case 1: modrm_update8( rm, cpu_ror( value, imm, 8 )); break;
+		case 2: modrm_update8( rm, cpu_rcl( value, imm, 8 )); break;
+		case 3: modrm_update8( rm, cpu_rcr( value, imm, 8 )); break;
+		case 4: modrm_update8( rm, cpu_shl( value, imm, 8 )); break;
+		case 5: modrm_update8( rm, cpu_shr( value, imm, 8 )); break;
+		case 7: modrm_update8( rm, cpu_sar( value, imm, 8 )); break;
+		default: vlog( VM_ALERT, "C0 /%d not wrapped", rmreg( rm ));
 	}
 }
 
 void
-_wrap_0xC1() {
+_wrap_0xC1()
+{
 	byte rm = cpu_pfq_getbyte();
-	word *p = cpu_rmptr(rm, 16);
+	word value = modrm_read16( rm );
 	byte imm = cpu_pfq_getbyte();
-	switch(rmreg(rm)) {
-		case 0: *p = cpu_rol(*p, imm, 16); break;
-		case 1: *p = cpu_ror(*p, imm, 16); break;
-		case 2: *p = cpu_rcl(*p, imm, 16); break;
-		case 3: *p = cpu_rcr(*p, imm, 16); break;
-		case 4: *p = cpu_shl(*p, imm, 16); break;
-		case 5: *p = cpu_shr(*p, imm, 16); break;
-		case 7: *p = cpu_sar(*p, imm, 16); break;
-		default: vlog( VM_ALERT, "C1 /%d not wrapped", rmreg( cpu_rmbyte ));
+
+	switch( rmreg(rm) )
+	{
+		case 0: modrm_update16( rm, cpu_rol( value, imm, 16)); break;
+		case 1: modrm_update16( rm, cpu_ror( value, imm, 16)); break;
+		case 2: modrm_update16( rm, cpu_rcl( value, imm, 16)); break;
+		case 3: modrm_update16( rm, cpu_rcr( value, imm, 16)); break;
+		case 4: modrm_update16( rm, cpu_shl( value, imm, 16)); break;
+		case 5: modrm_update16( rm, cpu_shr( value, imm, 16)); break;
+		case 7: modrm_update16( rm, cpu_sar( value, imm, 16)); break;
+		default: vlog( VM_ALERT, "C1 /%d not wrapped", rmreg( rm ));
 	}
 }
 
 void
-_wrap_0xD0() {
+_wrap_0xD0()
+{
 	byte rm = cpu_pfq_getbyte();
-	byte *p = cpu_rmptr(rm, 8);
-	switch(rmreg(rm)) {
-		case 0: *p = cpu_rol(*p, 1, 8); break;
-		case 1: *p = cpu_ror(*p, 1, 8); break;
-		case 2: *p = cpu_rcl(*p, 1, 8); break;
-		case 3: *p = cpu_rcr(*p, 1, 8); break;
-		case 4: *p = cpu_shl(*p, 1, 8); break;
-		case 5: *p = cpu_shr(*p, 1, 8); break;
-		case 7: *p = cpu_sar(*p, 1, 8); break;
-		default: vlog( VM_ALERT, "D0 /%d not wrapped", rmreg( cpu_rmbyte ));
+	byte value = modrm_read8( rm );
+
+	switch( rmreg(rm) )
+	{
+		case 0: modrm_update8( rm, cpu_rol( value, 1, 8 )); break;
+		case 1: modrm_update8( rm, cpu_ror( value, 1, 8 )); break;
+		case 2: modrm_update8( rm, cpu_rcl( value, 1, 8 )); break;
+		case 3: modrm_update8( rm, cpu_rcr( value, 1, 8 )); break;
+		case 4: modrm_update8( rm, cpu_shl( value, 1, 8 )); break;
+		case 5: modrm_update8( rm, cpu_shr( value, 1, 8 )); break;
+		case 7: modrm_update8( rm, cpu_sar( value, 1, 8 )); break;
+		default: vlog( VM_ALERT, "D0 /%d not wrapped", rmreg( rm ));
 	}
 }
 
 void
-_wrap_0xD1() {
+_wrap_0xD1()
+{
 	byte rm = cpu_pfq_getbyte();
-	word *p = cpu_rmptr(rm, 16);
-	switch(rmreg(rm)) {
-		case 0: *p = cpu_rol(*p, 1, 16); break;
-		case 1: *p = cpu_ror(*p, 1, 16); break;
-		case 2: *p = cpu_rcl(*p, 1, 16); break;
-		case 3: *p = cpu_rcr(*p, 1, 16); break;
-		case 4: *p = cpu_shl(*p, 1, 16); break;
-		case 5: *p = cpu_shr(*p, 1, 16); break;
-		case 7: *p = cpu_sar(*p, 1, 16); break;
-		default: vlog( VM_ALERT, "D1 /%d not wrapped", rmreg( cpu_rmbyte ));
+	word value = modrm_read16( rm );
+
+	switch( rmreg(rm) )
+	{
+		case 0: modrm_update16( rm, cpu_rol( value, 1, 16 )); break;
+		case 1: modrm_update16( rm, cpu_ror( value, 1, 16 )); break;
+		case 2: modrm_update16( rm, cpu_rcl( value, 1, 16 )); break;
+		case 3: modrm_update16( rm, cpu_rcr( value, 1, 16 )); break;
+		case 4: modrm_update16( rm, cpu_shl( value, 1, 16 )); break;
+		case 5: modrm_update16( rm, cpu_shr( value, 1, 16 )); break;
+		case 7: modrm_update16( rm, cpu_sar( value, 1, 16 )); break;
+		default: vlog( VM_ALERT, "D1 /%d not wrapped", rmreg( rm ));
 	}
 }
 
 void
-_wrap_0xD2() {
+_wrap_0xD2()
+{
 	byte rm = cpu_pfq_getbyte();
-	byte *p = cpu_rmptr(rm, 8);
-	switch(rmreg(rm)) {
-		case 0: *p = cpu_rol(*p, cpu.regs.B.CL, 8); break;
-		case 1: *p = cpu_ror(*p, cpu.regs.B.CL, 8); break;
-		case 2: *p = cpu_rcl(*p, cpu.regs.B.CL, 8); break;
-		case 3: *p = cpu_rcr(*p, cpu.regs.B.CL, 8); break;
-		case 4: *p = cpu_shl(*p, cpu.regs.B.CL, 8); break;
-		case 5: *p = cpu_shr(*p, cpu.regs.B.CL, 8); break;
-		case 7: *p = cpu_sar(*p, cpu.regs.B.CL, 8); break;
-		default: vlog( VM_ALERT, "D2 /%d not wrapped", rmreg( cpu_rmbyte ));
+	byte value = modrm_read8( rm );
+
+	switch( rmreg(rm) )
+	{
+		case 0: modrm_update8( rm, cpu_rol( value, cpu.regs.B.CL, 8 )); break;
+		case 1: modrm_update8( rm, cpu_ror( value, cpu.regs.B.CL, 8 )); break;
+		case 2: modrm_update8( rm, cpu_rcl( value, cpu.regs.B.CL, 8 )); break;
+		case 3: modrm_update8( rm, cpu_rcr( value, cpu.regs.B.CL, 8 )); break;
+		case 4: modrm_update8( rm, cpu_shl( value, cpu.regs.B.CL, 8 )); break;
+		case 5: modrm_update8( rm, cpu_shr( value, cpu.regs.B.CL, 8 )); break;
+		case 7: modrm_update8( rm, cpu_sar( value, cpu.regs.B.CL, 8 )); break;
+		default: vlog( VM_ALERT, "D2 /%d not wrapped", rmreg( rm ));
 	}
 }
 
 void
-_wrap_0xD3() {
+_wrap_0xD3()
+{
 	byte rm = cpu_pfq_getbyte();
-	word *p = cpu_rmptr(rm, 16);
-	switch(rmreg(rm)) {
-		case 0: *p = cpu_rol(*p, cpu.regs.B.CL, 16); break;
-		case 1: *p = cpu_ror(*p, cpu.regs.B.CL, 16); break;
-		case 2: *p = cpu_rcl(*p, cpu.regs.B.CL, 16); break;
-		case 3: *p = cpu_rcr(*p, cpu.regs.B.CL, 16); break;
-		case 4: *p = cpu_shl(*p, cpu.regs.B.CL, 16); break;
-		case 5: *p = cpu_shr(*p, cpu.regs.B.CL, 16); break;
-		case 7: *p = cpu_sar(*p, cpu.regs.B.CL, 16); break;
-		default: vlog( VM_ALERT, "D3 /%d not wrapped", rmreg( cpu_rmbyte ));
+	word value = modrm_read16( rm );
+
+	switch( rmreg(rm) )
+	{
+		case 0: modrm_update16( rm, cpu_rol( value, cpu.regs.B.CL, 16 )); break;
+		case 1: modrm_update16( rm, cpu_ror( value, cpu.regs.B.CL, 16 )); break;
+		case 2: modrm_update16( rm, cpu_rcl( value, cpu.regs.B.CL, 16 )); break;
+		case 3: modrm_update16( rm, cpu_rcr( value, cpu.regs.B.CL, 16 )); break;
+		case 4: modrm_update16( rm, cpu_shl( value, cpu.regs.B.CL, 16 )); break;
+		case 5: modrm_update16( rm, cpu_shr( value, cpu.regs.B.CL, 16 )); break;
+		case 7: modrm_update16( rm, cpu_sar( value, cpu.regs.B.CL, 16 )); break;
+		default: vlog( VM_ALERT, "D3 /%d not wrapped", rmreg( rm ));
 	}
 }
 
 void
-_wrap_0xF6() {
+_wrap_0xF6()
+{
 	cpu_rmbyte = cpu_pfq_getbyte();
-	switch(rmreg(cpu_rmbyte)) {
+
+	switch( rmreg(cpu_rmbyte) )
+	{
 		case 0: _TEST_RM8_imm8(); break;
 		case 2: _NOT_RM8(); break;
 		case 3: _NEG_RM8(); break;
@@ -175,9 +196,12 @@ _wrap_0xF6() {
 }
 
 void
-_wrap_0xF7() {
+_wrap_0xF7()
+{
 	cpu_rmbyte = cpu_pfq_getbyte();
-	switch(rmreg(cpu_rmbyte)) {
+
+	switch( rmreg(cpu_rmbyte) )
+	{
 		case 0: _TEST_RM16_imm16(); break;
 		case 2: _NOT_RM16(); break;
 		case 3: _NEG_RM16(); break;
@@ -190,31 +214,34 @@ _wrap_0xF7() {
 }
 
 
-/* 0xFE: _________WRAP ME_________ GOD DAMN IT */
-
 void
-_wrap_0xFE() {
-	byte *p, rm = cpu_pfq_getbyte();
-	word i;
-	p = cpu_rmptr(rm, 8);
-	i = *p;
-	switch(rmreg(rm)) {
+_wrap_0xFE()
+{
+	/* TODO: Is this really correct? Really? */
+	byte rm = cpu_pfq_getbyte();
+	byte value = modrm_read8( rm );
+
+	word i = value;
+
+	switch( rmreg(rm) )
+	{
 		case 0:
-			cpu.OF = i != 255 ? 0 : 1;
+			cpu.OF = value == 0xFF;
 			i++;
-			cpu_setAF(i,*p,1);
+			cpu_setAF( i, value, 1 );
 			cpu_updflags(i, 8);
-			*p = i;
+			modrm_update8( rm, value + 1 );
 			break;
 		case 1:
-			cpu.OF = i != 0 ? 0 : 1;
+			cpu.OF = i == 0;
 			i--;
-			cpu_setAF(i,*p,1);
+			cpu_setAF( i, value, 1 );
 			cpu_updflags(i, 8);
-			*p = i;
+			modrm_update8( rm, value - 1 );
 			break;
 		default:
-			vlog( VM_ALERT, "FE /%d not wrapped", rmreg( cpu_rmbyte ));
+			vlog( VM_ALERT, "FE /%d not wrapped", rmreg( rm ));
+			return;
 	}
 }
 

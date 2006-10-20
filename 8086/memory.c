@@ -4,8 +4,10 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "vomit.h"
+#include "debug.h"
 
 byte *mem_space;
 word mem_avail = 640;
@@ -106,15 +108,15 @@ void
 _LDS_reg16_mem16()
 {
 	byte rm = cpu_pfq_getbyte();
-	word *p = cpu_rmptr( rm, 16 );
-	*treg16[rmreg(rm)] = *p;
-	cpu.DS = *(p+1);
+	dword value = modrm_read32( rm );
+	*treg16[rmreg(rm)] = LSW(value);
+	cpu.DS = MSW(value);
 }
 void
 _LES_reg16_mem16()
 {
 	byte rm = cpu_pfq_getbyte();
-	word *p = cpu_rmptr(rm, 16);
-	*treg16[rmreg(rm)] = *p;
-	cpu.ES = *(p+1);
+	dword value = modrm_read32( rm );
+	*treg16[rmreg(rm)] = LSW(value);
+	cpu.ES = MSW(value);
 }

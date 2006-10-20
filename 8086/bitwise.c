@@ -345,43 +345,45 @@ cpu_rcr( word data, byte steps, byte bits )
 void
 _NOT_RM8()
 {
-	byte *p = cpu_rmptr( cpu_rmbyte, 8 );
-	*p = ~(*p);
+	byte value = modrm_read8( cpu_rmbyte );
+	modrm_update8( cpu_rmbyte, ~value );
 }
 
 void
 _NOT_RM16()
 {
-	word *p = cpu_rmptr( cpu_rmbyte, 16 );
-	*p = ~(*p);
+	word value = modrm_read16( cpu_rmbyte );
+	modrm_update16( cpu_rmbyte, ~value );
 }
 
 void
 _NEG_RM8()
 {
-	byte *p = cpu_rmptr( cpu_rmbyte, 8 );
-	byte old = *p;
-	*p = 0 - *p;
+	byte value = modrm_read8( cpu_rmbyte );
+	byte old = value;
+	value = -value;
+	modrm_update8( cpu_rmbyte, value );
 	cpu.CF = ( old != 0 );
-	cpu_updflags( *p, 8 );
+	cpu_updflags( value, 8 );
 	cpu.OF = ((
 	         ((0)^(old)) &
-	         ((0)^(*p))
+	         ((0)^(value))
 	         )>>(7))&1;
-	cpu_setAF( *p, 0, old );
+	cpu_setAF( value, 0, old );
 }
 
 void
 _NEG_RM16()
 {
-	word *p = cpu_rmptr( cpu_rmbyte, 16 );
-	word old = *p;
-	*p = -old;
+	word value = modrm_read16( cpu_rmbyte );
+	word old = value;
+	value = -value;
+	modrm_update16( cpu_rmbyte, value );
 	cpu.CF = ( old != 0 );
-	cpu_updflags( *p, 16 );
+	cpu_updflags( value, 16 );
 	cpu.OF = ((
 	         ((0)^(old)) &
-	         ((0)^(*p))
+	         ((0)^(value))
 	         )>>(15))&1;
-	cpu_setAF( *p, 0, old );
+	cpu_setAF( value, 0, old );
 }

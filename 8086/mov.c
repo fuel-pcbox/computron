@@ -4,29 +4,32 @@
  */
 
 #include "vomit.h"
+#include "debug.h"
 #include <assert.h>
 
 void
-_MOV_RM8_imm8() {
+_MOV_RM8_imm8()
+{
 	byte rm = cpu_pfq_getbyte();
-	byte *p = cpu_rmptr(rm, 8);
-	*p = cpu_pfq_getbyte();
+	(void) modrm_resolve( rm );
+	modrm_update8( rm, cpu_pfq_getbyte() );
 }
 
 void
 _MOV_RM16_imm16() {
 	byte rm = cpu_pfq_getbyte();
-	word *p = cpu_rmptr(rm, 16);
-	*p = cpu_pfq_getword();
+	(void) modrm_resolve( rm );
+	modrm_update16( rm, cpu_pfq_getword() );
 }
 
 void
 _MOV_RM16_seg()
 {
 	byte rm  = cpu_pfq_getbyte();
-	word *p = cpu_rmptr( rm, 16 );
+
 	assert( rmreg(rm) >= 0 && rmreg(rm) <= 5 );
-	*p = *tseg[rmreg(rm)];
+
+	modrm_write16( rm, *tseg[rmreg(rm)] );
 
 	if( rmreg(rm) == REG_FS || rmreg(rm) == REG_GS )
 	{
@@ -38,9 +41,10 @@ void
 _MOV_seg_RM16()
 {
 	byte rm = cpu_pfq_getbyte();
-	word *p = cpu_rmptr( rm, 16 );
+
 	assert( rmreg(rm) >= 0 && rmreg(rm) <= 5 );
-	*tseg[rmreg(rm)] = *p;
+
+	*tseg[rmreg(rm)] = modrm_read16( rm );
 
 	if( rmreg(rm) == REG_FS || rmreg(rm) == REG_GS )
 	{
@@ -49,31 +53,28 @@ _MOV_seg_RM16()
 }
 
 void
-_MOV_RM8_reg8() {
+_MOV_RM8_reg8()
+{
 	byte rm = cpu_pfq_getbyte();
-	byte *p = cpu_rmptr(rm, 8);
-	*p = *treg8[rmreg(rm)];
+	modrm_write8( rm, *treg8[rmreg(rm)] );
 }
 
 void
 _MOV_reg8_RM8() {
 	byte rm = cpu_pfq_getbyte();
-	byte *p = cpu_rmptr(rm, 8);
-	*treg8[rmreg(rm)] = *p;
+	*treg8[rmreg(rm)] = modrm_read8( rm );
 }
 
 void
 _MOV_RM16_reg16() {
 	byte rm = cpu_pfq_getbyte();
-	word *p = cpu_rmptr(rm, 16);
-	*p = *treg16[rmreg(rm)];
+	modrm_write16( rm, *treg16[rmreg(rm)] );
 }
 
 void
 _MOV_reg16_RM16() {
 	byte rm = cpu_pfq_getbyte();
-	word *p = cpu_rmptr(rm, 16);
-	*treg16[rmreg(rm)] = *p;
+	*treg16[rmreg(rm)] = modrm_read16( rm );
 }
 
 void _MOV_reg8_imm8() { *treg8[cpu_opcode&7] = cpu_pfq_getbyte(); }

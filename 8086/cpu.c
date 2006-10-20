@@ -80,7 +80,6 @@ cpu_init()
 	cpu_jump( 0xF000, 0x0000 );
 
     cpu_setflags( 0x0200 | cpu_static_flags() );
-	cpu_modrm_init();
 
 	cpu_ips = 30000;	/* FUCK WITH CARE */
 	cpu_ii = 0;

@@ -5,6 +5,7 @@
  */
 
 #include "vomit.h"
+#include "debug.h"
 
 void
 _wrap_0x0F()
@@ -26,9 +27,11 @@ void
 _BOUND()
 {
 	byte rm = cpu_pfq_getbyte();
-	word *p = cpu_rmptr( rm, 16 );
-	if ( ( *treg16[rmreg(rm)] < *(p) ) || ( *treg16[rmreg(rm)] >= *(p + 1) ) )
-		int_call( 5 );	/* BR exception */
+	dword value = modrm_read32( rm );
+	word index = *treg16[rmreg(rm)];
+
+	if( index < LSW(value) || index > MSW(value) )
+		int_call( 5 ); /* BR exception */
 }
 
 void
