@@ -226,14 +226,14 @@ _wrap_0xFE()
 	switch( rmreg(rm) )
 	{
 		case 0:
-			cpu.OF = value == 0xFF;
+			cpu.OF = value == 0x7F;
 			i++;
 			cpu_setAF( i, value, 1 );
 			cpu_updflags(i, 8);
 			modrm_update8( value + 1 );
 			break;
 		case 1:
-			cpu.OF = i == 0;
+			cpu.OF = value == 0x80;
 			i--;
 			cpu_setAF( i, value, 1 );
 			cpu_updflags(i, 8);

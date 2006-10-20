@@ -182,7 +182,7 @@ _DEC_reg16()
 	dword i = *treg16[cpu_opcode & 7];
 
 	/* Overflow if we'll wrap. */
-	cpu.OF = (i == 0);
+	cpu.OF = i == 0x8000;
 
 	i--;
 	cpu_setAF(i, *treg16[cpu_opcode & 7], 1);
@@ -196,7 +196,7 @@ _INC_reg16()
 	dword i = *treg16[cpu_opcode & 7];
 
 	/* Overflow if we'll wrap. */
-	cpu.OF = (i == 32767);
+	cpu.OF = i == 0x7FFF;
 
 	i++;
 	cpu_setAF(i,*treg16[cpu_opcode & 7],1);
@@ -212,7 +212,7 @@ _INC_RM16()
 	dword i = value;
 
 	/* Overflow if we'll wrap. */
-	cpu.OF = (i == 32767);
+	cpu.OF = value == 0x7FFF;
 
 	i++;
 	cpu_setAF( i, value, 1 );
@@ -228,7 +228,7 @@ _DEC_RM16()
 	dword i = value;
 
 	/* Overflow if we'll wrap. */
-	cpu.OF = (i == 0);
+	cpu.OF = value == 0x8000;
 
 	i--;
 	cpu_setAF( i, value, 1 ); // XXX: i can be (dword)(-1)...
