@@ -11,16 +11,20 @@
 #include <stdio.h>
 
 bool g_debug_step = false;
+static FILE *s_logfile = 0L;
 
 void
 vlog( int category, const char *format, ... )
 {
 	va_list ap;
 	const char *prefix = 0L;
-	FILE *logfile = fopen( "log.txt", "a" );
 
-	if( !logfile )
-		return;
+	if( !s_logfile )
+	{
+		s_logfile = fopen( "log.txt", "a" );
+		if( !s_logfile )
+			return;
+	}
 
 	switch( category )
 	{
@@ -37,17 +41,13 @@ vlog( int category, const char *format, ... )
 	}
 
 	if( prefix )
-	{
-		fprintf( logfile, "(%8s) ", prefix );
-	}
+		fprintf( s_logfile, "(%8s) ", prefix );
 
 	va_start( ap, format );
-	vfprintf( logfile, format, ap );
+	vfprintf( s_logfile, format, ap );
 	va_end( ap );
 
-	fputc( '\n', logfile );
-
-	fclose( logfile );
+	fputc( '\n', s_logfile );
 }
 
 void
