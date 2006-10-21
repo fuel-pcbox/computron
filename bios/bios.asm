@@ -1045,35 +1045,27 @@ _bios_interrupt14:
 
 _bios_interrupt15:
 	cmp		ah, 0x24
-	je		.controlA20
+	je		.unsupported
     cmp     ah, 0xc0
-    je      .fn0xc0
+    je      .unsupported
+	cmp		ah, 0xc1
+	je		.unsupported
     cmp     ah, 0x41
     je      .fn0x41
 	cmp		ah, 0x88
 	je		.fn0x88
-	cmp		ah, 0xc1
-	je		.fn0xc1
     push    ax
     mov     al, 0x15
     out     0xE0, al				; VM call 0x00 - What the fuck is up?
     pop     ax						; AL = INT, AH = function
     jmp     .end
-.controlA20:
-	stc
-	mov		ah, 0x86
-	jmp		.end
 .fn0x88:
 	stc								; This call is only valid on 286/386 machines
 	xor		ax, ax
 	jmp		.end
-.fn0xc0:
+.unsupported:
     stc								; This ain't no fucking PS/2 system, dickweed.
     mov		ah, 0x86				; 80 for PC, 86 for XT/AT
-	jmp		.end
-.fn0xc1:
-	stc								; Same as C0
-	mov		ah, 0x86
 	jmp		.end
 .fn0x41:
     stc								; Unsupported
