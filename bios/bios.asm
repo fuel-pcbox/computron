@@ -1,7 +1,7 @@
 ; VOMIT ROM-BIOS
 ; (C) Andreas Kling 2003-2006
 ;
-;
+; vim:set syntax=nasm et sts=4 sw=4:
 
 [org 0]
 [bits 16]
@@ -112,6 +112,11 @@ _bios_post:							; Power On Self-Test ;-)
 	call    _bios_setup_ints		; Install BIOS Interrupts
 	
 	call    _bios_init_data			; Initialize BIOS data area (0040:0000)
+
+	mov     si, szCrLf
+	call    safe_putString
+
+	call    ide_init
 
 	mov		si, szCrLf
 	call	safe_putString
@@ -402,6 +407,15 @@ _bios_init_data:
 	                            ; 101/102 ext. kbd.
 	mov     byte [0x0417], 0x8F
 
+    mov     byte [0x0449], 0x03
+
+    mov     byte [0x044A], 80
+    mov	    byte [0x044B], 0
+
+    mov     byte [0x0484], 25
+    mov     byte [0x0460], 0x0E
+    mov     byte [0x0461], 0x0D
+
 ; EQUIPMENT LIST ---------------------------------------
 ;			                      v DMA (1 if not)
 ;	mov		word [0x0410], 0000000100100000b
@@ -511,6 +525,8 @@ _bios_interrupt10:					; BIOS Video Interrupt
 	je		.getVideoState
 	cmp		ah, 0x12
 	je		.vgaConf
+    cmp     ah, 0x1a
+    je      .get_video_display_combination
 	cmp		ah, 0x05				; 5 - Select active page
 	je		.selectPage				; Nah. Paging? Pahh.
 	push	ax
@@ -524,6 +540,12 @@ _bios_interrupt10:					; BIOS Video Interrupt
 	out		0xE6, al
 	pop		ax
 	jmp		.end
+.get_video_display_combination:
+	push  
+    xor     bx, bx
+    mov     ds, bx
+    mov     [0x449], ah
+    
 .readChar:
 	jmp		vga_readchr
 .outChar:
@@ -1203,6 +1225,49 @@ _bios_interrupt1a:
 	mov		ax, 0x1A00				; optimization. DOS calls it all the time
 	out		0xE6, al				; and a speed boost can't hurt :-)
 	iret
+
+ide_init:
+	push    ax
+	push    dx
+	push    si
+
+	mov     si, msg_ide0
+	call    safe_putString
+
+	mov     dx, 0x1f7
+	in      al, dx
+	and     al, 0x40
+	jnz     .drive0ready
+
+	mov     si, msg_not
+	call    safe_putString
+
+.drive0ready:
+
+	mov     si, msg_ready
+	call    safe_putString
+
+	mov     si, msg_ide1
+	call    safe_putString
+
+	mov     dx, 0x177
+	in      al, dx
+	and     al, 0x40
+	jnz     .drive1ready
+
+	mov     si, msg_not
+	call    safe_putString
+
+.drive1ready:
+
+	mov     si, msg_ready
+	call    safe_putString
+
+
+	pop     si
+	pop     dx
+	pop     ax
+	ret
 	
 ; DATA
 
@@ -1233,5 +1298,10 @@ _bios_interrupt1a:
 	szAnyKeyPlease  db  "Hit any key to reboot.", 0x0d, 0x0a, 0
 
 	szCrLf          db  0x0d, 0x0a, 0
+
+	msg_ide0        db  "IDE0", 0
+	msg_ide1        db  "IDE1", 0
+    msg_not         db  " not", 0
+    msg_ready       db  " ready.", 0x0d, 0x0a, 0
 
 	temp			dw	0x0000
