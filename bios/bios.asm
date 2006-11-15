@@ -9,7 +9,7 @@
     jmp     0xF000:_bios_post
 
 reboot_on_any_key:
-    mov     si, szAnyKeyPlease
+    mov     si, msg_press_any_key
     call    safe_putString
 .loop:
     mov     ax, 0x1600
@@ -20,7 +20,7 @@ reboot_on_any_key:
 
 _cpux_dividebyzero:                 ; Interrupt 0x00 - Divide by zero
     push    si
-    mov     si, szDivideByZero
+    mov     si, msg_divide_by_zero
     call    safe_putString
     pop     si
     jmp     reboot_on_any_key
@@ -43,14 +43,14 @@ _cpux_breakpoint:                   ; Interrupt 0x03 - Breakpoint
 
 _cpux_overflow:                     ; Interrupt 0x04 - Overflow
     push    si
-    mov     si, szOverflow
+    mov     si, msg_overflow
     call    safe_putString
     pop     si
     jmp     reboot_on_any_key
 
 _cpux_invalidop:
     push    si
-    mov     si, szInvalidOpcode
+    mov     si, msg_invalid_opcode
     call    safe_putString
     pop     si
     jmp     reboot_on_any_key
@@ -85,7 +85,7 @@ _bios_ctrl_break:
 
 _unimplemented_isr:
     push    si
-    mov     si, szUnimplemented
+    mov     si, msg_unimplemented
     call    safe_putString
     pop     si
     iret
@@ -106,19 +106,19 @@ _bios_post:                         ; Power On Self-Test ;-)
     xor     ax, ax                  ; upper left corner.
     call    vga_store_cursor
 
-    mov     si, szVersion
+    mov     si, msg_version
     call    safe_putString          ; Print BIOS Version string
 
     call    _bios_setup_ints        ; Install BIOS Interrupts
     
     call    _bios_init_data         ; Initialize BIOS data area (0040:0000)
 
-    mov     si, szCrLf
+    mov     si, msg_crlf
     call    safe_putString
 
     call    ide_init
 
-    mov     si, szCrLf
+    mov     si, msg_crlf
     call    safe_putString
 
     call    _bios_find_bootdrv      ; Find a boot drive 
@@ -132,12 +132,12 @@ _bios_post:                         ; Power On Self-Test ;-)
     jmp     0x0000:0x7C00           ; JMP to software entry
 
 .nobootdrv:    
-    mov     si, szNoBootDrive
+    mov     si, msg_no_boot_drive
     call    safe_putString
     hlt
 
 .bootloadfail:
-    mov     si, szBootLoadFail
+    mov     si, msg_boot_failed
     call    safe_putString
     mov     ax, 0x0000
     out     0xE6, al
@@ -378,18 +378,18 @@ _bios_init_data:
     call    check_for_80186
     je      .print80186
 
-    mov     si, szUnknownCPU
+    mov     si, msg_unknown
 .cCend:
     call    safe_putString
-    mov     si, szCPU
+    mov     si, msg_cpu
     call    safe_putString
     jmp     .checkMem
 
 .print8086:
-    mov     si, sz8086
+    mov     si, msg_8086
     jmp     .cCend
 .print80186:
-    mov     si, sz80186
+    mov     si, msg_80186
     jmp     .cCend
 
 .checkMem:
@@ -398,7 +398,7 @@ _bios_init_data:
 
     call    print_integer
 
-    mov     si, szBaseMemory
+    mov     si, msg_kb_memory
     call    safe_putString
         
     mov     word [0x0413], ax   ; Store it.
@@ -415,6 +415,9 @@ _bios_init_data:
     mov     byte [0x0484], 25
     mov     byte [0x0460], 0x0E
     mov     byte [0x0461], 0x0D
+
+    ; Video displays (active: color VGA, inactive: none)
+    mov     word [0x048a], 0x0008
 
 ; EQUIPMENT LIST ---------------------------------------
 ;                                 v DMA (1 if not)
@@ -447,18 +450,18 @@ _bios_init_data:
     
 .setDisk00:
     or      cx, 0x01
-    mov     si, szDisk00
+    mov     si, msg_floppy_a
     call    safe_putString
     inc     bp
     jmp     .check01
 .setDisk01:
     or      cx, 0x40
-    mov     si, szDisk01
+    mov     si, msg_floppy_b
     call    safe_putString
     inc     bp
     jmp     .check80
 .noFloppies:
-    mov     si, szNoFloppies
+    mov     si, msg_no_floppies
     call    safe_putString
     jmp     .end
 
@@ -498,7 +501,7 @@ _bios_load_bootsector:
 .end:
     ret
 .noboot:
-    mov     si, szNotBootable
+    mov     si, msg_not_bootable
     call    safe_putString
     jmp     .end
 
@@ -526,7 +529,7 @@ _bios_interrupt10:                  ; BIOS Video Interrupt
     cmp     ah, 0x12
     je      .vgaConf
     cmp     ah, 0x1a
-    je      .get_video_display_combination
+    je      .video_display_combination
     cmp     ah, 0x05                ; 5 - Select active page
     je      .selectPage             ; Nah. Paging? Pahh.
     push    ax
@@ -540,12 +543,30 @@ _bios_interrupt10:                  ; BIOS Video Interrupt
     out     0xE6, al
     pop     ax
     jmp     .end
-.get_video_display_combination:
-    push  
+
+.video_display_combination:
+    push    ds
     xor     bx, bx
     mov     ds, bx
-    mov     [0x449], ah
-    
+    cmp     al, 0x01
+    je      .set_video_display_combination
+
+.get_video_display_combination:
+    mov     bx, [0x048a]
+    jmp     .finish_video_display_combination
+
+.set_video_display_combination:
+    mov     [0x048a], bx
+
+.finish_video_display_combination:
+    pop     ds
+
+    ; XXX: HelpPC says AL contains 0x1a if valid function requested in AH.
+    ;      Needs verification.
+    mov     al, 0x1a
+
+    iret
+
 .readChar:
     jmp     vga_readchr
 .outChar:
@@ -1271,37 +1292,38 @@ ide_init:
     
 ; DATA
 
-    szVersion       db  "VOMIT Virtual Machine", 0x0d, 0x0a
-                    db  "(C) Copyright Andreas Kling 2003-2006", 0x0d, 0x0a, 0x0d, 0x0a, 0
+    msg_version        db "VOMIT Virtual Machine", 0x0d, 0x0a
+                       db "(C) Copyright Andreas Kling 2003-2006", 0x0d, 0x0a, 0x0d, 0x0a, 0
 
-    sz8086          db  "8086", 0
-    sz80186         db  "80186", 0
-    szUnknownCPU    db  "Unknown", 0
-    szCPU           db  " CPU", 0x0d, 0x0a, 0
+    msg_8086           db "8086", 0
+    msg_80186          db "80186", 0
+    msg_unknown        db "Unknown", 0
+    msg_cpu            db " CPU", 0x0d, 0x0a, 0
 
-    szBaseMemory    db  " kB memory", 0x0d, 0x0a, 0
+    msg_kb_memory      db " kB memory", 0x0d, 0x0a, 0
 
-    szDisk00        db  "Floppy A: present.", 0x0d, 0x0a, 0
-    szDisk01        db  "Floppy B: present.", 0x0d, 0x0a, 0
-    szNoFloppies    db  "No floppy drives present.", 0x0d, 0x0a, 0
+    msg_floppy_a       db "Floppy A: present.", 0x0d, 0x0a, 0
+    msg_floppy_b       db "Floppy B: present.", 0x0d, 0x0a, 0
+    msg_no_floppies    db "No floppy drives present.", 0x0d, 0x0a, 0
 
-    szDivideByZero  db  "Divide by zero.", 0x0d, 0x0a, 0
-    szOverflow      db  "Overflow.", 0x0d, 0x0a, 0
-    szInvalidOpcode db  "Invalid opcode.", 0x0d, 0x0a, 0
+    msg_divide_by_zero db "Divide by zero.", 0x0d, 0x0a, 0
+    msg_overflow       db "Overflow.", 0x0d, 0x0a, 0
+    msg_invalid_opcode db "Invalid opcode.", 0x0d, 0x0a, 0
 
-    szUnimplemented db  "Unimplemented ISR.", 0x0d, 0x0a, 0
+    msg_unimplemented  db "Unimplemented ISR.", 0x0d, 0x0a, 0
 
-    szNoBootDrive   db  "No bootable media found.", 0x0d, 0x0a, 0
-    szNotBootable   db  "Warning: Boot signature missing.", 0x0d, 0x0a, 0
-    szBootLoadFail  db  "Could not load boot sector.", 0x0d, 0x0a, 0
+    msg_no_boot_drive  db "No bootable media found.", 0x0d, 0x0a, 0
+    msg_not_bootable   db "Warning: Boot signature missing.", 0x0d, 0x0a, 0
+    msg_boot_failed    db "Could not load boot sector.", 0x0d, 0x0a, 0
 
-    szAnyKeyPlease  db  "Hit any key to reboot.", 0x0d, 0x0a, 0
+    msg_press_any_key  db  "Hit any key to reboot.", 0x0d, 0x0a, 0
 
-    szCrLf          db  0x0d, 0x0a, 0
+    msg_crlf           db  0x0d, 0x0a, 0
 
-    msg_ide0        db  "IDE0", 0
-    msg_ide1        db  "IDE1", 0
-    msg_not         db  " not", 0
-    msg_ready       db  " ready.", 0x0d, 0x0a, 0
+    msg_ide0           db  "IDE0", 0
+    msg_ide1           db  "IDE1", 0
+    msg_not            db  " not", 0
+    msg_ready          db  " ready.", 0x0d, 0x0a, 0
 
-    temp            dw  0x0000
+    ; this pretty much violates the whole ROM concept
+    temp               dw  0x0000
