@@ -21,6 +21,10 @@ static byte vga_status( word );
 void
 vga_init()
 {
+	vm_listen( 0x3b4, 0L, vga_selreg );
+	vm_listen( 0x3b5, vga_getreg, vga_setreg );
+	vm_listen( 0x3ba, vga_status, 0L );
+
 	vm_listen( 0x3d4, 0L, vga_selreg );
 	vm_listen( 0x3d5, vga_getreg, vga_setreg );
 	vm_listen( 0x3da, vga_status, 0L );
