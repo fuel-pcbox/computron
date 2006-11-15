@@ -11,13 +11,13 @@
 #include "vomit.h"
 #include "debug.h"
 
-vomit_cpu_t cpu;
+#define INSNS_PER_VIDEO_SYNC 30000
 
-dword cpu_ips, cpu_ii;
+vomit_cpu_t cpu;
+uint32_t video_sync_counter;
 
 byte cpu_opcode; /* Opcodes are no longer passed as handler arguments!! */
 byte cpu_rmbyte; /* Me neither. */
-
 
 /* This points to the base of CS for fast opcode fetches. */
 static byte *code_memory;
@@ -81,9 +81,7 @@ cpu_init()
 
     cpu_setflags( 0x0200 | cpu_static_flags() );
 
-	cpu_ips = 30000;	/* FUCK WITH CARE */
-	cpu_ii = 0;
-
+	video_sync_counter = INSNS_PER_VIDEO_SYNC;
 }
 
 void
@@ -342,8 +340,9 @@ kontinue:
 			int_call( 1 );
 		}
 
-		if( ++cpu_ii == cpu_ips ) {
-			cpu_ii = 0;
+		if( !--video_sync_counter )
+		{
+			video_sync_counter = INSNS_PER_VIDEO_SYNC;
 			if( !g_try_run )
 				ui_sync();
 
