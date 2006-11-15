@@ -36,6 +36,7 @@ Screen::Screen()
 	}
 
 	setAttribute( Qt::WA_OpaquePaintEvent );
+	setAttribute( Qt::WA_NoSystemBackground );
 }
 
 Screen::~Screen()
