@@ -506,32 +506,33 @@ _bios_load_bootsector:
     jmp     .end
 
 _bios_interrupt10:                  ; BIOS Video Interrupt
-    cmp     ah, 0x0e
-    je      .outChar
-    cmp     ah, 0x09
-    je      .outCharStill
-    cmp     ah, 0x08
-    je      .readChar
-    cmp     ah, 0x13
-    je      .putString
+    or      ah, 0x00
+    jz      .setVideoMode
+    cmp     ah, 0x01
+    jz      .setCursorType
     cmp     ah, 0x02
     je      .setCursor
     cmp     ah, 0x03
     je      .getCursor
-    cmp     ah, 0x01
-    jz      .setCursorType
-    or      ah, 0x00
-    jz      .setVideoMode
+    cmp     ah, 0x05                ; 5 - Select active page
+    je      .selectPage             ; Nah. Paging? Pahh.
     cmp     ah, 0x06
     je      .scrollWindow
+    cmp     ah, 0x08
+    je      .readChar
+    cmp     ah, 0x09
+    je      .outCharStill
+    cmp     ah, 0x0e
+    je      .outChar
     cmp     ah, 0x0f
     je      .getVideoState
     cmp     ah, 0x12
     je      .vgaConf
+    cmp     ah, 0x13
+    je      .putString
     cmp     ah, 0x1a
     je      .video_display_combination
-    cmp     ah, 0x05                ; 5 - Select active page
-    je      .selectPage             ; Nah. Paging? Pahh.
+
     push    ax
     mov     al, 0x10
     out     0xE0, al                ; VM call 0xA0 - What the fuck is up?
@@ -545,28 +546,7 @@ _bios_interrupt10:                  ; BIOS Video Interrupt
     jmp     .end
 
 .video_display_combination:
-    push    ds
-    xor     bx, bx
-    mov     ds, bx
-    cmp     al, 0x01
-    je      .set_video_display_combination
-
-.get_video_display_combination:
-    mov     bx, [0x048a]
-    jmp     .finish_video_display_combination
-
-.set_video_display_combination:
-    mov     [0x048a], bx
-
-.finish_video_display_combination:
-    pop     ds
-
-    ; XXX: HelpPC says AL contains 0x1a if valid function requested in AH.
-    ;      Needs verification.
-    mov     al, 0x1a
-
-    iret
-
+    jmp     video_display_combination
 .readChar:
     jmp     vga_readchr
 .outChar:
@@ -602,6 +582,29 @@ _bios_interrupt10:                  ; BIOS Video Interrupt
     mov     ax, 0x1005
     out     0xE6, al
 .end:
+    iret
+
+video_display_combination:
+    push    ds
+    xor     bx, bx
+    mov     ds, bx
+    cmp     al, 0x01
+    je      .set
+
+.get:
+    mov     bx, [0x048a]
+    jmp     .end
+
+.set:
+    mov     [0x048a], bx
+
+.end:
+    pop     ds
+
+    ; XXX: HelpPC says AL contains 0x1a if valid function requested in AH.
+    ;      Needs verification.
+    mov     al, 0x1a
+
     iret
 
 ; vga_set_mode
