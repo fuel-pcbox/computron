@@ -152,7 +152,7 @@ const insn_t insn_table[256] = {
 	{ "MOV",		OP_reg8_RM8		},			/* 8A */
 	{ "MOV",		OP_reg16_RM16	},			/* 8B */
 	{ "MOV",		OP_RM16_seg		},			/* 8C */
-	{ "LEA",		OP_reg16_mem16	},			/* 8D */
+	{ "LEA",		OP_reg16_RM16	},			/* 8D */
 	{ "MOV",		OP_seg_RM16		},			/* 8E */
 	{ "wrap",		WRAP			},			/* 8F */
 
@@ -211,8 +211,8 @@ const insn_t insn_table[256] = {
 	{ "wrap",		WRAP			},			/* C1 */
 	{ "RET",		OP_imm16		},			/* C2 */
 	{ "RET",		OP				},			/* C3 */
-	{ "LES",		OP_reg16_mem16	},			/* C4 */
-	{ "LDS",		OP_reg16_mem16	},			/* C5 */
+	{ "LES",		OP_reg16_RM16	},			/* C4 */
+	{ "LDS",		OP_reg16_RM16	},			/* C5 */
 	{ "MOV",		OP_RM8_imm8		},			/* C6 */
 	{ "MOV",		OP_RM16_imm16	},			/* C7 */
 	{ "ENTER",		OP				},			/* C8 */
