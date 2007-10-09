@@ -28,7 +28,7 @@ dump_try()
 	printf( "CF=%x\nPF=%x\nAF=%x\nZF=%x\nSF=%x\nIF=%x\nDF=%x\nOF=%x\nTF=%x\n", cpu.CF, cpu.PF, cpu.AF, cpu.ZF, cpu.SF, cpu.IF, cpu.DF, cpu.OF, cpu.TF );
 }
 
-void
+int
 dump_disasm( word segment, word offset )
 {
 	char disasm[64];
@@ -39,22 +39,24 @@ dump_disasm( word segment, word offset )
 	width = insn_width( opcode );
 	disassemble( opcode, offset, disasm, sizeof(disasm) );
 
-	printf( "%04X:%04X ", segment, offset );
+	fprintf( stderr, "%04X:%04X ", segment, offset );
 
 	for( i = 0; i < (width ? width : 7); ++i )
 	{
-		printf( "%02X", opcode[i] );
+		fprintf( stderr, "%02X", opcode[i] );
 	}
 	for( i = 0; i < (14-((width?width:7)*2)); ++i )
 	{
-		printf( " " );
+		fprintf( stderr, " " );
 	}
 
-	printf( " %s\n", disasm );
+	fprintf( stderr, " %s\n", disasm );
 
 	/* Recurse if this is a prefix instruction. */
 	if( *opcode == 0x26 || *opcode == 0x2E || *opcode == 0x36 || *opcode == 0x3E || *opcode == 0xF2 || *opcode == 0xF3 )
-		dump_disasm( cpu.CS, cpu.IP + width );
+		width += dump_disasm( segment, offset + width );
+
+	return width;
 }
 
 void dump_all() {

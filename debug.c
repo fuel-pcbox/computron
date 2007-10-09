@@ -48,6 +48,18 @@ vlog( int category, const char *format, ... )
 	va_end( ap );
 
 	fputc( '\n', s_logfile );
+
+	fflush( s_logfile );
+}
+
+void
+uasm( word seg, word off, int n )
+{
+	int i;
+	for( i = 0; i < n; ++i )
+	{
+		off += dump_disasm( seg, off );
+	}
 }
 
 void
@@ -101,6 +113,22 @@ vm_debug()
 					}
 				} else {
 					dump_mem( cpu.CS, (cpu.IP&0xFFF0), 16 );
+					curtok = &curcmd[0];
+				}
+			}
+			else if ( curtok[0] == 'u' ) {
+				curtok = strtok(NULL, ": \n");
+				if(curtok!=0) {
+					mseg = strtol(curtok,NULL,16);
+					curtok = mseg ? strtok(NULL, " \n") : NULL;
+					if(curtok!=0) {
+						moff = strtol(curtok,NULL,16);
+						uasm(mseg, moff, 16);
+					} else {
+						uasm( cpu.CS, mseg, 16 );
+					}
+				} else {
+					uasm( cpu.CS, cpu.IP, 16 );
 					curtok = &curcmd[0];
 				}
 			}
