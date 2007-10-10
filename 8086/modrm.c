@@ -2,9 +2,9 @@
 #include "debug.h"
 #include <stdlib.h>
 
-#define DEFAULT_TO_SS if( cpu.CurrentSegment == &cpu.SegmentPrefix ) { segment = *cpu.CurrentSegment; } else { segment = cpu.SS; }
+#define DEFAULT_TO_SS if( cpu.CurrentSegment != &cpu.SegmentPrefix ) { segment = cpu.SS; }
 static void *s_last_modrm_ptr = 0L;
-static byte s_last_rmbyte;
+static int s_last_is_register = 0;
 
 void *modrm_resolve8( byte rmbyte );
 void *modrm_resolve16( byte rmbyte );
@@ -47,7 +47,7 @@ void
 modrm_update16( word data )
 {
 	byte *rmp = s_last_modrm_ptr;
-	if( MODRM_ISREG( s_last_rmbyte ))
+	if( s_last_is_register )
 	{
 		*((word *)rmp) = data;
 		return;
@@ -93,7 +93,7 @@ _LEA_reg16_mem16()
                 case 4: retv = cpu.regs.W.SI; break;
                 case 5: retv = cpu.regs.W.DI; break;
                 case 6: retv = cpu_pfq_getword(); break;
-                case 7: retv = cpu.regs.W.BX; break;
+                default: retv = cpu.regs.W.BX; break;
             }
             break;
         case 64:
@@ -106,7 +106,7 @@ _LEA_reg16_mem16()
                 case 4: retv = cpu.regs.W.SI + signext(cpu_pfq_getbyte()); break;
                 case 5: retv = cpu.regs.W.DI + signext(cpu_pfq_getbyte()); break;
                 case 6: retv = cpu.regs.W.BP + signext(cpu_pfq_getbyte()); break;
-                case 7: retv = cpu.regs.W.BX + signext(cpu_pfq_getbyte()); break;
+                default: retv = cpu.regs.W.BX + signext(cpu_pfq_getbyte()); break;
             }
             break;
         case 128:
@@ -119,7 +119,7 @@ _LEA_reg16_mem16()
                 case 4: retv = cpu.regs.W.SI + cpu_pfq_getword(); break;
                 case 5: retv = cpu.regs.W.DI + cpu_pfq_getword(); break;
                 case 6: retv = cpu.regs.W.BP + cpu_pfq_getword(); break;
-                case 7: retv = cpu.regs.W.BX + cpu_pfq_getword(); break;
+                default: retv = cpu.regs.W.BX + cpu_pfq_getword(); break;
             }
             break;
 		case 192:
@@ -137,7 +137,6 @@ modrm_resolve8( byte rmbyte )
 {
 	word segment = *cpu.CurrentSegment;
 	word offset = 0x0000;
-	s_last_rmbyte = rmbyte;
 
 	switch( rmbyte & 0xC0 )
 	{
@@ -151,7 +150,7 @@ modrm_resolve8( byte rmbyte )
 				case 4: offset = cpu.regs.W.SI; break;
 				case 5: offset = cpu.regs.W.DI; break;
 				case 6: offset = cpu_pfq_getword(); break;
-				case 7: offset = cpu.regs.W.BX; break;
+				default: offset = cpu.regs.W.BX; break;
 			}
 			s_last_modrm_ptr = &mem_space[(segment<<4) + offset];
 			break;
@@ -166,7 +165,7 @@ modrm_resolve8( byte rmbyte )
 				case 4: offset += cpu.regs.W.SI; break;
 				case 5: offset += cpu.regs.W.DI; break;
 				case 6: DEFAULT_TO_SS; offset += cpu.regs.W.BP; break;
-				case 7: offset += cpu.regs.W.BX; break;
+				default: offset += cpu.regs.W.BX; break;
 			}
 			s_last_modrm_ptr = &mem_space[(segment<<4) + offset];
 			break;
@@ -181,7 +180,7 @@ modrm_resolve8( byte rmbyte )
 				case 4: offset += cpu.regs.W.SI; break;
 				case 5: offset += cpu.regs.W.DI; break;
 				case 6: DEFAULT_TO_SS; offset += cpu.regs.W.BP; break;
-				case 7: offset += cpu.regs.W.BX; break;
+				default: offset += cpu.regs.W.BX; break;
 			}
 			s_last_modrm_ptr = &mem_space[(segment<<4) + offset];
 			break;
@@ -195,7 +194,7 @@ modrm_resolve8( byte rmbyte )
 				case 4: s_last_modrm_ptr = &cpu.regs.B.AH; break;
 				case 5: s_last_modrm_ptr = &cpu.regs.B.CH; break;
 				case 6: s_last_modrm_ptr = &cpu.regs.B.DH; break;
-				case 7: s_last_modrm_ptr = &cpu.regs.B.BH; break;
+				default: s_last_modrm_ptr = &cpu.regs.B.BH; break;
 			}
 			break;
 	}
@@ -207,11 +206,11 @@ modrm_resolve16( byte rmbyte )
 {
 	word segment = *cpu.CurrentSegment;
 	word offset = 0x0000;
-	s_last_rmbyte = rmbyte;
 
 	switch( rmbyte & 0xC0 )
 	{
 		case 0x00:
+			s_last_is_register = 0;
 			switch( rmbyte & 0x07 )
 			{
 				case 0: offset = cpu.regs.W.BX + cpu.regs.W.SI; break;
@@ -221,11 +220,12 @@ modrm_resolve16( byte rmbyte )
 				case 4: offset = cpu.regs.W.SI; break;
 				case 5: offset = cpu.regs.W.DI; break;
 				case 6: offset = cpu_pfq_getword(); break;
-				case 7: offset = cpu.regs.W.BX; break;
+				default: offset = cpu.regs.W.BX; break;
 			}
 			s_last_modrm_ptr = &mem_space[(segment<<4) + offset];
 			break;
 		case 0x40:
+			s_last_is_register = 0;
 			offset = signext( cpu_pfq_getbyte() );
 			switch( rmbyte & 0x07 )
 			{
@@ -236,11 +236,12 @@ modrm_resolve16( byte rmbyte )
 				case 4: offset += cpu.regs.W.SI; break;
 				case 5: offset += cpu.regs.W.DI; break;
 				case 6: DEFAULT_TO_SS; offset += cpu.regs.W.BP; break;
-				case 7: offset += cpu.regs.W.BX; break;
+				default: offset += cpu.regs.W.BX; break;
 			}
 			s_last_modrm_ptr = &mem_space[(segment<<4) + offset];
 			break;
 		case 0x80:
+			s_last_is_register = 0;
 			offset = cpu_pfq_getword();
 			switch( rmbyte & 0x07 )
 			{
@@ -251,11 +252,12 @@ modrm_resolve16( byte rmbyte )
 				case 4: offset += cpu.regs.W.SI; break;
 				case 5: offset += cpu.regs.W.DI; break;
 				case 6: DEFAULT_TO_SS; offset += cpu.regs.W.BP; break;
-				case 7: offset += cpu.regs.W.BX; break;
+				default: offset += cpu.regs.W.BX; break;
 			}
 			s_last_modrm_ptr = &mem_space[(segment<<4) + offset];
 			break;
 		case 0xC0:
+			s_last_is_register = 1;
 			switch( rmbyte & 0x07 )
 			{
 				case 0: s_last_modrm_ptr = &cpu.regs.W.AX; break;
@@ -265,7 +267,7 @@ modrm_resolve16( byte rmbyte )
 				case 4: s_last_modrm_ptr = &cpu.regs.W.SP; break;
 				case 5: s_last_modrm_ptr = &cpu.regs.W.BP; break;
 				case 6: s_last_modrm_ptr = &cpu.regs.W.SI; break;
-				case 7: s_last_modrm_ptr = &cpu.regs.W.DI; break;
+				default: s_last_modrm_ptr = &cpu.regs.W.DI; break;
 			}
 			break;
 	}
