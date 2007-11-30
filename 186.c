@@ -13,6 +13,13 @@ _wrap_0x0F()
 	byte op = cpu_pfq_getbyte();
 	switch( op )
 	{
+		case 0x01:
+		{
+			byte rm;
+			rm = cpu_pfq_getbyte();
+			vlog( VM_ALERT, "Sliding by 0F 01 /%d\n", rmreg(rm) );
+			break;
+		}
 		case 0xFF:		/* UD0 */
 		case 0xB9:		/* UD1 */
 		case 0x0B:		/* UD2 */

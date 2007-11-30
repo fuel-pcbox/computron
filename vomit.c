@@ -101,9 +101,11 @@ void vm_init() {
 	for ( i = 0; i <= 0xFFFF; ++i )
 		vm_listen( i, 0L, 0L );
 
+	pic_init();
 	dma_init();
 	vga_init();
 	fdc_init();
+	ide_init();
 }
 
 void

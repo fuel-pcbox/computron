@@ -9,6 +9,12 @@
 #include "vomit.h"
 #include "debug.h"
 
+#define FLAT(s,o) (((s)<<4)+(off))
+extern byte vga_getbyte( dword );
+extern word vga_getword( dword );
+extern void vga_setbyte( dword, byte );
+extern void vga_setword( dword, word );
+
 byte *mem_space;
 word mem_avail = 640;
 
@@ -39,6 +45,7 @@ mem_getbyte( word seg, word off )
 		vlog( VM_MEMORYMSG, "%04X:%04X reading   BYTE at %08X", cpu.base_CS, cpu.base_IP, seg*16+off );
 	}
 #endif
+	if( FLAT(seg,off) >= 0xA0000 && FLAT(seg,off) < 0xB0000 ) return vga_getbyte( FLAT(seg, off) );
 	return mem_space[(seg<<4)+off];
 }
 word
@@ -51,6 +58,7 @@ mem_getword( word seg, word off )
 	}
 #endif
 
+	if( FLAT(seg,off) >= 0xA0000 && FLAT(seg,off) < 0xB0000 ) return vga_getword( FLAT(seg, off) );
 #ifdef VOMIT_CORRECTNESS
 	if( off == 0xFFFF )
 		return mem_space[(seg<<4)+off] + (mem_space[seg<<4]<<8);
@@ -67,7 +75,8 @@ mem_setbyte( word seg, word off, byte b )
 		vlog( VM_MEMORYMSG, "%04X:%04X writing   BYTE at %08X", cpu.base_CS, cpu.base_IP, seg*16+off );
 	}
 #endif
-	mem_space[(seg<<4)+off]=b;
+	if( FLAT(seg,off) >= 0xA0000 && FLAT(seg,off) < 0xB0000 ) vga_setbyte( FLAT(seg, off), b );
+	else mem_space[(seg<<4)+off]=b;
 }
 void
 mem_setword( word seg, word off, word w )
@@ -86,7 +95,8 @@ mem_setword( word seg, word off, word w )
 		return;
 	}
 #endif
-	mem_space[(seg<<4)+off]=(byte)w; mem_space[(seg<<4)+off+1]=(byte)(w>>8);
+	if( FLAT(seg,off) >= 0xA0000 && FLAT(seg,off) < 0xB0000 ) vga_setword( FLAT(seg, off), w );
+	else mem_space[(seg<<4)+off]=(byte)w; mem_space[(seg<<4)+off+1]=(byte)(w>>8);
 }
 
 void

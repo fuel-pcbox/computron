@@ -21,7 +21,8 @@ vlog( int category, const char *format, ... )
 
 	if( !s_logfile )
 	{
-		s_logfile = fopen( "log.txt", "a" );
+		s_logfile = stderr;
+		//s_logfile = fopen( "log.txt", "a" );
 		if( !s_logfile )
 			return;
 	}
@@ -58,7 +59,10 @@ uasm( word seg, word off, int n )
 	int i;
 	for( i = 0; i < n; ++i )
 	{
-		off += dump_disasm( seg, off );
+		int w = dump_disasm( seg, off );
+		if( !w )
+			break;
+		off += w;
 	}
 }
 

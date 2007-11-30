@@ -23,7 +23,7 @@ main( int argc, char **argv )
 	s.show();
 
 	QTimer syncTimer;
-	QObject::connect( &syncTimer, SIGNAL( timeout() ), &s, SLOT( update() ));
+	QObject::connect( &syncTimer, SIGNAL( timeout() ), &s, SLOT( refresh() ));
 	syncTimer.start( 50 );
 
 	Worker w;

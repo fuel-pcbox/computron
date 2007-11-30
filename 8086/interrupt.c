@@ -48,6 +48,12 @@ int_call( byte isr )
 		vlog( VM_CPUMSG, "%04X:%04X Interrupt %02X,%02X trapped", cpu.base_CS, cpu.base_IP, isr, cpu.regs.B.AH );
 #endif
 
+	if( isr == 0x10 )
+	{
+		bios_interrupt10();
+		return;
+	}
+
 	mem_push( cpu_getflags() );
 	cpu.IF = 0;
 	cpu.TF = 0;

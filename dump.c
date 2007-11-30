@@ -39,18 +39,18 @@ dump_disasm( word segment, word offset )
 	width = insn_width( opcode );
 	disassemble( opcode, offset, disasm, sizeof(disasm) );
 
-	fprintf( stderr, "%04X:%04X ", segment, offset );
+	vlog( VM_CPUMSG, "%04X:%04X ", segment, offset );
 
 	for( i = 0; i < (width ? width : 7); ++i )
 	{
-		fprintf( stderr, "%02X", opcode[i] );
+		vlog( VM_CPUMSG, "%02X", opcode[i] );
 	}
 	for( i = 0; i < (14-((width?width:7)*2)); ++i )
 	{
-		fprintf( stderr, " " );
+		vlog( VM_CPUMSG, " " );
 	}
 
-	fprintf( stderr, " %s\n", disasm );
+	vlog( VM_CPUMSG, " %s\n", disasm );
 
 	/* Recurse if this is a prefix instruction. */
 	if( *opcode == 0x26 || *opcode == 0x2E || *opcode == 0x36 || *opcode == 0x3E || *opcode == 0xF2 || *opcode == 0xF3 )

@@ -28,6 +28,9 @@ public:
 
 	void putCharacter( QPainter &p, int row, int column, byte color, byte c );
 
+public slots:
+	void refresh();
+
 private slots:
 	void paintEvent( QPaintEvent * );
 
@@ -41,6 +44,9 @@ private:
 	QColor m_color[16];
 	QBitmap m_character[256];
 	QQueue<word> m_keyQueue;
+
+	void paintMode12( QPaintEvent * );
+	void putpixel( QPainter &p, int x, int y, int color );
 };
 
 #endif // __screen_h__

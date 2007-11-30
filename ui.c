@@ -134,7 +134,7 @@ sdl_init()
 	{
 		vm_exit( 1 );
 	}
-	s_surface = SDL_SetVideoMode( 320, 200, 32, SDL_SWSURFACE | SDL_ANYFORMAT );
+	s_surface = SDL_SetVideoMode( 640, 480, 32, SDL_SWSURFACE | SDL_ANYFORMAT );
 	if( !s_surface )
 	{
 		vm_exit( 1 );
@@ -157,6 +157,7 @@ putpixel( int x, int y, dword rgb )
 	*(dword *)p = rgb;
 }
 
+#ifdef poo
 dword
 to_rgb( byte color )
 {
@@ -168,6 +169,33 @@ to_rgb( byte color )
 	}
 	return 0xffffff;
 }
+#endif
+
+dword
+to_rgb( byte color )
+{
+	switch( color )
+	{
+		case  0: return 0;
+		case  1: return 0x000080;
+		case  2: return 0x008000;
+		case  3: return 0x008080;
+		case  4: return 0x800000;
+		case  5: return 0x800080;
+		case  6: return 0x808000;
+		case  7: return 0x808080;
+
+		case  8: return 0xa0a0a0;
+		case  9: return 0x0000ff;
+		case 10: return 0x00ffff;
+		case 11: return 0xff0000;
+		case 12: return 0xff00ff;
+		case 13: return 0xffff00;
+		case 14: return 0xffffff;
+	}
+	return 0xffffff;
+}
+
 #endif /* VOMIT_SDL */
 
 void
@@ -251,10 +279,64 @@ ui_sync() {
 
 		SDL_Flip( s_surface );
 	}
+	else if( mode == 0x12 )
+	{
+		if( !s_surface )
+		{
+			sdl_init();
+		}
+
+		if( SDL_MUSTLOCK( s_surface ))
+			SDL_LockSurface( s_surface );
+
+		extern byte vm_p1[];
+		extern byte vm_p2[];
+		extern byte vm_p3[];
+
+		byte *vm = mem_space + 0xA0000;
+		word offset = 0;
+		for( y = 0; y < 480; y ++ )
+		{
+			for( x = 0; x < 640; x += 8, ++offset )
+			{
+				byte data[4];
+				data[0] = vm[offset];
+				data[1] = vm_p1[offset];
+				data[2] = vm_p2[offset];
+				data[3] = vm_p3[offset];
+
+#define D(i) ((data[0]>>i) & 1) | (((data[1]>>i) & 1)<<1) | (((data[2]>>i) & 1)<<2) | (((data[3]>>i) & 1)<<3)
+
+				byte p1 = D(0);
+				byte p2 = D(1);
+				byte p3 = D(2);
+				byte p4 = D(3);
+				byte p5 = D(4);
+				byte p6 = D(5);
+				byte p7 = D(6);
+				byte p8 = D(7);
+
+				putpixel( x+7, y, to_rgb( p1 ));
+				putpixel( x+6, y, to_rgb( p2 ));
+				putpixel( x+5, y, to_rgb( p3 ));
+				putpixel( x+4, y, to_rgb( p4 ));
+				putpixel( x+3, y, to_rgb( p5 ));
+				putpixel( x+2, y, to_rgb( p6 ));
+				putpixel( x+1, y, to_rgb( p7 ));
+				putpixel( x+0, y, to_rgb( p8 ));
+
+			}
+		}
+
+		if( SDL_MUSTLOCK( s_surface ))
+			SDL_UnlockSurface( s_surface );
+
+		SDL_Flip( s_surface );
+	}
 #endif /* VOMIT_SDL */
 	else
 	{
-		mvwaddstr( s_screen, 2, 2, "Crazy video mode active..." );
+		mvwaddstr( s_screen, 1, 1, "Crazy video mode active..." );
 	}
 
 	box( s_screen, ACS_VLINE, ACS_HLINE );

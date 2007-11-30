@@ -16,7 +16,7 @@
 char drv_imgfile[4][MAX_FN_LENGTH];
 char drv_title[4][MAX_DRV_TITLESIZE+1];
 byte drv_status[4], drv_type[4];
-word drv_spt[4], drv_heads[4], drv_sectors[4], drv_sectsize[4];
+dword drv_spt[4], drv_heads[4], drv_sectors[4], drv_sectsize[4];
 
 word
 chs2lba( byte drive, word cyl, byte head, word sector )
@@ -113,7 +113,7 @@ byte floppy_write(byte drive, word cylinder, word head, word sector, word count,
     fpdrv = fopen(drv_imgfile[drive], "rb+");
     if( !fpdrv )
 	{
-        vlog( VM_DISKLOG, "PANIC: Could not access drive %d image!" );
+        vlog( VM_DISKLOG, "PANIC: Could not access drive %d image!", drive );
         vm_exit( 1 );
     }
     fseek(fpdrv, lba*drv_sectsize[drive], SEEK_SET);

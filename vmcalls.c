@@ -73,7 +73,7 @@ vm_handleE6(word data)
 		}
 		break;
 	case 0x1A00:	/* INT 1A, 00: Get RTC tick count */
-		cpu.regs.B.AL = 0; /* midnight flag */
+		cpu.regs.B.AL = 1; /* midnight flag */
 		curtime = time((time_t) NULL);
 		t = localtime(&curtime);
 		tick_count = ( (t->tm_hour*3600) + (t->tm_min*60) + (t->tm_sec) ) * 18.206; /* semi-disgusting */
@@ -81,6 +81,8 @@ vm_handleE6(word data)
 		tick_count += timv.tv_usec / 54926.9471602768;	/* precision is healthy */
 		cpu.regs.W.CX = tick_count >> 16;
 		cpu.regs.W.DX = tick_count & 0xFFFF;
+		mem_setword( 0x0040, 0x006C, tick_count & 0xFFFF );
+		mem_setword( 0x0040, 0x006D, tick_count >> 16 );
 		break;
 	case 0x1300:
 		drive = cpu.regs.B.DL;
@@ -93,7 +95,7 @@ vm_handleE6(word data)
 			cpu.regs.B.AH = FD_CHANGED_OR_REMOVED;
 			cpu.CF = 1;
 		}
-		mem_setbyte(0x0040, 0x0041, cpu.regs.B.AH);
+		mem_setbyte(0x0040, drive < 2 ? 0x0041 : 0x0072, cpu.regs.B.AH);
 		break;
 	case 0x1305:
 		drive = cpu.regs.B.DL;
@@ -126,27 +128,34 @@ vm_handleE6(word data)
 		drive = cpu.regs.B.DL;
 		if(drive>=0x80) drive = drive - 0x80 + 2;
 		if(drv_status[drive]!=0) {
-			tracks = (drv_sectors[drive] / drv_spt[drive] / drv_heads[drive]) - 1;
+			tracks = (drv_sectors[drive] / drv_spt[drive] / drv_heads[drive]) - 2;
 			cpu.regs.B.AL = 0;
 			cpu.regs.B.AH = FD_NO_ERROR;
 			cpu.regs.B.BL = drv_type[drive];
 			cpu.regs.B.BH = 0;
-			cpu.regs.B.CH = tracks; /* Tracks */
-			cpu.regs.B.CL = drv_spt[drive]; /* Sectors per Track */
+			cpu.regs.B.CH = tracks & 0xFF; /* Tracks */
+			cpu.regs.B.CL = ((tracks >> 2) & 0xC0) | (drv_spt[drive] & 0x3F); /* Sectors per Track */
 			cpu.regs.B.DH = drv_heads[drive] - 1; /* Sides */
-			/* TODO: count only drives of selected type (floppy/fixed) */
-			cpu.regs.B.DL = drv_status[0] + drv_status[1] + drv_status[2] + drv_status[3];
+
+			if( drive < 2 )
+				cpu.regs.B.DL = drv_status[0] + drv_status[1];
+			else
+				cpu.regs.B.DL = drv_status[2] + drv_status[3];
+
+			vlog( VM_DISKLOG, "Reporting disk%d geo: %d tracks, %d spt, %d sides", drive, tracks, drv_spt[drive], drv_heads[drive] );
 
 			/* WACKY SHIT about to take place. */
-			//cpu.regs.B.CH = tracks & 0xFF;
-			//cpu.regs.B.CL |= (tracks & 0x00030000) >> 10;
+			cpu.regs.B.CH = tracks & 0xFF;
+			cpu.regs.B.CL |= (tracks & 0x00030000) >> 10;
 
 			/* ES:DI points to wacky Disk Base Table */
+			#if 0
 			if(drive<2) {
 				cpu.ES = 0x820E; cpu.regs.W.DI = 0x0503;
 			} else {
 				cpu.ES = 0x820E; cpu.regs.W.DI = 0x04F8;
 			}
+			#endif
 
 			cpu.CF = 0;
 		} else {

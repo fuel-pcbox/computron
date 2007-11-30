@@ -767,8 +767,8 @@ vga_ttyecho:
     mov     ax, di
     shr     ax, 1
     dec     ax
-    push    .end                ; Backspace isn't going to overflow the cursor,
-    jmp     vga_store_cursor    ; so we walk around .locate (v_s_c RETs for us)
+    call    vga_store_cursor    ; so we walk around .locate (v_s_c RETs for us)
+    jmp     .end                ; Backspace isn't going to overflow the cursor,
 .tab:
     mov     al, 0x20
     stosw
@@ -1010,6 +1010,11 @@ _bios_interrupt13:
     pop     ax                      ; AL = INT, AH = function
     jmp     .end
 .resetDisk:
+    and     dl, 0xf0
+    jz      .reset_floppy_drive
+    call    reset_ide_drive
+    jmp     .end
+.reset_floppy_drive:
     mov     ax, 0x1300
     out     0xE6, al
     jmp     .end
@@ -1252,8 +1257,11 @@ _bios_interrupt1a:
 
 ide_init:
     push    ax
+    push    bx
     push    dx
     push    si
+
+    xor     bx, bx
 
     mov     si, msg_ide0
     call    safe_putString
@@ -1266,8 +1274,12 @@ ide_init:
     mov     si, msg_not
     call    safe_putString
 
-.drive0ready:
+    jmp    .drive0notready
 
+.drive0ready:
+    inc     bl
+
+.drive0notready:
     mov     si, msg_ready
     call    safe_putString
 
@@ -1282,15 +1294,53 @@ ide_init:
     mov     si, msg_not
     call    safe_putString
 
-.drive1ready:
+    jmp     .drive1notready
 
+.drive1ready:
+    inc     bl
+
+.drive1notready:
     mov     si, msg_ready
     call    safe_putString
 
+; BDA:0075 - Number of hard disks attached
+    push    ds
+    xor     ax, ax
+    mov     ds, ax
+    mov     [0x475], bl
+    pop     ds
 
     pop     si
     pop     dx
+    pop     bx
     pop     ax
+    ret
+
+reset_ide_drive:
+    push    dx
+    mov     dx, 0x170           ; drive 1 base addr is 0x170
+    and     dl, 0
+    jz      .drive0
+    add     dx, 0x80            ; drive 0 base addr is 0x1F0
+.drive0:
+
+    mov     al, 0x90            ; 90 - Execute Drive Diagnostic
+    out     dx, al
+
+    in      al, dx
+    cmp     al, 0x00
+
+    je      .ok
+    stc
+    mov     al, 0x05
+    jmp     .end
+
+.ok:
+    mov     al, 0x00
+    clc
+
+.end:
+    pop     dx
     ret
     
 ; DATA

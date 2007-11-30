@@ -138,7 +138,7 @@ bool disassemble(BYTE *p, long unsigned int offset, char *buf, int len) {
 	case OP_RM16_imm8:
 		{
 			int w = modrm_width( p[1] );
-			snprintf(ptr, len, "%s, %02X", modrm_string(&p[1], 16), p[w+2]);
+			snprintf(ptr, len, "%s, %02X", modrm_string(&p[1], 16), p[w+1]);
 		}
 		break;
 	case OP_RM16_imm16:

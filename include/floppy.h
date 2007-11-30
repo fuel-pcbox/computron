@@ -25,10 +25,10 @@ void bios_verifysectors();
 
 extern byte drv_status[];
 extern char drv_imgfile[][MAX_FN_LENGTH];
-extern word drv_spt[];
-extern word drv_heads[];
-extern word drv_sectors[];
-extern word drv_sectsize[];
+extern dword drv_spt[];
+extern dword drv_heads[];
+extern dword drv_sectors[];
+extern dword drv_sectsize[];
 extern byte drv_type[];
 
 #endif /* __floppy_h__ */

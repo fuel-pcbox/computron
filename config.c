@@ -69,11 +69,11 @@ void vm_loadconf() {
                 loff = strtol(strtok(NULL," \t\n"), NULL, 16);
                 curtok = strtok(NULL, " \t\n");
 
-				vlog( VM_INITMSG, "Entering at %04X:%04X", lseg, loff );
+				//vlog( VM_INITMSG, "Entering at %04X:%04X", lseg, loff );
 
                 while(curtok) {
                     tb = strtol(curtok,NULL,16);
-					vlog( VM_INITMSG, "  [%04X] = %02X", loff, tb );
+					//vlog( VM_INITMSG, "  [%04X] = %02X", loff, tb );
                     mem_setbyte(lseg, loff, tb);
 					++loff;
                     curtok = strtok(NULL, " \t\n");
@@ -118,9 +118,10 @@ void vm_loadconf() {
                 lhds = strtol(strtok(NULL, " \t\n"), NULL, 16);
                 lsect = strtol(strtok(NULL, " \t\n"), NULL, 16);
                 lsectsize = strtol(strtok(NULL, " \t\n"), NULL, 16);
-				ltype = strtol(strtok(NULL, " \t\n"), NULL, 16);
 
 				vlog( VM_INITMSG, "Drive %d: %s (%dspt, %dh, %ds (%db))", ldrv, lfname, lspt, lhds, lsect, lsectsize );
+
+				ldrv += 2;
 
                 strcpy(drv_imgfile[ldrv], lfname);
                 drv_spt[ldrv] = lspt;

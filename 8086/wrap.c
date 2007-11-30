@@ -57,7 +57,9 @@ _wrap_0x8F() {
 	cpu_rmbyte = cpu_pfq_getbyte();
 	switch(rmreg(cpu_rmbyte)) {
 		case 0: _POP_RM16(); break;
-		default: vlog( VM_ALERT, "8F /%d not wrapped", rmreg( cpu_rmbyte ));
+		default:
+			vlog( VM_ALERT, "8F /%d not wrapped", rmreg( cpu_rmbyte ));
+			uasm( cpu.CS, cpu.IP - 2 );
 	}
 }
 
@@ -256,5 +258,6 @@ _wrap_0xFF() {
 		case 5: _JMP_FAR_mem16();		break;
 		case 6: _PUSH_RM16();			break;
 		case 7: vlog( VM_ALERT, "FF /%d not wrapped", rmreg( cpu_rmbyte ));
+			uasm( cpu.CS, cpu.IP - 2 );
 	}
 }

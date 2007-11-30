@@ -237,8 +237,10 @@ cpu_genmap()
 	cpu_addinstruction( 0xEA, 0xEA, _JMP_imm16_imm16  );
 	cpu_addinstruction( 0xEB, 0xEB, _JMP_short_imm8   );
 	cpu_addinstruction( 0xEC, 0xEC, _IN_AL_DX         );
+	cpu_addinstruction( 0xED, 0xED, _IN_AX_DX         );
 	cpu_addinstruction( 0xEE, 0xEE, _OUT_DX_AL        );
 	cpu_addinstruction( 0xEF, 0xEF, _OUT_DX_AX        );
+	cpu_addinstruction( 0xF0, 0xF0, _NOP              );
 	cpu_addinstruction( 0xF2, 0xF2, _REPNE            );
 	cpu_addinstruction( 0xF3, 0xF3, _REP              );
 	cpu_addinstruction( 0xF4, 0xF4, _HLT              );
@@ -253,6 +255,9 @@ cpu_genmap()
 	cpu_addinstruction( 0xFD, 0xFD, _STD              );
 	cpu_addinstruction( 0xFE, 0xFE, _wrap_0xFE        );
 	cpu_addinstruction( 0xFF, 0xFF, _wrap_0xFF        );
+
+		cpu_addinstruction( 0xC0, 0xC0, _wrap_0xC0  );
+		cpu_addinstruction( 0xC1, 0xC1, _wrap_0xC1  );
 
 	if( cpu.type >= INTEL_80186 )
 	{
@@ -309,6 +314,7 @@ kontinue:
 
 		if( g_debug_step )
 		{
+			ui_kill();
 			vm_debug();
 			if( g_debug_step )
 				goto kontinue;

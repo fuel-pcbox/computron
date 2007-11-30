@@ -1,6 +1,7 @@
 #include "screen.h"
 #include <QPainter>
 #include <QApplication>
+#include <QPaintEvent>
 
 typedef struct {
   byte data[16];
@@ -21,7 +22,7 @@ Screen::Screen()
 	m_color[6].setRgb( 0x7f, 0x7f, 0 );
 	m_color[7].setRgb( 0x7f, 0x7f, 0x7f );
 
-	m_color[8].setRgb( 0, 0, 0 );
+	m_color[8].setRgb( 0xbf, 0xbf, 0xbf );
 	m_color[9].setRgb( 0, 0, 0xff );
 	m_color[10].setRgb( 0, 0xff, 0 );
 	m_color[11].setRgb( 0, 0xff, 0xff );
@@ -58,13 +59,107 @@ Screen::putCharacter( QPainter &p, int row, int column, byte color, byte c )
 	p.drawPixmap( x, y, m_character[c] );
 }
 
+extern "C" {
+	int is_video_dirty();
+	void clear_video_dirty();
+}
+
+void
+Screen::refresh()
+{
+	if( mem_space[0x449] == 0x12 )
+	{
+		if( is_video_dirty() )
+		{
+			update();
+			clear_video_dirty();
+		}
+		else
+		{
+			static int moop = 0;
+			if( moop == 0 )
+			{
+				update();
+				moop = 10;
+			}
+			else --moop;
+		}
+	}
+	else
+	{
+		update();
+	}
+}
+
+void
+Screen::putpixel( QPainter &p, int x, int y, int color )
+{
+	p.setPen( m_color[color & 0xF] );
+	p.drawPoint( x, y );
+}
+
+void
+Screen::paintMode12( QPaintEvent *e )
+{
+	setFixedSize( 640, 480 );
+
+	QPixmap pm( e->rect().size() );
+	QPainter p( &pm );
+
+	byte *vm_p0 = mem_space + 0xA0000;
+	extern byte vm_p1[];
+	extern byte vm_p2[];
+	extern byte vm_p3[];
+
+	word offset = 0;
+
+	for( int y = e->rect().top(); y < e->rect().bottom(); y ++ )
+	{
+		for( int x = e->rect().left(); x < e->rect().right(); x += 8, ++offset )
+		{
+			byte data[4];
+			data[0] = vm_p0[offset];
+			data[1] = vm_p1[offset];
+			data[2] = vm_p2[offset];
+			data[3] = vm_p3[offset];
+
+#define D(i) ((data[0]>>i) & 1) | (((data[1]>>i) & 1)<<1) | (((data[2]>>i) & 1)<<2) | (((data[3]>>i) & 1)<<3)
+
+			byte p1 = D(0);
+			byte p2 = D(1);
+			byte p3 = D(2);
+			byte p4 = D(3);
+			byte p5 = D(4);
+			byte p6 = D(5);
+			byte p7 = D(6);
+			byte p8 = D(7);
+
+			putpixel( p, x+7, y, p1 );
+			putpixel( p, x+6, y, p2 );
+			putpixel( p, x+5, y, p3 );
+			putpixel( p, x+4, y, p4 );
+			putpixel( p, x+3, y, p5 );
+			putpixel( p, x+2, y, p6 );
+			putpixel( p, x+1, y, p7 );
+			putpixel( p, x+0, y, p8 );
+		}
+	}
+
+	QPainter wp( this );
+	wp.drawPixmap( e->rect(), pm );
+}
+
 void
 Screen::paintEvent( QPaintEvent *e )
 {
-	(void) e;
-	QPainter p( this );
+	if( mem_space[0x449] == 0x12 )
+	{
+		paintMode12( e );
+		return;
+	}
 
-	//synchronizeFont();
+	QPainter p( this );
+	synchronizeFont();
 
 	byte *v = m_videoMemory;
 	static byte last[25][80];
