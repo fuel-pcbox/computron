@@ -34,6 +34,7 @@ static void vga_selseq( word, byte );
 static void vga_setseq( word, byte );
 static byte vga_getreg( word );
 static byte vga_status( word );
+static byte vga_get_current_register( word );
 
 static byte video_dirty = 0;
 
@@ -50,7 +51,7 @@ vga_init()
 	memset( &vm_p2, 0x0, sizeof(vm_p2) );
 	memset( &vm_p3, 0x0, sizeof(vm_p3) );
 
-	vm_listen( 0x3b4, 0L, vga_selreg );
+	vm_listen( 0x3b4, vga_get_current_register, vga_selreg );
 	vm_listen( 0x3b5, vga_getreg, vga_setreg );
 	vm_listen( 0x3ba, vga_status, 0L );
 
@@ -59,7 +60,7 @@ vga_init()
 	vm_listen( 0x3ce, 0L, vga_selreg2 );
 	vm_listen( 0x3cf, 0L, vga_setreg2 );
 
-	vm_listen( 0x3d4, 0L, vga_selreg );
+	vm_listen( 0x3d4, vga_get_current_register, vga_selreg );
 	vm_listen( 0x3d5, vga_getreg, vga_setreg );
 	vm_listen( 0x3da, vga_status, 0L );
 
@@ -92,6 +93,12 @@ vga_kill()
 #ifdef VOMIT_DEBUG_VGA
 	vga_dump();
 #endif
+}
+
+byte
+vga_get_current_register( word port )
+{
+	return current_register;
 }
 
 void
