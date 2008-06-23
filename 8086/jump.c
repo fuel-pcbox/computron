@@ -50,6 +50,9 @@ _JMP_FAR_mem16()
 	cpu_jump( MSW(value), LSW(value) );
 }
 
+/* If you're bored some day and REALLY WANT SOME SMALL PERFORMANCE IMPROVEMENT
+ * just split Jcc_imm8 into separate opcode handlers. Woot! */
+
 void
 _Jcc_imm8()
 {
