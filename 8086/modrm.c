@@ -6,6 +6,9 @@
 static void *s_last_modrm_ptr = 0L;
 static int s_last_is_register = 0;
 
+static word s_last_modrm_segment = 0;
+static word s_last_modrm_offset = 0;
+
 void *modrm_resolve8( byte rmbyte );
 void *modrm_resolve16( byte rmbyte );
 
@@ -18,14 +21,19 @@ modrm_write16( byte rmbyte, word data )
 		*((word *)rmp) = data;
 		return;
 	}
-	rmp[0] = LSB(data);
-	rmp[1] = MSB(data);
+	mem_setword( s_last_modrm_segment, s_last_modrm_offset, data );
 }
 
 void
 modrm_write8( byte rmbyte, byte data )
 {
-	*((byte *)modrm_resolve8( rmbyte )) = data;
+	byte *rmp = modrm_resolve8( rmbyte );
+	if( MODRM_ISREG( rmbyte ))
+	{
+		*rmp = data;
+		return;
+	}
+	mem_setbyte( s_last_modrm_segment, s_last_modrm_offset, data );
 }
 
 word
@@ -34,32 +42,38 @@ modrm_read16( byte rmbyte )
 	byte *rmp = modrm_resolve16( rmbyte );
 	if( MODRM_ISREG( rmbyte ))
 		return *((word *)rmp);
-	return (rmp[0] | (rmp[1] << 8));
+	return mem_getword( s_last_modrm_segment, s_last_modrm_offset );
 }
 
 byte
 modrm_read8( byte rmbyte )
 {
-	return *((byte *)modrm_resolve8( rmbyte ));
+	byte *rmp = modrm_resolve8( rmbyte );
+	if( MODRM_ISREG( rmbyte ))
+		return *rmp;
+	return mem_getbyte( s_last_modrm_segment, s_last_modrm_offset );
 }
 
 void
 modrm_update16( word data )
 {
-	byte *rmp = s_last_modrm_ptr;
 	if( s_last_is_register )
 	{
-		*((word *)rmp) = data;
+		*((word *)s_last_modrm_ptr) = data;
 		return;
 	}
-	rmp[0] = LSB( data );
-	rmp[1] = MSB( data );
+	mem_setword( s_last_modrm_segment, s_last_modrm_offset, data );
 }
 
 void
 modrm_update8( byte data )
 {
-	*((byte *)s_last_modrm_ptr) = data;
+	if( s_last_is_register )
+	{
+		*((byte *)s_last_modrm_ptr) = data;
+		return;
+	}
+	mem_setbyte( s_last_modrm_segment, s_last_modrm_offset, data );
 }
 
 dword
@@ -142,6 +156,7 @@ modrm_resolve8( byte rmbyte )
 	switch( rmbyte & 0xC0 )
 	{
 		case 0x00:
+			s_last_is_register = 0;
 			switch( rmbyte & 0x07 )
 			{
 				case 0: offset = cpu.regs.W.BX + cpu.regs.W.SI; break;
@@ -153,9 +168,12 @@ modrm_resolve8( byte rmbyte )
 				case 6: offset = cpu_pfq_getword(); break;
 				default: offset = cpu.regs.W.BX; break;
 			}
+			s_last_modrm_segment = segment;
+			s_last_modrm_offset = offset;
 			s_last_modrm_ptr = &mem_space[(segment<<4) + offset];
 			break;
 		case 0x40:
+			s_last_is_register = 0;
 			offset = signext( cpu_pfq_getbyte() );
 			switch( rmbyte & 0x07 )
 			{
@@ -168,9 +186,12 @@ modrm_resolve8( byte rmbyte )
 				case 6: DEFAULT_TO_SS; offset += cpu.regs.W.BP; break;
 				default: offset += cpu.regs.W.BX; break;
 			}
+			s_last_modrm_segment = segment;
+			s_last_modrm_offset = offset;
 			s_last_modrm_ptr = &mem_space[(segment<<4) + offset];
 			break;
 		case 0x80:
+			s_last_is_register = 0;
 			offset = cpu_pfq_getword();
 			switch( rmbyte & 0x07 )
 			{
@@ -183,9 +204,12 @@ modrm_resolve8( byte rmbyte )
 				case 6: DEFAULT_TO_SS; offset += cpu.regs.W.BP; break;
 				default: offset += cpu.regs.W.BX; break;
 			}
+			s_last_modrm_segment = segment;
+			s_last_modrm_offset = offset;
 			s_last_modrm_ptr = &mem_space[(segment<<4) + offset];
 			break;
 		case 0xC0:
+			s_last_is_register = 1;
 			switch( rmbyte & 0x07 )
 			{
 				case 0: s_last_modrm_ptr = &cpu.regs.B.AL; break;
@@ -223,6 +247,8 @@ modrm_resolve16( byte rmbyte )
 				case 6: offset = cpu_pfq_getword(); break;
 				default: offset = cpu.regs.W.BX; break;
 			}
+			s_last_modrm_segment = segment;
+			s_last_modrm_offset = offset;
 			s_last_modrm_ptr = &mem_space[(segment<<4) + offset];
 			break;
 		case 0x40:
@@ -239,6 +265,8 @@ modrm_resolve16( byte rmbyte )
 				case 6: DEFAULT_TO_SS; offset += cpu.regs.W.BP; break;
 				default: offset += cpu.regs.W.BX; break;
 			}
+			s_last_modrm_segment = segment;
+			s_last_modrm_offset = offset;
 			s_last_modrm_ptr = &mem_space[(segment<<4) + offset];
 			break;
 		case 0x80:
@@ -255,6 +283,8 @@ modrm_resolve16( byte rmbyte )
 				case 6: DEFAULT_TO_SS; offset += cpu.regs.W.BP; break;
 				default: offset += cpu.regs.W.BX; break;
 			}
+			s_last_modrm_segment = segment;
+			s_last_modrm_offset = offset;
 			s_last_modrm_ptr = &mem_space[(segment<<4) + offset];
 			break;
 		case 0xC0:
