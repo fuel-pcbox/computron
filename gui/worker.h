@@ -2,11 +2,8 @@
 #define __worker_h__
 
 #include <QObject>
-#include <QTimer>
 
-extern "C" {
-#include "../include/vomit.h"
-}
+class QTimer;
 
 class Worker : public QObject
 {

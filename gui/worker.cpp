@@ -1,4 +1,9 @@
 #include "worker.h"
+#include <QTimer>
+
+extern "C" {
+#include "../include/vomit.h"
+}
 
 Worker::Worker()
 {
