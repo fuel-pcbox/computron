@@ -70,6 +70,7 @@ modrm_read32( byte rmbyte )
 	if( MODRM_ISREG( rmbyte ))
 	{
 		vlog( VM_CPUMSG, "PANIC: Attempt to read 32-bit register." );
+		uasm( cpu.base_CS, cpu.base_IP );
 		vm_kill();
 		exit( 1 );
 	}

@@ -351,6 +351,8 @@ void _OUT_imm8_AL();
 void _OUT_imm8_AX();
 void _OUT_DX_AL();
 void _OUT_DX_AX();
+void _OUTSB();
+void _OUTSW();
 
 void _IN_AL_imm8();
 void _IN_AX_imm8();

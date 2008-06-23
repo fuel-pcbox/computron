@@ -40,6 +40,34 @@ _OUT_DX_AX()
 }
 
 void
+_OUTSB()
+{
+	byte b = mem_getbyte( *(cpu.CurrentSegment), cpu.regs.W.SI );
+	cpu_out( cpu.regs.W.DX, b );
+
+	/* Modify SI according to DF */
+	if( cpu.DF == 0 )
+		++cpu.regs.W.SI;
+	else
+		--cpu.regs.W.SI;
+}
+
+void
+_OUTSW()
+{
+	byte lsb = mem_getbyte( *(cpu.CurrentSegment), cpu.regs.W.SI );
+	byte msb = mem_getbyte( *(cpu.CurrentSegment), cpu.regs.W.SI + 1 );
+	cpu_out( cpu.regs.W.DX, lsb );
+	cpu_out( cpu.regs.W.DX + 1, msb );
+
+	/* Modify SI according to DF */
+	if( cpu.DF == 0 )
+		cpu.regs.W.SI += 2;
+	else
+		cpu.regs.W.SI -= 2;
+}
+
+void
 _IN_AL_imm8()
 {
 	cpu.regs.B.AL = cpu_in( cpu_pfq_getbyte() );

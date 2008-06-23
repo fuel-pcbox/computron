@@ -8,6 +8,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include "vomit.h"
 #include "debug.h"
 
@@ -162,6 +163,8 @@ cpu_genmap()
 	cpu_addinstruction( 0x48, 0x4F, _DEC_reg16        );
 	cpu_addinstruction( 0x50, 0x57, _PUSH_reg16       );
 	cpu_addinstruction( 0x58, 0x5F, _POP_reg16        );
+	cpu_addinstruction( 0x6E, 0x6E, _OUTSB            );
+	cpu_addinstruction( 0x6F, 0x6F, _OUTSW            );
 	cpu_addinstruction( 0x70, 0x7F, _Jcc_imm8         );
 	cpu_addinstruction( 0x80, 0x80, _wrap_0x80        );
 	cpu_addinstruction( 0x81, 0x81, _wrap_0x81        );
@@ -215,6 +218,7 @@ cpu_genmap()
 	cpu_addinstruction( 0xCB, 0xCB, _RETF             );
 	cpu_addinstruction( 0xCC, 0xCC, _INT3             );
 	cpu_addinstruction( 0xCD, 0xCD, _INT_imm8         );
+	cpu_addinstruction( 0xCE, 0xCE, _INTO             );
 	cpu_addinstruction( 0xCF, 0xCF, _IRET             );
 	cpu_addinstruction( 0xD0, 0xD0, _wrap_0xD0        );
 	cpu_addinstruction( 0xD1, 0xD1, _wrap_0xD1        );
@@ -290,6 +294,8 @@ cpu_kill()
 #endif
 }
 
+int eh = 0;
+
 void
 cpu_main()
 {
@@ -311,6 +317,28 @@ kontinue:
 
 		cpu_opcode = cpu_pfq_getbyte();
 		cpu_optable[cpu_opcode]();	/* Call instruction handler. */
+
+		if( 0 && !eh )
+		{
+			static FILE *f = 0L;
+			int y, x;
+			char *video_memory = mem_space + 0xB8000;
+
+			if( !f )
+				f = fopen( "video.txt", "w" );
+			for (y=0; y<25; y++)
+			{
+				for (x=0; x<80; x++) {
+					char ch = video_memory[y*160+x*2];
+					if( ch < ' ' )
+						ch = ' ';
+					putc( ch, f );
+				}
+				fprintf( f, "\n" );
+			}
+			eh = 5000;
+		}
+		--eh;
 
 		if( g_debug_step )
 		{

@@ -1,5 +1,4 @@
 #include "screen.h"
-#include "keyboard.h"
 #include "worker.h"
 #include <QApplication>
 #include <QTimer>
@@ -8,6 +7,8 @@ extern "C" {
 #include "../include/vomit.h"
 }
 
+Screen *scr = 0L;
+
 int
 main( int argc, char **argv )
 {
@@ -15,20 +16,18 @@ main( int argc, char **argv )
 
 	vomit_init( argc, argv );
 
-	Keyboard::init();
+	scr = new Screen;
 
-	Screen s;
-
-	s.setWindowTitle( "VOMIT" );
-	s.show();
+	scr->setWindowTitle( "VOMIT" );
+	scr->show();
 
 	QTimer syncTimer;
-	QObject::connect( &syncTimer, SIGNAL( timeout() ), &s, SLOT( refresh() ));
+	QObject::connect( &syncTimer, SIGNAL( timeout() ), scr, SLOT( refresh() ));
 	syncTimer.start( 50 );
 
 	Worker w;
 
-	QObject::connect( &w, SIGNAL( finished() ), &s, SLOT( close() ));
+	QObject::connect( &w, SIGNAL( finished() ), scr, SLOT( close() ));
 
 	return app.exec();
 }
@@ -36,11 +35,11 @@ main( int argc, char **argv )
 word
 kbd_getc()
 {
-	return Keyboard::nextKey();
+	return scr->nextKey();
 }
 
 word
 kbd_hit()
 {
-	return Keyboard::peekKey();
+	return scr->peekKey();
 }

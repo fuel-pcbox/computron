@@ -106,6 +106,7 @@ void vm_init() {
 	vga_init();
 	fdc_init();
 	ide_init();
+	keyboard_init();
 }
 
 void

@@ -9,6 +9,7 @@ typedef struct {
 
 Screen::Screen()
 {
+	init();
 	synchronizeFont();
 	setTextMode( 80, 25 );
 	m_videoMemory = mem_space + 0xB8000;

@@ -59,7 +59,7 @@ _wrap_0x8F() {
 		case 0: _POP_RM16(); break;
 		default:
 			vlog( VM_ALERT, "8F /%d not wrapped", rmreg( cpu_rmbyte ));
-			uasm( cpu.CS, cpu.IP - 2 );
+			uasm( cpu.base_CS, cpu.base_IP );
 	}
 }
 

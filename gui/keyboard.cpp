@@ -1,13 +1,13 @@
 // This sucks, any suggestions?
 
-#include "keyboard.h"
+#include "screen.h"
+#include <QMap>
+#include <QKeyEvent>
 
-Keyboard *Keyboard::s_self = 0L;
-
-QMap<int, word> normals;
-QMap<int, word> shifts;
-QMap<int, word> ctrls;
-QMap<int, word> alts;
+static QMap<int, word> normals;
+static QMap<int, word> shifts;
+static QMap<int, word> ctrls;
+static QMap<int, word> alts;
 
 void
 addKey( int key, word normal, word shift, word ctrl, word alt )
@@ -96,15 +96,8 @@ addKey( int key, word normal, word shift, word ctrl, word alt )
 #define K_Backslash 0x33
 
 void
-Keyboard::init()
+Screen::init()
 {
-	if( s_self != 0L )
-	{
-		return;
-	}
-
-	s_self = new Keyboard;
-
 	addKey( K_A, 0x1E61, 0x1E41, 0x1E01, 0x1E00 );
 	addKey( K_B, 0x3062, 0x3042, 0x3002, 0x3000 );
 	addKey( K_C, 0x2E63, 0x2E42, 0x2E03, 0x2E00 );
@@ -181,7 +174,7 @@ Keyboard::init()
 	addKey( K_PageUp, 0x4900, 0x4B34, 0x7300, 0x9B00 );
 	addKey( K_PageDown, 0x5100, 0x5133, 0x7600, 0xA100 );
 
-	s_self->grabKeyboard();
+	//grabKeyboard();
 }
 
 word
@@ -206,42 +199,39 @@ keyToScanCode( Qt::KeyboardModifiers mod, int key )
 }
 
 void
-Keyboard::keyPressEvent( QKeyEvent *e )
+Screen::keyPressEvent( QKeyEvent *e )
 {
-	printf( "native scancode = %04X (%c)\n", e->nativeScanCode(), e->nativeScanCode() );
+	//printf( "native scancode = %04X (%c)\n", e->nativeScanCode(), e->nativeScanCode() );
 
 	word scancode = keyToScanCode( e->modifiers(), e->nativeScanCode() );
 
 	if( scancode != 0 )
 	{
 		m_keyQueue.enqueue( scancode );
-//		printf( "Queued %04X (%02X)\n", scancode, e->key() );
+		//printf( "Queued %04X (%02X)\n", scancode, e->key() );
 	}
 }
 
 void
-Keyboard::keyReleaseEvent( QKeyEvent *e )
+Screen::keyReleaseEvent( QKeyEvent *e )
 {
 	e->ignore();
 }
 
 word
-Keyboard::nextKey()
+Screen::nextKey()
 {
-	if( !s_self->m_keyQueue.isEmpty() )
-		return s_self->m_keyQueue.dequeue();
+	if( !m_keyQueue.isEmpty() )
+		return m_keyQueue.dequeue();
 
 	return 0;
 }
 
 word
-Keyboard::peekKey()
+Screen::peekKey()
 {
-	if( !s_self->m_keyQueue.isEmpty() )
-		return s_self->m_keyQueue.head();
+	if( !m_keyQueue.isEmpty() )
+		return m_keyQueue.head();
 
 	return 0;
 }
-
-Keyboard::Keyboard() {}
-Keyboard::~Keyboard() {}

@@ -9,13 +9,13 @@
 void
 dump_cpu()
 {
-	printf( "CPU is an Intel %s\n", cpu.type == 0 ? "8086" : "80186" );
-	printf( "Memory size: %dK\n", mem_avail );
-	printf( "Prefetch queue: " );
+	vlog( VM_DUMPMSG, "CPU is an Intel %s", cpu.type == 0 ? "8086" : "80186" );
+	vlog( VM_DUMPMSG, "Memory size: %dK", mem_avail );
+	vlog( "Prefetch queue: " );
 #ifndef VM_NOPFQ
-	printf( "%d bytes\n", CPU_PFQ_SIZE );
+	vlog( VM_DUMPMSG, "%d bytes", CPU_PFQ_SIZE );
 #else
-	printf( "off\n" );
+	vlog( VM_DUMPMSG, "off" );
 #endif
 }
 
@@ -33,24 +33,28 @@ dump_disasm( word segment, word offset )
 {
 	char disasm[64];
 	int width, i;
+	char buf[512];
+	char *p = buf;
 	byte *opcode;
 
 	opcode = mem_space + (segment << 4) + offset;
 	width = insn_width( opcode );
 	disassemble( opcode, offset, disasm, sizeof(disasm) );
 
-	vlog( VM_CPUMSG, "%04X:%04X ", segment, offset );
+	p += sprintf( p, "%04X:%04X ", segment, offset );
 
 	for( i = 0; i < (width ? width : 7); ++i )
 	{
-		vlog( VM_CPUMSG, "%02X", opcode[i] );
+		p += sprintf( p, "%02X", opcode[i] );
 	}
 	for( i = 0; i < (14-((width?width:7)*2)); ++i )
 	{
-		vlog( VM_CPUMSG, " " );
+		p += sprintf( p, " " );
 	}
 
-	vlog( VM_CPUMSG, " %s\n", disasm );
+	p += sprintf( p, " %s", disasm );
+
+	vlog( VM_DUMPMSG, buf );
 
 	/* Recurse if this is a prefix instruction. */
 	if( *opcode == 0x26 || *opcode == 0x2E || *opcode == 0x36 || *opcode == 0x3E || *opcode == 0xF2 || *opcode == 0xF3 )
@@ -61,6 +65,7 @@ dump_disasm( word segment, word offset )
 
 void dump_all() {
 	word *stacky = (void *)mem_space + (cpu.SS<<4)+cpu.regs.W.SP;
+	byte *csip = mem_space + (cpu.base_CS<<4) + cpu.base_IP;
 
 #ifndef VM_NOPFQ
 	byte x = (byte)cpu_pfq_current;
@@ -73,19 +78,18 @@ void dump_all() {
 	}
 #endif
 
-	printf( "\nAX=%04X BX=%04X CX=%04X DX=%04X     SP=> %04X", cpu.regs.W.AX, cpu.regs.W.BX, cpu.regs.W.CX, cpu.regs.W.DX, *(stacky++) );
-	printf( "\nSP=%04X BP=%04X SI=%04X DI=%04X          %04X", cpu.regs.W.SP, cpu.regs.W.BP, cpu.regs.W.SI, cpu.regs.W.DI, *(stacky++) );
-	printf( "\nCS=%04X DS=%04X ES=%04X SS=%04X          %04X", cpu.CS, cpu.DS, cpu.ES, cpu.SS, *(stacky++) );
-	printf( "\nC=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u          %04X", cpu.CF, cpu.PF, cpu.AF, cpu.ZF, cpu.SF, cpu.IF, cpu.DF, cpu.OF, *(stacky++) );
+	vlog( VM_DUMPMSG, "AX=%04X BX=%04X CX=%04X DX=%04X     SP=> %04X", cpu.regs.W.AX, cpu.regs.W.BX, cpu.regs.W.CX, cpu.regs.W.DX, *(stacky++) );
+	vlog( VM_DUMPMSG, "SP=%04X BP=%04X SI=%04X DI=%04X          %04X", cpu.regs.W.SP, cpu.regs.W.BP, cpu.regs.W.SI, cpu.regs.W.DI, *(stacky++) );
+	vlog( VM_DUMPMSG, "CS=%04X DS=%04X ES=%04X SS=%04X          %04X", cpu.CS, cpu.DS, cpu.ES, cpu.SS, *(stacky++) );
+	vlog( VM_DUMPMSG, "C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u          %04X", cpu.CF, cpu.PF, cpu.AF, cpu.ZF, cpu.SF, cpu.IF, cpu.DF, cpu.OF, *(stacky++) );
 
+	vlog( VM_DUMPMSG, "  -  (%02X %02X%02X%02X%02X%02X)", csip[0], csip[1], csip[2], csip[3], csip[4], csip[5] );
 #ifndef VM_NOPFQ
-	printf("  -  [%02X %02X%02X%02X%02X%02X]\n", dpfq[0], dpfq[1], dpfq[2], dpfq[3], dpfq[4], dpfq[5]);
-#else
-	printf("\n");
+	vlog( VM_DUMPMSG, "  -  [%02X %02X%02X%02X%02X%02X]", dpfq[0], dpfq[1], dpfq[2], dpfq[3], dpfq[4], dpfq[5] );
 #endif
 
-	printf( "\n" );
-	dump_disasm( cpu.CS, cpu.IP );
+	vlog( VM_DUMPMSG, "\n" );
+	dump_disasm( cpu.base_CS, cpu.base_IP );
 }
 
 byte n(byte b) {					/* Nice it up for printing.		*/
@@ -98,8 +102,8 @@ void dump_mem(word seg, word off, byte rows) {
 	int i; byte *p = mem_space + (seg*16) + off;
 	if(rows==0) rows=5;
 	for(i=0;i<rows;i++) {
-		printf(
-			"%04X:%04X   %02X %02X %02X %02X %02X %02X %02X %02X - %02X %02X %02X %02X %02X %02X %02X %02X   %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c\n",
+		vlog( VM_DUMPMSG,
+			"%04X:%04X   %02X %02X %02X %02X %02X %02X %02X %02X - %02X %02X %02X %02X %02X %02X %02X %02X   %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
 			seg, (off+i*16),
 			p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7],
 			p[8], p[9], p[10], p[11], p[12], p[13], p[14], p[15],
@@ -121,8 +125,8 @@ dump_ivt()
 	/* XXX: For alignment reasons, we're skipping INT FF */
 	for( i = 0; i < 0xFF; i += 5 )
 	{
-		printf(
-			"%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X\n",
+		vlog( VM_DUMPMSG,
+			"%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X",
 			i, iseg(i), ioff(i),
 			i+1, iseg(i+1), ioff(i+1),
 			i+2, iseg(i+2), ioff(i+2),

@@ -11,6 +11,7 @@
 #include <stdio.h>
 
 bool g_debug_step = false;
+bool g_in_debug = false;
 static FILE *s_logfile = 0L;
 
 void
@@ -21,8 +22,7 @@ vlog( int category, const char *format, ... )
 
 	if( !s_logfile )
 	{
-		s_logfile = stderr;
-		//s_logfile = fopen( "log.txt", "a" );
+		s_logfile = fopen( "log.txt", "a" );
 		if( !s_logfile )
 			return;
 	}
@@ -48,6 +48,14 @@ vlog( int category, const char *format, ... )
 	vfprintf( s_logfile, format, ap );
 	va_end( ap );
 
+	if( g_in_debug )
+	{
+		va_start( ap, format );
+		vprintf( format, ap );
+		va_end( ap );
+		puts("");
+	}
+
 	fputc( '\n', s_logfile );
 
 	fflush( s_logfile );
@@ -71,6 +79,8 @@ vm_debug()
 {
 	char curcmd[256], *curtok;
 	word mseg, moff;
+
+	g_in_debug = true;
 
 	if( g_debug_step )
 	{
@@ -151,4 +161,5 @@ vm_debug()
 			}
 		}
 	}
+	g_in_debug = false;
 }

@@ -28,6 +28,7 @@
 #define VM_MEMORYMSG    118
 #define VM_DMAMSG       119
 #define VM_FDCMSG       120
+#define VM_DUMPMSG      121
 
 typedef uint8_t byte;
 typedef uint16_t word;

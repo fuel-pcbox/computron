@@ -575,7 +575,7 @@ _bios_interrupt10:                  ; BIOS Video Interrupt
     mov     bh, 0                   ; color mode
     mov     bl, 0                   ; 64k EGA mem
     iret    ; we want to return in AX
-.scrollWindow
+.scrollWindow:
     out     0xE7, al
     jmp     .end
 .selectPage:

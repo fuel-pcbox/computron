@@ -5,6 +5,7 @@
 
 #include "vomit.h"
 #include "debug.h"
+#include <stdio.h>
 
 void
 _INT_imm8()
@@ -38,15 +39,24 @@ _IRET()
 	cpu_setflags( mem_pop() );
 }
 
+FILE *f = 0L;
+
 void
 int_call( byte isr )
 {
 	word segment, offset;
+	if( !f )
+		f = fopen("echo.txt", "w");
 
 #ifdef VM_DEBUG
 	if( trapint )
 		vlog( VM_CPUMSG, "%04X:%04X Interrupt %02X,%02X trapped", cpu.base_CS, cpu.base_IP, isr, cpu.regs.B.AH );
 #endif
+
+	if( isr == 0x06 )
+	{
+		vlog( VM_CPUMSG, "Invalid opcode trap at %04X:%04X (%02X)", cpu.base_CS, cpu.base_IP, mem_getbyte(cpu.base_CS, cpu.base_IP) );
+	}
 
 	if( isr == 0x10 )
 	{

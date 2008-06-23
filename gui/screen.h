@@ -28,6 +28,13 @@ public:
 
 	void putCharacter( QPainter &p, int row, int column, byte color, byte c );
 
+	word nextKey();
+	word peekKey();
+
+protected:
+	void keyPressEvent( QKeyEvent *e );
+	void keyReleaseEvent( QKeyEvent *e );
+
 public slots:
 	void refresh();
 
@@ -35,6 +42,7 @@ private slots:
 	void paintEvent( QPaintEvent * );
 
 private:
+	void init();
 	bool m_inTextMode;
 	int m_width, m_height;
 	int m_characterWidth, m_characterHeight;
