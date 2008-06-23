@@ -100,7 +100,7 @@ char * modrm_string(BYTE *p, int bits) {
 		if ((rm & 7) == 6)
 			sprintf(ret, modrm_fmt[rm & 7], (*(p+1) | (*(p+2) << 8)));
 		else
-			sprintf(ret, modrm_fmt[rm & 7]);
+			sprintf(ret, "%s", modrm_fmt[rm & 7]);
 		break;
 	case 0x40:
 		sprintf(ret, modrm_fmt[8 + (rm & 7)], *(p+1));

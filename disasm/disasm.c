@@ -108,6 +108,9 @@ bool disassemble(BYTE *p, long unsigned int offset, char *buf, int len) {
 				offset + w + base_width);
 		break;
 
+	case OP_DX_AX:
+		snprintf(ptr, len, "DX, AX");
+		break;
 	case OP_DX_AL:
 		snprintf(ptr, len, "DX, AL");
 		break;
