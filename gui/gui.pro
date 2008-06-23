@@ -9,8 +9,7 @@ INCLUDEPATH += .
 LIBS += -L.. -lvomit
 
 # Input
-HEADERS += keyboard.h \
-           screen.h \
+HEADERS += screen.h \
            worker.h \
            ../include/vomit.h \
            ../include/8086.h \
