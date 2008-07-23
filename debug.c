@@ -19,6 +19,7 @@ vlog( int category, const char *format, ... )
 {
 	va_list ap;
 	const char *prefix = 0L;
+	bool show_on_stdout = false;
 
 	if( !s_logfile )
 	{
@@ -32,7 +33,7 @@ vlog( int category, const char *format, ... )
 		case VM_INITMSG: prefix = "init"; break;
 		case VM_DISKLOG: prefix = "disk"; break;
 		case VM_KILLMSG: prefix = "kill"; break;
-		case VM_IOMSG:   prefix = "i/o"; break;
+		case VM_IOMSG:   prefix = "i/o"; show_on_stdout = false; break;
 		case VM_ALERT:   prefix = "alert"; break;
 		case VM_PRNLOG:  prefix = "lpt"; break;
 		case VM_VIDEOMSG: prefix = "video"; break;
@@ -48,8 +49,10 @@ vlog( int category, const char *format, ... )
 	vfprintf( s_logfile, format, ap );
 	va_end( ap );
 
-	if( g_in_debug )
+	if( g_in_debug || show_on_stdout )
 	{
+		if( prefix )
+			printf( "(%8s) ", prefix );
 		va_start( ap, format );
 		vprintf( format, ap );
 		va_end( ap );
@@ -110,6 +113,8 @@ vm_debug()
 
 			if ( !strcmp( curtok, "c" ) )
 				dump_cpu();
+			if ( !strcmp( curtok, "reconf" ) )
+				config_reload();
 			else if ( !strcmp( curtok, "r" ) )
 				dump_all();
 			else if ( !strcmp( curtok, "i" ) )

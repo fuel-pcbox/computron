@@ -56,6 +56,14 @@ void
 _MOV_RM8_reg8()
 {
 	byte rm = cpu_pfq_getbyte();
+	if( rm == 0x26 )
+	{
+		if( mem_getword(cpu.CS, cpu.IP )== 0xBFFC )
+		{
+			// wat
+			rm = 0x26;
+		}
+	}
 	modrm_write8( rm, *treg8[rmreg(rm)] );
 }
 

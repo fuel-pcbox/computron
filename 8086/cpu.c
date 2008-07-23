@@ -349,18 +349,16 @@ kontinue:
 //			ui_show();
 		}
 
-#if 0
 		if( g_break_pressed )
 		{
 			ui_kill();
-			vm_exit( 0 );
+			//vm_exit( 0 );
 			vm_debug();
 			if( !g_debug_step )
 				ui_show();
 			g_break_pressed = false;
 			/* TODO: int_call( 9 ); */
 		}
-#endif
 
 		if( cpu.TF )
 		{

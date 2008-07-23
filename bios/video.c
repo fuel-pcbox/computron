@@ -17,6 +17,7 @@ static void scroll_active_page_up();
 static void scroll_active_page_down();
 static void video_subsystem_configuration();
 static void video_display_combination();
+static void character_generator();
 static word columns();
 static byte rows();
 static void store_cursor( word cursor );
@@ -71,8 +72,9 @@ bios_interrupt10()
 		case 0x0f: get_video_state(); break;
 		case 0x12: video_subsystem_configuration(); break;
 		case 0x1a: video_display_combination(); break;
+		case 0x11: character_generator(); break;
 		default:
-			vlog( VM_VIDEOMSG, "Interrupt 10, function %02X requested", cpu.regs.B.AH );
+			vlog( VM_VIDEOMSG, "Interrupt 10, function %02X requested, AL=%02X, BH=%02X", cpu.regs.B.AH, cpu.regs.B.AL, cpu.regs.B.BH );
 	}
 }
 
@@ -353,4 +355,21 @@ video_display_combination()
 	{
 		vlog( VM_VIDEOMSG, "Video display combination overwrite requested." );
 	}
+}
+
+void
+character_generator()
+{
+	if( cpu.regs.B.AL == 0x30 )
+	{
+		if( cpu.regs.B.BH == 0 )
+		{
+			cpu.regs.W.BP = (mem_space[0x1F * 4 + 1] << 8) | mem_space[0x1F * 4];
+			cpu.ES = (mem_space[0x1F * 4 + 3] << 8) | mem_space[0x1F * 4 + 2];
+			vlog( VM_VIDEOMSG, "Character generator returned pointer to Interrupt 1F" );
+			return;
+		}
+	}
+
+	vlog( VM_VIDEOMSG, "Unknown character generator request: AL=%02X, BH=%02X\n", cpu.regs.B.AL, cpu.regs.B.BH );
 }

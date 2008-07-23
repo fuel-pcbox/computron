@@ -77,7 +77,7 @@ _cpu_default_softtimer:
     iret
 
 _kbd_interrupt:
-    int     0x1B
+    ;int     0x1B
     iret
 
 _bios_ctrl_break:

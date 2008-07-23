@@ -1,6 +1,6 @@
 /* config.c
  *
- * I'm sorry.
+ * Future me: I'm sorry.
  *
  */
 
@@ -9,6 +9,8 @@
 #include <string.h>
 #include "vomit.h"
 #include "debug.h"
+
+static bool reloading = false;
 
 typedef struct
 {
@@ -31,7 +33,10 @@ static disk_type_t floppy_types[] =
 	{ 0L,       0, 0,    0,   0, 0 }
 };
 
-void vm_loadconf() {
+static void
+unspeakable_abomination()
+{
+
 	FILE *fconf, *ftmp;
 	char curline[256], *curtok; char lfname[MAX_FN_LENGTH];
 	byte tb, lnum;
@@ -64,21 +69,22 @@ void vm_loadconf() {
                 fread(mem_space+lseg*16+loff, 1, MAX_FILESIZE, ftmp);
                 fclose(ftmp);
             }
-			else if(strcmp(curtok,"setbyte")==0) {
-                lseg = strtol(strtok(NULL,": \t\n"), NULL, 16);
-                loff = strtol(strtok(NULL," \t\n"), NULL, 16);
-                curtok = strtok(NULL, " \t\n");
+			else if( !reloading && !strcmp( curtok, "setbyte" ))
+			{
+				lseg = strtol(strtok(NULL,": \t\n"), NULL, 16);
+				loff = strtol(strtok(NULL," \t\n"), NULL, 16);
+				curtok = strtok(NULL, " \t\n");
 
 				//vlog( VM_INITMSG, "Entering at %04X:%04X", lseg, loff );
 
-                while(curtok) {
-                    tb = strtol(curtok,NULL,16);
+				while( curtok )
+				{
+					tb = strtol(curtok,NULL,16);
 					//vlog( VM_INITMSG, "  [%04X] = %02X", loff, tb );
-                    mem_setbyte(lseg, loff, tb);
-					++loff;
-                    curtok = strtok(NULL, " \t\n");
+					mem_setbyte(lseg, loff++, tb);
+					curtok = strtok(NULL, " \t\n");
                 }
-                curtok=curline;
+				curtok=curline;
             }
 			else if( !strcmp( curtok, "floppy" ))
 			{
@@ -131,31 +137,49 @@ void vm_loadconf() {
 				drv_type[ldrv] = ltype;
                 drv_status[ldrv] = 1;
             }
-			else if(strcmp(curtok,"cpu")==0) {
+			else if( !reloading && !strcmp( curtok, "cpu" ))
+			{
 				curtok = strtok(NULL, " \t\n");
 				cpu.type = (word)(strtol(curtok, NULL, 10));
 				vlog( VM_INITMSG, "Setting CPU type to %d", cpu.type );
 			}
-			else if(strcmp(curtok,"memory")==0) {
+			else if( !reloading && !strcmp( curtok, "memory" ))
+			{
 				curtok = strtok(NULL, " \t\n");
 				mem_avail = (word)(strtol(curtok, NULL, 10));
 				vlog( VM_INITMSG, "Memory size: %d kilobytes", mem_avail );
 			}
-			else if(strcmp(curtok,"entry")==0) {
-                curtok = strtok(NULL, ": \t\n");
-                cpu.CS = (word)strtol(curtok, NULL, 16);
-                curtok = strtok(NULL, " \t\n");
-                cpu.IP = (word)strtol(curtok, NULL, 16);
+			else if( !reloading && !strcmp( curtok, "entry" ))
+			{
+				curtok = strtok(NULL, ": \t\n");
+				cpu.CS = (word)strtol(curtok, NULL, 16);
+				curtok = strtok(NULL, " \t\n");
+				cpu.IP = (word)strtol(curtok, NULL, 16);
 				cpu_jump( cpu.CS, cpu.IP );
-            }
-			else if(strcmp(curtok,"addint")==0) {
-                lnum = (byte)strtol(strtok(NULL, " \t\n"), NULL, 16);
-                lseg = (word)strtol(strtok(NULL, ": \t\n"), NULL, 16);
-                loff = (word)strtol(strtok(NULL, " \t\n"), NULL, 16);
+			}
+			else if( !reloading && !strcmp( curtok, "addint" ))
+			{
+				lnum = (byte)strtol(strtok(NULL, " \t\n"), NULL, 16);
+				lseg = (word)strtol(strtok(NULL, ": \t\n"), NULL, 16);
+				loff = (word)strtol(strtok(NULL, " \t\n"), NULL, 16);
 				vlog( VM_INITMSG, "Software interrupt %02X at %04X:%04X", lnum, lseg, loff );
 		        cpu_addint(lnum, lseg, loff);
             }
         }
     }
     fclose(fconf);
+}
+
+void
+vm_loadconf()
+{
+	reloading = false;
+	unspeakable_abomination();
+}
+
+void
+config_reload()
+{
+	reloading = true;
+	unspeakable_abomination();
 }

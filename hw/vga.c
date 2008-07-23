@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <stdlib.h>
 
 static byte current_register = 0;
 static byte current_register2 = 0;
@@ -24,8 +25,6 @@ static byte rows;
 
 static byte latch[4];
 
-static byte *vm_p0 = 0;
-
 static void vga_selreg( word, byte );
 static void vga_setreg( word, byte );
 static void vga_selreg2( word, byte );
@@ -36,8 +35,9 @@ static byte vga_getreg( word );
 static byte vga_status( word );
 static byte vga_get_current_register( word );
 
-static byte video_dirty = 0;
+static bool video_dirty = false;
 
+byte vm_p0[0x9600];
 byte vm_p1[0x9600];
 byte vm_p2[0x9600];
 byte vm_p3[0x9600];
@@ -45,7 +45,10 @@ byte vm_p3[0x9600];
 void
 vga_init()
 {
-	vm_p0 = mem_space + 0xA0000;
+	latch[0] = 0;
+	latch[1] = 0;
+	latch[2] = 0;
+	latch[3] = 0;
 
 	memset( &vm_p1, 0x0, sizeof(vm_p1) );
 	memset( &vm_p2, 0x0, sizeof(vm_p2) );
@@ -98,6 +101,7 @@ vga_kill()
 byte
 vga_get_current_register( word port )
 {
+	(void) port;
 	return current_register;
 }
 
@@ -135,7 +139,7 @@ void
 vga_setseq( word port, byte data )
 {
 	(void) port;
-	vlog( VM_VIDEOMSG, "writing to seq %d, data is %02X", current_sequencer, data );
+	//vlog( VM_VIDEOMSG, "writing to seq %d, data is %02X", current_sequencer, data );
 	io_sequencer[current_sequencer] = data;
 }
 
@@ -233,7 +237,7 @@ void
 vga_setreg2( word port, byte data )
 {
 	(void) port;
-	vlog( VM_VIDEOMSG, "writing to reg2 %d, data is %02X", current_register2, data );
+	//vlog( VM_VIDEOMSG, "writing to reg2 %d, data is %02X", current_register2, data );
 	io_register2[current_register2] = data;
 }
 
@@ -242,101 +246,135 @@ vga_setreg2( word port, byte data )
 void
 vga_setbyte( dword a, byte d )
 {
-	dword aa = a-0xA0000;
-#if 0
-	latch[0] = vm_p0[aa];
-	latch[1] = vm_p1[aa];
-	latch[2] = vm_p2[aa];
-	latch[3] = vm_p3[aa];
-#endif
+	/*
+	 * fprintf(stderr,"mem_write: %02X:%04X = %02X <%d>, BM=%02X, ESR=%02X, SR=%02X\n", io_sequencer[2] & 0x0F, a-0xA0000, d, DRAWOP, BIT_MASK, io_register2[1], io_register2[0]);
+	 */
 
-	if( aa >= 0x9600 )
+	if( a >= 0xA9600 )
 	{
-		vlog( VM_VIDEOMSG, "OOB write %lx", a + 0xA0000 );
+		vlog( VM_VIDEOMSG, "OOB write 0x%lx", a );
 		mem_space[a] = d;
 	}
 
-	if( MODE12 )
+	byte new_val[4];
+
+	a -= 0xA0000;
+
+	if( WRITE_MODE == 2 )
 	{
-		byte *dest = 0;
-		a -= 0xA0000;
-		if( WRITE_MODE != 0 )
+		byte bitmask = BIT_MASK;
+
+        new_val[0] = latch[0] & ~bitmask;
+        new_val[1] = latch[1] & ~bitmask;
+        new_val[2] = latch[2] & ~bitmask;
+        new_val[3] = latch[3] & ~bitmask;
+
+		switch( DRAWOP )
 		{
-			vlog( VM_VIDEOMSG, "write mode %d, no idea what to do ;(", WRITE_MODE );
+			case 0:
+				new_val[0] |= (d & 1) ? bitmask : 0;
+				new_val[1] |= (d & 2) ? bitmask : 0;
+				new_val[2] |= (d & 4) ? bitmask : 0;
+				new_val[3] |= (d & 8) ? bitmask : 0;
+				break;
+			default:
+				ui_kill();
+				vlog( VM_VIDEOMSG, "Gaah, unsupported raster op %d in mode 2 :(\n", DRAWOP );
+				vm_exit( 0 );
 		}
-		switch( io_register2[4] )
+	}
+	else if( WRITE_MODE == 0 )
+	{
+		byte bitmask = BIT_MASK;
+		byte set_reset = io_register2[0];
+		byte enable_set_reset = io_register2[1];
+		byte value = d;
+
+		if( ROTATE )
 		{
-			case 0: dest = &vm_p0[a]; break;
-			case 1: dest = &vm_p1[a]; break;
-			case 2: dest = &vm_p2[a]; break;
-			case 3: dest = &vm_p3[a]; break;
+			vlog( VM_VIDEOMSG, "Rotate used!" );
+			value = (value >> ROTATE) | (value << ( 8 - ROTATE ));
 		}
 
-		if( WRITE_MODE == 0 )
-		{
-			byte new_val[4] = { 0, 0, 0, 0 };
-			int j, i;
-			byte bit_mask = BIT_MASK;
-			byte and_mask = 0x01;
-			byte value = (d >> ROTATE) | (d << (8-ROTATE));
-			static byte lastb = 0;
-			if( bit_mask != lastb )
-			{
-				vlog( VM_VIDEOMSG, "bitmask is %02X", bit_mask );
-				lastb = bit_mask;
-			}
-			for( j = 0; j < 8; ++j )
-			{
-				if( bit_mask & 0x01 )
-				{
-					for( i = 0; i < 4; ++i )
-					{
-						byte new_bit;
-						if( SET_RESET_ENABLE_BIT(i))
-							new_bit = SET_RESET_BIT(i) << j;
-						else
-							new_bit = (value & and_mask);
+		new_val[0] = latch[0] & ~bitmask;
+		new_val[1] = latch[1] & ~bitmask;
+		new_val[2] = latch[2] & ~bitmask;
+		new_val[3] = latch[3] & ~bitmask;
 
-						switch( DRAWOP )
-						{
-							case 0: new_val[i] |= new_bit; break;
-							case 1: new_val[i] |= new_bit & (latch[i] & and_mask); break;
-							case 2: new_val[i] |= new_bit | (latch[i] & and_mask); break;
-							case 3: new_val[i] |= new_bit ^ (latch[i] & and_mask); break;
-							default:
-								vlog( VM_VIDEOMSG, "LOL WUT?" );
-						}
-					}
-				}
-				else
-				{
-					for( i = 0; i < 4; ++i )
-						new_val[i] |= (latch[i] & and_mask);
-				}
-				bit_mask >>= 1;
-				and_mask <<= 1;
-			}
-			if( io_sequencer[2] & 0x0F )
-			{
-				if( MAP_MASK_BIT(0) ) vm_p0[a] = new_val[0];
-				if( MAP_MASK_BIT(1) ) vm_p1[a] = new_val[1];
-				if( MAP_MASK_BIT(2) ) vm_p2[a] = new_val[2];
-				if( MAP_MASK_BIT(3) ) vm_p3[a] = new_val[3];
-			}
-			else
-			{
-				*dest = d;
-			}
-		}
-		else
+		//fprintf( stderr, "new_val[] = {%02X, %02X, %02X, %02X}\n", new_val[0], new_val[1], new_val[2], new_val[3] );
+
+		switch( DRAWOP )
 		{
-			*dest = d;
+			case 0:
+				new_val[0] |= ((enable_set_reset & 1)
+					? ((set_reset & 1) ? bitmask : 0)
+					: (value & bitmask));
+				new_val[1] |= ((enable_set_reset & 2)
+					? ((set_reset & 2) ? bitmask : 0)
+					: (value & bitmask));
+				new_val[2] |= ((enable_set_reset & 4)
+					? ((set_reset & 4) ? bitmask : 0)
+					: (value & bitmask));
+				new_val[3] |= ((enable_set_reset & 8)
+					? ((set_reset & 8) ? bitmask : 0)
+					: (value & bitmask));
+				break;
+			case 3:
+				new_val[0] |= ((enable_set_reset & 1)
+					? ((set_reset & 1)
+						? (~latch[0] & bitmask)
+						: (latch[0] & bitmask))
+					: (value ^ latch[0]) & bitmask);
+
+				new_val[1] |= ((enable_set_reset & 2)
+					? ((set_reset & 2)
+						? (~latch[1] & bitmask)
+						: (latch[1] & bitmask))
+					: (value ^ latch[1]) & bitmask);
+
+				new_val[2] |= ((enable_set_reset & 4)
+					? ((set_reset & 4)
+						? (~latch[2] & bitmask)
+						: (latch[2] & bitmask))
+					: (value ^ latch[2]) & bitmask);
+
+				new_val[3] |= ((enable_set_reset & 8)
+					? ((set_reset & 8)
+						? (~latch[3] & bitmask)
+						: (latch[3] & bitmask))
+					: (value ^ latch[3]) & bitmask);
+				break;
+			default:
+				vlog( VM_VIDEOMSG, "Unsupported raster operation %d\n", DRAWOP );
+				ui_kill();
+				vm_exit( 0 );
 		}
-		video_dirty = 1;
+	}
+	else
+	{
+		vlog( VM_VIDEOMSG, "Unsupported 6845 write mode %d\n", WRITE_MODE );
+		vm_exit( 0 );
+
+		/* This is just here to make GCC stop worrying about accessing new_val[] uninitialized. */
 		return;
 	}
-	video_dirty = 1;
-	mem_space[a] = d;
+
+	/*
+	 * Check first if any planes should be written.
+	 */
+	if( io_sequencer[2] & 0x0F )
+	{
+		if( io_sequencer[2] & 0x01 )
+			vm_p0[a] = new_val[0];
+		if( io_sequencer[2] & 0x02 )
+			vm_p1[a] = new_val[1];
+		if( io_sequencer[2] & 0x04 )
+			vm_p2[a] = new_val[2];
+		if( io_sequencer[2] & 0x08 )
+			vm_p3[a] = new_val[3];
+
+		video_dirty = true;
+	}
 }
 
 byte
@@ -344,30 +382,32 @@ vga_getbyte( dword a )
 {
 	if( READ_MODE == 1 )
 	{
-		vlog( VM_VIDEOMSG, "ZOMG!" );
+		vlog( VM_VIDEOMSG, "ZOMG! READ_MODE == 1" );
+		ui_kill();
+		vm_exit( 1 );
 	}
-	else if( READ_MODE == 0 )
-	{
-	}
-	if( MODE12 )
+
+	/* We're assuming READ_MODE == 0 now... */
+
+	if( a < 0xA9600 )
 	{
 		a -= 0xA0000;
-		if( a < 0x9600 )
-		{
-			latch[0] = vm_p0[a];
-			latch[1] = vm_p1[a];
-			latch[2] = vm_p2[a];
-			latch[3] = vm_p3[a];
-			return latch[io_register2[4]];
-		}
-		else
-		{
-		vlog( VM_VIDEOMSG, "OOB read %lx", a + 0xA0000 );
-		return mem_space[a];
-		}
+		latch[0] = vm_p0[a];
+		latch[1] = vm_p1[a];
+		latch[2] = vm_p2[a];
+		latch[3] = vm_p3[a];
+		/*
+			fprintf(stderr, "mem_read: %02X {%02X, %02X, %02X, %02X}\n", latch[io_register2[4]], latch[0], latch[1], latch[2], latch[3]);
+		*/
+		return latch[io_register2[4]];
 	}
 	else
 	{
+		vlog( VM_VIDEOMSG, "OOB read %lx", a + 0xA0000 );
+#if 0
+			g_debug_step = true;
+			vm_debug();
+#endif
 		return mem_space[a];
 	}
 }
@@ -388,10 +428,10 @@ vga_getword( dword a )
 void
 clear_video_dirty()
 {
-	video_dirty = 0;
+	video_dirty = false;
 }
 
-int
+bool
 is_video_dirty()
 {
 	return video_dirty;

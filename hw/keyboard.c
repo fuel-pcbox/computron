@@ -15,6 +15,7 @@
 #define ATKBD_INPUT_STATUS  0x02
 #define ATKBD_OUTPUT_STATUS 0x01
 
+static byte keyboard_data( word port );
 static byte keyboard_status( word );
 static byte system_control_read( word );
 static void system_control_write( word, byte );
@@ -24,6 +25,7 @@ static byte system_control_port_data;
 void
 keyboard_init()
 {
+	vm_listen( 0x60, keyboard_data, 0L );
 	vm_listen( 0x61, system_control_read, system_control_write );
 	vm_listen( 0x64, keyboard_status, 0L );
 
@@ -49,4 +51,10 @@ system_control_write( word port, byte data )
 {
 	system_control_port_data = data;
 	vlog( VM_KEYMSG, "System control port <- %02X", data );
+}
+
+byte
+keyboard_data( word port )
+{
+	return kbd_getc();
 }

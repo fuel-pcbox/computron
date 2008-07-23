@@ -46,10 +46,10 @@ __rep( byte opcode, bool should_equal )
 {
 	switch( opcode )
 	{
-		case 0x26: cpu.CurrentSegment = &cpu.ES; break;
-		case 0x2E: cpu.CurrentSegment = &cpu.CS; break;
-		case 0x36: cpu.CurrentSegment = &cpu.SS; break;
-		case 0x3E: cpu.CurrentSegment = &cpu.DS; break;
+		case 0x26: cpu.SegmentPrefix = cpu.ES; cpu.CurrentSegment = &cpu.SegmentPrefix; break;
+		case 0x2E: cpu.SegmentPrefix = cpu.CS; cpu.CurrentSegment = &cpu.SegmentPrefix; break;
+		case 0x36: cpu.SegmentPrefix = cpu.SS; cpu.CurrentSegment = &cpu.SegmentPrefix; break;
+		case 0x3E: cpu.SegmentPrefix = cpu.DS; cpu.CurrentSegment = &cpu.SegmentPrefix; break;
 
 		case 0xA4: DO_REP( _MOVSB ); return;
 		case 0xA5: DO_REP( _MOVSW ); return;

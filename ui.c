@@ -11,7 +11,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <curses.h>
-#include <signal.h>
 
 #define VGA_ATTR(a) COLOR_PAIR( (((a)>>4)&7)*8 |  ((a)&7)) | ( ((a)&8) ? A_BOLD : 0 )
 #define PRINTABLE(c) ((c < 32 || c > 250) ? ' ' : c)
@@ -289,18 +288,18 @@ ui_sync() {
 		if( SDL_MUSTLOCK( s_surface ))
 			SDL_LockSurface( s_surface );
 
+		extern byte vm_p0[];
 		extern byte vm_p1[];
 		extern byte vm_p2[];
 		extern byte vm_p3[];
 
-		byte *vm = mem_space + 0xA0000;
 		word offset = 0;
 		for( y = 0; y < 480; y ++ )
 		{
 			for( x = 0; x < 640; x += 8, ++offset )
 			{
 				byte data[4];
-				data[0] = vm[offset];
+				data[0] = vm_p0[offset];
 				data[1] = vm_p1[offset];
 				data[2] = vm_p2[offset];
 				data[3] = vm_p3[offset];

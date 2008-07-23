@@ -205,11 +205,19 @@ Screen::keyPressEvent( QKeyEvent *e )
 
 	word scancode = keyToScanCode( e->modifiers(), e->nativeScanCode() );
 
+	if( e->nativeScanCode() == K_F12 )
+	{
+		printf( "DEBUG!\n" );
+		g_debug_step = 1;
+		vm_debug();
+	}
+
 	if( scancode != 0 )
 	{
 		m_keyQueue.enqueue( scancode );
 		//printf( "Queued %04X (%02X)\n", scancode, e->key() );
 	}
+	int_call( 9 );
 }
 
 void

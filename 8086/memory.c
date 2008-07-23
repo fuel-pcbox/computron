@@ -5,6 +5,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "vomit.h"
 #include "debug.h"
@@ -39,48 +40,97 @@ mem_kill()
 byte
 mem_getbyte( word seg, word off )
 {
+	dword flat_address = FLAT( seg, off );
+
 #ifdef VM_DEBUG
 	if( mempeek )
 	{
-		vlog( VM_MEMORYMSG, "%04X:%04X reading   BYTE at %08X", cpu.base_CS, cpu.base_IP, seg*16+off );
+		vlog( VM_MEMORYMSG, "%04X:%04X reading   BYTE at %08X", cpu.base_CS, cpu.base_IP, flat_address );
 	}
 #endif
-	if( FLAT(seg,off) >= 0xA0000 && FLAT(seg,off) < 0xB0000 ) return vga_getbyte( FLAT(seg, off) );
-	return mem_space[(seg<<4)+off];
+
+	if( flat_address >= 0xA0000 && flat_address < 0xB0000 )
+		return vga_getbyte( flat_address );
+
+	return mem_space[flat_address];
 }
 word
 mem_getword( word seg, word off )
 {
+	dword flat_address = FLAT(seg, off);
+
 #ifdef VM_DEBUG
 	if( mempeek )
 	{
-		vlog( VM_MEMORYMSG, "%04X:%04X reading   WORD at %08X", cpu.base_CS, cpu.base_IP, seg*16+off );
+		vlog( VM_MEMORYMSG, "%04X:%04X reading   WORD at %08X", cpu.base_CS, cpu.base_IP, flat_address );
 	}
 #endif
 
-	if( FLAT(seg,off) >= 0xA0000 && FLAT(seg,off) < 0xB0000 ) return vga_getword( FLAT(seg, off) );
+	if( flat_address >= 0xA0000 && flat_address < 0xB0000 )
+		return vga_getword( flat_address );
 #ifdef VOMIT_CORRECTNESS
 	if( off == 0xFFFF )
-		return mem_space[(seg<<4)+off] + (mem_space[seg<<4]<<8);
+		return mem_space[flat_address] + (mem_space[seg<<4]<<8);
 #endif
-	return mem_space[(seg<<4)+off] + (mem_space[(seg<<4)+off+1]<<8);
+	return mem_space[flat_address] + (mem_space[flat_address + 1]<<8);
 }
 
 void
 mem_setbyte( word seg, word off, byte b )
 {
+	dword flat_address = FLAT( seg, off );
+	#if 0
+	if( off == 0x95FF )
+	{
+		ui_kill();
+		vlog( VM_VIDEOMSG, "WEWT BOOYAH write %02X to %04X:%04X (%08X)\n", b, seg, off, flat_address );
+		vm_debug();
+		if( !g_debug_step )
+			ui_show();
+	}
+	#endif
+
 #ifdef VM_DEBUG
 	if( mempeek )
 	{
-		vlog( VM_MEMORYMSG, "%04X:%04X writing   BYTE at %08X", cpu.base_CS, cpu.base_IP, seg*16+off );
+		vlog( VM_MEMORYMSG, "%04X:%04X writing   BYTE at %08X", cpu.base_CS, cpu.base_IP, flat_address );
 	}
 #endif
-	if( FLAT(seg,off) >= 0xA0000 && FLAT(seg,off) < 0xB0000 ) vga_setbyte( FLAT(seg, off), b );
-	else mem_space[(seg<<4)+off]=b;
+	if( flat_address >= 0xA0000 && flat_address < 0xB0000 )
+	{
+		//fprintf( stderr, "yes vga: %08x\n", flat_address);
+		vga_setbyte( flat_address, b );
+	}
+	else
+	{
+		//fprintf(stderr,"not vga: %08x\n", flat_address);
+		mem_space[flat_address] = b;
+	}
+
+#if 0
+	if( off == 0x95FF )
+	{
+ 		ui_kill();
+		g_debug_step = 1;
+		vm_debug();
+		if( !g_debug_step )
+		  ui_show();
+	}
+#endif
 }
+
 void
 mem_setword( word seg, word off, word w )
 {
+	dword flat_address = FLAT( seg, off );
+
+	if( off == 0xBFFC )
+	{
+ 		ui_kill();
+		vlog( VM_VIDEOMSG, "LOOOOL BOOYAH write %04X to %04X:%04X (%08X)\n", w, seg, off, flat_address );
+		vm_exit( 0 );
+	}
+
 #ifdef VM_DEBUG
 	if( mempeek )
 	{
@@ -91,12 +141,20 @@ mem_setword( word seg, word off, word w )
 #ifdef VOMIT_CORRECTNESS
 	if( off == 0xFFFF )
 	{
-		mem_space[(seg<<4)+off]=(byte)w; mem_space[seg<<4]=(byte)(w>>8);
+		mem_space[flat_address] = (byte)w;
+		mem_space[seg<<4] = (byte)(w>>8);
 		return;
 	}
 #endif
-	if( FLAT(seg,off) >= 0xA0000 && FLAT(seg,off) < 0xB0000 ) vga_setword( FLAT(seg, off), w );
-	else mem_space[(seg<<4)+off]=(byte)w; mem_space[(seg<<4)+off+1]=(byte)(w>>8);
+	if( flat_address >= 0xA0000 && flat_address < 0xB0000 )
+	{
+		vga_setword( flat_address, w );
+	}
+	else
+	{
+		mem_space[flat_address] = (byte)w;
+		mem_space[flat_address + 1] = (byte)(w>>8);
+	}
 }
 
 void

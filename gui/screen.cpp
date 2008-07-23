@@ -61,7 +61,7 @@ Screen::putCharacter( QPainter &p, int row, int column, byte color, byte c )
 }
 
 extern "C" {
-	int is_video_dirty();
+	bool is_video_dirty();
 	void clear_video_dirty();
 }
 
@@ -75,6 +75,7 @@ Screen::refresh()
 			update();
 			clear_video_dirty();
 		}
+		/*
 		else
 		{
 			static int moop = 0;
@@ -85,6 +86,7 @@ Screen::refresh()
 			}
 			else --moop;
 		}
+		*/
 	}
 	else
 	{
@@ -104,10 +106,11 @@ Screen::paintMode12( QPaintEvent *e )
 {
 	setFixedSize( 640, 480 );
 
-	QPixmap pm( e->rect().size() );
+	//QPixmap pm( e->rect().size() );
+	static QPixmap pm( 640, 480 );
 	QPainter p( &pm );
 
-	byte *vm_p0 = mem_space + 0xA0000;
+	extern byte vm_p0[];
 	extern byte vm_p1[];
 	extern byte vm_p2[];
 	extern byte vm_p3[];
@@ -124,7 +127,7 @@ Screen::paintMode12( QPaintEvent *e )
 			data[2] = vm_p2[offset];
 			data[3] = vm_p3[offset];
 
-#define D(i) ((data[0]>>i) & 1) | (((data[1]>>i) & 1)<<1) | (((data[2]>>i) & 1)<<2) | (((data[3]>>i) & 1)<<3)
+#define D(i) ((vm_p0[offset]>>i) & 1) | (((vm_p1[offset]>>i) & 1)<<1) | (((vm_p2[offset]>>i) & 1)<<2) | (((vm_p3[offset]>>i) & 1)<<3)
 
 			byte p1 = D(0);
 			byte p2 = D(1);
