@@ -13,7 +13,10 @@
 
 bool disklog, trapint, iopeek, mempeek, callpeek;
 
+#ifdef VOMIT_TRY
 bool g_try_run = false;
+#endif
+
 bool g_break_pressed = false;
 
 static bool exiting = 0;
@@ -34,12 +37,15 @@ vomit_init( int argc, char **argv )
 		FLAGARG( "--mempeek",  mempeek )
 		FLAGARG( "--iopeek",   iopeek )
 
+#ifdef VOMIT_TRY
 		else if( argc > 2 && !strcmp( argv[1], "--try" ))
 		{
 			try_path = argv[2];
 			g_try_run = true;
 			argc -= 2, argv += 2;
 		}
+#endif
+
 		else
 		{
 			fprintf( stderr, "Unknown option: %s\n", argv[1] );
@@ -59,6 +65,7 @@ vomit_init( int argc, char **argv )
 
 	cpu.state = CPU_ALIVE;
 
+#ifdef VOMIT_TRY
 	if( g_try_run )
 	{
 		FILE *fp = fopen( try_path, "rb" );
@@ -80,6 +87,7 @@ vomit_init( int argc, char **argv )
 		cpu_jump( 0x1000, 0x0000 );
 		cpu.regs.W.SP = 0x1000;
 	}
+#endif
 	return 0;
 }
 
@@ -92,7 +100,9 @@ void vm_init() {
 	vlog( VM_INITMSG, "Initializing video BIOS" );
 	video_bios_init();
 
+#ifdef VOMIT_TRY
 	if( !g_try_run )
+#endif
 	{
 		vlog( VM_INITMSG, "Initializing user interface" );
 		ui_init();
@@ -116,8 +126,10 @@ vm_kill()
 	vga_kill();
 	cpu_kill();
 	mem_kill();
+#ifdef VOMIT_TRY
 	if( !g_try_run )
 		ui_kill();
+#endif
 }
 
 void

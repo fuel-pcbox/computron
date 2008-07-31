@@ -355,8 +355,13 @@ kontinue:
 		if( !--video_sync_counter )
 		{
 			video_sync_counter = INSNS_PER_VIDEO_SYNC;
+
+#ifdef VOMIT_CURSES
+# ifdef VOMIT_TRY
 			if( !g_try_run )
+# endif
 				ui_sync();
+#endif
 
 			if( cpu.IF == 1 )
 			{
