@@ -294,8 +294,6 @@ cpu_kill()
 #endif
 }
 
-int eh = 0;
-
 void
 cpu_main()
 {
@@ -303,50 +301,31 @@ cpu_main()
 	cpu_pfq_flush();
 #endif
 #ifdef VOMIT_FOREVER
-	for(;;) {
+	for( ;; )
+	{
 #endif
 kontinue:
 		cpu.base_CS = cpu.CS;
 		cpu.base_IP = cpu.IP;
 
+#ifdef VM_DEBUG
 		if( cpu.base_CS != 0xF000 )
 		{
 			g_last_nonbios_CS = cpu.base_CS;
 			g_last_nonbios_IP = cpu.base_IP;
 		}
+#endif
 
 		cpu_opcode = cpu_pfq_getbyte();
 		cpu_optable[cpu_opcode]();	/* Call instruction handler. */
 
-		if( 0 && !eh )
-		{
-			static FILE *f = 0L;
-			int y, x;
-			char *video_memory = mem_space + 0xB8000;
-
-			if( !f )
-				f = fopen( "video.txt", "w" );
-			for (y=0; y<25; y++)
-			{
-				for (x=0; x<80; x++) {
-					char ch = video_memory[y*160+x*2];
-					if( ch < ' ' )
-						ch = ' ';
-					putc( ch, f );
-				}
-				fprintf( f, "\n" );
-			}
-			eh = 5000;
-		}
-		--eh;
-
+#ifdef VM_DEBUG
 		if( g_debug_step )
 		{
 			ui_kill();
 			vm_debug();
 			if( g_debug_step )
 				goto kontinue;
-//			ui_show();
 		}
 
 		if( g_break_pressed )
@@ -359,6 +338,7 @@ kontinue:
 			g_break_pressed = false;
 			/* TODO: int_call( 9 ); */
 		}
+#endif
 
 		if( cpu.TF )
 		{
