@@ -79,16 +79,6 @@ void
 mem_setbyte( word seg, word off, byte b )
 {
 	dword flat_address = FLAT( seg, off );
-	#if 0
-	if( off == 0x95FF )
-	{
-		ui_kill();
-		vlog( VM_VIDEOMSG, "WEWT BOOYAH write %02X to %04X:%04X (%08X)\n", b, seg, off, flat_address );
-		vm_debug();
-		if( !g_debug_step )
-			ui_show();
-	}
-	#endif
 
 #ifdef VM_DEBUG
 	if( mempeek )
@@ -123,13 +113,6 @@ void
 mem_setword( word seg, word off, word w )
 {
 	dword flat_address = FLAT( seg, off );
-
-	if( off == 0xBFFC )
-	{
- 		ui_kill();
-		vlog( VM_VIDEOMSG, "LOOOOL BOOYAH write %04X to %04X:%04X (%08X)\n", w, seg, off, flat_address );
-		vm_exit( 0 );
-	}
 
 #ifdef VM_DEBUG
 	if( mempeek )
