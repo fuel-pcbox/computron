@@ -40,6 +40,11 @@ Screen::Screen()
 		m_brush[i] = QBrush( m_color[i] );
 	}
 
+	m_canvas12 = QImage( 640, 480, QImage::Format_Indexed8 );
+	for( int i = 0; i < 16; ++i )
+		m_canvas12.setColor( i, m_color[i].rgb() );
+
+
 	setAttribute( Qt::WA_OpaquePaintEvent );
 	setAttribute( Qt::WA_NoSystemBackground );
 
@@ -112,6 +117,55 @@ Screen::paintMode12( QPaintEvent *e )
 {
 	setFixedSize( 640, 480 );
 
+	extern byte vm_p0[];
+	extern byte vm_p1[];
+	extern byte vm_p2[];
+	extern byte vm_p3[];
+
+	word offset = 0;
+
+	for( int y = e->rect().top(); y < e->rect().bottom(); y ++ )
+	{
+		for( int x = e->rect().left(); x < e->rect().right(); x += 8, ++offset )
+		{
+			byte data[4];
+			data[0] = vm_p0[offset];
+			data[1] = vm_p1[offset];
+			data[2] = vm_p2[offset];
+			data[3] = vm_p3[offset];
+
+#define D(i) ((vm_p0[offset]>>i) & 1) | (((vm_p1[offset]>>i) & 1)<<1) | (((vm_p2[offset]>>i) & 1)<<2) | (((vm_p3[offset]>>i) & 1)<<3)
+
+			byte p1 = D(0);
+			byte p2 = D(1);
+			byte p3 = D(2);
+			byte p4 = D(3);
+			byte p5 = D(4);
+			byte p6 = D(5);
+			byte p7 = D(6);
+			byte p8 = D(7);
+
+			m_canvas12.setPixel( x+7, y, p1 );
+			m_canvas12.setPixel( x+6, y, p2 );
+			m_canvas12.setPixel( x+5, y, p3 );
+			m_canvas12.setPixel( x+4, y, p4 );
+			m_canvas12.setPixel( x+3, y, p5 );
+			m_canvas12.setPixel( x+2, y, p6 );
+			m_canvas12.setPixel( x+1, y, p7 );
+			m_canvas12.setPixel( x+0, y, p8 );
+		}
+	}
+
+	QPainter wp( this );
+	wp.drawImage( e->rect(), m_canvas12 );
+}
+
+#if 0
+void
+Screen::paintMode12( QPaintEvent *e )
+{
+	setFixedSize( 640, 480 );
+
 	//QPixmap pm( e->rect().size() );
 	static QPixmap pm( 640, 480 );
 	QPainter p( &pm );
@@ -158,6 +212,7 @@ Screen::paintMode12( QPaintEvent *e )
 	QPainter wp( this );
 	wp.drawPixmap( e->rect(), pm );
 }
+#endif
 
 void
 Screen::resizeEvent( QResizeEvent *e )
@@ -202,7 +257,7 @@ Screen::paintEvent( QPaintEvent *e )
 
 	byte cursorStart = vga_read_register( 0x0A );
 	byte cursorEnd = vga_read_register( 0x0B );
-	
+
 	p.fillRect( cx * m_characterWidth, cy * m_characterHeight + cursorStart, m_characterWidth, cursorEnd - cursorStart, QBrush( m_color[13] ));
 
 	lcx = cx;

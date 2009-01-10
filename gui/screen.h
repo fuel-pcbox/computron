@@ -56,6 +56,8 @@ private:
 	QQueue<word> m_keyQueue;
 	QQueue<byte> m_rawQueue;
 
+	QImage m_canvas12;
+
 	void paintMode12( QPaintEvent * );
 	void putpixel( QPainter &p, int x, int y, int color );
 };
