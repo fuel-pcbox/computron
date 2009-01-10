@@ -36,13 +36,27 @@ byte
 keyboard_status( word port )
 {
 	/* Keyboard not locked, POST completed successfully. */
+	vlog( VM_KEYMSG, "Keyboard status queried." );
 	return ATKBD_UNLOCKED | ATKBD_SYSTEM_FLAG;
 }
+
+/*
+ * From http://courses.ece.uiuc.edu/ece390/books/labmanual/io-devices.html
+ *
+ * ...The only special requirement is that it acknowledges reception of
+ * the keyboard event by toggling bit 7 of port 61h to 1 and back to 0.
+ * The other bits of port 61h must not be modified, since they control
+ * other hardware. This is only required for full original IBM PC
+ * compatibility.
+ *
+ * This is why MS Windows flips the 0x80 bit of I/O port 0x61 after each
+ * keypress. Took a while to catch that one... :)
+ */
 
 byte
 system_control_read( word port )
 {
-	vlog( VM_KEYMSG, "%02X <- System control port", system_control_port_data );
+	//vlog( VM_KEYMSG, "%02X <- System control port", system_control_port_data );
 	return system_control_port_data;
 }
 
@@ -50,11 +64,13 @@ void
 system_control_write( word port, byte data )
 {
 	system_control_port_data = data;
-	vlog( VM_KEYMSG, "System control port <- %02X", data );
+	//vlog( VM_KEYMSG, "System control port <- %02X", data );
 }
 
 byte
 keyboard_data( word port )
 {
-	return kbd_getc();
+	byte key = kbd_pop_raw();
+	vlog( VM_KEYMSG, "keyboard_data = %02X", key );
+	return key;
 }

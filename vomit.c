@@ -60,8 +60,8 @@ vomit_init( int argc, char **argv )
 	vm_loadconf();
 	cpu_genmap();
 
-	vlog( VM_INITMSG, "Registering SIGINT handler" );
-	signal( SIGINT, vm_cbreak );
+	/*vlog( VM_INITMSG, "Registering SIGINT handler" );
+	signal( SIGINT, vm_cbreak );*/
 
 	cpu.state = CPU_ALIVE;
 

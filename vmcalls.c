@@ -206,6 +206,7 @@ vm_handleE6(word data)
 		}
 		break;
 	case 0x1600:
+		vlog( VM_KEYMSG, "kbd_getc 1600!" );
 		cpu.regs.W.AX = kbd_getc();
 		break;
 

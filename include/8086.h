@@ -104,6 +104,7 @@ typedef struct {
 	word IP;
 	byte type;
 	byte state;
+	dword insn_count;
 
 	word base_CS;
 	word base_IP;

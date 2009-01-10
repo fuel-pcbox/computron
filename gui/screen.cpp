@@ -1,4 +1,7 @@
 #include "screen.h"
+extern "C" {
+#include "../include/debug.h"
+}
 #include <QPainter>
 #include <QApplication>
 #include <QPaintEvent>
@@ -39,6 +42,8 @@ Screen::Screen()
 
 	setAttribute( Qt::WA_OpaquePaintEvent );
 	setAttribute( Qt::WA_NoSystemBackground );
+
+	setFocusPolicy( Qt::ClickFocus );
 }
 
 Screen::~Screen()
@@ -72,6 +77,7 @@ Screen::refresh()
 	{
 		if( is_video_dirty() )
 		{
+			vlog( VM_VIDEOMSG, "Painting mode12h screen" );
 			update();
 			clear_video_dirty();
 		}
@@ -151,6 +157,13 @@ Screen::paintMode12( QPaintEvent *e )
 
 	QPainter wp( this );
 	wp.drawPixmap( e->rect(), pm );
+}
+
+void
+Screen::resizeEvent( QResizeEvent *e )
+{
+	QWidget::resizeEvent( e );
+	vlog( VM_VIDEOMSG, "Resizing viewport" );
 }
 
 void

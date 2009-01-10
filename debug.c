@@ -13,6 +13,13 @@
 bool g_debug_step = false;
 bool g_in_debug = false;
 static FILE *s_logfile = 0L;
+static void (*s_vlog_handler)(int, const char *, va_list);
+
+void
+vomit_set_vlog_handler( void (*f)(int, const char *, va_list) )
+{
+	s_vlog_handler = f;
+}
 
 void
 vlog( int category, const char *format, ... )
@@ -20,6 +27,14 @@ vlog( int category, const char *format, ... )
 	va_list ap;
 	const char *prefix = 0L;
 	bool show_on_stdout = false;
+
+	if( s_vlog_handler )
+	{
+		va_start( ap, format );
+		(*s_vlog_handler)( category, format, ap );
+		va_end( ap );
+		return;
+	}
 
 	if( !s_logfile )
 	{
@@ -82,6 +97,8 @@ vm_debug()
 {
 	char curcmd[256], *curtok;
 	word mseg, moff;
+
+	memset( curcmd, 0, sizeof(curcmd) );
 
 	g_in_debug = true;
 

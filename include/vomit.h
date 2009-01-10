@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdarg.h>
 
 #define MAX_FILESIZE	524288		/* 512kB is max "loadfile" size */
 #define MAX_FN_LENGTH	128
@@ -46,6 +47,7 @@ byte vm_ioh_nin( word );
 void vm_ioh_nout( word, byte );
 
 void vm_exit(int);
+void config_reload();
 void vm_loadconf();
 void vm_cbreak(int);
 void vm_debug();
@@ -62,6 +64,7 @@ void ui_show();
 void ui_sync();
 word kbd_hit();
 word kbd_getc();
+byte kbd_pop_raw();
 
 void dump_cpu();
 void dump_all();
@@ -82,6 +85,8 @@ extern bool disklog, trapint, iopeek, mempeek, callpeek;
 extern bool g_try_run;
 extern bool g_debug_step;
 extern bool g_break_pressed;
+
+extern void vomit_set_vlog_handler( void (*f)(int, const char *, va_list) );
 
 #include "8086.h"
 #include "186.h"

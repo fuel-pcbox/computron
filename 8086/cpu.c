@@ -316,6 +316,9 @@ kontinue:
 		}
 #endif
 
+		/* Instruction counter */
+		cpu.insn_count++;
+
 		cpu_opcode = cpu_pfq_getbyte();
 		cpu_optable[cpu_opcode]();	/* Call instruction handler. */
 

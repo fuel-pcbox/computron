@@ -522,6 +522,8 @@ _bios_interrupt10:                  ; BIOS Video Interrupt
     je      .readChar
     cmp     ah, 0x09
     je      .outCharStill
+    cmp     ah, 0x11
+    je      .addrOfCharacterGenerator
     cmp     ah, 0x0e
     je      .outChar
     cmp     ah, 0x0f
@@ -544,6 +546,9 @@ _bios_interrupt10:                  ; BIOS Video Interrupt
     out     0xE6, al
     pop     ax
     jmp     .end
+
+.addrOfCharacterGenerator:
+    jmp     addrOfCharacterGenerator
 
 .video_display_combination:
     jmp     video_display_combination
@@ -605,6 +610,24 @@ video_display_combination:
     ;      Needs verification.
     mov     al, 0x1a
 
+    iret
+
+addrOfCharacterGenerator:
+    cmp     al, 0x30
+    jne     .end
+    cmp     bh, 0x00
+    jne     .end
+    push    ax
+
+    xor     ax, ax
+    mov     es, ax
+
+    mov     bp, [es:(0x1F * 4)]
+    mov     ax, [es:(0x1F * 4 + 2)]
+    mov     es, ax
+
+    pop     ax
+.end:
     iret
 
 ; vga_set_mode

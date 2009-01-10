@@ -3,19 +3,33 @@
 #include "screen.h"
 #include <QMap>
 #include <QKeyEvent>
+#include <QDebug>
 
 static QMap<int, word> normals;
 static QMap<int, word> shifts;
 static QMap<int, word> ctrls;
 static QMap<int, word> alts;
+static QMap<int, byte> makeCode;
+static QMap<int, byte> breakCode;
+static QMap<int, bool> extended;
 
 void
-addKey( int key, word normal, word shift, word ctrl, word alt )
+addKey( int key, word normal, word shift, word ctrl, word alt, bool isExtended = false )
 {
 	normals[key] = normal;
 	shifts[key] = shift;
 	ctrls[key] = ctrl;
 	alts[key] = alt;
+
+	extended[key] = isExtended;
+
+	if( extended[key] )
+	{
+		qDebug() << "Extended key" << key;
+	}
+
+	makeCode[key] = (normal & 0xFF00) >> 8;
+	breakCode[key] = ((normal & 0xFF00) >> 8) | 0x80;
 }
 
 #define K_A 0x26
@@ -72,13 +86,17 @@ addKey( int key, word normal, word shift, word ctrl, word alt )
 #define K_Minus 0x14
 #define K_Slash 0x3D
 
-#define K_Up 0x62
-#define K_Down 0x68
-#define K_Left 0x64
-#define K_Right 0x66
+#define K_Up 0x6F
+#define K_Down 0x74
+#define K_Left 0x71
+#define K_Right 0x72
 
 #define K_PageUp 0x63
 #define K_PageDown 0x69
+
+#define K_LAlt 0x40
+#define K_LCtrl 0x25
+#define K_LShift 0x32
 
 #define K_Tab 0x17
 #define K_Backspace 0x16
@@ -98,6 +116,19 @@ addKey( int key, word normal, word shift, word ctrl, word alt )
 void
 Screen::init()
 {
+	makeCode[K_LShift] = 0x2A;
+	makeCode[K_LCtrl] = 0x1D;
+	makeCode[K_LAlt] = 0x38;
+
+	breakCode[K_LShift] = 0xAA;
+	breakCode[K_LCtrl] = 0x9D;
+	breakCode[K_LAlt] = 0xB8;
+
+	// Windows key == Alt for haxx
+	makeCode[0x85] = 0x38;
+	breakCode[0x85] = 0xB8;
+
+
 	addKey( K_A, 0x1E61, 0x1E41, 0x1E01, 0x1E00 );
 	addKey( K_B, 0x3062, 0x3042, 0x3002, 0x3000 );
 	addKey( K_C, 0x2E63, 0x2E42, 0x2E03, 0x2E00 );
@@ -166,10 +197,10 @@ Screen::init()
 	addKey( K_Space, 0x3920, 0x3920, 0x3920, 0x3920 );
 	addKey( K_Escape, 0x011B, 0x011B, 0x011B, 0x0100 );
 
-	addKey( K_Up, 0x4800, 0x4838, 0x8D00, 0x9800 );
-	addKey( K_Down, 0x5000, 0x5032, 0x9100, 0xA000 );
-	addKey( K_Left, 0x4B00, 0x4B34, 0x7300, 0x9B00 );
-	addKey( K_Right, 0x4D00, 0x4D36, 0x7400, 0x9D00 );
+	addKey( K_Up, 0x4800, 0x4838, 0x8D00, 0x9800, true );
+	addKey( K_Down, 0x5000, 0x5032, 0x9100, 0xA000, true );
+	addKey( K_Left, 0x4B00, 0x4B34, 0x7300, 0x9B00, true );
+	addKey( K_Right, 0x4D00, 0x4D36, 0x7400, 0x9D00, true );
 
 	addKey( K_PageUp, 0x4900, 0x4B34, 0x7300, 0x9B00 );
 	addKey( K_PageDown, 0x5100, 0x5133, 0x7600, 0xA100 );
@@ -201,11 +232,12 @@ keyToScanCode( Qt::KeyboardModifiers mod, int key )
 void
 Screen::keyPressEvent( QKeyEvent *e )
 {
-	//printf( "native scancode = %04X (%c)\n", e->nativeScanCode(), e->nativeScanCode() );
+	int nativeScanCode = e->nativeScanCode();
+	printf( "native scancode = %04X (%c)\n", e->nativeScanCode(), e->nativeScanCode() );
 
-	word scancode = keyToScanCode( e->modifiers(), e->nativeScanCode() );
+	word scancode = keyToScanCode( e->modifiers(), nativeScanCode );
 
-	if( e->nativeScanCode() == K_F12 )
+	if( nativeScanCode == K_F12 )
 	{
 		printf( "DEBUG!\n" );
 		g_debug_step = 1;
@@ -217,18 +249,48 @@ Screen::keyPressEvent( QKeyEvent *e )
 		m_keyQueue.enqueue( scancode );
 		//printf( "Queued %04X (%02X)\n", scancode, e->key() );
 	}
+
+	if( extended[nativeScanCode] )
+	{
+		m_rawQueue.enqueue( 0xE0 );
+	}
+
+	m_rawQueue.enqueue( makeCode[nativeScanCode] );
+
+#if 0
+	QString s;
+	s.sprintf("%02X",makeCode[e->nativeScanCode()]);
+	qDebug() << "++++:" << s;
+#endif
+
 	int_call( 9 );
 }
 
 void
 Screen::keyReleaseEvent( QKeyEvent *e )
 {
+	int nativeScanCode = e->nativeScanCode();
+
+	if( extended[nativeScanCode] )
+		m_rawQueue.enqueue( 0xE0 );
+
+	m_rawQueue.enqueue( breakCode[nativeScanCode] );
+
+#if 0
+	QString s;
+	s.sprintf("%02X",breakCode[e->nativeScanCode()]);
+	qDebug() << "----:"<< s;
+#endif
+
+	int_call( 9 );
+
 	e->ignore();
 }
 
 word
 Screen::nextKey()
 {
+	m_rawQueue.clear();
 	if( !m_keyQueue.isEmpty() )
 		return m_keyQueue.dequeue();
 
@@ -238,8 +300,22 @@ Screen::nextKey()
 word
 Screen::peekKey()
 {
+	m_rawQueue.clear();
 	if( !m_keyQueue.isEmpty() )
 		return m_keyQueue.head();
 
 	return 0;
+}
+
+byte
+Screen::popKeyData()
+{
+	byte key = 0;
+	if( !m_rawQueue.isEmpty() )
+		key = m_rawQueue.dequeue();
+	QString s;
+	s.sprintf("%02X", key);
+	qDebug() << "pop " << s;
+	qDebug() << "Key queue:" << m_rawQueue.size();
+	return key;
 }

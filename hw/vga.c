@@ -42,9 +42,15 @@ byte vm_p1[0x9600];
 byte vm_p2[0x9600];
 byte vm_p3[0x9600];
 
+dword vga_writes = 0;
+dword vga_reads = 0;
+
 void
 vga_init()
 {
+	vga_writes = 0;
+	vga_reads = 0;
+
 	latch[0] = 0;
 	latch[1] = 0;
 	latch[2] = 0;
@@ -250,10 +256,13 @@ vga_setbyte( dword a, byte d )
 	 * fprintf(stderr,"mem_write: %02X:%04X = %02X <%d>, BM=%02X, ESR=%02X, SR=%02X\n", io_sequencer[2] & 0x0F, a-0xA0000, d, DRAWOP, BIT_MASK, io_register2[1], io_register2[0]);
 	 */
 
+	vga_writes++;
+
 	if( a >= 0xA9600 )
 	{
 		vlog( VM_VIDEOMSG, "OOB write 0x%lx", a );
 		mem_space[a] = d;
+		return;
 	}
 
 	byte new_val[4];
@@ -380,6 +389,8 @@ vga_setbyte( dword a, byte d )
 byte
 vga_getbyte( dword a )
 {
+	vga_reads++;
+
 	if( READ_MODE == 1 )
 	{
 		vlog( VM_VIDEOMSG, "ZOMG! READ_MODE == 1" );
@@ -408,7 +419,7 @@ vga_getbyte( dword a )
 			g_debug_step = true;
 			vm_debug();
 #endif
-		return mem_space[a];
+		return mem_space[a + 0xA0000];
 	}
 }
 

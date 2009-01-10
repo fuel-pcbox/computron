@@ -30,6 +30,7 @@ public:
 
 	word nextKey();
 	word peekKey();
+	byte popKeyData();
 
 protected:
 	void keyPressEvent( QKeyEvent *e );
@@ -40,6 +41,7 @@ public slots:
 
 private slots:
 	void paintEvent( QPaintEvent * );
+	void resizeEvent( QResizeEvent * );
 
 private:
 	void init();
@@ -52,6 +54,7 @@ private:
 	QColor m_color[16];
 	QBitmap m_character[256];
 	QQueue<word> m_keyQueue;
+	QQueue<byte> m_rawQueue;
 
 	void paintMode12( QPaintEvent * );
 	void putpixel( QPainter &p, int x, int y, int color );

@@ -11,11 +11,10 @@ dump_cpu()
 {
 	vlog( VM_DUMPMSG, "CPU is an Intel %s", cpu.type == 0 ? "8086" : "80186" );
 	vlog( VM_DUMPMSG, "Memory size: %dK", mem_avail );
-	vlog( "Prefetch queue: " );
 #ifndef VM_NOPFQ
-	vlog( VM_DUMPMSG, "%d bytes", CPU_PFQ_SIZE );
+	vlog( VM_DUMPMSG, "Prefetch queue: %d bytes", CPU_PFQ_SIZE );
 #else
-	vlog( VM_DUMPMSG, "off" );
+	vlog( VM_DUMPMSG, "Prefetch queue: off" );
 #endif
 }
 
@@ -123,15 +122,15 @@ dump_ivt()
 	word i;
 
 	/* XXX: For alignment reasons, we're skipping INT FF */
-	for( i = 0; i < 0xFF; i += 5 )
+	for( i = 0; i < 0xFF; i += 4 )
 	{
 		vlog( VM_DUMPMSG,
 			"%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X",
 			i, iseg(i), ioff(i),
 			i+1, iseg(i+1), ioff(i+1),
 			i+2, iseg(i+2), ioff(i+2),
-			i+3, iseg(i+3), ioff(i+3),
-			i+4, iseg(i+4), ioff(i+4)
+			i+3, iseg(i+3), ioff(i+3)
+			//,i+4, iseg(i+4), ioff(i+4)
 		);
 	}
 }
