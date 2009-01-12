@@ -15,11 +15,6 @@
 #define VGA_ATTR(a) COLOR_PAIR( (((a)>>4)&7)*8 |  ((a)&7)) | ( ((a)&8) ? A_BOLD : 0 )
 #define PRINTABLE(c) ((c < 32 || c > 250) ? ' ' : c)
 
-#ifdef VM_DEBUG
-extern word g_last_nonbios_CS;
-extern word g_last_nonbios_IP;
-#endif
-
 static WINDOW *s_screen;
 static bool ui_visible;
 

@@ -23,11 +23,6 @@ addKey( int key, word normal, word shift, word ctrl, word alt, bool isExtended =
 
 	extended[key] = isExtended;
 
-	if( extended[key] )
-	{
-		qDebug() << "Extended key" << key;
-	}
-
 	makeCode[key] = (normal & 0xFF00) >> 8;
 	breakCode[key] = ((normal & 0xFF00) >> 8) | 0x80;
 }
@@ -98,6 +93,10 @@ addKey( int key, word normal, word shift, word ctrl, word alt, bool isExtended =
 #define K_LCtrl 0x25
 #define K_LShift 0x32
 
+#define K_RShift 0x3E
+#define K_RCtrl 0x69
+#define K_RAlt 0x38
+
 #define K_Tab 0x17
 #define K_Backspace 0x16
 #define K_Return 0x24
@@ -119,10 +118,17 @@ Screen::init()
 	makeCode[K_LShift] = 0x2A;
 	makeCode[K_LCtrl] = 0x1D;
 	makeCode[K_LAlt] = 0x38;
+	makeCode[K_RShift] = 0x36;
+	makeCode[K_RCtrl] = 0x1D;
+	makeCode[K_RAlt] = 0x38;
 
 	breakCode[K_LShift] = 0xAA;
 	breakCode[K_LCtrl] = 0x9D;
 	breakCode[K_LAlt] = 0xB8;
+
+	breakCode[K_RShift] = 0xB6;
+	breakCode[K_RCtrl] = 0x9D;
+	breakCode[K_RAlt] = 0xB8;
 
 	// Windows key == Alt for haxx
 	makeCode[0x85] = 0x38;
@@ -226,14 +232,14 @@ keyToScanCode( Qt::KeyboardModifiers mod, int key )
 	if( mod & Qt::ControlModifier )
 		return ctrls[key];
 
-	printf( "EH!\n" );
+	//printf( "EH!\n" );
 }
 
 void
 Screen::keyPressEvent( QKeyEvent *e )
 {
 	int nativeScanCode = e->nativeScanCode();
-	printf( "native scancode = %04X (%c)\n", e->nativeScanCode(), e->nativeScanCode() );
+	//printf( "native scancode = %04X\n", nativeScanCode );
 
 	word scancode = keyToScanCode( e->modifiers(), nativeScanCode );
 
@@ -263,7 +269,7 @@ Screen::keyPressEvent( QKeyEvent *e )
 	qDebug() << "++++:" << s;
 #endif
 
-	int_call( 9 );
+	irq( 1 );
 }
 
 void
@@ -282,7 +288,7 @@ Screen::keyReleaseEvent( QKeyEvent *e )
 	qDebug() << "----:"<< s;
 #endif
 
-	int_call( 9 );
+	irq( 1 );
 
 	e->ignore();
 }
@@ -313,9 +319,18 @@ Screen::popKeyData()
 	byte key = 0;
 	if( !m_rawQueue.isEmpty() )
 		key = m_rawQueue.dequeue();
+	#if 0
 	QString s;
 	s.sprintf("%02X", key);
 	qDebug() << "pop " << s;
-	qDebug() << "Key queue:" << m_rawQueue.size();
+	#endif
+	//qDebug() << "Keys queued:" << m_rawQueue.size();
 	return key;
+}
+
+void
+Screen::flushKeyBuffer()
+{
+	if( !m_rawQueue.isEmpty() && cpu.IF )
+		irq( 1 );
 }

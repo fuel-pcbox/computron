@@ -56,7 +56,7 @@ keyboard_status( word port )
 byte
 system_control_read( word port )
 {
-	//vlog( VM_KEYMSG, "%02X <- System control port", system_control_port_data );
+//	vlog( VM_KEYMSG, "%02X <- System control port", system_control_port_data );
 	return system_control_port_data;
 }
 
@@ -64,13 +64,13 @@ void
 system_control_write( word port, byte data )
 {
 	system_control_port_data = data;
-	//vlog( VM_KEYMSG, "System control port <- %02X", data );
+//	vlog( VM_KEYMSG, "System control port <- %02X", data );
 }
 
 byte
 keyboard_data( word port )
 {
 	byte key = kbd_pop_raw();
-	vlog( VM_KEYMSG, "keyboard_data = %02X", key );
+//	vlog( VM_KEYMSG, "keyboard_data = %02X", key );
 	return key;
 }

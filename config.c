@@ -93,7 +93,7 @@ unspeakable_abomination()
 
 				ldrv = strtol( strtok( 0L, " \t\n" ), 0L, 10 );
                 strcpy( type, strtok( 0L, " \t\n" ));
-                strcpy( lfname, strtok( 0L, " \t\n" ));
+                strcpy( lfname, strtok( 0L, "\n" ));
 
 				for( dt = floppy_types; dt->name; ++dt )
 				{

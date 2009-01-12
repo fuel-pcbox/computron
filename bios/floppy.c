@@ -44,8 +44,7 @@ byte floppy_read(byte drive, word cylinder, word head, word sector, word count, 
 	if((sector>drv_spt[drive])||(head>=drv_heads[drive])) {
 		if( disklog )
 		{
-			extern word g_last_nonbios_CS, g_last_nonbios_IP;
-			vlog( VM_DISKLOG, "%04X:%04X Drive %d read request out of geometrical bounds (%d/%d/%d)", g_last_nonbios_CS, g_last_nonbios_IP, drive, cylinder, head, sector );
+			vlog( VM_DISKLOG, "%04X:%04X Drive %d read request out of geometrical bounds (%d/%d/%d)", cpu.CS, cpu.IP, drive, cylinder, head, sector );
 		}
 		*fderr = FD_TIMEOUT;
 		return *fderr;

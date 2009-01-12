@@ -205,8 +205,13 @@ vm_handleE6(word data)
 			cpu.regs.B.AH = 0x80;			/* No media in drive */
 		}
 		break;
+		#if 0
+	case 0x3300:
+		cpu.regs.W.AX = cpu.regs.W.BX;
+		bios_interrupt33();
+		break;
+		#endif
 	case 0x1600:
-		vlog( VM_KEYMSG, "kbd_getc 1600!" );
 		cpu.regs.W.AX = kbd_getc();
 		break;
 

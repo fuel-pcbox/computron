@@ -137,6 +137,8 @@ vm_ioh_nout( word port, byte data )
 byte
 vm_ioh_nin( word port )
 {
+	if( port == 0x2F8 || port == 0x2FD || port == 0x3F8 || port == 0x3FD )
+		return 0;
 	vlog( VM_IOMSG, "Read port %04X", port );
 	return 0;
 }

@@ -125,7 +125,7 @@ dump_ivt()
 	for( i = 0; i < 0xFF; i += 4 )
 	{
 		vlog( VM_DUMPMSG,
-			"%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X",
+			"%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X",
 			i, iseg(i), ioff(i),
 			i+1, iseg(i+1), ioff(i+1),
 			i+2, iseg(i+2), ioff(i+2),

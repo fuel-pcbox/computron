@@ -5,7 +5,7 @@
 #include <QTimer>
 #include <QSplitter>
 #include "cpuview.h"
-#include "activity_bar.h"
+//#include "activity_bar.h"
 #include "console.h"
 
 extern "C" {
@@ -40,6 +40,7 @@ main( int argc, char **argv )
 	l->addWidget( console );
 
 	win->setLayout( l );
+	scr->setFocus();
 	win->show();
 
 //	CPUView *cpuView = new CPUView;
@@ -47,7 +48,11 @@ main( int argc, char **argv )
 
 	QTimer syncTimer;
 	QObject::connect( &syncTimer, SIGNAL( timeout() ), scr, SLOT( refresh() ));
-	syncTimer.start( 300 );
+	syncTimer.start( 200 );
+
+	QTimer flushKeyboardTimer;
+	QObject::connect( &flushKeyboardTimer, SIGNAL( timeout() ), scr, SLOT( flushKeyBuffer() ));
+	flushKeyboardTimer.start( 50 );
 
 	Worker w;
 

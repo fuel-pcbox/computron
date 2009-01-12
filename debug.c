@@ -26,14 +26,14 @@ vlog( int category, const char *format, ... )
 {
 	va_list ap;
 	const char *prefix = 0L;
-	bool show_on_stdout = false;
+	bool show_on_stdout = true;
 
 	if( s_vlog_handler )
 	{
 		va_start( ap, format );
 		(*s_vlog_handler)( category, format, ap );
 		va_end( ap );
-		return;
+		//return;
 	}
 
 	if( !s_logfile )
@@ -55,6 +55,8 @@ vlog( int category, const char *format, ... )
 		case VM_CONFIGMSG: prefix = "config"; break;
 		case VM_CPUMSG:  prefix = "cpu"; break;
 		case VM_MEMORYMSG: prefix = "memory"; break;
+		case VM_MOUSEMSG: prefix = "mouse"; break;
+		case VM_PICMSG: prefix = "pic"; break;
 	}
 
 	if( prefix )

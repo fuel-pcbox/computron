@@ -323,6 +323,10 @@ _bios_setup_ints:
     mov     dx, _cpu_default_softtimer
     call    .install
 
+    ;mov     al, 0x33
+    ;mov     dx, _bios_interrupt33
+    ;call    .install
+
     pop     ds
 
     ret
@@ -340,6 +344,7 @@ _bios_setup_ints:
     pop     ax
     ret
 
+    ; INCORRECT CODE! 286 is the first cpu to mask shift/rotate count
 check_for_8086:
     mov     al, 0xff
     mov     cl, 0x80
@@ -405,7 +410,9 @@ _bios_init_data:
 
     mov     byte [0x0496], 0x0E ; 0x0E = CTRL & ALT depressed;
                                 ; 101/102 ext. kbd.
-    mov     byte [0x0417], 0x8F
+    mov     byte [0x0417], 0x00
+    mov     byte [0x0418], 0x00
+    mov     byte [0x0497], 0x00
 
     mov     byte [0x0449], 0x03
 
@@ -424,6 +431,7 @@ _bios_init_data:
 ;   mov     word [0x0410], 0000000100100000b
 ;                                  xx     x   floppies
     mov     cx, 0000000100100000b
+    mov     cx, 0000000100100100b
     ; No DMA
     ; 80x25 color
 ; ------------------------------------------------------
@@ -504,6 +512,14 @@ _bios_load_bootsector:
     mov     si, msg_not_bootable
     call    safe_putString
     jmp     .end
+
+_bios_interrupt33:
+    push    bx
+    mov     bx, ax
+    mov     ax, 0x3300
+    out     0xE6, al
+    pop     bx
+    iret
 
 _bios_interrupt10:                  ; BIOS Video Interrupt
     or      ah, 0x00
@@ -1369,7 +1385,7 @@ reset_ide_drive:
 ; DATA
 
     msg_version        db "VOMIT Virtual Machine", 0x0d, 0x0a
-                       db "(C) Copyright Andreas Kling 2003-2006", 0x0d, 0x0a, 0x0d, 0x0a, 0
+                       db "(C) Copyright Andreas Kling 2003-2009", 0x0d, 0x0a, 0x0d, 0x0a, 0
 
     msg_8086           db "8086", 0
     msg_80186          db "80186", 0

@@ -190,3 +190,20 @@ _LES_reg16_mem16()
 	*treg16[rmreg(rm)] = LSW(value);
 	cpu.ES = MSW(value);
 }
+
+char *
+mem_get_ascii$( word seg, word off )
+{
+	char buf[256];
+	buf[255] = 0;
+	for( int i = 0; i < 255; ++i )
+	{
+		buf[i] = mem_getbyte( seg, off + i );
+		if( buf[i] == '$' )
+		{
+			buf[i] = 0;
+			break;
+		}
+	}
+	return buf;
+}

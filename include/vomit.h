@@ -30,6 +30,9 @@
 #define VM_DMAMSG       119
 #define VM_FDCMSG       120
 #define VM_DUMPMSG      121
+#define VM_MOUSEMSG     122
+#define VM_DOSMSG       123
+#define VM_PICMSG       124
 
 typedef uint8_t byte;
 typedef uint16_t word;
@@ -79,6 +82,9 @@ void video_bios_init();
 void load_cursor( byte *row, byte *column );
 
 int vomit_init( int, char ** );
+
+void irq( byte num );
+bool pic_next_irq( byte *retval );
 
 extern bool disklog, trapint, iopeek, mempeek, callpeek;
 

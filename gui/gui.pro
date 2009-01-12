@@ -11,9 +11,7 @@ LIBS += -L.. -lvomit
 # Input
 HEADERS += screen.h \
            worker.h \
-		   cpuview.h \
 		   console.h \
-		   activity_bar.h \
            ../include/vomit.h \
            ../disasm/include/disasm.h \
            ../include/8086.h \
@@ -21,4 +19,4 @@ HEADERS += screen.h \
            ../include/floppy.h \
            ../include/vga.h
 
-SOURCES += keyboard.cpp main.cpp screen.cpp worker.cpp cpuview.cpp console.cpp activity_bar.cpp
+SOURCES += keyboard.cpp main.cpp screen.cpp worker.cpp console.cpp

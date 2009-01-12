@@ -25,6 +25,7 @@ public:
 	void setTextMode( int w, int h );
 
 	void synchronizeFont();
+	void synchronizeColors();
 
 	void putCharacter( QPainter &p, int row, int column, byte color, byte c );
 
@@ -40,10 +41,11 @@ public slots:
 	void refresh();
 
 private slots:
-	void paintEvent( QPaintEvent * );
-	void resizeEvent( QResizeEvent * );
+	void flushKeyBuffer();
 
 private:
+	void paintEvent( QPaintEvent * );
+	void resizeEvent( QResizeEvent * );
 	void init();
 	bool m_inTextMode;
 	int m_width, m_height;
@@ -60,6 +62,8 @@ private:
 
 	void paintMode12( QPaintEvent * );
 	void putpixel( QPainter &p, int x, int y, int color );
+
+	bool m_clearBackground;
 };
 
 #endif // __screen_h__

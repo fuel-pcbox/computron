@@ -21,16 +21,13 @@ byte cpu_opcode; /* Opcodes are no longer passed as handler arguments!! */
 byte cpu_rmbyte; /* Me neither. */
 
 /* This points to the base of CS for fast opcode fetches. */
-static byte *code_memory;
+byte *code_memory;
 
 #ifndef VM_NOPFQ
 byte *cpu_pfq;
 byte cpu_pfq_current;
 byte CPU_PFQ_SIZE;
 #endif
-
-word g_last_nonbios_CS;
-word g_last_nonbios_IP;
 
 word *treg16[8]; byte *treg8[8]; word *tseg[8];
 
@@ -244,7 +241,7 @@ cpu_genmap()
 	cpu_addinstruction( 0xED, 0xED, _IN_AX_DX         );
 	cpu_addinstruction( 0xEE, 0xEE, _OUT_DX_AL        );
 	cpu_addinstruction( 0xEF, 0xEF, _OUT_DX_AX        );
-	cpu_addinstruction( 0xF0, 0xF0, _NOP              );
+	//cpu_addinstruction( 0xF0, 0xF0, _NOP              );
 	cpu_addinstruction( 0xF2, 0xF2, _REPNE            );
 	cpu_addinstruction( 0xF3, 0xF3, _REP              );
 	cpu_addinstruction( 0xF4, 0xF4, _HLT              );
@@ -260,8 +257,8 @@ cpu_genmap()
 	cpu_addinstruction( 0xFE, 0xFE, _wrap_0xFE        );
 	cpu_addinstruction( 0xFF, 0xFF, _wrap_0xFF        );
 
-		cpu_addinstruction( 0xC0, 0xC0, _wrap_0xC0  );
-		cpu_addinstruction( 0xC1, 0xC1, _wrap_0xC1  );
+	cpu_addinstruction( 0xC0, 0xC0, _wrap_0xC0  );
+	cpu_addinstruction( 0xC1, 0xC1, _wrap_0xC1  );
 
 	if( cpu.type >= INTEL_80186 )
 	{
@@ -308,20 +305,31 @@ kontinue:
 		cpu.base_CS = cpu.CS;
 		cpu.base_IP = cpu.IP;
 
-#ifdef VM_DEBUG
-		if( cpu.base_CS != 0xF000 )
-		{
-			g_last_nonbios_CS = cpu.base_CS;
-			g_last_nonbios_IP = cpu.base_IP;
-		}
-#endif
-
+#if 0
 		/* Instruction counter */
 		cpu.insn_count++;
+#endif
 
 		cpu_opcode = cpu_pfq_getbyte();
 		cpu_optable[cpu_opcode]();	/* Call instruction handler. */
 
+		if( g_debug_step )
+		{
+			ui_kill();
+			vm_debug();
+			if( g_debug_step )
+				goto kontinue;
+		}
+
+		byte irq_to_service = 0;
+		if( pic_next_irq( &irq_to_service ))
+		{
+			//vlog( VM_CPUMSG, "Servicing IRQ %u", irq_to_service );
+			int_call( 0x08 + irq_to_service );
+		}
+
+#if 0
+#ifdef OLD_DEBUGGER
 #ifdef VM_DEBUG
 		if( g_debug_step )
 		{
@@ -341,6 +349,8 @@ kontinue:
 			g_break_pressed = false;
 			/* TODO: int_call( 9 ); */
 		}
+#endif
+#endif
 #endif
 
 		if( cpu.TF )
@@ -366,28 +376,28 @@ kontinue:
 				ui_sync();
 #endif
 
-			if( cpu.IF == 1 )
-			{
-				/* Call the PIT ISR. This is ugly, to say the least, and I'm sorry. */
-				int_call( 8 );
-			}
+			/* Call the PIT ISR. This is ugly, to say the least, and I'm sorry. */
+			irq( 0 );
 		}
 #ifdef VOMIT_FOREVER
     }
 #endif
 }
 
-byte cpu_pfq_getbyte() { /* Get byte from prefetch queue and let new ops in. Modifies IP+1 */
-#ifdef VM_NOPFQ
-	return code_memory[cpu.IP++];
-#else
+#ifndef VM_NOPFQ
+/* cpu_pfq_getbyte() is a macro if !VM_NOPFQ */
+
+/* Get byte from prefetch queue and let new ops in. Modifies IP+1 */
+byte
+cpu_pfq_getbyte()
+{
 	byte b = cpu_pfq[cpu_pfq_current];
 	cpu_pfq[cpu_pfq_current] = mem_space[(cpu.CS<<4) + cpu.IP + CPU_PFQ_SIZE];
 	if(++cpu_pfq_current==CPU_PFQ_SIZE) cpu_pfq_current=0;
 	++cpu.IP;
 	return b;
-#endif
 }
+#endif
 
 word cpu_pfq_getword() { /* Get word from prefetch queue... same as above, but word and IP+2 */
 #ifdef VM_NOPFQ

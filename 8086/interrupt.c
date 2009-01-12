@@ -39,22 +39,45 @@ _IRET()
 	cpu_setflags( mem_pop() );
 }
 
-FILE *f = 0L;
-
 void
 int_call( byte isr )
 {
 	word segment, offset;
-	if( !f )
-		f = fopen("echo.txt", "w");
 
 #ifdef VM_DEBUG
 	if( trapint )
 		vlog( VM_CPUMSG, "%04X:%04X Interrupt %02X,%02X trapped", cpu.base_CS, cpu.base_IP, isr, cpu.regs.B.AH );
 #endif
 
-	if( isr == 0x9 )
-		vlog( VM_CPUMSG, "%04X:%04X Interrupt %02X,%02X trapped", cpu.base_CS, cpu.base_IP, isr, cpu.regs.B.AH );
+//	cpu_addint(0x33, 0xf000, 0x0306);
+
+#if 0
+	if( isr == 0x21 )
+	{
+		switch( cpu.regs.B.AH )
+		{
+			case 0x30:
+				vlog( VM_DOSMSG, "GetVersion" );
+				break;
+			case 0x3B:
+				vlog( VM_DOSMSG, "ChDir '%s'", mem_get_ascii$( cpu.DS, cpu.regs.W.DX ));
+				break;
+			case 0x3D:
+				vlog( VM_DOSMSG, "Open '%s' (%s)", mem_get_ascii$( cpu.DS, cpu.regs.W.DX ), cpu.regs.B.AL == 0 ? "R" : cpu.regs.B.AL == 1 ? "W" : "RW" );
+				break;
+		}
+	}
+
+	if( isr == 0x2F )
+	{
+		switch( cpu.regs.W.AX )
+		{
+			case 0x1684:
+				vlog( VM_DOSMSG, "Get API entry point" );
+				break;
+		}
+	}
+#endif
 
 	if( isr == 0x06 )
 	{
@@ -66,6 +89,14 @@ int_call( byte isr )
 		bios_interrupt10();
 		return;
 	}
+
+#if 0
+	if( isr == 0x33 )
+	{
+		bios_interrupt33();
+		return;
+	}
+#endif
 
 	mem_push( cpu_getflags() );
 	cpu.IF = 0;

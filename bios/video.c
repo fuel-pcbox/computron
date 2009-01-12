@@ -22,6 +22,7 @@ static word columns();
 static byte rows();
 static void store_cursor( word cursor );
 static word load_cursor_word();
+static void set_dac_color_register();
 void load_cursor( byte *row, byte *column );
 
 void
@@ -41,8 +42,8 @@ video_bios_init()
 	mem_space[0x460] = 0x0E;
 	mem_space[0x461] = 0x0D;
 
-	vga_write_register( 0x0A, 0x0D );
-	vga_write_register( 0x0B, 0x0E );
+	vga_write_register( 0x0A, 0x06 );
+	vga_write_register( 0x0B, 0x07 );
 }
 
 void
@@ -73,6 +74,7 @@ bios_interrupt10()
 		case 0x12: video_subsystem_configuration(); break;
 		case 0x1a: video_display_combination(); break;
 		case 0x11: character_generator(); break;
+		case 0x10: set_dac_color_register(); break;
 		default:
 			vlog( VM_VIDEOMSG, "Interrupt 10, function %02X requested, AL=%02X, BH=%02X", cpu.regs.B.AH, cpu.regs.B.AL, cpu.regs.B.BH );
 	}
@@ -270,12 +272,10 @@ video_subsystem_configuration()
 	/* Report "color mode" in effect. */
 	cpu.regs.B.BH = 0x00;
 
-#if 0
 	/* Report 256k of EGA memory. */
 	cpu.regs.B.BL = 0x00;
 
 	cpu.regs.W.CX = 0;
-#endif
 }
 
 void
@@ -372,4 +372,38 @@ character_generator()
 	}
 
 	vlog( VM_VIDEOMSG, "Unknown character generator request: AL=%02X, BH=%02X\n", cpu.regs.B.AL, cpu.regs.B.BH );
+}
+
+void
+set_dac_color_register()
+{
+	if( cpu.regs.B.AL == 0x00 )
+	{
+		vlog( VM_VIDEOMSG, "Set palette register %u to color %u", cpu.regs.B.BL, cpu.regs.B.BH );
+		vga_palette_register[cpu.regs.B.BL] = cpu.regs.B.BH;
+	}
+	if( cpu.regs.B.AL == 0x10 )
+	{
+		vlog( VM_VIDEOMSG, "Set color %d to #%02x%02x%02x", cpu.regs.W.BX, cpu.regs.B.DH<<2, cpu.regs.B.CH<<2, cpu.regs.B.CL<<2 );
+
+		vga_color_register[cpu.regs.W.BX & 0xFF].r = cpu.regs.B.DH;
+		vga_color_register[cpu.regs.W.BX & 0xFF].g = cpu.regs.B.CH;
+		vga_color_register[cpu.regs.W.BX & 0xFF].b = cpu.regs.B.CL;
+
+	}
+	else if( cpu.regs.B.AL == 0x02 )
+	{
+		vlog( VM_VIDEOMSG, "Loading palette from %04X:%04X", cpu.ES, cpu.regs.W.DX );
+		for( int i = 0; i < 17; ++i )
+		{
+			vga_palette_register[i] = mem_getbyte( cpu.ES, cpu.regs.W.DX + i );
+			//vlog( VM_VIDEOMSG, "Palette(%u): %02X", i, vga_palette_register[i] );
+		}
+	}
+	else
+	{
+		vlog( VM_VIDEOMSG, "Unsupported palette operation %02X", cpu.regs.B.AL );
+	}
+	extern bool palette_dirty;
+	palette_dirty = true;
 }

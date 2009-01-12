@@ -11,6 +11,7 @@ void
 _wrap_0x0F()
 {
 	byte op = cpu_pfq_getbyte();
+	vlog( VM_CPUMSG, "186: wrap_0x0F %02X", op );
 	switch( op )
 	{
 		case 0x01:
@@ -33,6 +34,8 @@ _wrap_0x0F()
 void
 _BOUND()
 {
+	vlog( VM_CPUMSG, "186: BOUND" );
+
 	byte rm = cpu_pfq_getbyte();
 	dword value = modrm_read32( rm );
 	word index = *treg16[rmreg(rm)];
@@ -44,18 +47,24 @@ _BOUND()
 void
 _PUSH_imm8()
 {
+	vlog( VM_CPUMSG, "186: PUSH imm8" );
+
 	mem_push( signext( cpu_pfq_getbyte() ) );
 }
 
 void
 _PUSH_imm16()
 {
+	vlog( VM_CPUMSG, "186: PUSH imm16" );
+
 	mem_push( cpu_pfq_getword() );
 }
 
 void
 _ENTER()
 {
+	vlog( VM_CPUMSG, "186: ENTER" );
+
 	word Size = cpu_pfq_getword();
 	byte NestingLevel = cpu_pfq_getbyte() % 32;
 	word FrameTemp, i;
@@ -75,6 +84,8 @@ _ENTER()
 void
 _LEAVE()
 {
+	vlog( VM_CPUMSG, "186: LEAVE" );
+
 	cpu.regs.W.SP = cpu.regs.W.BP;
 	cpu.regs.W.BP = mem_pop();
 }
@@ -82,6 +93,8 @@ _LEAVE()
 void
 _PUSHA()
 {
+	vlog( VM_CPUMSG, "186: PUSHA" );
+
 	word oldsp = cpu.regs.W.SP;
 	mem_push( cpu.regs.W.AX );
 	mem_push( cpu.regs.W.BX );
@@ -96,6 +109,8 @@ _PUSHA()
 void
 _POPA()
 {
+	vlog( VM_CPUMSG, "186: POPA" );
+
 	cpu.regs.W.DI = mem_pop();
 	cpu.regs.W.SI = mem_pop();
 	(void) mem_pop();

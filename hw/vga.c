@@ -29,33 +29,71 @@ static void vga_selreg( word, byte );
 static void vga_setreg( word, byte );
 static void vga_selreg2( word, byte );
 static void vga_setreg2( word, byte );
+static byte vga_getreg2( word );
 static void vga_selseq( word, byte );
 static void vga_setseq( word, byte );
+static byte vga_getseq( word );
 static byte vga_getreg( word );
 static byte vga_status( word );
 static byte vga_get_current_register( word );
 
 static bool video_dirty = false;
+bool palette_dirty = true;
 
-byte vm_p0[0x9600];
-byte vm_p1[0x9600];
-byte vm_p2[0x9600];
-byte vm_p3[0x9600];
+byte vm_p0[0x10000];
+byte vm_p1[0x10000];
+byte vm_p2[0x10000];
+byte vm_p3[0x10000];
 
-dword vga_writes = 0;
-dword vga_reads = 0;
+byte vga_palette_register[17] =
+{
+	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0x03
+};
+
+rgb_t vga_color_register[256] =
+{
+	{0x00,0x00,0x00}, {0x00,0x00,0x2a}, {0x00,0x2a,0x00}, {0x00,0x2a,0x2a}, {0x2a,0x00,0x00}, {0x2a,0x00,0x2a}, {0x2a,0x15,0x00}, {0x2a,0x2a,0x2a},
+	{0x00,0x00,0x00}, {0x00,0x00,0x2a}, {0x00,0x2a,0x00}, {0x00,0x2a,0x2a}, {0x2a,0x00,0x00}, {0x2a,0x00,0x2a}, {0x2a,0x15,0x00}, {0x2a,0x2a,0x2a},
+	{0x15,0x15,0x15}, {0x15,0x15,0x3f}, {0x15,0x3f,0x15}, {0x15,0x3f,0x3f}, {0x3f,0x15,0x15}, {0x3f,0x15,0x3f}, {0x3f,0x3f,0x15}, {0x3f,0x3f,0x3f},
+	{0x15,0x15,0x15}, {0x15,0x15,0x3f}, {0x15,0x3f,0x15}, {0x15,0x3f,0x3f}, {0x3f,0x15,0x15}, {0x3f,0x15,0x3f}, {0x3f,0x3f,0x15}, {0x3f,0x3f,0x3f},
+	{0x00,0x00,0x00}, {0x00,0x00,0x2a}, {0x00,0x2a,0x00}, {0x00,0x2a,0x2a}, {0x2a,0x00,0x00}, {0x2a,0x00,0x2a}, {0x2a,0x15,0x00}, {0x2a,0x2a,0x2a},
+	{0x00,0x00,0x00}, {0x00,0x00,0x2a}, {0x00,0x2a,0x00}, {0x00,0x2a,0x2a}, {0x2a,0x00,0x00}, {0x2a,0x00,0x2a}, {0x2a,0x15,0x00}, {0x2a,0x2a,0x2a},
+	{0x15,0x15,0x15}, {0x15,0x15,0x3f}, {0x15,0x3f,0x15}, {0x15,0x3f,0x3f}, {0x3f,0x15,0x15}, {0x3f,0x15,0x3f}, {0x3f,0x3f,0x15}, {0x3f,0x3f,0x3f},
+	{0x15,0x15,0x15}, {0x15,0x15,0x3f}, {0x15,0x3f,0x15}, {0x15,0x3f,0x3f}, {0x3f,0x15,0x15}, {0x3f,0x15,0x3f}, {0x3f,0x3f,0x15}, {0x3f,0x3f,0x3f},
+};
+
+
+#if 0
+rgb_t vga_color_register[256] =
+{
+	{ 0, 0, 0 },
+	{ 0, 0, 31 },
+	{ 0, 31, 0 },
+	{ 0, 31, 31 },
+	{ 31, 0, 0 },
+	{ 31, 0, 31 },
+	{ 31, 31, 0 },
+	{ 31, 31, 31 },
+	{ 47, 47, 47},
+	{ 0, 0, 63 },
+	{ 0, 63, 0 },
+	{ 0, 63, 63 },
+	{ 63, 0, 0 },
+	{ 63, 0, 63 },
+	{ 63, 63, 0 },
+	{ 63, 63, 63 },
+};
+#endif
 
 void
 vga_init()
 {
-	vga_writes = 0;
-	vga_reads = 0;
-
 	latch[0] = 0;
 	latch[1] = 0;
 	latch[2] = 0;
 	latch[3] = 0;
 
+	memset( &vm_p0, 0x0, sizeof(vm_p0) );
 	memset( &vm_p1, 0x0, sizeof(vm_p1) );
 	memset( &vm_p2, 0x0, sizeof(vm_p2) );
 	memset( &vm_p3, 0x0, sizeof(vm_p3) );
@@ -65,9 +103,9 @@ vga_init()
 	vm_listen( 0x3ba, vga_status, 0L );
 
 	vm_listen( 0x3c4, 0L, vga_selseq );
-	vm_listen( 0x3c5, 0L, vga_setseq );
+	vm_listen( 0x3c5, vga_getseq, vga_setseq );
 	vm_listen( 0x3ce, 0L, vga_selreg2 );
-	vm_listen( 0x3cf, 0L, vga_setreg2 );
+	vm_listen( 0x3cf, vga_getreg2, vga_setreg2 );
 
 	vm_listen( 0x3d4, vga_get_current_register, vga_selreg );
 	vm_listen( 0x3d5, vga_getreg, vga_setreg );
@@ -139,6 +177,14 @@ vga_selseq( word port, byte data )
 	(void) port;
 	/* mask off unused bits */
 	current_sequencer = data & 0x1F;
+}
+
+byte
+vga_getseq( word port )
+{
+	(void) port;
+	//vlog( VM_VIDEOMSG, "reading seq %d, data is %02X", current_sequencer, io_sequencer[current_sequencer] );
+	return io_sequencer[current_sequencer];
 }
 
 void
@@ -247,6 +293,14 @@ vga_setreg2( word port, byte data )
 	io_register2[current_register2] = data;
 }
 
+byte
+vga_getreg2( word port )
+{
+	(void) port;
+	//vlog( VM_VIDEOMSG, "reading reg2 %d, data is %02X", current_register2, io_register2[current_register2] );
+	return io_register2[current_register2];
+}
+
 #define MODE12 (mem_space[0x449]==0x12)
 
 void
@@ -256,9 +310,7 @@ vga_setbyte( dword a, byte d )
 	 * fprintf(stderr,"mem_write: %02X:%04X = %02X <%d>, BM=%02X, ESR=%02X, SR=%02X\n", io_sequencer[2] & 0x0F, a-0xA0000, d, DRAWOP, BIT_MASK, io_register2[1], io_register2[0]);
 	 */
 
-	vga_writes++;
-
-	if( a >= 0xA9600 )
+	if( a >= 0xAFFFF )
 	{
 		vlog( VM_VIDEOMSG, "OOB write 0x%lx", a );
 		mem_space[a] = d;
@@ -328,6 +380,31 @@ vga_setbyte( dword a, byte d )
 					? ((set_reset & 8) ? bitmask : 0)
 					: (value & bitmask));
 				break;
+			case 1:
+				new_val[0] |= ((enable_set_reset & 1)
+					? ((set_reset & 1)
+						? (~latch[0] & bitmask)
+						: (latch[0] & bitmask))
+					: (value & latch[0]) & bitmask);
+
+				new_val[1] |= ((enable_set_reset & 2)
+					? ((set_reset & 2)
+						? (~latch[1] & bitmask)
+						: (latch[1] & bitmask))
+					: (value & latch[1]) & bitmask);
+
+				new_val[2] |= ((enable_set_reset & 4)
+					? ((set_reset & 4)
+						? (~latch[2] & bitmask)
+						: (latch[2] & bitmask))
+					: (value & latch[2]) & bitmask);
+
+				new_val[3] |= ((enable_set_reset & 8)
+					? ((set_reset & 8)
+						? (~latch[3] & bitmask)
+						: (latch[3] & bitmask))
+					: (value & latch[3]) & bitmask);
+				break;
 			case 3:
 				new_val[0] |= ((enable_set_reset & 1)
 					? ((set_reset & 1)
@@ -354,14 +431,21 @@ vga_setbyte( dword a, byte d )
 					: (value ^ latch[3]) & bitmask);
 				break;
 			default:
-				vlog( VM_VIDEOMSG, "Unsupported raster operation %d\n", DRAWOP );
+				vlog( VM_VIDEOMSG, "Unsupported raster operation %d", DRAWOP );
 				ui_kill();
 				vm_exit( 0 );
 		}
 	}
+	else if( WRITE_MODE == 1 )
+	{
+		new_val[0] = latch[0];
+		new_val[1] = latch[1];
+		new_val[2] = latch[2];
+		new_val[3] = latch[3];
+	}
 	else
 	{
-		vlog( VM_VIDEOMSG, "Unsupported 6845 write mode %d\n", WRITE_MODE );
+		vlog( VM_VIDEOMSG, "Unsupported 6845 write mode %d", WRITE_MODE );
 		vm_exit( 0 );
 
 		/* This is just here to make GCC stop worrying about accessing new_val[] uninitialized. */
@@ -389,18 +473,16 @@ vga_setbyte( dword a, byte d )
 byte
 vga_getbyte( dword a )
 {
-	vga_reads++;
-
-	if( READ_MODE == 1 )
+	if( READ_MODE != 0 )
 	{
-		vlog( VM_VIDEOMSG, "ZOMG! READ_MODE == 1" );
+		vlog( VM_VIDEOMSG, "ZOMG! READ_MODE = %u", READ_MODE );
 		ui_kill();
 		vm_exit( 1 );
 	}
 
 	/* We're assuming READ_MODE == 0 now... */
 
-	if( a < 0xA9600 )
+	if( a < 0xB0000 )
 	{
 		a -= 0xA0000;
 		latch[0] = vm_p0[a];
@@ -414,12 +496,12 @@ vga_getbyte( dword a )
 	}
 	else
 	{
-		vlog( VM_VIDEOMSG, "OOB read %lx", a + 0xA0000 );
+		vlog( VM_VIDEOMSG, "OOB read 0x%lx", a );
 #if 0
 			g_debug_step = true;
 			vm_debug();
 #endif
-		return mem_space[a + 0xA0000];
+		return mem_space[a];
 	}
 }
 
@@ -446,4 +528,16 @@ bool
 is_video_dirty()
 {
 	return video_dirty;
+}
+
+void
+clear_palette_dirty()
+{
+	palette_dirty = false;
+}
+
+bool
+is_palette_dirty()
+{
+	return palette_dirty;
 }

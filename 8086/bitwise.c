@@ -3,7 +3,7 @@
  *
  */
 
-#define MASK_STEPS_IF_80186 if( cpu.type == INTEL_80186 ) { steps &= 0x1F; }
+#define MASK_STEPS_IF_80286 if( cpu.type >= INTEL_80286 ) { steps &= 0x1F; }
 
 #include "vomit.h"
 #include "templates.h"
@@ -105,7 +105,7 @@ cpu_shl( word data, byte steps, byte bits )
 	unsigned int i;
 	dword result = (dword)data;
 
-	MASK_STEPS_IF_80186;
+	MASK_STEPS_IF_80286;
 
 	if( bits == 8 )
 	{
@@ -139,7 +139,7 @@ cpu_shr( word data, byte steps, byte bits )
 	unsigned int i;
 	dword result = (dword)data;
 
-	MASK_STEPS_IF_80186;
+	MASK_STEPS_IF_80286;
 
 	if( bits == 8 )
 	{
@@ -174,7 +174,7 @@ cpu_sar( word data, byte steps, byte bits )
 	dword result = (dword)data;
 	word n;
 
-	MASK_STEPS_IF_80186;
+	MASK_STEPS_IF_80286;
 
 	if( bits == 8 )
 	{
@@ -210,7 +210,7 @@ cpu_rol( word data, byte steps, byte bits )
 	unsigned int i;
 	dword result = (dword)data;
 
-	MASK_STEPS_IF_80186;
+	MASK_STEPS_IF_80286;
 
 	if( bits == 8 )
 	{
@@ -243,7 +243,7 @@ cpu_ror( word data, byte steps, byte bits )
 	unsigned int i;
 	dword result = (dword)data;
 
-	MASK_STEPS_IF_80186;
+	MASK_STEPS_IF_80286;
 
 	if( bits == 8 )
 	{
@@ -277,7 +277,7 @@ cpu_rcl( word data, byte steps, byte bits )
 	dword result = (dword)data;
 	word n;
 
-	MASK_STEPS_IF_80186;
+	MASK_STEPS_IF_80286;
 
 	if( bits == 8 )
 	{
@@ -313,7 +313,7 @@ cpu_rcr( word data, byte steps, byte bits )
 	dword result = (dword)data;
 	word n;
 
-	MASK_STEPS_IF_80186;
+	MASK_STEPS_IF_80286;
 
 	if( bits == 8 )
 	{

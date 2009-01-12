@@ -7,6 +7,7 @@
 
 #define INTEL_8086          0
 #define INTEL_80186         1
+#define INTEL_80286         2
 
 #define rmreg(b) (b>>3&7)	/* Extracts RegID from RM byte. */
 #define MODRM_ISREG(b) (((b)&0xC0)==0xC0)
@@ -22,8 +23,13 @@ extern byte CPU_PFQ_SIZE;
 extern byte cpu_pfq_current;
 extern byte *cpu_pfq;
 void cpu_pfq_flush();
+byte cpu_pfq_getbyte();
+word cpu_pfq_getword();
 #else
 #define cpu_pfq_flush()
+#define cpu_pfq_getbyte() (code_memory[cpu.IP++])
+word cpu_pfq_getword();
+extern byte *code_memory;
 #endif
 
 extern byte cpu_state;
@@ -121,8 +127,6 @@ void cpu_init();
 void cpu_genmap();
 void cpu_kill();
 void cpu_main();
-byte cpu_pfq_getbyte();
-word cpu_pfq_getword();
 void cpu_jump(word,word);
 void cpu_jump_relative8( sigbyte );
 void cpu_jump_relative16( sigword );

@@ -9,8 +9,15 @@
 void
 _PUSH_reg16()
 {
-	/* TODO: PUSH SP differs between 8086 and later processors. */
-	mem_push( *treg16[cpu_opcode & 7] );
+	/* PUSH SP will use the value AFTER the push on Intel 8086. */
+	if( cpu.type == INTEL_8086 && cpu_opcode & 7 == REG_SP )
+	{
+		mem_push( cpu.regs.W.SP + 2 );
+	}
+	else
+	{
+		mem_push( *treg16[cpu_opcode & 7] );
+	}
 }
 
 void
