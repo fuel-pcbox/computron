@@ -77,6 +77,7 @@ vlog_hook( int category, const char *format, va_list ap )
 		case VM_MOUSEMSG: prefix = "mouse"; break;
 		case VM_DOSMSG: prefix = "dos"; break;
 		case VM_PICMSG: prefix = "pic"; break;
+		case VM_DMAMSG: prefix = "dma"; break;
 	}
 
 	if( prefix )
