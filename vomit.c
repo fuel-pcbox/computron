@@ -113,7 +113,6 @@ void vm_init() {
 
 	pic_init();
 	dma_init();
-	uart_init();
 	vga_init();
 	fdc_init();
 	ide_init();
