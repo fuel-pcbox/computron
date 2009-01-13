@@ -3,11 +3,11 @@
 
 static void pic_write_icw( word, byte );
 static byte pic_read_icw( word );
-static bool read_irr = 0;
+static bool read_irr = 1;
 
 static byte master_irr = 0;
 static byte master_isr = 0;
-static byte master_imr = 0xFF;
+static byte master_imr = 0xff; // HACK - should be 0xff
 
 void
 pic_init()
@@ -21,12 +21,13 @@ pic_write_icw( word port, byte data )
 {
 	if( port == 0x20 && data == 0x20 ) // non-specific EOI
 	{
-		//vlog( VM_PICMSG, "EOI" );
+		vlog( VM_PICMSG, "EOI" );
+		master_isr = 0;
 		return;
 	}
 	if( port == 0x20 && ((data & 0x18) == 0x08) ) // OCW3
 	{
-		//vlog( VM_PICMSG, "*** OCW3 *** %02X on port %02X", data, port );
+		vlog( VM_PICMSG, "*** OCW3 *** %02X on port %02X", data, port );
 		if( data & 0x02 )
 			read_irr = data & 0x01;
 		return;
@@ -42,11 +43,12 @@ pic_write_icw( word port, byte data )
 		master_imr = 0;
 		master_isr = 0;
 		master_irr = 0;
+		read_irr = 1;
 		return;
 	}
-	if( port == 0x21 && ((data & 0x18) == 0x00) )
+	if( port == 0x20 && ((data & 0x18) == 0x00) )
 	{
-		//vlog( VM_PICMSG, "*** OCW2 *** Data: %02X", data );
+		vlog( VM_PICMSG, "*** OCW2 *** Data: %02X", data );
 		return;
 	}
 	if( port == 0x21 ) // OCW1 - IMR write
@@ -67,11 +69,11 @@ pic_write_icw( word port, byte data )
 byte
 pic_read_icw( word port )
 {
-	master_irr = 0;
-	master_isr = 0;
+	//master_irr = 0;
+	//master_isr = 0;
 	if( read_irr )
 	{
-		//vlog( VM_PICMSG, "Read IRR (%02X)", master_irr );
+		vlog( VM_PICMSG, "Read IRR (%02X)", master_irr );
 		return master_irr;
 	}
 	else
@@ -90,12 +92,14 @@ irq( byte num )
 {
 	//vlog( VM_PICMSG, "IRQ %u", num );
 	master_irr |= 1 << num;
+	master_irr &= ~master_imr;
 }
 
 bool
 pic_next_irq( byte *retval )
 {
 	byte pending_requests = master_irr & ~master_imr;
+	//byte pending_requests = master_irr;
 
 	if( !pending_requests )
 		return 0;
@@ -103,6 +107,10 @@ pic_next_irq( byte *retval )
 	for( int i = 0; i < 8; ++i )
 		if( pending_requests & (1 << i) )
 			*retval = i;
+
+	//vlog( VM_PICMSG, "IRQ %u setting %02X", num, (1 << num) & 0xFF );
 	master_irr &= ~(1 << *retval);
+
+	master_isr |= (1 << *retval);
 	return 1;
 }

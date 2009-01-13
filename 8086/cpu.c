@@ -322,9 +322,10 @@ kontinue:
 		}
 
 		byte irq_to_service = 0;
-		if( pic_next_irq( &irq_to_service ))
+		if( cpu.IF && pic_next_irq( &irq_to_service ))
 		{
-			//vlog( VM_CPUMSG, "Servicing IRQ %u", irq_to_service );
+			if( irq_to_service != 0 )
+				vlog( VM_CPUMSG, "Servicing IRQ %u", irq_to_service );
 			int_call( 0x08 + irq_to_service );
 		}
 
@@ -363,6 +364,13 @@ kontinue:
 			/* NOTE: The PIT ISR won't be called below, since int_call()
 			 *       clears IF. Phew. */
 			int_call( 1 );
+		}
+
+		static byte x = 40;
+		if( x-- == 0 )
+		{
+			busmouse_pulse();
+			x = 80;
 		}
 
 		if( !--video_sync_counter )

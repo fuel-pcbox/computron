@@ -18,6 +18,8 @@
 #define LSB(w) ((w)&0xFF)
 #define MSB(w) (((w)&0xFF00)>>8)
 
+#define FLAT(s,o) (((s)<<4)+(o))
+
 #ifndef VM_NOPFQ
 extern byte CPU_PFQ_SIZE;
 extern byte cpu_pfq_current;

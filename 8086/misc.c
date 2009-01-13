@@ -66,8 +66,23 @@ cpu_updflags (word data, byte bits) {
 	cpu_setSF((dword)data, bits);
 }
 
-void _STC() { cpu.CF = 1; } void _STD() { cpu.DF = 1; } void _STI() { cpu.IF = 1; }
-void _CLC() { cpu.CF = 0; } void _CLD() { cpu.DF = 0; } void _CLI() { cpu.IF = 0; }
+void _STC() { cpu.CF = 1; } void _STD() { cpu.DF = 1; }
+
+void
+_STI()
+{
+	//if( !cpu.IF ) vlog( VM_CPUMSG, "Interrupts ON" );
+	cpu.IF = 1;
+}
+
+void
+_CLI()
+{
+	//if( cpu.IF ) vlog( VM_CPUMSG, "Interrupts OFF" );
+	cpu.IF = 0;
+}
+
+void _CLC() { cpu.CF = 0; } void _CLD() { cpu.DF = 0; }
 void _CMC() { cpu.CF = !cpu.CF; }
 
 void

@@ -10,7 +10,6 @@
 #include "vomit.h"
 #include "debug.h"
 
-#define FLAT(s,o) (((s)<<4)+(off))
 extern byte vga_getbyte( dword );
 extern word vga_getword( dword );
 extern void vga_setbyte( dword, byte );

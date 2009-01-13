@@ -71,6 +71,11 @@ _cpu_timer:
     pop     bx
     pop     ds
     int     0x1C
+
+    push    ax
+    mov     al, 0x20
+    out     0x20, al
+    pop     ax
     iret
 
 _cpu_default_softtimer:

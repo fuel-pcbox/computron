@@ -90,9 +90,12 @@ int_call( byte isr )
 		return;
 	}
 
-#if 0
 	if( isr == 0x33 )
 	{
+		vlog( VM_MOUSEMSG, "Interrupt 0x33 called from %04X:%04X", cpu.base_CS, cpu.base_IP );
+		dump_all();
+	}
+	#if 0
 		bios_interrupt33();
 		return;
 	}

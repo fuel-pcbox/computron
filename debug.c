@@ -28,21 +28,6 @@ vlog( int category, const char *format, ... )
 	const char *prefix = 0L;
 	bool show_on_stdout = true;
 
-	if( s_vlog_handler )
-	{
-		va_start( ap, format );
-		(*s_vlog_handler)( category, format, ap );
-		va_end( ap );
-		//return;
-	}
-
-	if( !s_logfile )
-	{
-		s_logfile = fopen( "log.txt", "a" );
-		if( !s_logfile )
-			return;
-	}
-
 	switch( category )
 	{
 		case VM_INITMSG: prefix = "init"; break;
@@ -56,7 +41,22 @@ vlog( int category, const char *format, ... )
 		case VM_CPUMSG:  prefix = "cpu"; break;
 		case VM_MEMORYMSG: prefix = "memory"; break;
 		case VM_MOUSEMSG: prefix = "mouse"; break;
-		case VM_PICMSG: prefix = "pic"; break;
+		case VM_PICMSG: prefix = "pic"; show_on_stdout = false; break;
+	}
+
+	if( s_vlog_handler && show_on_stdout )
+	{
+		va_start( ap, format );
+		(*s_vlog_handler)( category, format, ap );
+		va_end( ap );
+		//return;
+	}
+
+	if( !s_logfile )
+	{
+		s_logfile = fopen( "log.txt", "a" );
+		if( !s_logfile )
+			return;
 	}
 
 	if( prefix )

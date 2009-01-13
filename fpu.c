@@ -21,6 +21,8 @@ _ESCAPE()
 	rm = cpu_pfq_getbyte();
 	(void) modrm_read16( rm );
 
+	return;
+
 	ui_kill();
 	vm_debug();
 	ui_show();

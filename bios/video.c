@@ -42,6 +42,9 @@ video_bios_init()
 	mem_space[0x460] = 0x0E;
 	mem_space[0x461] = 0x0D;
 
+	/* Video Display Combination */
+	mem_space[0x48A] = 0x08;
+
 	vga_write_register( 0x0A, 0x06 );
 	vga_write_register( 0x0B, 0x07 );
 }
