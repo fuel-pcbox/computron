@@ -154,7 +154,7 @@ READONLY_AX_imm16( cpu_sub, _CMP_AX_imm16 )
 void
 _MUL_RM8()
 {
-	byte value = modrm_read8( cpu_rmbyte );
+	byte value = modrm_read8( cpu.rmbyte );
 	cpu.regs.W.AX = cpu_mul( cpu.regs.B.AL, value, 8 );
 
 	if( cpu.regs.B.AH == 0x00 )
@@ -172,7 +172,7 @@ _MUL_RM8()
 void
 _MUL_RM16()
 {
-	word value = modrm_read16( cpu_rmbyte );
+	word value = modrm_read16( cpu.rmbyte );
 	dword result = cpu_mul( cpu.regs.W.AX, value, 16 );
 	cpu.regs.W.AX = result & 0xFFFF;
 	cpu.regs.W.DX = (result >> 16) & 0xFFFF;
@@ -192,7 +192,7 @@ _MUL_RM16()
 void
 _IMUL_RM8()
 {
-	byte rm = cpu_rmbyte;
+	byte rm = cpu.rmbyte;
 	sigbyte value = (sigbyte)modrm_read8( rm );
 	cpu.regs.W.AX = (sigword) cpu_imul( cpu.regs.B.AL, value, 8 );
 
@@ -233,7 +233,7 @@ _IMUL_reg16_RM16_imm8()
 void
 _IMUL_RM16()
 {
-	sigword value = (sigword)modrm_read16( cpu_rmbyte );
+	sigword value = (sigword)modrm_read16( cpu.rmbyte );
 	sigdword result = (sigdword) cpu_imul( cpu.regs.W.AX, value, 16 );
 	cpu.regs.W.AX = result;
 	cpu.regs.W.DX = result >> 16;
@@ -254,7 +254,7 @@ void
 _DIV_RM8()
 {
 	word offend = cpu.IP;
-	byte value = modrm_read8( cpu_rmbyte );
+	byte value = modrm_read8( cpu.rmbyte );
 	word tAX = cpu.regs.W.AX;
 
 	if( value == 0 )
@@ -272,7 +272,7 @@ void
 _DIV_RM16()
 {
 	word offend = cpu.IP;
-	word value = modrm_read16( cpu_rmbyte );
+	word value = modrm_read16( cpu.rmbyte );
 	dword tDXAX = cpu.regs.W.AX + (cpu.regs.W.DX << 16);
 
 	if( value == 0 )
@@ -290,7 +290,7 @@ void
 _IDIV_RM8()
 {
 	word offend = cpu.IP;
-	sigbyte value = (sigbyte)modrm_read8( cpu_rmbyte );
+	sigbyte value = (sigbyte)modrm_read8( cpu.rmbyte );
 	sigword tAX = (sigword)cpu.regs.W.AX;
 
 	if( value == 0 )
@@ -308,7 +308,7 @@ void
 _IDIV_RM16()
 {
 	word offend = cpu.IP;
-	sigword value = (sigword)modrm_read16( cpu_rmbyte );
+	sigword value = (sigword)modrm_read16( cpu.rmbyte );
 	sigdword tDXAX = (sigword)(cpu.regs.W.AX + (cpu.regs.W.DX << 16));
 
 	if( value == 0 )

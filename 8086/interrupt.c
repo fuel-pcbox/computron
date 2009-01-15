@@ -46,7 +46,7 @@ int_call( byte isr )
 
 #ifdef VM_DEBUG
 	if( trapint )
-		vlog( VM_CPUMSG, "%04X:%04X Interrupt %02X,%02X trapped", cpu.base_CS, cpu.base_IP, isr, cpu.regs.B.AH );
+		vlog( VM_PICMSG, "%04X:%04X Interrupt %02X,%02X trapped", cpu.base_CS, cpu.base_IP, isr, cpu.regs.B.AH );
 #endif
 
 //	cpu_addint(0x33, 0xf000, 0x0306);
@@ -92,14 +92,17 @@ int_call( byte isr )
 
 	if( isr == 0x33 )
 	{
-		vlog( VM_MOUSEMSG, "Interrupt 0x33 called from %04X:%04X", cpu.base_CS, cpu.base_IP );
-		dump_all();
+		switch( cpu.regs.W.AX )
+		{
+			case 0x000C:
+				vlog( VM_MOUSEMSG, "Call mask: %04X, handler: %04X:%04X", cpu.regs.W.CX, cpu.ES, cpu.regs.W.DX );
+				break;
+			default:
+				vlog( VM_MOUSEMSG, "Interrupt 0x33 func %04X called from %04X:%04X", cpu.regs.W.AX, cpu.base_CS, cpu.base_IP );
+		}
+/*		bios_interrupt33();
+		return;*/
 	}
-	#if 0
-		bios_interrupt33();
-		return;
-	}
-#endif
 
 	mem_push( cpu_getflags() );
 	cpu.IF = 0;

@@ -11,6 +11,8 @@
 #include "vomit.h"
 #include "debug.h"
 
+vomit_options_t options;
+
 bool disklog, trapint, iopeek, mempeek, callpeek;
 
 #ifdef VOMIT_TRY
@@ -26,6 +28,8 @@ static bool exiting = 0;
 int
 vomit_init( int argc, char **argv )
 {
+	memset( &options, 0, sizeof(options) );
+
 	const char *try_path = 0L;
 
 	while( argc > 1 )
@@ -36,6 +40,7 @@ vomit_init( int argc, char **argv )
 		FLAGARG( "--trapint",  trapint )
 		FLAGARG( "--mempeek",  mempeek )
 		FLAGARG( "--iopeek",   iopeek )
+		FLAGARG( "--bda-peek", options.bda_peek )
 
 #ifdef VOMIT_TRY
 		else if( argc > 2 && !strcmp( argv[1], "--try" ))

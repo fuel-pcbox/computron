@@ -345,21 +345,21 @@ cpu_rcr( word data, byte steps, byte bits )
 void
 _NOT_RM8()
 {
-	byte value = modrm_read8( cpu_rmbyte );
+	byte value = modrm_read8( cpu.rmbyte );
 	modrm_update8( ~value );
 }
 
 void
 _NOT_RM16()
 {
-	word value = modrm_read16( cpu_rmbyte );
+	word value = modrm_read16( cpu.rmbyte );
 	modrm_update16( ~value );
 }
 
 void
 _NEG_RM8()
 {
-	byte value = modrm_read8( cpu_rmbyte );
+	byte value = modrm_read8( cpu.rmbyte );
 	byte old = value;
 	value = -value;
 	modrm_update8( value );
@@ -375,7 +375,7 @@ _NEG_RM8()
 void
 _NEG_RM16()
 {
-	word value = modrm_read16( cpu_rmbyte );
+	word value = modrm_read16( cpu.rmbyte );
 	word old = value;
 	value = -value;
 	modrm_update16( value );

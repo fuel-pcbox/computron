@@ -45,6 +45,10 @@ video_bios_init()
 	/* Video Display Combination */
 	mem_space[0x48A] = 0x08;
 
+	/* Active 6845 CRT I/O base */
+	mem_space[0x463] = 0xD4;
+	mem_space[0x464] = 0x03;
+
 	vga_write_register( 0x0A, 0x06 );
 	vga_write_register( 0x0B, 0x07 );
 }
@@ -239,11 +243,32 @@ void
 set_video_mode()
 {
 	byte mode = cpu.regs.B.AL;
+	byte actual_mode = cpu.regs.B.AL & ~0x80;
 
 	mem_space[0x449] = mode;
+
+	mem_space[0x487] &= ~0x80;
 	mem_space[0x487] |= mode & 0x80;
 
-	vlog( VM_VIDEOMSG, "Mode %d selected", mode );
+	vlog( VM_VIDEOMSG, "Mode %d (hex %02X) selected", mode, mode );
+
+#if 0
+	vlog( VM_VIDEOMSG, "=== Begin CRT register update ===" );
+
+	(void) cpu_in( 0x3DA );
+	cpu_out( 0x3C0, 0x10 );
+	cpu_out( 0x3C0, actual_mode == 0x03 ? 0x0C : 0x01 );
+	cpu_out( 0x3C0, 0x11 );
+	cpu_out( 0x3C0, actual_mode == 0x03 ? 0x00 : 0x00 );
+	cpu_out( 0x3C0, 0x12 );
+	cpu_out( 0x3C0, actual_mode == 0x03 ? 0x0F : 0x0F );
+	cpu_out( 0x3C0, 0x13 );
+	cpu_out( 0x3C0, actual_mode == 0x03 ? 0x08 : 0x00 );
+	cpu_out( 0x3C0, 0x14 );
+	cpu_out( 0x3C0, actual_mode == 0x03 ? 0x00 : 0x00 );
+
+	vlog( VM_VIDEOMSG, "=== End CRT register update ===" );
+#endif
 }
 
 void
@@ -272,13 +297,22 @@ video_subsystem_configuration()
 {
 	vlog( VM_VIDEOMSG, "INT 10,12 with BL=%02X", cpu.regs.B.BL );
 
-	/* Report "color mode" in effect. */
-	cpu.regs.B.BH = 0x00;
+	if( cpu.regs.B.BL == 0x10 )
+	{
+		/* Report "color mode" in effect. */
+		cpu.regs.B.BH = 0x00;
 
-	/* Report 256k of EGA memory. */
-	cpu.regs.B.BL = 0x00;
+		/* Report 256k of EGA memory. */
+		cpu.regs.B.BL = 0x00;
 
-	cpu.regs.W.CX = 0;
+		cpu.regs.W.CX = 0;
+	}
+	else if( cpu.regs.B.BL == 0x33 )
+	{
+		vlog( VM_VIDEOMSG, "Gray scale summing mode %02X", cpu.regs.B.AL );
+
+		cpu.regs.B.AL = 0x12;
+	}
 }
 
 void

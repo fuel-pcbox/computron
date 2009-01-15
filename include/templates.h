@@ -31,19 +31,19 @@
 
 #define DEFAULT_RM8_imm8( helper, name ) \
 	void name() { \
-		byte value = modrm_read8( cpu_rmbyte ); \
+		byte value = modrm_read8( cpu.rmbyte ); \
 		modrm_update8( helper( value, cpu_pfq_getbyte(), 8 )); \
 	}
 
 #define DEFAULT_RM16_imm16( helper, name ) \
 	void name() { \
-		word value = modrm_read16( cpu_rmbyte ); \
+		word value = modrm_read16( cpu.rmbyte ); \
 		modrm_update16( helper( value, cpu_pfq_getword(), 16 )); \
 	}
 
 #define DEFAULT_RM16_imm8( helper, name ) \
 	void name() { \
-		word value = modrm_read16( cpu_rmbyte ); \
+		word value = modrm_read16( cpu.rmbyte ); \
 		modrm_update16( helper( value, signext( cpu_pfq_getbyte() ), 16 )); \
 	}
 
@@ -83,19 +83,19 @@
 
 #define READONLY_RM8_imm8( helper, name ) \
 	void name() { \
-		byte value = modrm_read8( cpu_rmbyte ); \
+		byte value = modrm_read8( cpu.rmbyte ); \
 		helper( value, cpu_pfq_getbyte(), 8 ); \
 	}
 
 #define READONLY_RM16_imm16( helper, name ) \
 	void name() { \
-		word value = modrm_read16( cpu_rmbyte ); \
+		word value = modrm_read16( cpu.rmbyte ); \
 		helper( value, cpu_pfq_getword(), 16 ); \
 	}
 
 #define READONLY_RM16_imm8( helper, name ) \
 	void name() { \
-		word value = modrm_read16( cpu_rmbyte ); \
+		word value = modrm_read16( cpu.rmbyte ); \
 		helper( value, signext( cpu_pfq_getbyte() ), 16 ); \
 	}
 

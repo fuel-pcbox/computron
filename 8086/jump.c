@@ -40,13 +40,13 @@ _JMP_short_imm8()
 void
 _JMP_RM16()
 {
-	cpu_jump_absolute16( modrm_read16( cpu_rmbyte ));
+	cpu_jump_absolute16( modrm_read16( cpu.rmbyte ));
 }
 
 void
 _JMP_FAR_mem16()
 {
-	dword value = modrm_read32( cpu_rmbyte );
+	dword value = modrm_read32( cpu.rmbyte );
 	cpu_jump( MSW(value), LSW(value) );
 }
 
@@ -57,7 +57,7 @@ void
 _Jcc_imm8()
 {
 	sigbyte imm = cpu_pfq_getbyte();
-	if( cpu_evaluate( cpu_opcode & 0x0F ))
+	if( cpu_evaluate( cpu.opcode & 0x0F ))
 	{
 		cpu_jump_relative8( imm );
 	}
@@ -84,7 +84,7 @@ _CALL_imm16_imm16()
 void
 _CALL_FAR_mem16()
 {
-	dword value = modrm_read32( cpu_rmbyte );
+	dword value = modrm_read32( cpu.rmbyte );
 	mem_push( cpu.CS );
 	mem_push( cpu.IP );
 	cpu_jump( MSW(value), LSW(value) );
@@ -93,7 +93,7 @@ _CALL_FAR_mem16()
 void
 _CALL_RM16()
 {
-	word value = modrm_read16( cpu_rmbyte );
+	word value = modrm_read16( cpu.rmbyte );
 	mem_push( cpu.IP );
 	cpu_jump_absolute16( value );
 }

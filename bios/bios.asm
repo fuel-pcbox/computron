@@ -89,6 +89,7 @@ _bios_ctrl_break:
     iret
 
 _unimplemented_isr:
+    iret
     push    si
     mov     si, msg_unimplemented
     call    safe_putString
@@ -328,9 +329,13 @@ _bios_setup_ints:
     mov     dx, _cpu_default_softtimer
     call    .install
 
-    ;mov     al, 0x33
-    ;mov     dx, _bios_interrupt33
-    ;call    .install
+    mov     al, 0x74
+    mov     dx, _bios_interrupt74
+    call    .install
+
+    mov     al, 0x0d
+    mov     dx, _bios_interrupt74
+    call    .install
 
     pop     ds
 
@@ -424,7 +429,7 @@ _bios_init_data:
     mov     byte [0x044A], 80
     mov     byte [0x044B], 0
 
-    mov     byte [0x0484], 25
+    mov     byte [0x0484], 25 ; rows on screen
     mov     byte [0x0460], 0x0E
     mov     byte [0x0461], 0x0D
 
@@ -436,7 +441,7 @@ _bios_init_data:
 ;   mov     word [0x0410], 0000000100100000b
 ;                                  xx     x   floppies
     mov     cx, 0000000100100000b
-    mov     cx, 0000000100100100b
+    mov     cx, 0000000100100101b
     ; No DMA
     ; 80x25 color
 ; ------------------------------------------------------
@@ -518,12 +523,26 @@ _bios_load_bootsector:
     call    safe_putString
     jmp     .end
 
-_bios_interrupt33:
-    push    bx
-    mov     bx, ax
-    mov     ax, 0x3300
-    out     0xE6, al
-    pop     bx
+_bios_interrupt74:
+    out     0xE8, al
+    jc      .end
+
+    add      sp, byte 0x08
+
+    push    ax
+    mov     al, 0x20
+    out     0x20, al
+    pop     ax
+.end:
+    push    bp
+    mov     bp, sp
+    jc      .carry
+    and     byte [bp+6], 0xfe       ; No carry
+    pop     bp
+    iret
+.carry:
+    or      byte [bp+6], 0x01       ; Carry
+    pop     bp
     iret
 
 _bios_interrupt10:                  ; BIOS Video Interrupt
@@ -1139,10 +1158,13 @@ _bios_interrupt14:
 ; 24    A20 gate control        (not supported)
 
 _bios_interrupt15:
+    cmp     ah, 0xc2
+    je      .unsupported
+    je      .ps2mouse
     cmp     ah, 0x24
     je      .unsupported
     cmp     ah, 0xc0
-    je      .unsupported
+    je      .getSysConf
     cmp     ah, 0xc1
     je      .unsupported
     cmp     ah, 0x41
@@ -1153,6 +1175,13 @@ _bios_interrupt15:
     mov     al, 0x15
     out     0xE0, al                ; VM call 0x00 - What the fuck is up?
     pop     ax                      ; AL = INT, AH = function
+    jmp     .end
+.getSysConf:
+    clc
+    xor     ah, ah
+    jmp     .end
+.ps2mouse:
+    out     0xE1, al
     jmp     .end
 .fn0x88:
     stc                             ; This call is only valid on 286/386 machines

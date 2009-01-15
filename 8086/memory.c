@@ -51,6 +51,16 @@ mem_getbyte( word seg, word off )
 	if( flat_address >= 0xA0000 && flat_address < 0xB0000 )
 		return vga_getbyte( flat_address );
 
+#ifdef VM_DEBUG
+	if( options.bda_peek )
+	{
+		if( flat_address >= 0x400 && flat_address <= 0x4FF )
+		{
+			vlog( VM_MEMORYMSG, "BDA: read byte at %08X (=%02X)", flat_address, mem_space[flat_address] );
+		}
+	}
+#endif
+
 	return mem_space[flat_address];
 }
 word
@@ -62,6 +72,16 @@ mem_getword( word seg, word off )
 	if( mempeek )
 	{
 		vlog( VM_MEMORYMSG, "%04X:%04X reading   WORD at %08X", cpu.base_CS, cpu.base_IP, flat_address );
+	}
+#endif
+
+#ifdef VM_DEBUG
+	if( options.bda_peek )
+	{
+		if( flat_address >= 0x400 && flat_address <= 0x4FF )
+		{
+			vlog( VM_MEMORYMSG, "BDA: read word at %08X (=%04X)", flat_address, mem_space[flat_address] + (mem_space[flat_address + 1]<<8) );
+		}
 	}
 #endif
 
@@ -94,7 +114,16 @@ mem_setbyte( word seg, word off, byte b )
 	{
 		vlog( VM_MEMORYMSG, "%04X:%04X writing   BYTE at %08X", cpu.base_CS, cpu.base_IP, flat_address );
 	}
+
+	if( options.bda_peek )
+	{
+		if( flat_address >= 0x400 && flat_address <= 0x4FF )
+		{
+			vlog( VM_MEMORYMSG, "BDA: write byte at %08X: %02X", flat_address, b );
+		}
+	}
 #endif
+
 	if( flat_address >= 0xA0000 && flat_address < 0xB0000 )
 	{
 		//fprintf( stderr, "yes vga: %08x\n", flat_address);
@@ -136,6 +165,14 @@ mem_setword( word seg, word off, word w )
 	if( mempeek )
 	{
 		vlog( VM_MEMORYMSG, "%04X:%04X writing   WORD at %08X", cpu.base_CS, cpu.base_IP, seg*16+off );
+	}
+
+	if( options.bda_peek )
+	{
+		if( flat_address >= 0x400 && flat_address <= 0x4FF )
+		{
+			vlog( VM_MEMORYMSG, "BDA: write word at %08X: %04X", flat_address, w );
+		}
 	}
 #endif
 

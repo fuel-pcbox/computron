@@ -169,8 +169,8 @@ void
 _XCHG_AX_reg16()
 {
 	word tmpax = cpu.regs.W.AX;
-	cpu.regs.W.AX = *treg16[cpu_opcode & 7];
-	*treg16[cpu_opcode & 7] = tmpax;
+	cpu.regs.W.AX = *treg16[cpu.opcode & 7];
+	*treg16[cpu.opcode & 7] = tmpax;
 }
 
 void
@@ -198,35 +198,35 @@ _XCHG_reg16_RM16()
 void
 _DEC_reg16()
 {
-	dword i = *treg16[cpu_opcode & 7];
+	dword i = *treg16[cpu.opcode & 7];
 
 	/* Overflow if we'll wrap. */
 	cpu.OF = i == 0x8000;
 
 	i--;
-	cpu_setAF(i, *treg16[cpu_opcode & 7], 1);
+	cpu_setAF(i, *treg16[cpu.opcode & 7], 1);
 	cpu_updflags(i, 16);
-	--*treg16[cpu_opcode & 7];
+	--*treg16[cpu.opcode & 7];
 }
 
 void
 _INC_reg16()
 {
-	dword i = *treg16[cpu_opcode & 7];
+	dword i = *treg16[cpu.opcode & 7];
 
 	/* Overflow if we'll wrap. */
 	cpu.OF = i == 0x7FFF;
 
 	i++;
-	cpu_setAF(i,*treg16[cpu_opcode & 7],1);
+	cpu_setAF(i,*treg16[cpu.opcode & 7],1);
 	cpu_updflags(i, 16);
-	++*treg16[cpu_opcode & 7];
+	++*treg16[cpu.opcode & 7];
 }
 
 void
 _INC_RM16()
 {
-	word value = modrm_read16( cpu_rmbyte );
+	word value = modrm_read16( cpu.rmbyte );
 	dword i = value;
 
 	/* Overflow if we'll wrap. */
@@ -241,7 +241,7 @@ _INC_RM16()
 void
 _DEC_RM16()
 {
-	word value = modrm_read16( cpu_rmbyte );
+	word value = modrm_read16( cpu.rmbyte );
 	dword i = value;
 
 	/* Overflow if we'll wrap. */

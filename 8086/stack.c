@@ -10,38 +10,38 @@ void
 _PUSH_reg16()
 {
 	/* PUSH SP will use the value AFTER the push on Intel 8086. */
-	if( cpu.type == INTEL_8086 && cpu_opcode & 7 == REG_SP )
+	if( cpu.type == INTEL_8086 && cpu.opcode & 7 == REG_SP )
 	{
 		mem_push( cpu.regs.W.SP + 2 );
 	}
 	else
 	{
-		mem_push( *treg16[cpu_opcode & 7] );
+		mem_push( *treg16[cpu.opcode & 7] );
 	}
 }
 
 void
 _POP_reg16()
 {
-	*treg16[cpu_opcode & 7] = mem_pop();
+	*treg16[cpu.opcode & 7] = mem_pop();
 }
 
 void
 _PUSH_RM16()
 {
-	mem_push( modrm_read16( cpu_rmbyte ));
+	mem_push( modrm_read16( cpu.rmbyte ));
 }
 
 void
 _POP_RM16()
 {
-	modrm_write16( cpu_rmbyte, mem_pop() );
+	modrm_write16( cpu.rmbyte, mem_pop() );
 }
 
 void
 _PUSH_seg()
 {
-	mem_push( *tseg[rmreg(cpu_opcode)] );
+	mem_push( *tseg[rmreg(cpu.opcode)] );
 }
 
 void
@@ -57,7 +57,7 @@ _POP_CS()
 void
 _POP_seg()
 {
-	*tseg[rmreg(cpu_opcode)] = mem_pop();
+	*tseg[rmreg(cpu.opcode)] = mem_pop();
 }
 
 void

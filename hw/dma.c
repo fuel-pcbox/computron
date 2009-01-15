@@ -39,23 +39,32 @@ dma_init()
 
 	vm_listen( 0x000, dma_ch_address_read, dma_ch_address_write );
 	vm_listen( 0x001, dma_ch_count_read, dma_ch_count_write );
+	vm_listen( 0x002, dma_ch_address_read, dma_ch_address_write );
+	vm_listen( 0x003, dma_ch_count_read, dma_ch_count_write );
+	vm_listen( 0x004, dma_ch_address_read, dma_ch_address_write );
+	vm_listen( 0x005, dma_ch_count_read, dma_ch_count_write );
+	vm_listen( 0x006, dma_ch_address_read, dma_ch_address_write );
+	vm_listen( 0x007, dma_ch_count_read, dma_ch_count_write );
 }
 
 void
 dma_ch_count_write( word port, byte data )
 {
 	dma_channel_t *c;
-	byte channel, chip;
+	byte channel, chip = 0;
 
-	if( port == 0x001 )
+	switch( port )
 	{
-		channel = 0;
-		chip = 1;
+		case 0x001: channel = 0; break;
+		case 0x003: channel = 1; break;
+		case 0x005: channel = 2; break;
+		case 0x007: channel = 3; break;
+		default:
+			vlog( VM_DMAMSG, "Unknown channel for port %03X", port );
+			return;
 	}
-	else
-		vlog( VM_DMAMSG, "Unknown channel for port %03X", port );
 
-	c = (chip == 1) ? &dma1_channel[channel] : &dma2_channel[channel];
+	c = &dma1_channel[channel];
 
 	if( c->next_count_write_is_msb )
 		c->count |= (data << 8);
@@ -99,17 +108,20 @@ void
 dma_ch_address_write( word port, byte data )
 {
 	dma_channel_t *c;
-	byte channel, chip;
+	byte channel, chip = 0;
 
-	if( port == 0x000 )
+	switch( port )
 	{
-		channel = 0;
-		chip = 1;
+		case 0x000: channel = 0; break;
+		case 0x002: channel = 1; break;
+		case 0x004: channel = 2; break;
+		case 0x006: channel = 3; break;
+		default:
+			vlog( VM_DMAMSG, "Unknown channel for port %03X", port );
+			return;
 	}
-	else
-		vlog( VM_DMAMSG, "Unknown channel for port %03X", port );
 
-	c = (chip == 1) ? &dma1_channel[channel] : &dma2_channel[channel];
+	c = &dma1_channel[channel];
 
 	if( c->next_address_write_is_msb )
 		c->address |= (data << 8);
@@ -126,17 +138,20 @@ dma_ch_address_read( word port )
 {
 	dma_channel_t *c;
 	byte data;
-	byte channel, chip;
+	byte channel, chip = 0;
 
-	if( port == 0x000 )
+	switch( port )
 	{
-		channel = 0;
-		chip = 1;
+		case 0x000: channel = 0; break;
+		case 0x002: channel = 1; break;
+		case 0x004: channel = 2; break;
+		case 0x006: channel = 3; break;
+		default:
+			vlog( VM_DMAMSG, "Unknown channel for port %03X", port );
+			return;
 	}
-	else
-		vlog( VM_DMAMSG, "Unknown channel for port %03X", port );
 
-	c = (chip == 1) ? &dma1_channel[channel] : &dma2_channel[channel];
+	c = &dma1_channel[channel];
 
 	if( c->next_address_read_is_msb )
 		data = (c->address >> 8);
@@ -146,5 +161,6 @@ dma_ch_address_read( word port )
 	vlog( VM_DMAMSG, "Read DMA-%u channel %u address (%s), data: %02X", chip, channel, c->next_address_read_is_msb ? "MSB" : "LSB", data );
 
 	c->next_address_read_is_msb = !c->next_address_read_is_msb;
+	return 1;
 	return data;
 }

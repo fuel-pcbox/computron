@@ -9,8 +9,8 @@
 
 void
 _wrap_0x80() {
-	cpu_rmbyte = cpu_pfq_getbyte();
-	switch(rmreg(cpu_rmbyte)) {
+	cpu.rmbyte = cpu_pfq_getbyte();
+	switch(rmreg(cpu.rmbyte)) {
 		case 0: _ADD_RM8_imm8(); break;
 		case 1:  _OR_RM8_imm8(); break;
 		case 2: _ADC_RM8_imm8(); break;
@@ -24,8 +24,8 @@ _wrap_0x80() {
 
 void
 _wrap_0x81() {
-	cpu_rmbyte = cpu_pfq_getbyte();
-	switch(rmreg(cpu_rmbyte)) {
+	cpu.rmbyte = cpu_pfq_getbyte();
+	switch(rmreg(cpu.rmbyte)) {
 		case 0: _ADD_RM16_imm16(); break;
 		case 1:  _OR_RM16_imm16(); break;
 		case 2: _ADC_RM16_imm16(); break;
@@ -39,8 +39,8 @@ _wrap_0x81() {
 
 void
 _wrap_0x83() {
-	cpu_rmbyte = cpu_pfq_getbyte();
-	switch(rmreg(cpu_rmbyte)) {
+	cpu.rmbyte = cpu_pfq_getbyte();
+	switch(rmreg(cpu.rmbyte)) {
 		case 0: _ADD_RM16_imm8(); break;
 		case 1:  _OR_RM16_imm8(); break;
 		case 2: _ADC_RM16_imm8(); break;
@@ -54,11 +54,11 @@ _wrap_0x83() {
 
 void
 _wrap_0x8F() {
-	cpu_rmbyte = cpu_pfq_getbyte();
-	switch(rmreg(cpu_rmbyte)) {
+	cpu.rmbyte = cpu_pfq_getbyte();
+	switch(rmreg(cpu.rmbyte)) {
 		case 0: _POP_RM16(); break;
 		default:
-			vlog( VM_ALERT, "8F /%d not wrapped", rmreg( cpu_rmbyte ));
+			vlog( VM_ALERT, "8F /%d not wrapped", rmreg( cpu.rmbyte ));
 			uasm( cpu.base_CS, cpu.base_IP );
 	}
 }
@@ -182,9 +182,9 @@ _wrap_0xD3()
 void
 _wrap_0xF6()
 {
-	cpu_rmbyte = cpu_pfq_getbyte();
+	cpu.rmbyte = cpu_pfq_getbyte();
 
-	switch( rmreg(cpu_rmbyte) )
+	switch( rmreg(cpu.rmbyte) )
 	{
 		case 0: _TEST_RM8_imm8(); break;
 		case 2: _NOT_RM8(); break;
@@ -193,16 +193,16 @@ _wrap_0xF6()
 		case 5: _IMUL_RM8(); break;
 		case 6: _DIV_RM8(); break;
 		case 7: _IDIV_RM8(); break;
-		default: vlog( VM_ALERT, "F6 /%d not wrapped", rmreg( cpu_rmbyte ));
+		default: vlog( VM_ALERT, "F6 /%d not wrapped", rmreg( cpu.rmbyte ));
 	}
 }
 
 void
 _wrap_0xF7()
 {
-	cpu_rmbyte = cpu_pfq_getbyte();
+	cpu.rmbyte = cpu_pfq_getbyte();
 
-	switch( rmreg(cpu_rmbyte) )
+	switch( rmreg(cpu.rmbyte) )
 	{
 		case 0: _TEST_RM16_imm16(); break;
 		case 2: _NOT_RM16(); break;
@@ -211,7 +211,7 @@ _wrap_0xF7()
 		case 5: _IMUL_RM16(); break;
 		case 6: _DIV_RM16(); break;
 		case 7: _IDIV_RM16(); break;
-		default: vlog( VM_ALERT, "F7 /%d not wrapped", rmreg( cpu_rmbyte ));
+		default: vlog( VM_ALERT, "F7 /%d not wrapped", rmreg( cpu.rmbyte ));
 	}
 }
 
@@ -248,8 +248,8 @@ _wrap_0xFE()
 
 void
 _wrap_0xFF() {
-	cpu_rmbyte = cpu_pfq_getbyte();
-	switch(rmreg(cpu_rmbyte)) {
+	cpu.rmbyte = cpu_pfq_getbyte();
+	switch(rmreg(cpu.rmbyte)) {
 		case 0: _INC_RM16();			break;
 		case 1: _DEC_RM16();			break;
 		case 2: _CALL_RM16();			break;
@@ -257,7 +257,7 @@ _wrap_0xFF() {
 		case 4: _JMP_RM16();			break;
 		case 5: _JMP_FAR_mem16();		break;
 		case 6: _PUSH_RM16();			break;
-		case 7: vlog( VM_ALERT, "FF /%d not wrapped", rmreg( cpu_rmbyte ));
+		case 7: vlog( VM_ALERT, "FF /%d not wrapped", rmreg( cpu.rmbyte ));
 			uasm( cpu.CS, cpu.IP - 2 );
 	}
 }

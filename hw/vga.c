@@ -19,6 +19,9 @@ static byte io_register2[0x20];
 /* there are only 4, but let's avoid segfaults. */
 static byte io_sequencer[0x20];
 
+/* there are only ??, but let's avoid segfaults. */
+static byte index_palette = 0;
+
 static byte *video_memory;
 static byte columns;
 static byte rows;
@@ -36,6 +39,11 @@ static byte vga_getseq( word );
 static byte vga_getreg( word );
 static byte vga_status( word );
 static byte vga_get_current_register( word );
+static void vga_write_3c0( word port, byte data );
+static byte vga_read_3c1( word port );
+static byte vga_read_miscellaneous_output_register( word port );
+
+static bool next_3c0_is_index = true;
 
 static bool video_dirty = false;
 bool palette_dirty = true;
@@ -102,6 +110,9 @@ vga_init()
 	vm_listen( 0x3b5, vga_getreg, vga_setreg );
 	vm_listen( 0x3ba, vga_status, 0L );
 
+	vm_listen( 0x3c0, 0L, vga_write_3c0 );
+	vm_listen( 0x3c1, vga_read_3c1, 0L );
+
 	vm_listen( 0x3c4, 0L, vga_selseq );
 	vm_listen( 0x3c5, vga_getseq, vga_setseq );
 	vm_listen( 0x3ce, 0L, vga_selreg2 );
@@ -111,11 +122,53 @@ vga_init()
 	vm_listen( 0x3d5, vga_getreg, vga_setreg );
 	vm_listen( 0x3da, vga_status, 0L );
 
+	vm_listen( 0x3cc, vga_read_miscellaneous_output_register, 0L );
+
 	columns = 80;
 	rows = 25;
 
 	video_memory = mem_space + 0xB8000;
 	memset( video_memory, 0, columns * rows * 2 );
+}
+
+void
+vga_write_3c0( word port, byte data )
+{
+	(void) port;
+
+	if( next_3c0_is_index )
+		index_palette = data;
+	else
+	{
+		vga_palette_register[index_palette] = data;
+		vlog( VM_VIDEOMSG, "PALETTE[%u] = %02X", index_palette, data );
+	}
+
+	next_3c0_is_index = !next_3c0_is_index;
+}
+
+byte
+vga_read_3c1( word port )
+{
+	(void) port;
+	vlog( VM_VIDEOMSG, "Read PALETTE[%u] (=%02X)", index_palette, vga_palette_register[index_palette] );
+	return vga_palette_register[index_palette];
+}
+
+byte
+vga_read_miscellaneous_output_register( word port )
+{
+	(void) port;
+
+	vlog( VM_VIDEOMSG, "Read MOR" );
+
+	/*
+	 * 0x01: I/O at 0x3Dx (otherwise at 0x3Bx)
+	 * 0x02: RAM access enabled?
+	 */
+
+	return 0x03;
+
 }
 
 #ifdef VOMIT_DEBUG_VGA
@@ -219,8 +272,10 @@ vga_status( word port )
 	data = 0x0C;
 
 	/* Microsoft DEFRAG expects bit 0 to "blink", so we'll flip it between reads. */
-	last_bit0 = !last_bit0;
-	data |= last_bit0;
+	/*last_bit0 = !last_bit0;
+	data |= last_bit0;*/
+
+	next_3c0_is_index = true;
 
 	return data;
 }
@@ -300,8 +355,6 @@ vga_getreg2( word port )
 	//vlog( VM_VIDEOMSG, "reading reg2 %d, data is %02X", current_register2, io_register2[current_register2] );
 	return io_register2[current_register2];
 }
-
-#define MODE12 (mem_space[0x449]==0x12)
 
 void
 vga_setbyte( dword a, byte d )

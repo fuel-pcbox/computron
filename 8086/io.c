@@ -131,15 +131,15 @@ vm_listen( word port, byte (*ioh_in)(word), void (*ioh_out)(word, byte) )
 void
 vm_ioh_nout( word port, byte data )
 {
-	vlog( VM_IOMSG, "Write port %04X, data %02X", port, data );
+	vlog( VM_ALERT, "Write port %04X, data %02X", port, data );
 }
 
 byte
 vm_ioh_nin( word port )
 {
 	if( port == 0x2F8 || port == 0x2FD || port == 0x3F8 || port == 0x3FD )
-		return 0;
-	vlog( VM_IOMSG, "Read port %04X", port );
-	return 0;
+		return 0xff;
+	vlog( VM_ALERT, "Read port %04X", port );
+	return 0xff;
 }
 

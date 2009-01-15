@@ -12,16 +12,14 @@
 #include "vomit.h"
 #include "debug.h"
 
-#define INSNS_PER_VIDEO_SYNC 30000
+#define INSNS_PER_PIT_IRQ 400000
 
 vomit_cpu_t cpu;
+#ifdef VOMIT_CURSES
+#define INSNS_PER_VIDEO_SYNC 300000
 uint32_t video_sync_counter;
-
-byte cpu_opcode; /* Opcodes are no longer passed as handler arguments!! */
-byte cpu_rmbyte; /* Me neither. */
-
-/* This points to the base of CS for fast opcode fetches. */
-byte *code_memory;
+#endif
+static uint32_t pit_counter;
 
 #ifndef VM_NOPFQ
 byte *cpu_pfq;
@@ -79,7 +77,11 @@ cpu_init()
 
     cpu_setflags( 0x0200 | cpu_static_flags() );
 
+#ifdef VOMIT_CURSES
 	video_sync_counter = INSNS_PER_VIDEO_SYNC;
+#endif
+
+	pit_counter = INSNS_PER_PIT_IRQ;
 }
 
 void
@@ -305,13 +307,19 @@ kontinue:
 		cpu.base_CS = cpu.CS;
 		cpu.base_IP = cpu.IP;
 
+		if( cpu.CS == 0x42F3 && cpu.IP == 0x0223 )
+		{
+			vlog( VM_ALERT, "MouseEvent: AX=%04X Buttons=%04X X=%04X Y=%04X dX=%04X dY=%04X", cpu.regs.W.AX, cpu.regs.W.BX, cpu.regs.W.CX, cpu.regs.W.DX, cpu.regs.W.SI, cpu.regs.W.DI );
+		}
+
+
 #if 0
 		/* Instruction counter */
 		cpu.insn_count++;
 #endif
 
-		cpu_opcode = cpu_pfq_getbyte();
-		cpu_optable[cpu_opcode]();	/* Call instruction handler. */
+		cpu.opcode = cpu_pfq_getbyte();
+		cpu_optable[cpu.opcode]();	/* Call instruction handler. */
 
 		if( g_debug_step )
 		{
@@ -324,9 +332,12 @@ kontinue:
 		byte irq_to_service = 0;
 		if( cpu.IF && pic_next_irq( &irq_to_service ))
 		{
-			if( irq_to_service != 0 )
-				vlog( VM_CPUMSG, "Servicing IRQ %u", irq_to_service );
-			int_call( 0x08 + irq_to_service );
+			//if( irq_to_service != 0 ) vlog( VM_CPUMSG, "Servicing IRQ %u", irq_to_service );
+
+			if( irq_to_service < 8 )
+				int_call( 0x08 + irq_to_service );
+			else
+				int_call( 0x70 + irq_to_service - 8 );
 		}
 
 #if 0
@@ -358,31 +369,37 @@ kontinue:
 		{
 			/* The Trap Flag is set, so we'll execute one instruction and
 			 * call INT 1 as soon as it's finished. */
-			cpu_opcode = cpu_pfq_getbyte();
-			cpu_optable[cpu_opcode]();
+			cpu.opcode = cpu_pfq_getbyte();
+			cpu_optable[cpu.opcode]();
 
 			/* NOTE: The PIT ISR won't be called below, since int_call()
 			 *       clears IF. Phew. */
 			int_call( 1 );
 		}
 
-		static byte x = 40;
+		static dword x = 40000;
 		if( x-- == 0 )
 		{
+			/*bios_ps2mouse_irq();*/
 			busmouse_pulse();
-			x = 80;
+			x = 1600000;
 		}
 
+#ifdef VOMIT_CURSES
 		if( !--video_sync_counter )
 		{
 			video_sync_counter = INSNS_PER_VIDEO_SYNC;
 
-#ifdef VOMIT_CURSES
 # ifdef VOMIT_TRY
 			if( !g_try_run )
 # endif
 				ui_sync();
+		}
 #endif
+
+		if( !--pit_counter )
+		{
+			pit_counter = INSNS_PER_PIT_IRQ;
 
 			/* Call the PIT ISR. This is ugly, to say the least, and I'm sorry. */
 			irq( 0 );
@@ -410,8 +427,8 @@ cpu_pfq_getbyte()
 word cpu_pfq_getword() { /* Get word from prefetch queue... same as above, but word and IP+2 */
 #ifdef VM_NOPFQ
 	word w;
-	w = code_memory[cpu.IP++];
-	w |= (code_memory[cpu.IP++]) << 8;
+	w = cpu.code_memory[cpu.IP++];
+	w |= (cpu.code_memory[cpu.IP++]) << 8;
 	return w;
 #else
 	word w = (word)cpu_pfq[cpu_pfq_current];
@@ -458,11 +475,14 @@ cpu_jump_absolute16( word address )
 	cpu_pfq_flush();
 }
 
-void cpu_jump(word seg, word off) { /* Jump to specified location. */
-	cpu.CS = seg;
-	cpu.IP = off;
+void
+cpu_jump( word segment, word offset )
+{
+	/* Jump to specified location. */
+	cpu.CS = segment;
+	cpu.IP = offset;
 
-	code_memory = mem_space + (cpu.CS << 4);
+	cpu.code_memory = mem_space + (segment << 4);
 	cpu_pfq_flush();
 }
 
@@ -535,6 +555,7 @@ _UNSUPP()
 {
 	/* We've come across an unsupported instruction, log it,
 	 * then vector to the "illegal instruction" ISR. */
-	vlog( VM_ALERT, "%04X:%04X: Unsupported opcode %02X", cpu.base_CS, cpu.base_IP, cpu_opcode );
+	vlog( VM_ALERT, "%04X:%04X: Unsupported opcode %02X", cpu.base_CS, cpu.base_IP, cpu.opcode );
+	dump_all();
 	int_call( 6 );
 }

@@ -85,8 +85,8 @@ _MOV_reg16_RM16() {
 	*treg16[rmreg(rm)] = modrm_read16( rm );
 }
 
-void _MOV_reg8_imm8() { *treg8[cpu_opcode&7] = cpu_pfq_getbyte(); }
-void _MOV_reg16_imm16() { *treg16[cpu_opcode&7] = cpu_pfq_getword(); }
+void _MOV_reg8_imm8() { *treg8[cpu.opcode&7] = cpu_pfq_getbyte(); }
+void _MOV_reg16_imm16() { *treg16[cpu.opcode&7] = cpu_pfq_getword(); }
 void _MOV_AL_moff8() { cpu.regs.B.AL = mem_getbyte( *(cpu.CurrentSegment), cpu_pfq_getword() ); }
 void _MOV_AX_moff16() { cpu.regs.W.AX = mem_getword( *(cpu.CurrentSegment), cpu_pfq_getword() ); }
 void _MOV_moff8_AL() { mem_setbyte( *(cpu.CurrentSegment), cpu_pfq_getword(), cpu.regs.B.AL ); }

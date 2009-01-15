@@ -1,6 +1,7 @@
 #include "screen.h"
 extern "C" {
 #include "../include/debug.h"
+#include "../include/vomit.h"
 }
 #include <QPainter>
 #include <QApplication>
@@ -27,6 +28,8 @@ Screen::Screen()
 	setAttribute( Qt::WA_NoSystemBackground );
 
 	setFocusPolicy( Qt::ClickFocus );
+
+	setMouseTracking( true );
 }
 
 Screen::~Screen()
@@ -58,7 +61,7 @@ extern "C" {
 void
 Screen::refresh()
 {
-	if( mem_space[0x449] == 0x12 )
+	if( (mem_space[0x449] & 0x7F) == 0x12 )
 	{
 		if( is_palette_dirty() )
 		{
@@ -88,7 +91,7 @@ Screen::refresh()
 		}
 		*/
 	}
-	else if( mem_space[0x449] == 0x03 )
+	else if( (mem_space[0x449] & 0x7F) == 0x03 )
 	{
 		setTextMode( 80, 25 );
 		update();
@@ -217,7 +220,7 @@ Screen::resizeEvent( QResizeEvent *e )
 void
 Screen::paintEvent( QPaintEvent *e )
 {
-	if( mem_space[0x449] == 0x12 )
+	if( (mem_space[0x449] & 0x7F) == 0x12 )
 	{
 		paintMode12( e );
 		return;
@@ -258,7 +261,7 @@ Screen::paintEvent( QPaintEvent *e )
 
 	//vlog( VM_VIDEOMSG, "cursor: %d to %d", cursorStart, cursorEnd );
 
-	p.fillRect( cx * m_characterWidth, cy * m_characterHeight + cursorStart, m_characterWidth, cursorEnd - cursorStart, QBrush( m_color[13] ));
+	p.fillRect( cx * m_characterWidth, cy * m_characterHeight + cursorStart, m_characterWidth, cursorEnd - cursorStart, QBrush( m_color[14] ));
 
 	lcx = cx;
 	lcy = cy;
@@ -315,4 +318,39 @@ Screen::synchronizeColors()
 
 	for( int i = 0; i < 16; ++i )
 		m_canvas12.setColor( i, m_color[i].rgb() );
+}
+
+static int currentX = 0;
+static int currentY = 0;
+
+void
+Screen::mouseMoveEvent( QMouseEvent *e )
+{
+	currentX = e->x();
+	currentY = e->y();
+	QWidget::mouseMoveEvent( e );
+}
+
+void
+Screen::mousePressEvent( QMouseEvent *e )
+{
+	QWidget::mousePressEvent( e );
+}
+
+void
+Screen::mouseReleaseEvent( QMouseEvent *e )
+{
+	QWidget::mouseReleaseEvent( e );
+}
+
+int
+get_current_x()
+{
+	return currentX;
+}
+
+int
+get_current_y()
+{
+	return currentY;
 }

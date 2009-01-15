@@ -7,13 +7,23 @@ static bool read_irr = 1;
 
 static byte master_irr = 0;
 static byte master_isr = 0;
-static byte master_imr = 0xff; // HACK - should be 0xff
+static byte master_imr = 0; // HACK - should be 0xff
+
+static byte slave_irr = 0;
+static byte slave_isr = 0;
+static byte slave_imr = 0; // HACK - should be 0xff
+
+static byte read_death( word port ) { vlog( VM_ALERT, "Death due to read from slave PIC" ); vm_exit(1); }
+static void write_death( word port, byte data ) { vlog( VM_ALERT, "Death due to write to slave PIC" ); vm_exit(1); }
 
 void
 pic_init()
 {
 	vm_listen( 0x0020, pic_read_icw, pic_write_icw );
 	vm_listen( 0x0021, pic_read_icw, pic_write_icw );
+
+	vm_listen( 0x00A0, read_death, write_death );
+	vm_listen( 0x00A0, read_death, write_death );
 }
 
 void
@@ -21,7 +31,7 @@ pic_write_icw( word port, byte data )
 {
 	if( port == 0x20 && data == 0x20 ) // non-specific EOI
 	{
-		vlog( VM_PICMSG, "EOI" );
+		//vlog( VM_PICMSG, "EOI" );
 		master_isr = 0;
 		return;
 	}
@@ -91,26 +101,41 @@ void
 irq( byte num )
 {
 	//vlog( VM_PICMSG, "IRQ %u", num );
-	master_irr |= 1 << num;
-	master_irr &= ~master_imr;
+
+	if( num < 8 )
+	{
+		master_irr |= 1 << num;
+	}
+	else
+	{
+		slave_irr |= 1 << (num - 8);
+	}
 }
 
 bool
 pic_next_irq( byte *retval )
 {
-	byte pending_requests = master_irr & ~master_imr;
-	//byte pending_requests = master_irr;
+	word pending_requests = (master_irr & ~master_imr) | ((slave_irr & ~slave_imr) << 8);
 
 	if( !pending_requests )
 		return 0;
 
-	for( int i = 0; i < 8; ++i )
+	for( int i = 0; i < 16; ++i )
 		if( pending_requests & (1 << i) )
 			*retval = i;
 
-	//vlog( VM_PICMSG, "IRQ %u setting %02X", num, (1 << num) & 0xFF );
-	master_irr &= ~(1 << *retval);
+	//if( *retval != 0 ) vlog( VM_ALERT, "IRQ %u pending", *retval );
 
-	master_isr |= (1 << *retval);
+	if( *retval < 8 )
+	{
+		master_irr &= ~(1 << *retval);
+		master_isr |= (1 << *retval);
+	}
+	else
+	{
+		slave_irr &= ~(1 << (*retval - 8));
+		slave_isr |= (1 << (*retval - 8));
+	}
+
 	return 1;
 }

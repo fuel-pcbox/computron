@@ -68,6 +68,8 @@ void ui_sync();
 word kbd_hit();
 word kbd_getc();
 byte kbd_pop_raw();
+int get_current_x();
+int get_current_y();
 
 void dump_cpu();
 void dump_all();
@@ -93,6 +95,12 @@ extern bool g_debug_step;
 extern bool g_break_pressed;
 
 extern void vomit_set_vlog_handler( void (*f)(int, const char *, va_list) );
+
+typedef struct {
+	bool bda_peek;
+} vomit_options_t;
+
+extern vomit_options_t options;
 
 #include "8086.h"
 #include "186.h"

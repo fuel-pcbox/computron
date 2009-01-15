@@ -39,10 +39,11 @@ vlog( int category, const char *format, ... )
 		case VM_VIDEOMSG: prefix = "video"; break;
 		case VM_CONFIGMSG: prefix = "config"; break;
 		case VM_CPUMSG:  prefix = "cpu"; break;
-		case VM_MEMORYMSG: prefix = "memory"; break;
+		case VM_MEMORYMSG: prefix = "memory"; show_on_stdout = false; break;
 		case VM_MOUSEMSG: prefix = "mouse"; break;
 		case VM_PICMSG: prefix = "pic"; show_on_stdout = false; break;
-		case VM_DMAMSG: prefix = "dma"; break;
+		case VM_DMAMSG: prefix = "dma"; show_on_stdout = false; break;
+		case VM_KEYMSG: prefix = "keyb"; break;
 	}
 
 	if( s_vlog_handler && show_on_stdout )

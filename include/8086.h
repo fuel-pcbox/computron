@@ -29,17 +29,13 @@ byte cpu_pfq_getbyte();
 word cpu_pfq_getword();
 #else
 #define cpu_pfq_flush()
-#define cpu_pfq_getbyte() (code_memory[cpu.IP++])
+#define cpu_pfq_getbyte() (cpu.code_memory[cpu.IP++])
 word cpu_pfq_getword();
-extern byte *code_memory;
 #endif
 
 extern byte cpu_state;
 extern byte cpu_type;
 extern dword cpu_ips;
-
-extern byte cpu_opcode;
-extern byte cpu_rmbyte;
 
 extern byte *mem_space;
 extern word mem_avail;
@@ -116,6 +112,12 @@ typedef struct {
 
 	word base_CS;
 	word base_IP;
+
+	byte opcode;
+	byte rmbyte;
+
+	/* This points to the base of CS for fast opcode fetches. */
+	byte *code_memory;
 
 } vomit_cpu_t;
 

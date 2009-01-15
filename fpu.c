@@ -14,7 +14,8 @@ void
 _ESCAPE()
 {
 	byte rm;
-	vlog( VM_CPUMSG, "%04X:%04X FPU escape via %02X /%u", cpu.base_CS, cpu.base_IP, cpu_opcode, rmreg( mem_getbyte(cpu.base_CS, cpu.base_IP + 1) ));
+	vlog( VM_CPUMSG, "%04X:%04X FPU escape via %02X /%u", cpu.base_CS, cpu.base_IP, cpu.opcode, rmreg( mem_getbyte(cpu.base_CS, cpu.base_IP + 1) ));
+
 	dump_all();
 	dump_ivt();
 
