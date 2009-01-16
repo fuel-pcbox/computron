@@ -271,8 +271,6 @@ Screen::paintEvent( QPaintEvent *e )
 	byte cursorStart = vga_read_register( 0x0A ) * 2;
 	byte cursorEnd = vga_read_register( 0x0B ) * 2;
 
-	vlog( VM_VIDEOMSG, "rows: %d", m_rows );
-
 	//vlog( VM_VIDEOMSG, "cursor: %d to %d", cursorStart, cursorEnd );
 
 	p.fillRect( cx * m_characterWidth, cy * m_characterHeight + cursorStart, m_characterWidth, cursorEnd - cursorStart, QBrush( m_color[14] ));
