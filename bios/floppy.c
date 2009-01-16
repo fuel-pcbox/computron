@@ -59,7 +59,7 @@ byte floppy_read(byte drive, word cylinder, word head, word sector, word count, 
 	}
 	if( disklog )
 	{
-		vlog( VM_DISKLOG, "Drive %d reading %d sectors at %d/%d/%d (LBA %d) to %04X:%04X", drive, count, cylinder, head, sector, lba, segment, offset );
+		vlog( VM_DISKLOG, "Drive %d reading %d sectors at %d/%d/%d (LBA %d) to %04X:%04X [offset=0x%x]", drive, count, cylinder, head, sector, lba, segment, offset, lba*drv_sectsize[drive] );
 	}
 	fpdrv = fopen(drv_imgfile[drive], "rb");
 	if( !fpdrv )

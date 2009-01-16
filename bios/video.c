@@ -36,7 +36,7 @@ video_bios_init()
 	mem_space[0x44B] = 0;
 
 	/* 25 rows */
-	mem_space[0x484] = 25;
+	mem_space[0x484] = 24;
 
 	/* Cursor type */
 	mem_space[0x460] = 0x0E;
@@ -250,6 +250,15 @@ set_video_mode()
 	mem_space[0x487] &= ~0x80;
 	mem_space[0x487] |= mode & 0x80;
 
+	switch( actual_mode )
+	{
+		case 0x03:
+			mem_space[0x44A] = 80;
+			mem_space[0x44B] = 0;
+			mem_space[0x484] = 24;
+			break;
+	}
+
 	vlog( VM_VIDEOMSG, "Mode %d (hex %02X) selected", mode, mode );
 
 #if 0
@@ -347,7 +356,7 @@ columns()
 byte
 rows()
 {
-	return mem_space[0x484];
+	return mem_space[0x484] + 1;
 }
 
 void

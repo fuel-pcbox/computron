@@ -13,6 +13,8 @@ typedef struct {
 
 Screen::Screen()
 {
+	m_rows = 0;
+
 	init();
 	synchronizeFont();
 	setTextMode( 80, 25 );
@@ -93,7 +95,17 @@ Screen::refresh()
 	}
 	else if( (mem_space[0x449] & 0x7F) == 0x03 )
 	{
-		setTextMode( 80, 25 );
+		int rows = mem_space[0x484] + 1;
+		switch( rows )
+		{
+			case 25:
+			case 50:
+				break;
+			default:
+				rows = 25;
+				break;
+		}
+		setTextMode( 80, rows );
 		update();
 	}
 	else
@@ -235,14 +247,14 @@ Screen::paintEvent( QPaintEvent *e )
 	}
 
 	byte *v = m_videoMemory;
-	static byte last[25][80];
-	static byte lasta[25][80];
+	static byte last[50][80];
+	static byte lasta[50][80];
 	static byte lcx = 0, lcy = 0;
 
 	byte cx, cy;
 	load_cursor( &cy, &cx );
 
-	for( int y = 0; y < 25; ++y )
+	for( int y = 0; y < m_rows; ++y )
 	{
 		for( int x = 0; x < 80; ++x )
 		{
@@ -259,6 +271,8 @@ Screen::paintEvent( QPaintEvent *e )
 	byte cursorStart = vga_read_register( 0x0A ) * 2;
 	byte cursorEnd = vga_read_register( 0x0B ) * 2;
 
+	vlog( VM_VIDEOMSG, "rows: %d", m_rows );
+
 	//vlog( VM_VIDEOMSG, "cursor: %d to %d", cursorStart, cursorEnd );
 
 	p.fillRect( cx * m_characterWidth, cy * m_characterHeight + cursorStart, m_characterWidth, cursorEnd - cursorStart, QBrush( m_color[14] ));
@@ -274,6 +288,8 @@ Screen::setTextMode( int w, int h )
 {
 	int wi = w * m_characterWidth;
 	int he = h * m_characterHeight;
+
+	m_rows = h;
 
 	setFixedSize( wi, he );
 	m_inTextMode = true;

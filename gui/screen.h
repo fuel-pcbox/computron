@@ -67,6 +67,8 @@ private:
 	void putpixel( QPainter &p, int x, int y, int color );
 
 	bool m_clearBackground;
+
+	int m_rows;
 };
 
 #endif // __screen_h__

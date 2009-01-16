@@ -429,7 +429,7 @@ _bios_init_data:
     mov     byte [0x044A], 80
     mov     byte [0x044B], 0
 
-    mov     byte [0x0484], 25 ; rows on screen
+    mov     byte [0x0484], 24 ; rows on screen
     mov     byte [0x0460], 0x0E
     mov     byte [0x0461], 0x0D
 
@@ -485,19 +485,19 @@ _bios_init_data:
 
 _bios_find_bootdrv:
     mov     dl, 0x00
-    mov     ax, 0x1301
+    mov     ax, 0x3333
     out     0xE6, al
     jnc     .end
     mov     dl, 0x01
-    mov     ax, 0x1301
+    mov     ax, 0x3333
     out     0xE6, al
     jnc     .end
     mov     dl, 0x80
-    mov     ax, 0x1301
+    mov     ax, 0x3333
     out     0xE6, al
     jnc     .end
     mov     dl, 0x81
-    mov     ax, 0x1301
+    mov     ax, 0x3333
     out     0xE6, al
     jnc     .end
 .error:
@@ -1073,7 +1073,7 @@ _bios_interrupt13:
     pop     ax                      ; AL = INT, AH = function
     jmp     .end
 .resetDisk:
-    and     dl, 0xf0
+    and     dl, 0x80
     jz      .reset_floppy_drive
     call    reset_ide_drive
     jmp     .end
@@ -1391,14 +1391,16 @@ ide_init:
 
 reset_ide_drive:
     push    dx
-    mov     dx, 0x170           ; drive 1 base addr is 0x170
-    and     dl, 0
+    mov     dx, 0x177           ; drive 1 base addr is 0x170
+    cmp     dl, 0
     jz      .drive0
     add     dx, 0x80            ; drive 0 base addr is 0x1F0
-.drive0:
 
+.drive0:
     mov     al, 0x90            ; 90 - Execute Drive Diagnostic
     out     dx, al
+
+    sub     dx, 6
 
     in      al, dx
     cmp     al, 0x00
@@ -1409,10 +1411,12 @@ reset_ide_drive:
     jmp     .end
 
 .ok:
+    xor     ah, ah
     mov     al, 0x00
     clc
 
 .end:
+    mov     ah, 0xAA
     pop     dx
     ret
     

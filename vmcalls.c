@@ -46,8 +46,8 @@ vm_call8( word port, byte data )
 			vga_scrollup( cpu.regs.B.CL, cpu.regs.B.CH, cpu.regs.B.DL, cpu.regs.B.DH, cpu.regs.B.AL, cpu.regs.B.BH );
 			break;
 		default:
-			if( callpeek )
-				vlog( VM_IOMSG, "vm_call8: Unhandled write, %02X -> %04X", data, port );
+			vlog( VM_ALERT, "vm_call8: Unhandled write, %02X -> %04X", data, port );
+			vm_exit( 0 );
 			break;
     }
 }
@@ -276,6 +276,33 @@ vm_handleE6(word data)
 
 	case 0x0001:
 		cpu.regs.W.AX = mem_avail;
+		break;
+
+	/* 0x3333: Is Drive Present?
+	 * DL = Drive
+	 *
+	 * Returns:
+	 * AL = 0x01 if drive is present
+	 *    = 0x00 if not
+	 *
+	 * CF = !AL
+	 */
+	case 0x3333:
+		drive = cpu.regs.B.DL;
+		if (drive >= 0x80)
+			drive = drive - 0x80 + 2;
+		if (drv_status[drive] != 0) {
+			cpu.regs.B.AL = 0x01;
+			cpu.CF = 0;
+		} else {
+			cpu.regs.B.AL = 0x00;
+			cpu.CF = 1;
+		}
+		break;
+
+	default:
+		vlog( VM_ALERT, "Unknown VM call %04X received!!", cpu.regs.W.AX );
+		vm_exit( 0 );
 		break;
 	}
 }

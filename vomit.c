@@ -13,7 +13,7 @@
 
 vomit_options_t options;
 
-bool disklog, trapint, iopeek, mempeek, callpeek;
+bool disklog, trapint, iopeek, mempeek;
 
 #ifdef VOMIT_TRY
 bool g_try_run = false;
@@ -35,7 +35,6 @@ vomit_init( int argc, char **argv )
 	while( argc > 1 )
 	{
 		if( 0 ) {}
-		FLAGARG( "--callpeek", callpeek )
 		FLAGARG( "--disklog",  disklog )
 		FLAGARG( "--trapint",  trapint )
 		FLAGARG( "--mempeek",  mempeek )
