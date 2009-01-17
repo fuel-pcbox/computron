@@ -24,12 +24,14 @@ vm_call8( word port, byte data )
 			vlog( VM_ALERT, "Interrupt %02X, function %04X requested", cpu.regs.B.AL, cpu.regs.W.AX );
 			//dump_all();
 			break;
+#ifdef VOMIT_PS2MOUSE
 		case 0xE1:
 			bios_ps2mouse();
 			break;
 		case 0xE8:
 			bios_ps2mouse_pulse();
 			break;
+#endif
 		case 0xE6:
 			vm_handleE6( cpu.regs.W.AX );
 			break;
@@ -302,7 +304,7 @@ vm_handleE6(word data)
 
 	default:
 		vlog( VM_ALERT, "Unknown VM call %04X received!!", cpu.regs.W.AX );
-		vm_exit( 0 );
+		//vm_exit( 0 );
 		break;
 	}
 }

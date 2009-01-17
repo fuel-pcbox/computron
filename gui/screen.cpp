@@ -227,6 +227,9 @@ Screen::resizeEvent( QResizeEvent *e )
 {
 	QWidget::resizeEvent( e );
 	vlog( VM_VIDEOMSG, "Resizing viewport" );
+
+	m_clearBackground = true;
+	update();
 }
 
 void
@@ -268,11 +271,20 @@ Screen::paintEvent( QPaintEvent *e )
 		}
 	}
 
-	byte cursorStart = vga_read_register( 0x0A ) * 2;
-	byte cursorEnd = vga_read_register( 0x0B ) * 2;
+	byte cursorStart = vga_read_register( 0x0A );
+	byte cursorEnd = vga_read_register( 0x0B );
 
+	// HACK 2000!
+	if( cursorEnd < 14 )
+	{
+		cursorEnd *= 2;
+		cursorStart *= 2;
+	}
+
+	//vlog( VM_VIDEOMSG, "rows: %d, row: %d, col: %d", m_rows, cy, cx );
 	//vlog( VM_VIDEOMSG, "cursor: %d to %d", cursorStart, cursorEnd );
 
+	p.setCompositionMode( QPainter::CompositionMode_Xor );
 	p.fillRect( cx * m_characterWidth, cy * m_characterHeight + cursorStart, m_characterWidth, cursorEnd - cursorStart, QBrush( m_color[14] ));
 
 	lcx = cx;
@@ -342,19 +354,46 @@ Screen::mouseMoveEvent( QMouseEvent *e )
 {
 	currentX = e->x();
 	currentY = e->y();
+
 	QWidget::mouseMoveEvent( e );
+
+	busmouse_event();
 }
 
 void
 Screen::mousePressEvent( QMouseEvent *e )
 {
+	currentX = e->x();
+	currentY = e->y();
+
 	QWidget::mousePressEvent( e );
+	switch( e->button() )
+	{
+		case Qt::LeftButton:
+			busmouse_press( 1 );
+			break;
+		case Qt::RightButton:
+			busmouse_press( 2 );
+			break;
+	}
 }
 
 void
 Screen::mouseReleaseEvent( QMouseEvent *e )
 {
+	currentX = e->x();
+	currentY = e->y();
+
 	QWidget::mouseReleaseEvent( e );
+	switch( e->button() )
+	{
+		case Qt::LeftButton:
+			busmouse_release( 1 );
+			break;
+		case Qt::RightButton:
+			busmouse_release( 2 );
+			break;
+	}
 }
 
 int

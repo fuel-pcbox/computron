@@ -284,6 +284,7 @@ vga_status( word port )
 void
 vga_scrollup (byte x1, byte y1, byte x2, byte y2, byte num, byte attr) {
 	byte x, y, i;
+	//vlog( VM_VIDEOMSG, "vga_scrollup( %d, %d, %d, %d, %d )", x1, y1, x2, y2, num);
 	if ( (num == 0 ) || ( num > rows ) ) {
 		for( y = y1; y <= y2; ++y ) {
 			for( x = x1; x < x2; ++x) {
@@ -575,6 +576,12 @@ void
 clear_video_dirty()
 {
 	video_dirty = false;
+}
+
+void
+set_video_dirty()
+{
+	video_dirty = true;
 }
 
 bool

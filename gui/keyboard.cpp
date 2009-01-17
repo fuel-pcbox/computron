@@ -243,12 +243,16 @@ Screen::keyPressEvent( QKeyEvent *e )
 
 	word scancode = keyToScanCode( e->modifiers(), nativeScanCode );
 
+	if( nativeScanCode == K_F11 )
+	{
+		grabMouse( QCursor( Qt::BlankCursor ));
+	}
+
 	if( nativeScanCode == K_F12 )
 	{
-		printf( "DEBUG!\n" );
-		g_debug_step = 1;
-		vm_debug();
+		releaseMouse();
 	}
+
 
 	if( scancode != 0 )
 	{

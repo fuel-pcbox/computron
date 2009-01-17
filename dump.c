@@ -62,6 +62,19 @@ dump_disasm( word segment, word offset )
 	return width;
 }
 
+void
+dump_regs()
+{
+	vlog( VM_DUMPMSG,
+			"AX=%04X BX=%04X CX=%04X DX=%04X SP=%04X BP=%04X SI=%04X DI=%04X "
+			"CS=%04X DS=%04X ES=%04X SS=%04X C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u",
+			cpu.regs.W.AX, cpu.regs.W.BX, cpu.regs.W.CX, cpu.regs.W.DX,
+			cpu.regs.W.SP, cpu.regs.W.BP, cpu.regs.W.SI, cpu.regs.W.DI,
+			cpu.CS, cpu.DS, cpu.ES, cpu.SS,
+			cpu.CF, cpu.PF, cpu.AF, cpu.ZF, cpu.SF, cpu.IF, cpu.DF, cpu.OF
+		);
+}
+
 void dump_all() {
 	word *stacky = (void *)mem_space + (cpu.SS<<4)+cpu.regs.W.SP;
 	byte *csip = mem_space + (cpu.base_CS<<4) + cpu.base_IP;

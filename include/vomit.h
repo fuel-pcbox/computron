@@ -70,6 +70,9 @@ word kbd_getc();
 byte kbd_pop_raw();
 int get_current_x();
 int get_current_y();
+void busmouse_event();
+void busmouse_press( int button );
+void busmouse_release( int button );
 
 void dump_cpu();
 void dump_all();
@@ -98,6 +101,7 @@ extern void vomit_set_vlog_handler( void (*f)(int, const char *, va_list) );
 
 typedef struct {
 	bool bda_peek;
+	bool trace;
 } vomit_options_t;
 
 extern vomit_options_t options;

@@ -329,13 +329,13 @@ _bios_setup_ints:
     mov     dx, _cpu_default_softtimer
     call    .install
 
-    mov     al, 0x74
-    mov     dx, _bios_interrupt74
-    call    .install
+;    mov     al, 0x74
+;    mov     dx, _bios_interrupt74
+;    call    .install
 
-    mov     al, 0x0d
-    mov     dx, _bios_interrupt74
-    call    .install
+;    mov     al, 0x0d
+;    mov     dx, _bios_interrupt74
+;    call    .install
 
     pop     ds
 

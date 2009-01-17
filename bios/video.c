@@ -2,6 +2,7 @@
 #include "8086.h"
 #include "debug.h"
 #include <string.h>
+#include <stdio.h>
 
 static void set_video_mode();
 static void select_active_display_page();
@@ -92,8 +93,12 @@ set_cursor_position()
 {
 	/* BH is page# */
 
+	if( cpu.regs.B.BH != 0 )
+		vlog( VM_VIDEOMSG, "Cursor moved on page %u", cpu.regs.B.BH );
+
 	byte row = cpu.regs.B.DH;
 	byte column = cpu.regs.B.DL;
+	//vlog( VM_VIDEOMSG, "Move to %u, %u", row, column );
 
 	word cursor = row * columns() + column;
 
@@ -105,8 +110,6 @@ get_cursor_position()
 {
 	/* Cursor row and column. */
 	load_cursor( &cpu.regs.B.DH, &cpu.regs.B.DL );
-
-	/* XXX: Cursor scanlines are not actually implemented. */
 
 	/* Starting (top) scanline. */
 	cpu.regs.B.CH = mem_space[0x461];
@@ -178,24 +181,29 @@ write_text_in_teletype_mode()
 	byte attr = cpu.regs.B.BL;
 
 	load_cursor( &row, &column );
+
+	//fprintf( stderr, "<%02u,%02u>%c", row, column, ch );
+
 	cursor = row * columns() + column;
 
 	switch( ch )
 	{
-		case 0x0d:
+		case '\n':
 			row++;
 			cursor = row * columns() + column;
 			break;
-		case 0x0a:
+		case '\r':
 			column = 0;
 			cursor = row * columns() + column;
 			break;
 		case 0x08:
-			cursor--;
+			if( column > 0)
+				--cursor;
 			break;
 		case '\t':
 			{
 				word space = attr << 8 | ch;
+
 				/* 1 tab -- 4 spaces ;-) */
 				mem_setword( 0xB800, cursor++ << 1, space );
 				mem_setword( 0xB800, cursor++ << 1, space );
@@ -256,6 +264,21 @@ set_video_mode()
 			mem_space[0x44A] = 80;
 			mem_space[0x44B] = 0;
 			mem_space[0x484] = 24;
+
+			if( (mode & 0x80) == 0 )
+			{
+				// Blank it!
+				word space = (0x07 << 8) | ' ';
+				int i = 0;
+				for( int y = 0; y < 25; ++y )
+				{
+					for( int x = 0; x < 80; ++x )
+					{
+						//mem_setword( 0xB800, i++ << 1, space );
+					}
+				}
+			}
+
 			break;
 	}
 
@@ -337,8 +360,8 @@ set_cursor_type()
 	vga_write_register( 0x0A, start );
 	vga_write_register( 0x0B, end );
 
-	mem_space[0x460] = end;
 	mem_space[0x461] = start;
+	mem_space[0x460] = end;
 }
 
 byte
@@ -367,6 +390,8 @@ store_cursor( word cursor )
 
 	mem_space[0x450] = cursor / columns();
 	mem_space[0x451] = cursor % columns();
+
+	set_video_dirty();
 }
 
 void

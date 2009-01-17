@@ -5,116 +5,164 @@
 #include "vomit.h"
 #include "debug.h"
 
-static void busmouse_ident_write( word port, byte data );
-static byte busmouse_ident_read( word port );
-static void busmouse_signature_write( word port, byte data );
-static byte busmouse_signature_read( word port );
-static void busmouse_control_write( word port, byte data );
-static void busmouse_data_write( word port, byte data );
-static byte busmouse_data_read( word port );
+static byte busmouse_read( word port );
+static void busmouse_write( word port, byte data );
 
-static byte mouse_register[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-static byte selected_register = 0;
-static unsigned int ident_seq = 0;
-static byte signature = 0x22;
-static bool interrupts = false;
+static bool interrupts = true;
+static byte busmouse_command = 0;
+static byte busmouse_buttons = 0;
 
 void
 busmouse_init()
 {
-	vm_listen( 0x23c, 0L, busmouse_control_write );
-	vm_listen( 0x23d, busmouse_signature_read, busmouse_signature_write );
-	vm_listen( 0x23e, busmouse_ident_read, busmouse_ident_write );
-	vm_listen( 0x23f, busmouse_data_read, busmouse_data_write );
+	vm_listen( 0x23c, busmouse_read, busmouse_write );
+	vm_listen( 0x23d, busmouse_read, 0L );
+	vm_listen( 0x23e, busmouse_read, busmouse_write );
+	vm_listen( 0x23f, 0L, 0L );
 }
 
 void
-busmouse_ident_write( word port, byte data )
+busmouse_write( word port, byte data )
 {
-	vlog( VM_MOUSEMSG, "Ident write %02X?", data );
-}
-
-void
-busmouse_signature_write( word port, byte data )
-{
-	vlog( VM_MOUSEMSG, "register[%u] = %02X", selected_register, data );
-	mouse_register[selected_register] = data;
-}
-
-byte
-busmouse_ident_read( word port )
-{
-	byte retval;
-
-	if( ident_seq++ & 1 )
-		retval = 0x22;
-	else
-		retval = 0xDE;
-
-	vlog( VM_MOUSEMSG, "Bus mouse identification queried (seq: %u, value: %02X)", ident_seq & 1, retval );
-
-	//vm_debug();
-
-	return retval;
-}
-
-void
-busmouse_control_write( word port, byte data )
-{
-
-	if( data & 0x80 )
+	switch( port )
 	{
-		vlog( VM_MOUSEMSG, "BusMouse reset" );
-		ident_seq = 0;
-	}
+		case 0x23e:
+			busmouse_command = data;
+			break;
 
-	selected_register = data & 0x07;
-	vlog( VM_MOUSEMSG, "Register %u selected", selected_register );
+		case 0x23f:
+			switch( data )
+			{
+				case 0x10:
+					vlog( VM_MOUSEMSG, "Bus mouse interrupt disabled" );
+					interrupts = false;
+					break;
+				case 0x11:
+					vlog( VM_MOUSEMSG, "Bus mouse interrupt enabled" );
+					interrupts = true;
+					break;
+				default:
+					vlog( VM_MOUSEMSG, "Write %02X to %03X, don't know what to do", data, port );
+			}
+			break;
 
-	switch( data )
-	{
+		case 0x23c:
+		case 0x23d:
 		default:
-			vlog( VM_MOUSEMSG, "Command %02X received", data );
+			vlog( VM_MOUSEMSG, "Write %02X to %03X, don't know what to do", data, port );
 			break;
 	}
 }
 
-void
-busmouse_data_write( word port, byte data )
-{
-	switch( data )
-	{
-		case 0x10:
-			vlog( VM_MOUSEMSG, "Bus mouse interrupt disabled" );
-			interrupts = false;
-			break;
-		case 0x11:
-			vlog( VM_MOUSEMSG, "Bus mouse interrupt enabled" );
-			interrupts = true;
-			break;
-		default:
-			vlog( VM_MOUSEMSG, "Data %02X received (port: %03x)", data, port );
-			break;
-	}
-}
+static int delta_x = 0;
+static int delta_y = 0;
 
-byte
-busmouse_signature_read( word port )
-{
-	vlog( VM_MOUSEMSG, "Read register[%u] (= %02X)", selected_register, mouse_register[selected_register] );
-	return mouse_register[selected_register];
-}
+static int last_x = 0;
+static int last_y = 0;
 
-byte
-busmouse_data_read( word port )
-{
-	vlog( VM_MOUSEMSG, "Bus mouse data requested (port: %03x)", port );
-	return 0x00;
-}
+static int current_x = 0;
+static int current_y = 0;
 
 void
-busmouse_pulse()
+busmouse_event()
 {
+	current_x = get_current_x();
+	current_y = get_current_y();
+
+	delta_x = current_x - last_x;
+	delta_y = current_y - last_y;
+
+	//vlog( VM_MOUSEMSG, "busmouse_event(): dX = %d, dY = %d", delta_x, delta_y );
+
 	if( interrupts )
 		irq( 5 );
 }
+
+void
+busmouse_press( int button )
+{
+	if( button == 1 )
+		busmouse_buttons &= ~(1 << 7);
+	else
+		busmouse_buttons &= ~(1 << 5);
+
+	delta_x = 0;
+	delta_y = 0;
+
+	if( interrupts )
+		irq( 5 );
+}
+
+void
+busmouse_release( int button )
+{
+	if( button == 1 )
+		busmouse_buttons |= (1 << 7);
+	else
+		busmouse_buttons |= (1 << 5);
+
+	delta_x = 0;
+	delta_y = 0;
+
+	if( interrupts )
+		irq( 5 );
+}
+
+byte
+busmouse_read( word port )
+{
+	static byte interrupt_val = 0x01;
+
+	byte ret = 0;
+
+	switch( port )
+	{
+		case 0x23c:
+			switch( busmouse_command )
+			{
+				case 0x90:
+				case 0x80: // X LSB
+					ret = delta_x & 0xF;
+					break;
+				case 0xb0:
+				case 0xa0: // X MSB
+					ret = (delta_x >> 4) & 0xF;
+					last_x = current_x;
+					break;
+				case 0xd0:
+				case 0xc0: // Y LSB
+					ret = delta_y & 0xF;
+					break;
+				case 0xf0:
+				case 0xe0: // Y MSB
+					ret = (delta_y >> 4) & 0xF;
+					ret |= busmouse_buttons;
+					last_y = current_y;
+					break;
+				default:
+					vlog( VM_MOUSEMSG, "Unknown BusMouse command %02X", busmouse_command );
+			}
+			break;
+
+		case 0x23d:
+			// Signature byte
+			// I believe some OS's expect this to alternate between 0xDE and 0xA5...
+			ret = 0xa5;
+			break;
+
+		case 0x23e:
+			// Stolen from NeXTStep-on-QEMU patches
+			ret = interrupt_val;
+			interrupt_val = (interrupt_val << 1) & 0xff;
+			if( interrupt_val == 0 ) interrupt_val = 1;
+			break;
+
+		case 0x23f:
+		default:
+			vlog( VM_MOUSEMSG, "Read from %03X, don't know what to do", port );
+			break;
+	}
+
+	return ret;
+}
+

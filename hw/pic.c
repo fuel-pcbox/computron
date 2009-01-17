@@ -105,6 +105,7 @@ irq( byte num )
 	if( num < 8 )
 	{
 		master_irr |= 1 << num;
+		master_isr |= 1 << num;
 	}
 	else
 	{
@@ -128,6 +129,7 @@ pic_next_irq( byte *retval )
 
 	if( *retval < 8 )
 	{
+		vlog( VM_PICMSG, "Clearing IRQ %u", *retval );
 		master_irr &= ~(1 << *retval);
 		master_isr |= (1 << *retval);
 	}

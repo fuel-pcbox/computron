@@ -45,7 +45,7 @@ unspeakable_abomination()
 	fconf = fopen("vm.conf", "r");
 	if(fconf == NULL) {
 		vlog( VM_CONFIGMSG, "Couldn't load vm.conf" );
-		vm_exit(1);
+		//vm_exit(1);
 		return;
 	}
 

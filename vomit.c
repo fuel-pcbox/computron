@@ -40,6 +40,7 @@ vomit_init( int argc, char **argv )
 		FLAGARG( "--mempeek",  mempeek )
 		FLAGARG( "--iopeek",   iopeek )
 		FLAGARG( "--bda-peek", options.bda_peek )
+		FLAGARG( "--trace", options.trace )
 
 #ifdef VOMIT_TRY
 		else if( argc > 2 && !strcmp( argv[1], "--try" ))

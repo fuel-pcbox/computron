@@ -307,11 +307,19 @@ kontinue:
 		cpu.base_CS = cpu.CS;
 		cpu.base_IP = cpu.IP;
 
+		if( options.trace )
+		{
+			dump_disasm( cpu.base_CS, cpu.base_IP );
+			dump_regs();
+		}
+
+
+#if 0
 		if( cpu.CS == 0x42F3 && cpu.IP == 0x0223 )
 		{
 			vlog( VM_ALERT, "MouseEvent: AX=%04X Buttons=%04X X=%04X Y=%04X dX=%04X dY=%04X", cpu.regs.W.AX, cpu.regs.W.BX, cpu.regs.W.CX, cpu.regs.W.DX, cpu.regs.W.SI, cpu.regs.W.DI );
 		}
-
+#endif
 
 #if 0
 		/* Instruction counter */
@@ -375,14 +383,6 @@ kontinue:
 			/* NOTE: The PIT ISR won't be called below, since int_call()
 			 *       clears IF. Phew. */
 			int_call( 1 );
-		}
-
-		static dword x = 40000;
-		if( x-- == 0 )
-		{
-			/*bios_ps2mouse_irq();*/
-			busmouse_pulse();
-			x = 1600000;
 		}
 
 #ifdef VOMIT_CURSES
