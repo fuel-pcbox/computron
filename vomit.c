@@ -58,6 +58,14 @@ vomit_init( int argc, char **argv )
 		}
 	}
 
+#ifndef VOMIT_TRACE
+	if( options.trace )
+	{
+		fprintf( stderr, "Rebuild with #define VOMIT_TRACE if you want --trace t work.\n" );
+		exit( 1 );
+	}
+#endif
+
 	FILE *fplog = fopen( "log.txt", "w" );
 	fclose( fplog );
 
@@ -121,6 +129,7 @@ void vm_init() {
 	vga_init();
 	fdc_init();
 	ide_init();
+	pit_init();
 	busmouse_init();
 	keyboard_init();
 }

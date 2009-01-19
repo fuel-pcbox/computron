@@ -13,6 +13,7 @@
 #include "debug.h"
 
 #define INSNS_PER_PIT_IRQ 400000
+#define INSNS_BETWEEN_IRQ_CHECK 10000
 
 vomit_cpu_t cpu;
 #ifdef VOMIT_CURSES
@@ -20,6 +21,7 @@ vomit_cpu_t cpu;
 uint32_t video_sync_counter;
 #endif
 static uint32_t pit_counter;
+static uint32_t irq_check_counter;
 
 #ifndef VM_NOPFQ
 byte *cpu_pfq;
@@ -82,6 +84,7 @@ cpu_init()
 #endif
 
 	pit_counter = INSNS_PER_PIT_IRQ;
+	irq_check_counter = INSNS_BETWEEN_IRQ_CHECK;
 }
 
 void
@@ -307,12 +310,13 @@ kontinue:
 		cpu.base_CS = cpu.CS;
 		cpu.base_IP = cpu.IP;
 
+#ifdef VOMIT_TRACE
 		if( options.trace )
 		{
 			dump_disasm( cpu.base_CS, cpu.base_IP );
 			dump_regs();
 		}
-
+#endif
 
 #if 0
 		if( cpu.CS == 0x42F3 && cpu.IP == 0x0223 )
@@ -337,15 +341,21 @@ kontinue:
 				goto kontinue;
 		}
 
-		byte irq_to_service = 0;
-		if( cpu.IF && pic_next_irq( &irq_to_service ))
+		if( !--irq_check_counter )
 		{
-			//if( irq_to_service != 0 ) vlog( VM_CPUMSG, "Servicing IRQ %u", irq_to_service );
+			byte irq_to_service = 0;
+			if( cpu.IF && pic_next_irq( &irq_to_service ))
+			{
+				//if( irq_to_service != 0 )
+				//	vlog( VM_CPUMSG, "Servicing IRQ %u", irq_to_service );
 
-			if( irq_to_service < 8 )
-				int_call( 0x08 + irq_to_service );
-			else
-				int_call( 0x70 + irq_to_service - 8 );
+				if( irq_to_service < 8 )
+					int_call( 0x08 + irq_to_service );
+				else
+					int_call( 0x70 + irq_to_service - 8 );
+			}
+
+			irq_check_counter = INSNS_BETWEEN_IRQ_CHECK;
 		}
 
 #if 0

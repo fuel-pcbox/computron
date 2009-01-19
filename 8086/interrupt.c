@@ -49,8 +49,6 @@ int_call( byte isr )
 		vlog( VM_PICMSG, "%04X:%04X Interrupt %02X,%02X trapped", cpu.base_CS, cpu.base_IP, isr, cpu.regs.B.AH );
 #endif
 
-//	cpu_addint(0x33, 0xf000, 0x0306);
-
 #if 0
 	if( isr == 0x21 )
 	{
@@ -79,29 +77,17 @@ int_call( byte isr )
 	}
 #endif
 
+#if 0
 	if( isr == 0x06 )
 	{
 		vlog( VM_CPUMSG, "Invalid opcode trap at %04X:%04X (%02X)", cpu.base_CS, cpu.base_IP, mem_getbyte(cpu.base_CS, cpu.base_IP) );
 	}
+#endif
 
 	if( isr == 0x10 )
 	{
 		bios_interrupt10();
 		return;
-	}
-
-	if( isr == 0x33 )
-	{
-		switch( cpu.regs.W.AX )
-		{
-			case 0x000C:
-				vlog( VM_MOUSEMSG, "Call mask: %04X, handler: %04X:%04X", cpu.regs.W.CX, cpu.ES, cpu.regs.W.DX );
-				break;
-			default:
-				vlog( VM_MOUSEMSG, "Interrupt 0x33 func %04X called from %04X:%04X", cpu.regs.W.AX, cpu.base_CS, cpu.base_IP );
-		}
-/*		bios_interrupt33();
-		return;*/
 	}
 
 	mem_push( cpu_getflags() );

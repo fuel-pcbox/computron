@@ -135,32 +135,27 @@ Screen::paintMode12( QPaintEvent *e )
 
 	uchar *pixels = m_canvas12.bits();
 
+	int yMax = e->rect().bottom();
+	int xMin = e->rect().left();
+	int xMax = e->rect().right();
 
-	for( int y = e->rect().top(); y < e->rect().bottom(); y ++ )
+
+	for( int y = e->rect().top(); y < yMax; ++y )
 	{
-		for( int x = e->rect().left(); x < e->rect().right(); x += 8, ++offset )
+		uchar *px = &pixels[y*640];
+
+		for( int x = xMin; x < xMax; x += 8, ++offset )
 		{
 #define D(i) ((vm_p0[offset]>>i) & 1) | (((vm_p1[offset]>>i) & 1)<<1) | (((vm_p2[offset]>>i) & 1)<<2) | (((vm_p3[offset]>>i) & 1)<<3)
 
-			pixels[(y*640) + x+7] = D(0);
-			pixels[(y*640) + x+6] = D(1);
-			pixels[(y*640) + x+5] = D(2);
-			pixels[(y*640) + x+4] = D(3);
-			pixels[(y*640) + x+3] = D(4);
-			pixels[(y*640) + x+2] = D(5);
-			pixels[(y*640) + x+1] = D(6);
-			pixels[(y*640) + x+0] = D(7);
-
-			/*
-			m_canvas12.setPixel( x+7, y, p1 );
-			m_canvas12.setPixel( x+6, y, p2 );
-			m_canvas12.setPixel( x+5, y, p3 );
-			m_canvas12.setPixel( x+4, y, p4 );
-			m_canvas12.setPixel( x+3, y, p5 );
-			m_canvas12.setPixel( x+2, y, p6 );
-			m_canvas12.setPixel( x+1, y, p7 );
-			m_canvas12.setPixel( x+0, y, p8 );
-			*/
+			*(px++) = D(7);
+			*(px++) = D(6);
+			*(px++) = D(5);
+			*(px++) = D(4);
+			*(px++) = D(3);
+			*(px++) = D(2);
+			*(px++) = D(1);
+			*(px++) = D(0);
 		}
 	}
 
