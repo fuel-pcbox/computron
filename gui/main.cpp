@@ -48,7 +48,7 @@ main( int argc, char **argv )
 
 	QTimer syncTimer;
 	QObject::connect( &syncTimer, SIGNAL( timeout() ), scr, SLOT( refresh() ));
-	syncTimer.start( 50 );
+	syncTimer.start( 100 );
 
 	QTimer flushKeyboardTimer;
 	QObject::connect( &flushKeyboardTimer, SIGNAL( timeout() ), scr, SLOT( flushKeyBuffer() ));
