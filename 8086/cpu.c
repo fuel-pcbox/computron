@@ -13,7 +13,6 @@
 #include "debug.h"
 
 #define INSNS_PER_PIT_IRQ 400000
-#define INSNS_BETWEEN_IRQ_CHECK 10000
 
 vomit_cpu_t cpu;
 #ifdef VOMIT_CURSES
@@ -21,7 +20,6 @@ vomit_cpu_t cpu;
 uint32_t video_sync_counter;
 #endif
 static uint32_t pit_counter;
-static uint32_t irq_check_counter;
 
 #ifndef VM_NOPFQ
 byte *cpu_pfq;
@@ -84,7 +82,6 @@ cpu_init()
 #endif
 
 	pit_counter = INSNS_PER_PIT_IRQ;
-	irq_check_counter = INSNS_BETWEEN_IRQ_CHECK;
 }
 
 void
@@ -341,21 +338,26 @@ kontinue:
 				goto kontinue;
 		}
 
-		if( !--irq_check_counter )
+		if( !--pit_counter )
 		{
-			byte irq_to_service = 0;
-			if( cpu.IF && pic_next_irq( &irq_to_service ))
-			{
-				//if( irq_to_service != 0 )
-				//	vlog( VM_CPUMSG, "Servicing IRQ %u", irq_to_service );
+			pit_counter = INSNS_PER_PIT_IRQ;
 
-				if( irq_to_service < 8 )
-					int_call( 0x08 + irq_to_service );
-				else
-					int_call( 0x70 + irq_to_service - 8 );
-			}
+			/* Call the PIT ISR. This is ugly, to say the least, and I'm sorry. */
+			irq( 0 );
+		}
 
-			irq_check_counter = INSNS_BETWEEN_IRQ_CHECK;
+		byte irq_to_service;
+		if( cpu.IF && pic_next_irq( &irq_to_service ))
+		{
+#ifdef VOMIT_DEBUG_SPAM
+			if( irq_to_service != 0 )
+				vlog( VM_CPUMSG, "Servicing IRQ %u", irq_to_service );
+#endif
+
+			if( irq_to_service < 8 )
+				int_call( 0x08 + irq_to_service );
+			else
+				int_call( 0x70 + irq_to_service - 8 );
 		}
 
 #if 0
@@ -406,14 +408,6 @@ kontinue:
 				ui_sync();
 		}
 #endif
-
-		if( !--pit_counter )
-		{
-			pit_counter = INSNS_PER_PIT_IRQ;
-
-			/* Call the PIT ISR. This is ugly, to say the least, and I'm sorry. */
-			irq( 0 );
-		}
 #ifdef VOMIT_FOREVER
     }
 #endif
