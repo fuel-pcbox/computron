@@ -338,6 +338,15 @@ const insn_t wrapped_insn_table[256][8] = {
 	[0xD1][6] = { 0, OP_UNASSIGNED },
 	[0xD1][7] = { "SAR", OP_RM16 },
 
+	[0xD3][0] = { "ROL", OP_reg8_CL },
+	[0xD3][1] = { "ROR", OP_reg8_CL },
+	[0xD3][2] = { "RCL", OP_reg8_CL },
+	[0xD3][3] = { "RCR", OP_reg8_CL },
+	[0xD3][4] = { "SHL", OP_reg8_CL },
+	[0xD3][5] = { "SHR", OP_reg8_CL },
+	[0xD3][6] = { 0, OP_UNASSIGNED },
+	[0xD3][7] = { "SAR", OP_reg8_CL },
+
 	[0xFF][0] = { "INC", OP_RM16 },
 	[0xFF][1] = { "DEC", OP_RM16 },
 	[0xFF][2] = { "CALL", OP_RM16 },
@@ -358,7 +367,7 @@ const insn_t wrapped_insn_table[256][8] = {
 };
 
 /* Base width of instruction types, a work in progress. */
-const int insn_base_width[42] = {
+const int insn_base_width[43] = {
 	[OP_RM8_reg8] = 1,
 	[OP_RM16_reg16] = 1,
 	[OP_reg8_RM8] = 1,
@@ -399,7 +408,8 @@ const int insn_base_width[42] = {
 	[OP_imm8_AL] = 2,
 	[OP_imm8_AX] = 2,
 	[OP_RM8] = 1,
-	[OP_RM16] = 1
+	[OP_RM16] = 1,
+	[OP_reg8_CL] = 2
 };
 
 const char segname[4][3] = {

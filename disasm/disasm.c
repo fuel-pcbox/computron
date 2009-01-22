@@ -200,6 +200,9 @@ bool disassemble(BYTE *p, long unsigned int offset, char *buf, int len) {
 		++p;
 		snprintf(ptr, len, "%s, %s", modrm_string(p, 16), SEG(MODRM_REG(*p)));
 		break;
+	case OP_reg8_CL:
+		snprintf(ptr, len, "%s, CL", R8(*p));
+		break;
 	default:
 		snprintf(ptr, len, "???");
 		return false;
