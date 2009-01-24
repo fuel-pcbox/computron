@@ -346,18 +346,9 @@ kontinue:
 			irq( 0 );
 		}
 
-		byte irq_to_service;
-		if( cpu.IF && pic_next_irq( &irq_to_service ))
+		if( cpu.IF )
 		{
-#ifdef VOMIT_DEBUG_SPAM
-			if( irq_to_service != 0 )
-				vlog( VM_CPUMSG, "Servicing IRQ %u", irq_to_service );
-#endif
-
-			if( irq_to_service < 8 )
-				int_call( 0x08 + irq_to_service );
-			else
-				int_call( 0x70 + irq_to_service - 8 );
+			pic_service_irq();
 		}
 
 #if 0

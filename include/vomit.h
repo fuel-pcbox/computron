@@ -89,7 +89,7 @@ void load_cursor( byte *row, byte *column );
 int vomit_init( int, char ** );
 
 void irq( byte num );
-bool pic_next_irq( byte *retval );
+void pic_service_irq();
 
 extern bool disklog, trapint, iopeek, mempeek, callpeek;
 
