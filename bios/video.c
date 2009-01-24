@@ -183,6 +183,7 @@ write_text_in_teletype_mode()
 	load_cursor( &row, &column );
 
 	//fprintf( stderr, "<%02u,%02u>%c", row, column, ch );
+	//fprintf( stderr, "%c", ch );
 
 	cursor = row * columns() + column;
 
@@ -253,6 +254,8 @@ set_video_mode()
 	byte mode = cpu.regs.B.AL;
 	byte actual_mode = cpu.regs.B.AL & ~0x80;
 
+	byte last_mode = mem_space[0x449];
+
 	mem_space[0x449] = mode;
 
 	mem_space[0x487] &= ~0x80;
@@ -282,7 +285,8 @@ set_video_mode()
 			break;
 	}
 
-	vlog( VM_VIDEOMSG, "Mode %d (hex %02X) selected", mode, mode );
+	if( mode != last_mode )
+		vlog( VM_VIDEOMSG, "Mode %d (hex %02X) selected", mode, mode );
 
 #if 0
 	vlog( VM_VIDEOMSG, "=== Begin CRT register update ===" );
@@ -319,7 +323,7 @@ get_video_state()
 void
 select_active_display_page()
 {
-	vlog( VM_VIDEOMSG, "Page %d selected (not handled!)", cpu.regs.B.AL );
+	//vlog( VM_VIDEOMSG, "Page %d selected (not handled!)", cpu.regs.B.AL );
 
 	/* XXX: Note that nothing actually happens here ;-) */
 }
