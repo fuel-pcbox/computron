@@ -82,6 +82,7 @@ cpu_init()
 #endif
 
 	pit_counter = INSNS_PER_PIT_IRQ;
+	cpu.state = CPU_ALIVE;
 }
 
 void
@@ -306,6 +307,19 @@ cpu_main()
 kontinue:
 		cpu.base_CS = cpu.CS;
 		cpu.base_IP = cpu.IP;
+
+		if( cpu.state == CPU_HALTED )
+		{
+			if( cpu.IF )
+			{
+				pic_service_irq();
+			}
+#ifdef VOMIT_FOREVER
+			continue;
+#else
+			return;
+#endif
+		}
 
 #ifdef VOMIT_TRACE
 		if( options.trace )

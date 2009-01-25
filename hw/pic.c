@@ -158,6 +158,8 @@ pic_service_irq()
 
 		int_call( slave_addr_base | its );
 	}
+
+	cpu.state = CPU_ALIVE;
 }
 
 void

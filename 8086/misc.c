@@ -21,6 +21,8 @@ _HLT()
 	cpu.state = CPU_HALTED;
 	vlog( VM_CPUMSG, "%04X:%04X Halted", cpu.base_CS, cpu.base_IP );
 
+	return;
+
 #ifdef VOMIT_TRY
 	if( g_try_run )
 	{
