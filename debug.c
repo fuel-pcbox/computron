@@ -44,7 +44,7 @@ vlog( int category, const char *format, ... )
 		case VM_PICMSG: prefix = "pic"; show_on_stdout = false; break;
 		case VM_DMAMSG: prefix = "dma"; show_on_stdout = false; break;
 		case VM_KEYMSG: prefix = "keyb"; break;
-		case VM_DUMPMSG: show_on_stdout = false; break;
+		case VM_DUMPMSG: break;
 	}
 
 	if( s_vlog_handler && show_on_stdout )
