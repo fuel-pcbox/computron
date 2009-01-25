@@ -61,7 +61,7 @@ vomit_init( int argc, char **argv )
 #ifndef VOMIT_TRACE
 	if( options.trace )
 	{
-		fprintf( stderr, "Rebuild with #define VOMIT_TRACE if you want --trace t work.\n" );
+		fprintf( stderr, "Rebuild with #define VOMIT_TRACE if you want --trace to work.\n" );
 		exit( 1 );
 	}
 #endif
