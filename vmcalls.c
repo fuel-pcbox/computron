@@ -280,6 +280,10 @@ vm_handleE6(word data)
 		cpu.regs.W.AX = mem_avail;
 		break;
 
+	case 0x0002:
+		cpu.regs.W.AX = cpu.type;
+		break;
+
 	/* 0x3333: Is Drive Present?
 	 * DL = Drive
 	 *
