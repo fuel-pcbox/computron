@@ -24,6 +24,7 @@ static byte rows();
 static void store_cursor( word cursor );
 static word load_cursor_word();
 static void set_dac_color_register();
+static void write_graphics_pixel_at_coordinate();
 void load_cursor( byte *row, byte *column );
 
 void
@@ -74,7 +75,9 @@ bios_interrupt10()
 		case 0x0a: write_character_at_cursor(); break;
 #if 0
 		case 0x0b: /*set_color_palette();*/ break;
-		case 0x0c: /*write_graphics_pixel_at_coordinate();*/ break;
+#endif
+		case 0x0c: write_graphics_pixel_at_coordinate(); break;
+#if 0
 		case 0x0d: /*read_graphics_pixel_at_coordinate();*/ break;
 #endif
 		case 0x0e: write_text_in_teletype_mode(); break;
@@ -481,4 +484,49 @@ set_dac_color_register()
 	}
 	extern bool palette_dirty;
 	palette_dirty = true;
+}
+
+
+void
+write_graphics_pixel_at_coordinate()
+{
+	// AL = color value
+	// BH = page#
+	// CX = column
+	// DX = row
+
+	if( mem_space[0x449] != 0x12 )
+	{
+		vlog( VM_ALERT, "Poking pixels in mode %02X, dunno how to handle that\n", mem_space[0x449] );
+		vm_kill( 1 );
+	}
+
+	//vlog( VM_ALERT, "y = %03u, x = %03u, color = %02X\n", cpu.regs.W.DX, cpu.regs.W.CX, cpu.regs.B.AL );
+
+	extern byte vm_p0[];
+	extern byte vm_p1[];
+	extern byte vm_p2[];
+	extern byte vm_p3[];
+
+	word offset = (cpu.regs.W.DX * 80) + (cpu.regs.W.CX / 8);
+	byte bit = cpu.regs.W.CX % 8;
+
+	vm_p0[offset] &= ~(0x80 >> bit);
+	vm_p1[offset] &= ~(0x80 >> bit);
+	vm_p2[offset] &= ~(0x80 >> bit);
+	vm_p3[offset] &= ~(0x80 >> bit);
+
+	if( cpu.regs.B.AL & 0x01 )
+		vm_p0[offset] |= (0x80 >> bit);
+
+	if( cpu.regs.B.AL & 0x02 )
+		vm_p1[offset] |= (0x80 >> bit);
+
+	if( cpu.regs.B.AL & 0x04 )
+		vm_p2[offset] |= (0x80 >> bit);
+
+	if( cpu.regs.B.AL & 0x08 )
+		vm_p3[offset] |= (0x80 >> bit);
+
+	set_video_dirty();
 }
