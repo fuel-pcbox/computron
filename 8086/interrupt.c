@@ -84,6 +84,14 @@ int_call( byte isr )
 	}
 #endif
 
+#ifdef VOMIT_SLEEP_WHEN_DOS_IDLE
+	if( isr == 0x28 )
+	{
+		/* DOS idle interrupt, catch a quick rest! */
+		usleep( 10 );
+	}
+#endif
+
 	if( isr == 0x10 )
 	{
 		bios_interrupt10();
