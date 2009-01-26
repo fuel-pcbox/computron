@@ -5,6 +5,7 @@
 
 #include "vomit.h"
 #include "templates.h"
+#include "debug.h"
 
 void
 cpu_mathflags( dword result, word dest, word src, byte bits )
@@ -94,10 +95,11 @@ cpu_mul( word acc, word multi, byte bits )
 	return result;
 }
 
-dword
-cpu_imul (word acc, word multi, byte bits) {
-	sigword result = (sigword)acc * (sigword)multi;
-	cpu_mathflags(result, acc, multi, bits);
+sigdword
+cpu_imul( sigword acc, sigword multi, byte bits )
+{
+	sigdword result = acc * multi;
+	cpu_mathflags( result, acc, multi, bits );
 	return result;
 }
 
@@ -233,8 +235,8 @@ _IMUL_reg16_RM16_imm8()
 void
 _IMUL_RM16()
 {
-	sigword value = (sigword)modrm_read16( cpu.rmbyte );
-	sigdword result = (sigdword) cpu_imul( cpu.regs.W.AX, value, 16 );
+	sigword value = modrm_read16( cpu.rmbyte );
+	sigdword result = cpu_imul( cpu.regs.W.AX, value, 16 );
 	cpu.regs.W.AX = result;
 	cpu.regs.W.DX = result >> 16;
 
@@ -308,8 +310,8 @@ void
 _IDIV_RM16()
 {
 	word offend = cpu.IP;
-	sigword value = (sigword)modrm_read16( cpu.rmbyte );
-	sigdword tDXAX = (sigword)(cpu.regs.W.AX + (cpu.regs.W.DX << 16));
+	sigword value = modrm_read16( cpu.rmbyte );
+	sigdword tDXAX = (cpu.regs.W.AX + (cpu.regs.W.DX << 16));
 
 	if( value == 0 )
 	{
