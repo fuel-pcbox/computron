@@ -158,7 +158,7 @@ dword cpu_add(word, word, byte);
 dword cpu_sub(word, word, byte);
 dword cpu_mul(word, word, byte);
 dword cpu_div(word, word, byte);
-dword cpu_imul(word, word, byte);
+sigdword cpu_imul( sigword, sigword, byte );
 
 dword cpu_or(word, word, byte);
 dword cpu_xor(word, word, byte);
