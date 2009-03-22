@@ -10,11 +10,20 @@ extern "C" {
 }
 #include <QTextEdit>
 #include <QLineEdit>
+#include <QMutex>
+#include <QMutexLocker>
+#include <QTimer>
+
+Console *Console::s_self = 0L;
 
 struct Console::Private
 {
 	QTextEdit *textEdit;
 	QLineEdit *lineEdit;
+
+	QMutex mutex;
+	QStringList newStrings;
+	QTimer updateTimer;
 };
 
 int
@@ -88,9 +97,9 @@ vlog_hook( int category, const char *format, va_list ap )
 
 	vsnprintf( buf, sizeof(buf), format, ap );
 	s += buf;
-	textEdit->append( s );
-	textEdit->moveCursor( QTextCursor::End );
-	textEdit->ensureCursorVisible();
+
+	QMutexLocker( &Console::s_self->d->mutex );
+	Console::s_self->d->newStrings.append( s );
 }
 
 #if 0
@@ -113,6 +122,8 @@ Console::Console( QWidget *parent )
 	: QWidget( parent ),
 	  d( new Private )
 {
+	s_self = this;
+
 	vomit_set_vlog_handler( vlog_hook );
 
 	resize( 600, 400 );
@@ -138,7 +149,8 @@ Console::Console( QWidget *parent )
 
 	setWindowTitle( "Console" );
 
-	QTimer::singleShot( 0, this, SLOT(refresh()) );
+	connect( &d->updateTimer, SIGNAL(timeout()), this, SLOT(refresh()) );
+	d->updateTimer.start( 200 );
 }
 
 Console::~Console()
@@ -158,8 +170,15 @@ Console::append( const QString &s )
 void
 Console::refresh()
 {
-	/*dump_disasm( cpu.CS, cpu.IP );
-	QTimer::singleShot( 500, this, SLOT(refresh()) );*/
+	{
+		QMutexLocker( &d->mutex );
+		foreach( QString s, d->newStrings )
+			textEdit->append( s );
+		d->newStrings.clear();
+	}
+
+	textEdit->moveCursor( QTextCursor::End );
+	textEdit->ensureCursorVisible();
 }
 
 void

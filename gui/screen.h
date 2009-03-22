@@ -63,14 +63,12 @@ private:
 	QQueue<word> m_keyQueue;
 	QQueue<byte> m_rawQueue;
 
-	QImage m_canvas12;
-	uchar *m_canvas12Bits;
+	QImage m_screen12;
+	QImage m_render12;
 
-	void paintMode12( QPaintEvent * );
-	void putpixel( QPainter &p, int x, int y, int color );
+	void renderMode12( QImage &target );
 
 	bool m_clearBackground;
-
 	int m_rows;
 };
 

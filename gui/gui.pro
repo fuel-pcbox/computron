@@ -7,6 +7,7 @@ TARGET +=
 DEPENDPATH += .
 INCLUDEPATH += .
 LIBS += -L.. -lvomit
+QT += debug
 
 # Input
 HEADERS += screen.h \
