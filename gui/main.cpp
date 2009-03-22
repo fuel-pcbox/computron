@@ -5,7 +5,6 @@
 #include <QTimer>
 #include <QSplitter>
 //#include "cpuview.h"
-//#include "activity_bar.h"
 #include "console.h"
 
 extern "C" {
@@ -22,12 +21,16 @@ main( int argc, char **argv )
 	Console *console = new Console;
 	//console->show();
 
-	vomit_init( argc, argv );
+	int rc = vomit_init( argc, argv );
+
+	if( rc != 0 )
+	{
+		fprintf( stderr, "vomit_init() returned %d\n", rc );
+		return rc;
+	}
 
 	QWidget *win = new QWidget;
 	win->setWindowTitle( "VOMIT" );
-
-	//ActivityBar *activityBar = new ActivityBar;
 
 	QVBoxLayout *l = new QVBoxLayout;
 	l->setSpacing( 0 );
