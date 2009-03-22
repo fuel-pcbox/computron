@@ -1,27 +1,22 @@
 #include "worker.h"
-#include <QTimer>
 
 extern "C" {
 #include "../include/vomit.h"
 }
 
-Worker::Worker()
+Worker::Worker( QObject *parent )
+	: QThread( parent )
 {
-	m_workTimer = new QTimer;
-	connect( m_workTimer, SIGNAL( timeout() ), this, SLOT( work() ));
-	m_workTimer->start( 0 );
 }
 
 Worker::~Worker()
 {
-	delete m_workTimer;
 }
 
 void
-Worker::work()
+Worker::run()
 {
-	for( int i= 0; i < 10000; ++i )
-		cpu_main();
+	cpu_main();
 }
 
 void

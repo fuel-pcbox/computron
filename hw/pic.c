@@ -135,28 +135,28 @@ pic_service_irq()
 	if( !pending_requests )
 		return;
 
-	byte its = 0xFF;
+	byte interrupt_to_service = 0xFF;
 
 	for( int i = 0; i < 16; ++i )
 		if( pending_requests & (1 << i) )
-			its = i;
+			interrupt_to_service = i;
 
-	if( its == 0xFF )
+	if( interrupt_to_service == 0xFF )
 		return;
 
-	if( its < 8 )
+	if( interrupt_to_service < 8 )
 	{
-		master_irr &= ~(1 << its);
-		master_isr |= (1 << its);
+		master_irr &= ~(1 << interrupt_to_service);
+		master_isr |= (1 << interrupt_to_service);
 
-		int_call( master_addr_base | its );
+		int_call( master_addr_base | interrupt_to_service );
 	}
 	else
 	{
-		slave_irr &= ~(1 << (its - 8));
-		slave_isr |= (1 << (its - 8));
+		slave_irr &= ~(1 << (interrupt_to_service - 8));
+		slave_isr |= (1 << (interrupt_to_service - 8));
 
-		int_call( slave_addr_base | its );
+		int_call( slave_addr_base | interrupt_to_service );
 	}
 
 	cpu.state = CPU_ALIVE;

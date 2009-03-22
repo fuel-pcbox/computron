@@ -2,6 +2,6 @@
 cd ..
 export LD_LIBRARY_PATH=.
 
-valgrind --tool=callgrind --error-limit=no --num-callers=20 ./gui/gui $*
+#valgrind --tool=callgrind --error-limit=no --num-callers=20 ./gui/gui $*
 #valgrind -v --main-stacksize=28388608 --error-limit=no --num-callers=20 ./gui/gui $*
-#./gui/gui $*
+./gui/gui $*

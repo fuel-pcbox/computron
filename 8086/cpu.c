@@ -300,11 +300,9 @@ cpu_main()
 #ifndef VM_NOPFQ
 	cpu_pfq_flush();
 #endif
-#ifdef VOMIT_FOREVER
+
 	for( ;; )
 	{
-#endif
-kontinue:
 		cpu.base_CS = cpu.CS;
 		cpu.base_IP = cpu.IP;
 
@@ -314,11 +312,7 @@ kontinue:
 			{
 				pic_service_irq();
 			}
-#ifdef VOMIT_FOREVER
 			continue;
-#else
-			return;
-#endif
 		}
 
 #ifdef VOMIT_TRACE
@@ -326,13 +320,6 @@ kontinue:
 		{
 			dump_disasm( cpu.base_CS, cpu.base_IP );
 			dump_regs();
-		}
-#endif
-
-#if 0
-		if( cpu.CS == 0x42F3 && cpu.IP == 0x0223 )
-		{
-			vlog( VM_ALERT, "MouseEvent: AX=%04X Buttons=%04X X=%04X Y=%04X dX=%04X dY=%04X", cpu.regs.W.AX, cpu.regs.W.BX, cpu.regs.W.CX, cpu.regs.W.DX, cpu.regs.W.SI, cpu.regs.W.DI );
 		}
 #endif
 
@@ -349,7 +336,7 @@ kontinue:
 			ui_kill();
 			vm_debug();
 			if( g_debug_step )
-				goto kontinue;
+				continue;
 		}
 
 		if( !--pit_counter )
@@ -364,31 +351,6 @@ kontinue:
 		{
 			pic_service_irq();
 		}
-
-#if 0
-#ifdef OLD_DEBUGGER
-#ifdef VM_DEBUG
-		if( g_debug_step )
-		{
-			ui_kill();
-			vm_debug();
-			if( g_debug_step )
-				goto kontinue;
-		}
-
-		if( g_break_pressed )
-		{
-			ui_kill();
-			//vm_exit( 0 );
-			vm_debug();
-			if( !g_debug_step )
-				ui_show();
-			g_break_pressed = false;
-			/* TODO: int_call( 9 ); */
-		}
-#endif
-#endif
-#endif
 
 		if( cpu.TF )
 		{
@@ -413,9 +375,7 @@ kontinue:
 				ui_sync();
 		}
 #endif
-#ifdef VOMIT_FOREVER
     }
-#endif
 }
 
 #ifndef VM_NOPFQ

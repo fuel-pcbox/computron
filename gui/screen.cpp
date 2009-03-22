@@ -139,7 +139,6 @@ Screen::paintMode12( QPaintEvent *e )
 	int xMin = e->rect().left();
 	int xMax = e->rect().right();
 
-
 	for( int y = e->rect().top(); y < yMax; ++y )
 	{
 		uchar *px = &pixels[y*640];

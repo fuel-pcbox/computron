@@ -1,26 +1,21 @@
 #ifndef __worker_h__
 #define __worker_h__
 
-#include <QObject>
+#include <QThread>
 
-class QTimer;
-
-class Worker : public QObject
+class Worker : public QThread
 {
 	Q_OBJECT
 public:
-	Worker();
+	Worker( QObject *parent = 0L );
 	~Worker();
 
 signals:
 	void finished();
 
 public slots:
-	void work();
+	void run();
 	void shutdown();
-
-private:
-	QTimer *m_workTimer;
 };
 
-#endif // __worker_h__
+#endif

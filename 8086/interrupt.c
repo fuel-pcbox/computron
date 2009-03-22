@@ -77,12 +77,10 @@ int_call( byte isr )
 	}
 #endif
 
-#if 0
 	if( isr == 0x06 )
 	{
 		vlog( VM_CPUMSG, "Invalid opcode trap at %04X:%04X (%02X)", cpu.base_CS, cpu.base_IP, mem_getbyte(cpu.base_CS, cpu.base_IP) );
 	}
-#endif
 
 #ifdef VOMIT_SLEEP_WHEN_DOS_IDLE
 	if( isr == 0x28 )

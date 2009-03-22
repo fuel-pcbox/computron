@@ -4,7 +4,7 @@
 #include <QVBoxLayout>
 #include <QTimer>
 #include <QSplitter>
-#include "cpuview.h"
+//#include "cpuview.h"
 //#include "activity_bar.h"
 #include "console.h"
 
@@ -55,6 +55,7 @@ main( int argc, char **argv )
 	flushKeyboardTimer.start( 50 );
 
 	Worker w;
+	w.start();
 
 	QObject::connect( &w, SIGNAL( finished() ), scr, SLOT( close() ));
 
