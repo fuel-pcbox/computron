@@ -33,6 +33,8 @@ public:
 	word peekKey();
 	byte popKeyData();
 
+	void setScreenSize( int width, int height );
+
 protected:
 	void keyPressEvent( QKeyEvent *e );
 	void keyReleaseEvent( QKeyEvent *e );
@@ -62,6 +64,7 @@ private:
 	QQueue<byte> m_rawQueue;
 
 	QImage m_canvas12;
+	uchar *m_canvas12Bits;
 
 	void paintMode12( QPaintEvent * );
 	void putpixel( QPainter &p, int x, int y, int color );
@@ -71,4 +74,4 @@ private:
 	int m_rows;
 };
 
-#endif // __screen_h__
+#endif

@@ -14,6 +14,8 @@ typedef struct {
 Screen::Screen()
 {
 	m_rows = 0;
+	m_width = 0;
+	m_height = 0;
 
 	init();
 	synchronizeFont();
@@ -21,6 +23,7 @@ Screen::Screen()
 	m_videoMemory = mem_space + 0xB8000;
 
 	m_canvas12 = QImage( 640, 480, QImage::Format_Indexed8 );
+	m_canvas12Bits = m_canvas12.bits();
 
 	synchronizeColors();
 
@@ -122,9 +125,21 @@ Screen::putpixel( QPainter &p, int x, int y, int color )
 }
 
 void
+Screen::setScreenSize( int width, int height )
+{
+	if( m_width == width && m_height == height )
+		return;
+
+	m_width = width;
+	m_height = height;
+
+	setFixedSize( m_width, m_height );
+}
+
+void
 Screen::paintMode12( QPaintEvent *e )
 {
-	setFixedSize( 640, 480 );
+	setScreenSize( 640, 480 );
 
 	extern byte vm_p0[];
 	extern byte vm_p1[];
@@ -133,15 +148,13 @@ Screen::paintMode12( QPaintEvent *e )
 
 	word offset = 0;
 
-	uchar *pixels = m_canvas12.bits();
-
 	int yMax = e->rect().bottom();
 	int xMin = e->rect().left();
 	int xMax = e->rect().right();
 
 	for( int y = e->rect().top(); y < yMax; ++y )
 	{
-		uchar *px = &pixels[y*640];
+		uchar *px = &m_canvas12Bits[y*640];
 
 		for( int x = xMin; x < xMax; x += 8, ++offset )
 		{
@@ -160,13 +173,21 @@ Screen::paintMode12( QPaintEvent *e )
 
 	QPainter wp( this );
 	wp.drawImage( e->rect(), m_canvas12 );
+
+#ifdef NO_TAINTED_REPAINTS
+	QRect paintedRect(e->rect());
+	paintedRect.setRight(paintedRect.right()-1);
+	paintedRect.setBottom(paintedRect.bottom()-1);
+	wp.setOpacity( 0.3 );
+	wp.fillRect( paintedRect, Qt::red );
+#endif
 }
 
 #if 0
 void
 Screen::paintMode12( QPaintEvent *e )
 {
-	setFixedSize( 640, 480 );
+	setScreenSize( 640, 480 );
 
 	//QPixmap pm( e->rect().size() );
 	static QPixmap pm( 640, 480 );
@@ -295,7 +316,7 @@ Screen::setTextMode( int w, int h )
 
 	m_rows = h;
 
-	setFixedSize( wi, he );
+	setScreenSize( wi, he );
 	m_inTextMode = true;
 }
 
