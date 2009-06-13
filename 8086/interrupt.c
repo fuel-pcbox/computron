@@ -7,6 +7,8 @@
 #include "debug.h"
 #include <stdio.h>
 
+extern void bios_interrupt10();
+
 void
 _INT_imm8()
 {

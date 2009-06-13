@@ -69,31 +69,61 @@ _SALC()
 	cpu.regs.B.AL = cpu.CF ? 0xFF : 0x00;
 }
 
-dword
-cpu_or( word dest, word src, byte bits )
+byte
+cpu_or8( byte dest, byte src )
 {
-	dword result = dest | src;
-	cpu_updflags( result, bits );
+	byte result = dest | src;
+	cpu_update_flags8( result );
 	cpu.OF = 0;
 	cpu.CF = 0;
 	return result;
 }
 
-dword
-cpu_xor( word dest, word src, byte bits )
+word
+cpu_or16( word dest, word src )
 {
-	dword result = dest ^ src;
-	cpu_updflags( result, bits );
+	word result = dest | src;
+	cpu_update_flags16( result );
 	cpu.OF = 0;
 	cpu.CF = 0;
 	return result;
 }
 
-dword
-cpu_and( word dest, word src, byte bits )
+byte
+cpu_xor8( byte dest, byte src )
 {
-	dword result = dest & src;
-	cpu_updflags( result, bits );
+	byte result = dest ^ src;
+	cpu_update_flags8( result );
+	cpu.OF = 0;
+	cpu.CF = 0;
+	return result;
+}
+
+word
+cpu_xor16( word dest, word src )
+{
+	word result = dest ^ src;
+	cpu_update_flags16( result );
+	cpu.OF = 0;
+	cpu.CF = 0;
+	return result;
+}
+
+byte
+cpu_and8( byte dest, byte src )
+{
+	byte result = dest & src;
+	cpu_update_flags8( result );
+	cpu.OF = 0;
+	cpu.CF = 0;
+	return result;
+}
+
+word
+cpu_and16( word dest, word src )
+{
+	word result = dest & src;
+	cpu_update_flags16( result );
 	cpu.OF = 0;
 	cpu.CF = 0;
 	return result;
@@ -129,7 +159,7 @@ cpu_shl( word data, byte steps, byte bits )
 		cpu.OF = (data >> ( bits - 1 )) ^ cpu.CF;
 	}
 
-	cpu_updflags( result, bits );
+	cpu_update_flags( result, bits );
 	return result;
 }
 
@@ -163,7 +193,7 @@ cpu_shr( word data, byte steps, byte bits )
 		cpu.OF = (data >> ( bits - 1 )) & 1;
 	}
 
-	cpu_updflags( result, bits );
+	cpu_update_flags( result, bits );
 	return result;
 }
 
@@ -200,7 +230,7 @@ cpu_sar( word data, byte steps, byte bits )
 		cpu.OF = 0;
 	}
 
-	cpu_updflags( result, bits );
+	cpu_update_flags( result, bits );
 	return result;
 }
 
@@ -364,7 +394,7 @@ _NEG_RM8()
 	value = -value;
 	modrm_update8( value );
 	cpu.CF = ( old != 0 );
-	cpu_updflags( value, 8 );
+	cpu_update_flags8( value );
 	cpu.OF = ((
 	         ((0)^(old)) &
 	         ((0)^(value))
@@ -380,7 +410,7 @@ _NEG_RM16()
 	value = -value;
 	modrm_update16( value );
 	cpu.CF = ( old != 0 );
-	cpu_updflags( value, 16 );
+	cpu_update_flags16( value );
 	cpu.OF = ((
 	         ((0)^(old)) &
 	         ((0)^(value))

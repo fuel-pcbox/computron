@@ -215,9 +215,10 @@ Console::execute()
 	{
 		dump_cpu();
 	}
-	else if( parts[0] == "byte" )
+	else if( parts[0] == "d" )
 	{
 		QStringList address = parts[1].split(":");
+		dump_mem( address[0].toUInt(0L, 16), address[1].toUInt(0L, 16), 16 );
 	}
 	else if( parts[0] == "leds" )
 	{

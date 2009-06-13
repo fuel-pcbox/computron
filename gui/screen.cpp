@@ -26,6 +26,9 @@ Screen::Screen()
 	m_screen12 = QImage( 640, 480, QImage::Format_Indexed8 );
 	m_render12 = QImage( 640, 480, QImage::Format_Indexed8 );
 
+	m_screen0D = QImage( 320, 200, QImage::Format_Indexed8 );
+	m_render0D = QImage( 320, 200, QImage::Format_Indexed8 );
+
 	synchronizeColors();
 
 	m_clearBackground = true;
@@ -129,6 +132,59 @@ Screen::refresh()
 			m_clearBackground = true;
 		}
 	}
+	else if( (mem_space[0x449] & 0x7F) == 0x0D )
+	{
+		if( is_palette_dirty() )
+		{
+			synchronizeColors();
+			clear_palette_dirty();
+		}
+
+		if( is_video_dirty() )
+		{
+			//vlog( VM_VIDEOMSG, "Painting mode0Dh screen" );
+			renderMode0D( m_render0D );
+
+			QRect updateRect;
+
+			uchar *newBits = m_render0D.bits();
+			uchar *oldBits = m_screen0D.bits();
+
+			// Compare screen rendition to what's showing ATM, to find the region
+			// that needs to be updated.
+			for( int y = 0; y < 200; ++y )
+			{
+				uchar *newPixels = &newBits[y*640];
+				uchar *oldPixels = &oldBits[y*640];
+				for( int x = 0; x < 320; ++x )
+				{
+					if( newPixels[x] != oldPixels[x] )
+					{
+						if( updateRect.isNull() )
+							updateRect.setCoords( x, y, x, y );
+						else
+						{
+							if( x < updateRect.left() )
+								updateRect.setLeft( x );
+							if( x > updateRect.right() )
+								updateRect.setRight( x );
+							if( y < updateRect.top() )
+								updateRect.setTop( y );
+							if( y > updateRect.bottom() )
+								updateRect.setBottom( y );
+						}
+					}
+				}
+			}
+
+			m_screen0D = m_render0D;
+			update( updateRect );
+			clear_video_dirty();
+
+			// Trigger a clear on next mode3 paint...
+			m_clearBackground = true;
+		}
+	}
 	else if( (mem_space[0x449] & 0x7F) == 0x03 )
 	{
 		int rows = mem_space[0x484] + 1;
@@ -193,6 +249,55 @@ Screen::renderMode12( QImage &target )
 }
 
 void
+Screen::renderMode0D( QImage &target )
+{
+	extern byte vm_p0[];
+	extern byte vm_p1[];
+	extern byte vm_p2[];
+	extern byte vm_p3[];
+
+	int offset = 0;
+
+	for( int y = 0; y < 200; ++y )
+	{
+		uchar *px = &target.bits()[y*320];
+
+#define A0D(i) ((vm_p0[offset]>>i) & 1) | (((vm_p1[offset]>>i) & 1)<<1) | (((vm_p2[offset]>>i) & 1)<<2) | (((vm_p3[offset]>>i) & 1)<<3)
+		for( int x = 0; x < 320; x += 8, ++offset )
+		{
+			*(px++) = D(7);
+			*(px++) = D(6);
+			*(px++) = D(5);
+			*(px++) = D(4);
+			*(px++) = D(3);
+			*(px++) = D(2);
+			*(px++) = D(1);
+			*(px++) = D(0);
+		}
+	}
+	return;
+
+	for( int y = 0; y < 200; ++y )
+	{
+		uchar *px = &target.bits()[y*320];
+
+		for( int x = 0; x < 320; x += 8, ++offset )
+		{
+#define D(i) ((vm_p0[offset]>>i) & 1) | (((vm_p1[offset]>>i) & 1)<<1) | (((vm_p2[offset]>>i) & 1)<<2) | (((vm_p3[offset]>>i) & 1)<<3)
+
+			*(px++) = D(7);
+			*(px++) = D(6);
+			*(px++) = D(5);
+			*(px++) = D(4);
+			*(px++) = D(3);
+			*(px++) = D(2);
+			*(px++) = D(1);
+			*(px++) = D(0);
+		}
+	}
+}
+
+void
 Screen::resizeEvent( QResizeEvent *e )
 {
 	QWidget::resizeEvent( e );
@@ -210,6 +315,20 @@ Screen::paintEvent( QPaintEvent *e )
 		setScreenSize( 640, 480 );
 		QPainter wp( this );
 		wp.drawImage( e->rect(), m_screen12.copy( e->rect() ));
+
+		if( m_tinted )
+		{
+			wp.setOpacity( 0.3 );
+			wp.fillRect( e->rect(), Qt::blue );
+		}
+		return;
+	}
+
+	if( (mem_space[0x449] & 0x7F) == 0x0D )
+	{
+		setScreenSize( 320, 200 );
+		QPainter wp( this );
+		wp.drawImage( e->rect(), m_screen0D.copy( e->rect() ));
 
 		if( m_tinted )
 		{
@@ -324,6 +443,8 @@ Screen::synchronizeColors()
 	{
 		m_screen12.setColor( i, m_color[i].rgb() );
 		m_render12.setColor( i, m_color[i].rgb() );
+		m_screen0D.setColor( i, m_color[i].rgb() );
+		m_render0D.setColor( i, m_color[i].rgb() );
 	}
 }
 

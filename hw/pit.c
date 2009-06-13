@@ -8,6 +8,7 @@ void
 pit_init()
 {
 	vm_listen( 0x40, pit_read, 0L );
+	vm_listen( 0x42, 0L, pit_write );
 	vm_listen( 0x43, 0L, pit_write );
 }
 

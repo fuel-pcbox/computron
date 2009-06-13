@@ -5,6 +5,7 @@
  */
 
 #include "vomit.h"
+#include "debug.h"
 
 void
 _LOOP_imm8()
@@ -63,7 +64,10 @@ __rep( byte opcode, bool should_equal )
 		case 0xAE: DO_REPZ( _SCASB ); return;
 		case 0xAF: DO_REPZ( _SCASW ); return;
 
-		default: cpu_optable[opcode](); return;
+		default:
+			vlog( VM_ALERT, "SUSPICIOUS: Opcode %02X used with REP* prefix", opcode );
+			cpu_optable[opcode]();
+			return;
 	}
 
 	/* Recurse if this opcode was a segment prefix. */

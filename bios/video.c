@@ -162,14 +162,56 @@ write_character_and_attribute_at_cursor()
 
 	/* Check count of characters to write. */
 	if( cpu.regs.W.CX == 0 )
+	{
+		vlog( VM_VIDEOMSG, "Asked to write zero chars!?\n" );
 		return;
+	}
+
+
 
 	load_cursor( &row, &column );
 	cursor = row * columns() + column;
 
-	/* XXX: 0xB800 is hard-coded for now. */
-	mem_setbyte( 0xB800, cursor << 1, cpu.regs.B.AL );
-	mem_setbyte( 0xB800, (cursor << 1) + 1, cpu.regs.B.BL );
+	if( mem_space[0x449] == 0x0D )
+	{
+		typedef struct {
+			byte data[16];
+		} fontcharbitmap_t;
+		fontcharbitmap_t *fbmp_map = (fontcharbitmap_t *)(mem_space + 0xC4000);
+
+		//printf( "mode0D_putchar: %02X (%c)\n", cpu.regs.B.AL, cpu.regs.B.AL );
+
+		//if( fbmp )
+		{
+			word x1 = column * 8;
+			word y1 = row * 16;
+
+			if( cpu.regs.B.AL != 0x80 )
+				printf( "write character at %03u,%03u: %c\n", x1, y1, cpu.regs.B.AL );
+
+			for( int char_y = 0; char_y < 16; ++char_y )
+			{
+				putpixel0D( y1 + char_y, x1 + 0, (fbmp_map[cpu.regs.B.AL].data[char_y] & 0x80) != 0 );
+				putpixel0D( y1 + char_y, x1 + 1, (fbmp_map[cpu.regs.B.AL].data[char_y] & 0x40) != 0 );
+				putpixel0D( y1 + char_y, x1 + 2, (fbmp_map[cpu.regs.B.AL].data[char_y] & 0x20) != 0 );
+				putpixel0D( y1 + char_y, x1 + 3, (fbmp_map[cpu.regs.B.AL].data[char_y] & 0x10) != 0 );
+				putpixel0D( y1 + char_y, x1 + 4, (fbmp_map[cpu.regs.B.AL].data[char_y] & 0x08) != 0 );
+				putpixel0D( y1 + char_y, x1 + 5, (fbmp_map[cpu.regs.B.AL].data[char_y] & 0x04) != 0 );
+				putpixel0D( y1 + char_y, x1 + 6, (fbmp_map[cpu.regs.B.AL].data[char_y] & 0x02) != 0 );
+				putpixel0D( y1 + char_y, x1 + 7, (fbmp_map[cpu.regs.B.AL].data[char_y] & 0x01) != 0 );
+			}
+		}
+	}
+	else
+	{
+		if( mem_space[0x449] != 0x03 )
+		{
+			vlog( VM_VIDEOMSG, "Writing text to screen but not in mode 3.." );
+		}
+		/* XXX: 0xB800 is hard-coded for now. */
+		mem_setbyte( 0xB800, cursor << 1, cpu.regs.B.AL );
+		mem_setbyte( 0xB800, (cursor << 1) + 1, cpu.regs.B.BL );
+	}
 }
 
 void
@@ -326,7 +368,7 @@ get_video_state()
 void
 select_active_display_page()
 {
-	//vlog( VM_VIDEOMSG, "Page %d selected (not handled!)", cpu.regs.B.AL );
+	vlog( VM_VIDEOMSG, "Page %d selected (not handled!)", cpu.regs.B.AL );
 
 	/* XXX: Note that nothing actually happens here ;-) */
 }
@@ -502,7 +544,6 @@ write_graphics_pixel_at_coordinate()
 	}
 
 	//vlog( VM_ALERT, "y = %03u, x = %03u, color = %02X\n", cpu.regs.W.DX, cpu.regs.W.CX, cpu.regs.B.AL );
-
 	extern byte vm_p0[];
 	extern byte vm_p1[];
 	extern byte vm_p2[];
@@ -530,3 +571,80 @@ write_graphics_pixel_at_coordinate()
 
 	set_video_dirty();
 }
+
+void
+putpixel0D( word row, word column, byte pixel )
+{
+	// AL = color value
+	// BH = page#
+	// CX = column
+	// DX = row
+
+	//printf( "putpixel at %03u,%03u: %02X\n", row, column, pixel );
+
+	extern byte vm_p0[];
+	extern byte vm_p1[];
+	extern byte vm_p2[];
+	extern byte vm_p3[];
+
+	word offset = (row * 40) + (cpu.regs.W.CX / 8);
+	byte bit = cpu.regs.W.CX % 8;
+
+	vm_p0[offset] &= ~(0x80 >> bit);
+	vm_p1[offset] &= ~(0x80 >> bit);
+	vm_p2[offset] &= ~(0x80 >> bit);
+	vm_p3[offset] &= ~(0x80 >> bit);
+
+	if( pixel & 0x01 )
+		vm_p0[offset] |= (0x80 >> bit);
+
+	if( pixel & 0x02 )
+		vm_p1[offset] |= (0x80 >> bit);
+
+	if( pixel & 0x04 )
+		vm_p2[offset] |= (0x80 >> bit);
+
+	if( pixel & 0x08 )
+		vm_p3[offset] |= (0x80 >> bit);
+
+	set_video_dirty();
+}
+
+void
+vga_scrollup (byte x1, byte y1, byte x2, byte y2, byte num, byte attr) {
+	byte x, y, i;
+
+	byte *video_memory;
+
+	if( mem_space[0x449] == 0x0D || mem_space[0x449] == 0x12 )
+		video_memory = mem_space + 0xB8000;
+	else
+		video_memory = mem_space + 0xB8000;
+
+	// TODO: Scroll graphics when in graphics mode (using text coordinates)
+
+	//vlog( VM_VIDEOMSG, "vga_scrollup( %d, %d, %d, %d, %d )", x1, y1, x2, y2, num);
+	if ( (num == 0 ) || ( num > rows ) ) {
+		for( y = y1; y <= y2; ++y ) {
+			for( x = x1; x < x2; ++x) {
+				video_memory[( y * 160 + x * 2 ) + 0] = 0x20;
+				video_memory[( y * 160 + x * 2 ) + 1] = attr;
+			}
+		}
+		return;
+	}
+	for ( i = 0; i < num; ++i ) {
+		for ( y = y1; y < y2; ++y ) {
+			for ( x = x1; x < x2; ++x ) {
+				video_memory[( y * 160 + x * 2 ) + 0] = video_memory[(((y+1)*160)+x*2)+0];
+				video_memory[( y * 160 + x * 2 ) + 1] = video_memory[(((y+1)*160)+x*2)+1];
+			}
+		}
+		for ( x = x1; x < x2; ++x ) {
+			video_memory[( y2 * 160 + x * 2 ) + 0] = 0x20;
+			video_memory[( y2 * 160 + x * 2 ) + 1] = attr;
+		}
+		y2--;
+	}
+}
+

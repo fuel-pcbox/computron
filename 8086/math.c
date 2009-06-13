@@ -7,85 +7,101 @@
 #include "templates.h"
 #include "debug.h"
 
-void
-cpu_mathflags( dword result, word dest, word src, byte bits )
+word
+cpu_add8( byte dest, byte src )
 {
-	if( bits == 8 )
-	{
-		cpu.CF = ( result >> 8 ) & 1;
-		cpu.SF = ( result >> 7 ) & 1;
-		cpu.ZF = ( result & 0x00FF ) == 0;
-	}
-	else
-	{
-		cpu.CF = ( result >> 16 ) & 1;
-		cpu.SF = ( result >> 15 ) & 1;
-		cpu.ZF = ( result & 0xFFFF ) == 0;
-	}
-	cpu_setPF( result );
-	cpu_setAF( result, dest, src );
-}
-
-void
-cpu_cmpflags( dword result, word dest, word src, byte bits )
-{
-	cpu_mathflags( result, dest, src, bits );
-	cpu.OF = ((
-	         ((src)^(dest)) &
-	         ((src)^(src-dest))
-	         )>>(bits-1))&1;
-}
-
-dword
-cpu_add( word dest, word src, byte bits )
-{
-	dword result = dest + src;
-	cpu_mathflags( result, dest, src, bits );
+	word result = dest + src;
+	cpu_math_flags8( result, dest, src );
 	cpu.OF = ((
 	         ((result)^(dest)) &
 	         ((result)^(src))
-	         )>>(bits-1))&1;
+	         )>>(7))&1;
 	return result;
 }
 
 dword
-cpu_adc( word dest, word src, byte bits )
+cpu_add16( word dest, word src )
+{
+	dword result = dest + src;
+	cpu_math_flags16( result, dest, src );
+	cpu.OF = ((
+	         ((result)^(dest)) &
+	         ((result)^(src))
+	         )>>(15))&1;
+	return result;
+}
+
+word
+cpu_adc8( word dest, word src )
+{
+	word result;
+	src += cpu.CF;
+	result = dest + src;
+
+	cpu_math_flags8( result, dest, src );
+	cpu.OF = ((
+	         ((result)^(dest)) &
+	         ((result)^(src))
+	         )>>(7))&1;
+	return result;
+}
+
+dword
+cpu_adc16( word dest, word src )
 {
 	dword result;
 	src += cpu.CF;
 	result = dest + src;
 
-	cpu_mathflags( result, dest, src, bits );
+	cpu_math_flags16( result, dest, src );
 	cpu.OF = ((
 	         ((result)^(dest)) &
 	         ((result)^(src))
-	         )>>(bits-1))&1;
+	         )>>(15))&1;
+	return result;
+}
+
+word
+cpu_sub8( byte dest, byte src )
+{
+	word result = dest - src;
+	cpu_cmp_flags8( result, dest, src );
 	return result;
 }
 
 dword
-cpu_sub( word dest, word src, byte bits )
+cpu_sub16( word dest, word src )
 {
 	dword result = dest - src;
-	cpu_cmpflags( result, dest, src, bits );
+	cpu_cmp_flags16( result, dest, src );
+	return result;
+}
+
+word
+cpu_sbb8( byte dest, byte src )
+{
+	word result;
+	src += cpu.CF;
+	result = dest - src;
+	cpu_cmp_flags8( result, dest, src );
 	return result;
 }
 
 dword
-cpu_sbb( word dest, word src, byte bits )
+cpu_sbb16( word dest, word src )
 {
 	dword result;
 	src += cpu.CF;
 	result = dest - src;
-	cpu_cmpflags( result, dest, src, bits );
+	cpu_cmp_flags16( result, dest, src );
 	return result;
 }
 
-dword
-cpu_mul( word acc, word multi, byte bits )
+word
+cpu_mul8( byte acc, byte multi )
 {
-	dword result = acc * multi;
-	cpu_mathflags( result, acc, multi, bits );
+	word result = acc * multi;
+	cpu_math_flags8( result, acc, multi );
 
 	/* 8086 CPUs set ZF on zero result */
 	if( cpu.type == INTEL_8086 )
@@ -95,11 +111,34 @@ cpu_mul( word acc, word multi, byte bits )
 	return result;
 }
 
+dword
+cpu_mul16( word acc, word multi )
+{
+	dword result = acc * multi;
+	cpu_math_flags16( result, acc, multi );
+
+	/* 8086 CPUs set ZF on zero result */
+	if( cpu.type == INTEL_8086 )
+	{
+		cpu.ZF = (result == 0);
+	}
+	return result;
+}
+
+sigword
+cpu_imul8( sigbyte acc, sigbyte multi )
+{
+	sigword result = acc * multi;
+	cpu_math_flags8( result, acc, multi );
+	return result;
+}
+
+
 sigdword
-cpu_imul( sigword acc, sigword multi, byte bits )
+cpu_imul16( sigword acc, sigword multi )
 {
 	sigdword result = acc * multi;
-	cpu_mathflags( result, acc, multi, bits );
+	cpu_math_flags16( result, acc, multi );
 	return result;
 }
 
@@ -157,7 +196,7 @@ void
 _MUL_RM8()
 {
 	byte value = modrm_read8( cpu.rmbyte );
-	cpu.regs.W.AX = cpu_mul( cpu.regs.B.AL, value, 8 );
+	cpu.regs.W.AX = cpu_mul8( cpu.regs.B.AL, value );
 
 	if( cpu.regs.B.AH == 0x00 )
 	{
@@ -175,7 +214,7 @@ void
 _MUL_RM16()
 {
 	word value = modrm_read16( cpu.rmbyte );
-	dword result = cpu_mul( cpu.regs.W.AX, value, 16 );
+	dword result = cpu_mul16( cpu.regs.W.AX, value );
 	cpu.regs.W.AX = result & 0xFFFF;
 	cpu.regs.W.DX = (result >> 16) & 0xFFFF;
 
@@ -196,7 +235,7 @@ _IMUL_RM8()
 {
 	byte rm = cpu.rmbyte;
 	sigbyte value = (sigbyte)modrm_read8( rm );
-	cpu.regs.W.AX = (sigword) cpu_imul( cpu.regs.B.AL, value, 8 );
+	cpu.regs.W.AX = (sigword) cpu_imul8( cpu.regs.B.AL, value );
 
 	if( cpu.regs.B.AH == 0x00 || cpu.regs.B.AH == 0xFF )
 	{
@@ -216,7 +255,7 @@ _IMUL_reg16_RM16_imm8()
 	byte rm = cpu_pfq_getbyte();
 	byte imm = cpu_pfq_getbyte();
 	sigword value = (sigword)modrm_read16( rm );
-	sigword result = cpu_imul( value, imm, 16 );
+	sigword result = cpu_imul16( value, imm );
 
 	*treg16[rmreg(rm)] = result;
 
@@ -236,7 +275,7 @@ void
 _IMUL_RM16()
 {
 	sigword value = modrm_read16( cpu.rmbyte );
-	sigdword result = cpu_imul( cpu.regs.W.AX, value, 16 );
+	sigdword result = cpu_imul16( cpu.regs.W.AX, value );
 	cpu.regs.W.AX = result;
 	cpu.regs.W.DX = result >> 16;
 

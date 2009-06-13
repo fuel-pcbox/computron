@@ -58,7 +58,7 @@ _CMPSB()
 {
 	byte src = mem_getbyte( *(cpu.CurrentSegment), cpu.regs.W.SI );
 	byte dest = mem_getbyte( cpu.ES, cpu.regs.W.DI );
-	cpu_cmpflags( src - dest, src, dest, 8 );
+	cpu_cmp_flags8( src - dest, src, dest );
 	if( cpu.DF == 0 )
 		++cpu.regs.W.DI, ++cpu.regs.W.SI;
 	else
@@ -70,7 +70,7 @@ _CMPSW()
 {
 	word src = mem_getword( *(cpu.CurrentSegment), cpu.regs.W.SI );
 	word dest = mem_getword( cpu.ES, cpu.regs.W.DI );
-	cpu_cmpflags( src - dest, src, dest, 16 );
+	cpu_cmp_flags16( src - dest, src, dest );
 	if( cpu.DF == 0 )
 		cpu.regs.W.DI += 2, cpu.regs.W.SI += 2;
 	else
@@ -81,7 +81,7 @@ void
 _SCASB()
 {
 	byte dest = mem_getbyte( cpu.ES, cpu.regs.W.DI );
-	cpu_cmpflags( cpu.regs.B.AL - dest, dest, cpu.regs.B.AL, 8 );
+	cpu_cmp_flags8( cpu.regs.B.AL - dest, dest, cpu.regs.B.AL );
 
 	if( cpu.DF == 0 )
 		++cpu.regs.W.DI;
@@ -93,7 +93,7 @@ void
 _SCASW()
 {
 	word dest = mem_getword( cpu.ES, cpu.regs.W.DI );
-	cpu_cmpflags( cpu.regs.W.AX - dest, dest, cpu.regs.W.AX, 16 );
+	cpu_cmp_flags16( cpu.regs.W.AX - dest, dest, cpu.regs.W.AX );
 
 	if( cpu.DF == 0 )
 		cpu.regs.W.DI += 2;

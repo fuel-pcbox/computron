@@ -230,14 +230,14 @@ _wrap_0xFE()
 			cpu.OF = value == 0x7F;
 			i++;
 			cpu_setAF( i, value, 1 );
-			cpu_updflags(i, 8);
+			cpu_update_flags8( i );
 			modrm_update8( value + 1 );
 			break;
 		case 1:
 			cpu.OF = value == 0x80;
 			i--;
 			cpu_setAF( i, value, 1 );
-			cpu_updflags(i, 8);
+			cpu_update_flags8( i );
 			modrm_update8( value - 1 );
 			break;
 		default:

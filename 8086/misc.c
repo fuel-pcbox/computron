@@ -61,33 +61,6 @@ _HLT()
 }
 
 void
-cpu_updflags (word data, byte bits) {
-	if(bits==8) data &= 0xFF; else data &= 0xFFFF;
-	cpu_setPF((dword)data);
-	cpu_setZF((dword)data);
-	cpu_setSF((dword)data, bits);
-}
-
-void _STC() { cpu.CF = 1; } void _STD() { cpu.DF = 1; }
-
-void
-_STI()
-{
-	//if( !cpu.IF ) vlog( VM_CPUMSG, "Interrupts ON" );
-	cpu.IF = 1;
-}
-
-void
-_CLI()
-{
-	//if( cpu.IF ) vlog( VM_CPUMSG, "Interrupts OFF" );
-	cpu.IF = 0;
-}
-
-void _CLC() { cpu.CF = 0; } void _CLD() { cpu.DF = 0; }
-void _CMC() { cpu.CF = !cpu.CF; }
-
-void
 _XLAT() {
 	cpu.regs.B.AL = mem_getbyte( *(cpu.CurrentSegment), cpu.regs.W.BX + cpu.regs.B.AL );
 }
@@ -207,7 +180,7 @@ _DEC_reg16()
 
 	i--;
 	cpu_setAF(i, *treg16[cpu.opcode & 7], 1);
-	cpu_updflags(i, 16);
+	cpu_update_flags16( i );
 	--*treg16[cpu.opcode & 7];
 }
 
@@ -221,7 +194,7 @@ _INC_reg16()
 
 	i++;
 	cpu_setAF(i,*treg16[cpu.opcode & 7],1);
-	cpu_updflags(i, 16);
+	cpu_update_flags16( i );
 	++*treg16[cpu.opcode & 7];
 }
 
@@ -236,7 +209,7 @@ _INC_RM16()
 
 	i++;
 	cpu_setAF( i, value, 1 );
-	cpu_updflags(i, 16);
+	cpu_update_flags16( i );
 	modrm_update16( value + 1 );
 }
 
@@ -251,7 +224,7 @@ _DEC_RM16()
 
 	i--;
 	cpu_setAF( i, value, 1 ); // XXX: i can be (dword)(-1)...
-	cpu_updflags(i, 16);
+	cpu_update_flags16( i );
 	modrm_update16( value - 1 );
 }
 

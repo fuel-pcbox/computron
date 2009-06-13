@@ -43,7 +43,7 @@ _AAM()
 
 	cpu.regs.B.AH = tempAL / imm;
 	cpu.regs.B.AL = tempAL % imm;
-	cpu_updflags( cpu.regs.B.AL, 8 );
+	cpu_update_flags8( cpu.regs.B.AL );
 }
 
 void
@@ -55,7 +55,7 @@ _AAD()
 
 	cpu.regs.B.AL = (tempAL + (tempAH * imm)) & 0xFF;
 	cpu.regs.B.AH = 0x00;
-	cpu_updflags( cpu.regs.B.AL, 8 );
+	cpu_update_flags8( cpu.regs.B.AL );
 }
 
 void

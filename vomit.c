@@ -134,6 +134,7 @@ void vm_init() {
 	pit_init();
 	busmouse_init();
 	keyboard_init();
+	gameport_init();
 }
 
 void

@@ -22,7 +22,6 @@ static byte io_sequencer[0x20];
 /* there are only ??, but let's avoid segfaults. */
 static byte index_palette = 0;
 
-static byte *video_memory;
 static byte columns;
 static byte rows;
 
@@ -127,8 +126,10 @@ vga_init()
 	columns = 80;
 	rows = 25;
 
-	video_memory = mem_space + 0xB8000;
-	memset( video_memory, 0, columns * rows * 2 );
+	memset( io_register, 0, sizeof(io_register) );
+	memset( io_register2, 0, sizeof(io_register2) );
+
+	io_sequencer[2] = 0x0F;
 }
 
 void
@@ -278,35 +279,6 @@ vga_status( word port )
 	next_3c0_is_index = true;
 
 	return data;
-}
-
-/* TODO: move this to bios/video.c */
-void
-vga_scrollup (byte x1, byte y1, byte x2, byte y2, byte num, byte attr) {
-	byte x, y, i;
-	//vlog( VM_VIDEOMSG, "vga_scrollup( %d, %d, %d, %d, %d )", x1, y1, x2, y2, num);
-	if ( (num == 0 ) || ( num > rows ) ) {
-		for( y = y1; y <= y2; ++y ) {
-			for( x = x1; x < x2; ++x) {
-				video_memory[( y * 160 + x * 2 ) + 0] = 0x20;
-				video_memory[( y * 160 + x * 2 ) + 1] = attr;
-			}
-		}
-		return;
-	}
-	for ( i = 0; i < num; ++i ) {
-		for ( y = y1; y < y2; ++y ) {
-			for ( x = x1; x < x2; ++x ) {
-				video_memory[( y * 160 + x * 2 ) + 0] = video_memory[(((y+1)*160)+x*2)+0];
-				video_memory[( y * 160 + x * 2 ) + 1] = video_memory[(((y+1)*160)+x*2)+1];
-			}
-		}
-		for ( x = x1; x < x2; ++x ) {
-			video_memory[( y2 * 160 + x * 2 ) + 0] = 0x20;
-			video_memory[( y2 * 160 + x * 2 ) + 1] = attr;
-		}
-		y2--;
-	}
 }
 
 byte

@@ -136,7 +136,9 @@ void cpu_jump_relative8( sigbyte );
 void cpu_jump_relative16( sigword );
 void cpu_jump_absolute16( word );
 void cpu_setflags(word);
-void cpu_updflags(word, byte);
+void cpu_update_flags( word, byte bits );
+void cpu_update_flags16( word );
+void cpu_update_flags8( byte );
 word cpu_getflags();
 void cpu_addint(byte,word,word);
 void cpu_addinstruction( byte opcode_range_start, byte opcode_range_end, void (*handler)() );
@@ -145,24 +147,33 @@ byte cpu_in( word );
 bool cpu_evaluate(byte);
 word cpu_static_flags();
 
-void cpu_setZF(dword);
-void cpu_setSF(dword, byte);
-void cpu_setPF(dword);
 void cpu_setCF(dword, byte);
 void cpu_setAF(dword, word, word);
 
-void cpu_mathflags(dword, word, word, byte);
-void cpu_cmpflags(dword, word, word, byte);
+void cpu_math_flags8( dword, byte, byte );
+void cpu_math_flags16( dword, word, word );
+void cpu_cmp_flags8( dword, byte, byte );
+void cpu_cmp_flags16( dword, word, word );
 
-dword cpu_add(word, word, byte);
-dword cpu_sub(word, word, byte);
-dword cpu_mul(word, word, byte);
-dword cpu_div(word, word, byte);
-sigdword cpu_imul( sigword, sigword, byte );
+word cpu_add8( byte, byte );
+word cpu_sub8( byte, byte );
+word cpu_mul8( byte, byte );
+word cpu_div8( byte, byte );
+sigword cpu_imul8( sigbyte, sigbyte );
 
-dword cpu_or(word, word, byte);
-dword cpu_xor(word, word, byte);
-dword cpu_and(word, word, byte);
+dword cpu_add16( word, word );
+dword cpu_sub16( word, word );
+dword cpu_mul16( word, word );
+dword cpu_div16( word, word );
+sigdword cpu_imul16( sigword, sigword );
+
+byte cpu_or8( byte, byte );
+byte cpu_and8( byte, byte );
+byte cpu_xor8( byte, byte );
+word cpu_or16( word, word );
+word cpu_and16( word, word );
+word cpu_xor16( word, word );
+
 dword cpu_shl(word, byte, byte);
 dword cpu_shr(word, byte, byte);
 dword cpu_sar(word, byte, byte);
