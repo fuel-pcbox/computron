@@ -30,7 +30,9 @@ vomit_init( int argc, char **argv )
 {
 	memset( &options, 0, sizeof(options) );
 
+#ifdef VOMIT_TRY
 	const char *try_path = 0L;
+#endif
 
 	while( argc > 1 )
 	{

@@ -9,9 +9,6 @@ static int s_last_is_register = 0;
 static word s_last_modrm_segment = 0;
 static word s_last_modrm_offset = 0;
 
-void *modrm_resolve8( byte rmbyte );
-void *modrm_resolve16( byte rmbyte );
-
 void
 modrm_write16( byte rmbyte, word data )
 {

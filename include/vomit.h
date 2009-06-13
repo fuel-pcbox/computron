@@ -78,10 +78,16 @@ void dump_cpu();
 void dump_all();
 void dump_try();
 void dump_ivt();
+int dump_disasm( word, word );
 void dump_mem(word,word,byte);
 
 void dma_init();
 void fdc_init();
+void pic_init();
+void pit_init();
+void busmouse_init();
+void keyboard_init();
+void ide_init();
 
 void video_bios_init();
 void load_cursor( byte *row, byte *column );

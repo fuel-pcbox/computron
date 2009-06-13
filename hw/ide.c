@@ -1,4 +1,5 @@
 #include "vomit.h"
+#include "debug.h"
 
 #define ERROR 0x01
 #define INDEX 0x02

@@ -40,7 +40,7 @@ unspeakable_abomination()
 	FILE *fconf, *ftmp;
 	char curline[256], *curtok; char lfname[MAX_FN_LENGTH];
 	byte tb, lnum;
-	word lseg, loff, ldrv, lspt, lhds, lsect, lsectsize, ltype;
+	word lseg, loff, ldrv, lspt, lhds, lsect, lsectsize;
 
 	fconf = fopen("vm.conf", "r");
 	if(fconf == NULL) {
@@ -49,8 +49,10 @@ unspeakable_abomination()
 		return;
 	}
 
-    while(!feof(fconf)) {
-        fgets(curline, 256, fconf);
+    while( !feof( fconf ))
+	{
+		if( !fgets(curline, 256, fconf) )
+			break;
         if((curline[0]!='#')&&(strlen(curline)>1)) {
             curtok = strtok(curline, " \t\n");
             if(strcmp(curtok,"loadfile")==0) {
@@ -66,7 +68,11 @@ unspeakable_abomination()
 					vlog( VM_CONFIGMSG, "Error while processing \"loadfile\" line." );
 					vm_exit(1);
 				}
-                fread(mem_space+lseg*16+loff, 1, MAX_FILESIZE, ftmp);
+                if( !fread( mem_space+lseg*16+loff, 1, MAX_FILESIZE, ftmp ))
+				{
+					vlog( VM_CONFIGMSG, "Failure reading from %s", lfname );
+					vm_exit(1);
+				}
                 fclose(ftmp);
             }
 			else if( !reloading && !strcmp( curtok, "setbyte" ))
@@ -114,6 +120,8 @@ unspeakable_abomination()
                 drv_sectsize[ldrv] = dt->bytes_per_sector;
 				drv_type[ldrv] = dt->media_type;
                 drv_status[ldrv] = 1;
+				/* TODO: What should the media type be? */
+				drv_type[ldrv] = 0;
 
 				vlog( VM_INITMSG, "Floppy %d: %s (%dspt, %dh, %ds (%db))", ldrv, lfname, dt->sectors_per_track, dt->heads, dt->sectors, dt->bytes_per_sector );
 			}
@@ -134,7 +142,6 @@ unspeakable_abomination()
                 drv_heads[ldrv] = lhds;
                 drv_sectors[ldrv] = lsect;
                 drv_sectsize[ldrv] = lsectsize;
-				drv_type[ldrv] = ltype;
                 drv_status[ldrv] = 1;
             }
 			else if( !reloading && !strcmp( curtok, "cpu" ))

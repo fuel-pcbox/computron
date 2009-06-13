@@ -5,6 +5,8 @@
 
 #include <stdio.h>
 #include "vomit.h"
+#include "debug.h"
+#include "disasm.h"
 
 void
 dump_cpu()

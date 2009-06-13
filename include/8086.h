@@ -178,6 +178,8 @@ void modrm_write8( byte, byte );
 void modrm_write16( byte, word );
 void modrm_update8( byte );
 void modrm_update16( word );
+void *modrm_resolve8( byte rmbyte );
+void *modrm_resolve16( byte rmbyte );
 
 void mem_init();
 void mem_kill();
