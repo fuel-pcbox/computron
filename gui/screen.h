@@ -35,6 +35,8 @@ public:
 
 	void setScreenSize( int width, int height );
 
+	void setTinted( bool );
+
 protected:
 	void keyPressEvent( QKeyEvent *e );
 	void keyReleaseEvent( QKeyEvent *e );
@@ -70,6 +72,7 @@ private:
 
 	bool m_clearBackground;
 	int m_rows;
+	bool m_tinted;
 };
 
 #endif

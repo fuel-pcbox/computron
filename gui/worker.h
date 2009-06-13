@@ -2,6 +2,7 @@
 #define __worker_h__
 
 #include <QThread>
+#include <QMutex>
 
 class Worker : public QThread
 {
@@ -10,12 +11,19 @@ public:
 	Worker( QObject *parent = 0L );
 	~Worker();
 
+	void startMachine();
+	void stopMachine();
+
 signals:
 	void finished();
 
 public slots:
 	void run();
 	void shutdown();
+
+private:
+	QMutex m_mutex;
+	bool m_active;
 };
 
 #endif

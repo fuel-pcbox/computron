@@ -20,6 +20,7 @@ vomit_cpu_t cpu;
 uint32_t video_sync_counter;
 #endif
 static uint32_t pit_counter;
+unsigned int g_vomit_exit_main_loop = 0;
 
 #ifndef VM_NOPFQ
 byte *cpu_pfq;
@@ -303,6 +304,9 @@ cpu_main()
 
 	for( ;; )
 	{
+		if( g_vomit_exit_main_loop )
+			return;
+
 		cpu.base_CS = cpu.CS;
 		cpu.base_IP = cpu.IP;
 

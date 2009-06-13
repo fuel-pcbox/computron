@@ -13,6 +13,7 @@ QT += debug
 HEADERS += screen.h \
            worker.h \
 		   console.h \
+		   mainwindow.h \
            ../include/vomit.h \
            ../disasm/include/disasm.h \
            ../include/8086.h \
@@ -20,4 +21,4 @@ HEADERS += screen.h \
            ../include/floppy.h \
            ../include/vga.h
 
-SOURCES += keyboard.cpp main.cpp screen.cpp worker.cpp console.cpp
+SOURCES += keyboard.cpp main.cpp screen.cpp worker.cpp console.cpp mainwindow.cpp

@@ -16,6 +16,7 @@ Screen::Screen()
 	m_rows = 0;
 	m_width = 0;
 	m_height = 0;
+	m_tinted = false;
 
 	init();
 	synchronizeFont();
@@ -54,6 +55,15 @@ Screen::putCharacter( QPainter &p, int row, int column, byte color, byte c )
 	// Text
 	p.setPen( m_color[color & 0xF] );
 	p.drawPixmap( x, y, m_character[c] );
+
+	if( m_tinted )
+	{
+		p.save();
+		p.setCompositionMode( QPainter::CompositionMode_SourceOver );
+		p.setOpacity( 0.3 );
+		p.fillRect( x, y, m_characterWidth, m_characterHeight, Qt::blue );
+		p.restore();
+	}
 }
 
 extern "C" {
@@ -200,6 +210,12 @@ Screen::paintEvent( QPaintEvent *e )
 		setScreenSize( 640, 480 );
 		QPainter wp( this );
 		wp.drawImage( e->rect(), m_screen12.copy( e->rect() ));
+
+		if( m_tinted )
+		{
+			wp.setOpacity( 0.3 );
+			wp.fillRect( e->rect(), Qt::blue );
+		}
 		return;
 	}
 
@@ -371,4 +387,12 @@ int
 get_current_y()
 {
 	return currentY;
+}
+
+void
+Screen::setTinted( bool t )
+{
+	m_tinted = t;
+	m_clearBackground = true;
+	repaint();
 }

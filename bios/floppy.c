@@ -18,6 +18,13 @@ char drv_title[4][MAX_DRV_TITLESIZE+1];
 byte drv_status[4], drv_type[4];
 dword drv_spt[4], drv_heads[4], drv_sectors[4], drv_sectsize[4];
 
+void
+vomit_set_drive_image( int drive_id, const char *filename )
+{
+	strcpy( drv_imgfile[drive_id], filename );
+	vlog( VM_DISKLOG, "Drive %u image changed to %s", drive_id, filename );
+}
+
 word
 chs2lba( byte drive, word cyl, byte head, word sector )
 {

@@ -48,7 +48,7 @@ vlog( int category, const char *format, ... )
 		case VM_DUMPMSG: show_on_stdout = false; break;
 	}
 
-	if( s_vlog_handler && show_on_stdout )
+	if( s_vlog_handler && (show_on_stdout || category == VM_DUMPMSG) )
 	{
 		va_start( ap, format );
 		(*s_vlog_handler)( category, format, ap );
