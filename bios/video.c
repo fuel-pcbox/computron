@@ -186,8 +186,8 @@ write_character_and_attribute_at_cursor()
 			word x1 = column * 8;
 			word y1 = row * 16;
 
-			if( cpu.regs.B.AL != 0x80 )
-				printf( "write character at %03u,%03u: %c\n", x1, y1, cpu.regs.B.AL );
+			//if( cpu.regs.B.AL != 0x80 )
+				//printf( "write character at %03u,%03u: %c\n", x1, y1, cpu.regs.B.AL );
 
 			for( int char_y = 0; char_y < 16; ++char_y )
 			{
