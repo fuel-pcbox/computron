@@ -29,6 +29,11 @@ Screen::Screen()
 	m_screen0D = QImage( 320, 200, QImage::Format_Indexed8 );
 	m_render0D = QImage( 320, 200, QImage::Format_Indexed8 );
 
+	m_screen12.fill(0);
+	m_render12.fill(0);
+	m_screen0D.fill(0);
+	m_render0D.fill(0);
+
 	synchronizeColors();
 
 	m_clearBackground = true;
