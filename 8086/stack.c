@@ -10,7 +10,7 @@ void
 _PUSH_reg16()
 {
 	/* PUSH SP will use the value AFTER the push on Intel 8086. */
-	if( cpu.type == INTEL_8086 && cpu.opcode & 7 == REG_SP )
+	if( cpu.type == INTEL_8086 && (cpu.opcode & 7) == REG_SP )
 	{
 		mem_push( cpu.regs.W.SP + 2 );
 	}
