@@ -23,6 +23,10 @@ static bool slave_icw2_expected = false;
 static byte master_addr_base = 0x08;
 static byte slave_addr_base = 0x70;
 
+static word s_pending_requests = 0;
+
+#define UPDATE_PENDING_REQUESTS do { s_pending_requests = (master_irr & ~master_imr) | ((slave_irr & ~slave_imr) << 8); } while(0);
+
 void
 pic_init()
 {
@@ -31,6 +35,8 @@ pic_init()
 
 	vm_listen( 0x00A0, pic_slave_read, pic_slave_write );
 	vm_listen( 0x00A1, pic_slave_read, pic_slave_write );
+
+	UPDATE_PENDING_REQUESTS;
 }
 
 void
@@ -68,6 +74,7 @@ pic_master_write( word port, byte data )
 		master_irr = 0;
 		master_read_irr = 1;
 		master_icw2_expected = 1;
+		UPDATE_PENDING_REQUESTS;
 		return;
 	}
 	if( port == 0x20 && ((data & 0x18) == 0x00) )
@@ -83,11 +90,12 @@ pic_master_write( word port, byte data )
 			vlog( VM_PICMSG, " - IRQ %u: %s", i, (data & (1 << i)) ? "masked" : "service" );
 		}
 		master_imr = data;
+		UPDATE_PENDING_REQUESTS;
 		return;
 	}
 	vlog( VM_PICMSG, "Write PIC ICW on port %04X (data: %02X)", port, data );
 	vlog( VM_PICMSG, "I can't handle that request, better quit!" );
-	vm_kill( 1 );
+	vm_exit( 1 );
 }
 
 byte
@@ -107,7 +115,7 @@ pic_master_read( word port )
 	}
 	vlog( VM_PICMSG, "Read PIC ICW on port %04X", port );
 	vlog( VM_PICMSG, "I can't handle that request, better quit!" );
-	vm_kill( 1 );
+	vm_exit( 1 );
 	return 0;
 }
 
@@ -125,20 +133,20 @@ irq( byte num )
 	{
 		slave_irr |= 1 << (num - 8);
 	}
+
+	UPDATE_PENDING_REQUESTS;
 }
 
 void
 pic_service_irq()
 {
-	word pending_requests = (master_irr & ~master_imr) | ((slave_irr & ~slave_imr) << 8);
-
-	if( !pending_requests )
+	if( !s_pending_requests )
 		return;
 
 	byte interrupt_to_service = 0xFF;
 
 	for( int i = 0; i < 16; ++i )
-		if( pending_requests & (1 << i) )
+		if( s_pending_requests & (1 << i) )
 			interrupt_to_service = i;
 
 	if( interrupt_to_service == 0xFF )
@@ -158,6 +166,8 @@ pic_service_irq()
 
 		int_call( slave_addr_base | interrupt_to_service );
 	}
+
+	UPDATE_PENDING_REQUESTS;
 
 	cpu.state = CPU_ALIVE;
 }
@@ -197,6 +207,7 @@ pic_slave_write( word port, byte data )
 		slave_irr = 0;
 		slave_read_irr = 1;
 		slave_icw2_expected = 1;
+		UPDATE_PENDING_REQUESTS;
 		return;
 	}
 	if( port == 0xA0 && ((data & 0x18) == 0x00) )
@@ -212,11 +223,12 @@ pic_slave_write( word port, byte data )
 			vlog( VM_PICMSG, " - IRQ %u: %s", i, (data & (1 << i)) ? "masked" : "service" );
 		}
 		slave_imr = data;
+		UPDATE_PENDING_REQUESTS;
 		return;
 	}
 	vlog( VM_PICMSG, "Write PIC ICW on port %04X (data: %02X)", port, data );
 	vlog( VM_PICMSG, "I can't handle that request, better quit!" );
-	vm_kill( 1 );
+	vm_exit( 1 );
 }
 
 byte
