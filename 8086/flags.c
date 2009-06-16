@@ -72,7 +72,7 @@ cpu_update_flags( word data, byte bits )
 	}
 	else
 	{
-		cpu.PF = parity_table[data];
+		cpu.PF = parity_table[data & 0xFF];
 		cpu.SF = (data & 0x8000) != 0;
 	}
 	cpu.ZF = data == 0;
