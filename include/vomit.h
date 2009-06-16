@@ -80,6 +80,7 @@ void dump_try();
 void dump_ivt();
 int dump_disasm( word, word );
 void dump_mem(word,word,byte);
+void dump_regs();
 
 void dma_init();
 void fdc_init();

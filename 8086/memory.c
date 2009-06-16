@@ -15,7 +15,7 @@ extern word vga_getword( dword );
 extern void vga_setbyte( dword, byte );
 extern void vga_setword( dword, word );
 
-byte *mem_space;
+byte *mem_space = 0;
 word mem_avail = 640;
 
 void

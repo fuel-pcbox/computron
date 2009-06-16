@@ -21,6 +21,8 @@ private slots:
 	void slotStartMachine();
 	void slotStopMachine();
 
+	void slotUpdateMemView();
+
 private:
 	struct Private;
 	Private *d;

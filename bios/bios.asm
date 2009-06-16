@@ -98,15 +98,30 @@ _unimplemented_isr:
 
 _bios_post:                         ; Power On Self-Test ;-)
     cli
-    mov     ax, 0x0030              ; actual default
+    mov     ax, 0x9000              ; actual default
     mov     ss, ax                  ; POST stack location
     mov     sp, 0x00FF              ; (whee)
     
     push    cs
     pop     ds
 
-    mov     ax, 0x9000
-    mov     ss, ax
+; ***
+; Let's start by poking some random bytes that used to be in the config file.
+    xor     ax, ax
+    mov     es, ax
+
+    mov     [es:0x500], byte 0xFF   ; PrintScreen error.
+
+    mov     ax, 0xF000
+    mov     es, ax
+    mov     [es:0xFFFE], word 0x00FE ; IBM XT(82) - 0x00FF is original IBM PC
+
+    mov     si, bios_date
+    mov     di, 0xFFF5
+    mov     cx, 8
+    rep     movsb
+
+; ***
 
     call    vga_clear               ; Clear screen and move cursor to
     xor     ax, ax                  ; upper left corner.
@@ -1454,6 +1469,8 @@ reset_ide_drive:
     msg_ide1           db  "IDE1", 0
     msg_not            db  " not", 0
     msg_ready          db  " ready.", 0x0d, 0x0a, 0
+
+    bios_date          db  "11/02/03"
 
     ; this pretty much violates the whole ROM concept
     temp               dw  0x0000

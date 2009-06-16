@@ -21,9 +21,7 @@ Worker::run()
 {
 	while( m_active )
 	{
-		qDebug() << "VOMIT entering cpu_main()";
 		cpu_main();
-		qDebug() << "VOMIT left cpu_main()";
 		while( !m_active )
 			msleep( 50 );
 	}

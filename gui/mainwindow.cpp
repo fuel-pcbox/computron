@@ -2,12 +2,16 @@
 #include "worker.h"
 #include "console.h"
 #include "screen.h"
+#include "memview.h"
 #include <QToolBar>
 #include <QAction>
 #include <QFileDialog>
 #include <QVBoxLayout>
 #include <QTimer>
+#include <QTabWidget>
+#include <QLabel>
 #include <QDebug>
+#include "hexspinbox.h"
 
 extern "C" {
 void vomit_set_drive_image( int drive_id, const char *filename );
@@ -21,9 +25,13 @@ struct MainWindow::Private
 	QAction *pauseMachine;
 	QAction *stopMachine;
 
-	Worker worker;
+	Worker *worker;
 	Screen screen;
 	Console console;
+	MemoryView memview;
+
+	HexSpinBox *segmentEdit;
+	HexSpinBox *offsetEdit;
 
 	QTimer syncTimer;
 };
@@ -34,7 +42,6 @@ MainWindow::MainWindow()
 	setWindowTitle( "Vomit" );
 
 	QWidget *widget = new QWidget( this );
-	widget->setWindowTitle( "VOMIT" );
 
 	QVBoxLayout *l = new QVBoxLayout;
 	l->setSpacing( 0 );
@@ -42,8 +49,36 @@ MainWindow::MainWindow()
 	widget->setLayout( l );
 	l->addWidget( &d->screen );
 	//l->addWidget( activityBar );
-	l->addWidget( &d->console );
 
+	QTabWidget *tabs = new QTabWidget;
+	l->addWidget( tabs );
+
+	tabs->addTab( &d->console, tr("Console") );
+
+	QWidget *memTab = new QWidget;
+	QVBoxLayout *ml = new QVBoxLayout;
+	ml->setSpacing( 0 );
+	ml->setMargin( 0 );
+
+	d->segmentEdit = new HexSpinBox;
+	d->offsetEdit = new HexSpinBox;
+
+	QHBoxLayout *mhl = new QHBoxLayout;
+	mhl->addWidget( new QLabel( tr("Segment:") ));
+	mhl->addWidget( d->segmentEdit );
+	mhl->addWidget( new QLabel( tr("Offset:") ));
+	mhl->addWidget( d->offsetEdit );
+	ml->addLayout( mhl );
+
+	connect( d->segmentEdit, SIGNAL(valueChanged(int)), SLOT(slotUpdateMemView()) );
+	connect( d->offsetEdit, SIGNAL(valueChanged(int)), SLOT(slotUpdateMemView()) );
+
+	ml->addWidget( &d->memview );
+
+	memTab->setLayout( ml );
+	tabs->addTab( memTab, tr("Memory") );
+
+	tabs->setCurrentWidget( memTab );
 
 	d->screen.setFocus();
 
@@ -75,9 +110,10 @@ MainWindow::MainWindow()
 	connect( d->startMachine, SIGNAL(triggered(bool)), SLOT(slotStartMachine()) );
 	connect( d->stopMachine, SIGNAL(triggered(bool)), SLOT(slotStopMachine()) );
 
-	QObject::connect( &d->worker, SIGNAL( finished() ), this, SLOT( close() ));
-	d->worker.startMachine();
-	d->worker.start();
+	d->worker = new Worker( this );
+	QObject::connect( d->worker, SIGNAL( finished() ), this, SLOT( close() ));
+	d->worker->startMachine();
+	d->worker->start();
 
 	QObject::connect( &d->syncTimer, SIGNAL( timeout() ), &d->screen, SLOT( refresh() ));
 	QObject::connect( &d->syncTimer, SIGNAL( timeout() ), &d->screen, SLOT( flushKeyBuffer() ));
@@ -123,7 +159,7 @@ MainWindow::slotPauseMachine()
 
 	d->screen.setTinted( true );
 
-	d->worker.stopMachine();
+	d->worker->stopMachine();
 }
 
 void
@@ -135,7 +171,7 @@ MainWindow::slotStopMachine()
 
 	d->screen.setTinted( true );
 
-	d->worker.stopMachine();
+	d->worker->stopMachine();
 }
 
 void
@@ -147,11 +183,17 @@ MainWindow::slotStartMachine()
 
 	d->screen.setTinted( false );
 
-	d->worker.startMachine();
+	d->worker->startMachine();
 }
 
 Screen *
 MainWindow::screen()
 {
 	return &d->screen;
+}
+
+void
+MainWindow::slotUpdateMemView()
+{
+	d->memview.setAddress( d->segmentEdit->value(), d->offsetEdit->value() );
 }

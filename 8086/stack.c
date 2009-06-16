@@ -47,7 +47,7 @@ _PUSH_seg()
 void
 _POP_CS()
 {
-	vlog( VM_ALERT, "%04X:%04X Attempted either POP CS or 286+ instruction.", cpu.base_CS, cpu.base_IP );
+	vlog( VM_ALERT, "%04X:%04X: 286+ instruction (or possibly POP CS...)", cpu.base_CS, cpu.base_IP );
 
 	(void) cpu_pfq_getbyte();
 	(void) cpu_pfq_getbyte();

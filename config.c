@@ -144,6 +144,26 @@ unspeakable_abomination()
                 drv_sectsize[ldrv] = lsectsize;
                 drv_status[ldrv] = 1;
             }
+			else if( !strcmp( curtok, "fixed" ))
+			{
+				long megabytes;
+
+				ldrv = strtol( strtok(NULL, " \t\n"), NULL, 16 );
+                strcpy(lfname, strtok(NULL, " \t\n"));
+
+				megabytes = strtol( strtok(NULL, " \t\n"), NULL, 10 );
+
+				vlog( VM_INITMSG, "Fixed drive %d: %s (%ld MB)", ldrv, lfname, megabytes );
+
+				ldrv += 2;
+
+				strcpy( drv_imgfile[ldrv], lfname );
+				drv_spt[ldrv] = 63;
+				drv_heads[ldrv] = 16;
+				drv_sectsize[ldrv] = 512;
+				drv_status[ldrv] = 1;
+				drv_sectors[ldrv] = (megabytes * 1048576) / drv_sectsize[ldrv];
+			}
 			else if( !reloading && !strcmp( curtok, "cpu" ))
 			{
 				curtok = strtok(NULL, " \t\n");

@@ -521,6 +521,7 @@ void
 _WAIT()
 {
 	/* Do nothing? */
+	vlog( VM_ALERT, "%04X:%04X: WAIT", cpu.base_CS, cpu.base_IP );
 }
 
 void
