@@ -88,6 +88,7 @@ void pit_init();
 void busmouse_init();
 void keyboard_init();
 void ide_init();
+void gameport_init();
 
 void video_bios_init();
 void load_cursor( byte *row, byte *column );
@@ -101,7 +102,6 @@ extern bool disklog, trapint, iopeek, mempeek, callpeek;
 
 extern bool g_try_run;
 extern bool g_debug_step;
-extern bool g_break_pressed;
 
 extern void vomit_set_vlog_handler( void (*f)(int, const char *, va_list) );
 
@@ -117,4 +117,4 @@ extern vomit_options_t options;
 #include "floppy.h"
 #include "vga.h"
 
-#endif /* __vomit_h__ */
+#endif

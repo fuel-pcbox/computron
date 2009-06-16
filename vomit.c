@@ -3,7 +3,6 @@
  *
  */
 
-#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -74,9 +73,6 @@ vomit_init( int argc, char **argv )
 	vm_init();
 	vm_loadconf();
 	cpu_genmap();
-
-	/*vlog( VM_INITMSG, "Registering SIGINT handler" );
-	signal( SIGINT, vm_cbreak );*/
 
 	cpu.state = CPU_ALIVE;
 
@@ -156,13 +152,4 @@ vm_exit( int ec )
 	exiting = true;
 	vm_kill();
 	exit( ec );
-}
-
-void
-vm_cbreak( int sig )
-{
-	(void) sig;
-	g_break_pressed = true;
-
-	signal( SIGINT, vm_cbreak );
 }
