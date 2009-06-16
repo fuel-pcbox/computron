@@ -3,9 +3,9 @@ OBJS = vomit.o ui.o config.o dump.o debug.o vmcalls.o fpu.o 186.o 8086/cpu.o 808
 DEFS = -DVM_DEBUG -DVOMIT_TRACE -DVOMIT_FOREVER #-DVOMIT_CORRECTNESS -DVOMIT_CURSES #-DVOMIT_BIG_ENDIAN
 #DEFS = -DVM_DEBUG -DVOMIT_CORRECTNESS# -DVOMIT_CURSES #-DVOMIT_BIG_ENDIAN
 #DEFS += -DVOMIT_SDL -DVOMIT_CURSES `sdl-config --cflags`
-CFLAGS = -std=c99 -ggdb3 -pipe -O3 -W -Wall -pedantic -Wcast-qual -Wuninitialized -Wshadow -Wformat -Wimplicit -Wunused -Wundef -Wformat-security -Wpointer-arith
+CFLAGS = -std=c99 -ggdb3 -pipe -O3 -W -Wall -pedantic -Wcast-qual -Wuninitialized -Wshadow -Wformat -Wimplicit -Wunused -Wundef -Wformat-security -Wpointer-arith -fPIC
 INCLUDES = -Iinclude -Idisasm/include #`sdl-config --cflags`
-LIBS = -lcurses `sdl-config --libs`
+LIBS = -lncurses `sdl-config --libs`
 PRG = vmachine
 LIBRARY = libvomit.so
 
