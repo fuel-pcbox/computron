@@ -24,6 +24,7 @@ gameport_init()
 byte
 gameport_read( word port )
 {
+	(void) port;
 	return 0x80;
 }
 
