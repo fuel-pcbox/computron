@@ -335,6 +335,7 @@ cpu_main()
 		cpu.opcode = cpu_pfq_getbyte();
 		cpu_optable[cpu.opcode]();	/* Call instruction handler. */
 
+#ifdef VM_DEBUG
 		if( g_debug_step )
 		{
 			ui_kill();
@@ -342,6 +343,7 @@ cpu_main()
 			if( g_debug_step )
 				continue;
 		}
+#endif
 
 		if( !--pit_counter )
 		{
