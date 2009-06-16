@@ -16,52 +16,13 @@ _NOP()
 void
 _HLT()
 {
-	/* XXX: When halted, we're not really waiting for an interrupt.
-	 *      We should, though. */
 	cpu.state = CPU_HALTED;
 	vlog( VM_CPUMSG, "%04X:%04X Halted", cpu.base_CS, cpu.base_IP );
-
-	return;
-
-#ifdef VOMIT_TRY
-	if( g_try_run )
-	{
-		vm_kill();
-		dump_try();
-		exit( 0 );
-	}
-#endif
-
-	while( cpu.state == CPU_HALTED )
-	{
-		/* Sleep for 100ms when halted. Prevents resource sucking. */
-		usleep( 100 );
-
-		if( g_debug_step )
-		{
-			vm_debug();
-			if( g_debug_step )
-				continue;
-			ui_show();
-		}
-
-		/* TODO: This is a clone of code in cpu_main(). Me no likey. */
-		if( g_break_pressed )
-		{
-			ui_kill();
-			vm_debug();
-			if( !g_debug_step )
-				ui_show();
-			g_break_pressed = false;
-			/* TODO: int_call( 9 ); */
-		}
-
-		ui_sync();
-	}
 }
 
 void
-_XLAT() {
+_XLAT()
+{
 	cpu.regs.B.AL = mem_getbyte( *(cpu.CurrentSegment), cpu.regs.W.BX + cpu.regs.B.AL );
 }
 

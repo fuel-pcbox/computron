@@ -78,24 +78,47 @@ cpu_update_flags( word data, byte bits )
 	cpu.ZF = data == 0;
 }
 
-void _STC() { cpu.CF = 1; } void _STD() { cpu.DF = 1; }
+void
+_STC()
+{
+	cpu.CF = 1;
+}
+
+void
+_STD()
+{
+	cpu.DF = 1;
+}
 
 void
 _STI()
 {
-	//if( !cpu.IF ) vlog( VM_CPUMSG, "Interrupts ON" );
 	cpu.IF = 1;
 }
 
 void
 _CLI()
 {
-	//if( cpu.IF ) vlog( VM_CPUMSG, "Interrupts OFF" );
 	cpu.IF = 0;
 }
 
-void _CLC() { cpu.CF = 0; } void _CLD() { cpu.DF = 0; }
-void _CMC() { cpu.CF = !cpu.CF; }
+void
+_CLC()
+{
+	cpu.CF = 0;
+}
+
+void
+_CLD()
+{
+	cpu.DF = 0;
+}
+
+void
+_CMC()
+{
+	cpu.CF = !cpu.CF;
+}
 
 void
 cpu_math_flags8( dword result, byte dest, byte src )
