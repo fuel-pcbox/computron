@@ -274,6 +274,23 @@ void _JMP_short_imm8();
 void _Jcc_imm8();
 void _JCXZ_imm8();
 
+void _JO_imm8();
+void _JNO_imm8();
+void _JC_imm8();
+void _JNC_imm8();
+void _JZ_imm8();
+void _JNZ_imm8();
+void _JNA_imm8();
+void _JA_imm8();
+void _JS_imm8();
+void _JNS_imm8();
+void _JP_imm8();
+void _JNP_imm8();
+void _JL_imm8();
+void _JNL_imm8();
+void _JNG_imm8();
+void _JG_imm8();
+
 void _CALL_imm16();
 void _RET();
 void _RET_imm16();
