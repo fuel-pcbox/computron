@@ -492,6 +492,11 @@ vga_setbyte( dword a, byte d )
 		if( io_sequencer[2] & 0x08 )
 			vm_p3[a] = new_val[3];
 
+#ifdef VOMIT_DIRECT_SCREEN
+		if( a < (640 * 480) )
+			screen_direct_update( a );
+#endif
+
 		video_dirty = true;
 	}
 }

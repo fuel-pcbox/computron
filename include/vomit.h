@@ -45,6 +45,8 @@ typedef void (*tfunctab) ();
 typedef void *(*tvptrfunctab) ();
 extern tfunctab cpu_optable[0x100];
 
+extern word g_pic_pending_requests;
+
 void vm_listen(word, byte (*)(word), void (*)(word, byte));
 byte vm_ioh_nin( word );
 void vm_ioh_nout( word, byte );
@@ -70,6 +72,11 @@ word kbd_getc();
 byte kbd_pop_raw();
 int get_current_x();
 int get_current_y();
+
+#ifdef VOMIT_DIRECT_SCREEN
+void screen_direct_update( word );
+#endif
+
 void busmouse_event();
 void busmouse_press( int button );
 void busmouse_release( int button );

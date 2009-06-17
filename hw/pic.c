@@ -23,9 +23,9 @@ static bool slave_icw2_expected = false;
 static byte master_addr_base = 0x08;
 static byte slave_addr_base = 0x70;
 
-static word s_pending_requests = 0;
+word g_pic_pending_requests = 0;
 
-#define UPDATE_PENDING_REQUESTS do { s_pending_requests = (master_irr & ~master_imr) | ((slave_irr & ~slave_imr) << 8); } while(0);
+#define UPDATE_PENDING_REQUESTS do { g_pic_pending_requests = (master_irr & ~master_imr) | ((slave_irr & ~slave_imr) << 8); } while(0);
 
 void
 pic_init()
@@ -140,13 +140,13 @@ irq( byte num )
 void
 pic_service_irq()
 {
-	if( !s_pending_requests )
+	if( !g_pic_pending_requests )
 		return;
 
 	byte interrupt_to_service = 0xFF;
 
 	for( int i = 0; i < 16; ++i )
-		if( s_pending_requests & (1 << i) )
+		if( g_pic_pending_requests & (1 << i) )
 			interrupt_to_service = i;
 
 	if( interrupt_to_service == 0xFF )
