@@ -8,6 +8,7 @@ INCLUDES = -Iinclude -Idisasm/include #`sdl-config --cflags`
 LIBS = -lncurses `sdl-config --libs`
 PRG = vmachine
 LIBRARY = libvomit.so
+MACLIBRARY = libvomit.dylib
 
 .c.o:
 	$(CC) $(CFLAGS) $(INCLUDES) $(DEFS) -o $@ -c $<
@@ -19,6 +20,11 @@ $(PRG): $(LIBRARY) main.o
 
 $(LIBRARY): $(OBJS)
 	$(CXX) -o $@ -shared -Wl,-soname=$@ $(OBJS)
+
+maclib: $(MACLIBRARY)
+
+$(MACLIBRARY): $(OBJS)
+	$(CXX) -dynamiclib -Wl,-headerpad_max_install_names,-undefined,dynamic_lookup -install_name,$(MACLIBRARY) -o $(MACLIBRARY) $(OBJS)
 
 clean:
 	$(RM) $(PRG) $(OBJS)
