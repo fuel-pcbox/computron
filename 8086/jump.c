@@ -50,18 +50,29 @@ _JMP_FAR_mem16()
 	cpu_jump( MSW(value), LSW(value) );
 }
 
-/* If you're bored some day and REALLY WANT SOME SMALL PERFORMANCE IMPROVEMENT
- * just split Jcc_imm8 into separate opcode handlers. Woot! */
-
-void
-_Jcc_imm8()
-{
-	sigbyte imm = cpu_pfq_getbyte();
-	if( cpu_evaluate( cpu.opcode & 0x0F ))
-	{
-		cpu_jump_relative8( imm );
-	}
+#define DO_JCC_imm8(name, condition) \
+void _ ## name ## _imm8() { \
+	sigbyte imm = cpu_pfq_getbyte(); \
+	if( (condition) ) \
+		cpu_jump_relative8( imm ); \
 }
+
+DO_JCC_imm8( JO,   cpu.OF )
+DO_JCC_imm8( JNO,  !cpu.OF )
+DO_JCC_imm8( JC,   cpu.CF )
+DO_JCC_imm8( JNC,  !cpu.CF )
+DO_JCC_imm8( JZ,   cpu.ZF )
+DO_JCC_imm8( JNZ,  !cpu.ZF )
+DO_JCC_imm8( JNA,  cpu.CF | cpu.ZF )
+DO_JCC_imm8( JA,   !(cpu.CF | cpu.ZF) )
+DO_JCC_imm8( JS,   cpu.SF )
+DO_JCC_imm8( JNS,  !cpu.SF )
+DO_JCC_imm8( JP,   cpu.PF )
+DO_JCC_imm8( JNP,  !cpu.PF )
+DO_JCC_imm8( JL,   cpu.SF ^ cpu.OF )
+DO_JCC_imm8( JNL,  !(cpu.SF ^ cpu.OF) )
+DO_JCC_imm8( JNG,  (cpu.SF ^ cpu.OF) | cpu.ZF )
+DO_JCC_imm8( JG,   !((cpu.SF ^ cpu.OF) | cpu.ZF) )
 
 void
 _CALL_imm16()

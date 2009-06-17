@@ -91,7 +91,15 @@ mem_getword( word seg, word off )
 	if( off == 0xFFFF )
 		return mem_space[flat_address] + (mem_space[seg<<4]<<8);
 #endif
+
+#ifdef VOMIT_BIG_ENDIAN
 	return mem_space[flat_address] + (mem_space[flat_address + 1]<<8);
+#else
+	{
+		word *wptr = (word *)&mem_space[flat_address];
+		return *wptr;
+	}
+#endif
 }
 
 void
@@ -190,8 +198,14 @@ mem_setword( word seg, word off, word w )
 	}
 	else
 	{
+
+#ifdef VOMIT_BIG_ENDIAN
 		mem_space[flat_address] = (byte)w;
 		mem_space[flat_address + 1] = (byte)(w>>8);
+#else
+		word *wptr = (word *)&mem_space[flat_address];
+		*wptr = w;
+#endif
 	}
 }
 

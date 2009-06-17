@@ -166,7 +166,22 @@ cpu_genmap()
 	cpu_addinstruction( 0x58, 0x5F, _POP_reg16        );
 	cpu_addinstruction( 0x6E, 0x6E, _OUTSB            );
 	cpu_addinstruction( 0x6F, 0x6F, _OUTSW            );
-	cpu_addinstruction( 0x70, 0x7F, _Jcc_imm8         );
+	cpu_addinstruction( 0x70, 0x70, _JO_imm8          );
+	cpu_addinstruction( 0x71, 0x71, _JNO_imm8         );
+	cpu_addinstruction( 0x72, 0x72, _JC_imm8          );
+	cpu_addinstruction( 0x73, 0x73, _JNC_imm8         );
+	cpu_addinstruction( 0x74, 0x74, _JZ_imm8          );
+	cpu_addinstruction( 0x75, 0x75, _JNZ_imm8         );
+	cpu_addinstruction( 0x76, 0x76, _JNA_imm8         );
+	cpu_addinstruction( 0x77, 0x77, _JA_imm8          );
+	cpu_addinstruction( 0x78, 0x78, _JS_imm8          );
+	cpu_addinstruction( 0x79, 0x79, _JNS_imm8         );
+	cpu_addinstruction( 0x7A, 0x7A, _JP_imm8          );
+	cpu_addinstruction( 0x7B, 0x7B, _JNP_imm8         );
+	cpu_addinstruction( 0x7C, 0x7C, _JL_imm8          );
+	cpu_addinstruction( 0x7D, 0x7D, _JNL_imm8         );
+	cpu_addinstruction( 0x7E, 0x7E, _JNG_imm8         );
+	cpu_addinstruction( 0x7F, 0x7F, _JG_imm8          );
 	cpu_addinstruction( 0x80, 0x80, _wrap_0x80        );
 	cpu_addinstruction( 0x81, 0x81, _wrap_0x81        );
 	cpu_addinstruction( 0x83, 0x83, _wrap_0x83        );
@@ -312,7 +327,13 @@ cpu_main()
 
 		if( cpu.state == CPU_HALTED )
 		{
-			if( cpu.IF )
+			if( !cpu.IF )
+			{
+				vlog( VM_ALERT, "%04X:%04X: Halted with IF=0", cpu.base_CS, cpu.base_IP );
+				return;
+			}
+
+			if( g_pic_pending_requests )
 			{
 				pic_service_irq();
 			}
@@ -353,7 +374,7 @@ cpu_main()
 			irq( 0 );
 		}
 
-		if( cpu.IF )
+		if( g_pic_pending_requests && cpu.IF )
 		{
 			pic_service_irq();
 		}
@@ -402,8 +423,13 @@ cpu_pfq_getbyte()
 word cpu_pfq_getword() { /* Get word from prefetch queue... same as above, but word and IP+2 */
 #ifdef VM_NOPFQ
 	word w;
+# ifdef VOMIT_BIG_ENDIAN
 	w = cpu.code_memory[cpu.IP++];
 	w |= (cpu.code_memory[cpu.IP++]) << 8;
+# else
+    w = *(word *)(&cpu.code_memory[cpu.IP]);
+	cpu.IP += 2;
+# endif
 	return w;
 #else
 	word w = (word)cpu_pfq[cpu_pfq_current];
