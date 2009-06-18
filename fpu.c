@@ -26,9 +26,6 @@ _ESCAPE()
 
 	return;
 
-	ui_kill();
-	vm_debug();
-	ui_show();
 #if 0
 	printf( "Swallowed %d bytes: ", cpu.IP - cpu.base_IP );
 	for( int i = 0; i < cpu.IP - cpu.base_IP; ++i )

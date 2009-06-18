@@ -365,7 +365,6 @@ vga_setbyte( dword a, byte d )
 				new_val[3] |= (d & 8) ? bitmask : 0;
 				break;
 			default:
-				ui_kill();
 				vlog( VM_VIDEOMSG, "Gaah, unsupported raster op %d in mode 2 :(\n", DRAWOP );
 				vm_exit( 0 );
 		}
@@ -458,7 +457,6 @@ vga_setbyte( dword a, byte d )
 				break;
 			default:
 				vlog( VM_VIDEOMSG, "Unsupported raster operation %d", DRAWOP );
-				ui_kill();
 				vm_exit( 0 );
 		}
 	}
@@ -507,7 +505,6 @@ vga_getbyte( dword a )
 	if( READ_MODE != 0 )
 	{
 		vlog( VM_VIDEOMSG, "ZOMG! READ_MODE = %u", READ_MODE );
-		ui_kill();
 		vm_exit( 1 );
 	}
 

@@ -15,10 +15,6 @@
 #define INSNS_PER_PIT_IRQ 400000
 
 vomit_cpu_t cpu;
-#ifdef VOMIT_CURSES
-#define INSNS_PER_VIDEO_SYNC 300000
-uint32_t video_sync_counter;
-#endif
 static uint32_t pit_counter;
 unsigned int g_vomit_exit_main_loop = 0;
 
@@ -77,10 +73,6 @@ cpu_init()
 	cpu_jump( 0xF000, 0x0000 );
 
     cpu_setflags( 0x0200 | cpu_static_flags() );
-
-#ifdef VOMIT_CURSES
-	video_sync_counter = INSNS_PER_VIDEO_SYNC;
-#endif
 
 	pit_counter = INSNS_PER_PIT_IRQ;
 	cpu.state = CPU_ALIVE;
@@ -356,16 +348,6 @@ cpu_main()
 		cpu.opcode = cpu_pfq_getbyte();
 		cpu_optable[cpu.opcode]();	/* Call instruction handler. */
 
-#ifdef VM_DEBUG
-		if( g_debug_step )
-		{
-			ui_kill();
-			vm_debug();
-			if( g_debug_step )
-				continue;
-		}
-#endif
-
 		if( !--pit_counter )
 		{
 			pit_counter = INSNS_PER_PIT_IRQ;
@@ -390,18 +372,6 @@ cpu_main()
 			 *       clears IF. Phew. */
 			int_call( 1 );
 		}
-
-#ifdef VOMIT_CURSES
-		if( !--video_sync_counter )
-		{
-			video_sync_counter = INSNS_PER_VIDEO_SYNC;
-
-# ifdef VOMIT_TRY
-			if( !g_try_run )
-# endif
-				ui_sync();
-		}
-#endif
     }
 }
 

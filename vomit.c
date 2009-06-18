@@ -111,14 +111,6 @@ void vm_init() {
 	vlog( VM_INITMSG, "Initializing video BIOS" );
 	video_bios_init();
 
-#ifdef VOMIT_TRY
-	if( !g_try_run )
-#endif
-	{
-		vlog( VM_INITMSG, "Initializing user interface" );
-		ui_init();
-	}
-
 	for ( i = 0; i <= 0xFFFF; ++i )
 		vm_listen( i, 0L, 0L );
 
@@ -140,10 +132,6 @@ vm_kill()
 	vga_kill();
 	cpu_kill();
 	mem_kill();
-#ifdef VOMIT_TRY
-	if( !g_try_run )
-		ui_kill();
-#endif
 }
 
 void

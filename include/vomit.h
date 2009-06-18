@@ -63,10 +63,6 @@ void vm_handleE6(word);
 void vm_init();
 void vm_kill();
 
-void ui_init();
-void ui_kill();
-void ui_show();
-void ui_sync();
 word kbd_hit();
 word kbd_getc();
 byte kbd_pop_raw();

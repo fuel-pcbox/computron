@@ -106,16 +106,6 @@ void
 mem_setbyte( word seg, word off, byte b )
 {
 	dword flat_address = FLAT( seg, off );
-	#if 0
-	if( off == 0x95FF )
-	{
-		ui_kill();
-		vlog( VM_VIDEOMSG, "WEWT BOOYAH write %02X to %04X:%04X (%08X)\n", b, seg, off, flat_address );
-		vm_debug();
-		if( !g_debug_step )
-			ui_show();
-	}
-	#endif
 
 #ifdef VM_DEBUG
 	if( mempeek )
@@ -142,32 +132,12 @@ mem_setbyte( word seg, word off, byte b )
 		//fprintf(stderr,"not vga: %08x\n", flat_address);
 		mem_space[flat_address] = b;
 	}
-
-#if 0
-	if( off == 0x95FF )
-	{
- 		ui_kill();
-		g_debug_step = 1;
-		vm_debug();
-		if( !g_debug_step )
-		  ui_show();
-	}
-#endif
 }
 
 void
 mem_setword( word seg, word off, word w )
 {
 	dword flat_address = FLAT( seg, off );
-
-#if 0
-	if( off == 0xBFFC )
-	{
-		ui_kill();
-		vlog( VM_VIDEOMSG, "LOOOOL BOOYAH write %04X to %04X:%04X (%08X)\n", w, seg, off, flat_address );
-		vm_exit( 0 );
-	}
-#endif
 
 #ifdef VM_DEBUG
 	if( mempeek )
