@@ -142,7 +142,7 @@ vga_write_3c0( word port, byte data )
 	else
 	{
 		vga_palette_register[index_palette] = data;
-		vlog( VM_VIDEOMSG, "PALETTE[%u] = %02X", index_palette, data );
+		//vlog( VM_VIDEOMSG, "PALETTE[%u] = %02X", index_palette, data );
 	}
 
 	next_3c0_is_index = !next_3c0_is_index;
@@ -152,7 +152,7 @@ byte
 vga_read_3c1( word port )
 {
 	(void) port;
-	vlog( VM_VIDEOMSG, "Read PALETTE[%u] (=%02X)", index_palette, vga_palette_register[index_palette] );
+	//vlog( VM_VIDEOMSG, "Read PALETTE[%u] (=%02X)", index_palette, vga_palette_register[index_palette] );
 	return vga_palette_register[index_palette];
 }
 
