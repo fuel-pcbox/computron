@@ -1,4 +1,4 @@
-; VOMIT ROM-BIOS
+; Vomit ROM-BIOS
 ; (C) Andreas Kling 2003-2006
 ;
 ; vim:set syntax=nasm et sts=4 sw=4:
@@ -1437,7 +1437,7 @@ reset_ide_drive:
     
 ; DATA
 
-    msg_version        db "VOMIT Virtual Machine", 0x0d, 0x0a
+    msg_version        db "Vomit Virtual 8086", 0x0d, 0x0a
                        db "(C) Copyright Andreas Kling 2003-2009", 0x0d, 0x0a, 0x0d, 0x0a, 0
 
     msg_8086           db "8086", 0
