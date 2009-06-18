@@ -3,6 +3,7 @@
 #include "console.h"
 #include "screen.h"
 #include "memview.h"
+#include "codeview.h"
 #include <QToolBar>
 #include <QAction>
 #include <QFileDialog>
@@ -29,6 +30,7 @@ struct MainWindow::Private
 	Screen screen;
 	Console console;
 	MemoryView memview;
+	CodeView codeview;
 
 	HexSpinBox *segmentEdit;
 	HexSpinBox *offsetEdit;
@@ -78,7 +80,9 @@ MainWindow::MainWindow()
 	memTab->setLayout( ml );
 	tabs->addTab( memTab, tr("Memory") );
 
-	tabs->setCurrentWidget( memTab );
+	tabs->addTab( &d->codeview, tr("Code") );
+
+	tabs->setCurrentWidget( &d->codeview );
 
 	d->screen.setFocus();
 

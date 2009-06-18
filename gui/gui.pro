@@ -14,6 +14,7 @@ HEADERS += screen.h \
            worker.h \
 		   console.h \
 		   memview.h \
+		   codeview.h \
 		   mainwindow.h \
 		   hexspinbox.h \
            ../include/vomit.h \
@@ -23,4 +24,4 @@ HEADERS += screen.h \
            ../include/floppy.h \
            ../include/vga.h
 
-SOURCES += keyboard.cpp main.cpp screen.cpp worker.cpp console.cpp mainwindow.cpp memview.cpp hexspinbox.cpp
+SOURCES += keyboard.cpp main.cpp screen.cpp worker.cpp console.cpp mainwindow.cpp memview.cpp hexspinbox.cpp codeview.cpp
