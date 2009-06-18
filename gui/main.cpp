@@ -1,16 +1,42 @@
 #include "mainwindow.h"
 #include <QApplication>
+#include <QFile>
 #include "screen.h"
-//#include "cpuview.h"
-
-#include "../include/vomit.h"
+#include "vomit.h"
 
 static MainWindow *mw = 0L;
+
+bool disklog, trapint, iopeek, mempeek;
 
 int
 main( int argc, char **argv )
 {
 	QApplication app( argc, argv );
+
+	QStringList args = app.arguments();
+
+	memset( &options, 0, sizeof(options) );
+	if( args.contains( "--disklog" )) disklog = true;
+	if( args.contains( "--trapint" )) trapint = true;
+	if( args.contains( "--mempeek" )) mempeek = true;
+	if( args.contains( "--iopeek" )) iopeek = true;
+	if( args.contains( "--bda-peek" )) options.bda_peek = true;
+	if( args.contains( "--trace" )) options.trace = true;
+
+#ifndef VOMIT_TRACE
+	if( options.trace )
+	{
+		fprintf( stderr, "Rebuild with #define VOMIT_TRACE if you want --trace to work.\n" );
+		exit( 1 );
+	}
+#endif
+
+	extern void vomit_disasm_init_tables();
+	vomit_disasm_init_tables();
+
+	QFile::remove( "log.txt" );
+
+	cpu_genmap();
 
 	int rc = vomit_init( argc, argv );
 
@@ -23,9 +49,6 @@ main( int argc, char **argv )
 	mw = new MainWindow;
 
 	mw->show();
-
-//	CPUView *cpuView = new CPUView;
-//	cpuView->show();
 
 	return app.exec();
 }
