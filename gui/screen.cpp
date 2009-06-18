@@ -6,13 +6,18 @@ extern "C" {
 #include <QPainter>
 #include <QApplication>
 #include <QPaintEvent>
+#include <QDebug>
 
 typedef struct {
   byte data[16];
 } fontcharbitmap_t;
 
+static Screen *s_self = 0L;
+
 Screen::Screen()
 {
+	s_self = this;
+
 	m_rows = 0;
 	m_width = 0;
 	m_height = 0;
@@ -253,6 +258,32 @@ Screen::renderMode12( QImage &target )
 	}
 }
 
+
+#ifdef VOMIT_DIRECT_SCREEN
+void
+screen_direct_update( word offset )
+{
+	extern byte vm_p0[];
+	extern byte vm_p1[];
+	extern byte vm_p2[];
+	extern byte vm_p3[];
+
+	// offset 100
+	// pixels 800-807
+
+	uchar *px = &s_self->m_render12.bits()[offset * 8];
+
+	*(px++) = D(7);
+	*(px++) = D(6);
+	*(px++) = D(5);
+	*(px++) = D(4);
+	*(px++) = D(3);
+	*(px++) = D(2);
+	*(px++) = D(1);
+	*(px++) = D(0);
+}
+#endif
+
 void
 Screen::renderMode0D( QImage &target )
 {
@@ -459,8 +490,11 @@ static int currentY = 0;
 void
 Screen::mouseMoveEvent( QMouseEvent *e )
 {
-	currentX = e->x();
-	currentY = e->y();
+	{
+		QMutexLocker l( &m_mouseLock );
+		currentX = e->x();
+		currentY = e->y();
+	}
 
 	QWidget::mouseMoveEvent( e );
 
@@ -470,8 +504,11 @@ Screen::mouseMoveEvent( QMouseEvent *e )
 void
 Screen::mousePressEvent( QMouseEvent *e )
 {
-	currentX = e->x();
-	currentY = e->y();
+	{
+		QMutexLocker l( &m_mouseLock );
+		currentX = e->x();
+		currentY = e->y();
+	}
 
 	QWidget::mousePressEvent( e );
 	switch( e->button() )
@@ -488,8 +525,11 @@ Screen::mousePressEvent( QMouseEvent *e )
 void
 Screen::mouseReleaseEvent( QMouseEvent *e )
 {
-	currentX = e->x();
-	currentY = e->y();
+	{
+		QMutexLocker l( &m_mouseLock );
+		currentX = e->x();
+		currentY = e->y();
+	}
 
 	QWidget::mouseReleaseEvent( e );
 	switch( e->button() )
@@ -506,12 +546,14 @@ Screen::mouseReleaseEvent( QMouseEvent *e )
 int
 get_current_x()
 {
+	QMutexLocker l( &s_self->m_mouseLock );
 	return currentX;
 }
 
 int
 get_current_y()
 {
+	QMutexLocker l( &s_self->m_mouseLock );
 	return currentY;
 }
 

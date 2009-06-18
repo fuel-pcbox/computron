@@ -4,6 +4,7 @@
 #include <QMap>
 #include <QKeyEvent>
 #include <QDebug>
+#include <QMutexLocker>
 
 static QMap<int, word> normals;
 static QMap<int, word> shifts;
@@ -238,6 +239,8 @@ keyToScanCode( Qt::KeyboardModifiers mod, int key )
 void
 Screen::keyPressEvent( QKeyEvent *e )
 {
+	QMutexLocker l( &m_keyQueueLock );
+
 	int nativeScanCode = e->nativeScanCode();
 	//printf( "native scancode = %04X\n", nativeScanCode );
 
@@ -279,6 +282,8 @@ Screen::keyPressEvent( QKeyEvent *e )
 void
 Screen::keyReleaseEvent( QKeyEvent *e )
 {
+	QMutexLocker l( &m_keyQueueLock );
+
 	int nativeScanCode = e->nativeScanCode();
 
 	if( extended[nativeScanCode] )
@@ -300,6 +305,8 @@ Screen::keyReleaseEvent( QKeyEvent *e )
 word
 Screen::nextKey()
 {
+	QMutexLocker l( &m_keyQueueLock );
+
 	m_rawQueue.clear();
 	if( !m_keyQueue.isEmpty() )
 		return m_keyQueue.dequeue();
@@ -310,6 +317,8 @@ Screen::nextKey()
 word
 Screen::peekKey()
 {
+	QMutexLocker l( &m_keyQueueLock );
+
 	m_rawQueue.clear();
 	if( !m_keyQueue.isEmpty() )
 		return m_keyQueue.head();
@@ -320,6 +329,8 @@ Screen::peekKey()
 byte
 Screen::popKeyData()
 {
+	QMutexLocker l( &m_keyQueueLock );
+
 	byte key = 0;
 	if( !m_rawQueue.isEmpty() )
 		key = m_rawQueue.dequeue();
@@ -335,6 +346,8 @@ Screen::popKeyData()
 void
 Screen::flushKeyBuffer()
 {
+	QMutexLocker l( &m_keyQueueLock );
+
 	if( !m_rawQueue.isEmpty() && cpu.IF )
 		irq( 1 );
 }

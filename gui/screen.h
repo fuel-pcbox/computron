@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QBitmap>
 #include <QQueue>
+#include <QMutex>
 
 extern "C" {
 	#include "../include/vomit.h"
@@ -77,6 +78,15 @@ private:
 	bool m_clearBackground;
 	int m_rows;
 	bool m_tinted;
+	bool m_needRepaint;
+
+	friend void screen_direct_update( word offset );
+
+	friend int get_current_x();
+	friend int get_current_y();
+
+	QMutex m_keyQueueLock;
+	QMutex m_mouseLock;
 };
 
 #endif
