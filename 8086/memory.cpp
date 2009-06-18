@@ -21,7 +21,7 @@ word mem_avail = 640;
 void
 mem_init()
 {
-    mem_space = malloc( 1048576 + 65536 );
+    mem_space = new uint8_t[1048576 + 65536];
     if( !mem_space )
 	{
 		vlog( VM_INITMSG, "Insufficient memory available." );
@@ -33,7 +33,7 @@ mem_init()
 void
 mem_kill()
 {
-    free( mem_space );
+    delete [] mem_space;
 }
 
 byte
@@ -214,9 +214,10 @@ _LES_reg16_mem16()
 char *
 mem_get_ascii$( word seg, word off )
 {
+	int i;
 	char buf[256];
 	buf[255] = 0;
-	for( int i = 0; i < 255; ++i )
+	for( i = 0; i < 255; ++i )
 	{
 		buf[i] = mem_getbyte( seg, off + i );
 		if( buf[i] == '$' )

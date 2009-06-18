@@ -3,11 +3,9 @@
 #include <QTimer>
 #include <QDebug>
 #include <QApplication>
-extern "C" {
 #include "../include/vomit.h"
 #include "../include/8086.h"
 #include "../disasm/include/disasm.h"
-}
 #include <QTextEdit>
 #include <QLineEdit>
 #include <QMutex>

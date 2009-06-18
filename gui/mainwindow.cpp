@@ -14,9 +14,7 @@
 #include <QDebug>
 #include "hexspinbox.h"
 
-extern "C" {
 void vomit_set_drive_image( int drive_id, const char *filename );
-};
 
 struct MainWindow::Private
 {

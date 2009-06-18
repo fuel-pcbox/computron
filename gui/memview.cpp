@@ -2,10 +2,8 @@
 #include <QPainter>
 #include <QTimer>
 
-extern "C" {
-	#include "../include/vomit.h"
-	#include "../include/8086.h"
-}
+#include "../include/vomit.h"
+#include "../include/8086.h"
 
 struct MemoryView::Private
 {

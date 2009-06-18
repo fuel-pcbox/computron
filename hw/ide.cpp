@@ -30,7 +30,7 @@ static byte get_cylinder_msb( word );
 static void set_cylinder_msb( word, byte );
 static byte get_head( word );
 static void set_head( word, byte );
-static byte ide_error( word port, byte data );
+static byte ide_error( word port );
 
 void
 ide_init()
@@ -66,7 +66,7 @@ ide_status( word port )
 }
 
 static byte
-ide_error( word port, byte data )
+ide_error( word port )
 {
 	vlog( VM_DISKLOG, "ide%d error queried", CONTROLLER );
 	return error[CONTROLLER];

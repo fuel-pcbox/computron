@@ -78,6 +78,7 @@ dump_regs()
 }
 
 void dump_all() {
+#if 0
 	word *stacky = (void *)mem_space + (cpu.SS<<4)+cpu.regs.W.SP;
 	byte *csip = mem_space + (cpu.base_CS<<4) + cpu.base_IP;
 
@@ -104,6 +105,7 @@ void dump_all() {
 
 	vlog( VM_DUMPMSG, "\n" );
 	dump_disasm( cpu.base_CS, cpu.base_IP );
+#endif
 }
 
 byte n(byte b) {					/* Nice it up for printing.		*/

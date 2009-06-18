@@ -98,6 +98,7 @@ vm_handleE6(word data)
 		}
 		mem_setbyte(0x0040, drive < 2 ? 0x0041 : 0x0072, cpu.regs.B.AH);
 		break;
+#if 0
 	case 0x1305:
 		drive = cpu.regs.B.DL;
 		if (drive >= 0x80)
@@ -125,6 +126,7 @@ vm_handleE6(word data)
 			cpu.CF = 1;
 		}
 		break;
+#endif
 	case 0x1308:
 		drive = cpu.regs.B.DL;
 		if(drive>=0x80) drive = drive - 0x80 + 2;
@@ -206,12 +208,7 @@ vm_handleE6(word data)
 			cpu.regs.B.AH = 0x80;			/* No media in drive */
 		}
 		break;
-		#if 0
-	case 0x3300:
-		cpu.regs.W.AX = cpu.regs.W.BX;
-		bios_interrupt33();
-		break;
-		#endif
+
 	case 0x1600:
 		cpu.regs.W.AX = kbd_getc();
 		break;

@@ -276,141 +276,144 @@ const insn_t insn_table[256] = {
 	{ "wrap",		WRAP			}			/* FF */
 };
 
-const insn_t wrapped_insn_table[256][8] = {
-	[0x80][0] = { "ADD", OP_RM8_imm8 },
-	[0x80][1] = { "OR",  OP_RM8_imm8 },
-	[0x80][2] = { "ADC", OP_RM8_imm8 },
-	[0x80][3] = { "SBB", OP_RM8_imm8 },
-	[0x80][4] = { "AND", OP_RM8_imm8 },
-	[0x80][5] = { "SUB", OP_RM8_imm8 },
-	[0x80][6] = { "XOR", OP_RM8_imm8 },
-	[0x80][7] = { "CMP", OP_RM8_imm8 },
-
-	[0x81][0] = { "ADD", OP_RM16_imm16 },
-	[0x81][1] = { "OR",  OP_RM16_imm16 },
-	[0x81][2] = { "ADC", OP_RM16_imm16 },
-	[0x81][3] = { "SBB", OP_RM16_imm16 },
-	[0x81][4] = { "AND", OP_RM16_imm16 },
-	[0x81][5] = { "SUB", OP_RM16_imm16 },
-	[0x81][6] = { "XOR", OP_RM16_imm16 },
-	[0x81][7] = { "CMP", OP_RM16_imm16 },
-
-	[0x83][0] = { "ADD", OP_RM16_imm8 },
-	[0x83][1] = { "OR",  OP_RM16_imm8 },
-	[0x83][2] = { "ADC", OP_RM16_imm8 },
-	[0x83][3] = { "SBB", OP_RM16_imm8 },
-	[0x83][4] = { "AND", OP_RM16_imm8 },
-	[0x83][5] = { "SUB", OP_RM16_imm8 },
-	[0x83][6] = { "XOR", OP_RM16_imm8 },
-	[0x83][7] = { "CMP", OP_RM16_imm8 },
-
-	[0xF6][0] = { "TEST", OP_RM8_imm8 },
-	[0xF6][1] = { 0, OP_UNASSIGNED },
-	[0xF6][2] = { 0, OP_UNASSIGNED },
-	[0xF6][3] = { 0, OP_UNASSIGNED },
-	[0xF6][4] = { "MUL", OP_RM8 },
-	[0xF6][6] = { "DIV", OP_RM8 },
-	[0xF6][7] = { 0, OP_UNASSIGNED },
-
-	[0xF7][0] = { "TEST", OP_RM16_imm16 },
-	[0xF7][1] = { 0, OP_UNASSIGNED },
-	[0xF7][2] = { 0, OP_UNASSIGNED },
-	[0xF7][3] = { 0, OP_UNASSIGNED },
-	[0xF7][4] = { "MUL", OP_RM16 },
-	[0xF7][6] = { "DIV", OP_RM16 },
-	[0xF7][7] = { 0, OP_UNASSIGNED },
-
-	[0xD0][0] = { "ROL", OP_RM8 },
-	[0xD0][1] = { "ROR", OP_RM8 },
-	[0xD0][2] = { "RCL", OP_RM8 },
-	[0xD0][3] = { "RCR", OP_RM8 },
-	[0xD0][4] = { "SHL", OP_RM8 },
-	[0xD0][5] = { "SHR", OP_RM8 },
-	[0xD0][6] = { 0, OP_UNASSIGNED },
-	[0xD0][7] = { "SAR", OP_RM8 },
-
-	[0xD1][0] = { "ROL", OP_RM16 },
-	[0xD1][1] = { "ROR", OP_RM16 },
-	[0xD1][2] = { "RCL", OP_RM16 },
-	[0xD1][3] = { "RCR", OP_RM16 },
-	[0xD1][4] = { "SHL", OP_RM16 },
-	[0xD1][5] = { "SHR", OP_RM16 },
-	[0xD1][6] = { 0, OP_UNASSIGNED },
-	[0xD1][7] = { "SAR", OP_RM16 },
-
-	[0xD3][0] = { "ROL", OP_reg8_CL },
-	[0xD3][1] = { "ROR", OP_reg8_CL },
-	[0xD3][2] = { "RCL", OP_reg8_CL },
-	[0xD3][3] = { "RCR", OP_reg8_CL },
-	[0xD3][4] = { "SHL", OP_reg8_CL },
-	[0xD3][5] = { "SHR", OP_reg8_CL },
-	[0xD3][6] = { 0, OP_UNASSIGNED },
-	[0xD3][7] = { "SAR", OP_reg8_CL },
-
-	[0xFF][0] = { "INC", OP_RM16 },
-	[0xFF][1] = { "DEC", OP_RM16 },
-	[0xFF][2] = { "CALL", OP_RM16 },
-	[0xFF][3] = { "CALL", OP_RM16 },
-	[0xFF][4] = { "JMP", OP_RM16 },
-	[0xFF][5] = { 0, OP_UNASSIGNED },
-	[0xFF][6] = { "PUSH", OP_RM16 },
-	[0xFF][7] = { 0, OP_UNASSIGNED },
-
-	[0xFE][0] = { "INC", OP_RM8 },
-	[0xFE][1] = { "DEC", OP_RM8 },
-	[0xFE][2] = { 0, OP_UNASSIGNED },
-	[0xFE][3] = { 0, OP_UNASSIGNED },
-	[0xFE][4] = { 0, OP_UNASSIGNED },
-	[0xFE][5] = { 0, OP_UNASSIGNED },
-	[0xFE][6] = { 0, OP_UNASSIGNED },
-	[0xFE][7] = { 0, OP_UNASSIGNED }
-};
+insn_t wrapped_insn_table[256][8];
 
 /* Base width of instruction types, a work in progress. */
-const int insn_base_width[43] = {
-	[OP_RM8_reg8] = 1,
-	[OP_RM16_reg16] = 1,
-	[OP_reg8_RM8] = 1,
-	[OP_reg16_RM16] = 1,
-	[OP_AL_imm8] = 2,
-	[OP_AX_imm16] = 3,
-	[OP_CS] = 1,
-	[OP_DS] = 1,
-	[OP_ES] = 1,
-	[OP_SS] = 1,
-	[OP] = 1,
-	[OP_reg16] = 1,
-	[OP_imm16] = 3,
-	[OP_relimm16] = 3,
-	[OP_imm8] = 2,
-	[WRAP] = 1,
-	[OP_RM16_seg] = 1,
-	[OP_reg16_mem16] = -1,
-	[OP_imm16_imm16] = 5,
-	[OP_AX_reg16] = 1,
-	[OP_AL_moff8] = 3,
-	[OP_AX_moff16] = 3,
-	[OP_moff8_AL] = 3,
-	[OP_moff16_AX] = 3,
-	[OP_reg8_imm8] = 2,
-	[OP_reg16_imm16] = 3,
-	[OP_RM8_imm8] = 2,
-	[OP_RM16_imm16] = 3,
-	[OP_RM16_imm8] = 3,
-	[OP_3] = 1,
-	[OP_AX_imm8] = 2,
-	[OP_short_imm8] = 2,
-	[OP_AL_DX] = 1,
-	[OP_DX_AL] = 1,
-	[OP_DX_AX] = 1,
-	[OP_OP] = 1,
-	[OP_seg_RM16] = 1,
-	[OP_imm8_AL] = 2,
-	[OP_imm8_AX] = 2,
-	[OP_RM8] = 1,
-	[OP_RM16] = 1,
-	[OP_reg8_CL] = 2
-};
+int insn_base_width[43];
+
+void
+vomit_disasm_init_tables()
+{
+wrapped_insn_table[0x80][0] = (insn_t){ "ADD", OP_RM8_imm8 };
+wrapped_insn_table[0x80][1] = (insn_t){ "OR",  OP_RM8_imm8 };
+wrapped_insn_table[0x80][2] = (insn_t){ "ADC", OP_RM8_imm8 };
+wrapped_insn_table[0x80][3] = (insn_t){ "SBB", OP_RM8_imm8 };
+wrapped_insn_table[0x80][4] = (insn_t){ "AND", OP_RM8_imm8 };
+wrapped_insn_table[0x80][5] = (insn_t){ "SUB", OP_RM8_imm8 };
+wrapped_insn_table[0x80][6] = (insn_t){ "XOR", OP_RM8_imm8 };
+wrapped_insn_table[0x80][7] = (insn_t){ "CMP", OP_RM8_imm8 };
+
+wrapped_insn_table[0x81][0] = (insn_t){ "ADD", OP_RM16_imm16 };
+wrapped_insn_table[0x81][1] = (insn_t){ "OR",  OP_RM16_imm16 };
+wrapped_insn_table[0x81][2] = (insn_t){ "ADC", OP_RM16_imm16 };
+wrapped_insn_table[0x81][3] = (insn_t){ "SBB", OP_RM16_imm16 };
+wrapped_insn_table[0x81][4] = (insn_t){ "AND", OP_RM16_imm16 };
+wrapped_insn_table[0x81][5] = (insn_t){ "SUB", OP_RM16_imm16 };
+wrapped_insn_table[0x81][6] = (insn_t){ "XOR", OP_RM16_imm16 };
+wrapped_insn_table[0x81][7] = (insn_t){ "CMP", OP_RM16_imm16 };
+
+wrapped_insn_table[0x83][0] = (insn_t){ "ADD", OP_RM16_imm8 };
+wrapped_insn_table[0x83][1] = (insn_t){ "OR",  OP_RM16_imm8 };
+wrapped_insn_table[0x83][2] = (insn_t){ "ADC", OP_RM16_imm8 };
+wrapped_insn_table[0x83][3] = (insn_t){ "SBB", OP_RM16_imm8 };
+wrapped_insn_table[0x83][4] = (insn_t){ "AND", OP_RM16_imm8 };
+wrapped_insn_table[0x83][5] = (insn_t){ "SUB", OP_RM16_imm8 };
+wrapped_insn_table[0x83][6] = (insn_t){ "XOR", OP_RM16_imm8 };
+wrapped_insn_table[0x83][7] = (insn_t){ "CMP", OP_RM16_imm8 };
+
+wrapped_insn_table[0xF6][0] = (insn_t){ "TEST", OP_RM8_imm8 };
+wrapped_insn_table[0xF6][1] = (insn_t){ 0, OP_UNASSIGNED };
+wrapped_insn_table[0xF6][2] = (insn_t){ 0, OP_UNASSIGNED };
+wrapped_insn_table[0xF6][3] = (insn_t){ 0, OP_UNASSIGNED };
+wrapped_insn_table[0xF6][4] = (insn_t){ "MUL", OP_RM8 };
+wrapped_insn_table[0xF6][6] = (insn_t){ "DIV", OP_RM8 };
+wrapped_insn_table[0xF6][7] = (insn_t){ 0, OP_UNASSIGNED };
+
+wrapped_insn_table[0xF7][0] = (insn_t){ "TEST", OP_RM16_imm16 };
+wrapped_insn_table[0xF7][1] = (insn_t){ 0, OP_UNASSIGNED };
+wrapped_insn_table[0xF7][2] = (insn_t){ 0, OP_UNASSIGNED };
+wrapped_insn_table[0xF7][3] = (insn_t){ 0, OP_UNASSIGNED };
+wrapped_insn_table[0xF7][4] = (insn_t){ "MUL", OP_RM16 };
+wrapped_insn_table[0xF7][6] = (insn_t){ "DIV", OP_RM16 };
+wrapped_insn_table[0xF7][7] = (insn_t){ 0, OP_UNASSIGNED };
+
+wrapped_insn_table[0xD0][0] = (insn_t){ "ROL", OP_RM8 };
+wrapped_insn_table[0xD0][1] = (insn_t){ "ROR", OP_RM8 };
+wrapped_insn_table[0xD0][2] = (insn_t){ "RCL", OP_RM8 };
+wrapped_insn_table[0xD0][3] = (insn_t){ "RCR", OP_RM8 };
+wrapped_insn_table[0xD0][4] = (insn_t){ "SHL", OP_RM8 };
+wrapped_insn_table[0xD0][5] = (insn_t){ "SHR", OP_RM8 };
+wrapped_insn_table[0xD0][6] = (insn_t){ 0, OP_UNASSIGNED };
+wrapped_insn_table[0xD0][7] = (insn_t){ "SAR", OP_RM8 };
+
+wrapped_insn_table[0xD1][0] = (insn_t){ "ROL", OP_RM16 };
+wrapped_insn_table[0xD1][1] = (insn_t){ "ROR", OP_RM16 };
+wrapped_insn_table[0xD1][2] = (insn_t){ "RCL", OP_RM16 };
+wrapped_insn_table[0xD1][3] = (insn_t){ "RCR", OP_RM16 };
+wrapped_insn_table[0xD1][4] = (insn_t){ "SHL", OP_RM16 };
+wrapped_insn_table[0xD1][5] = (insn_t){ "SHR", OP_RM16 };
+wrapped_insn_table[0xD1][6] = (insn_t){ 0, OP_UNASSIGNED };
+wrapped_insn_table[0xD1][7] = (insn_t){ "SAR", OP_RM16 };
+
+wrapped_insn_table[0xD3][0] = (insn_t){ "ROL", OP_reg8_CL };
+wrapped_insn_table[0xD3][1] = (insn_t){ "ROR", OP_reg8_CL };
+wrapped_insn_table[0xD3][2] = (insn_t){ "RCL", OP_reg8_CL };
+wrapped_insn_table[0xD3][3] = (insn_t){ "RCR", OP_reg8_CL };
+wrapped_insn_table[0xD3][4] = (insn_t){ "SHL", OP_reg8_CL };
+wrapped_insn_table[0xD3][5] = (insn_t){ "SHR", OP_reg8_CL };
+wrapped_insn_table[0xD3][6] = (insn_t){ 0, OP_UNASSIGNED };
+wrapped_insn_table[0xD3][7] = (insn_t){ "SAR", OP_reg8_CL };
+
+wrapped_insn_table[0xFF][0] = (insn_t){ "INC", OP_RM16 };
+wrapped_insn_table[0xFF][1] = (insn_t){ "DEC", OP_RM16 };
+wrapped_insn_table[0xFF][2] = (insn_t){ "CALL", OP_RM16 };
+wrapped_insn_table[0xFF][3] = (insn_t){ "CALL", OP_RM16 };
+wrapped_insn_table[0xFF][4] = (insn_t){ "JMP", OP_RM16 };
+wrapped_insn_table[0xFF][5] = (insn_t){ 0, OP_UNASSIGNED };
+wrapped_insn_table[0xFF][6] = (insn_t){ "PUSH", OP_RM16 };
+wrapped_insn_table[0xFF][7] = (insn_t){ 0, OP_UNASSIGNED };
+
+wrapped_insn_table[0xFE][0] = (insn_t){ "INC", OP_RM8 };
+wrapped_insn_table[0xFE][1] = (insn_t){ "DEC", OP_RM8 };
+wrapped_insn_table[0xFE][2] = (insn_t){ 0, OP_UNASSIGNED };
+wrapped_insn_table[0xFE][3] = (insn_t){ 0, OP_UNASSIGNED };
+wrapped_insn_table[0xFE][4] = (insn_t){ 0, OP_UNASSIGNED };
+wrapped_insn_table[0xFE][5] = (insn_t){ 0, OP_UNASSIGNED };
+wrapped_insn_table[0xFE][6] = (insn_t){ 0, OP_UNASSIGNED };
+wrapped_insn_table[0xFE][7] = (insn_t){ 0, OP_UNASSIGNED };
+	insn_base_width[OP_RM8_reg8] = 1;
+	insn_base_width[OP_RM16_reg16] = 1;
+	insn_base_width[OP_reg8_RM8] = 1;
+	insn_base_width[OP_reg16_RM16] = 1;
+	insn_base_width[OP_AL_imm8] = 2;
+	insn_base_width[OP_AX_imm16] = 3;
+	insn_base_width[OP_CS] = 1;
+	insn_base_width[OP_DS] = 1;
+	insn_base_width[OP_ES] = 1;
+	insn_base_width[OP_SS] = 1;
+	insn_base_width[OP] = 1;
+	insn_base_width[OP_reg16] = 1;
+	insn_base_width[OP_imm16] = 3;
+	insn_base_width[OP_relimm16] = 3;
+	insn_base_width[OP_imm8] = 2;
+	insn_base_width[WRAP] = 1;
+	insn_base_width[OP_RM16_seg] = 1;
+	insn_base_width[OP_reg16_mem16] = -1;
+	insn_base_width[OP_imm16_imm16] = 5;
+	insn_base_width[OP_AX_reg16] = 1;
+	insn_base_width[OP_AL_moff8] = 3;
+	insn_base_width[OP_AX_moff16] = 3;
+	insn_base_width[OP_moff8_AL] = 3;
+	insn_base_width[OP_moff16_AX] = 3;
+	insn_base_width[OP_reg8_imm8] = 2;
+	insn_base_width[OP_reg16_imm16] = 3;
+	insn_base_width[OP_RM8_imm8] = 2;
+	insn_base_width[OP_RM16_imm16] = 3;
+	insn_base_width[OP_RM16_imm8] = 3;
+	insn_base_width[OP_3] = 1;
+	insn_base_width[OP_AX_imm8] = 2;
+	insn_base_width[OP_short_imm8] = 2;
+	insn_base_width[OP_AL_DX] = 1;
+	insn_base_width[OP_DX_AL] = 1;
+	insn_base_width[OP_DX_AX] = 1;
+	insn_base_width[OP_OP] = 1;
+	insn_base_width[OP_seg_RM16] = 1;
+	insn_base_width[OP_imm8_AL] = 2;
+	insn_base_width[OP_imm8_AX] = 2;
+	insn_base_width[OP_RM8] = 1;
+	insn_base_width[OP_RM16] = 1;
+	insn_base_width[OP_reg8_CL] = 2;
+}
 
 const char segname[4][3] = {
 	"ES", "CS", "SS", "DS"

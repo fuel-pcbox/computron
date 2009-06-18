@@ -6,9 +6,7 @@
 #include <QQueue>
 #include <QMutex>
 
-extern "C" {
-	#include "../include/vomit.h"
-}
+#include "../include/vomit.h"
 
 class Screen : public QWidget
 {

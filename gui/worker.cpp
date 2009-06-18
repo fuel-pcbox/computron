@@ -2,10 +2,8 @@
 #include <QMutexLocker>
 #include <QDebug>
 
-extern "C" {
 #include "../include/vomit.h"
 extern unsigned int g_vomit_exit_main_loop;
-}
 
 Worker::Worker( QObject *parent )
 	: QThread( parent )

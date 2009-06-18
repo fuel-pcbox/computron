@@ -148,7 +148,7 @@ dma_ch_address_read( word port )
 		case 0x006: channel = 3; break;
 		default:
 			vlog( VM_DMAMSG, "Unknown channel for port %03X", port );
-			return;
+			return 0;
 	}
 
 	c = &dma1_channel[channel];

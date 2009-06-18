@@ -24,13 +24,13 @@ typedef uint8_t BYTE;
 #define MAKEWORD(l, m)	(((m) << 8) | (l))
 
 typedef struct {
-	char *name;
+	const char *name;
 	int type;
 } insn_t;
 
-extern const int insn_base_width[];
+extern int insn_base_width[];
 extern const insn_t insn_table[];
-extern const insn_t wrapped_insn_table[256][8];
+extern insn_t wrapped_insn_table[256][8];
 extern const char reg16name[8][3];
 extern const char reg8name[8][3];
 extern const char segname[4][3];

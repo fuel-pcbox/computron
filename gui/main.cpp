@@ -3,9 +3,7 @@
 #include "screen.h"
 //#include "cpuview.h"
 
-extern "C" {
 #include "../include/vomit.h"
-}
 
 static MainWindow *mw = 0L;
 

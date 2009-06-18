@@ -27,6 +27,8 @@ static void set_dac_color_register();
 static void write_graphics_pixel_at_coordinate();
 void load_cursor( byte *row, byte *column );
 
+extern void set_video_dirty();
+
 void
 video_bios_init()
 {
@@ -167,51 +169,16 @@ write_character_and_attribute_at_cursor()
 		return;
 	}
 
-
-
 	load_cursor( &row, &column );
 	cursor = row * columns() + column;
 
-	if( mem_space[0x449] == 0x0D )
+	if( mem_space[0x449] != 0x03 )
 	{
-		typedef struct {
-			byte data[16];
-		} fontcharbitmap_t;
-		fontcharbitmap_t *fbmp_map = (fontcharbitmap_t *)(mem_space + 0xC4000);
-
-		//printf( "mode0D_putchar: %02X (%c)\n", cpu.regs.B.AL, cpu.regs.B.AL );
-
-		//if( fbmp )
-		{
-			word x1 = column * 8;
-			word y1 = row * 16;
-
-			//if( cpu.regs.B.AL != 0x80 )
-				//printf( "write character at %03u,%03u: %c\n", x1, y1, cpu.regs.B.AL );
-
-			for( int char_y = 0; char_y < 16; ++char_y )
-			{
-				putpixel0D( y1 + char_y, x1 + 0, (fbmp_map[cpu.regs.B.AL].data[char_y] & 0x80) != 0 );
-				putpixel0D( y1 + char_y, x1 + 1, (fbmp_map[cpu.regs.B.AL].data[char_y] & 0x40) != 0 );
-				putpixel0D( y1 + char_y, x1 + 2, (fbmp_map[cpu.regs.B.AL].data[char_y] & 0x20) != 0 );
-				putpixel0D( y1 + char_y, x1 + 3, (fbmp_map[cpu.regs.B.AL].data[char_y] & 0x10) != 0 );
-				putpixel0D( y1 + char_y, x1 + 4, (fbmp_map[cpu.regs.B.AL].data[char_y] & 0x08) != 0 );
-				putpixel0D( y1 + char_y, x1 + 5, (fbmp_map[cpu.regs.B.AL].data[char_y] & 0x04) != 0 );
-				putpixel0D( y1 + char_y, x1 + 6, (fbmp_map[cpu.regs.B.AL].data[char_y] & 0x02) != 0 );
-				putpixel0D( y1 + char_y, x1 + 7, (fbmp_map[cpu.regs.B.AL].data[char_y] & 0x01) != 0 );
-			}
-		}
+		vlog( VM_VIDEOMSG, "Writing text to screen but not in mode 3.." );
 	}
-	else
-	{
-		if( mem_space[0x449] != 0x03 )
-		{
-			vlog( VM_VIDEOMSG, "Writing text to screen but not in mode 3.." );
-		}
-		/* XXX: 0xB800 is hard-coded for now. */
-		mem_setbyte( 0xB800, cursor << 1, cpu.regs.B.AL );
-		mem_setbyte( 0xB800, (cursor << 1) + 1, cpu.regs.B.BL );
-	}
+	/* XXX: 0xB800 is hard-coded for now. */
+	mem_setbyte( 0xB800, cursor << 1, cpu.regs.B.AL );
+	mem_setbyte( 0xB800, (cursor << 1) + 1, cpu.regs.B.BL );
 }
 
 void
@@ -317,10 +284,10 @@ set_video_mode()
 			{
 				// Blank it!
 				word space = (0x07 << 8) | ' ';
-				int i = 0;
-				for( int y = 0; y < 25; ++y )
+				int y, x, i = 0;
+				for( y = 0; y < 25; ++y )
 				{
-					for( int x = 0; x < 80; ++x )
+					for( x = 0; x < 80; ++x )
 					{
 						//mem_setword( 0xB800, i++ << 1, space );
 					}
@@ -513,8 +480,9 @@ set_dac_color_register()
 	}
 	else if( cpu.regs.B.AL == 0x02 )
 	{
+		int i;
 		vlog( VM_VIDEOMSG, "Loading palette from %04X:%04X", cpu.ES, cpu.regs.W.DX );
-		for( int i = 0; i < 17; ++i )
+		for( i = 0; i < 17; ++i )
 		{
 			vga_palette_register[i] = mem_getbyte( cpu.ES, cpu.regs.W.DX + i );
 			//vlog( VM_VIDEOMSG, "Palette(%u): %02X", i, vga_palette_register[i] );
@@ -540,7 +508,7 @@ write_graphics_pixel_at_coordinate()
 	if( mem_space[0x449] != 0x12 )
 	{
 		vlog( VM_ALERT, "Poking pixels in mode %02X, dunno how to handle that\n", mem_space[0x449] );
-		vm_kill( 1 );
+		vm_exit( 1 );
 	}
 
 	//vlog( VM_ALERT, "y = %03u, x = %03u, color = %02X\n", cpu.regs.W.DX, cpu.regs.W.CX, cpu.regs.B.AL );
@@ -624,7 +592,7 @@ vga_scrollup (byte x1, byte y1, byte x2, byte y2, byte num, byte attr) {
 	// TODO: Scroll graphics when in graphics mode (using text coordinates)
 
 	//vlog( VM_VIDEOMSG, "vga_scrollup( %d, %d, %d, %d, %d )", x1, y1, x2, y2, num);
-	if ( (num == 0 ) || ( num > rows ) ) {
+	if ( (num == 0 ) || ( num > rows() ) ) {
 		for( y = y1; y <= y2; ++y ) {
 			for( x = x1; x < x2; ++x) {
 				video_memory[( y * 160 + x * 2 ) + 0] = 0x20;

@@ -5,6 +5,7 @@
 
 #include "vomit.h"
 #include "debug.h"
+#include <QList>
 
 typedef byte (*tintab) (word);
 typedef void (*touttab) (word, byte);

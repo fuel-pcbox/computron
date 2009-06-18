@@ -12,7 +12,7 @@ static word s_last_modrm_offset = 0;
 void
 modrm_write16( byte rmbyte, word data )
 {
-	byte *rmp = modrm_resolve16( rmbyte );
+	byte *rmp = (byte *)modrm_resolve16( rmbyte );
 	if( MODRM_ISREG( rmbyte ))
 	{
 		*((word *)rmp) = data;
@@ -24,7 +24,7 @@ modrm_write16( byte rmbyte, word data )
 void
 modrm_write8( byte rmbyte, byte data )
 {
-	byte *rmp = modrm_resolve8( rmbyte );
+	byte *rmp = (byte *)modrm_resolve8( rmbyte );
 	if( MODRM_ISREG( rmbyte ))
 	{
 		*rmp = data;
@@ -36,7 +36,7 @@ modrm_write8( byte rmbyte, byte data )
 word
 modrm_read16( byte rmbyte )
 {
-	byte *rmp = modrm_resolve16( rmbyte );
+	byte *rmp = (byte *)modrm_resolve16( rmbyte );
 	if( MODRM_ISREG( rmbyte ))
 		return *((word *)rmp);
 	return mem_getword( s_last_modrm_segment, s_last_modrm_offset );
@@ -45,7 +45,7 @@ modrm_read16( byte rmbyte )
 byte
 modrm_read8( byte rmbyte )
 {
-	byte *rmp = modrm_resolve8( rmbyte );
+	byte *rmp = (byte *)modrm_resolve8( rmbyte );
 	if( MODRM_ISREG( rmbyte ))
 		return *rmp;
 	return mem_getbyte( s_last_modrm_segment, s_last_modrm_offset );
@@ -77,13 +77,11 @@ dword
 modrm_read32( byte rmbyte )
 {
 	/* NOTE: We don't need modrm_resolve32() at the moment. */
-	byte *rmp = modrm_resolve8( rmbyte );
+	byte *rmp = (byte *)modrm_resolve8( rmbyte );
 	if( MODRM_ISREG( rmbyte ))
 	{
 		vlog( VM_CPUMSG, "PANIC: Attempt to read 32-bit register." );
-		uasm( cpu.base_CS, cpu.base_IP );
-		vm_kill();
-		exit( 1 );
+		vm_exit( 1 );
 	}
 
 	return rmp[0] | (rmp[1]<<8) | (rmp[2]<<16) | (rmp[3]<<24);

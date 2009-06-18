@@ -10,8 +10,10 @@
  */
 
 #include "vomit.h"
+#include "debug.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 char drv_imgfile[4][MAX_FN_LENGTH];
 char drv_title[4][MAX_DRV_TITLESIZE+1];
@@ -218,7 +220,7 @@ floppy_verify( byte drive, word cylinder, word head, word sector, word count, wo
 	fflush(fpdrv);
 	fseek(fpdrv, lba * drv_sectsize[drive], SEEK_SET);
 
-	dummy = malloc(count * drv_sectsize[drive] * sizeof(byte));
+	dummy = (byte *)malloc(count * drv_sectsize[drive] * sizeof(byte));
 		veri = fread(dummy, drv_sectsize[drive], count, fpdrv);
 		/* XXX: Eh? */
 		if(veri!=count) printf("EYY!\n");

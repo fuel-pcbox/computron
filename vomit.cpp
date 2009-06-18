@@ -70,6 +70,9 @@ vomit_init( int argc, char **argv )
 	FILE *fplog = fopen( "log.txt", "w" );
 	fclose( fplog );
 
+	extern void vomit_disasm_init_tables();
+	vomit_disasm_init_tables();
+
 	vm_init();
 	vm_loadconf();
 	cpu_genmap();

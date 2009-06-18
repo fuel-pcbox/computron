@@ -84,8 +84,9 @@ pic_master_write( word port, byte data )
 	}
 	if( port == 0x21 ) // OCW1 - IMR write
 	{
+		int i;
 		vlog( VM_PICMSG, "New IRQ mask set: %02X", data );
-		for( int i = 0; i < 8; ++i )
+		for( i = 0; i < 8; ++i )
 		{
 			vlog( VM_PICMSG, " - IRQ %u: %s", i, (data & (1 << i)) ? "masked" : "service" );
 		}
@@ -140,12 +141,14 @@ irq( byte num )
 void
 pic_service_irq()
 {
+	int i;
+
 	if( !g_pic_pending_requests )
 		return;
 
 	byte interrupt_to_service = 0xFF;
 
-	for( int i = 0; i < 16; ++i )
+	for( i = 0; i < 16; ++i )
 		if( g_pic_pending_requests & (1 << i) )
 			interrupt_to_service = i;
 
@@ -217,8 +220,9 @@ pic_slave_write( word port, byte data )
 	}
 	if( port == 0xA1 ) // OCW1 - IMR write
 	{
+		int i;
 		vlog( VM_PICMSG, "New IRQ mask set: %02X", data );
-		for( int i = 0; i < 8; ++i )
+		for( i = 0; i < 8; ++i )
 		{
 			vlog( VM_PICMSG, " - IRQ %u: %s", i, (data & (1 << i)) ? "masked" : "service" );
 		}
