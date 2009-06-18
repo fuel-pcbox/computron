@@ -13,6 +13,7 @@ public:
 
 	void startMachine();
 	void stopMachine();
+	void rebootMachine();
 
 signals:
 	void finished();

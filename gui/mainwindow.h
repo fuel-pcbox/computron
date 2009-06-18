@@ -20,6 +20,7 @@ private slots:
 	void slotPauseMachine();
 	void slotStartMachine();
 	void slotStopMachine();
+	void slotRebootMachine();
 
 	void slotUpdateMemView();
 

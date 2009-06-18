@@ -51,6 +51,7 @@ MainWindow::MainWindow()
 	//l->addWidget( activityBar );
 
 	QTabWidget *tabs = new QTabWidget;
+	tabs->setTabPosition( QTabWidget::South );
 	l->addWidget( tabs );
 
 	tabs->addTab( &d->console, tr("Console") );
@@ -80,7 +81,7 @@ MainWindow::MainWindow()
 
 	tabs->addTab( &d->codeview, tr("Code") );
 
-	tabs->setCurrentWidget( &d->codeview );
+	//tabs->setCurrentWidget( &d->codeview );
 
 	d->screen.setFocus();
 
@@ -90,7 +91,9 @@ MainWindow::MainWindow()
 	QAction *chooseFloppyBImage = new QAction( QIcon("icons/media-floppy.png"), tr("Choose floppy B image..."), this );
 	d->pauseMachine = new QAction( QIcon("icons/media-playback-pause.png"), tr("Pause VM"), this );
 	d->startMachine = new QAction( QIcon("icons/media-playback-start.png"), tr("Start VM"), this );
-	d->stopMachine = new QAction( QIcon("icons/media-playback-stop.png"), tr("Start VM"), this );
+	d->stopMachine = new QAction( QIcon("icons/media-playback-stop.png"), tr("Stop VM"), this );
+
+	QAction *rebootMachine = new QAction( QIcon("icons/view-refresh.png"), tr("Reboot VM"), this );
 
 	d->startMachine->setEnabled( false );
 	d->pauseMachine->setEnabled( true );
@@ -105,8 +108,12 @@ MainWindow::MainWindow()
 	d->mainToolBar->addAction( chooseFloppyAImage );
 	d->mainToolBar->addAction( chooseFloppyBImage );
 
+	d->mainToolBar->addAction( rebootMachine );
+
 	connect( chooseFloppyAImage, SIGNAL(triggered(bool)), SLOT(slotFloppyAClicked()) );
 	connect( chooseFloppyBImage, SIGNAL(triggered(bool)), SLOT(slotFloppyBClicked()) );
+
+	connect( rebootMachine, SIGNAL(triggered(bool)), SLOT(slotRebootMachine()) );
 
 	connect( d->pauseMachine, SIGNAL(triggered(bool)), SLOT(slotPauseMachine()) );
 	connect( d->startMachine, SIGNAL(triggered(bool)), SLOT(slotStartMachine()) );
@@ -186,6 +193,12 @@ MainWindow::slotStartMachine()
 	d->screen.setTinted( false );
 
 	d->worker->startMachine();
+}
+
+void
+MainWindow::slotRebootMachine()
+{
+	d->worker->rebootMachine();
 }
 
 Screen *

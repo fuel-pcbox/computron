@@ -47,6 +47,7 @@ vlog( int category, const char *format, ... )
 		case VM_KEYMSG: prefix = "keyb"; break;
 		case VM_FDCMSG: prefix = "fdc"; break;
 		case VM_DUMPMSG: show_on_stdout = false; break;
+		case VM_VOMCTL: prefix = "vomctl"; break;
 	}
 
 	if( s_vlog_handler && (show_on_stdout || category == VM_DUMPMSG) )

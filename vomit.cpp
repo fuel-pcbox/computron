@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include "vomit.h"
 #include "debug.h"
+#include "iodevice.h"
+#include <QDebug>
 
 vomit_options_t options;
 
@@ -116,6 +118,12 @@ void vm_init() {
 
 	for ( i = 0; i <= 0xFFFF; ++i )
 		vm_listen( i, 0L, 0L );
+
+	vlog( VM_INITMSG, "Registering I/O devices" );
+	foreach( Vomit::IODevice *device, Vomit::IODevice::s_devices )
+	{
+		vlog( VM_INITMSG, "%s at 0x%p", device->name(), device );
+	}
 
 	pic_init();
 	dma_init();

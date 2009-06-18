@@ -1,11 +1,19 @@
 #include "vomctl.h"
 #include <stdio.h>
+#include "vomit.h"
+#include "debug.h"
+#include <string.h>
 
 namespace Vomit
 {
 
+static VomCtl the;
+
 VomCtl::VomCtl()
+	: IODevice( "VomCtl" )
 {
+	m_registerIndex = 0;
+
 	listen( 0xD6, Vomit::IODevice::ReadWrite );
 }
 
@@ -13,22 +21,35 @@ VomCtl::~VomCtl()
 {
 }
 
-const char *
-VomCtl::name() const
-{
-	return "VomCtl";
-}
-
 uint8_t
 VomCtl::in8()
 {
-	return 0xAA;
+	//vlog( VM_VOMCTL, "Read register %02X", m_registerIndex );
+
+	switch( m_registerIndex )
+	{
+		case 0x00: /* Always 0 */
+			return 0;
+
+		case 0x01: /* Get CPU type */
+			return cpu.type;
+
+		case 0x02: /* RAM size LSB */
+			return LSB( mem_avail );
+
+		case 0x03: /* RAM size MSB */
+			return MSB( mem_avail );
+	}
+
+	vlog( VM_VOMCTL, "Invalid register %02X read", m_registerIndex );
+	return 0;
 }
 
 void
 VomCtl::out8( uint8_t data )
 {
-	printf( "VomCtl: %02X\n", data );
+	//vlog( VM_VOMCTL, "Select register %02X", data );
+	m_registerIndex = data;
 }
 
 }

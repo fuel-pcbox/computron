@@ -1,9 +1,9 @@
 #include "worker.h"
 #include <QMutexLocker>
 #include <QDebug>
-
 #include "../include/vomit.h"
 extern unsigned int g_vomit_exit_main_loop;
+extern bool vomit_reboot;
 
 Worker::Worker( QObject *parent )
 	: QThread( parent )
@@ -44,4 +44,10 @@ Worker::stopMachine()
 {
 	m_active = false;
 	g_vomit_exit_main_loop = true;
+}
+
+void
+Worker::rebootMachine()
+{
+	// :(
 }

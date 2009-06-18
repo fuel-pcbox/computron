@@ -3,6 +3,8 @@
 ;
 ; vim:set syntax=nasm et sts=4 sw=4:
 
+%define VOMCTL 0xD6
+
 [org 0]
 [bits 16]
 
@@ -36,10 +38,11 @@ _cpux_singlestep:                   ; Interrupt 0x01 - Single step
 ;   pop     ax                      ; Restore AX
 
 _cpux_breakpoint:                   ; Interrupt 0x03 - Breakpoint
-    push    ax                      ; Preserve AX
-    mov     ax, 0x0300              ; VM call 0x0300: Show debug prompt
-    out     0xE6, al
-    pop     ax                      ; Restore AX
+    push    si
+    mov     si, msg_breakpoint
+    call    safe_putString
+    pop     si
+    jmp     reboot_on_any_key
 
 _cpux_overflow:                     ; Interrupt 0x04 - Overflow
     push    si
@@ -160,8 +163,7 @@ _bios_post:                         ; Power On Self-Test ;-)
 .bootloadfail:
     mov     si, msg_boot_failed
     call    safe_putString
-    mov     ax, 0x0000
-    out     0xE6, al
+    cli
     hlt
 
 safe_putString:
@@ -423,8 +425,14 @@ _bios_init_data:
     jmp     .cCend
 
 .checkMem:
-    mov     ax, 0x0001          ; Get the amount of memory in kB
-    out     0xE6, al
+    mov     al, 0x03            ; VomCtl[03] = RAM size MSB
+    out     VOMCTL, al
+    in      al, VOMCTL
+    xchg    al, ah
+
+    mov     al, 0x02            ; VomCtl[02] = RAM size LSB
+    out     VOMCTL, al
+    in      al, VOMCTL 
 
     call    print_integer
 
@@ -1453,6 +1461,7 @@ reset_ide_drive:
 
     msg_divide_by_zero db "Divide by zero.", 0x0d, 0x0a, 0
     msg_overflow       db "Overflow.", 0x0d, 0x0a, 0
+    msg_breakpoint     db "Breakpoint", 0x0d, 0x0a, 0
     msg_invalid_opcode db "Invalid opcode.", 0x0d, 0x0a, 0
 
     msg_unimplemented  db "Unimplemented ISR.", 0x0d, 0x0a, 0

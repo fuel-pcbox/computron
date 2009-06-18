@@ -265,10 +265,6 @@ vm_handleE6(word data)
 		vm_exit( 0 );
 		break;
 
-	case 0x0001:
-		cpu.regs.W.AX = mem_avail;
-		break;
-
 	case 0x0002:
 		cpu.regs.W.AX = cpu.type;
 		break;

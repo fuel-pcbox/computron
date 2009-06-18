@@ -10,12 +10,13 @@ class VomCtl : public Vomit::IODevice
 {
 public:
 	VomCtl();
-	~VomCtl();
+	virtual ~VomCtl();
 
-	const char *name() const;
+	virtual void out8( uint8_t );
+	virtual uint8_t in8();
 
-	void out8( uint8_t );
-	uint8_t in8();
+private:
+	uint8_t m_registerIndex;
 };
 
 }
