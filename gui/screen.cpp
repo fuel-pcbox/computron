@@ -343,16 +343,18 @@ Screen::resizeEvent( QResizeEvent *e )
 void
 Screen::paintEvent( QPaintEvent *e )
 {
+	QRect r = rect();
+
 	if( (mem_space[0x449] & 0x7F) == 0x12 )
 	{
 		setScreenSize( 640, 480 );
 		QPainter wp( this );
-		wp.drawImage( e->rect(), m_screen12.copy( e->rect() ));
+		wp.drawImage( r, m_screen12.copy( r ));
 
 		if( m_tinted )
 		{
 			wp.setOpacity( 0.3 );
-			wp.fillRect( e->rect(), Qt::blue );
+			wp.fillRect( r, Qt::blue );
 		}
 		return;
 	}
@@ -361,12 +363,12 @@ Screen::paintEvent( QPaintEvent *e )
 	{
 		setScreenSize( 320, 200 );
 		QPainter wp( this );
-		wp.drawImage( e->rect(), m_screen0D.copy( e->rect() ));
+		wp.drawImage( r, m_screen0D.copy( r ));
 
 		if( m_tinted )
 		{
 			wp.setOpacity( 0.3 );
-			wp.fillRect( e->rect(), Qt::blue );
+			wp.fillRect( r, Qt::blue );
 		}
 		return;
 	}

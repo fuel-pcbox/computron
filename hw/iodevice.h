@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <QList>
-#include <QMap>
+#include <QHash>
 
 namespace Vomit
 {
@@ -19,9 +19,9 @@ public:
 	virtual uint8_t in8();
 	virtual void out8( uint8_t );
 
-	static QList<IODevice *> s_devices;
-	static QMap<uint16_t, IODevice *> s_readDevice;
-	static QMap<uint16_t, IODevice *> s_writeDevice;
+	static QList<IODevice *> & devices();
+	static QHash<uint16_t, IODevice *> & readDevices();
+	static QHash<uint16_t, IODevice *> & writeDevices();
 
 	QList<uint16_t> ports() const;
 

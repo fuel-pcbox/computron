@@ -35,7 +35,7 @@ void vm_init() {
 		vm_listen( i, 0L, 0L );
 
 	vlog( VM_INITMSG, "Registering I/O devices" );
-	foreach( Vomit::IODevice *device, Vomit::IODevice::s_devices )
+	foreach( Vomit::IODevice *device, Vomit::IODevice::devices() )
 	{
 		vlog( VM_INITMSG, "%s at 0x%p", device->name(), device );
 	}

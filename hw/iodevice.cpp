@@ -5,29 +5,43 @@
 namespace Vomit
 {
 
-QList<IODevice *> IODevice::s_devices;
-QMap<uint16_t, IODevice *> IODevice::s_readDevice;
-QMap<uint16_t, IODevice *> IODevice::s_writeDevice;
+QList<IODevice *> & IODevice::devices()
+{
+	static QList<IODevice *> s_devices;
+	return s_devices;
+}
+
+QHash<uint16_t, IODevice *> & IODevice::readDevices()
+{
+	static QHash<uint16_t, IODevice *> s_readDevices;
+	return s_readDevices;
+}
+
+QHash<uint16_t, IODevice *> & IODevice::writeDevices()
+{
+	static QHash<uint16_t, IODevice *> s_writeDevices;
+	return s_writeDevices;
+}
 
 IODevice::IODevice( const char *name )
 	: m_name( name )
 {
-	s_devices.append( this );
+	devices().append( this );
 }
 
 IODevice::~IODevice()
 {
-	s_devices.removeAll( this );
+	devices().removeAll( this );
 }
 
 void
 IODevice::listen( uint16_t port, ListenMask mask )
 {
 	if( mask & Read )
-		s_readDevice[port] = this;
+		readDevices()[port] = this;
 
 	if( mask & Write )
-		s_writeDevice[port] = this;
+		writeDevices()[port] = this;
 
 	m_ports.append( port );
 }

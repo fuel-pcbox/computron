@@ -103,9 +103,9 @@ cpu_out( word port, byte data )
 		vlog( VM_IOMSG, "[%04X:%04X] cpu_out: %02X --> %04X", cpu.base_CS, cpu.base_IP, data, port );
 #endif
 
-	if( Vomit::IODevice::s_writeDevice.contains(port) )
+	if( Vomit::IODevice::writeDevices().contains(port) )
 	{
-		Vomit::IODevice::s_writeDevice[port]->out8( data );
+		Vomit::IODevice::writeDevices()[port]->out8( data );
 		return;
 	}
 
@@ -124,8 +124,8 @@ cpu_in( word port )
 		vlog( VM_IOMSG, "[%04X:%04X] cpu_in: %04X", cpu.base_CS, cpu.base_IP, port );
 #endif
 
-	if( Vomit::IODevice::s_readDevice.contains(port) )
-		return Vomit::IODevice::s_readDevice[port]->in8();
+	if( Vomit::IODevice::readDevices().contains(port) )
+		return Vomit::IODevice::readDevices()[port]->in8();
 
 	return vm_ioh_in[port]( port );
 }
