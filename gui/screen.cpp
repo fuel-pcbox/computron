@@ -5,6 +5,9 @@
 #include <QPainter>
 #include <QApplication>
 #include <QPaintEvent>
+#include <QBitmap>
+#include <QMutex>
+#include <QQueue>
 #include <QDebug>
 
 typedef struct {
@@ -13,7 +16,24 @@ typedef struct {
 
 static Screen *s_self = 0L;
 
-Screen::Screen()
+struct Screen::Private
+{
+	QBitmap character[256];
+	QBrush brush[16];
+	QColor color[16];
+
+	QMutex keyQueueLock;
+	QMutex mouseLock;
+
+	QQueue<word> keyQueue;
+	QQueue<byte> rawQueue;
+
+	byte *videoMemory;
+};
+
+Screen::Screen(QWidget *parent)
+	: QWidget(parent),
+	  d(new Private)
 {
 	s_self = this;
 
@@ -26,7 +46,7 @@ Screen::Screen()
 	init();
 	synchronizeFont();
 	setTextMode( 80, 25 );
-	m_videoMemory = mem_space + 0xB8000;
+	d->videoMemory = mem_space + 0xB8000;
 
 	m_screen12 = QImage( 640, 480, QImage::Format_Indexed8 );
 	m_render12 = QImage( 640, 480, QImage::Format_Indexed8 );
@@ -56,13 +76,13 @@ Screen::putCharacter( QPainter &p, int row, int column, byte color, byte c )
 	int x = column * m_characterWidth;
 	int y = row * m_characterHeight;
 
-	p.setBackground( m_brush[color >> 4] );
+	p.setBackground( d->brush[color >> 4] );
 
 	p.eraseRect( x, y, m_characterWidth, m_characterHeight );
 
 	// Text
-	p.setPen( m_color[color & 0xF] );
-	p.drawPixmap( x, y, m_character[c] );
+	p.setPen( d->color[color & 0xF] );
+	p.drawPixmap( x, y, d->character[c] );
 
 	if( m_tinted )
 	{
@@ -245,32 +265,6 @@ Screen::renderMode12( QImage &target )
 	}
 }
 
-
-#ifdef VOMIT_DIRECT_SCREEN
-void
-screen_direct_update( word offset )
-{
-	extern byte vm_p0[];
-	extern byte vm_p1[];
-	extern byte vm_p2[];
-	extern byte vm_p3[];
-
-	// offset 100
-	// pixels 800-807
-
-	uchar *px = &s_self->m_render12.bits()[offset * 8];
-
-	*(px++) = D(7);
-	*(px++) = D(6);
-	*(px++) = D(5);
-	*(px++) = D(4);
-	*(px++) = D(3);
-	*(px++) = D(2);
-	*(px++) = D(1);
-	*(px++) = D(0);
-}
-#endif
-
 void
 Screen::renderMode0D( QImage &target )
 {
@@ -363,7 +357,7 @@ Screen::paintEvent( QPaintEvent *e )
 	QPainter p( this );
 	//synchronizeFont();
 
-	byte *v = m_videoMemory;
+	byte *v = d->videoMemory;
 
 	byte cx, cy;
 	load_cursor( &cy, &cx );
@@ -391,8 +385,8 @@ Screen::paintEvent( QPaintEvent *e )
 	//vlog( VM_VIDEOMSG, "rows: %d, row: %d, col: %d", m_rows, cursor.row, cursor.column );
 	//vlog( VM_VIDEOMSG, "cursor: %d to %d", cursorStart, cursorEnd );
 
-	p.setCompositionMode( QPainter::CompositionMode_Xor );
-	p.fillRect( cursor.column * m_characterWidth, cursor.row * m_characterHeight + cursorStart, m_characterWidth, cursorEnd - cursorStart, QBrush( m_color[14] ));
+	//p.setCompositionMode( QPainter::CompositionMode_Xor );
+	p.fillRect( cursor.column * m_characterWidth, cursor.row * m_characterHeight + cursorStart, m_characterWidth, cursorEnd - cursorStart, d->brush[14] );
 }
 
 void
@@ -423,10 +417,8 @@ Screen::synchronizeFont()
 
 	fontcharbitmap_t *fbmp = (fontcharbitmap_t *)(mem_space + 0xC4000);
 
-	for( int i = 0; i < 256; ++i )
-	{
-	//	m_character[i] = QBitmap::fromData( s, (const uchar *)(bx_vgafont[i].data), QImage::Format_MonoLSB );
-		m_character[i] = QBitmap::fromData( s, (const byte *)fbmp[i].data, QImage::Format_MonoLSB );
+	for (int i = 0; i < 256; ++i) {
+		d->character[i] = QBitmap::fromData(s, (const byte *)fbmp[i].data, QImage::Format_MonoLSB);
 	}
 }
 
@@ -435,7 +427,7 @@ Screen::synchronizeColors()
 {
 	for( int i = 0; i < 16; ++i )
 	{
-		m_color[i].setRgb(
+		d->color[i].setRgb(
 			vga_color_register[vga_palette_register[i]].r << 2,
 			vga_color_register[vga_palette_register[i]].g << 2,
 			vga_color_register[vga_palette_register[i]].b << 2
@@ -443,14 +435,14 @@ Screen::synchronizeColors()
 	}
 
 	for( int i = 0; i < 16; ++i )
-		m_brush[i] = QBrush( m_color[i] );
+		d->brush[i] = QBrush( d->color[i] );
 
 	for( int i = 0; i < 16; ++i )
 	{
-		m_screen12.setColor( i, m_color[i].rgb() );
-		m_render12.setColor( i, m_color[i].rgb() );
-		m_screen0D.setColor( i, m_color[i].rgb() );
-		m_render0D.setColor( i, m_color[i].rgb() );
+		m_screen12.setColor( i, d->color[i].rgb() );
+		m_render12.setColor( i, d->color[i].rgb() );
+		m_screen0D.setColor( i, d->color[i].rgb() );
+		m_render0D.setColor( i, d->color[i].rgb() );
 	}
 }
 
@@ -461,7 +453,7 @@ void
 Screen::mouseMoveEvent( QMouseEvent *e )
 {
 	{
-		QMutexLocker l( &m_mouseLock );
+		QMutexLocker l( &d->mouseLock );
 		currentX = e->x();
 		currentY = e->y();
 	}
@@ -475,7 +467,7 @@ void
 Screen::mousePressEvent( QMouseEvent *e )
 {
 	{
-		QMutexLocker l( &m_mouseLock );
+		QMutexLocker l( &d->mouseLock );
 		currentX = e->x();
 		currentY = e->y();
 	}
@@ -496,7 +488,7 @@ void
 Screen::mouseReleaseEvent( QMouseEvent *e )
 {
 	{
-		QMutexLocker l( &m_mouseLock );
+		QMutexLocker l( &d->mouseLock );
 		currentX = e->x();
 		currentY = e->y();
 	}
@@ -516,14 +508,14 @@ Screen::mouseReleaseEvent( QMouseEvent *e )
 int
 get_current_x()
 {
-	QMutexLocker l( &s_self->m_mouseLock );
+	QMutexLocker l( &s_self->d->mouseLock );
 	return currentX;
 }
 
 int
 get_current_y()
 {
-	QMutexLocker l( &s_self->m_mouseLock );
+	QMutexLocker l( &s_self->d->mouseLock );
 	return currentY;
 }
 
@@ -775,7 +767,7 @@ keyToScanCode( Qt::KeyboardModifiers mod, int key )
 void
 Screen::keyPressEvent( QKeyEvent *e )
 {
-	QMutexLocker l( &m_keyQueueLock );
+	QMutexLocker l( &d->keyQueueLock );
 
 	int nativeScanCode = e->nativeScanCode();
 	//printf( "native scancode = %04X\n", nativeScanCode );
@@ -795,16 +787,16 @@ Screen::keyPressEvent( QKeyEvent *e )
 
 	if( scancode != 0 )
 	{
-		m_keyQueue.enqueue( scancode );
+		d->keyQueue.enqueue( scancode );
 		//printf( "Queued %04X (%02X)\n", scancode, e->key() );
 	}
 
 	if( extended[nativeScanCode] )
 	{
-		m_rawQueue.enqueue( 0xE0 );
+		d->rawQueue.enqueue( 0xE0 );
 	}
 
-	m_rawQueue.enqueue( makeCode[nativeScanCode] );
+	d->rawQueue.enqueue( makeCode[nativeScanCode] );
 
 #if 0
 	QString s;
@@ -818,14 +810,14 @@ Screen::keyPressEvent( QKeyEvent *e )
 void
 Screen::keyReleaseEvent( QKeyEvent *e )
 {
-	QMutexLocker l( &m_keyQueueLock );
+	QMutexLocker l( &d->keyQueueLock );
 
 	int nativeScanCode = e->nativeScanCode();
 
 	if( extended[nativeScanCode] )
-		m_rawQueue.enqueue( 0xE0 );
+		d->rawQueue.enqueue( 0xE0 );
 
-	m_rawQueue.enqueue( breakCode[nativeScanCode] );
+	d->rawQueue.enqueue( breakCode[nativeScanCode] );
 
 #if 0
 	QString s;
@@ -841,11 +833,11 @@ Screen::keyReleaseEvent( QKeyEvent *e )
 word
 Screen::nextKey()
 {
-	QMutexLocker l( &m_keyQueueLock );
+	QMutexLocker l( &d->keyQueueLock );
 
-	m_rawQueue.clear();
-	if( !m_keyQueue.isEmpty() )
-		return m_keyQueue.dequeue();
+	d->rawQueue.clear();
+	if( !d->keyQueue.isEmpty() )
+		return d->keyQueue.dequeue();
 
 	return 0;
 }
@@ -853,11 +845,11 @@ Screen::nextKey()
 word
 Screen::peekKey()
 {
-	QMutexLocker l( &m_keyQueueLock );
+	QMutexLocker l( &d->keyQueueLock );
 
-	m_rawQueue.clear();
-	if( !m_keyQueue.isEmpty() )
-		return m_keyQueue.head();
+	d->rawQueue.clear();
+	if( !d->keyQueue.isEmpty() )
+		return d->keyQueue.head();
 
 	return 0;
 }
@@ -865,25 +857,25 @@ Screen::peekKey()
 byte
 Screen::popKeyData()
 {
-	QMutexLocker l( &m_keyQueueLock );
+	QMutexLocker l( &d->keyQueueLock );
 
 	byte key = 0;
-	if( !m_rawQueue.isEmpty() )
-		key = m_rawQueue.dequeue();
+	if( !d->rawQueue.isEmpty() )
+		key = d->rawQueue.dequeue();
 	#if 0
 	QString s;
 	s.sprintf("%02X", key);
 	qDebug() << "pop " << s;
 	#endif
-	//qDebug() << "Keys queued:" << m_rawQueue.size();
+	//qDebug() << "Keys queued:" << d->rawQueue.size();
 	return key;
 }
 
 void
 Screen::flushKeyBuffer()
 {
-	QMutexLocker l( &m_keyQueueLock );
+	QMutexLocker l( &d->keyQueueLock );
 
-	if( !m_rawQueue.isEmpty() && cpu.IF )
+	if( !d->rawQueue.isEmpty() && cpu.IF )
 		irq( 1 );
 }

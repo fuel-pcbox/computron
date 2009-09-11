@@ -2,31 +2,25 @@
 #define __screen_h__
 
 #include <QWidget>
-#include <QBitmap>
-#include <QQueue>
-#include <QMutex>
 
-#include "../include/vomit.h"
+#include "vomit.h"
 
 class Screen : public QWidget
 {
 	Q_OBJECT
 
 public:
-	Screen();
+	Screen(QWidget *parent = 0);
 	virtual ~Screen();
 
 	int characterWidth() const;
 	int characterHeight() const;
 
 	bool inTextMode() const;
-
 	void setTextMode( int w, int h );
 
 	void synchronizeFont();
 	void synchronizeColors();
-
-	void putCharacter( QPainter &p, int row, int column, byte color, byte c );
 
 	word nextKey();
 	word peekKey();
@@ -62,16 +56,11 @@ private:
 	void paintEvent( QPaintEvent * );
 	void resizeEvent( QResizeEvent * );
 	void init();
+	void putCharacter( QPainter &p, int row, int column, byte color, byte c );
+
 	bool m_inTextMode;
 	int m_width, m_height;
 	int m_characterWidth, m_characterHeight;
-	byte *m_videoMemory;
-
-	QBrush m_brush[16];
-	QColor m_color[16];
-	QBitmap m_character[256];
-	QQueue<word> m_keyQueue;
-	QQueue<byte> m_rawQueue;
 
 	QImage m_screen12;
 	QImage m_render12;
@@ -87,13 +76,11 @@ private:
 
 	bool m_tinted;
 
-	friend void screen_direct_update( word offset );
-
 	friend int get_current_x();
 	friend int get_current_y();
 
-	QMutex m_keyQueueLock;
-	QMutex m_mouseLock;
+	struct Private;
+	Private *d;
 };
 
 #endif
