@@ -18,6 +18,7 @@ Screen::Screen()
 	s_self = this;
 
 	m_rows = 0;
+	m_columns = 0;
 	m_width = 0;
 	m_height = 0;
 	m_tinted = false;
@@ -39,11 +40,6 @@ Screen::Screen()
 	m_render0D.fill(0);
 
 	synchronizeColors();
-
-	m_clearBackground = true;
-
-	setAttribute( Qt::WA_OpaquePaintEvent );
-	setAttribute( Qt::WA_NoSystemBackground );
 
 	setFocusPolicy( Qt::ClickFocus );
 
@@ -134,9 +130,6 @@ Screen::refresh()
 			m_screen12 = m_render12;
 			update( updateRect );
 			clear_video_dirty();
-
-			// Trigger a clear on next mode3 paint...
-			m_clearBackground = true;
 		}
 	}
 	else if( (mem_space[0x449] & 0x7F) == 0x0D )
@@ -187,9 +180,6 @@ Screen::refresh()
 			m_screen0D = m_render0D;
 			update( updateRect );
 			clear_video_dirty();
-
-			// Trigger a clear on next mode3 paint...
-			m_clearBackground = true;
 		}
 	}
 	else if( (mem_space[0x449] & 0x7F) == 0x03 )
@@ -336,7 +326,6 @@ Screen::resizeEvent( QResizeEvent *e )
 	QWidget::resizeEvent( e );
 	vlog( VM_VIDEOMSG, "Resizing viewport" );
 
-	m_clearBackground = true;
 	update();
 }
 
@@ -374,29 +363,17 @@ Screen::paintEvent( QPaintEvent *e )
 	QPainter p( this );
 	//synchronizeFont();
 
-	if( m_clearBackground )
-	{
-		p.eraseRect( rect() );
-	}
-
 	byte *v = m_videoMemory;
-	static byte last[50][80];
-	static byte lasta[50][80];
-	static byte lcx = 0, lcy = 0;
 
 	byte cx, cy;
 	load_cursor( &cy, &cx );
 
-	for( int y = 0; y < m_rows; ++y )
-	{
-		for( int x = 0; x < 80; ++x )
-		{
-			if( m_clearBackground || ((lcx == x && lcy == y) || *v != last[y][x] || *(v+1) != lasta[y][x] ))
-			{
-				putCharacter( p, y, x, *(v+1), *v);
-				last[y][x] = *v;
-				lasta[y][x] = *(v+1);
-			}
+	Cursor cursor(cy, cx);
+
+	// Repaint everything
+	for (int y = 0; y < m_rows; ++y) {
+		for (int x = 0; x < m_columns; ++x) {
+			putCharacter(p, y, x, v[1], v[0]);
 			v += 2;
 		}
 	}
@@ -411,16 +388,11 @@ Screen::paintEvent( QPaintEvent *e )
 		cursorStart *= 2;
 	}
 
-	//vlog( VM_VIDEOMSG, "rows: %d, row: %d, col: %d", m_rows, cy, cx );
+	//vlog( VM_VIDEOMSG, "rows: %d, row: %d, col: %d", m_rows, cursor.row, cursor.column );
 	//vlog( VM_VIDEOMSG, "cursor: %d to %d", cursorStart, cursorEnd );
 
 	p.setCompositionMode( QPainter::CompositionMode_Xor );
-	p.fillRect( cx * m_characterWidth, cy * m_characterHeight + cursorStart, m_characterWidth, cursorEnd - cursorStart, QBrush( m_color[14] ));
-
-	lcx = cx;
-	lcy = cy;
-
-	m_clearBackground = false;
+	p.fillRect( cursor.column * m_characterWidth, cursor.row * m_characterHeight + cursorStart, m_characterWidth, cursorEnd - cursorStart, QBrush( m_color[14] ));
 }
 
 void
@@ -430,6 +402,7 @@ Screen::setTextMode( int w, int h )
 	int he = h * m_characterHeight;
 
 	m_rows = h;
+	m_columns = w;
 
 	setScreenSize( wi, he );
 	m_inTextMode = true;
@@ -558,25 +531,24 @@ void
 Screen::setTinted( bool t )
 {
 	m_tinted = t;
-	m_clearBackground = true;
 	repaint();
 }
 
 // This sucks, any suggestions?
 
 #include "screen.h"
-#include <QMap>
+#include <QHash>
 #include <QKeyEvent>
 #include <QDebug>
 #include <QMutexLocker>
 
-static QMap<int, word> normals;
-static QMap<int, word> shifts;
-static QMap<int, word> ctrls;
-static QMap<int, word> alts;
-static QMap<int, byte> makeCode;
-static QMap<int, byte> breakCode;
-static QMap<int, bool> extended;
+static QHash<int, word> normals;
+static QHash<int, word> shifts;
+static QHash<int, word> ctrls;
+static QHash<int, word> alts;
+static QHash<int, byte> makeCode;
+static QHash<int, byte> breakCode;
+static QHash<int, bool> extended;
 
 void
 addKey( int key, word normal, word shift, word ctrl, word alt, bool isExtended = false )
@@ -797,7 +769,7 @@ keyToScanCode( Qt::KeyboardModifiers mod, int key )
 	if( mod & Qt::ControlModifier )
 		return ctrls[key];
 
-	//printf( "EH!\n" );
+	qDebug() << Q_FUNC_INFO << "Unhandled key" << mod << key;
 }
 
 void

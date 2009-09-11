@@ -36,6 +36,15 @@ public:
 
 	void setTinted( bool );
 
+	struct Cursor
+	{
+		uint8_t row;
+		uint8_t column;
+
+		Cursor() : row(0), column(0) {}
+		Cursor(uint8_t r, uint8_t c) : row(r), column(c) {}
+	};
+
 protected:
 	void keyPressEvent( QKeyEvent *e );
 	void keyReleaseEvent( QKeyEvent *e );
@@ -73,10 +82,10 @@ private:
 	void renderMode12( QImage &target );
 	void renderMode0D( QImage &target );
 
-	bool m_clearBackground;
 	int m_rows;
+	int m_columns;
+
 	bool m_tinted;
-	bool m_needRepaint;
 
 	friend void screen_direct_update( word offset );
 
