@@ -20,6 +20,9 @@
 
 #define FLAT(s,o) (((s)<<4)+(o))
 
+#define SET_SEGMENT_PREFIX(segment) do { cpu.SegmentPrefix = cpu.segment; cpu.CurrentSegment = &cpu.SegmentPrefix; } while(0);
+#define RESET_SEGMENT_PREFIX do { cpu.CurrentSegment = &cpu.DS; } while(0);
+
 #ifndef VM_NOPFQ
 extern byte CPU_PFQ_SIZE;
 extern byte cpu_pfq_current;
@@ -203,7 +206,14 @@ void mem_setword(word, word, word);
 
 void int_call(byte);
 
-word signext(byte);
+inline word signext (byte b)
+{
+	word w = 0x0000 | b;
+	if ((w&0x80))
+		return (w | 0xff00);
+	else
+		return (w & 0x00ff);
+}
 
 #define REG_AL  0
 #define REG_CL  1

@@ -122,4 +122,11 @@ extern vomit_options_t options;
 #include "floppy.h"
 #include "vga.h"
 
+template <typename T> inline void swap(T &a, T &b)
+{
+	T c(a);
+	a = b;
+	b = c;
+}
+
 #endif

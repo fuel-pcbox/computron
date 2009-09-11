@@ -9,6 +9,7 @@ INCLUDEPATH += . include disasm/include gui hw
 CFLAGS += -std=gnu++0x
 CXXFLAGS += -std=gnu++0x
 DEFINES += VM_NOPFQ
+CONFIG += debug silent
 
 # Input
 HEADERS += gui/codeview.h \
