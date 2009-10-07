@@ -91,11 +91,11 @@ MainWindow::MainWindow()
 
 	QAction *chooseFloppyAImage = new QAction(QIcon(":/icons/disk.png"), tr("Floppy A:"), this);
 	QAction *chooseFloppyBImage = new QAction(QIcon(":/icons/disk.png"), tr("Floppy B:"), this);
-	d->pauseMachine = new QAction(QIcon(":/icons/control_pause.png"), tr("Pause VM"), this);
-	d->startMachine = new QAction(QIcon(":/icons/control_play.png"), tr("Start VM"), this);
-	d->stopMachine = new QAction(QIcon(":/icons/control_stop.png"), tr("Stop VM"), this);
+	d->pauseMachine = new QAction(QIcon(":/icons/control_pause.png"), tr("Pause"), this);
+	d->startMachine = new QAction(QIcon(":/icons/control_play.png"), tr("Start"), this);
+	d->stopMachine = new QAction(QIcon(":/icons/control_stop.png"), tr("Stop"), this);
 
-	QAction *rebootMachine = new QAction(QIcon(":/icons/arrow_refresh.png"), tr("Reboot VM"), this);
+	QAction *rebootMachine = new QAction(QIcon(":/icons/arrow_refresh.png"), tr("Reboot"), this);
 
 	d->startMachine->setEnabled( false );
 	d->pauseMachine->setEnabled( true );
@@ -106,11 +106,12 @@ MainWindow::MainWindow()
 	d->mainToolBar->addAction( d->startMachine );
 	d->mainToolBar->addAction( d->pauseMachine );
 	d->mainToolBar->addAction( d->stopMachine );
+	d->mainToolBar->addAction( rebootMachine );
+
+        d->mainToolBar->addSeparator();
 
 	d->mainToolBar->addAction( chooseFloppyAImage );
 	d->mainToolBar->addAction( chooseFloppyBImage );
-
-	d->mainToolBar->addAction( rebootMachine );
 
 	connect( chooseFloppyAImage, SIGNAL(triggered(bool)), SLOT(slotFloppyAClicked()) );
 	connect( chooseFloppyBImage, SIGNAL(triggered(bool)), SLOT(slotFloppyBClicked()) );
