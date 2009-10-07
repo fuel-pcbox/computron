@@ -53,6 +53,7 @@ MainWindow::MainWindow()
 	l->addWidget( &d->screen );
 	//l->addWidget( activityBar );
 
+#if 0
 	QTabWidget *tabs = new QTabWidget;
 	tabs->setTabPosition( QTabWidget::South );
 	l->addWidget( tabs );
@@ -85,6 +86,7 @@ MainWindow::MainWindow()
 	tabs->addTab( &d->codeview, tr("Code") );
 
 	//tabs->setCurrentWidget( &d->codeview );
+#endif
 
 	d->screen.setFocus();
 
