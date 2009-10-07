@@ -7,6 +7,8 @@ CXXFLAGS += -std=gnu++0x
 DEFINES += VM_NOPFQ
 CONFIG += debug silent
 
+CONFIG -= app_bundle
+
 RESOURCES = vomit.qrc
 
 HEADERS += gui/codeview.h \
