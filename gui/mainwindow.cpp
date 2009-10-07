@@ -89,13 +89,13 @@ MainWindow::MainWindow()
 
 	setCentralWidget( widget );
 
-	QAction *chooseFloppyAImage = new QAction( QIcon("icons/disk.png"), tr("Floppy A:"), this );
-	QAction *chooseFloppyBImage = new QAction( QIcon("icons/disk.png"), tr("Floppy B:"), this );
-	d->pauseMachine = new QAction( QIcon("icons/control_pause.png"), tr("Pause VM"), this );
-	d->startMachine = new QAction( QIcon("icons/control_play.png"), tr("Start VM"), this );
-	d->stopMachine = new QAction( QIcon("icons/control_stop.png"), tr("Stop VM"), this );
+	QAction *chooseFloppyAImage = new QAction(QIcon(":/icons/disk.png"), tr("Floppy A:"), this);
+	QAction *chooseFloppyBImage = new QAction(QIcon(":/icons/disk.png"), tr("Floppy B:"), this);
+	d->pauseMachine = new QAction(QIcon(":/icons/control_pause.png"), tr("Pause VM"), this);
+	d->startMachine = new QAction(QIcon(":/icons/control_play.png"), tr("Start VM"), this);
+	d->stopMachine = new QAction(QIcon(":/icons/control_stop.png"), tr("Stop VM"), this);
 
-	QAction *rebootMachine = new QAction( QIcon("icons/arrow_refresh.png"), tr("Reboot VM"), this );
+	QAction *rebootMachine = new QAction(QIcon(":/icons/arrow_refresh.png"), tr("Reboot VM"), this);
 
 	d->startMachine->setEnabled( false );
 	d->pauseMachine->setEnabled( true );
