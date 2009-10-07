@@ -28,8 +28,9 @@ Worker::run()
 void
 Worker::shutdown()
 {
-	vm_exit( 0 );
-	emit finished();
+    stopMachine();
+    vm_exit( 0 );
+    emit finished();
 }
 
 void

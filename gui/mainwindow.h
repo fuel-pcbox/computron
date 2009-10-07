@@ -24,6 +24,8 @@ private slots:
 
 	void slotUpdateMemView();
 
+    void onAboutToQuit();
+
 private:
 	struct Private;
 	Private *d;

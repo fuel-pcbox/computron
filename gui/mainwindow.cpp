@@ -13,6 +13,7 @@
 #include <QLabel>
 #include <QDebug>
 #include "hexspinbox.h"
+#include <QApplication>
 
 void vomit_set_drive_image( int drive_id, const char *filename );
 
@@ -130,6 +131,8 @@ MainWindow::MainWindow()
 	QObject::connect( &d->syncTimer, SIGNAL( timeout() ), &d->screen, SLOT( refresh() ));
 	QObject::connect( &d->syncTimer, SIGNAL( timeout() ), &d->screen, SLOT( flushKeyBuffer() ));
 	d->syncTimer.start( 50 );
+
+        QObject::connect(qApp, SIGNAL(aboutToQuit()), this, SLOT(onAboutToQuit()));
 }
 
 MainWindow::~MainWindow()
@@ -214,4 +217,9 @@ void
 MainWindow::slotUpdateMemView()
 {
 	d->memview.setAddress( d->segmentEdit->value(), d->offsetEdit->value() );
+}
+
+void MainWindow::onAboutToQuit()
+{
+    d->worker->stopMachine();
 }
