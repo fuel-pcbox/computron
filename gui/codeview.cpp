@@ -1,6 +1,7 @@
 #include "codeview.h"
 #include <QPainter>
 #include <QTimer>
+#include <stdio.h>
 
 #include "../include/vomit.h"
 #include "../include/8086.h"
