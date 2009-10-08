@@ -5,121 +5,118 @@
 
 #include "vomit.h"
 
-void
-_LODSB()
+void _LODSB(vomit_cpu_t *cpu)
 {
-	/* Load byte at CurSeg:SI into AL */
-	cpu.regs.B.AL = mem_getbyte( *(cpu.CurrentSegment), cpu.regs.W.SI );
+    /* Load byte at CurSeg:SI into AL */
+    cpu->regs.B.AL = vomit_cpu_memory_read8(cpu, *(cpu->CurrentSegment), cpu->regs.W.SI);
 
-	/* Modify SI according to DF */
-	if( cpu.DF == 0 )
-		++cpu.regs.W.SI;
-	else
-		--cpu.regs.W.SI;
+    /* Modify SI according to DF */
+    if (cpu->DF == 0)
+        ++cpu->regs.W.SI;
+    else
+        --cpu->regs.W.SI;
 }
 
-void
-_LODSW()
+void _LODSW(vomit_cpu_t *cpu)
 {
-	/* Load word at CurSeg:SI into AX */
-	cpu.regs.W.AX = mem_getword( *(cpu.CurrentSegment), cpu.regs.W.SI );
+    /* Load word at CurSeg:SI into AX */
+    cpu->regs.W.AX = vomit_cpu_memory_read16(cpu, *(cpu->CurrentSegment), cpu->regs.W.SI);
 
-	/* Modify SI according to DF */
-	if( cpu.DF == 0 )
-		cpu.regs.W.SI += 2;
-	else
-		cpu.regs.W.SI -= 2;
+    /* Modify SI according to DF */
+    if (cpu->DF == 0)
+        cpu->regs.W.SI += 2;
+    else
+        cpu->regs.W.SI -= 2;
 }
 
-void
-_STOSB()
+void _STOSB(vomit_cpu_t *cpu)
 {
-	mem_setbyte( cpu.ES, cpu.regs.W.DI, cpu.regs.B.AL );
+    vomit_cpu_memory_write8(cpu, cpu->ES, cpu->regs.W.DI, cpu->regs.B.AL);
 
-	if( cpu.DF == 0 )
-		++cpu.regs.W.DI;
-	else
-		--cpu.regs.W.DI;
+    if (cpu->DF == 0)
+        ++cpu->regs.W.DI;
+    else
+        --cpu->regs.W.DI;
 }
 
-void
-_STOSW()
+void _STOSW(vomit_cpu_t *cpu)
 {
-	mem_setword( cpu.ES, cpu.regs.W.DI, cpu.regs.W.AX );
+    vomit_cpu_memory_write16(cpu, cpu->ES, cpu->regs.W.DI, cpu->regs.W.AX);
 
-	if( cpu.DF == 0 )
-		cpu.regs.W.DI += 2;
-	else
-		cpu.regs.W.DI -= 2;
+    if (cpu->DF == 0)
+        cpu->regs.W.DI += 2;
+    else
+        cpu->regs.W.DI -= 2;
 }
 
-void
-_CMPSB()
+void _CMPSB(vomit_cpu_t *cpu)
 {
-	byte src = mem_getbyte( *(cpu.CurrentSegment), cpu.regs.W.SI );
-	byte dest = mem_getbyte( cpu.ES, cpu.regs.W.DI );
-	cpu_cmp_flags8( src - dest, src, dest );
-	if( cpu.DF == 0 )
-		++cpu.regs.W.DI, ++cpu.regs.W.SI;
-	else
-		--cpu.regs.W.DI, --cpu.regs.W.SI;
+    BYTE src = vomit_cpu_memory_read8(cpu, *(cpu->CurrentSegment), cpu->regs.W.SI);
+    BYTE dest = vomit_cpu_memory_read8(cpu, cpu->ES, cpu->regs.W.DI);
+
+    vomit_cpu_cmp_flags8(cpu, src - dest, src, dest);
+
+    if (cpu->DF == 0)
+        ++cpu->regs.W.DI, ++cpu->regs.W.SI;
+    else
+        --cpu->regs.W.DI, --cpu->regs.W.SI;
 }
 
-void
-_CMPSW()
+void _CMPSW(vomit_cpu_t *cpu)
 {
-	word src = mem_getword( *(cpu.CurrentSegment), cpu.regs.W.SI );
-	word dest = mem_getword( cpu.ES, cpu.regs.W.DI );
-	cpu_cmp_flags16( src - dest, src, dest );
-	if( cpu.DF == 0 )
-		cpu.regs.W.DI += 2, cpu.regs.W.SI += 2;
-	else
-		cpu.regs.W.DI -= 2, cpu.regs.W.SI -= 2;
+    WORD src = vomit_cpu_memory_read16(cpu, *(cpu->CurrentSegment), cpu->regs.W.SI);
+    WORD dest = vomit_cpu_memory_read16(cpu, cpu->ES, cpu->regs.W.DI);
+
+    vomit_cpu_cmp_flags16(cpu, src - dest, src, dest);
+
+    if (cpu->DF == 0)
+        cpu->regs.W.DI += 2, cpu->regs.W.SI += 2;
+    else
+        cpu->regs.W.DI -= 2, cpu->regs.W.SI -= 2;
 }
 
-void
-_SCASB()
+void _SCASB(vomit_cpu_t *cpu)
 {
-	byte dest = mem_getbyte( cpu.ES, cpu.regs.W.DI );
-	cpu_cmp_flags8( cpu.regs.B.AL - dest, dest, cpu.regs.B.AL );
+    BYTE dest = vomit_cpu_memory_read8(cpu, cpu->ES, cpu->regs.W.DI);
 
-	if( cpu.DF == 0 )
-		++cpu.regs.W.DI;
-	else
-		--cpu.regs.W.DI;
+    vomit_cpu_cmp_flags8(cpu, cpu->regs.B.AL - dest, dest, cpu->regs.B.AL);
+
+    if (cpu->DF == 0)
+        ++cpu->regs.W.DI;
+    else
+        --cpu->regs.W.DI;
 }
 
-void
-_SCASW()
+void _SCASW(vomit_cpu_t *cpu)
 {
-	word dest = mem_getword( cpu.ES, cpu.regs.W.DI );
-	cpu_cmp_flags16( cpu.regs.W.AX - dest, dest, cpu.regs.W.AX );
+    WORD dest = vomit_cpu_memory_read16(cpu, cpu->ES, cpu->regs.W.DI);
 
-	if( cpu.DF == 0 )
-		cpu.regs.W.DI += 2;
-	else
-		cpu.regs.W.DI -= 2;
+    vomit_cpu_cmp_flags16(cpu, cpu->regs.W.AX - dest, dest, cpu->regs.W.AX);
+
+    if (cpu->DF == 0)
+        cpu->regs.W.DI += 2;
+    else
+        cpu->regs.W.DI -= 2;
 }
 
-void
-_MOVSB()
+void _MOVSB(vomit_cpu_t *cpu)
 {
-	byte tmpb = mem_getbyte( *(cpu.CurrentSegment), cpu.regs.W.SI );
-	mem_setbyte( cpu.ES, cpu.regs.W.DI, tmpb );
+    BYTE tmpb = vomit_cpu_memory_read8(cpu, *(cpu->CurrentSegment), cpu->regs.W.SI);
+    vomit_cpu_memory_write8(cpu, cpu->ES, cpu->regs.W.DI, tmpb);
 
-	if( cpu.DF == 0 )
-		++cpu.regs.W.SI, ++cpu.regs.W.DI;
-	else
-		--cpu.regs.W.SI, --cpu.regs.W.DI;
+    if (cpu->DF == 0)
+        ++cpu->regs.W.SI, ++cpu->regs.W.DI;
+    else
+        --cpu->regs.W.SI, --cpu->regs.W.DI;
 }
-void
-_MOVSW()
-{
-	word tmpw = mem_getword( *(cpu.CurrentSegment), cpu.regs.W.SI );
-	mem_setword( cpu.ES, cpu.regs.W.DI, tmpw );
 
-	if( cpu.DF == 0 )
-		cpu.regs.W.SI += 2, cpu.regs.W.DI += 2;
-	else
-		cpu.regs.W.SI -= 2, cpu.regs.W.DI -= 2;
+void _MOVSW(vomit_cpu_t *cpu)
+{
+    WORD tmpw = vomit_cpu_memory_read16(cpu, *(cpu->CurrentSegment), cpu->regs.W.SI);
+    vomit_cpu_memory_write16(cpu, cpu->ES, cpu->regs.W.DI, tmpw);
+
+    if (cpu->DF == 0)
+        cpu->regs.W.SI += 2, cpu->regs.W.DI += 2;
+    else
+        cpu->regs.W.SI -= 2, cpu->regs.W.DI -= 2;
 }

@@ -18,19 +18,19 @@ static byte sector[2];
 static byte nsectors[2];
 static byte error[2];
 
-static byte ide_status( word );
-static void ide_command( word, byte );
-static byte get_sector_count( word );
-static void set_sector_count( word, byte );
-static byte get_sector( word );
-static void set_sector( word, byte );
-static byte get_cylinder_lsb( word );
-static void set_cylinder_lsb( word, byte );
-static byte get_cylinder_msb( word );
-static void set_cylinder_msb( word, byte );
-static byte get_head( word );
-static void set_head( word, byte );
-static byte ide_error( word port );
+static byte ide_status(vomit_cpu_t *cpu, word );
+static void ide_command(vomit_cpu_t *cpu, word, byte );
+static byte get_sector_count(vomit_cpu_t *cpu, word );
+static void set_sector_count(vomit_cpu_t *cpu, word, byte );
+static byte get_sector(vomit_cpu_t *cpu, word );
+static void set_sector(vomit_cpu_t *cpu, word, byte );
+static byte get_cylinder_lsb(vomit_cpu_t *cpu, word );
+static void set_cylinder_lsb(vomit_cpu_t *cpu, word, byte );
+static byte get_cylinder_msb(vomit_cpu_t *cpu, word );
+static void set_cylinder_msb(vomit_cpu_t *cpu, word, byte );
+static byte get_head(vomit_cpu_t *cpu, word );
+static void set_head(vomit_cpu_t *cpu, word, byte );
+static byte ide_error(vomit_cpu_t *cpu, word port );
 
 void
 ide_init()
@@ -52,13 +52,13 @@ ide_init()
 }
 
 static void
-ide_command( word port, byte data )
+ide_command(vomit_cpu_t *cpu, word port, byte data )
 {
 	vlog( VM_DISKLOG, "ide%d received cmd %02X", CONTROLLER, data );
 }
 
 static byte
-ide_status( word port )
+ide_status(vomit_cpu_t *cpu, word port )
 {
 	vlog( VM_DISKLOG, "ide%d status queried", CONTROLLER );
 	(void) port;
@@ -66,7 +66,7 @@ ide_status( word port )
 }
 
 static byte
-ide_error( word port )
+ide_error(vomit_cpu_t *cpu, word port )
 {
 	vlog( VM_DISKLOG, "ide%d error queried", CONTROLLER );
 	return error[CONTROLLER];
@@ -74,42 +74,42 @@ ide_error( word port )
 
 
 static byte
-get_sector_count( word port )
+get_sector_count(vomit_cpu_t *cpu, word port )
 {
 	vlog( VM_DISKLOG, "ide%d sector count queried", CONTROLLER );
 	return nsectors[CONTROLLER];
 }
 
 static void
-set_sector_count( word port, byte data )
+set_sector_count(vomit_cpu_t *cpu, word port, byte data )
 {
 	vlog( VM_DISKLOG, "ide%d sector count set to %d", CONTROLLER, data );
 	nsectors[CONTROLLER] = data;
 }
 
 static byte
-get_sector( word port )
+get_sector(vomit_cpu_t *cpu, word port )
 {
 	vlog( VM_DISKLOG, "ide%d sector queried", CONTROLLER );
 	return sector[CONTROLLER];
 }
 
 static void
-set_sector( word port, byte data )
+set_sector(vomit_cpu_t *cpu, word port, byte data )
 {
 	vlog( VM_DISKLOG, "ide%d sector set to %d", CONTROLLER, data );
 	sector[CONTROLLER] = data;
 }
 
 static byte
-get_cylinder_lsb( word port )
+get_cylinder_lsb(vomit_cpu_t *cpu, word port )
 {
 	vlog( VM_DISKLOG, "ide%d cylinder LSB queried", CONTROLLER );
 	return cylinder[CONTROLLER] & 0xFF;
 }
 
 static void
-set_cylinder_lsb( word port, byte data )
+set_cylinder_lsb(vomit_cpu_t *cpu, word port, byte data )
 {
 	vlog( VM_DISKLOG, "ide%d cylinder LSB set to 0x%02X", CONTROLLER, data );
 	cylinder[CONTROLLER] &= 0xFF00;
@@ -117,14 +117,14 @@ set_cylinder_lsb( word port, byte data )
 }
 
 static byte
-get_cylinder_msb( word port )
+get_cylinder_msb(vomit_cpu_t *cpu, word port )
 {
 	vlog( VM_DISKLOG, "ide%d cylinder MSB queried", CONTROLLER );
 	return (cylinder[CONTROLLER] >> 8) & 0xFF;
 }
 
 static void
-set_cylinder_msb( word port, byte data )
+set_cylinder_msb(vomit_cpu_t *cpu, word port, byte data )
 {
 	vlog( VM_DISKLOG, "ide%d cylinder MSB set to 0x%02X", CONTROLLER, data );
 	cylinder[CONTROLLER] &= 0x00FF;
@@ -132,14 +132,14 @@ set_cylinder_msb( word port, byte data )
 }
 
 static byte
-get_head( word port )
+get_head(vomit_cpu_t *cpu, word port )
 {
 	vlog( VM_DISKLOG, "ide%d head queried", CONTROLLER );
 	return head[CONTROLLER];
 }
 
 static void
-set_head( word port, byte data )
+set_head(vomit_cpu_t *cpu, word port, byte data )
 {
 	vlog( VM_DISKLOG, "ide%d head set to %d", CONTROLLER, data );
 	head[CONTROLLER] = data;

@@ -1,4 +1,4 @@
-/* 8086/mov.c
+/* 8086/mov.cpp
  * MOVe instructions
  *
  */
@@ -7,88 +7,101 @@
 #include "debug.h"
 #include <assert.h>
 
-void
-_MOV_RM8_imm8()
+void _MOV_RM8_imm8(vomit_cpu_t *cpu)
 {
-	byte rm = cpu_pfq_getbyte();
-	(void) modrm_resolve8( rm );
-	modrm_update8( cpu_pfq_getbyte() );
+    BYTE rm = vomit_cpu_pfq_getbyte(cpu);
+    (void) vomit_cpu_modrm_resolve8(cpu, rm);
+    vomit_cpu_modrm_update8(cpu, vomit_cpu_pfq_getbyte(cpu));
 }
 
-void
-_MOV_RM16_imm16() {
-	byte rm = cpu_pfq_getbyte();
-	(void) modrm_resolve16( rm );
-	modrm_update16( cpu_pfq_getword() );
-}
-
-void
-_MOV_RM16_seg()
+void _MOV_RM16_imm16(vomit_cpu_t *cpu)
 {
-	byte rm  = cpu_pfq_getbyte();
-
-	assert( rmreg(rm) >= 0 && rmreg(rm) <= 5 );
-
-	modrm_write16( rm, *tseg[rmreg(rm)] );
-
-	if( rmreg(rm) == REG_FS || rmreg(rm) == REG_GS )
-	{
-		vlog( VM_CPUMSG, "%04X:%04X: Read from 80386 segment register" );
-	}
+    BYTE rm = vomit_cpu_pfq_getbyte(cpu);
+    (void) vomit_cpu_modrm_resolve16(cpu, rm);
+    vomit_cpu_modrm_update16(cpu, vomit_cpu_pfq_getword(cpu));
 }
 
-void
-_MOV_seg_RM16()
+void _MOV_RM16_seg(vomit_cpu_t *cpu)
 {
-	byte rm = cpu_pfq_getbyte();
+    BYTE rm = vomit_cpu_pfq_getbyte(cpu);
 
-	assert( rmreg(rm) >= 0 && rmreg(rm) <= 5 );
+    assert(rmreg(rm) >= 0 && rmreg(rm) <= 5);
 
-	*tseg[rmreg(rm)] = modrm_read16( rm );
+    vomit_cpu_modrm_write16(cpu, rm, *cpu->tseg[rmreg(rm)]);
 
-	if( rmreg(rm) == REG_FS || rmreg(rm) == REG_GS )
-	{
-		vlog( VM_CPUMSG, "%04X:%04X: Write to 80386 segment register" );
-	}
+#ifdef VOMIT_DEBUG
+    if (rmreg(rm) == REG_FS || rmreg(rm) == REG_GS) {
+        vlog(VM_CPUMSG, "%04X:%04X: Read from 80386 segment register");
+    }
+#endif
 }
 
-void
-_MOV_RM8_reg8()
+void _MOV_seg_RM16(vomit_cpu_t *cpu)
 {
-	byte rm = cpu_pfq_getbyte();
-	if( rm == 0x26 )
-	{
-		if( mem_getword(cpu.CS, cpu.IP )== 0xBFFC )
-		{
-			// wat
-			rm = 0x26;
-		}
-	}
-	modrm_write8( rm, *treg8[rmreg(rm)] );
+    BYTE rm = vomit_cpu_pfq_getbyte(cpu);
+
+    assert(rmreg(rm) >= 0 && rmreg(rm) <= 5);
+
+    *cpu->tseg[rmreg(rm)] = vomit_cpu_modrm_read16(cpu, rm);
+
+#ifdef VOMIT_DEBUG
+    if (rmreg(rm) == REG_FS || rmreg(rm) == REG_GS) {
+        vlog(VM_CPUMSG, "%04X:%04X: Write to 80386 segment register");
+    }
+#endif
 }
 
-void
-_MOV_reg8_RM8() {
-	byte rm = cpu_pfq_getbyte();
-	*treg8[rmreg(rm)] = modrm_read8( rm );
+void _MOV_RM8_reg8(vomit_cpu_t *cpu)
+{
+    BYTE rm = vomit_cpu_pfq_getbyte(cpu);
+    vomit_cpu_modrm_write8(cpu, rm, *cpu->treg8[rmreg(rm)]);
 }
 
-void
-_MOV_RM16_reg16() {
-	byte rm = cpu_pfq_getbyte();
-	modrm_write16( rm, *treg16[rmreg(rm)] );
+void _MOV_reg8_RM8(vomit_cpu_t *cpu)
+{
+    BYTE rm = vomit_cpu_pfq_getbyte(cpu);
+    *cpu->treg8[rmreg(rm)] = vomit_cpu_modrm_read8(cpu, rm);
 }
 
-void
-_MOV_reg16_RM16() {
-	byte rm = cpu_pfq_getbyte();
-	*treg16[rmreg(rm)] = modrm_read16( rm );
+void _MOV_RM16_reg16(vomit_cpu_t *cpu)
+{
+    BYTE rm = vomit_cpu_pfq_getbyte(cpu);
+    vomit_cpu_modrm_write16(cpu, rm, *cpu->treg16[rmreg(rm)]);
 }
 
-void _MOV_reg8_imm8() { *treg8[cpu.opcode&7] = cpu_pfq_getbyte(); }
-void _MOV_reg16_imm16() { *treg16[cpu.opcode&7] = cpu_pfq_getword(); }
-void _MOV_AL_moff8() { cpu.regs.B.AL = mem_getbyte( *(cpu.CurrentSegment), cpu_pfq_getword() ); }
-void _MOV_AX_moff16() { cpu.regs.W.AX = mem_getword( *(cpu.CurrentSegment), cpu_pfq_getword() ); }
-void _MOV_moff8_AL() { mem_setbyte( *(cpu.CurrentSegment), cpu_pfq_getword(), cpu.regs.B.AL ); }
-void _MOV_moff16_AX() { mem_setword( *(cpu.CurrentSegment), cpu_pfq_getword(), cpu.regs.W.AX ); }
+void _MOV_reg16_RM16(vomit_cpu_t *cpu)
+{
+    BYTE rm = vomit_cpu_pfq_getbyte(cpu);
+    *cpu->treg16[rmreg(rm)] = vomit_cpu_modrm_read16(cpu, rm);
+}
+
+void _MOV_reg8_imm8(vomit_cpu_t *cpu)
+{
+    *cpu->treg8[cpu->opcode&7] = vomit_cpu_pfq_getbyte(cpu);
+}
+
+void _MOV_reg16_imm16(vomit_cpu_t *cpu)
+{
+    *cpu->treg16[cpu->opcode&7] = vomit_cpu_pfq_getword(cpu);
+}
+
+void _MOV_AL_moff8(vomit_cpu_t *cpu)
+{
+    cpu->regs.B.AL = vomit_cpu_memory_read8(cpu, *(cpu->CurrentSegment), vomit_cpu_pfq_getword(cpu));
+}
+
+void _MOV_AX_moff16(vomit_cpu_t *cpu)
+{
+    cpu->regs.W.AX = vomit_cpu_memory_read16(cpu, *(cpu->CurrentSegment), vomit_cpu_pfq_getword(cpu));
+}
+
+void _MOV_moff8_AL(vomit_cpu_t *cpu)
+{
+    vomit_cpu_memory_write8(cpu, *(cpu->CurrentSegment), vomit_cpu_pfq_getword(cpu), cpu->regs.B.AL);
+}
+
+void _MOV_moff16_AX(vomit_cpu_t *cpu)
+{
+    vomit_cpu_memory_write16(cpu, *(cpu->CurrentSegment), vomit_cpu_pfq_getword(cpu), cpu->regs.W.AX);
+}
 

@@ -3,20 +3,23 @@
 
 #include "iodevice.h"
 
+struct __vomit_cpu_t;
+
 namespace Vomit
 {
 
 class VomCtl : public Vomit::IODevice
 {
 public:
-	VomCtl();
-	virtual ~VomCtl();
+    VomCtl();
+    virtual ~VomCtl();
 
-	virtual void out8( uint8_t );
-	virtual uint8_t in8();
+    virtual void out8( uint8_t );
+    virtual uint8_t in8();
 
 private:
-	uint8_t m_registerIndex;
+    uint8_t m_registerIndex;
+    __vomit_cpu_t *m_cpu;
 };
 
 }

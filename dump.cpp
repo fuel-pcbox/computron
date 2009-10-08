@@ -1,4 +1,4 @@
-/* dump.c
+/* dump.cpp
  * Assorted dump functions
  *
  */
@@ -8,25 +8,23 @@
 #include "debug.h"
 #include "disasm.h"
 
-void
-dump_cpu()
+void dump_cpu(vomit_cpu_t *cpu)
 {
-	vlog( VM_DUMPMSG, "CPU is an Intel %s", cpu.type == 0 ? "8086" : "80186" );
-	vlog( VM_DUMPMSG, "Memory size: %dK", mem_avail );
-#ifndef VM_NOPFQ
-	vlog( VM_DUMPMSG, "Prefetch queue: %d bytes", CPU_PFQ_SIZE );
+    vlog(VM_DUMPMSG, "CPU is an Intel %s", cpu->type == 0 ? "8086" : "80186");
+    vlog(VM_DUMPMSG, "Memory size: %dK", cpu->memory_size);
+#ifdef VOMIT_PREFETCH_QUEUE
+    vlog(VM_DUMPMSG, "Prefetch queue: %d bytes", cpu->pfq_size);
 #else
-	vlog( VM_DUMPMSG, "Prefetch queue: off" );
+    vlog(VM_DUMPMSG, "Prefetch queue: off");
 #endif
 }
 
-void
-dump_try()
+void dump_try(vomit_cpu_t *cpu)
 {
-	printf( "AX=%04X\nBX=%04X\nCX=%04X\nDX=%04X\n", cpu.regs.W.AX, cpu.regs.W.BX, cpu.regs.W.CX, cpu.regs.W.DX );
-	printf( "SP=%04X\nBP=%04X\nSI=%04X\nDI=%04X\n", cpu.regs.W.SP, cpu.regs.W.BP, cpu.regs.W.SI, cpu.regs.W.DI );
-	printf( "CS=%04X\nDS=%04X\nES=%04X\nSS=%04X\n", cpu.CS, cpu.DS, cpu.ES, cpu.SS );
-	printf( "CF=%x\nPF=%x\nAF=%x\nZF=%x\nSF=%x\nIF=%x\nDF=%x\nOF=%x\nTF=%x\n", cpu.CF, cpu.PF, cpu.AF, cpu.ZF, cpu.SF, cpu.IF, cpu.DF, cpu.OF, cpu.TF );
+    printf( "AX=%04X\nBX=%04X\nCX=%04X\nDX=%04X\n", cpu->regs.W.AX, cpu->regs.W.BX, cpu->regs.W.CX, cpu->regs.W.DX );
+    printf( "SP=%04X\nBP=%04X\nSI=%04X\nDI=%04X\n", cpu->regs.W.SP, cpu->regs.W.BP, cpu->regs.W.SI, cpu->regs.W.DI );
+    printf( "CS=%04X\nDS=%04X\nES=%04X\nSS=%04X\n", cpu->CS, cpu->DS, cpu->ES, cpu->SS );
+    printf( "CF=%x\nPF=%x\nAF=%x\nZF=%x\nSF=%x\nIF=%x\nDF=%x\nOF=%x\nTF=%x\n", cpu->CF, cpu->PF, cpu->AF, cpu->ZF, cpu->SF, cpu->IF, cpu->DF, cpu->OF, cpu->TF );
 }
 
 int
@@ -38,7 +36,7 @@ dump_disasm( word segment, word offset )
 	char *p = buf;
 	byte *opcode;
 
-	opcode = mem_space + (segment << 4) + offset;
+	opcode = g_cpu.memory + (segment << 4) + offset;
 	width = insn_width( opcode );
 	disassemble( opcode, offset, disasm, sizeof(disasm) );
 
@@ -64,23 +62,22 @@ dump_disasm( word segment, word offset )
 	return width;
 }
 
-void
-dump_regs()
+void dump_regs(vomit_cpu_t *cpu)
 {
-	vlog( VM_DUMPMSG,
-			"AX=%04X BX=%04X CX=%04X DX=%04X SP=%04X BP=%04X SI=%04X DI=%04X "
-			"CS=%04X DS=%04X ES=%04X SS=%04X C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u",
-			cpu.regs.W.AX, cpu.regs.W.BX, cpu.regs.W.CX, cpu.regs.W.DX,
-			cpu.regs.W.SP, cpu.regs.W.BP, cpu.regs.W.SI, cpu.regs.W.DI,
-			cpu.CS, cpu.DS, cpu.ES, cpu.SS,
-			cpu.CF, cpu.PF, cpu.AF, cpu.ZF, cpu.SF, cpu.IF, cpu.DF, cpu.OF
-		);
+    vlog( VM_DUMPMSG,
+        "AX=%04X BX=%04X CX=%04X DX=%04X SP=%04X BP=%04X SI=%04X DI=%04X "
+        "CS=%04X DS=%04X ES=%04X SS=%04X C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u",
+        cpu->regs.W.AX, cpu->regs.W.BX, cpu->regs.W.CX, cpu->regs.W.DX,
+        cpu->regs.W.SP, cpu->regs.W.BP, cpu->regs.W.SI, cpu->regs.W.DI,
+        cpu->CS, cpu->DS, cpu->ES, cpu->SS,
+        cpu->CF, cpu->PF, cpu->AF, cpu->ZF, cpu->SF, cpu->IF, cpu->DF, cpu->OF
+    );
 }
 
 void dump_all() {
 #if 0
-	word *stacky = (void *)mem_space + (cpu.SS<<4)+cpu.regs.W.SP;
-	byte *csip = mem_space + (cpu.base_CS<<4) + cpu.base_IP;
+	word *stacky = (void *)mem_space + (cpu->SS<<4)+cpu->regs.W.SP;
+	byte *csip = mem_space + (cpu->base_CS<<4) + cpu->base_IP;
 
 #ifndef VM_NOPFQ
 	byte x = (byte)cpu_pfq_current;
@@ -93,10 +90,10 @@ void dump_all() {
 	}
 #endif
 
-	vlog( VM_DUMPMSG, "AX=%04X BX=%04X CX=%04X DX=%04X     SP=> %04X", cpu.regs.W.AX, cpu.regs.W.BX, cpu.regs.W.CX, cpu.regs.W.DX, *(stacky++) );
-	vlog( VM_DUMPMSG, "SP=%04X BP=%04X SI=%04X DI=%04X          %04X", cpu.regs.W.SP, cpu.regs.W.BP, cpu.regs.W.SI, cpu.regs.W.DI, *(stacky++) );
-	vlog( VM_DUMPMSG, "CS=%04X DS=%04X ES=%04X SS=%04X          %04X", cpu.CS, cpu.DS, cpu.ES, cpu.SS, *(stacky++) );
-	vlog( VM_DUMPMSG, "C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u          %04X", cpu.CF, cpu.PF, cpu.AF, cpu.ZF, cpu.SF, cpu.IF, cpu.DF, cpu.OF, *(stacky++) );
+	vlog( VM_DUMPMSG, "AX=%04X BX=%04X CX=%04X DX=%04X     SP=> %04X", cpu->regs.W.AX, cpu->regs.W.BX, cpu->regs.W.CX, cpu->regs.W.DX, *(stacky++) );
+	vlog( VM_DUMPMSG, "SP=%04X BP=%04X SI=%04X DI=%04X          %04X", cpu->regs.W.SP, cpu->regs.W.BP, cpu->regs.W.SI, cpu->regs.W.DI, *(stacky++) );
+	vlog( VM_DUMPMSG, "CS=%04X DS=%04X ES=%04X SS=%04X          %04X", cpu->CS, cpu->DS, cpu->ES, cpu->SS, *(stacky++) );
+	vlog( VM_DUMPMSG, "C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u          %04X", cpu->CF, cpu->PF, cpu->AF, cpu->ZF, cpu->SF, cpu->IF, cpu->DF, cpu->OF, *(stacky++) );
 
 	vlog( VM_DUMPMSG, "  -  (%02X %02X%02X%02X%02X%02X)", csip[0], csip[1], csip[2], csip[3], csip[4], csip[5] );
 #ifndef VM_NOPFQ
@@ -104,7 +101,7 @@ void dump_all() {
 #endif
 
 	vlog( VM_DUMPMSG, "\n" );
-	dump_disasm( cpu.base_CS, cpu.base_IP );
+	dump_disasm( cpu->base_CS, cpu->base_IP );
 #endif
 }
 
@@ -115,7 +112,7 @@ byte n(byte b) {					/* Nice it up for printing.		*/
 }
 
 void dump_mem(word seg, word off, byte rows) {
-	int i; byte *p = mem_space + (seg*16) + off;
+	int i; byte *p = g_cpu.memory + (seg*16) + off;
 	if(rows==0) rows=5;
 	for(i=0;i<rows;i++) {
 		vlog( VM_DUMPMSG,
@@ -130,8 +127,8 @@ void dump_mem(word seg, word off, byte rows) {
 	}
 }
 
-static word iseg(byte isr) { return mem_getword(0x0000, (isr*4)+2); }
-static word ioff(byte isr) { return mem_getword(0x0000, (isr*4)); }
+static word iseg(byte isr) { return vomit_cpu_memory_read16(&g_cpu, 0x0000, (isr*4)+2); }
+static word ioff(byte isr) { return vomit_cpu_memory_read16(&g_cpu, 0x0000, (isr*4)); }
 
 void
 dump_ivt()

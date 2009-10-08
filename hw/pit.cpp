@@ -1,34 +1,34 @@
 #include "vomit.h"
 #include <stdlib.h>
 
-static byte pit_read( word port );
-static void pit_write( word port, byte data );
+static byte pit_read(vomit_cpu_t *cpu, word port);
+static void pit_write(vomit_cpu_t *cpu, word port, byte data);
 
 void
 pit_init()
 {
-	vm_listen( 0x40, pit_read, 0L );
-	vm_listen( 0x42, 0L, pit_write );
-	vm_listen( 0x43, 0L, pit_write );
+    vm_listen( 0x40, pit_read, 0L );
+    vm_listen( 0x42, 0L, pit_write );
+    vm_listen( 0x43, 0L, pit_write );
 }
 
 byte
-pit_read( word port )
+pit_read(vomit_cpu_t *cpu, word port )
 {
-	(void) port;
-	return rand() % 0xff;
+    (void) port;
+    return rand() % 0xff;
 }
 
 void
-pit_write( word port, byte data )
+pit_write(vomit_cpu_t *cpu, word port, byte data )
 {
-	(void) data;
-	switch( port )
-	{
-		case 0x43:
-			// yeah
-			break;
-		default:
-			break;
-	}
+    (void) data;
+    switch( port )
+    {
+        case 0x43:
+            // yeah
+            break;
+        default:
+            break;
+    }
 }

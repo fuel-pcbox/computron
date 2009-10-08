@@ -36,8 +36,6 @@ main( int argc, char **argv )
 
 	QFile::remove( "log.txt" );
 
-	cpu_genmap();
-
 	int rc = vomit_init( argc, argv );
 
 	if( rc != 0 )

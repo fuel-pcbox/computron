@@ -9,103 +9,68 @@
 
 extern void bios_interrupt10();
 
-void
-_INT_imm8()
+void _INT_imm8(vomit_cpu_t *cpu)
 {
-	byte imm = cpu_pfq_getbyte();
-	int_call( imm );
+    BYTE isr_index = vomit_cpu_pfq_getbyte(cpu);
+    vomit_cpu_isr_call(cpu, isr_index);
 }
 
-void
-_INT3()
+void _INT3(vomit_cpu_t *cpu)
 {
-	int_call( 3 );
+    vomit_cpu_isr_call(cpu, 3);
 }
 
-void
-_INTO()
+void _INTO(vomit_cpu_t *cpu)
 {
-	/* XXX: I've never seen this used, so it's probably good to log it. */
-	vlog( VM_ALERT, "INTO used, can you believe it?" );
+    /* XXX: I've never seen this used, so it's probably good to log it. */
+    vlog(VM_ALERT, "INTO used, can you believe it?");
 
-	if( cpu.OF == 1 )
-		int_call( 4 );
+    if (cpu->OF == 1)
+        vomit_cpu_isr_call(cpu, 4);
 }
 
-void
-_IRET()
+void _IRET(vomit_cpu_t *cpu)
 {
-	word nip = mem_pop();
-	word ncs = mem_pop();
-	cpu_jump( ncs, nip );
-	cpu_setflags( mem_pop() );
+    WORD nip = vomit_cpu_pop(cpu);
+    WORD ncs = vomit_cpu_pop(cpu);
+    vomit_cpu_jump(cpu, ncs, nip);
+    vomit_cpu_set_flags(cpu, vomit_cpu_pop(cpu));
 }
 
-void
-int_call( byte isr )
+void vomit_cpu_isr_call(vomit_cpu_t *cpu, BYTE isr_index)
 {
-	word segment, offset;
-
-#ifdef VM_DEBUG
-	if( trapint )
-		vlog( VM_PICMSG, "%04X:%04X Interrupt %02X,%02X trapped", cpu.base_CS, cpu.base_IP, isr, cpu.regs.B.AH );
+#ifdef VOMIT_DEBUG
+    if (trapint)
+        vlog(VM_PICMSG, "%04X:%04X Interrupt %02X,%02X trapped", cpu->base_CS, cpu->base_IP, isr_index, cpu->regs.B.AH);
 #endif
 
-#if 0
-	if( isr == 0x21 )
-	{
-		switch( cpu.regs.B.AH )
-		{
-			case 0x30:
-				vlog( VM_DOSMSG, "GetVersion" );
-				break;
-			case 0x3B:
-				vlog( VM_DOSMSG, "ChDir '%s'", mem_get_ascii$( cpu.DS, cpu.regs.W.DX ));
-				break;
-			case 0x3D:
-				vlog( VM_DOSMSG, "Open '%s' (%s)", mem_get_ascii$( cpu.DS, cpu.regs.W.DX ), cpu.regs.B.AL == 0 ? "R" : cpu.regs.B.AL == 1 ? "W" : "RW" );
-				break;
-		}
-	}
-
-	if( isr == 0x2F )
-	{
-		switch( cpu.regs.W.AX )
-		{
-			case 0x1684:
-				vlog( VM_DOSMSG, "Get API entry point" );
-				break;
-		}
-	}
+#ifdef VOMIT_DEBUG
+    if (isr_index == 0x06) {
+        vlog(VM_CPUMSG, "Invalid opcode trap at %04X:%04X (%02X)", cpu->base_CS, cpu->base_IP, cpu->code_memory[cpu->base_IP]);
+    }
 #endif
-
-	if( isr == 0x06 )
-	{
-		vlog( VM_CPUMSG, "Invalid opcode trap at %04X:%04X (%02X)", cpu.base_CS, cpu.base_IP, mem_getbyte(cpu.base_CS, cpu.base_IP) );
-	}
 
 #ifdef VOMIT_SLEEP_WHEN_DOS_IDLE
-	if( isr == 0x28 )
-	{
-		/* DOS idle interrupt, catch a quick rest! */
-		usleep( 10 );
-	}
+    if (isr_index == 0x28) {
+        /* DOS idle interrupt, catch a quick rest! */
+        usleep( 10 );
+    }
 #endif
 
-	if( isr == 0x10 )
-	{
-		bios_interrupt10();
-		return;
-	}
+    if (isr_index == 0x10) {
+        /* Call C video BIOS (faster and more complete ATM) */
+        bios_interrupt10();
+        return;
+    }
 
-	mem_push( cpu_getflags() );
-	cpu.IF = 0;
-	cpu.TF = 0;
-	mem_push( cpu.CS );
-	mem_push( cpu.IP );
+    vomit_cpu_push(cpu, vomit_cpu_get_flags(cpu));
+    cpu->IF = 0;
+    cpu->TF = 0;
+    vomit_cpu_push(cpu, cpu->CS);
+    vomit_cpu_push(cpu, cpu->IP);
 
-	segment = (mem_space[isr * 4 + 3] << 8) | mem_space[isr * 4 + 2];
-	offset = (mem_space[isr * 4 + 1] << 8) | mem_space[isr * 4];
+    WORD segment = (cpu->memory[isr_index * 4 + 3] << 8) | cpu->memory[isr_index * 4 + 2];
+    WORD offset = (cpu->memory[isr_index * 4 + 1] << 8) | cpu->memory[isr_index * 4];
 
-	cpu_jump( segment, offset );
+    vomit_cpu_jump(cpu, segment, offset);
 }

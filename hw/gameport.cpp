@@ -7,8 +7,8 @@
 
 #include "vomit.h"
 
-static byte gameport_read( word port );
-static void gameport_write( word port, byte data );
+static byte gameport_read(vomit_cpu_t *cpu, word port );
+static void gameport_write(vomit_cpu_t *cpu, word port, byte data );
 
 void
 gameport_init()
@@ -22,14 +22,14 @@ gameport_init()
 }
 
 byte
-gameport_read( word port )
+gameport_read(vomit_cpu_t *cpu, word port )
 {
 	(void) port;
 	return 0x80;
 }
 
 void
-gameport_write( word port, byte data )
+gameport_write(vomit_cpu_t *cpu, word port, byte data )
 {
 	(void) port;
 	(void) data;

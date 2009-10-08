@@ -42,26 +42,21 @@ typedef int8_t sigbyte;
 typedef int16_t sigword;
 typedef int32_t sigdword;
 
-typedef void (*tfunctab) ();
-typedef void *(*tvptrfunctab) ();
-extern tfunctab cpu_optable[0x100];
+typedef uint8_t BYTE;
+typedef uint16_t WORD;
+typedef uint32_t DWORD;
+typedef int8_t SIGNED_BYTE;
+typedef int16_t SIGNED_WORD;
+typedef int32_t SIGNED_DWORD;
 
 extern word g_pic_pending_requests;
-
-void vm_listen(word, byte (*)(word), void (*)(word, byte));
-byte vm_ioh_nin( word );
-void vm_ioh_nout( word, byte );
 
 void vm_exit(int);
 void config_reload();
 void vm_loadconf();
 void vm_cbreak(int);
 void vm_debug();
-void vm_call8(word, byte);
-void vm_call16(word, word);
-void vm_handleE6(word);
 
-void vm_init();
 void vm_kill();
 
 word kbd_hit();
@@ -78,13 +73,11 @@ void busmouse_event();
 void busmouse_press( int button );
 void busmouse_release( int button );
 
-void dump_cpu();
 void dump_all();
 void dump_try();
 void dump_ivt();
 int dump_disasm( word, word );
 void dump_mem(word,word,byte);
-void dump_regs();
 
 void dma_init();
 void fdc_init();
@@ -101,7 +94,6 @@ void load_cursor( byte *row, byte *column );
 int vomit_init( int, char ** );
 
 void irq( byte num );
-void pic_service_irq();
 
 extern bool disklog, trapint, iopeek, mempeek, callpeek;
 
@@ -121,6 +113,13 @@ extern vomit_options_t options;
 #include "186.h"
 #include "floppy.h"
 #include "vga.h"
+
+void pic_service_irq(vomit_cpu_t *cpu);
+
+void vm_listen(word, byte (*)(vomit_cpu_t *, word), void (*)(vomit_cpu_t *, word, byte));
+void vm_call8(vomit_cpu_t *cpu, WORD port, BYTE value);
+void dump_cpu(vomit_cpu_t *cpu);
+void dump_regs(vomit_cpu_t *cpu);
 
 template <typename T> inline void swap(T &a, T &b)
 {

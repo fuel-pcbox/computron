@@ -39,7 +39,7 @@ byte floppy_read(byte drive, word cylinder, word head, word sector, word count, 
 	FILE *fpdrv;
 
 	word lba = chs2lba(drive, cylinder, head, sector);
-	byte *fderr = (byte *)mem_space + 0x441;		/* fd status in bda */
+	byte *fderr = (byte *)g_cpu.memory + 0x441;		/* fd status in bda */
 
 	if(!drv_status[drive]) {
 		if(disklog)
@@ -53,7 +53,7 @@ byte floppy_read(byte drive, word cylinder, word head, word sector, word count, 
 	if((sector>drv_spt[drive])||(head>=drv_heads[drive])) {
 		if( disklog )
 		{
-			vlog( VM_DISKLOG, "%04X:%04X Drive %d read request out of geometrical bounds (%d/%d/%d)", cpu.CS, cpu.IP, drive, cylinder, head, sector );
+			vlog( VM_DISKLOG, "%04X:%04X Drive %d read request out of geometrical bounds (%d/%d/%d)", g_cpu.CS, g_cpu.IP, drive, cylinder, head, sector );
 		}
 		*fderr = FD_TIMEOUT;
 		return *fderr;
@@ -78,7 +78,7 @@ byte floppy_read(byte drive, word cylinder, word head, word sector, word count, 
 	}
 	fflush(fpdrv);
 	fseek(fpdrv, lba*drv_sectsize[drive], SEEK_SET);
-	fread(mem_space+(segment*16)+(offset), drv_sectsize[drive], count, fpdrv);
+	fread(g_cpu.memory+(segment*16)+(offset), drv_sectsize[drive], count, fpdrv);
 	fclose(fpdrv);
 	*fderr = FD_NO_ERROR;
 	return FD_NO_ERROR;
@@ -87,7 +87,7 @@ byte floppy_read(byte drive, word cylinder, word head, word sector, word count, 
 byte floppy_write(byte drive, word cylinder, word head, word sector, word count, word segment, word offset) {
     FILE *fpdrv;
     word lba = chs2lba(drive, cylinder, head, sector);
-    byte *fderr = (byte *)mem_space + 0x441;        /* fd status in bda */
+    byte *fderr = (byte *)g_cpu.memory + 0x441;        /* fd status in bda */
 
     if(!drv_status[drive]) {
 		if( disklog )
@@ -125,7 +125,7 @@ byte floppy_write(byte drive, word cylinder, word head, word sector, word count,
         vm_exit( 1 );
     }
     fseek(fpdrv, lba*drv_sectsize[drive], SEEK_SET);
-    fwrite(mem_space+(segment<<4)+offset, drv_sectsize[drive], count, fpdrv);
+    fwrite(g_cpu.memory+(segment<<4)+offset, drv_sectsize[drive], count, fpdrv);
 	fflush(fpdrv); /* best make sure! */
     fclose(fpdrv);
 	*fderr = FD_NO_ERROR;
@@ -135,38 +135,38 @@ byte floppy_write(byte drive, word cylinder, word head, word sector, word count,
 void
 bios_readsectors()
 {
-	word cyl = cpu.regs.B.CH;
-    word sect = cpu.regs.B.CL;
-	byte drive = cpu.regs.B.DL;
+	word cyl = g_cpu.regs.B.CH;
+    word sect = g_cpu.regs.B.CL;
+	byte drive = g_cpu.regs.B.DL;
 
 	if(drive>=0x80) drive = drive - 0x80 + 2;
 
-	cpu.regs.B.AH = floppy_read( drive, cyl, cpu.regs.B.DH, sect, cpu.regs.B.AL, cpu.ES, cpu.regs.W.BX );
+	g_cpu.regs.B.AH = floppy_read( drive, cyl, g_cpu.regs.B.DH, sect, g_cpu.regs.B.AL, g_cpu.ES, g_cpu.regs.W.BX );
 
-	if( cpu.regs.B.AH == 0x00 )
-		cpu.CF = 0;
+	if( g_cpu.regs.B.AH == 0x00 )
+		g_cpu.CF = 0;
 	else {
-		cpu.CF = 1;
-		cpu.regs.B.AL = 0x00;
+		g_cpu.CF = 1;
+		g_cpu.regs.B.AL = 0x00;
 	}
 }
 
 void
 bios_writesectors()
 {
-    word cyl = cpu.regs.B.CH;
-    word sect = cpu.regs.B.CL;
-	byte drive = cpu.regs.B.DL;
+    word cyl = g_cpu.regs.B.CH;
+    word sect = g_cpu.regs.B.CL;
+	byte drive = g_cpu.regs.B.DL;
 
 	if(drive>=0x80) drive = drive - 0x80 + 2;
 
-	cpu.regs.B.AH = floppy_write( drive, cyl, cpu.regs.B.DH, sect, cpu.regs.B.AL, cpu.ES, cpu.regs.W.BX );
+	g_cpu.regs.B.AH = floppy_write( drive, cyl, g_cpu.regs.B.DH, sect, g_cpu.regs.B.AL, g_cpu.ES, g_cpu.regs.W.BX );
 
-	if( cpu.regs.B.AH ==0x00 )
-		cpu.CF = 0;
+	if( g_cpu.regs.B.AH ==0x00 )
+		g_cpu.CF = 0;
 	else {
-		cpu.CF = 1;
-		cpu.regs.B.AL = 0x00;
+		g_cpu.CF = 1;
+		g_cpu.regs.B.AL = 0x00;
 	}
 }
 
@@ -178,7 +178,7 @@ floppy_verify( byte drive, word cylinder, word head, word sector, word count, wo
 	byte *dummy;
 	word lba = chs2lba(drive, cylinder, head, sector);
 	word veri;
-	byte *fderr = (byte *)mem_space + 0x441;		/* fd status in bda */
+	byte *fderr = (byte *)g_cpu.memory + 0x441;		/* fd status in bda */
 	(void) segment;
 	(void) offset;
 
@@ -233,18 +233,18 @@ floppy_verify( byte drive, word cylinder, word head, word sector, word count, wo
 void
 bios_verifysectors()
 {
-	word cyl = cpu.regs.B.CH;
-	word sect = cpu.regs.B.CL;
-	byte drive = cpu.regs.B.DL;
+	word cyl = g_cpu.regs.B.CH;
+	word sect = g_cpu.regs.B.CL;
+	byte drive = g_cpu.regs.B.DL;
 
 	if(drive>=0x80) drive = drive - 0x80 + 2;
 
-	cpu.regs.B.AH = floppy_verify( drive, cyl, cpu.regs.B.DH, sect, cpu.regs.B.AL, cpu.ES, cpu.regs.W.BX );
+	g_cpu.regs.B.AH = floppy_verify( drive, cyl, g_cpu.regs.B.DH, sect, g_cpu.regs.B.AL, g_cpu.ES, g_cpu.regs.W.BX );
 
-	if( cpu.regs.B.AH == 0x00 )
-		cpu.CF = 0;
+	if( g_cpu.regs.B.AH == 0x00 )
+		g_cpu.CF = 0;
 	else {
-		cpu.CF = 1;
-		cpu.regs.B.AL = 0x00;
+		g_cpu.CF = 1;
+		g_cpu.regs.B.AL = 0x00;
 	}
 }

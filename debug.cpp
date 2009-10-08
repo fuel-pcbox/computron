@@ -100,6 +100,7 @@ uasm( word seg, word off, int n )
 	}
 }
 
+#ifdef VOMIT_STDIO_DEBUGGER
 void
 vm_debug()
 {
@@ -193,3 +194,4 @@ vm_debug()
 	}
 	g_in_debug = false;
 }
+#endif

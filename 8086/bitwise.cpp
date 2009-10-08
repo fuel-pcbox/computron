@@ -1,9 +1,9 @@
-/* 8086/bitwise.c
+/* 8086/bitwise.cpp
  * Bitwise instructions
  *
  */
 
-#define MASK_STEPS_IF_80286 if( cpu.type >= INTEL_80186 ) { steps &= 0x1F; }
+#define MASK_STEPS_IF_80286 if( cpu->type >= INTEL_80186 ) { steps &= 0x1F; }
 
 #include "vomit.h"
 #include "templates.h"
@@ -48,372 +48,303 @@ READONLY_RM16_imm8( cpu_and, _TEST_RM16_imm8 )
 READONLY_AL_imm8( cpu_and, _TEST_AL_imm8 )
 READONLY_AX_imm16( cpu_and, _TEST_AX_imm16 )
 
-void
-_CBW()
+void _CBW(vomit_cpu_t *cpu)
 {
-	cpu.regs.W.AX = signext( cpu.regs.B.AL );
+    cpu->regs.W.AX = signext(cpu->regs.B.AL);
 }
 
-void
-_CWD()
+void _CWD(vomit_cpu_t *cpu)
 {
-	if( cpu.regs.B.AH & 0x80 )
-		cpu.regs.W.DX = 0xFFFF;
-	else
-		cpu.regs.W.DX = 0x0000;
+    if (cpu->regs.B.AH & 0x80)
+        cpu->regs.W.DX = 0xFFFF;
+    else
+        cpu->regs.W.DX = 0x0000;
 }
 
-void
-_SALC()
+void _SALC(vomit_cpu_t *cpu)
 {
-	cpu.regs.B.AL = cpu.CF ? 0xFF : 0x00;
+    cpu->regs.B.AL = cpu->CF ? 0xFF : 0x00;
 }
 
-byte
-cpu_or8( byte dest, byte src )
+BYTE cpu_or8(vomit_cpu_t *cpu, BYTE dest, BYTE src)
 {
-	byte result = dest | src;
-	cpu_update_flags8( result );
-	cpu.OF = 0;
-	cpu.CF = 0;
-	return result;
+    BYTE result = dest | src;
+    vomit_cpu_update_flags8(cpu, result);
+    cpu->OF = 0;
+    cpu->CF = 0;
+    return result;
 }
 
-word
-cpu_or16( word dest, word src )
+WORD cpu_or16(vomit_cpu_t *cpu, WORD dest, WORD src)
 {
-	word result = dest | src;
-	cpu_update_flags16( result );
-	cpu.OF = 0;
-	cpu.CF = 0;
-	return result;
+    WORD result = dest | src;
+    vomit_cpu_update_flags16(cpu, result);
+    cpu->OF = 0;
+    cpu->CF = 0;
+    return result;
 }
 
-byte
-cpu_xor8( byte dest, byte src )
+BYTE cpu_xor8(vomit_cpu_t *cpu, BYTE dest, BYTE src)
 {
-	byte result = dest ^ src;
-	cpu_update_flags8( result );
-	cpu.OF = 0;
-	cpu.CF = 0;
-	return result;
+    BYTE result = dest ^ src;
+    vomit_cpu_update_flags8(cpu, result);
+    cpu->OF = 0;
+    cpu->CF = 0;
+    return result;
 }
 
-word
-cpu_xor16( word dest, word src )
+WORD cpu_xor16(vomit_cpu_t *cpu, WORD dest, WORD src)
 {
-	word result = dest ^ src;
-	cpu_update_flags16( result );
-	cpu.OF = 0;
-	cpu.CF = 0;
-	return result;
+    WORD result = dest ^ src;
+    vomit_cpu_update_flags16(cpu, result);
+    cpu->OF = 0;
+    cpu->CF = 0;
+    return result;
 }
 
-byte
-cpu_and8( byte dest, byte src )
+BYTE cpu_and8(vomit_cpu_t *cpu, BYTE dest, BYTE src)
 {
-	byte result = dest & src;
-	cpu_update_flags8( result );
-	cpu.OF = 0;
-	cpu.CF = 0;
-	return result;
+    BYTE result = dest & src;
+    vomit_cpu_update_flags8(cpu, result);
+    cpu->OF = 0;
+    cpu->CF = 0;
+    return result;
 }
 
-word
-cpu_and16( word dest, word src )
+WORD cpu_and16(vomit_cpu_t *cpu, WORD dest, WORD src)
 {
-	word result = dest & src;
-	cpu_update_flags16( result );
-	cpu.OF = 0;
-	cpu.CF = 0;
-	return result;
+    WORD result = dest & src;
+    vomit_cpu_update_flags16(cpu, result);
+    cpu->OF = 0;
+    cpu->CF = 0;
+    return result;
 }
 
-dword
-cpu_shl( word data, byte steps, byte bits )
+DWORD cpu_shl(vomit_cpu_t *cpu, WORD data, BYTE steps, BYTE bits)
 {
-	unsigned int i;
-	dword result = (dword)data;
+    DWORD result = (DWORD)data;
 
-	MASK_STEPS_IF_80286;
+    MASK_STEPS_IF_80286;
 
-	if( bits == 8 )
-	{
-		for( i = 0; i < steps; ++i )
-		{
-			cpu.CF = (result>>7) & 1;
-			result <<= 1;
-		}
-	}
-	else
-	{
-		for( i = 0; i < steps; ++i )
-		{
-			cpu.CF = (result>>15) & 1;
-			result <<= 1;
-		}
-	}
+    if (bits == 8) {
+        for (BYTE i = 0; i < steps; ++i) {
+            cpu->CF = (result >> 7) & 1;
+            result <<= 1;
+        }
+    } else {
+        for (BYTE i = 0; i < steps; ++i) {
+            cpu->CF = (result >> 15) & 1;
+            result <<= 1;
+        }
+    }
 
-	if( steps == 1 )
-	{
-		cpu.OF = (data >> ( bits - 1 )) ^ cpu.CF;
-	}
+    if (steps == 1) {
+        cpu->OF = (data >> (bits - 1)) ^ cpu->CF;
+    }
 
-	cpu_update_flags( result, bits );
-	return result;
+    vomit_cpu_update_flags(cpu, result, bits);
+    return result;
 }
 
-dword
-cpu_shr( word data, byte steps, byte bits )
+DWORD cpu_shr(vomit_cpu_t *cpu, WORD data, BYTE steps, BYTE bits)
 {
-	unsigned int i;
-	dword result = (dword)data;
+    DWORD result = (DWORD)data;
 
-	MASK_STEPS_IF_80286;
+    MASK_STEPS_IF_80286;
 
-	if( bits == 8 )
-	{
-		for( i = 0; i < steps; ++i )
-		{
-			cpu.CF = result & 1;
-			result >>= 1;
-		}
-	}
-	else
-	{
-		for( i = 0; i < steps; ++i )
-		{
-			cpu.CF = result & 1;
-			result >>= 1;
-		}
-	}
+    if (bits == 8) {
+        for (BYTE i = 0; i < steps; ++i) {
+            cpu->CF = result & 1;
+            result >>= 1;
+        }
+    } else {
+        for (BYTE i = 0; i < steps; ++i) {
+            cpu->CF = result & 1;
+            result >>= 1;
+        }
+    }
 
-	if( steps == 1 )
-	{
-		cpu.OF = (data >> ( bits - 1 )) & 1;
-	}
+    if (steps == 1) {
+        cpu->OF = (data >> (bits - 1)) & 1;
+    }
 
-	cpu_update_flags( result, bits );
-	return result;
+    vomit_cpu_update_flags(cpu, result, bits);
+    return result;
 }
 
-dword
-cpu_sar( word data, byte steps, byte bits )
+DWORD cpu_sar(vomit_cpu_t *cpu, WORD data, BYTE steps, BYTE bits)
 {
-	unsigned int i;
-	dword result = (dword)data;
-	word n;
+    DWORD result = (DWORD)data;
+    word n;
 
-	MASK_STEPS_IF_80286;
+    MASK_STEPS_IF_80286;
 
-	if( bits == 8 )
-	{
-		for( i = 0; i < steps; ++i )
-		{
-			n = result;
-			result = (result>>1) | (n&0x80);
-			cpu.CF = n & 1;
-		}
-	}
-	else
-	{
-		for( i = 0; i < steps; ++i )
-		{
-			n = result;
-			result = (result>>1) | (n&0x8000);
-			cpu.CF = n & 1;
-		}
-	}
+    if( bits == 8 ) {
+        for (BYTE i = 0; i < steps; ++i) {
+            n = result;
+            result = (result>>1) | (n&0x80);
+            cpu->CF = n & 1;
+        }
+    } else {
+        for (BYTE i = 0; i < steps; ++i) {
+            n = result;
+            result = (result>>1) | (n&0x8000);
+            cpu->CF = n & 1;
+        }
+    }
 
-	if( steps == 1 )
-	{
-		cpu.OF = 0;
-	}
+    if (steps == 1) {
+        cpu->OF = 0;
+    }
 
-	cpu_update_flags( result, bits );
-	return result;
+    vomit_cpu_update_flags(cpu, result, bits);
+    return result;
 }
 
-dword
-cpu_rol( word data, byte steps, byte bits )
+DWORD cpu_rol(vomit_cpu_t *cpu, WORD data, BYTE steps, BYTE bits)
 {
-	unsigned int i;
-	dword result = (dword)data;
+    DWORD result = (DWORD)data;
 
-	MASK_STEPS_IF_80286;
+    MASK_STEPS_IF_80286;
 
-	if( bits == 8 )
-	{
-		for( i = 0; i < steps; ++i )
-		{
-			cpu.CF = (result>>7) & 1;
-			result = (result<<1) | cpu.CF;
-		}
-	}
-	else
-	{
-		for( i = 0; i < steps; ++i )
-		{
-			cpu.CF = (result>>15) & 1;
-			result = (result<<1) | cpu.CF;
-		}
-	}
+    if (bits == 8) {
+        for (BYTE i = 0; i < steps; ++i) {
+            cpu->CF = (result>>7) & 1;
+            result = (result<<1) | cpu->CF;
+        }
+    } else {
+        for (BYTE i = 0; i < steps; ++i) {
+            cpu->CF = (result>>15) & 1;
+            result = (result<<1) | cpu->CF;
+        }
+    }
 
-	if( steps == 1 )
-	{
-		cpu.OF = ( ( result >> ( bits - 1 ) ) & 1 ) ^ cpu.CF;
-	}
+    if (steps == 1) {
+        cpu->OF = ((result >> (bits - 1)) & 1) ^ cpu->CF;
+    }
 
-	return result;
+    return result;
 }
 
-dword
-cpu_ror( word data, byte steps, byte bits )
+DWORD cpu_ror(vomit_cpu_t *cpu, WORD data, BYTE steps, BYTE bits)
 {
-	unsigned int i;
-	dword result = (dword)data;
+    DWORD result = (DWORD)data;
 
-	MASK_STEPS_IF_80286;
+    MASK_STEPS_IF_80286;
 
-	if( bits == 8 )
-	{
-		for( i = 0; i < steps; ++i )
-		{
-			cpu.CF = result & 1;
-			result = (result>>1) | (cpu.CF<<7);
-		}
-	}
-	else
-	{
-		for( i = 0; i < steps; ++i )
-		{
-			cpu.CF = result & 1;
-			result = (result>>1) | (cpu.CF<<15);
-		}
-	}
+    if (bits == 8) {
+        for (BYTE i = 0; i < steps; ++i) {
+            cpu->CF = result & 1;
+            result = (result>>1) | (cpu->CF<<7);
+        }
+    } else {
+        for (BYTE i = 0; i < steps; ++i) {
+            cpu->CF = result & 1;
+            result = (result>>1) | (cpu->CF<<15);
+        }
+    }
 
-	if( steps == 1 )
-	{
-		cpu.OF = (result >> (bits - 1)) ^ ((result >> (bits - 2) & 1));
-	}
+    if (steps == 1) {
+        cpu->OF = (result >> (bits - 1)) ^ ((result >> (bits - 2) & 1));
+    }
 
-	return result;
+    return result;
 }
 
-dword
-cpu_rcl( word data, byte steps, byte bits )
+DWORD cpu_rcl(vomit_cpu_t *cpu, WORD data, BYTE steps, BYTE bits)
 {
-	unsigned int i;
-	dword result = (dword)data;
-	word n;
+    DWORD result = (DWORD)data;
+    WORD n;
 
-	MASK_STEPS_IF_80286;
+    MASK_STEPS_IF_80286;
 
-	if( bits == 8 )
-	{
-		for( i = 0; i < steps; ++i )
-		{
-			n = result;
-			result = ((result<<1) & 0xFF) | cpu.CF;
-			cpu.CF = (n>>7) & 1;
-		}
-	}
-	else
-	{
-		for( i = 0; i < steps; ++i )
-		{
-			n = result;
-			result = ((result<<1) & 0xFFFF) | cpu.CF;
-			cpu.CF = (n>>15) & 1;
-		}
-	}
+    if (bits == 8) {
+        for (BYTE i = 0; i < steps; ++i) {
+            n = result;
+            result = ((result<<1) & 0xFF) | cpu->CF;
+            cpu->CF = (n>>7) & 1;
+        }
+    } else {
+        for (BYTE i = 0; i < steps; ++i) {
+            n = result;
+            result = ((result<<1) & 0xFFFF) | cpu->CF;
+            cpu->CF = (n>>15) & 1;
+        }
+    }
 
-	if( steps == 1 )
-	{
-		cpu.OF = (result >> (bits - 1)) ^ cpu.CF;
-	}
+    if (steps == 1) {
+        cpu->OF = (result >> (bits - 1)) ^ cpu->CF;
+    }
 
-	return result;
+    return result;
 }
 
-dword
-cpu_rcr( word data, byte steps, byte bits )
+DWORD cpu_rcr(vomit_cpu_t *cpu, WORD data, BYTE steps, BYTE bits)
 {
-	unsigned int i;
-	dword result = (dword)data;
-	word n;
+    DWORD result = (DWORD)data;
+    word n;
 
-	MASK_STEPS_IF_80286;
+    MASK_STEPS_IF_80286;
 
-	if( bits == 8 )
-	{
-		for( i = 0; i < steps; ++i )
-		{
-			n = result;
-			result = (result>>1) | (cpu.CF<<7);
-			cpu.CF = n & 1;
-		}
-	}
-	else
-	{
-		for( i = 0; i < steps; ++i )
-		{
-			n = result;
-			result = (result>>1) | (cpu.CF<<15);
-			cpu.CF = n & 1;
-		}
-	}
+    if (bits == 8) {
+        for (BYTE i = 0; i < steps; ++i) {
+            n = result;
+            result = (result>>1) | (cpu->CF<<7);
+            cpu->CF = n & 1;
+        }
+    } else {
+        for (BYTE i = 0; i < steps; ++i) {
+            n = result;
+            result = (result>>1) | (cpu->CF<<15);
+            cpu->CF = n & 1;
+        }
+    }
 
-	if( steps == 1 )
-	{
-		cpu.OF = (result >> (bits - 1)) ^ ((result >> (bits - 2) & 1));
-	}
+    if (steps == 1) {
+        cpu->OF = (result >> (bits - 1)) ^ ((result >> (bits - 2) & 1));
+    }
 
-	return result;
+    return result;
 }
 
-void
-_NOT_RM8()
+void _NOT_RM8(vomit_cpu_t *cpu)
 {
-	byte value = modrm_read8( cpu.rmbyte );
-	modrm_update8( ~value );
+    BYTE value = vomit_cpu_modrm_read8(cpu, cpu->rmbyte);
+    vomit_cpu_modrm_update8(cpu, ~value);
 }
 
-void
-_NOT_RM16()
+void _NOT_RM16(vomit_cpu_t *cpu)
 {
-	word value = modrm_read16( cpu.rmbyte );
-	modrm_update16( ~value );
+    word value = vomit_cpu_modrm_read16(cpu, cpu->rmbyte);
+    vomit_cpu_modrm_update16(cpu, ~value);
 }
 
-void
-_NEG_RM8()
+void _NEG_RM8(vomit_cpu_t *cpu)
 {
-	byte value = modrm_read8( cpu.rmbyte );
-	byte old = value;
-	value = -value;
-	modrm_update8( value );
-	cpu.CF = ( old != 0 );
-	cpu_update_flags8( value );
-	cpu.OF = ((
-	         ((0)^(old)) &
-	         ((0)^(value))
-	         )>>(7))&1;
-	cpu_setAF( value, 0, old );
+    BYTE value = vomit_cpu_modrm_read8(cpu, cpu->rmbyte);
+    BYTE old = value;
+    value = -value;
+    vomit_cpu_modrm_update8(cpu, value);
+    cpu->CF = old != 0;
+    vomit_cpu_update_flags8(cpu, value);
+    cpu->OF = ((
+        ((0)^(old)) &
+        ((0)^(value))
+        )>>(7))&1;
+    vomit_cpu_setAF(cpu, value, 0, old);
 }
 
-void
-_NEG_RM16()
+void _NEG_RM16(vomit_cpu_t *cpu)
 {
-	word value = modrm_read16( cpu.rmbyte );
-	word old = value;
-	value = -value;
-	modrm_update16( value );
-	cpu.CF = ( old != 0 );
-	cpu_update_flags16( value );
-	cpu.OF = ((
-	         ((0)^(old)) &
-	         ((0)^(value))
-	         )>>(15))&1;
-	cpu_setAF( value, 0, old );
+    WORD value = vomit_cpu_modrm_read16(cpu, cpu->rmbyte);
+    WORD old = value;
+    value = -value;
+    vomit_cpu_modrm_update16(cpu, value);
+    cpu->CF = ( old != 0 );
+    vomit_cpu_update_flags16(cpu, value);
+    cpu->OF = ((
+        ((0)^(old)) &
+        ((0)^(value))
+        )>>(15))&1;
+    vomit_cpu_setAF(cpu, value, 0, old);
 }

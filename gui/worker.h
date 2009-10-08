@@ -15,9 +15,6 @@ public:
 	void stopMachine();
 	void rebootMachine();
 
-signals:
-	void finished();
-
 public slots:
 	void run();
 	void shutdown();

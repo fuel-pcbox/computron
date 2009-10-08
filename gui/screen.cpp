@@ -46,7 +46,7 @@ Screen::Screen(QWidget *parent)
 	init();
 	synchronizeFont();
 	setTextMode( 80, 25 );
-	d->videoMemory = mem_space + 0xB8000;
+	d->videoMemory = g_cpu.memory + 0xB8000;
 
 	m_screen12 = QImage( 640, 480, QImage::Format_Indexed8 );
 	m_render12 = QImage( 640, 480, QImage::Format_Indexed8 );
@@ -102,7 +102,7 @@ void clear_palette_dirty();
 void
 Screen::refresh()
 {
-	if( (mem_space[0x449] & 0x7F) == 0x12 )
+	if( (g_cpu.memory[0x449] & 0x7F) == 0x12 )
 	{
 		if( is_palette_dirty() )
 		{
@@ -152,7 +152,7 @@ Screen::refresh()
 			clear_video_dirty();
 		}
 	}
-	else if( (mem_space[0x449] & 0x7F) == 0x0D )
+	else if( (g_cpu.memory[0x449] & 0x7F) == 0x0D )
 	{
 		if( is_palette_dirty() )
 		{
@@ -202,9 +202,9 @@ Screen::refresh()
 			clear_video_dirty();
 		}
 	}
-	else if( (mem_space[0x449] & 0x7F) == 0x03 )
+	else if( (g_cpu.memory[0x449] & 0x7F) == 0x03 )
 	{
-		int rows = mem_space[0x484] + 1;
+		int rows = g_cpu.memory[0x484] + 1;
 		switch( rows )
 		{
 			case 25:
@@ -326,7 +326,7 @@ Screen::resizeEvent( QResizeEvent *e )
 void
 Screen::paintEvent( QPaintEvent *e )
 {
-	if( (mem_space[0x449] & 0x7F) == 0x12 )
+	if( (g_cpu.memory[0x449] & 0x7F) == 0x12 )
 	{
 		setScreenSize( 640, 480 );
 		QPainter wp( this );
@@ -340,7 +340,7 @@ Screen::paintEvent( QPaintEvent *e )
 		return;
 	}
 
-	if( (mem_space[0x449] & 0x7F) == 0x0D )
+	if( (g_cpu.memory[0x449] & 0x7F) == 0x0D )
 	{
 		setScreenSize( 320, 200 );
 		QPainter wp( this );
@@ -415,7 +415,7 @@ Screen::synchronizeFont()
 	m_characterHeight = 16;
 	const QSize s( 8, 16 );
 
-	fontcharbitmap_t *fbmp = (fontcharbitmap_t *)(mem_space + 0xC4000);
+	fontcharbitmap_t *fbmp = (fontcharbitmap_t *)(g_cpu.memory + 0xC4000);
 
 	for (int i = 0; i < 256; ++i) {
 		d->character[i] = QBitmap::fromData(s, (const byte *)fbmp[i].data, QImage::Format_MonoLSB);
@@ -876,6 +876,6 @@ Screen::flushKeyBuffer()
 {
 	QMutexLocker l( &d->keyQueueLock );
 
-	if( !d->rawQueue.isEmpty() && cpu.IF )
+	if( !d->rawQueue.isEmpty() && g_cpu.IF )
 		irq( 1 );
 }

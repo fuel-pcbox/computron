@@ -24,8 +24,7 @@ struct Console::Private
 	QTimer updateTimer;
 };
 
-int
-Console::dump_disasm( unsigned int segment, unsigned int offset )
+int Console::dump_disasm(unsigned int segment, unsigned int offset)
 {
 	char disasm[64];
 	int width, i;
@@ -33,7 +32,7 @@ Console::dump_disasm( unsigned int segment, unsigned int offset )
 	char *p = buf;
 	byte *opcode;
 
-	opcode = mem_space + (segment << 4) + offset;
+	opcode = g_cpu.memory + (segment << 4) + offset;
 	width = insn_width( opcode );
 	disassemble( opcode, offset, disasm, sizeof(disasm) );
 
@@ -212,7 +211,7 @@ Console::execute()
 	}
 	else if( parts[0] == "cpu" )
 	{
-		dump_cpu();
+		dump_cpu(&g_cpu);
 	}
 	else if( parts[0] == "d" )
 	{
@@ -221,8 +220,8 @@ Console::execute()
 	}
 	else if( parts[0] == "leds" )
 	{
-		byte led1 = mem_space[0x417];
-		byte led2 = mem_space[0x418];
+		byte led1 = g_cpu.memory[0x417];
+		byte led2 = g_cpu.memory[0x418];
 		QString s;
 		s.sprintf( "Keyboard flags: %02X %02X", led1, led2 );
 		append( s );

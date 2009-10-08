@@ -11,12 +11,12 @@
 #define DATA_FROM_FDC_TO_CPU 0x40
 #define DATA_FROM_CPU_TO_FDC 0x00
 
-static byte fdc_status_a( word );
-static byte fdc_status_b( word );
-static byte fdc_main_status( word );
-static void fdc_digital_output( word, byte );
-static void fdc_data_fifo_write( word, byte );
-static byte fdc_data_fifo_read( word );
+static byte fdc_status_a(vomit_cpu_t *cpu, word );
+static byte fdc_status_b(vomit_cpu_t *cpu, word );
+static byte fdc_main_status(vomit_cpu_t *cpu, word );
+static void fdc_digital_output(vomit_cpu_t *cpu, word, byte );
+static void fdc_data_fifo_write(vomit_cpu_t *cpu, word, byte );
+static byte fdc_data_fifo_read(vomit_cpu_t *cpu, word );
 
 static byte current_drive;
 static bool fdc_enabled;
@@ -58,7 +58,7 @@ fdc_init()
 }
 
 byte
-fdc_status_a( word port )
+fdc_status_a(vomit_cpu_t *cpu, word port )
 {
 	byte data = 0x00;
 
@@ -73,21 +73,21 @@ fdc_status_a( word port )
 }
 
 byte
-fdc_status_b( word port )
+fdc_status_b(vomit_cpu_t *cpu, word port )
 {
 	vlog( VM_FDCMSG, "Reading FDC status register B" );
 	return 0;
 }
 
 byte
-fdc_main_status( word port )
+fdc_main_status(vomit_cpu_t *cpu, word port )
 {
 	vlog( VM_FDCMSG, "Reading FDC main status register: %02X", fdc_main_status_register );
 	return fdc_main_status_register;
 }
 
 void
-fdc_digital_output( word port, byte data )
+fdc_digital_output(vomit_cpu_t *cpu, word port, byte data )
 {
 	bool old_fdc_enabled = fdc_enabled;
 
@@ -119,7 +119,7 @@ fdc_execute_command()
 }
 
 void
-fdc_data_fifo_write( word port, byte data )
+fdc_data_fifo_write(vomit_cpu_t *cpu, word port, byte data )
 {
 	if( fdc_command_complete )
 	{
@@ -150,7 +150,7 @@ fdc_data_fifo_write( word port, byte data )
 }
 
 byte
-fdc_data_fifo_read( word port )
+fdc_data_fifo_read(vomit_cpu_t *cpu, word port )
 {
 	switch( fdc_current_status_register )
 	{

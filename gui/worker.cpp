@@ -19,7 +19,7 @@ Worker::run()
 {
 	while( m_active )
 	{
-		cpu_main();
+		vomit_cpu_main(&g_cpu);
 		while( !m_active )
 			msleep( 50 );
 	}
@@ -30,7 +30,6 @@ Worker::shutdown()
 {
     stopMachine();
     vm_exit( 0 );
-    emit finished();
 }
 
 void

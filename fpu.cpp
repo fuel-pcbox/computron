@@ -1,4 +1,4 @@
-/* fpu.c
+/* fpu.cpp
  *
  * Actually, this file only contains the "ESCAPE" instruction, which handles
  * all FPU instructions by swallowing all ModR/M data and logging a little.
@@ -10,31 +10,28 @@
 #include "vomit.h"
 #include "debug.h"
 
-void
-_ESCAPE()
+void _ESCAPE(vomit_cpu_t *cpu)
 {
-	byte rm;
-	vlog( VM_CPUMSG, "%04X:%04X FPU escape via %02X /%u", cpu.base_CS, cpu.base_IP, cpu.opcode, rmreg( mem_getbyte(cpu.base_CS, cpu.base_IP + 1) ));
+    vlog(VM_CPUMSG, "%04X:%04X FPU escape via %02X /%u",
+        cpu->base_CS, cpu->base_IP,
+        cpu->opcode, rmreg(vomit_cpu_memory_read8(cpu, cpu->base_CS, cpu->base_IP + 1)));
+
+    vm_exit(0);
+
+    BYTE rm = vomit_cpu_pfq_getbyte(cpu);
+    (void) vomit_cpu_modrm_read16(cpu, rm);
+
+    return;
 
 #if 0
-	dump_all();
-	dump_ivt();
+    printf("Swallowed %d bytes: ", cpu->IP - cpu->base_IP);
+    for (int i = 0; i < cpu.IP - cpu->base_IP; ++i)
+        printf("%02X ", vomit_cpu_memory_read8(cpu, cpu->base_CS, cpu->base_IP + i));
+    printf("\n");
 #endif
 
-	rm = cpu_pfq_getbyte();
-	(void) modrm_read16( rm );
-
-	return;
-
 #if 0
-	printf( "Swallowed %d bytes: ", cpu.IP - cpu.base_IP );
-	for( int i = 0; i < cpu.IP - cpu.base_IP; ++i )
-		printf( "%02X ", mem_getbyte(cpu.base_CS, cpu.base_IP + i));
-	printf("\n");
-#endif
-
-#if 0
-	/* 80286+: Coprocessor not available exception. */
-	int_call( 7 );
+    /* 80286+: Coprocessor not available exception. */
+    vomit_cpu_isr_call(cpu, 7);
 #endif
 }

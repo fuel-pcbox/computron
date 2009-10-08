@@ -69,32 +69,32 @@ CPUView::refresh()
 	QString s;
 
 	d->qtw->item( row, 0 )->setText( "CS:IP" );
-	d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X:%04X", cpu.CS, cpu.IP ));
+	d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X:%04X", g_cpu.CS, g_cpu.IP ));
 
 	d->qtw->item( row, 0 )->setText( "SS:SP" );
-	d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X:%04X", cpu.SS, cpu.regs.W.SP ));
+	d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X:%04X", g_cpu.SS, g_cpu.regs.W.SP ));
 
 	d->qtw->item( row, 0 )->setText( "AX" );
-	d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X", cpu.regs.W.AX ));
+	d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X", g_cpu.regs.W.AX ));
 
 	d->qtw->item( row, 0 )->setText( "BX" );
-	d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X", cpu.regs.W.BX ));
+	d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X", g_cpu.regs.W.BX ));
 
 	d->qtw->item( row, 0 )->setText( "CX" );
-	d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X", cpu.regs.W.CX ));
+	d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X", g_cpu.regs.W.CX ));
 
 	d->qtw->item( row, 0 )->setText( "DX" );
-	d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X", cpu.regs.W.DX ));
+	d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X", g_cpu.regs.W.DX ));
 
 	d->qtw->item( row, 0 )->setText( "DS" );
-	d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X", cpu.DS ));
+	d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X", g_cpu.DS ));
 
 	d->qtw->item( row, 0 )->setText( "ES" );
-	d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X", cpu.ES ));
+	d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X", g_cpu.ES ));
 
 	d->qtw->item( row, 0 )->setText( "kI/sync" );
-	d->qtw->item( row++, 1 )->setText( s.sprintf( "%lu", cpu.insn_count / 1000 ));
-	cpu.insn_count = 0;
+	d->qtw->item( row++, 1 )->setText( s.sprintf( "%lu", g_cpu.insn_count / 1000 ));
+	g_cpu.insn_count = 0;
 
 	QTimer::singleShot( 500, this, SLOT(refresh()) );
 }

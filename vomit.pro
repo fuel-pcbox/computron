@@ -4,7 +4,7 @@ DEPENDPATH += . 8086 bios disasm gui hw include disasm/include
 INCLUDEPATH += . include disasm/include gui hw
 CFLAGS += -std=gnu++0x
 CXXFLAGS += -std=gnu++0x
-DEFINES += VM_NOPFQ
+DEFINES += VOMIT_DEBUG VOMIT_TRACE
 CONFIG += debug silent
 
 CONFIG -= app_bundle

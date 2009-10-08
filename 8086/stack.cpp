@@ -1,4 +1,4 @@
-/* 8086/stack.c
+/* 8086/stack.cpp
  * Stack instructions
  *
  */
@@ -6,68 +6,57 @@
 #include "vomit.h"
 #include "debug.h"
 
-void
-_PUSH_reg16()
+void _PUSH_reg16(vomit_cpu_t *cpu)
 {
-	/* PUSH SP will use the value AFTER the push on Intel 8086. */
-	if( cpu.type == INTEL_8086 && (cpu.opcode & 7) == REG_SP )
-	{
-		mem_push( cpu.regs.W.SP + 2 );
-	}
-	else
-	{
-		mem_push( *treg16[cpu.opcode & 7] );
-	}
+    /* PUSH SP will use the value AFTER the push on Intel 8086. */
+    if (cpu->type == INTEL_8086 && (cpu->opcode & 7) == REG_SP) {
+        vomit_cpu_push(cpu, cpu->regs.W.SP + 2);
+    } else {
+        vomit_cpu_push(cpu, *cpu->treg16[cpu->opcode & 7]);
+    }
 }
 
 void
-_POP_reg16()
+_POP_reg16(vomit_cpu_t *cpu)
 {
-	*treg16[cpu.opcode & 7] = mem_pop();
+    *cpu->treg16[cpu->opcode & 7] = vomit_cpu_pop(cpu);
 }
 
-void
-_PUSH_RM16()
+void _PUSH_RM16(vomit_cpu_t *cpu)
 {
-	mem_push( modrm_read16( cpu.rmbyte ));
+    vomit_cpu_push(cpu, vomit_cpu_modrm_read16(cpu, cpu->rmbyte));
 }
 
-void
-_POP_RM16()
+void _POP_RM16(vomit_cpu_t *cpu)
 {
-	modrm_write16( cpu.rmbyte, mem_pop() );
+    vomit_cpu_modrm_write16(cpu, cpu->rmbyte, vomit_cpu_pop(cpu));
 }
 
-void
-_PUSH_seg()
+void _PUSH_seg(vomit_cpu_t *cpu)
 {
-	mem_push( *tseg[rmreg(cpu.opcode)] );
+    vomit_cpu_push(cpu, *cpu->tseg[rmreg(cpu->opcode)]);
 }
 
-void
-_POP_CS()
+void _POP_CS(vomit_cpu_t *cpu)
 {
-	vlog( VM_ALERT, "%04X:%04X: 286+ instruction (or possibly POP CS...)", cpu.base_CS, cpu.base_IP );
+    vlog(VM_ALERT, "%04X:%04X: 286+ instruction (or possibly POP CS...)", cpu->base_CS, cpu->base_IP);
 
-	(void) cpu_pfq_getbyte();
-	(void) cpu_pfq_getbyte();
-	(void) cpu_pfq_getbyte();
-	(void) cpu_pfq_getbyte();
+    (void) vomit_cpu_pfq_getbyte(cpu);
+    (void) vomit_cpu_pfq_getbyte(cpu);
+    (void) vomit_cpu_pfq_getbyte(cpu);
+    (void) vomit_cpu_pfq_getbyte(cpu);
 }
-void
-_POP_seg()
+void _POP_seg(vomit_cpu_t *cpu)
 {
-	*tseg[rmreg(cpu.opcode)] = mem_pop();
+    *cpu->tseg[rmreg(cpu->opcode)] = vomit_cpu_pop(cpu);
 }
 
-void
-_PUSHF()
+void _PUSHF(vomit_cpu_t *cpu)
 {
-	mem_push( cpu_getflags() );
+    vomit_cpu_push(cpu, vomit_cpu_get_flags(cpu));
 }
 
-void
-_POPF()
+void _POPF(vomit_cpu_t *cpu)
 {
-	cpu_setflags( mem_pop() );
+    vomit_cpu_set_flags(cpu, vomit_cpu_pop(cpu));
 }

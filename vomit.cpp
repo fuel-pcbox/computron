@@ -14,55 +14,52 @@
 
 vomit_options_t options;
 
-int
-vomit_init( int argc, char **argv )
+static void vm_init();
+
+int vomit_init(int argc, char **argv)
 {
-	vm_init();
-	vm_loadconf();
-	return 0;
+    vm_init();
+    vm_loadconf();
+    return 0;
 }
 
 void vm_init() {
-	dword i;
-	vlog( VM_INITMSG, "Initializing memory" );
-    mem_init();
-	vlog( VM_INITMSG, "Initializing CPU" );
-    cpu_init();
-	vlog( VM_INITMSG, "Initializing video BIOS" );
-	video_bios_init();
+    vlog( VM_INITMSG, "Initializing CPU" );
+    vomit_cpu_init(&g_cpu);
+    vlog( VM_INITMSG, "Initializing video BIOS" );
+    video_bios_init();
 
-	for ( i = 0; i <= 0xFFFF; ++i )
-		vm_listen( i, 0L, 0L );
+    for (dword i = 0; i <= 0xFFFF; ++i)
+        vm_listen(i, 0L, 0L);
 
-	vlog( VM_INITMSG, "Registering I/O devices" );
-	foreach( Vomit::IODevice *device, Vomit::IODevice::devices() )
-	{
-		vlog( VM_INITMSG, "%s at 0x%p", device->name(), device );
-	}
+    for (BYTE i = 0xE0; i <= 0xEF; ++i)
+        vm_listen(i, 0L, vm_call8);
 
-	pic_init();
-	dma_init();
-	vga_init();
-	fdc_init();
-	ide_init();
-	pit_init();
-	busmouse_init();
-	keyboard_init();
-	gameport_init();
+    vlog( VM_INITMSG, "Registering I/O devices" );
+    foreach (Vomit::IODevice *device, Vomit::IODevice::devices()) {
+        vlog(VM_INITMSG, "%s at 0x%p", device->name(), device);
+    }
+
+    pic_init();
+    dma_init();
+    vga_init();
+    fdc_init();
+    ide_init();
+    pit_init();
+    busmouse_init();
+    keyboard_init();
+    gameport_init();
 }
 
-void
-vm_kill()
+void vm_kill()
 {
-	vlog( VM_KILLMSG, "Killing VM" );
-	vga_kill();
-	cpu_kill();
-	mem_kill();
+    vlog(VM_KILLMSG, "Killing VM");
+    vga_kill();
+    vomit_cpu_kill(&g_cpu);
 }
 
-void
-vm_exit( int ec )
+void vm_exit(int exit_code)
 {
-	vm_kill();
-	exit( ec );
+    vm_kill();
+    exit(exit_code);
 }

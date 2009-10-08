@@ -41,8 +41,7 @@ CodeView::setAddress( uint16_t segment, uint16_t offset )
 	update();
 }
 
-static int
-dump_disasm( QString &output, unsigned int segment, unsigned int offset )
+static int dump_disasm(vomit_cpu_t *cpu, QString &output, unsigned int segment, unsigned int offset)
 {
 	char disasm[64];
 	int width, i;
@@ -50,7 +49,7 @@ dump_disasm( QString &output, unsigned int segment, unsigned int offset )
 	char *p = buf;
 	byte *opcode;
 
-	opcode = mem_space + (segment << 4) + offset;
+	opcode = g_cpu.memory + (segment << 4) + offset;
 	width = insn_width( opcode );
 	disassemble( opcode, offset, disasm, sizeof(disasm) );
 
@@ -71,7 +70,7 @@ dump_disasm( QString &output, unsigned int segment, unsigned int offset )
 
 	/* Recurse if this is a prefix instruction. */
 	//if( *opcode == 0x26 || *opcode == 0x2E || *opcode == 0x36 || *opcode == 0x3E || *opcode == 0xF2 || *opcode == 0xF3 )
-	//	width += dump_disasm( output, segment, offset + width );
+	//	width += dump_disasm(cpu, output, segment, offset + width);
 
 	return width;
 }
@@ -81,8 +80,8 @@ CodeView::paintEvent( QPaintEvent * )
 {
 	QPainter p( this );
 
-	d->segment = cpu.base_CS;
-	d->offset = cpu.base_IP;
+	d->segment = g_cpu.base_CS;
+	d->offset = g_cpu.base_IP;
 
 	p.fillRect( rect(), Qt::white );
 
@@ -98,7 +97,7 @@ CodeView::paintEvent( QPaintEvent * )
 		QString line;
 
 		line.sprintf( "%04X:%04X  ", d->segment, d->offset + insn_ptr );
-		insn_ptr += dump_disasm( line, d->segment, d->offset + insn_ptr );
+		insn_ptr += dump_disasm(&g_cpu, line, d->segment, d->offset + insn_ptr);
 
 		p.drawText( 0, textY, line );
 

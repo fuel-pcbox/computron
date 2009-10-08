@@ -20,30 +20,12 @@
 
 #define FLAT(s,o) (((s)<<4)+(o))
 
-#define SET_SEGMENT_PREFIX(segment) do { cpu.SegmentPrefix = cpu.segment; cpu.CurrentSegment = &cpu.SegmentPrefix; } while(0);
-#define RESET_SEGMENT_PREFIX do { cpu.CurrentSegment = &cpu.DS; } while(0);
+#define SET_SEGMENT_PREFIX(cpu, segment) do { (cpu)->SegmentPrefix = (cpu)->segment; (cpu)->CurrentSegment = &(cpu)->SegmentPrefix; } while(0);
+#define RESET_SEGMENT_PREFIX(cpu) do { (cpu)->CurrentSegment = &(cpu)->DS; } while(0);
 
-#ifndef VM_NOPFQ
-extern byte CPU_PFQ_SIZE;
-extern byte cpu_pfq_current;
-extern byte *cpu_pfq;
-void cpu_pfq_flush();
-byte cpu_pfq_getbyte();
-word cpu_pfq_getword();
-#else
-#define cpu_pfq_flush()
-#define cpu_pfq_getbyte() (cpu.code_memory[cpu.IP++])
-word cpu_pfq_getword();
-#endif
+typedef void (*vomit_opcode_handler) (struct __vomit_cpu_t *);
 
-extern byte cpu_state;
-extern byte cpu_type;
-extern dword cpu_ips;
-
-extern byte *mem_space;
-extern word mem_avail;
-
-typedef struct {
+typedef struct __vomit_cpu_t {
 	union {
 		struct {
 			dword EAX, EBX, ECX, EDX;
@@ -119,92 +101,137 @@ typedef struct {
 	byte opcode;
 	byte rmbyte;
 
+        /* Memory size in KiB (will be reported by BIOS) */
+        WORD memory_size;
+
+        /* RAM */
+        BYTE *memory;
+
 	/* This points to the base of CS for fast opcode fetches. */
 	byte *code_memory;
 
+    /* Cycle counter. May wrap arbitrarily. */
+    dword pit_counter;
+
+    word *treg16[8];
+    byte *treg8[8];
+    word *tseg[8];
+
+    vomit_opcode_handler opcode_handler[0x100];
+
+#ifdef VOMIT_PREFETCH_QUEUE
+    byte *pfq;
+    byte pfq_current;
+    byte pfq_size;
+#endif
+
 } vomit_cpu_t;
 
-extern vomit_cpu_t cpu;
+extern vomit_cpu_t g_cpu;
 
-extern byte *treg8[];
-extern word *treg16[];
-extern word *tseg[];
+#ifdef VOMIT_PREFETCH_QUEUE
+void vomit_cpu_pfq_flush(vomit_cpu_t *cpu);
+BYTE vomit_cpu_pfq_getbyte(vomit_cpu_t *cpu);
+WORD vomit_cpu_pfq_getword(vomit_cpu_t *cpu);
+#else
+#define vomit_cpu_pfq_flush(cpu)
+#define vomit_cpu_pfq_getbyte(cpu) (cpu->code_memory[cpu->IP++])
+WORD vomit_cpu_pfq_getword(vomit_cpu_t *cpu);
+#endif
 
-void cpu_init();
-void cpu_genmap();
-void cpu_kill();
-void cpu_main();
-void cpu_jump(word,word);
-void cpu_jump_relative8( sigbyte );
-void cpu_jump_relative16( sigword );
-void cpu_jump_absolute16( word );
-void cpu_setflags(word);
-void cpu_update_flags( word, byte bits );
-void cpu_update_flags16( word );
-void cpu_update_flags8( byte );
-word cpu_getflags();
-void cpu_addint(byte,word,word);
-void cpu_addinstruction( byte opcode_range_start, byte opcode_range_end, void (*handler)() );
-void cpu_out( word, byte );
-byte cpu_in( word );
+void vomit_cpu_init(vomit_cpu_t *cpu);
+void vomit_cpu_jump(vomit_cpu_t *cpu, word segment, word offset);
+void vomit_cpu_set_flags(vomit_cpu_t *cpu, word flags);
+void vomit_cpu_genmap(vomit_cpu_t *cpu);
+void vomit_cpu_kill(vomit_cpu_t *cpu);
+void vomit_cpu_main(vomit_cpu_t *cpu);
+void vomit_cpu_jump_relative8(vomit_cpu_t *cpu, SIGNED_BYTE displacement);
+void vomit_cpu_jump_relative16(vomit_cpu_t *cpu, SIGNED_WORD displacement);
+void vomit_cpu_jump_absolute16(vomit_cpu_t *cpu, WORD offset);
+void vomit_cpu_update_flags(vomit_cpu_t *cpu, WORD value, BYTE bits);
+void vomit_cpu_update_flags16(vomit_cpu_t *cpu, WORD value);
+void vomit_cpu_update_flags8(vomit_cpu_t *cpu, BYTE value);
+WORD vomit_cpu_get_flags(vomit_cpu_t *cpu);
+void vomit_cpu_set_interrupt(vomit_cpu_t *cpu, BYTE isr_index, WORD segment, WORD offset);
+
+/*!
+    Writes an 8-bit value to an output port.
+ */
+void vomit_cpu_out(vomit_cpu_t *cpu, WORD port, BYTE value);
+
+/*!
+    Reads an 8-bit value from an input port.
+ */
+BYTE vomit_cpu_in(vomit_cpu_t *cpu, WORD port);
+
 bool cpu_evaluate(byte);
-word cpu_static_flags();
+WORD vomit_cpu_static_flags(vomit_cpu_t *cpu);
 
-void cpu_setCF(dword, byte);
-void cpu_setAF(dword, word, word);
+void vomit_cpu_setAF(vomit_cpu_t *cpu, DWORD result, WORD dest, WORD src);
 
-void cpu_math_flags8( dword, byte, byte );
-void cpu_math_flags16( dword, word, word );
-void cpu_cmp_flags8( dword, byte, byte );
-void cpu_cmp_flags16( dword, word, word );
+void vomit_cpu_math_flags8(vomit_cpu_t *cpu, DWORD result, BYTE dest, BYTE src);
+void vomit_cpu_math_flags16(vomit_cpu_t *cpu, DWORD result, WORD dest, WORD src);
+void vomit_cpu_cmp_flags8(vomit_cpu_t *cpu, DWORD result, BYTE dest, BYTE src);
+void vomit_cpu_cmp_flags16(vomit_cpu_t *cpu, DWORD result, WORD dest, WORD src);
 
-word cpu_add8( byte, byte );
-word cpu_sub8( byte, byte );
-word cpu_mul8( byte, byte );
-word cpu_div8( byte, byte );
+WORD cpu_add8( byte, byte );
+WORD cpu_sub8( byte, byte );
+WORD cpu_mul8( byte, byte );
+WORD cpu_div8( byte, byte );
 sigword cpu_imul8( sigbyte, sigbyte );
 
-dword cpu_add16( word, word );
-dword cpu_sub16( word, word );
-dword cpu_mul16( word, word );
-dword cpu_div16( word, word );
-sigdword cpu_imul16( sigword, sigword );
+DWORD cpu_add16(vomit_cpu_t *cpu, WORD, WORD);
+DWORD cpu_sub16(vomit_cpu_t *cpu, WORD, WORD);
+DWORD cpu_mul16(vomit_cpu_t *cpu, WORD, WORD);
+DWORD cpu_div16(vomit_cpu_t *cpu, WORD, WORD);
+SIGNED_DWORD cpu_imul16(vomit_cpu_t *cpu, SIGNED_WORD, SIGNED_WORD);
 
-byte cpu_or8( byte, byte );
-byte cpu_and8( byte, byte );
-byte cpu_xor8( byte, byte );
-word cpu_or16( word, word );
-word cpu_and16( word, word );
-word cpu_xor16( word, word );
+BYTE cpu_or8(vomit_cpu_t *cpu, BYTE, BYTE);
+BYTE cpu_and8(vomit_cpu_t *cpu, BYTE, BYTE);
+BYTE cpu_xor8(vomit_cpu_t *cpu, BYTE, BYTE);
+WORD cpu_or16(vomit_cpu_t *cpu, WORD, WORD);
+WORD cpu_and16(vomit_cpu_t *cpu, WORD, WORD);
+WORD cpu_xor16(vomit_cpu_t *cpu, WORD, WORD);
 
-dword cpu_shl(word, byte, byte);
-dword cpu_shr(word, byte, byte);
-dword cpu_sar(word, byte, byte);
-dword cpu_rcl(word, byte, byte);
-dword cpu_rcr(word, byte, byte);
-dword cpu_rol(word, byte, byte);
-dword cpu_ror(word, byte, byte);
+DWORD cpu_shl(vomit_cpu_t *cpu, word, byte, byte);
+DWORD cpu_shr(vomit_cpu_t *cpu, word, byte, byte);
+DWORD cpu_sar(vomit_cpu_t *cpu, word, byte, byte);
+DWORD cpu_rcl(vomit_cpu_t *cpu, word, byte, byte);
+DWORD cpu_rcr(vomit_cpu_t *cpu, word, byte, byte);
+DWORD cpu_rol(vomit_cpu_t *cpu, word, byte, byte);
+DWORD cpu_ror(vomit_cpu_t *cpu, word, byte, byte);
 
-byte modrm_read8( byte );
-word modrm_read16( byte );
-dword modrm_read32( byte );
-void modrm_write8( byte, byte );
-void modrm_write16( byte, word );
-void modrm_update8( byte );
-void modrm_update16( word );
-void *modrm_resolve8( byte rmbyte );
-void *modrm_resolve16( byte rmbyte );
+BYTE vomit_cpu_modrm_read8(vomit_cpu_t *cpu, BYTE rm);
+WORD vomit_cpu_modrm_read16(vomit_cpu_t *cpu, BYTE rm);
+DWORD vomit_cpu_modrm_read32(vomit_cpu_t *cpu, BYTE rm);
+void vomit_cpu_modrm_write8(vomit_cpu_t *cpu, BYTE rm, BYTE value);
+void vomit_cpu_modrm_write16(vomit_cpu_t *cpu, BYTE rm, WORD value);
 
-void mem_init();
-void mem_kill();
-void mem_push(word);
-word mem_pop();
-byte mem_getbyte(word, word);
-word mem_getword(word, word);
-void mem_setbyte(word, word, byte);
-void mem_setword(word, word, word);
+/*!
+    Writes an 8-bit value back to the most recently resolved ModR/M location.
+ */
+void vomit_cpu_modrm_update8(vomit_cpu_t *cpu, BYTE value);
 
-void int_call(byte);
+/*!
+    Writes a 16-bit value back to the most recently resolved ModR/M location.
+ */
+void vomit_cpu_modrm_update16(vomit_cpu_t *cpu, WORD value);
+
+void *vomit_cpu_modrm_resolve8(vomit_cpu_t *cpu, BYTE rm);
+void *vomit_cpu_modrm_resolve16(vomit_cpu_t *cpu, BYTE rm);
+
+void vomit_cpu_push(vomit_cpu_t *cpu, WORD value);
+WORD vomit_cpu_pop(vomit_cpu_t *cpu);
+
+BYTE vomit_cpu_memory_read8(vomit_cpu_t *cpu, WORD segment, WORD offset);
+WORD vomit_cpu_memory_read16(vomit_cpu_t *cpu, WORD segment, WORD offset);
+void vomit_cpu_memory_write8(vomit_cpu_t *cpu, WORD segment, WORD offset, BYTE value);
+void vomit_cpu_memory_write16(vomit_cpu_t *cpu, WORD segment, WORD offset, WORD value);
+
+/*!
+    Transfers execution to an ISR (Interrupt Service Routine)
+ */
+void vomit_cpu_isr_call(vomit_cpu_t *cpu, BYTE isr_index);
 
 inline word signext (byte b)
 {
@@ -240,268 +267,268 @@ inline word signext (byte b)
 #define REG_FS  4
 #define REG_GS  5
 
-void _UNSUPP();
-void _ESCAPE();
+void _UNSUPP(vomit_cpu_t *cpu);
+void _ESCAPE(vomit_cpu_t *cpu);
 
-void _NOP();
-void _HLT();
-void _INT_imm8();
-void _INT3();
-void _INTO();
-void _IRET();
+void _NOP(vomit_cpu_t *cpu);
+void _HLT(vomit_cpu_t *cpu);
+void _INT_imm8(vomit_cpu_t *cpu);
+void _INT3(vomit_cpu_t *cpu);
+void _INTO(vomit_cpu_t *cpu);
+void _IRET(vomit_cpu_t *cpu);
 
-void _AAA();
-void _AAM();
-void _AAD();
-void _AAS();
+void _AAA(vomit_cpu_t *cpu);
+void _AAM(vomit_cpu_t *cpu);
+void _AAD(vomit_cpu_t *cpu);
+void _AAS(vomit_cpu_t *cpu);
 
-void _DAA();
-void _DAS();
+void _DAA(vomit_cpu_t *cpu);
+void _DAS(vomit_cpu_t *cpu);
 
-void _STC();
-void _STD();
-void _STI();
-void _CLC();
-void _CLD();
-void _CLI();
-void _CMC();
+void _STC(vomit_cpu_t *cpu);
+void _STD(vomit_cpu_t *cpu);
+void _STI(vomit_cpu_t *cpu);
+void _CLC(vomit_cpu_t *cpu);
+void _CLD(vomit_cpu_t *cpu);
+void _CLI(vomit_cpu_t *cpu);
+void _CMC(vomit_cpu_t *cpu);
 
-void _CBW();
-void _CWD();
+void _CBW(vomit_cpu_t *cpu);
+void _CWD(vomit_cpu_t *cpu);
 
-void _XLAT();
+void _XLAT(vomit_cpu_t *cpu);
 
-void _CS();
-void _DS();
-void _ES();
-void _SS();
+void _CS(vomit_cpu_t *cpu);
+void _DS(vomit_cpu_t *cpu);
+void _ES(vomit_cpu_t *cpu);
+void _SS(vomit_cpu_t *cpu);
 
-void _SALC();
+void _SALC(vomit_cpu_t *cpu);
 
-void _JMP_imm16();
-void _JMP_imm16_imm16();
-void _JMP_short_imm8();
-void _Jcc_imm8();
-void _JCXZ_imm8();
+void _JMP_imm16(vomit_cpu_t *cpu);
+void _JMP_imm16_imm16(vomit_cpu_t *cpu);
+void _JMP_short_imm8(vomit_cpu_t *cpu);
+void _Jcc_imm8(vomit_cpu_t *cpu);
+void _JCXZ_imm8(vomit_cpu_t *cpu);
 
-void _JO_imm8();
-void _JNO_imm8();
-void _JC_imm8();
-void _JNC_imm8();
-void _JZ_imm8();
-void _JNZ_imm8();
-void _JNA_imm8();
-void _JA_imm8();
-void _JS_imm8();
-void _JNS_imm8();
-void _JP_imm8();
-void _JNP_imm8();
-void _JL_imm8();
-void _JNL_imm8();
-void _JNG_imm8();
-void _JG_imm8();
+void _JO_imm8(vomit_cpu_t *cpu);
+void _JNO_imm8(vomit_cpu_t *cpu);
+void _JC_imm8(vomit_cpu_t *cpu);
+void _JNC_imm8(vomit_cpu_t *cpu);
+void _JZ_imm8(vomit_cpu_t *cpu);
+void _JNZ_imm8(vomit_cpu_t *cpu);
+void _JNA_imm8(vomit_cpu_t *cpu);
+void _JA_imm8(vomit_cpu_t *cpu);
+void _JS_imm8(vomit_cpu_t *cpu);
+void _JNS_imm8(vomit_cpu_t *cpu);
+void _JP_imm8(vomit_cpu_t *cpu);
+void _JNP_imm8(vomit_cpu_t *cpu);
+void _JL_imm8(vomit_cpu_t *cpu);
+void _JNL_imm8(vomit_cpu_t *cpu);
+void _JNG_imm8(vomit_cpu_t *cpu);
+void _JG_imm8(vomit_cpu_t *cpu);
 
-void _CALL_imm16();
-void _RET();
-void _RET_imm16();
-void _RETF();
-void _RETF_imm16();
+void _CALL_imm16(vomit_cpu_t *cpu);
+void _RET(vomit_cpu_t *cpu);
+void _RET_imm16(vomit_cpu_t *cpu);
+void _RETF(vomit_cpu_t *cpu);
+void _RETF_imm16(vomit_cpu_t *cpu);
 
-void _LOOP_imm8();
-void _LOOPE_imm8();
-void _LOOPNE_imm8();
+void _LOOP_imm8(vomit_cpu_t *cpu);
+void _LOOPE_imm8(vomit_cpu_t *cpu);
+void _LOOPNE_imm8(vomit_cpu_t *cpu);
 
-void _REP();
-void _REPNE();
+void _REP(vomit_cpu_t *cpu);
+void _REPNE(vomit_cpu_t *cpu);
 
-void _XCHG_AX_reg16();
-void _XCHG_reg8_RM8();
-void _XCHG_reg16_RM16();
+void _XCHG_AX_reg16(vomit_cpu_t *cpu);
+void _XCHG_reg8_RM8(vomit_cpu_t *cpu);
+void _XCHG_reg16_RM16(vomit_cpu_t *cpu);
 
-void _CMPSB();
-void _CMPSW();
-void _LODSB();
-void _LODSW();
-void _SCASB();
-void _SCASW();
-void _STOSB();
-void _STOSW();
-void _MOVSB();
-void _MOVSW();
+void _CMPSB(vomit_cpu_t *cpu);
+void _CMPSW(vomit_cpu_t *cpu);
+void _LODSB(vomit_cpu_t *cpu);
+void _LODSW(vomit_cpu_t *cpu);
+void _SCASB(vomit_cpu_t *cpu);
+void _SCASW(vomit_cpu_t *cpu);
+void _STOSB(vomit_cpu_t *cpu);
+void _STOSW(vomit_cpu_t *cpu);
+void _MOVSB(vomit_cpu_t *cpu);
+void _MOVSW(vomit_cpu_t *cpu);
 
-void _LEA_reg16_mem16();
+void _LEA_reg16_mem16(vomit_cpu_t *cpu);
 
-void _LDS_reg16_mem16();
-void _LES_reg16_mem16();
+void _LDS_reg16_mem16(vomit_cpu_t *cpu);
+void _LES_reg16_mem16(vomit_cpu_t *cpu);
 
-void _MOV_reg8_imm8();
-void _MOV_reg16_imm16();
-void _MOV_seg_RM16();
-void _MOV_RM16_seg();
-void _MOV_AL_moff8();
-void _MOV_AX_moff16();
-void _MOV_moff8_AL();
-void _MOV_moff16_AX();
-void _MOV_reg8_RM8();
-void _MOV_reg16_RM16();
-void _MOV_RM8_reg8();
-void _MOV_RM16_reg16();
-void _MOV_RM8_imm8();
-void _MOV_RM16_imm16();
+void _MOV_reg8_imm8(vomit_cpu_t *cpu);
+void _MOV_reg16_imm16(vomit_cpu_t *cpu);
+void _MOV_seg_RM16(vomit_cpu_t *cpu);
+void _MOV_RM16_seg(vomit_cpu_t *cpu);
+void _MOV_AL_moff8(vomit_cpu_t *cpu);
+void _MOV_AX_moff16(vomit_cpu_t *cpu);
+void _MOV_moff8_AL(vomit_cpu_t *cpu);
+void _MOV_moff16_AX(vomit_cpu_t *cpu);
+void _MOV_reg8_RM8(vomit_cpu_t *cpu);
+void _MOV_reg16_RM16(vomit_cpu_t *cpu);
+void _MOV_RM8_reg8(vomit_cpu_t *cpu);
+void _MOV_RM16_reg16(vomit_cpu_t *cpu);
+void _MOV_RM8_imm8(vomit_cpu_t *cpu);
+void _MOV_RM16_imm16(vomit_cpu_t *cpu);
 
-void _XOR_RM8_reg8();
-void _XOR_RM16_reg16();
-void _XOR_reg8_RM8();
-void _XOR_reg16_RM16();
-void _XOR_RM8_imm8();
-void _XOR_RM16_imm16();
-void _XOR_RM16_imm8();
-void _XOR_AX_imm16();
-void _XOR_AL_imm8();
+void _XOR_RM8_reg8(vomit_cpu_t *cpu);
+void _XOR_RM16_reg16(vomit_cpu_t *cpu);
+void _XOR_reg8_RM8(vomit_cpu_t *cpu);
+void _XOR_reg16_RM16(vomit_cpu_t *cpu);
+void _XOR_RM8_imm8(vomit_cpu_t *cpu);
+void _XOR_RM16_imm16(vomit_cpu_t *cpu);
+void _XOR_RM16_imm8(vomit_cpu_t *cpu);
+void _XOR_AX_imm16(vomit_cpu_t *cpu);
+void _XOR_AL_imm8(vomit_cpu_t *cpu);
 
-void _OR_RM8_reg8();
-void _OR_RM16_reg16();
-void _OR_reg8_RM8();
-void _OR_reg16_RM16();
-void _OR_RM8_imm8();
-void _OR_RM16_imm16();
-void _OR_RM16_imm8();
-void _OR_AX_imm16();
-void _OR_AL_imm8();
+void _OR_RM8_reg8(vomit_cpu_t *cpu);
+void _OR_RM16_reg16(vomit_cpu_t *cpu);
+void _OR_reg8_RM8(vomit_cpu_t *cpu);
+void _OR_reg16_RM16(vomit_cpu_t *cpu);
+void _OR_RM8_imm8(vomit_cpu_t *cpu);
+void _OR_RM16_imm16(vomit_cpu_t *cpu);
+void _OR_RM16_imm8(vomit_cpu_t *cpu);
+void _OR_AX_imm16(vomit_cpu_t *cpu);
+void _OR_AL_imm8(vomit_cpu_t *cpu);
 
-void _AND_RM8_reg8();
-void _AND_RM16_reg16();
-void _AND_reg8_RM8();
-void _AND_reg16_RM16();
-void _AND_RM8_imm8();
-void _AND_RM16_imm16();
-void _AND_RM16_imm8();
-void _AND_AX_imm16();
-void _AND_AL_imm8();
+void _AND_RM8_reg8(vomit_cpu_t *cpu);
+void _AND_RM16_reg16(vomit_cpu_t *cpu);
+void _AND_reg8_RM8(vomit_cpu_t *cpu);
+void _AND_reg16_RM16(vomit_cpu_t *cpu);
+void _AND_RM8_imm8(vomit_cpu_t *cpu);
+void _AND_RM16_imm16(vomit_cpu_t *cpu);
+void _AND_RM16_imm8(vomit_cpu_t *cpu);
+void _AND_AX_imm16(vomit_cpu_t *cpu);
+void _AND_AL_imm8(vomit_cpu_t *cpu);
 
-void _TEST_RM8_reg8();
-void _TEST_RM16_reg16();
-void _TEST_AX_imm16();
-void _TEST_AL_imm8();
+void _TEST_RM8_reg8(vomit_cpu_t *cpu);
+void _TEST_RM16_reg16(vomit_cpu_t *cpu);
+void _TEST_AX_imm16(vomit_cpu_t *cpu);
+void _TEST_AL_imm8(vomit_cpu_t *cpu);
 
-void _PUSH_reg16();
-void _PUSH_seg();
-void _PUSHF();
+void _PUSH_reg16(vomit_cpu_t *cpu);
+void _PUSH_seg(vomit_cpu_t *cpu);
+void _PUSHF(vomit_cpu_t *cpu);
 
-void _POP_reg16();
-void _POP_seg();
-void _POP_CS();
-void _POPF();
+void _POP_reg16(vomit_cpu_t *cpu);
+void _POP_seg(vomit_cpu_t *cpu);
+void _POP_CS(vomit_cpu_t *cpu);
+void _POPF(vomit_cpu_t *cpu);
 
-void _LAHF();
-void _SAHF();
+void _LAHF(vomit_cpu_t *cpu);
+void _SAHF(vomit_cpu_t *cpu);
 
-void _OUT_imm8_AL();
-void _OUT_imm8_AX();
-void _OUT_DX_AL();
-void _OUT_DX_AX();
-void _OUTSB();
-void _OUTSW();
+void _OUT_imm8_AL(vomit_cpu_t *cpu);
+void _OUT_imm8_AX(vomit_cpu_t *cpu);
+void _OUT_DX_AL(vomit_cpu_t *cpu);
+void _OUT_DX_AX(vomit_cpu_t *cpu);
+void _OUTSB(vomit_cpu_t *cpu);
+void _OUTSW(vomit_cpu_t *cpu);
 
-void _IN_AL_imm8();
-void _IN_AX_imm8();
-void _IN_AL_DX();
-void _IN_AX_DX();
+void _IN_AL_imm8(vomit_cpu_t *cpu);
+void _IN_AX_imm8(vomit_cpu_t *cpu);
+void _IN_AL_DX(vomit_cpu_t *cpu);
+void _IN_AX_DX(vomit_cpu_t *cpu);
 
-void _ADD_RM8_reg8();
-void _ADD_RM16_reg16();
-void _ADD_reg8_RM8();
-void _ADD_reg16_RM16();
-void _ADD_AL_imm8();
-void _ADD_AX_imm16();
-void _ADD_RM8_imm8();
-void _ADD_RM16_imm16();
-void _ADD_RM16_imm8();
+void _ADD_RM8_reg8(vomit_cpu_t *cpu);
+void _ADD_RM16_reg16(vomit_cpu_t *cpu);
+void _ADD_reg8_RM8(vomit_cpu_t *cpu);
+void _ADD_reg16_RM16(vomit_cpu_t *cpu);
+void _ADD_AL_imm8(vomit_cpu_t *cpu);
+void _ADD_AX_imm16(vomit_cpu_t *cpu);
+void _ADD_RM8_imm8(vomit_cpu_t *cpu);
+void _ADD_RM16_imm16(vomit_cpu_t *cpu);
+void _ADD_RM16_imm8(vomit_cpu_t *cpu);
 
-void _SUB_RM8_reg8();
-void _SUB_RM16_reg16();
-void _SUB_reg8_RM8();
-void _SUB_reg16_RM16();
-void _SUB_AL_imm8();
-void _SUB_AX_imm16();
-void _SUB_RM8_imm8();
-void _SUB_RM16_imm16();
-void _SUB_RM16_imm8();
+void _SUB_RM8_reg8(vomit_cpu_t *cpu);
+void _SUB_RM16_reg16(vomit_cpu_t *cpu);
+void _SUB_reg8_RM8(vomit_cpu_t *cpu);
+void _SUB_reg16_RM16(vomit_cpu_t *cpu);
+void _SUB_AL_imm8(vomit_cpu_t *cpu);
+void _SUB_AX_imm16(vomit_cpu_t *cpu);
+void _SUB_RM8_imm8(vomit_cpu_t *cpu);
+void _SUB_RM16_imm16(vomit_cpu_t *cpu);
+void _SUB_RM16_imm8(vomit_cpu_t *cpu);
 
-void _ADC_RM8_reg8();
-void _ADC_RM16_reg16();
-void _ADC_reg8_RM8();
-void _ADC_reg16_RM16();
-void _ADC_AL_imm8();
-void _ADC_AX_imm16();
-void _ADC_RM8_imm8();
-void _ADC_RM16_imm16();
-void _ADC_RM16_imm8();
+void _ADC_RM8_reg8(vomit_cpu_t *cpu);
+void _ADC_RM16_reg16(vomit_cpu_t *cpu);
+void _ADC_reg8_RM8(vomit_cpu_t *cpu);
+void _ADC_reg16_RM16(vomit_cpu_t *cpu);
+void _ADC_AL_imm8(vomit_cpu_t *cpu);
+void _ADC_AX_imm16(vomit_cpu_t *cpu);
+void _ADC_RM8_imm8(vomit_cpu_t *cpu);
+void _ADC_RM16_imm16(vomit_cpu_t *cpu);
+void _ADC_RM16_imm8(vomit_cpu_t *cpu);
 
-void _SBB_RM8_reg8();
-void _SBB_RM16_reg16();
-void _SBB_reg8_RM8();
-void _SBB_reg16_RM16();
-void _SBB_AL_imm8();
-void _SBB_AX_imm16();
-void _SBB_RM8_imm8();
-void _SBB_RM16_imm16();
-void _SBB_RM16_imm8();
+void _SBB_RM8_reg8(vomit_cpu_t *cpu);
+void _SBB_RM16_reg16(vomit_cpu_t *cpu);
+void _SBB_reg8_RM8(vomit_cpu_t *cpu);
+void _SBB_reg16_RM16(vomit_cpu_t *cpu);
+void _SBB_AL_imm8(vomit_cpu_t *cpu);
+void _SBB_AX_imm16(vomit_cpu_t *cpu);
+void _SBB_RM8_imm8(vomit_cpu_t *cpu);
+void _SBB_RM16_imm16(vomit_cpu_t *cpu);
+void _SBB_RM16_imm8(vomit_cpu_t *cpu);
 
-void _CMP_RM8_reg8();
-void _CMP_RM16_reg16();
-void _CMP_reg8_RM8();
-void _CMP_reg16_RM16();
-void _CMP_AL_imm8();
-void _CMP_AX_imm16();
-void _CMP_RM8_imm8();
-void _CMP_RM16_imm16();
-void _CMP_RM16_imm8();
+void _CMP_RM8_reg8(vomit_cpu_t *cpu);
+void _CMP_RM16_reg16(vomit_cpu_t *cpu);
+void _CMP_reg8_RM8(vomit_cpu_t *cpu);
+void _CMP_reg16_RM16(vomit_cpu_t *cpu);
+void _CMP_AL_imm8(vomit_cpu_t *cpu);
+void _CMP_AX_imm16(vomit_cpu_t *cpu);
+void _CMP_RM8_imm8(vomit_cpu_t *cpu);
+void _CMP_RM16_imm16(vomit_cpu_t *cpu);
+void _CMP_RM16_imm8(vomit_cpu_t *cpu);
 
-void _MUL_RM8();
-void _MUL_RM16();
-void _DIV_RM8();
-void _DIV_RM16();
-void _IMUL_RM8();
-void _IMUL_RM16();
-void _IDIV_RM8();
-void _IDIV_RM16();
+void _MUL_RM8(vomit_cpu_t *cpu);
+void _MUL_RM16(vomit_cpu_t *cpu);
+void _DIV_RM8(vomit_cpu_t *cpu);
+void _DIV_RM16(vomit_cpu_t *cpu);
+void _IMUL_RM8(vomit_cpu_t *cpu);
+void _IMUL_RM16(vomit_cpu_t *cpu);
+void _IDIV_RM8(vomit_cpu_t *cpu);
+void _IDIV_RM16(vomit_cpu_t *cpu);
 
-void _TEST_RM8_imm8();
-void _TEST_RM16_imm16();
-void _NOT_RM8();
-void _NOT_RM16();
-void _NEG_RM8();
-void _NEG_RM16();
+void _TEST_RM8_imm8(vomit_cpu_t *cpu);
+void _TEST_RM16_imm16(vomit_cpu_t *cpu);
+void _NOT_RM8(vomit_cpu_t *cpu);
+void _NOT_RM16(vomit_cpu_t *cpu);
+void _NEG_RM8(vomit_cpu_t *cpu);
+void _NEG_RM16(vomit_cpu_t *cpu);
 
-void _INC_RM16();
-void _INC_reg16();
-void _DEC_RM16();
-void _DEC_reg16();
+void _INC_RM16(vomit_cpu_t *cpu);
+void _INC_reg16(vomit_cpu_t *cpu);
+void _DEC_RM16(vomit_cpu_t *cpu);
+void _DEC_reg16(vomit_cpu_t *cpu);
 
-void _CALL_RM16();
-void _CALL_FAR_mem16();
-void _CALL_imm16_imm16();
+void _CALL_RM16(vomit_cpu_t *cpu);
+void _CALL_FAR_mem16(vomit_cpu_t *cpu);
+void _CALL_imm16_imm16(vomit_cpu_t *cpu);
 
-void _JMP_RM16();
-void _JMP_FAR_mem16();
+void _JMP_RM16(vomit_cpu_t *cpu);
+void _JMP_FAR_mem16(vomit_cpu_t *cpu);
 
-void _PUSH_RM16();
-void _POP_RM16();
+void _PUSH_RM16(vomit_cpu_t *cpu);
+void _POP_RM16(vomit_cpu_t *cpu);
 
-void _wrap_0x80();
-void _wrap_0x81();
-void _wrap_0x83();
-void _wrap_0x8F();
-void _wrap_0xC0();
-void _wrap_0xC1();
-void _wrap_0xD0();
-void _wrap_0xD1();
-void _wrap_0xD2();
-void _wrap_0xD3();
-void _wrap_0xF6();
-void _wrap_0xF7();
-void _wrap_0xFE();
-void _wrap_0xFF();
+void _wrap_0x80(vomit_cpu_t *cpu);
+void _wrap_0x81(vomit_cpu_t *cpu);
+void _wrap_0x83(vomit_cpu_t *cpu);
+void _wrap_0x8F(vomit_cpu_t *cpu);
+void _wrap_0xC0(vomit_cpu_t *cpu);
+void _wrap_0xC1(vomit_cpu_t *cpu);
+void _wrap_0xD0(vomit_cpu_t *cpu);
+void _wrap_0xD1(vomit_cpu_t *cpu);
+void _wrap_0xD2(vomit_cpu_t *cpu);
+void _wrap_0xD3(vomit_cpu_t *cpu);
+void _wrap_0xF6(vomit_cpu_t *cpu);
+void _wrap_0xF7(vomit_cpu_t *cpu);
+void _wrap_0xFE(vomit_cpu_t *cpu);
+void _wrap_0xFF(vomit_cpu_t *cpu);
 
 #endif /* __8086_h__ */
