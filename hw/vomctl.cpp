@@ -13,9 +13,6 @@ VomCtl::VomCtl()
     : IODevice( "VomCtl" )
 {
     m_registerIndex = 0;
-    // FIXME: Don't get it via g_cpu
-    m_cpu = &g_cpu;
-
     listen( 0xD6, Vomit::IODevice::ReadWrite );
 }
 
@@ -34,13 +31,13 @@ VomCtl::in8()
             return 0;
 
         case 0x01: /* Get CPU type */
-            return m_cpu->type;
+            return g_cpu->type;
 
         case 0x02: /* RAM size LSB */
-            return LSB(m_cpu->memory_size);
+            return LSB(g_cpu->memory_size);
 
         case 0x03: /* RAM size MSB */
-            return MSB(m_cpu->memory_size);
+            return MSB(g_cpu->memory_size);
     }
 
     vlog( VM_VOMCTL, "Invalid register %02X read", m_registerIndex );

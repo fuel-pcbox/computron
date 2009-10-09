@@ -11,67 +11,63 @@ bool disklog, trapint, iopeek, mempeek;
 int
 main( int argc, char **argv )
 {
-	QApplication app( argc, argv );
+    QApplication app( argc, argv );
 
-	QStringList args = app.arguments();
+    QStringList args = app.arguments();
 
-	memset( &options, 0, sizeof(options) );
-	if( args.contains( "--disklog" )) disklog = true;
-	if( args.contains( "--trapint" )) trapint = true;
-	if( args.contains( "--mempeek" )) mempeek = true;
-	if( args.contains( "--iopeek" )) iopeek = true;
-	if( args.contains( "--bda-peek" )) options.bda_peek = true;
-	if( args.contains( "--trace" )) options.trace = true;
+    memset( &options, 0, sizeof(options) );
+    if( args.contains( "--disklog" )) disklog = true;
+    if( args.contains( "--trapint" )) trapint = true;
+    if( args.contains( "--mempeek" )) mempeek = true;
+    if( args.contains( "--iopeek" )) iopeek = true;
+    if( args.contains( "--bda-peek" )) options.bda_peek = true;
+    if( args.contains( "--trace" )) options.trace = true;
 
 #ifndef VOMIT_TRACE
-	if( options.trace )
-	{
-		fprintf( stderr, "Rebuild with #define VOMIT_TRACE if you want --trace to work.\n" );
-		exit( 1 );
-	}
+    if( options.trace )
+    {
+        fprintf( stderr, "Rebuild with #define VOMIT_TRACE if you want --trace to work.\n" );
+        exit( 1 );
+    }
 #endif
 
-	extern void vomit_disasm_init_tables();
-	vomit_disasm_init_tables();
+    g_cpu = new VCpu;
+    g_cpu->init();
 
-	QFile::remove( "log.txt" );
+    extern void vomit_disasm_init_tables();
+    vomit_disasm_init_tables();
 
-	int rc = vomit_init( argc, argv );
+    QFile::remove( "log.txt" );
 
-	if( rc != 0 )
-	{
-		fprintf( stderr, "vomit_init() returned %d\n", rc );
-		return rc;
-	}
+    vomit_init();
 
-	mw = new MainWindow;
+    mw = new MainWindow(g_cpu);
+    mw->show();
 
-	mw->show();
-
-	return app.exec();
+    return app.exec();
 }
 
 word
 kbd_getc()
 {
-	if( !mw || !mw->screen() )
-		return 0x0000;
-	return mw->screen()->nextKey();
+    if( !mw || !mw->screen() )
+        return 0x0000;
+    return mw->screen()->nextKey();
 }
 
 word
 kbd_hit()
 {
-	if( !mw || !mw->screen() )
-		return 0x0000;
-	return mw->screen()->peekKey();
+    if( !mw || !mw->screen() )
+        return 0x0000;
+    return mw->screen()->peekKey();
 }
 
 byte
 kbd_pop_raw()
 {
-	if( !mw || !mw->screen() )
-		return 0x00;
-	return mw->screen()->popKeyData();
+    if( !mw || !mw->screen() )
+        return 0x00;
+    return mw->screen()->popKeyData();
 }
 

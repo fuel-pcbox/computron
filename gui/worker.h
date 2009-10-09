@@ -4,24 +4,26 @@
 #include <QThread>
 #include <QMutex>
 
+#include "vomit.h"
+
 class Worker : public QThread
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	Worker( QObject *parent = 0L );
-	~Worker();
+    Worker(VCpu *cpu, QObject *parent = 0);
+    ~Worker();
 
-	void startMachine();
-	void stopMachine();
-	void rebootMachine();
+    void startMachine();
+    void stopMachine();
+    void rebootMachine();
 
 public slots:
-	void run();
-	void shutdown();
+    void run();
+    void shutdown();
 
 private:
-	QMutex m_mutex;
-	bool m_active;
+    struct Private;
+    Private *d;
 };
 
 #endif

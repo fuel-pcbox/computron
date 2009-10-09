@@ -11,7 +11,7 @@
 
 #define INSNS_PER_PIT_IRQ 400000
 
-vomit_cpu_t g_cpu;
+VCpu *g_cpu = 0;
 unsigned int g_vomit_exit_main_loop = 0;
 
 /* The black hole of 386 segment selectors. */
@@ -24,68 +24,68 @@ void _OpOverride(vomit_cpu_t *)
     vlog(VM_LOGMSG, "Operation size override detected!");
 }
 
-void vomit_cpu_init(vomit_cpu_t *cpu)
+void VCpu::init()
 {
-    cpu->memory = (BYTE *)malloc(1048576 + 65536);
-    if (!cpu->memory) {
+    memset(this, 0, sizeof(VCpu));
+    
+    this->memory = (BYTE *)malloc(1048576 + 65536);
+    if (!this->memory) {
         vlog(VM_INITMSG, "Insufficient memory available.");
         vm_exit(1);
     }
 
-    memset(cpu->memory, 0, 1048576 + 65536);
+    memset(this->memory, 0, 1048576 + 65536);
 
 #ifdef VOMIT_PREFETCH_QUEUE
-    if (cpu->pfq)
-        free(cpu->pfq);
+    if (this->pfq)
+        free(this->pfq);
 
-    cpu->pfq_size = 4;
-    cpu->pfq = malloc(cpu->pfq_size);
-    cpu->pfq_current = 0;
+    this->pfq_size = 4;
+    this->pfq = malloc(this->pfq_size);
+    this->pfq_current = 0;
 #endif
 
-    cpu->treg16[REG_AX] = &cpu->regs.W.AX;
-    cpu->treg16[REG_BX] = &cpu->regs.W.BX;
-    cpu->treg16[REG_CX] = &cpu->regs.W.CX;
-    cpu->treg16[REG_DX] = &cpu->regs.W.DX;
-    cpu->treg16[REG_SP] = &cpu->regs.W.SP;
-    cpu->treg16[REG_BP] = &cpu->regs.W.BP;
-    cpu->treg16[REG_SI] = &cpu->regs.W.SI;
-    cpu->treg16[REG_DI] = &cpu->regs.W.DI;
+    this->treg16[REG_AX] = &this->regs.W.AX;
+    this->treg16[REG_BX] = &this->regs.W.BX;
+    this->treg16[REG_CX] = &this->regs.W.CX;
+    this->treg16[REG_DX] = &this->regs.W.DX;
+    this->treg16[REG_SP] = &this->regs.W.SP;
+    this->treg16[REG_BP] = &this->regs.W.BP;
+    this->treg16[REG_SI] = &this->regs.W.SI;
+    this->treg16[REG_DI] = &this->regs.W.DI;
 
-    cpu->treg8[REG_AH] = &cpu->regs.B.AH;
-    cpu->treg8[REG_BH] = &cpu->regs.B.BH;
-    cpu->treg8[REG_CH] = &cpu->regs.B.CH;
-    cpu->treg8[REG_DH] = &cpu->regs.B.DH;
-    cpu->treg8[REG_AL] = &cpu->regs.B.AL;
-    cpu->treg8[REG_BL] = &cpu->regs.B.BL;
-    cpu->treg8[REG_CL] = &cpu->regs.B.CL;
-    cpu->treg8[REG_DL] = &cpu->regs.B.DL;
+    this->treg8[REG_AH] = &this->regs.B.AH;
+    this->treg8[REG_BH] = &this->regs.B.BH;
+    this->treg8[REG_CH] = &this->regs.B.CH;
+    this->treg8[REG_DH] = &this->regs.B.DH;
+    this->treg8[REG_AL] = &this->regs.B.AL;
+    this->treg8[REG_BL] = &this->regs.B.BL;
+    this->treg8[REG_CL] = &this->regs.B.CL;
+    this->treg8[REG_DL] = &this->regs.B.DL;
 
-    cpu->tseg[REG_CS] = &cpu->CS;
-    cpu->tseg[REG_DS] = &cpu->DS;
-    cpu->tseg[REG_ES] = &cpu->ES;
-    cpu->tseg[REG_SS] = &cpu->SS;
-    cpu->tseg[REG_FS] = &cpu->FS;
-    cpu->tseg[REG_GS] = &cpu->GS;
-    cpu->tseg[6] = &segment_dummy;
-    cpu->tseg[7] = &segment_dummy;
+    this->tseg[REG_CS] = &this->CS;
+    this->tseg[REG_DS] = &this->DS;
+    this->tseg[REG_ES] = &this->ES;
+    this->tseg[REG_SS] = &this->SS;
+    this->tseg[REG_FS] = &this->FS;
+    this->tseg[REG_GS] = &this->GS;
+    this->tseg[6] = &segment_dummy;
+    this->tseg[7] = &segment_dummy;
 
-    memset(cpu, 0, sizeof(cpu));
+    this->CurrentSegment = &this->DS;
 
-    cpu->CurrentSegment = &cpu->DS;
+    vomit_cpu_jump(this, 0xF000, 0x0000);
 
-    vomit_cpu_jump(cpu, 0xF000, 0x0000);
+    vomit_cpu_set_flags(this, 0x0200 | vomit_cpu_static_flags(this));
 
-    vomit_cpu_set_flags(cpu, 0x0200 | vomit_cpu_static_flags(cpu));
-
-    cpu->pit_counter = INSNS_PER_PIT_IRQ;
-    cpu->state = CPU_ALIVE;
+    this->pit_counter = INSNS_PER_PIT_IRQ;
+    this->state = CPU_ALIVE;
 
 #ifdef VOMIT_PREFETCH_QUEUE
-    cpu->pfq = 0;
+    this->pfq = 0;
 #endif
 
-    vomit_cpu_install_default_handlers(cpu);
+    vomit_cpu_install_default_handlers(this);
 }
 
 static void vomit_cpu_set_handler(vomit_cpu_t *cpu, BYTE range_start, BYTE range_end, vomit_opcode_handler handler)
@@ -305,16 +305,16 @@ void vomit_cpu_install_default_handlers(vomit_cpu_t *cpu)
     vomit_cpu_set_handler(cpu, 0xD8, 0xDF, _ESCAPE           );
 }
 
-void vomit_cpu_kill(vomit_cpu_t *cpu)
+void VCpu::kill()
 {
 #ifdef VOMIT_PREFETCH_QUEUE
-    free(cpu->pfq);
-    cpu->pfq = 0;
+    free(this->pfq);
+    this->pfq = 0;
 #endif
 
-    free(cpu->memory);
-    cpu->memory = 0;
-    cpu->code_memory = 0;
+    free(this->memory);
+    this->memory = 0;
+    this->code_memory = 0;
 }
 
 void vomit_cpu_main(vomit_cpu_t *cpu)

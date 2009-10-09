@@ -36,7 +36,7 @@ dump_disasm( word segment, word offset )
 	char *p = buf;
 	byte *opcode;
 
-	opcode = g_cpu.memory + (segment << 4) + offset;
+	opcode = g_cpu->memory + (segment << 4) + offset;
 	width = insn_width( opcode );
 	disassemble( opcode, offset, disasm, sizeof(disasm) );
 
@@ -112,7 +112,7 @@ byte n(byte b) {					/* Nice it up for printing.		*/
 }
 
 void dump_mem(word seg, word off, byte rows) {
-	int i; byte *p = g_cpu.memory + (seg*16) + off;
+	int i; byte *p = g_cpu->memory + (seg*16) + off;
 	if(rows==0) rows=5;
 	for(i=0;i<rows;i++) {
 		vlog( VM_DUMPMSG,
@@ -127,8 +127,8 @@ void dump_mem(word seg, word off, byte rows) {
 	}
 }
 
-static word iseg(byte isr) { return vomit_cpu_memory_read16(&g_cpu, 0x0000, (isr*4)+2); }
-static word ioff(byte isr) { return vomit_cpu_memory_read16(&g_cpu, 0x0000, (isr*4)); }
+static word iseg(byte isr) { return vomit_cpu_memory_read16(g_cpu, 0x0000, (isr*4)+2); }
+static word ioff(byte isr) { return vomit_cpu_memory_read16(g_cpu, 0x0000, (isr*4)); }
 
 void
 dump_ivt()

@@ -10,91 +10,91 @@
 
 struct CPUView::Private
 {
-	QTableWidget *qtw;
+    QTableWidget *qtw;
 };
 
 CPUView::CPUView( QWidget *parent )
-	: QWidget( parent ),
-	  d( new Private )
+    : QWidget( parent ),
+      d( new Private )
 {
-	resize( 200, 300 );
+    resize( 200, 300 );
 
-	QVBoxLayout *l = new QVBoxLayout;
-	d->qtw = new QTableWidget( 10, 2 );
-	l->addWidget( d->qtw );
-	l->setSpacing( 0 );
-	setLayout( l );
+    QVBoxLayout *l = new QVBoxLayout;
+    d->qtw = new QTableWidget( 10, 2 );
+    l->addWidget( d->qtw );
+    l->setSpacing( 0 );
+    setLayout( l );
 
-	setWindowTitle( "CPU State" );
+    setWindowTitle( "CPU State" );
 
-	d->qtw->verticalHeader()->hide();
-	d->qtw->horizontalHeader()->hide();
+    d->qtw->verticalHeader()->hide();
+    d->qtw->horizontalHeader()->hide();
 
-	d->qtw->setColumnWidth( 0, 50 );
-	d->qtw->setSelectionMode( QAbstractItemView::NoSelection );
+    d->qtw->setColumnWidth( 0, 50 );
+    d->qtw->setSelectionMode( QAbstractItemView::NoSelection );
 
-	d->qtw->setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
-	d->qtw->setVerticalScrollBarPolicy( Qt::ScrollBarAsNeeded );
-	d->qtw->setAlternatingRowColors( true );
+    d->qtw->setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
+    d->qtw->setVerticalScrollBarPolicy( Qt::ScrollBarAsNeeded );
+    d->qtw->setAlternatingRowColors( true );
 
-	for( int row = 0; row < d->qtw->rowCount(); ++row )
-	{
-		for( int column = 0; column < d->qtw->columnCount(); ++column )
-		{
-			QTableWidgetItem *item = new QTableWidgetItem;
+    for( int row = 0; row < d->qtw->rowCount(); ++row )
+    {
+        for( int column = 0; column < d->qtw->columnCount(); ++column )
+        {
+            QTableWidgetItem *item = new QTableWidgetItem;
 
-			if( column == 0 )
-			{
-				QFont f( item->font() );
-				f.setBold( true );
-				item->setFont( f );
-			}
-			d->qtw->setItem( row, column, item );
-		}
-	}
+            if( column == 0 )
+            {
+                QFont f( item->font() );
+                f.setBold( true );
+                item->setFont( f );
+            }
+            d->qtw->setItem( row, column, item );
+        }
+    }
 
-	QTimer::singleShot( 0, this, SLOT(refresh()) );
+    QTimer::singleShot( 0, this, SLOT(refresh()) );
 }
 
 CPUView::~CPUView()
 {
-	delete d;
-	d = 0L;
+    delete d;
+    d = 0L;
 }
 
 void
 CPUView::refresh()
 {
-	int row = 0;
-	QString s;
+    int row = 0;
+    QString s;
 
-	d->qtw->item( row, 0 )->setText( "CS:IP" );
-	d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X:%04X", g_cpu.CS, g_cpu.IP ));
+    d->qtw->item( row, 0 )->setText( "CS:IP" );
+    d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X:%04X", g_cpu->CS, g_cpu->IP ));
 
-	d->qtw->item( row, 0 )->setText( "SS:SP" );
-	d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X:%04X", g_cpu.SS, g_cpu.regs.W.SP ));
+    d->qtw->item( row, 0 )->setText( "SS:SP" );
+    d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X:%04X", g_cpu->SS, g_cpu->regs.W.SP ));
 
-	d->qtw->item( row, 0 )->setText( "AX" );
-	d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X", g_cpu.regs.W.AX ));
+    d->qtw->item( row, 0 )->setText( "AX" );
+    d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X", g_cpu->regs.W.AX ));
 
-	d->qtw->item( row, 0 )->setText( "BX" );
-	d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X", g_cpu.regs.W.BX ));
+    d->qtw->item( row, 0 )->setText( "BX" );
+    d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X", g_cpu->regs.W.BX ));
 
-	d->qtw->item( row, 0 )->setText( "CX" );
-	d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X", g_cpu.regs.W.CX ));
+    d->qtw->item( row, 0 )->setText( "CX" );
+    d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X", g_cpu->regs.W.CX ));
 
-	d->qtw->item( row, 0 )->setText( "DX" );
-	d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X", g_cpu.regs.W.DX ));
+    d->qtw->item( row, 0 )->setText( "DX" );
+    d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X", g_cpu->regs.W.DX ));
 
-	d->qtw->item( row, 0 )->setText( "DS" );
-	d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X", g_cpu.DS ));
+    d->qtw->item( row, 0 )->setText( "DS" );
+    d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X", g_cpu->DS ));
 
-	d->qtw->item( row, 0 )->setText( "ES" );
-	d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X", g_cpu.ES ));
+    d->qtw->item( row, 0 )->setText( "ES" );
+    d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X", g_cpu->ES ));
 
-	d->qtw->item( row, 0 )->setText( "kI/sync" );
-	d->qtw->item( row++, 1 )->setText( s.sprintf( "%lu", g_cpu.insn_count / 1000 ));
-	g_cpu.insn_count = 0;
+    d->qtw->item( row, 0 )->setText( "kI/sync" );
+    d->qtw->item( row++, 1 )->setText( s.sprintf( "%lu", g_cpu->insn_count / 1000 ));
+    g_cpu->insn_count = 0;
 
-	QTimer::singleShot( 500, this, SLOT(refresh()) );
+    QTimer::singleShot( 500, this, SLOT(refresh()) );
 }

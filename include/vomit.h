@@ -91,7 +91,7 @@ void gameport_init();
 void video_bios_init();
 void load_cursor( byte *row, byte *column );
 
-int vomit_init( int, char ** );
+void vomit_init();
 
 void irq( byte num );
 

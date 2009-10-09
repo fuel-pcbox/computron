@@ -48,7 +48,7 @@ dma_init()
 }
 
 void
-dma_ch_count_write(vomit_cpu_t *cpu, word port, byte data )
+dma_ch_count_write(vomit_cpu_t *, word port, byte data )
 {
 	dma_channel_t *c;
 	byte channel, chip = 0;
@@ -77,7 +77,7 @@ dma_ch_count_write(vomit_cpu_t *cpu, word port, byte data )
 }
 
 byte
-dma_ch_count_read(vomit_cpu_t *cpu, word port )
+dma_ch_count_read(vomit_cpu_t *, word port )
 {
 	dma_channel_t *c;
 	byte data;
@@ -105,7 +105,7 @@ dma_ch_count_read(vomit_cpu_t *cpu, word port )
 }
 
 void
-dma_ch_address_write(vomit_cpu_t *cpu, word port, byte data )
+dma_ch_address_write(vomit_cpu_t *, word port, byte data )
 {
 	dma_channel_t *c;
 	byte channel, chip = 0;
@@ -134,7 +134,7 @@ dma_ch_address_write(vomit_cpu_t *cpu, word port, byte data )
 }
 
 byte
-dma_ch_address_read(vomit_cpu_t *cpu, word port )
+dma_ch_address_read(vomit_cpu_t *, word port )
 {
 	dma_channel_t *c;
 	byte data;

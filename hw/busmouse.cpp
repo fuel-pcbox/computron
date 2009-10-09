@@ -21,7 +21,7 @@ void busmouse_init()
 }
 
 void
-busmouse_write(vomit_cpu_t *cpu, WORD port, BYTE data)
+busmouse_write(vomit_cpu_t *, WORD port, BYTE data)
 {
     switch (port) {
     case 0x23e:

@@ -5,49 +5,55 @@
 extern unsigned int g_vomit_exit_main_loop;
 extern bool vomit_reboot;
 
-Worker::Worker( QObject *parent )
-	: QThread( parent )
+struct Worker::Private
 {
+    QMutex mutex;
+    bool active;
+    VCpu *cpu;
+};
+
+Worker::Worker(VCpu *c, QObject *parent)
+    : QThread(parent),
+      d(new Private)
+{
+    d->cpu = c;
 }
 
 Worker::~Worker()
 {
+    d->cpu = 0;
+    delete d;
+    d = 0;
 }
 
-void
-Worker::run()
+void Worker::run()
 {
-	while( m_active )
-	{
-		vomit_cpu_main(&g_cpu);
-		while( !m_active )
-			msleep( 50 );
-	}
+    while (d->active) {
+        vomit_cpu_main(d->cpu);
+        while (!d->active)
+            msleep(50);
+    }
 }
 
-void
-Worker::shutdown()
+void Worker::shutdown()
 {
     stopMachine();
-    vm_exit( 0 );
+    vm_exit(0);
 }
 
-void
-Worker::startMachine()
+void Worker::startMachine()
 {
-	g_vomit_exit_main_loop = false;
-	m_active = true;
+    g_vomit_exit_main_loop = false;
+    d->active = true;
 }
 
-void
-Worker::stopMachine()
+void Worker::stopMachine()
 {
-	m_active = false;
-	g_vomit_exit_main_loop = true;
+    d->active = false;
+    g_vomit_exit_main_loop = true;
 }
 
-void
-Worker::rebootMachine()
+void Worker::rebootMachine()
 {
-	// :(
+    // :(
 }

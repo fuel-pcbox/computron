@@ -1,34 +1,38 @@
 #ifndef __mainwindow_h__
 #define __mainwindow_h__
 
-#include <QMainWindow>
+#include <QtGui/QMainWindow>
+
+#include "vomit.h"
 
 class Screen;
 
 class MainWindow : public QMainWindow
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	MainWindow();
-	~MainWindow();
+    MainWindow(VCpu *);
+    ~MainWindow();
 
-	Screen *screen();
+    void setCpu(VCpu *);
+    VCpu *cpu();
+    Screen *screen();
 
 private slots:
-	void slotFloppyAClicked();
-	void slotFloppyBClicked();
-	void slotPauseMachine();
-	void slotStartMachine();
-	void slotStopMachine();
-	void slotRebootMachine();
+    void slotFloppyAClicked();
+    void slotFloppyBClicked();
+    void slotPauseMachine();
+    void slotStartMachine();
+    void slotStopMachine();
+    void slotRebootMachine();
 
-	void slotUpdateMemView();
+    void slotUpdateMemView();
 
     void onAboutToQuit();
 
 private:
-	struct Private;
-	Private *d;
+    struct Private;
+    Private *d;
 };
 
 #endif // __mainwindow_h__

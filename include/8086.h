@@ -1,15 +1,15 @@
 #ifndef __8086_h__
 #define __8086_h__
 
-#define CPU_DEAD			0
-#define CPU_ALIVE			1
-#define CPU_HALTED			2
+#define CPU_DEAD            0
+#define CPU_ALIVE            1
+#define CPU_HALTED            2
 
 #define INTEL_8086          0
 #define INTEL_80186         1
 #define INTEL_80286         2
 
-#define rmreg(b) (b>>3&7)	/* Extracts RegID from RM byte. */
+#define rmreg(b) (b>>3&7)    /* Extracts RegID from RM byte. */
 #define MODRM_ISREG(b) (((b)&0xC0)==0xC0)
 
 #define LSW(d) ((d)&0xFFFF)
@@ -26,89 +26,89 @@
 typedef void (*vomit_opcode_handler) (struct __vomit_cpu_t *);
 
 typedef struct __vomit_cpu_t {
-	union {
-		struct {
-			dword EAX, EBX, ECX, EDX;
-			dword EBP, ESP, ESI, EDI;
-			dword EIP;
-		} D;
+    union {
+        struct {
+            dword EAX, EBX, ECX, EDX;
+            dword EBP, ESP, ESI, EDI;
+            dword EIP;
+        } D;
 #ifdef VOMIT_BIG_ENDIAN
-		struct {
-			word __EAX_high_word, AX;
-			word __EBX_high_word, BX;
-			word __ECX_high_word, CX;
-			word __EDX_high_word, DX;
-			word __EBP_high_word, BP;
-			word __ESP_high_word, SP;
-			word __ESI_high_word, SI;
-			word __EDI_high_word, DI;
-			word __EIP_high_word, IP;
-		} W;
-		struct {
-			word __EAX_high_word;
-			byte AH, AL;
-			word __EBX_high_word;
-			byte BH, BL;
-			word __ECX_high_word;
-			byte CH, CL;
-			word __EDX_high_word;
-			byte DH, DL;
-			dword EBP;
-			dword ESP;
-			dword ESI;
-			dword EDI;
-			dword EIP;
-		} B;
+        struct {
+            word __EAX_high_word, AX;
+            word __EBX_high_word, BX;
+            word __ECX_high_word, CX;
+            word __EDX_high_word, DX;
+            word __EBP_high_word, BP;
+            word __ESP_high_word, SP;
+            word __ESI_high_word, SI;
+            word __EDI_high_word, DI;
+            word __EIP_high_word, IP;
+        } W;
+        struct {
+            word __EAX_high_word;
+            byte AH, AL;
+            word __EBX_high_word;
+            byte BH, BL;
+            word __ECX_high_word;
+            byte CH, CL;
+            word __EDX_high_word;
+            byte DH, DL;
+            dword EBP;
+            dword ESP;
+            dword ESI;
+            dword EDI;
+            dword EIP;
+        } B;
 #else
-		struct {
-			word AX, __EAX_high_word;
-			word BX, __EBX_high_word;
-			word CX, __ECX_high_word;
-			word DX, __EDX_high_word;
-			word BP, __EBP_high_word;
-			word SP, __ESP_high_word;
-			word SI, __ESI_high_word;
-			word DI, __EDI_high_word;
-			word IP, __EIP_high_word;
-		} W;
-		struct {
-			byte AL, AH;
-			word __EAX_high_word;
-			byte BL, BH;
-			word __EBX_high_word;
-			byte CL, CH;
-			word __ECX_high_word;
-			byte DL, DH;
-			word __EDX_high_word;
-			dword EBP;
-			dword ESP;
-			dword ESI;
-			dword EDI;
-			dword EIP;
-		} B;
+        struct {
+            word AX, __EAX_high_word;
+            word BX, __EBX_high_word;
+            word CX, __ECX_high_word;
+            word DX, __EDX_high_word;
+            word BP, __EBP_high_word;
+            word SP, __ESP_high_word;
+            word SI, __ESI_high_word;
+            word DI, __EDI_high_word;
+            word IP, __EIP_high_word;
+        } W;
+        struct {
+            byte AL, AH;
+            word __EAX_high_word;
+            byte BL, BH;
+            word __EBX_high_word;
+            byte CL, CH;
+            word __ECX_high_word;
+            byte DL, DH;
+            word __EDX_high_word;
+            dword EBP;
+            dword ESP;
+            dword ESI;
+            dword EDI;
+            dword EIP;
+        } B;
 #endif
-	} regs;
-	word CS, DS, ES, SS, FS, GS, SegmentPrefix, *CurrentSegment;
-	bool CF, DF, TF, PF, AF, ZF, SF, IF, OF;
-	word IP;
-	byte type;
-	byte state;
-	dword insn_count;
+    } regs;
+    word CS, DS, ES, SS, FS, GS, SegmentPrefix, *CurrentSegment;
+    bool CF, DF, TF, PF, AF, ZF, SF, IF, OF;
+    word IP;
+    byte type;
+    byte state;
+    dword insn_count;
 
-	word base_CS;
-	word base_IP;
+    word base_CS;
+    word base_IP;
 
-	byte opcode;
-	byte rmbyte;
+    byte opcode;
+    byte rmbyte;
 
-        /* Memory size in KiB (will be reported by BIOS) */
-        WORD memory_size;
+    /* Memory size in KiB (will be reported by BIOS) */
+    WORD memory_size;
 
-        /* RAM */
-        BYTE *memory;
+    /* RAM */
+    BYTE *memory;
 
-	/* This points to the base of CS for fast opcode fetches. */
-	byte *code_memory;
+    /* This points to the base of CS for fast opcode fetches. */
+    byte *code_memory;
 
     /* Cycle counter. May wrap arbitrarily. */
     dword pit_counter;
@@ -125,9 +125,37 @@ typedef struct __vomit_cpu_t {
     byte pfq_size;
 #endif
 
+#ifndef __cplusplus
+#error Vomit is a C++ program nowadays
+#endif
+
+    void init();
+    void kill();
+    
+    void setIF(bool value) { this->IF = value; }
+    void setCF(bool value) { this->CF = value; }
+    void setSF(bool value) { this->DF = value; }
+    void setAF(bool value) { this->AF = value; }
+    void setTF(bool value) { this->TF = value; }
+    void setOF(bool value) { this->OF = value; }
+    void setPF(bool value) { this->PF = value; }
+
+    bool getIF() const { return this->IF; }
+    bool getCF() const { return this->CF; }
+    bool getDF() const { return this->DF; }
+    bool getSF() const { return this->SF; }
+    bool getAF() const { return this->AF; }
+    bool getTF() const { return this->TF; }
+    bool getOF() const { return this->OF; }
+    bool getPF() const { return this->PF; }
+    
+    BYTE *memoryPointer(WORD segment, WORD offset) { return &this->memory[FLAT(segment, offset)]; }
+
 } vomit_cpu_t;
 
-extern vomit_cpu_t g_cpu;
+#define VCpu vomit_cpu_t
+
+extern VCpu *g_cpu;
 
 #ifdef VOMIT_PREFETCH_QUEUE
 void vomit_cpu_pfq_flush(vomit_cpu_t *cpu);
@@ -139,11 +167,9 @@ WORD vomit_cpu_pfq_getword(vomit_cpu_t *cpu);
 WORD vomit_cpu_pfq_getword(vomit_cpu_t *cpu);
 #endif
 
-void vomit_cpu_init(vomit_cpu_t *cpu);
 void vomit_cpu_jump(vomit_cpu_t *cpu, word segment, word offset);
 void vomit_cpu_set_flags(vomit_cpu_t *cpu, word flags);
 void vomit_cpu_genmap(vomit_cpu_t *cpu);
-void vomit_cpu_kill(vomit_cpu_t *cpu);
 void vomit_cpu_main(vomit_cpu_t *cpu);
 void vomit_cpu_jump_relative8(vomit_cpu_t *cpu, SIGNED_BYTE displacement);
 void vomit_cpu_jump_relative16(vomit_cpu_t *cpu, SIGNED_WORD displacement);
@@ -235,11 +261,11 @@ void vomit_cpu_isr_call(vomit_cpu_t *cpu, BYTE isr_index);
 
 inline word signext (byte b)
 {
-	word w = 0x0000 | b;
-	if ((w&0x80))
-		return (w | 0xff00);
-	else
-		return (w & 0x00ff);
+    word w = 0x0000 | b;
+    if ((w&0x80))
+        return (w | 0xff00);
+    else
+        return (w & 0x00ff);
 }
 
 #define REG_AL  0

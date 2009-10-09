@@ -14,18 +14,11 @@
 
 vomit_options_t options;
 
-static void vm_init();
-
-int vomit_init(int argc, char **argv)
+void vomit_init()
 {
-    vm_init();
-    vm_loadconf();
-    return 0;
-}
+    printf("g_cpu = %p\n", g_cpu);
+    printf("g_cpu->memory = %p\n", g_cpu->memory);
 
-void vm_init() {
-    vlog( VM_INITMSG, "Initializing CPU" );
-    vomit_cpu_init(&g_cpu);
     vlog( VM_INITMSG, "Initializing video BIOS" );
     video_bios_init();
 
@@ -49,13 +42,15 @@ void vm_init() {
     busmouse_init();
     keyboard_init();
     gameport_init();
+
+    vm_loadconf();
 }
 
 void vm_kill()
 {
     vlog(VM_KILLMSG, "Killing VM");
     vga_kill();
-    vomit_cpu_kill(&g_cpu);
+    g_cpu->kill();
 }
 
 void vm_exit(int exit_code)

@@ -117,12 +117,12 @@ BYTE vomit_cpu_in(vomit_cpu_t *cpu, WORD port)
     return vm_ioh_in[port](cpu, port);
 }
 
-static void vm_ioh_nout(vomit_cpu_t *cpu, WORD port, BYTE value)
+static void vm_ioh_nout(vomit_cpu_t *, WORD port, BYTE value)
 {
     vlog(VM_ALERT, "Unhandled I/O write to port %04X, data %02X", port, value);
 }
 
-static BYTE vm_ioh_nin(vomit_cpu_t *cpu, WORD port)
+static BYTE vm_ioh_nin(vomit_cpu_t *, WORD port)
 {
     vlog(VM_ALERT, "Unhandled I/O read from port %04X", port);
     return 0xff;

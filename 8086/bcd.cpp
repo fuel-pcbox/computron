@@ -9,14 +9,14 @@
 
 void _AAA(vomit_cpu_t *cpu)
 {
-    if (((cpu->regs.B.AL & 0x0F)>9) || cpu->AF) {
+    if (((cpu->regs.B.AL & 0x0F)>9) || cpu->getAF()) {
         cpu->regs.B.AL += 6;
         cpu->regs.B.AH += 1;
-        cpu->AF = 1;
-        cpu->CF = 1;
+        cpu->setAF(1);
+        cpu->setCF(1);
     } else {
-        cpu->AF = 0;
-        cpu->CF = 0;
+        cpu->setAF(0);
+        cpu->setCF(0);
     }
     cpu->regs.B.AL &= 0x0F;
 }
@@ -51,62 +51,62 @@ void _AAD(vomit_cpu_t *cpu)
 
 void _AAS(vomit_cpu_t *cpu)
 {
-    if (((cpu->regs.B.AL & 0x0F) > 9) || cpu->AF) {
+    if (((cpu->regs.B.AL & 0x0F) > 9) || cpu->getAF()) {
         cpu->regs.B.AL -= 6;
         cpu->regs.B.AH -= 1;
-        cpu->AF = 1;
-        cpu->CF = 1;
+        cpu->setAF(1);
+        cpu->setCF(1);
     } else {
-        cpu->AF = 0;
-        cpu->CF = 0;
+        cpu->setAF(0);
+        cpu->setCF(0);
     }
 }
 
 void _DAS(vomit_cpu_t *cpu)
 {
-    bool oldCF = cpu->CF;
+    bool oldCF = cpu->getCF();
     BYTE oldAL = cpu->regs.B.AL;
 
-    cpu->CF = 0;
+    cpu->setCF(0);
 
-    if (((cpu->regs.B.AL & 0x0F) > 0x09) || cpu->AF) {
-        cpu->CF = ((cpu->regs.B.AL - 6) >> 8) & 1;
+    if (((cpu->regs.B.AL & 0x0F) > 0x09) || cpu->getAF()) {
+        cpu->setCF(((cpu->regs.B.AL - 6) >> 8) & 1);
         cpu->regs.B.AL -= 0x06;
-        cpu->CF = oldCF | cpu->CF;
-        cpu->AF = 1;
+        cpu->setCF(oldCF | cpu->getCF());
+        cpu->setAF(1);
     } else {
-        cpu->AF = 0;
+        cpu->setAF(0);
     }
 
     if (oldAL > 0x99 || oldCF == 1) {
         cpu->regs.B.AL -= 0x60;
-        cpu->CF = 1;
+        cpu->setCF(1);
     } else {
-        cpu->CF = 0;
+        cpu->setCF(0);
     }
 }
 
 void _DAA(vomit_cpu_t *cpu)
 {
-    bool oldCF = cpu->CF;
+    bool oldCF = cpu->getCF();
     BYTE oldAL = cpu->regs.B.AL;
 
-    cpu->CF = 0;
+    cpu->setCF(0);
 
-    if (((cpu->regs.B.AL & 0x0F) > 0x09) || cpu->AF) {
-        cpu->CF = ((cpu->regs.B.AL + 6) >> 8) & 1;
+    if (((cpu->regs.B.AL & 0x0F) > 0x09) || cpu->getAF()) {
+        cpu->setCF(((cpu->regs.B.AL + 6) >> 8) & 1);
         cpu->regs.B.AL += 6;
-        cpu->CF = oldCF | cpu->CF;
-        cpu->AF = 1;
+        cpu->setCF(oldCF | cpu->getCF());
+        cpu->setAF(1);
     } else {
-        cpu->AF = 0;
+        cpu->setAF(0);
     }
 
     if (oldAL > 0x99 || oldCF == 1) {
         cpu->regs.B.AL += 0x60;
-        cpu->CF = 1;
+        cpu->setCF(1);
     } else {
-        cpu->CF = 0;
+        cpu->setCF(0);
     }
 }
 

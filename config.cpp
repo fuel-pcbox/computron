@@ -69,7 +69,7 @@ unspeakable_abomination()
                     vm_exit(1);
                 }
 
-                if (!fread(g_cpu.memory+lseg*16+loff, 1, MAX_FILESIZE, ftmp)) {
+                if (!fread(g_cpu->memory+lseg*16+loff, 1, MAX_FILESIZE, ftmp)) {
                     vlog(VM_CONFIGMSG, "Failure reading from %s", lfname);
                     vm_exit(1);
                 }
@@ -87,7 +87,7 @@ unspeakable_abomination()
                 {
                     tb = strtol(curtok,NULL,16);
                     //vlog( VM_INITMSG, "  [%04X] = %02X", loff, tb );
-                    vomit_cpu_memory_write16(&g_cpu, lseg, loff++, tb);
+                    vomit_cpu_memory_write16(g_cpu, lseg, loff++, tb);
                     curtok = strtok(NULL, " \t\n");
                 }
                 curtok=curline;
@@ -167,22 +167,22 @@ unspeakable_abomination()
             else if( !reloading && !strcmp( curtok, "cpu" ))
             {
                 curtok = strtok(NULL, " \t\n");
-                g_cpu.type = (word)(strtol(curtok, NULL, 10));
-                vlog( VM_INITMSG, "Setting CPU type to %d", g_cpu.type );
+                g_cpu->type = (word)(strtol(curtok, NULL, 10));
+                vlog( VM_INITMSG, "Setting CPU type to %d", g_cpu->type );
             }
             else if( !reloading && !strcmp( curtok, "memory" ))
             {
                 curtok = strtok(NULL, " \t\n");
-                g_cpu.memory_size = (word)(strtol(curtok, NULL, 10));
-                vlog(VM_INITMSG, "Memory size: %d kilobytes", g_cpu.memory_size);
+                g_cpu->memory_size = (word)(strtol(curtok, NULL, 10));
+                vlog(VM_INITMSG, "Memory size: %d kilobytes", g_cpu->memory_size);
             }
             else if( !reloading && !strcmp( curtok, "entry" ))
             {
                 curtok = strtok(NULL, ": \t\n");
-                g_cpu.CS = (word)strtol(curtok, NULL, 16);
+                g_cpu->CS = (word)strtol(curtok, NULL, 16);
                 curtok = strtok(NULL, " \t\n");
-                g_cpu.IP = (word)strtol(curtok, NULL, 16);
-                vomit_cpu_jump(&g_cpu, g_cpu.CS, g_cpu.IP);
+                g_cpu->IP = (word)strtol(curtok, NULL, 16);
+                vomit_cpu_jump(g_cpu, g_cpu->CS, g_cpu->IP);
             }
             else if( !reloading && !strcmp( curtok, "addint" ))
             {
@@ -190,7 +190,7 @@ unspeakable_abomination()
                 lseg = (word)strtol(strtok(NULL, ": \t\n"), NULL, 16);
                 loff = (word)strtol(strtok(NULL, " \t\n"), NULL, 16);
                 vlog( VM_INITMSG, "Software interrupt %02X at %04X:%04X", lnum, lseg, loff );
-                vomit_cpu_set_interrupt(&g_cpu, lnum, lseg, loff);
+                vomit_cpu_set_interrupt(g_cpu, lnum, lseg, loff);
             }
         }
     }
