@@ -42,7 +42,6 @@ static byte vga_read_miscellaneous_output_register(vomit_cpu_t *, word port );
 
 static bool next_3c0_is_index = true;
 
-static bool video_dirty = false;
 bool palette_dirty = true;
 
 byte vga_palette_register[17] =
@@ -304,24 +303,6 @@ vga_getreg2(vomit_cpu_t *, word port )
     (void) port;
     //vlog( VM_VIDEOMSG, "reading reg2 %d, data is %02X", current_register2, io_register2[current_register2] );
     return io_register2[current_register2];
-}
-
-void
-clear_video_dirty()
-{
-    video_dirty = false;
-}
-
-void
-set_video_dirty()
-{
-    video_dirty = true;
-}
-
-bool
-is_video_dirty()
-{
-    return video_dirty;
 }
 
 void

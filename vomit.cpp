@@ -16,9 +16,6 @@ vomit_options_t options;
 
 void vomit_init()
 {
-    printf("g_cpu = %p\n", g_cpu);
-    printf("g_cpu->memory = %p\n", g_cpu->memory);
-
     vlog( VM_INITMSG, "Initializing video BIOS" );
     video_bios_init();
 

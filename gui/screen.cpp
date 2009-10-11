@@ -103,8 +103,6 @@ Screen::putCharacter( QPainter &p, int row, int column, byte color, byte c )
     }
 }
 
-bool is_video_dirty();
-void clear_video_dirty();
 bool is_palette_dirty();
 void clear_palette_dirty();
 
@@ -131,10 +129,9 @@ Screen::refresh()
             clear_palette_dirty();
         }
 
-        if( is_video_dirty() )
-        {
+        if (d->cpu->vgaMemory->isDirty()) {
             //vlog( VM_VIDEOMSG, "Painting mode0Dh screen" );
-            renderMode0D( m_render0D );
+            renderMode0D(m_render0D);
 
             QRect updateRect;
 
@@ -170,7 +167,6 @@ Screen::refresh()
 
             m_screen0D = m_render0D;
             update( updateRect );
-            clear_video_dirty();
         }
     } else if ((d->cpu->memory[0x449] & 0x7F) == 0x03) {
         int rows = d->cpu->memory[0x484] + 1;

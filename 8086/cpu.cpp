@@ -28,7 +28,7 @@ void _OpOverride(vomit_cpu_t *)
 void VCpu::init()
 {
     memset(this, 0, sizeof(VCpu));
-    
+
     this->memory = (BYTE *)malloc(1048576 + 65536);
     if (!this->memory) {
         vlog(VM_INITMSG, "Insufficient memory available.");

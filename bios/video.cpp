@@ -30,8 +30,6 @@ static void write_graphics_pixel_at_coordinate();
 #endif
 void load_cursor( byte *row, byte *column );
 
-extern void set_video_dirty();
-
 void
 video_bios_init()
 {
@@ -409,7 +407,7 @@ store_cursor( word cursor )
     g_cpu->memory[0x450] = cursor / columns();
     g_cpu->memory[0x451] = cursor % columns();
 
-    set_video_dirty();
+    g_cpu->vgaMemory->setDirty();
 }
 
 void
@@ -543,7 +541,7 @@ write_graphics_pixel_at_coordinate()
     if( g_cpu->regs.B.AL & 0x08 )
         vm_p3[offset] |= (0x80 >> bit);
 
-    set_video_dirty();
+    g_cpu->vgaMemory->setDirty();
 }
 
 void
@@ -581,7 +579,7 @@ putpixel0D( word row, word column, byte pixel )
     if( pixel & 0x08 )
         vm_p3[offset] |= (0x80 >> bit);
 
-    set_video_dirty();
+    g_cpu->vgaMemory->setDirty();
 }
 
 #endif

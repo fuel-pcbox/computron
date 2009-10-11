@@ -37,6 +37,8 @@ public:
 
     void clearDirty();
 
+    QT_DEPRECATED void setDirty();
+
 private:
     struct Private;
     Private *d;
