@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include "vomit.h"
 #include "debug.h"
+#include "vga_memory.h"
 
 #define INSNS_PER_PIT_IRQ 400000
 
@@ -35,6 +36,8 @@ void VCpu::init()
     }
 
     memset(this->memory, 0, 1048576 + 65536);
+
+	this->vgaMemory = new VgaMemory(this);
 
 #ifdef VOMIT_PREFETCH_QUEUE
     if (this->pfq)

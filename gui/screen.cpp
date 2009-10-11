@@ -1,14 +1,14 @@
 #include "screen.h"
-#include "../include/debug.h"
-#include "../include/vomit.h"
+#include "debug.h"
+#include "vomit.h"
+#include "vga_memory.h"
 
-#include <QPainter>
-#include <QApplication>
-#include <QPaintEvent>
-#include <QBitmap>
-#include <QMutex>
-#include <QQueue>
-#include <QDebug>
+#include <QtGui/QPainter>
+#include <QtGui/QPaintEvent>
+#include <QtGui/QBitmap>
+#include <QtCore/QMutex>
+#include <QtCore/QQueue>
+#include <QtCore/QDebug>
 
 typedef struct {
   byte data[16];
@@ -67,6 +67,12 @@ Screen::Screen(VCpu *cpu, QWidget *parent)
     setFocusPolicy( Qt::ClickFocus );
 
     setMouseTracking( true );
+
+#if 0
+    // HACK 2000: Type w<ENTER> at boot for Windows ;-)
+    d->keyQueue.enqueue(0x1177);
+    d->keyQueue.enqueue(0x1C0D);
+#endif
 }
 
 Screen::~Screen()
@@ -113,47 +119,11 @@ Screen::refresh()
             clear_palette_dirty();
         }
 
-        if( is_video_dirty() )
-        {
-            //vlog( VM_VIDEOMSG, "Painting mode12h screen" );
-            renderMode12( m_render12 );
-
-            QRect updateRect;
-
-            uchar *newBits = m_render12.bits();
-            uchar *oldBits = m_screen12.bits();
-
-            // Compare screen rendition to what's showing ATM, to find the region
-            // that needs to be updated.
-            for( int y = 0; y < 480; ++y )
-            {
-                uchar *newPixels = &newBits[y*640];
-                uchar *oldPixels = &oldBits[y*640];
-                for( int x = 0; x < 640; ++x )
-                {
-                    if( newPixels[x] != oldPixels[x] )
-                    {
-                        if( updateRect.isNull() )
-                            updateRect.setCoords( x, y, x, y );
-                        else
-                        {
-                            if( x < updateRect.left() )
-                                updateRect.setLeft( x );
-                            if( x > updateRect.right() )
-                                updateRect.setRight( x );
-                            if( y < updateRect.top() )
-                                updateRect.setTop( y );
-                            if( y > updateRect.bottom() )
-                                updateRect.setBottom( y );
-                        }
-                    }
-                }
-            }
-
-            m_screen12 = m_render12;
-            update( updateRect );
-            clear_video_dirty();
+        if (d->cpu->vgaMemory->isDirty()) {
+            update(d->cpu->vgaMemory->dirtyRect());
+            d->cpu->vgaMemory->clearDirty();
         }
+
     } else if ((d->cpu->memory[0x449] & 0x7F) == 0x0D) {
         if( is_palette_dirty() )
         {
@@ -237,10 +207,10 @@ Screen::setScreenSize( int width, int height )
 void
 Screen::renderMode12( QImage &target )
 {
-    extern byte vm_p0[];
-    extern byte vm_p1[];
-    extern byte vm_p2[];
-    extern byte vm_p3[];
+	const BYTE *p0 = d->cpu->vgaMemory->plane(0);
+	const BYTE *p1 = d->cpu->vgaMemory->plane(1);
+	const BYTE *p2 = d->cpu->vgaMemory->plane(2);
+	const BYTE *p3 = d->cpu->vgaMemory->plane(3);
 
     int offset = 0;
 
@@ -250,7 +220,7 @@ Screen::renderMode12( QImage &target )
 
         for( int x = 0; x < 640; x += 8, ++offset )
         {
-#define D(i) ((vm_p0[offset]>>i) & 1) | (((vm_p1[offset]>>i) & 1)<<1) | (((vm_p2[offset]>>i) & 1)<<2) | (((vm_p3[offset]>>i) & 1)<<3)
+#define D(i) ((p0[offset]>>i) & 1) | (((p1[offset]>>i) & 1)<<1) | (((p2[offset]>>i) & 1)<<2) | (((p3[offset]>>i) & 1)<<3)
 
             *(px++) = D(7);
             *(px++) = D(6);
@@ -267,10 +237,10 @@ Screen::renderMode12( QImage &target )
 void
 Screen::renderMode0D( QImage &target )
 {
-    extern byte vm_p0[];
-    extern byte vm_p1[];
-    extern byte vm_p2[];
-    extern byte vm_p3[];
+	const BYTE *p0 = d->cpu->vgaMemory->plane(0);
+	const BYTE *p1 = d->cpu->vgaMemory->plane(1);
+	const BYTE *p2 = d->cpu->vgaMemory->plane(2);
+	const BYTE *p3 = d->cpu->vgaMemory->plane(3);
 
     int offset = 0;
 
@@ -278,7 +248,7 @@ Screen::renderMode0D( QImage &target )
     {
         uchar *px = &target.bits()[y*320];
 
-#define A0D(i) ((vm_p0[offset]>>i) & 1) | (((vm_p1[offset]>>i) & 1)<<1) | (((vm_p2[offset]>>i) & 1)<<2) | (((vm_p3[offset]>>i) & 1)<<3)
+#define A0D(i) ((p0[offset]>>i) & 1) | (((p1[offset]>>i) & 1)<<1) | (((p2[offset]>>i) & 1)<<2) | (((p3[offset]>>i) & 1)<<3)
         for( int x = 0; x < 320; x += 8, ++offset )
         {
             *(px++) = D(7);
@@ -299,7 +269,7 @@ Screen::renderMode0D( QImage &target )
 
         for( int x = 0; x < 320; x += 8, ++offset )
         {
-#define D(i) ((vm_p0[offset]>>i) & 1) | (((vm_p1[offset]>>i) & 1)<<1) | (((vm_p2[offset]>>i) & 1)<<2) | (((vm_p3[offset]>>i) & 1)<<3)
+#define D(i) ((p0[offset]>>i) & 1) | (((p1[offset]>>i) & 1)<<1) | (((p2[offset]>>i) & 1)<<2) | (((p3[offset]>>i) & 1)<<3)
 
             *(px++) = D(7);
             *(px++) = D(6);
@@ -327,7 +297,8 @@ void Screen::paintEvent(QPaintEvent *e)
 
         setScreenSize(640, 480);
         QPainter wp(this);
-        wp.drawImage(e->rect(), m_screen12.copy(e->rect()));
+        wp.setClipRegion(e->rect());
+        wp.drawImage(rect(), *d->cpu->vgaMemory->modeImage(0x12));
 
         if (m_tinted) {
             wp.setOpacity( 0.3 );
@@ -339,8 +310,9 @@ void Screen::paintEvent(QPaintEvent *e)
     if ((d->cpu->memory[0x449] & 0x7F) == 0x0D) {
 
         setScreenSize( 320, 200 );
-        QPainter wp( this );
-        wp.drawImage( e->rect(), m_screen0D.copy( e->rect() ));
+        QPainter wp(this);
+        wp.setClipRegion(e->rect());
+        wp.drawImage(rect(), m_screen0D);
 
         if (m_tinted) {
             wp.setOpacity( 0.3 );

@@ -4,8 +4,10 @@
 void vga_init();
 void vga_kill();
 
-byte vga_read_register( byte number );
-void vga_write_register( byte number, byte value );
+BYTE vga_read_register(BYTE index);
+BYTE vga_read_register2(BYTE index);
+BYTE vga_read_sequencer(BYTE index);
+void vga_write_register(BYTE index, BYTE value);
 void vga_scrollup(byte, byte, byte, byte, byte, byte);
 
 typedef struct {

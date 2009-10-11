@@ -2,11 +2,12 @@ TEMPLATE = app
 TARGET = 
 DEPENDPATH += . 8086 bios disasm gui hw include disasm/include
 INCLUDEPATH += . include disasm/include gui hw
-CXXFLAGS += -std=gnu++0x -W -Wall -Wshadow -O0 -ggdb3
+CXXFLAGS += -std=gnu++0x -W -Wall -Wshadow
 DEFINES += VOMIT_DEBUG VOMIT_TRACE
-CONFIG += debug silent
+CONFIG += silent
+CONFIG += debug
 
-#CONFIG -= app_bundle
+CONFIG -= app_bundle
 
 RESOURCES = vomit.qrc
 
@@ -20,6 +21,7 @@ HEADERS += gui/codeview.h \
            gui/worker.h \
            hw/iodevice.h \
            hw/vomctl.h \
+           hw/vga_memory.h \
            include/186.h \
            include/8086.h \
            include/debug.h \
@@ -76,4 +78,5 @@ SOURCES += 186.cpp \
            hw/pit.cpp \
            hw/vga.cpp \
            hw/vomctl.cpp \
-		   hw/iodevice.cpp
+           hw/iodevice.cpp \
+           hw/vga_memory.cpp

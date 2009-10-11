@@ -25,8 +25,6 @@ static byte index_palette = 0;
 static byte columns;
 static byte rows;
 
-static byte latch[4];
-
 static void vga_selreg(vomit_cpu_t *, word, byte );
 static void vga_setreg(vomit_cpu_t *, word, byte );
 static void vga_selreg2(vomit_cpu_t *, word, byte );
@@ -46,11 +44,6 @@ static bool next_3c0_is_index = true;
 
 static bool video_dirty = false;
 bool palette_dirty = true;
-
-byte vm_p0[0x10000];
-byte vm_p1[0x10000];
-byte vm_p2[0x10000];
-byte vm_p3[0x10000];
 
 byte vga_palette_register[17] =
 {
@@ -95,16 +88,6 @@ rgb_t vga_color_register[256] =
 void
 vga_init()
 {
-    latch[0] = 0;
-    latch[1] = 0;
-    latch[2] = 0;
-    latch[3] = 0;
-
-    memset( &vm_p0, 0x0, sizeof(vm_p0) );
-    memset( &vm_p1, 0x0, sizeof(vm_p1) );
-    memset( &vm_p2, 0x0, sizeof(vm_p2) );
-    memset( &vm_p3, 0x0, sizeof(vm_p3) );
-
     vm_listen( 0x3b4, vga_get_current_register, vga_selreg );
     vm_listen( 0x3b5, vga_getreg, vga_setreg );
     vm_listen( 0x3ba, vga_status, 0L );
@@ -233,29 +216,23 @@ vga_selseq(vomit_cpu_t *, word port, byte data )
     current_sequencer = data & 0x1F;
 }
 
-byte
-vga_getseq(vomit_cpu_t *, word port )
+BYTE vga_getseq(vomit_cpu_t *, WORD)
 {
-    (void) port;
     //vlog( VM_VIDEOMSG, "reading seq %d, data is %02X", current_sequencer, io_sequencer[current_sequencer] );
     return io_sequencer[current_sequencer];
 }
 
-void
-vga_setseq(vomit_cpu_t *, word port, byte data )
+void vga_setseq(vomit_cpu_t *, WORD, BYTE value)
 {
-    (void) port;
     //vlog( VM_VIDEOMSG, "writing to seq %d, data is %02X", current_sequencer, data );
-    io_sequencer[current_sequencer] = data;
+    io_sequencer[current_sequencer] = value;
 }
 
-byte
-vga_status(vomit_cpu_t *, word port)
+BYTE
+vga_status(vomit_cpu_t *, word)
 {
     static bool last_bit0 = 0;
-    byte data;
-
-    (void) port;
+    BYTE value;
 
     /*
      * 6845 - Port 3DA Status Register
@@ -270,7 +247,7 @@ vga_status(vomit_cpu_t *, word port)
      */
 
     /* 0000 1100 */
-    data = 0x0C;
+    value = 0x0C;
 
     /* Microsoft DEFRAG expects bit 0 to "blink", so we'll flip it between reads. */
     /*last_bit0 = !last_bit0;
@@ -278,21 +255,32 @@ vga_status(vomit_cpu_t *, word port)
 
     next_3c0_is_index = true;
 
-    return data;
+    return value;
 }
 
-byte
-vga_read_register( byte number )
+BYTE vga_read_register(BYTE index)
 {
-    assert( number <= 0x12 );
-    return io_register[number];
+    assert(index <= 0x12);
+    return io_register[index];
 }
 
-void
-vga_write_register( byte number, byte value )
+BYTE vga_read_register2(BYTE index)
 {
-    assert( number <= 0x12 );
-    io_register[number] = value;
+	// TODO: Check if 12 is the right number here...
+    assert(index <= 0x12);
+    return io_register2[index];
+}
+
+BYTE vga_read_sequencer(BYTE index)
+{
+    assert(index <= 0x4);
+    return io_sequencer[index];
+}
+
+void vga_write_register(BYTE index, BYTE value)
+{
+    assert(index <= 0x12);
+    io_register[index] = value;
 }
 
 void
@@ -301,17 +289,6 @@ vga_selreg2(vomit_cpu_t *, word port, byte data)
     (void) port;
     current_register2 = data;
 }
-
-#define WRITE_MODE (io_register2[5] & 0x03)
-#define READ_MODE ((io_register2[5] >> 3) & 1)
-#define ODD_EVEN ((io_register2[5] >> 4) & 1)
-#define SHIFT_REG ((io_register2[5] >> 5) & 0x03)
-#define ROTATE ((io_register2[3]) & 0x07)
-#define DRAWOP ((io_register2[3] >> 3) & 3)
-#define MAP_MASK_BIT(i) ((io_sequencer[2] >> i)&1)
-#define SET_RESET_BIT(i) ((io_register2[0] >> i)&1)
-#define SET_RESET_ENABLE_BIT(i) ((io_register2[1] >> i)&1)
-#define BIT_MASK (io_register2[8])
 
 void
 vga_setreg2(vomit_cpu_t *, word port, byte data )
@@ -327,214 +304,6 @@ vga_getreg2(vomit_cpu_t *, word port )
     (void) port;
     //vlog( VM_VIDEOMSG, "reading reg2 %d, data is %02X", current_register2, io_register2[current_register2] );
     return io_register2[current_register2];
-}
-
-void
-vga_setbyte(vomit_cpu_t *cpu, dword a, byte d)
-{
-    /*
-     * fprintf(stderr,"mem_write: %02X:%04X = %02X <%d>, BM=%02X, ESR=%02X, SR=%02X\n", io_sequencer[2] & 0x0F, a-0xA0000, d, DRAWOP, BIT_MASK, io_register2[1], io_register2[0]);
-     */
-
-    if( a >= 0xAFFFF )
-    {
-        vlog( VM_VIDEOMSG, "OOB write 0x%lx", a );
-        cpu->memory[a] = d;
-        return;
-    }
-
-    byte new_val[4];
-
-    a -= 0xA0000;
-
-    if( WRITE_MODE == 2 )
-    {
-        byte bitmask = BIT_MASK;
-
-        new_val[0] = latch[0] & ~bitmask;
-        new_val[1] = latch[1] & ~bitmask;
-        new_val[2] = latch[2] & ~bitmask;
-        new_val[3] = latch[3] & ~bitmask;
-
-        switch( DRAWOP )
-        {
-            case 0:
-                new_val[0] |= (d & 1) ? bitmask : 0;
-                new_val[1] |= (d & 2) ? bitmask : 0;
-                new_val[2] |= (d & 4) ? bitmask : 0;
-                new_val[3] |= (d & 8) ? bitmask : 0;
-                break;
-            default:
-                vlog( VM_VIDEOMSG, "Gaah, unsupported raster op %d in mode 2 :(\n", DRAWOP );
-                vm_exit( 0 );
-        }
-    }
-    else if( WRITE_MODE == 0 )
-    {
-        byte bitmask = BIT_MASK;
-        byte set_reset = io_register2[0];
-        byte enable_set_reset = io_register2[1];
-        byte value = d;
-
-        if( ROTATE )
-        {
-            vlog( VM_VIDEOMSG, "Rotate used!" );
-            value = (value >> ROTATE) | (value << ( 8 - ROTATE ));
-        }
-
-        new_val[0] = latch[0] & ~bitmask;
-        new_val[1] = latch[1] & ~bitmask;
-        new_val[2] = latch[2] & ~bitmask;
-        new_val[3] = latch[3] & ~bitmask;
-
-        //fprintf( stderr, "new_val[] = {%02X, %02X, %02X, %02X}\n", new_val[0], new_val[1], new_val[2], new_val[3] );
-
-        switch( DRAWOP )
-        {
-            case 0:
-                new_val[0] |= ((enable_set_reset & 1)
-                    ? ((set_reset & 1) ? bitmask : 0)
-                    : (value & bitmask));
-                new_val[1] |= ((enable_set_reset & 2)
-                    ? ((set_reset & 2) ? bitmask : 0)
-                    : (value & bitmask));
-                new_val[2] |= ((enable_set_reset & 4)
-                    ? ((set_reset & 4) ? bitmask : 0)
-                    : (value & bitmask));
-                new_val[3] |= ((enable_set_reset & 8)
-                    ? ((set_reset & 8) ? bitmask : 0)
-                    : (value & bitmask));
-                break;
-            case 1:
-                new_val[0] |= ((enable_set_reset & 1)
-                    ? ((set_reset & 1)
-                        ? (~latch[0] & bitmask)
-                        : (latch[0] & bitmask))
-                    : (value & latch[0]) & bitmask);
-
-                new_val[1] |= ((enable_set_reset & 2)
-                    ? ((set_reset & 2)
-                        ? (~latch[1] & bitmask)
-                        : (latch[1] & bitmask))
-                    : (value & latch[1]) & bitmask);
-
-                new_val[2] |= ((enable_set_reset & 4)
-                    ? ((set_reset & 4)
-                        ? (~latch[2] & bitmask)
-                        : (latch[2] & bitmask))
-                    : (value & latch[2]) & bitmask);
-
-                new_val[3] |= ((enable_set_reset & 8)
-                    ? ((set_reset & 8)
-                        ? (~latch[3] & bitmask)
-                        : (latch[3] & bitmask))
-                    : (value & latch[3]) & bitmask);
-                break;
-            case 3:
-                new_val[0] |= ((enable_set_reset & 1)
-                    ? ((set_reset & 1)
-                        ? (~latch[0] & bitmask)
-                        : (latch[0] & bitmask))
-                    : (value ^ latch[0]) & bitmask);
-
-                new_val[1] |= ((enable_set_reset & 2)
-                    ? ((set_reset & 2)
-                        ? (~latch[1] & bitmask)
-                        : (latch[1] & bitmask))
-                    : (value ^ latch[1]) & bitmask);
-
-                new_val[2] |= ((enable_set_reset & 4)
-                    ? ((set_reset & 4)
-                        ? (~latch[2] & bitmask)
-                        : (latch[2] & bitmask))
-                    : (value ^ latch[2]) & bitmask);
-
-                new_val[3] |= ((enable_set_reset & 8)
-                    ? ((set_reset & 8)
-                        ? (~latch[3] & bitmask)
-                        : (latch[3] & bitmask))
-                    : (value ^ latch[3]) & bitmask);
-                break;
-            default:
-                vlog( VM_VIDEOMSG, "Unsupported raster operation %d", DRAWOP );
-                vm_exit( 0 );
-        }
-    }
-    else if( WRITE_MODE == 1 )
-    {
-        new_val[0] = latch[0];
-        new_val[1] = latch[1];
-        new_val[2] = latch[2];
-        new_val[3] = latch[3];
-    }
-    else
-    {
-        vlog( VM_VIDEOMSG, "Unsupported 6845 write mode %d", WRITE_MODE );
-        vm_exit( 0 );
-
-        /* This is just here to make GCC stop worrying about accessing new_val[] uninitialized. */
-        return;
-    }
-
-    /*
-     * Check first if any planes should be written.
-     */
-    if( io_sequencer[2] & 0x0F )
-    {
-        if( io_sequencer[2] & 0x01 )
-            vm_p0[a] = new_val[0];
-        if( io_sequencer[2] & 0x02 )
-            vm_p1[a] = new_val[1];
-        if( io_sequencer[2] & 0x04 )
-            vm_p2[a] = new_val[2];
-        if( io_sequencer[2] & 0x08 )
-            vm_p3[a] = new_val[3];
-
-        video_dirty = true;
-    }
-}
-
-BYTE vga_getbyte(vomit_cpu_t *cpu, dword a)
-{
-    if (READ_MODE != 0) {
-        vlog(VM_VIDEOMSG, "ZOMG! READ_MODE = %u", READ_MODE);
-        vm_exit(1);
-    }
-
-    /* We're assuming READ_MODE == 0 now... */
-
-    if( a < 0xB0000 )
-    {
-        a -= 0xA0000;
-        latch[0] = vm_p0[a];
-        latch[1] = vm_p1[a];
-        latch[2] = vm_p2[a];
-        latch[3] = vm_p3[a];
-        /*
-            fprintf(stderr, "mem_read: %02X {%02X, %02X, %02X, %02X}\n", latch[io_register2[4]], latch[0], latch[1], latch[2], latch[3]);
-        */
-        return latch[io_register2[4]];
-    }
-    else
-    {
-        vlog( VM_VIDEOMSG, "OOB read 0x%lx", a );
-#if 0
-            g_debug_step = true;
-            vm_debug();
-#endif
-        return cpu->memory[a];
-    }
-}
-
-void vga_setword(vomit_cpu_t *cpu, DWORD address, WORD value)
-{
-    vga_setbyte(cpu, address, LSB(value));
-    vga_setbyte(cpu, address + 1, MSB(value));
-}
-
-WORD vga_getword(vomit_cpu_t *cpu, DWORD address)
-{
-    return MAKEWORD(vga_getbyte(cpu, address), vga_getbyte(cpu, address + 1));
 }
 
 void

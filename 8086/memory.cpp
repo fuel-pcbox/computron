@@ -9,11 +9,7 @@
 
 #include "vomit.h"
 #include "debug.h"
-
-extern byte vga_getbyte(vomit_cpu_t *cpu, dword );
-extern word vga_getword(vomit_cpu_t *cpu, dword );
-extern void vga_setbyte(vomit_cpu_t *cpu, dword, byte );
-extern void vga_setword(vomit_cpu_t *cpu, dword, word );
+#include "vga_memory.h"
 
 BYTE vomit_cpu_memory_read8(vomit_cpu_t *cpu, WORD segment, WORD offset)
 {
@@ -26,7 +22,7 @@ BYTE vomit_cpu_memory_read8(vomit_cpu_t *cpu, WORD segment, WORD offset)
 #endif
 
     if (flat_address >= 0xA0000 && flat_address < 0xB0000)
-        return vga_getbyte(cpu, flat_address);
+		return cpu->vgaMemory->read8(flat_address);
 
 #ifdef VOMIT_DEBUG
     if( options.bda_peek )
@@ -57,7 +53,7 @@ WORD vomit_cpu_memory_read16(vomit_cpu_t *cpu, WORD segment, WORD offset)
 #endif
 
     if (flat_address >= 0xA0000 && flat_address < 0xB0000)
-        return vga_getword(cpu, flat_address);
+		return cpu->vgaMemory->read16(flat_address);
 #ifdef VOMIT_CORRECTNESS
     if (off == 0xFFFF)
         return cpu->memory[flat_address] | (cpu->memory[seg<<4]<<8);
@@ -87,7 +83,7 @@ void vomit_cpu_memory_write8(vomit_cpu_t *cpu, WORD segment, WORD offset, BYTE v
 #endif
 
     if (flat_address >= 0xA0000 && flat_address < 0xB0000) {
-        vga_setbyte(cpu, flat_address, value);
+		cpu->vgaMemory->write8(flat_address, value);
     } else {
         cpu->memory[flat_address] = value;
     }
@@ -117,7 +113,7 @@ void vomit_cpu_memory_write16(vomit_cpu_t *cpu, WORD segment, WORD offset, WORD 
     }
 #endif
     if (flat_address >= 0xA0000 && flat_address < 0xB0000) {
-        vga_setword(cpu, flat_address, value);
+		cpu->vgaMemory->write16(flat_address, value);
     } else {
         word *wptr = (word *)&cpu->memory[flat_address];
 #ifdef VOMIT_BIG_ENDIAN

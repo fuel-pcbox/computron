@@ -1,6 +1,7 @@
 #include "vomit.h"
 #include "8086.h"
 #include "debug.h"
+#include "vga_memory.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -24,7 +25,9 @@ static byte rows();
 static void store_cursor( word cursor );
 static word load_cursor_word();
 static void set_dac_color_register();
+#if 0
 static void write_graphics_pixel_at_coordinate();
+#endif
 void load_cursor( byte *row, byte *column );
 
 extern void set_video_dirty();
@@ -78,7 +81,9 @@ bios_interrupt10()
 #if 0
         case 0x0b: /*set_color_palette();*/ break;
 #endif
+#if 0
         case 0x0c: write_graphics_pixel_at_coordinate(); break;
+#endif
 #if 0
         case 0x0d: /*read_graphics_pixel_at_coordinate();*/ break;
 #endif
@@ -489,10 +494,14 @@ set_dac_color_register()
     {
         vlog( VM_VIDEOMSG, "Unsupported palette operation %02X", g_cpu->regs.B.AL );
     }
+
     extern bool palette_dirty;
     palette_dirty = true;
+    g_cpu->vgaMemory->syncPalette();
 }
 
+
+#if 0
 
 void
 write_graphics_pixel_at_coordinate()
@@ -574,6 +583,8 @@ putpixel0D( word row, word column, byte pixel )
 
     set_video_dirty();
 }
+
+#endif
 
 void
 vga_scrollup (byte x1, byte y1, byte x2, byte y2, byte num, byte attr) {

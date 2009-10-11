@@ -25,6 +25,8 @@
 
 typedef void (*vomit_opcode_handler) (struct __vomit_cpu_t *);
 
+class VgaMemory;
+
 typedef struct __vomit_cpu_t {
     union {
         struct {
@@ -151,6 +153,7 @@ typedef struct __vomit_cpu_t {
     
     BYTE *memoryPointer(WORD segment, WORD offset) { return &this->memory[FLAT(segment, offset)]; }
 
+	VgaMemory *vgaMemory;
 } vomit_cpu_t;
 
 #define VCpu vomit_cpu_t
