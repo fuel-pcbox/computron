@@ -53,10 +53,10 @@ void _POP_seg(vomit_cpu_t *cpu)
 
 void _PUSHF(vomit_cpu_t *cpu)
 {
-    vomit_cpu_push(cpu, vomit_cpu_get_flags(cpu));
+    vomit_cpu_push(cpu, cpu->getFlags());
 }
 
 void _POPF(vomit_cpu_t *cpu)
 {
-    vomit_cpu_set_flags(cpu, vomit_cpu_pop(cpu));
+    cpu->setFlags(vomit_cpu_pop(cpu));
 }

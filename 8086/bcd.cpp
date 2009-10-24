@@ -35,7 +35,7 @@ void _AAM(vomit_cpu_t *cpu)
     BYTE tempAL = cpu->regs.B.AL;
     cpu->regs.B.AH = tempAL / imm;
     cpu->regs.B.AL = tempAL % imm;
-    vomit_cpu_update_flags8(cpu, cpu->regs.B.AL);
+    cpu->updateFlags8(cpu->regs.B.AL);
 }
 
 void _AAD(vomit_cpu_t *cpu)
@@ -46,7 +46,7 @@ void _AAD(vomit_cpu_t *cpu)
 
     cpu->regs.B.AL = (tempAL + (tempAH * imm)) & 0xFF;
     cpu->regs.B.AH = 0x00;
-    vomit_cpu_update_flags8(cpu, cpu->regs.B.AL);
+    cpu->updateFlags8(cpu->regs.B.AL);
 }
 
 void _AAS(vomit_cpu_t *cpu)

@@ -215,17 +215,17 @@ void _wrap_0xFE(vomit_cpu_t *cpu)
 
     switch (rmreg(rm)) {
     case 0:
-        cpu->OF = value == 0x7F;
+        cpu->setOF(value == 0x7F);
         i++;
         vomit_cpu_setAF(cpu, i, value, 1);
-        vomit_cpu_update_flags8(cpu, i);
+        cpu->updateFlags8(i);
         vomit_cpu_modrm_update8(cpu, value + 1);
         break;
     case 1:
-        cpu->OF = value == 0x80;
+        cpu->setOF(value == 0x80);
         i--;
         vomit_cpu_setAF(cpu, i, value, 1);
-        vomit_cpu_update_flags8(cpu, i);
+        cpu->updateFlags8(i);
         vomit_cpu_modrm_update8(cpu, value - 1);
         break;
     default:

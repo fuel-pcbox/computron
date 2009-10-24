@@ -79,7 +79,7 @@ void VCpu::init()
 
     vomit_cpu_jump(this, 0xF000, 0x0000);
 
-    vomit_cpu_set_flags(this, 0x0200 | vomit_cpu_static_flags(this));
+    setFlags(0x0200 | vomit_cpu_static_flags(this));
 
     this->pit_counter = INSNS_PER_PIT_IRQ;
     this->state = CPU_ALIVE;
@@ -337,7 +337,7 @@ void vomit_cpu_main(vomit_cpu_t *cpu)
 
         /* TODO: Refactor this to spin in a separate mainloop when halted. */
         if (cpu->state == CPU_HALTED) {
-            if (!cpu->IF) {
+            if (!cpu->getIF()) {
                 vlog(VM_ALERT, "%04X:%04X: Halted with IF=0", cpu->base_CS, cpu->base_IP);
                 return;
             }
@@ -358,7 +358,7 @@ void vomit_cpu_main(vomit_cpu_t *cpu)
         cpu->opcode = vomit_cpu_pfq_getbyte(cpu);
         cpu->opcode_handler[cpu->opcode](cpu);
 
-        if (cpu->TF) {
+        if (cpu->getTF()) {
             /* The Trap Flag is set, so we'll execute one instruction and
              * call ISR 1 as soon as it's finished.
              *
@@ -376,7 +376,7 @@ void vomit_cpu_main(vomit_cpu_t *cpu)
             irq(0);
         }
 
-        if (g_pic_pending_requests && cpu->IF) {
+        if (g_pic_pending_requests && cpu->getIF()) {
             pic_service_irq(cpu);
         }
     }
@@ -458,22 +458,22 @@ void vomit_cpu_jump(vomit_cpu_t *cpu, WORD segment, WORD offset)
     vomit_cpu_pfq_flush(cpu);
 }
 
-void vomit_cpu_set_flags(vomit_cpu_t *cpu, WORD flags)
+void VCpu::setFlags(WORD flags)
 {
-    cpu->CF = (flags & 0x0001) != 0;
-    cpu->PF = (flags & 0x0004) != 0;
-    cpu->AF = (flags & 0x0010) != 0;
-    cpu->ZF = (flags & 0x0040) != 0;
-    cpu->SF = (flags & 0x0080) != 0;
-    cpu->TF = (flags & 0x0100) != 0;
-    cpu->IF = (flags & 0x0200) != 0;
-    cpu->DF = (flags & 0x0400) != 0;
-    cpu->OF = (flags & 0x0800) != 0;
+    this->CF = (flags & 0x0001) != 0;
+    this->PF = (flags & 0x0004) != 0;
+    this->AF = (flags & 0x0010) != 0;
+    this->ZF = (flags & 0x0040) != 0;
+    this->SF = (flags & 0x0080) != 0;
+    this->TF = (flags & 0x0100) != 0;
+    this->IF = (flags & 0x0200) != 0;
+    this->DF = (flags & 0x0400) != 0;
+    this->OF = (flags & 0x0800) != 0;
 }
 
-WORD vomit_cpu_get_flags(vomit_cpu_t *cpu)
-{
-    return cpu->CF | (cpu->PF << 2) | (cpu->AF << 4) | (cpu->ZF << 6) | (cpu->SF << 7) | (cpu->TF << 8) | (cpu->IF << 9) | (cpu->DF << 10) | (cpu->OF << 11) | vomit_cpu_static_flags(cpu);
+WORD VCpu::getFlags()
+ {
+    return this->CF | (this->PF << 2) | (this->AF << 4) | (this->ZF << 6) | (this->SF << 7) | (this->TF << 8) | (this->IF << 9) | (this->DF << 10) | (this->OF << 11) | vomit_cpu_static_flags(this);
 }
 
 void vomit_cpu_set_interrupt(vomit_cpu_t *cpu, BYTE isr, WORD segment, WORD offset)
@@ -482,28 +482,27 @@ void vomit_cpu_set_interrupt(vomit_cpu_t *cpu, BYTE isr, WORD segment, WORD offs
     vomit_cpu_memory_write16(cpu, 0x0000, (isr << 2) + 2, segment);
 }
 
-bool vomit_cpu_evaluate(vomit_cpu_t *cpu, BYTE condition_code)
+bool VCpu::evaluate(BYTE condition_code)
 {
-    //FIXME: uncomment
-    //V_ASSERT(condition_code <= 0xF);
+    Q_ASSERT(condition_code <= 0xF);
 
     switch (condition_code) {
-    case  0: return cpu->OF;                          /* O          */
-    case  1: return !cpu->OF;                         /* NO         */
-    case  2: return cpu->CF;                          /* B, C, NAE  */
-    case  3: return !cpu->CF;                         /* NB, NC, AE */
-    case  4: return cpu->ZF;                          /* E, Z       */
-    case  5: return !cpu->ZF;                         /* NE, NZ     */
-    case  6: return (cpu->CF | cpu->ZF);              /* BE, NA     */
-    case  7: return !(cpu->CF | cpu->ZF);             /* NBE, A     */
-    case  8: return cpu->SF;                          /* S          */
-    case  9: return !cpu->SF;                         /* NS         */
-    case 10: return cpu->PF;                          /* P, PE      */
-    case 11: return !cpu->PF;                         /* NP, PO     */
-    case 12: return cpu->SF ^ cpu->OF;                /* L, NGE     */
-    case 13: return !(cpu->SF ^ cpu->OF);             /* NL, GE     */
-    case 14: return (cpu->SF ^ cpu->OF) | cpu->ZF;    /* LE, NG     */
-    case 15: return !((cpu->SF ^ cpu->OF) | cpu->ZF); /* NLE, G     */
+    case  0: return this->OF;                            /* O          */
+    case  1: return !this->OF;                           /* NO         */
+    case  2: return this->CF;                            /* B, C, NAE  */
+    case  3: return !this->CF;                           /* NB, NC, AE */
+    case  4: return this->ZF;                            /* E, Z       */
+    case  5: return !this->ZF;                           /* NE, NZ     */
+    case  6: return (this->CF | this->ZF);               /* BE, NA     */
+    case  7: return !(this->CF | this->ZF);              /* NBE, A     */
+    case  8: return this->SF;                            /* S          */
+    case  9: return !this->SF;                           /* NS         */
+    case 10: return this->PF;                            /* P, PE      */
+    case 11: return !this->PF;                           /* NP, PO     */
+    case 12: return this->SF ^ this->OF;                 /* L, NGE     */
+    case 13: return !(this->SF ^ this->OF);              /* NL, GE     */
+    case 14: return (this->SF ^ this->OF) | this->ZF;    /* LE, NG     */
+    case 15: return !((this->SF ^ this->OF) | this->ZF); /* NLE, G     */
     }
     return 0;
 }

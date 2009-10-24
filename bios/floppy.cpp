@@ -144,9 +144,9 @@ bios_readsectors()
     g_cpu->regs.B.AH = floppy_read( drive, cyl, g_cpu->regs.B.DH, sect, g_cpu->regs.B.AL, g_cpu->ES, g_cpu->regs.W.BX );
 
     if( g_cpu->regs.B.AH == 0x00 )
-        g_cpu->CF = 0;
+        g_cpu->setCF(0);
     else {
-        g_cpu->CF = 1;
+        g_cpu->setCF(1);
         g_cpu->regs.B.AL = 0x00;
     }
 }
@@ -163,9 +163,9 @@ bios_writesectors()
     g_cpu->regs.B.AH = floppy_write( drive, cyl, g_cpu->regs.B.DH, sect, g_cpu->regs.B.AL, g_cpu->ES, g_cpu->regs.W.BX );
 
     if( g_cpu->regs.B.AH ==0x00 )
-        g_cpu->CF = 0;
+        g_cpu->setCF(0);
     else {
-        g_cpu->CF = 1;
+        g_cpu->setCF(1);
         g_cpu->regs.B.AL = 0x00;
     }
 }
@@ -242,9 +242,9 @@ bios_verifysectors()
     g_cpu->regs.B.AH = floppy_verify( drive, cyl, g_cpu->regs.B.DH, sect, g_cpu->regs.B.AL, g_cpu->ES, g_cpu->regs.W.BX );
 
     if( g_cpu->regs.B.AH == 0x00 )
-        g_cpu->CF = 0;
+        g_cpu->setCF(0);
     else {
-        g_cpu->CF = 1;
+        g_cpu->setCF(1);
         g_cpu->regs.B.AL = 0x00;
     }
 }

@@ -10,93 +10,93 @@
 WORD cpu_add8(vomit_cpu_t *cpu, BYTE dest, BYTE src)
 {
     WORD result = dest + src;
-    vomit_cpu_math_flags8(cpu, result, dest, src);
-    cpu->OF = ((
+    cpu->mathFlags8(result, dest, src);
+    cpu->setOF(((
              ((result)^(dest)) &
              ((result)^(src))
-             )>>(7))&1;
+             )>>(7))&1);
     return result;
 }
 
 DWORD cpu_add16(vomit_cpu_t *cpu, WORD dest, WORD src)
 {
     DWORD result = dest + src;
-    vomit_cpu_math_flags16(cpu, result, dest, src);
-    cpu->OF = ((
+    cpu->mathFlags16(result, dest, src);
+    cpu->setOF(((
              ((result)^(dest)) &
              ((result)^(src))
-             )>>(15))&1;
+             )>>(15))&1);
     return result;
 }
 
 WORD cpu_adc8(vomit_cpu_t *cpu, WORD dest, WORD src)
 {
     WORD result;
-    src += cpu->CF;
+    src += cpu->getCF();
     result = dest + src;
 
-    vomit_cpu_math_flags8(cpu, result, dest, src);
-    cpu->OF = ((
+    cpu->mathFlags8(result, dest, src);
+    cpu->setOF(((
              ((result)^(dest)) &
              ((result)^(src))
-             )>>(7))&1;
+             )>>(7))&1);
     return result;
 }
 
 DWORD cpu_adc16(vomit_cpu_t *cpu, WORD dest, WORD src)
 {
     DWORD result;
-    src += cpu->CF;
+    src += cpu->getCF();
     result = dest + src;
 
-    vomit_cpu_math_flags16(cpu, result, dest, src);
-    cpu->OF = ((
+    cpu->mathFlags16(result, dest, src);
+    cpu->setOF(((
              ((result)^(dest)) &
              ((result)^(src))
-             )>>(15))&1;
+             )>>(15))&1);
     return result;
 }
 
 WORD cpu_sub8(vomit_cpu_t *cpu, BYTE dest, BYTE src)
 {
     WORD result = dest - src;
-    vomit_cpu_cmp_flags8(cpu, result, dest, src);
+    cpu->cmpFlags8(result, dest, src);
     return result;
 }
 
 DWORD cpu_sub16(vomit_cpu_t *cpu, WORD dest, WORD src)
 {
     DWORD result = dest - src;
-    vomit_cpu_cmp_flags16(cpu, result, dest, src);
+    cpu->cmpFlags16(result, dest, src);
     return result;
 }
 
 WORD cpu_sbb8(vomit_cpu_t *cpu, BYTE dest, BYTE src)
 {
     WORD result;
-    src += cpu->CF;
+    src += cpu->getCF();
     result = dest - src;
-    vomit_cpu_cmp_flags8(cpu, result, dest, src);
+    cpu->cmpFlags8(result, dest, src);
     return result;
 }
 
 DWORD cpu_sbb16(vomit_cpu_t *cpu, WORD dest, WORD src)
 {
     DWORD result;
-    src += cpu->CF;
+    src += cpu->getCF();
     result = dest - src;
-    vomit_cpu_cmp_flags16(cpu, result, dest, src);
+    cpu->cmpFlags16(result, dest, src);
     return result;
 }
 
 WORD cpu_mul8(vomit_cpu_t *cpu, BYTE acc, BYTE multi)
 {
     WORD result = acc * multi;
-    vomit_cpu_math_flags8(cpu, result, acc, multi);
+    cpu->mathFlags8(result, acc, multi);
 
     /* 8086 CPUs set ZF on zero result */
     if (cpu->type == INTEL_8086)
-        cpu->ZF = result == 0;
+        cpu->setZF(result == 0);
 
     return result;
 }
@@ -104,11 +104,11 @@ WORD cpu_mul8(vomit_cpu_t *cpu, BYTE acc, BYTE multi)
 DWORD cpu_mul16(vomit_cpu_t *cpu, WORD acc, WORD multi)
 {
     DWORD result = acc * multi;
-    vomit_cpu_math_flags16(cpu, result, acc, multi);
+    cpu->mathFlags16(result, acc, multi);
 
     /* 8086 CPUs set ZF on zero result */
     if (cpu->type == INTEL_8086)
-        cpu->ZF = result == 0;
+        cpu->setZF(result == 0);
 
     return result;
 }
@@ -116,7 +116,7 @@ DWORD cpu_mul16(vomit_cpu_t *cpu, WORD acc, WORD multi)
 SIGNED_WORD cpu_imul8(vomit_cpu_t *cpu, SIGNED_BYTE acc, SIGNED_BYTE multi)
 {
     SIGNED_WORD result = acc * multi;
-    vomit_cpu_math_flags8(cpu, result, acc, multi);
+    cpu->mathFlags8(result, acc, multi);
     return result;
 }
 
@@ -124,7 +124,7 @@ SIGNED_WORD cpu_imul8(vomit_cpu_t *cpu, SIGNED_BYTE acc, SIGNED_BYTE multi)
 SIGNED_DWORD cpu_imul16(vomit_cpu_t *cpu, SIGNED_WORD acc, SIGNED_WORD multi)
 {
     SIGNED_DWORD result = acc * multi;
-    vomit_cpu_math_flags16(cpu, result, acc, multi);
+    cpu->mathFlags16(result, acc, multi);
     return result;
 }
 
@@ -184,11 +184,11 @@ void _MUL_RM8(vomit_cpu_t *cpu)
     cpu->regs.W.AX = cpu_mul8(cpu, cpu->regs.B.AL, value);
 
     if (cpu->regs.B.AH == 0x00) {
-        cpu->CF = 0;
-        cpu->OF = 0;
+        cpu->setCF(0);
+        cpu->setOF(0);
     } else {
-        cpu->CF = 1;
-        cpu->OF = 1;
+        cpu->setCF(1);
+        cpu->setOF(1);
     }
 }
 
@@ -200,11 +200,11 @@ void _MUL_RM16(vomit_cpu_t *cpu)
     cpu->regs.W.DX = (result >> 16) & 0xFFFF;
 
     if (cpu->regs.W.DX == 0x0000) {
-        cpu->CF = 0;
-        cpu->OF = 0;
+        cpu->setCF(0);
+        cpu->setOF(0);
     } else {
-        cpu->CF = 1;
-        cpu->OF = 1;
+        cpu->setCF(1);
+        cpu->setOF(1);
     }
 }
 
@@ -214,11 +214,11 @@ void _IMUL_RM8(vomit_cpu_t *cpu)
     cpu->regs.W.AX = (SIGNED_WORD)cpu_imul8(cpu, cpu->regs.B.AL, value);
 
     if (cpu->regs.B.AH == 0x00 || cpu->regs.B.AH == 0xFF) {
-        cpu->CF = 0;
-        cpu->OF = 0;
+        cpu->setCF(0);
+        cpu->setOF(0);
     } else {
-        cpu->CF = 1;
-        cpu->OF = 1;
+        cpu->setCF(1);
+        cpu->setOF(1);
     }
 }
 
@@ -232,11 +232,11 @@ void _IMUL_reg16_RM16_imm8(vomit_cpu_t *cpu)
     *cpu->treg16[rmreg(rm)] = result;
 
     if ((result & 0xFF00) == 0x00 || (result & 0xFF00) == 0xFF) {
-        cpu->CF = 0;
-        cpu->OF = 0;
+        cpu->setCF(0);
+        cpu->setOF(0);
     } else {
-        cpu->CF = 1;
-        cpu->OF = 1;
+        cpu->setCF(1);
+        cpu->setOF(1);
     }
 }
 
@@ -248,11 +248,11 @@ void _IMUL_RM16(vomit_cpu_t *cpu)
     cpu->regs.W.DX = result >> 16;
 
     if (cpu->regs.W.DX == 0x0000 || cpu->regs.W.DX == 0xFFFF) {
-        cpu->CF = 0;
-        cpu->OF = 0;
+        cpu->setCF(0);
+        cpu->setOF(0);
     } else {
-        cpu->CF = 1;
-        cpu->OF = 1;
+        cpu->setCF(1);
+        cpu->setOF(1);
     }
 }
 

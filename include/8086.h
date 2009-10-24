@@ -30,78 +30,76 @@ class VgaMemory;
 typedef struct __vomit_cpu_t {
     union {
         struct {
-            dword EAX, EBX, ECX, EDX;
-            dword EBP, ESP, ESI, EDI;
-            dword EIP;
+            DWORD EAX, EBX, ECX, EDX;
+            DWORD EBP, ESP, ESI, EDI;
+            DWORD EIP;
         } D;
 #ifdef VOMIT_BIG_ENDIAN
         struct {
-            word __EAX_high_word, AX;
-            word __EBX_high_word, BX;
-            word __ECX_high_word, CX;
-            word __EDX_high_word, DX;
-            word __EBP_high_word, BP;
-            word __ESP_high_word, SP;
-            word __ESI_high_word, SI;
-            word __EDI_high_word, DI;
-            word __EIP_high_word, IP;
+            WORD __EAX_high_word, AX;
+            WORD __EBX_high_word, BX;
+            WORD __ECX_high_word, CX;
+            WORD __EDX_high_word, DX;
+            WORD __EBP_high_word, BP;
+            WORD __ESP_high_word, SP;
+            WORD __ESI_high_word, SI;
+            WORD __EDI_high_word, DI;
+            WORD __EIP_high_word, IP;
         } W;
         struct {
-            word __EAX_high_word;
-            byte AH, AL;
-            word __EBX_high_word;
-            byte BH, BL;
-            word __ECX_high_word;
-            byte CH, CL;
-            word __EDX_high_word;
-            byte DH, DL;
-            dword EBP;
-            dword ESP;
-            dword ESI;
-            dword EDI;
-            dword EIP;
+            WORD __EAX_high_word;
+            BYTE AH, AL;
+            WORD __EBX_high_word;
+            BYTE BH, BL;
+            WORD __ECX_high_word;
+            BYTE CH, CL;
+            WORD __EDX_high_word;
+            BYTE DH, DL;
+            DWORD EBP;
+            DWORD ESP;
+            DWORD ESI;
+            DWORD EDI;
+            DWORD EIP;
         } B;
 #else
         struct {
-            word AX, __EAX_high_word;
-            word BX, __EBX_high_word;
-            word CX, __ECX_high_word;
-            word DX, __EDX_high_word;
-            word BP, __EBP_high_word;
-            word SP, __ESP_high_word;
-            word SI, __ESI_high_word;
-            word DI, __EDI_high_word;
-            word IP, __EIP_high_word;
+            WORD AX, __EAX_high_word;
+            WORD BX, __EBX_high_word;
+            WORD CX, __ECX_high_word;
+            WORD DX, __EDX_high_word;
+            WORD BP, __EBP_high_word;
+            WORD SP, __ESP_high_word;
+            WORD SI, __ESI_high_word;
+            WORD DI, __EDI_high_word;
+            WORD IP, __EIP_high_word;
         } W;
         struct {
-            byte AL, AH;
-            word __EAX_high_word;
-            byte BL, BH;
-            word __EBX_high_word;
-            byte CL, CH;
-            word __ECX_high_word;
-            byte DL, DH;
-            word __EDX_high_word;
-            dword EBP;
-            dword ESP;
-            dword ESI;
-            dword EDI;
-            dword EIP;
+            BYTE AL, AH;
+            WORD __EAX_high_word;
+            BYTE BL, BH;
+            WORD __EBX_high_word;
+            BYTE CL, CH;
+            WORD __ECX_high_word;
+            BYTE DL, DH;
+            WORD __EDX_high_word;
+            DWORD EBP;
+            DWORD ESP;
+            DWORD ESI;
+            DWORD EDI;
+            DWORD EIP;
         } B;
 #endif
     } regs;
-    word CS, DS, ES, SS, FS, GS, SegmentPrefix, *CurrentSegment;
-    bool CF, DF, TF, PF, AF, ZF, SF, IF, OF;
-    word IP;
-    byte type;
-    byte state;
-    dword insn_count;
+    WORD CS, DS, ES, SS, FS, GS, SegmentPrefix, *CurrentSegment;
+    WORD IP;
+    BYTE type;
+    BYTE state;
 
-    word base_CS;
-    word base_IP;
+    WORD base_CS;
+    WORD base_IP;
 
-    byte opcode;
-    byte rmbyte;
+    BYTE opcode;
+    BYTE rmbyte;
 
     /* Memory size in KiB (will be reported by BIOS) */
     WORD memory_size;
@@ -110,21 +108,21 @@ typedef struct __vomit_cpu_t {
     BYTE *memory;
 
     /* This points to the base of CS for fast opcode fetches. */
-    byte *code_memory;
+    BYTE *code_memory;
 
     /* Cycle counter. May wrap arbitrarily. */
-    dword pit_counter;
+    DWORD pit_counter;
 
-    word *treg16[8];
-    byte *treg8[8];
-    word *tseg[8];
+    WORD *treg16[8];
+    BYTE *treg8[8];
+    WORD *tseg[8];
 
     vomit_opcode_handler opcode_handler[0x100];
 
 #ifdef VOMIT_PREFETCH_QUEUE
-    byte *pfq;
-    byte pfq_current;
-    byte pfq_size;
+    BYTE *pfq;
+    BYTE pfq_current;
+    BYTE pfq_size;
 #endif
 
 #ifndef __cplusplus
@@ -133,14 +131,16 @@ typedef struct __vomit_cpu_t {
 
     void init();
     void kill();
-    
+
     void setIF(bool value) { this->IF = value; }
     void setCF(bool value) { this->CF = value; }
-    void setSF(bool value) { this->DF = value; }
+    void setDF(bool value) { this->DF = value; }
+    void setSF(bool value) { this->SF = value; }
     void setAF(bool value) { this->AF = value; }
     void setTF(bool value) { this->TF = value; }
     void setOF(bool value) { this->OF = value; }
     void setPF(bool value) { this->PF = value; }
+    void setZF(bool value) { this->ZF = value; }
 
     bool getIF() const { return this->IF; }
     bool getCF() const { return this->CF; }
@@ -150,10 +150,26 @@ typedef struct __vomit_cpu_t {
     bool getTF() const { return this->TF; }
     bool getOF() const { return this->OF; }
     bool getPF() const { return this->PF; }
-    
+    bool getZF() const { return this->ZF; }
+
     BYTE *memoryPointer(WORD segment, WORD offset) { return &this->memory[FLAT(segment, offset)]; }
 
-	VgaMemory *vgaMemory;
+    WORD getFlags();
+    void setFlags(WORD flags);
+
+    bool evaluate(BYTE);
+
+    void updateFlags(WORD value, BYTE bits);
+    void updateFlags16(WORD value);
+    void updateFlags8(BYTE value);
+    void mathFlags8(DWORD result, BYTE dest, BYTE src);
+    void mathFlags16(DWORD result, WORD dest, WORD src);
+    void cmpFlags8(DWORD result, BYTE dest, BYTE src);
+    void cmpFlags16(DWORD result, WORD dest, WORD src);
+
+    VgaMemory *vgaMemory;
+private:
+    bool CF, DF, TF, PF, AF, ZF, SF, IF, OF;
 } vomit_cpu_t;
 
 #define VCpu vomit_cpu_t
@@ -171,16 +187,11 @@ WORD vomit_cpu_pfq_getword(vomit_cpu_t *cpu);
 #endif
 
 void vomit_cpu_jump(vomit_cpu_t *cpu, word segment, word offset);
-void vomit_cpu_set_flags(vomit_cpu_t *cpu, word flags);
 void vomit_cpu_genmap(vomit_cpu_t *cpu);
 void vomit_cpu_main(vomit_cpu_t *cpu);
 void vomit_cpu_jump_relative8(vomit_cpu_t *cpu, SIGNED_BYTE displacement);
 void vomit_cpu_jump_relative16(vomit_cpu_t *cpu, SIGNED_WORD displacement);
 void vomit_cpu_jump_absolute16(vomit_cpu_t *cpu, WORD offset);
-void vomit_cpu_update_flags(vomit_cpu_t *cpu, WORD value, BYTE bits);
-void vomit_cpu_update_flags16(vomit_cpu_t *cpu, WORD value);
-void vomit_cpu_update_flags8(vomit_cpu_t *cpu, BYTE value);
-WORD vomit_cpu_get_flags(vomit_cpu_t *cpu);
 void vomit_cpu_set_interrupt(vomit_cpu_t *cpu, BYTE isr_index, WORD segment, WORD offset);
 
 /*!
@@ -193,15 +204,9 @@ void vomit_cpu_out(vomit_cpu_t *cpu, WORD port, BYTE value);
  */
 BYTE vomit_cpu_in(vomit_cpu_t *cpu, WORD port);
 
-bool cpu_evaluate(byte);
 WORD vomit_cpu_static_flags(vomit_cpu_t *cpu);
 
 void vomit_cpu_setAF(vomit_cpu_t *cpu, DWORD result, WORD dest, WORD src);
-
-void vomit_cpu_math_flags8(vomit_cpu_t *cpu, DWORD result, BYTE dest, BYTE src);
-void vomit_cpu_math_flags16(vomit_cpu_t *cpu, DWORD result, WORD dest, WORD src);
-void vomit_cpu_cmp_flags8(vomit_cpu_t *cpu, DWORD result, BYTE dest, BYTE src);
-void vomit_cpu_cmp_flags16(vomit_cpu_t *cpu, DWORD result, WORD dest, WORD src);
 
 WORD cpu_add8( byte, byte );
 WORD cpu_sub8( byte, byte );
@@ -262,9 +267,9 @@ void vomit_cpu_memory_write16(vomit_cpu_t *cpu, WORD segment, WORD offset, WORD 
  */
 void vomit_cpu_isr_call(vomit_cpu_t *cpu, BYTE isr_index);
 
-inline word signext (byte b)
+inline WORD signext (byte b)
 {
-    word w = 0x0000 | b;
+    WORD w = 0x0000 | b;
     if ((w&0x80))
         return (w | 0xff00);
     else

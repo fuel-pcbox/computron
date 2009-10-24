@@ -65,12 +65,12 @@ void vm_handleE6(vomit_cpu_t *cpu)
 		if( kbd_hit() )
 		{
 			cpu->regs.W.AX = kbd_hit();
-			cpu->ZF = 0;
+			cpu->setZF(0);
 		}
 		else
 		{
 			cpu->regs.W.AX = 0x0000;
-			cpu->ZF = 1;
+			cpu->setZF(1);
 		}
 		break;
 	case 0x1A00:	/* INT 1A, 00: Get RTC tick count */
@@ -91,10 +91,10 @@ void vm_handleE6(vomit_cpu_t *cpu)
 			drive = drive - 0x80 + 2;
 		if (drv_status[drive] != 0) {
 			cpu->regs.B.AH = FD_NO_ERROR;
-			cpu->CF = 0;
+			cpu->setCF(0);
 		} else {
 			cpu->regs.B.AH = FD_CHANGED_OR_REMOVED;
-			cpu->CF = 1;
+			cpu->setCF(1);
 		}
 		vomit_cpu_memory_write8(cpu, 0x0040, drive < 2 ? 0x0041 : 0x0072, cpu->regs.B.AH);
 		break;
@@ -160,13 +160,13 @@ void vm_handleE6(vomit_cpu_t *cpu)
 			}
 			#endif
 
-			cpu->CF = 0;
+			cpu->setCF(0);
 		} else {
 			if(drive<2) cpu->regs.B.AH = FD_CHANGED_OR_REMOVED;
 			else if(drive>1) {
 				cpu->regs.B.AH = FD_FIXED_NOT_READY;
 			}
-			cpu->CF = 1;
+			cpu->setCF(1);
 		}
 
 		break;
@@ -181,13 +181,13 @@ void vm_handleE6(vomit_cpu_t *cpu)
 				cpu->regs.W.DX = drv_sectors[drive];
 				cpu->regs.W.CX = (drv_sectors[drive] << 16);
 			}
-			cpu->CF = 0;
+			cpu->setCF(0);
 		}
 		else
 		{
 			/* Drive not present. */
 			cpu->regs.B.AH = 0x00;
-			cpu->CF = 1;
+			cpu->setCF(1);
 		}
 		break;
 	case 0x1318:
@@ -202,9 +202,9 @@ void vm_handleE6(vomit_cpu_t *cpu)
 			/* Wacky DBT. */
 			cpu->ES = 0x820E; cpu->regs.W.DI = 0x0503;
 			cpu->regs.B.AH = 0x00;
-			cpu->CF = 0;
+			cpu->setCF(0);
 		} else {
-			cpu->CF = 1;
+			cpu->setCF(1);
 			cpu->regs.B.AH = 0x80;			/* No media in drive */
 		}
 		break;
@@ -234,7 +234,7 @@ void vm_handleE6(vomit_cpu_t *cpu)
 		cpu->regs.B.CL = ((t->tm_min /10)<<4) | (t->tm_min -((t->tm_min /10)*10));
 		cpu->regs.B.DH = ((t->tm_sec /10)<<4) | (t->tm_sec -((t->tm_sec /10)*10));
 		/* BIOSes from 6/10/85 and on return Daylight Savings Time support status in DL. Fuck that. */
-		cpu->CF = 0;
+		cpu->setCF(0);
 		break;
 
 	case 0x1A04:    /* INT 1A, 04: Get BCD date */
@@ -253,7 +253,7 @@ void vm_handleE6(vomit_cpu_t *cpu)
 		b1 = t->tm_mday / 10;
 		b2 = t->tm_mday - (b1*10);
 		cpu->regs.B.DL = (b1<<4) | b2;
-		cpu->CF = 0;
+		cpu->setCF(0);
 		break;
 
 	case 0x1A05:
@@ -284,10 +284,10 @@ void vm_handleE6(vomit_cpu_t *cpu)
 			drive = drive - 0x80 + 2;
 		if (drv_status[drive] != 0) {
 			cpu->regs.B.AL = 0x01;
-			cpu->CF = 0;
+			cpu->setCF(0);
 		} else {
 			cpu->regs.B.AL = 0x00;
-			cpu->CF = 1;
+			cpu->setCF(1);
 		}
 		break;
 

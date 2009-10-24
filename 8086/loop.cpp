@@ -19,7 +19,7 @@ void _LOOPE_imm8(vomit_cpu_t *cpu)
 {
     SIGNED_BYTE disp = vomit_cpu_pfq_getbyte(cpu);
     --cpu->regs.W.CX;
-    if (cpu->regs.W.CX && cpu->ZF)
+    if (cpu->regs.W.CX && cpu->getZF())
         vomit_cpu_jump_relative8(cpu, disp);
 }
 
@@ -27,12 +27,12 @@ void _LOOPNE_imm8(vomit_cpu_t *cpu)
 {
     SIGNED_BYTE disp = vomit_cpu_pfq_getbyte(cpu);
     --cpu->regs.W.CX;
-    if (cpu->regs.W.CX && !cpu->ZF)
+    if (cpu->regs.W.CX && !cpu->getZF())
         vomit_cpu_jump_relative8(cpu, disp);
 }
 
 #define DO_REP(func) for (; cpu->regs.W.CX; --cpu->regs.W.CX) { func(cpu); }
-#define DO_REPZ(func) for (cpu->ZF = should_equal; cpu->regs.W.CX && (cpu->ZF == should_equal); --cpu->regs.W.CX) { func(cpu); }
+#define DO_REPZ(func) for (cpu->setZF(should_equal); cpu->regs.W.CX && (cpu->getZF() == should_equal); --cpu->regs.W.CX) { func(cpu); }
 
 static void __rep(vomit_cpu_t *cpu, byte opcode, bool should_equal)
 {

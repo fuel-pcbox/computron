@@ -25,7 +25,7 @@ void _INTO(vomit_cpu_t *cpu)
     /* XXX: I've never seen this used, so it's probably good to log it. */
     vlog(VM_ALERT, "INTO used, can you believe it?");
 
-    if (cpu->OF == 1)
+    if (cpu->getOF())
         vomit_cpu_isr_call(cpu, 4);
 }
 
@@ -34,7 +34,7 @@ void _IRET(vomit_cpu_t *cpu)
     WORD nip = vomit_cpu_pop(cpu);
     WORD ncs = vomit_cpu_pop(cpu);
     vomit_cpu_jump(cpu, ncs, nip);
-    vomit_cpu_set_flags(cpu, vomit_cpu_pop(cpu));
+    cpu->setFlags(vomit_cpu_pop(cpu));
 }
 
 void vomit_cpu_isr_call(vomit_cpu_t *cpu, BYTE isr_index)
@@ -63,9 +63,9 @@ void vomit_cpu_isr_call(vomit_cpu_t *cpu, BYTE isr_index)
         return;
     }
 
-    vomit_cpu_push(cpu, vomit_cpu_get_flags(cpu));
-    cpu->IF = 0;
-    cpu->TF = 0;
+    vomit_cpu_push(cpu, cpu->getFlags());
+    cpu->setIF(0);
+    cpu->setTF(0);
     vomit_cpu_push(cpu, cpu->CS);
     vomit_cpu_push(cpu, cpu->IP);
 

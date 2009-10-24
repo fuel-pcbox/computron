@@ -20,7 +20,7 @@ CPUView::CPUView( QWidget *parent )
     resize( 200, 300 );
 
     QVBoxLayout *l = new QVBoxLayout;
-    d->qtw = new QTableWidget( 10, 2 );
+    d->qtw = new QTableWidget( 9, 2 );
     l->addWidget( d->qtw );
     l->setSpacing( 0 );
     setLayout( l );
@@ -91,10 +91,6 @@ CPUView::refresh()
 
     d->qtw->item( row, 0 )->setText( "ES" );
     d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X", g_cpu->ES ));
-
-    d->qtw->item( row, 0 )->setText( "kI/sync" );
-    d->qtw->item( row++, 1 )->setText( s.sprintf( "%lu", g_cpu->insn_count / 1000 ));
-    g_cpu->insn_count = 0;
 
     QTimer::singleShot( 500, this, SLOT(refresh()) );
 }

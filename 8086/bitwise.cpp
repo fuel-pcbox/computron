@@ -63,60 +63,60 @@ void _CWD(vomit_cpu_t *cpu)
 
 void _SALC(vomit_cpu_t *cpu)
 {
-    cpu->regs.B.AL = cpu->CF ? 0xFF : 0x00;
+    cpu->regs.B.AL = cpu->getCF() ? 0xFF : 0x00;
 }
 
 BYTE cpu_or8(vomit_cpu_t *cpu, BYTE dest, BYTE src)
 {
     BYTE result = dest | src;
-    vomit_cpu_update_flags8(cpu, result);
-    cpu->OF = 0;
-    cpu->CF = 0;
+    cpu->updateFlags8(result);
+    cpu->setOF(0);
+    cpu->setCF(0);
     return result;
 }
 
 WORD cpu_or16(vomit_cpu_t *cpu, WORD dest, WORD src)
 {
     WORD result = dest | src;
-    vomit_cpu_update_flags16(cpu, result);
-    cpu->OF = 0;
-    cpu->CF = 0;
+    cpu->updateFlags16(result);
+    cpu->setOF(0);
+    cpu->setCF(0);
     return result;
 }
 
 BYTE cpu_xor8(vomit_cpu_t *cpu, BYTE dest, BYTE src)
 {
     BYTE result = dest ^ src;
-    vomit_cpu_update_flags8(cpu, result);
-    cpu->OF = 0;
-    cpu->CF = 0;
+    cpu->updateFlags8(result);
+    cpu->setOF(0);
+    cpu->setCF(0);
     return result;
 }
 
 WORD cpu_xor16(vomit_cpu_t *cpu, WORD dest, WORD src)
 {
     WORD result = dest ^ src;
-    vomit_cpu_update_flags16(cpu, result);
-    cpu->OF = 0;
-    cpu->CF = 0;
+    cpu->updateFlags16(result);
+    cpu->setOF(0);
+    cpu->setCF(0);
     return result;
 }
 
 BYTE cpu_and8(vomit_cpu_t *cpu, BYTE dest, BYTE src)
 {
     BYTE result = dest & src;
-    vomit_cpu_update_flags8(cpu, result);
-    cpu->OF = 0;
-    cpu->CF = 0;
+    cpu->updateFlags8(result);
+    cpu->setOF(0);
+    cpu->setCF(0);
     return result;
 }
 
 WORD cpu_and16(vomit_cpu_t *cpu, WORD dest, WORD src)
 {
     WORD result = dest & src;
-    vomit_cpu_update_flags16(cpu, result);
-    cpu->OF = 0;
-    cpu->CF = 0;
+    cpu->updateFlags16(result);
+    cpu->setOF(0);
+    cpu->setCF(0);
     return result;
 }
 
@@ -128,21 +128,21 @@ DWORD cpu_shl(vomit_cpu_t *cpu, WORD data, BYTE steps, BYTE bits)
 
     if (bits == 8) {
         for (BYTE i = 0; i < steps; ++i) {
-            cpu->CF = (result >> 7) & 1;
+            cpu->setCF((result >> 7) & 1);
             result <<= 1;
         }
     } else {
         for (BYTE i = 0; i < steps; ++i) {
-            cpu->CF = (result >> 15) & 1;
+            cpu->setCF((result >> 15) & 1);
             result <<= 1;
         }
     }
 
     if (steps == 1) {
-        cpu->OF = (data >> (bits - 1)) ^ cpu->CF;
+        cpu->setOF((data >> (bits - 1)) ^ cpu->getCF());
     }
 
-    vomit_cpu_update_flags(cpu, result, bits);
+    cpu->updateFlags(result, bits);
     return result;
 }
 
@@ -154,21 +154,21 @@ DWORD cpu_shr(vomit_cpu_t *cpu, WORD data, BYTE steps, BYTE bits)
 
     if (bits == 8) {
         for (BYTE i = 0; i < steps; ++i) {
-            cpu->CF = result & 1;
+            cpu->setCF(result & 1);
             result >>= 1;
         }
     } else {
         for (BYTE i = 0; i < steps; ++i) {
-            cpu->CF = result & 1;
+            cpu->setCF(result & 1);
             result >>= 1;
         }
     }
 
     if (steps == 1) {
-        cpu->OF = (data >> (bits - 1)) & 1;
+        cpu->setOF((data >> (bits - 1)) & 1);
     }
 
-    vomit_cpu_update_flags(cpu, result, bits);
+    cpu->updateFlags(result, bits);
     return result;
 }
 
@@ -183,21 +183,21 @@ DWORD cpu_sar(vomit_cpu_t *cpu, WORD data, BYTE steps, BYTE bits)
         for (BYTE i = 0; i < steps; ++i) {
             n = result;
             result = (result>>1) | (n&0x80);
-            cpu->CF = n & 1;
+            cpu->setCF(n & 1);
         }
     } else {
         for (BYTE i = 0; i < steps; ++i) {
             n = result;
             result = (result>>1) | (n&0x8000);
-            cpu->CF = n & 1;
+            cpu->setCF(n & 1);
         }
     }
 
     if (steps == 1) {
-        cpu->OF = 0;
+        cpu->setOF(0);
     }
 
-    vomit_cpu_update_flags(cpu, result, bits);
+    cpu->updateFlags(result, bits);
     return result;
 }
 
@@ -209,18 +209,18 @@ DWORD cpu_rol(vomit_cpu_t *cpu, WORD data, BYTE steps, BYTE bits)
 
     if (bits == 8) {
         for (BYTE i = 0; i < steps; ++i) {
-            cpu->CF = (result>>7) & 1;
-            result = (result<<1) | cpu->CF;
+            cpu->setCF((result>>7) & 1);
+            result = (result<<1) | cpu->getCF();
         }
     } else {
         for (BYTE i = 0; i < steps; ++i) {
-            cpu->CF = (result>>15) & 1;
-            result = (result<<1) | cpu->CF;
+            cpu->setCF((result>>15) & 1);
+            result = (result<<1) | cpu->getCF();
         }
     }
 
     if (steps == 1) {
-        cpu->OF = ((result >> (bits - 1)) & 1) ^ cpu->CF;
+        cpu->setOF(((result >> (bits - 1)) & 1) ^ cpu->getCF());
     }
 
     return result;
@@ -234,18 +234,18 @@ DWORD cpu_ror(vomit_cpu_t *cpu, WORD data, BYTE steps, BYTE bits)
 
     if (bits == 8) {
         for (BYTE i = 0; i < steps; ++i) {
-            cpu->CF = result & 1;
-            result = (result>>1) | (cpu->CF<<7);
+            cpu->setCF(result & 1);
+            result = (result>>1) | (cpu->getCF()<<7);
         }
     } else {
         for (BYTE i = 0; i < steps; ++i) {
-            cpu->CF = result & 1;
-            result = (result>>1) | (cpu->CF<<15);
+            cpu->setCF(result & 1);
+            result = (result>>1) | (cpu->getCF()<<15);
         }
     }
 
     if (steps == 1) {
-        cpu->OF = (result >> (bits - 1)) ^ ((result >> (bits - 2) & 1));
+        cpu->setOF((result >> (bits - 1)) ^ ((result >> (bits - 2) & 1)));
     }
 
     return result;
@@ -261,19 +261,19 @@ DWORD cpu_rcl(vomit_cpu_t *cpu, WORD data, BYTE steps, BYTE bits)
     if (bits == 8) {
         for (BYTE i = 0; i < steps; ++i) {
             n = result;
-            result = ((result<<1) & 0xFF) | cpu->CF;
-            cpu->CF = (n>>7) & 1;
+            result = ((result<<1) & 0xFF) | cpu->getCF();
+            cpu->setCF((n>>7) & 1);
         }
     } else {
         for (BYTE i = 0; i < steps; ++i) {
             n = result;
-            result = ((result<<1) & 0xFFFF) | cpu->CF;
-            cpu->CF = (n>>15) & 1;
+            result = ((result<<1) & 0xFFFF) | cpu->getCF();
+            cpu->setCF((n>>15) & 1);
         }
     }
 
     if (steps == 1) {
-        cpu->OF = (result >> (bits - 1)) ^ cpu->CF;
+        cpu->setOF((result >> (bits - 1)) ^ cpu->getCF());
     }
 
     return result;
@@ -289,19 +289,19 @@ DWORD cpu_rcr(vomit_cpu_t *cpu, WORD data, BYTE steps, BYTE bits)
     if (bits == 8) {
         for (BYTE i = 0; i < steps; ++i) {
             n = result;
-            result = (result>>1) | (cpu->CF<<7);
-            cpu->CF = n & 1;
+            result = (result>>1) | (cpu->getCF()<<7);
+            cpu->setCF(n & 1);
         }
     } else {
         for (BYTE i = 0; i < steps; ++i) {
             n = result;
-            result = (result>>1) | (cpu->CF<<15);
-            cpu->CF = n & 1;
+            result = (result>>1) | (cpu->getCF()<<15);
+            cpu->setCF(n & 1);
         }
     }
 
     if (steps == 1) {
-        cpu->OF = (result >> (bits - 1)) ^ ((result >> (bits - 2) & 1));
+        cpu->setOF((result >> (bits - 1)) ^ ((result >> (bits - 2) & 1)));
     }
 
     return result;
@@ -325,12 +325,12 @@ void _NEG_RM8(vomit_cpu_t *cpu)
     BYTE old = value;
     value = -value;
     vomit_cpu_modrm_update8(cpu, value);
-    cpu->CF = old != 0;
-    vomit_cpu_update_flags8(cpu, value);
-    cpu->OF = ((
+    cpu->setCF(old != 0);
+    cpu->updateFlags8(value);
+    cpu->setOF(((
         ((0)^(old)) &
         ((0)^(value))
-        )>>(7))&1;
+        )>>(7))&1);
     vomit_cpu_setAF(cpu, value, 0, old);
 }
 
@@ -340,11 +340,11 @@ void _NEG_RM16(vomit_cpu_t *cpu)
     WORD old = value;
     value = -value;
     vomit_cpu_modrm_update16(cpu, value);
-    cpu->CF = ( old != 0 );
-    vomit_cpu_update_flags16(cpu, value);
-    cpu->OF = ((
+    cpu->setCF(old != 0);
+    cpu->updateFlags16(value);
+    cpu->setOF(((
         ((0)^(old)) &
         ((0)^(value))
-        )>>(15))&1;
+        )>>(15))&1);
     vomit_cpu_setAF(cpu, value, 0, old);
 }

@@ -42,7 +42,7 @@ void _OUTSB(vomit_cpu_t *cpu)
     vomit_cpu_out(cpu, cpu->regs.W.DX, b);
 
     /* Modify SI according to DF */
-    if (cpu->DF == 0)
+    if (cpu->getDF() == 0)
         ++cpu->regs.W.SI;
     else
         --cpu->regs.W.SI;
@@ -56,7 +56,7 @@ void _OUTSW(vomit_cpu_t *cpu)
     vomit_cpu_out(cpu, cpu->regs.W.DX + 1, msb);
 
     /* Modify SI according to DF */
-    if (cpu->DF == 0)
+    if (cpu->getDF() == 0)
         cpu->regs.W.SI += 2;
     else
         cpu->regs.W.SI -= 2;
