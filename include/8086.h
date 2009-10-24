@@ -152,6 +152,11 @@ typedef struct __vomit_cpu_t {
     bool getPF() const { return this->PF; }
     bool getZF() const { return this->ZF; }
 
+    WORD getCS() const { return this->CS; }
+    WORD getIP() const { return this->IP; }
+
+    void exec();
+
     BYTE *memoryPointer(WORD segment, WORD offset) { return &this->memory[FLAT(segment, offset)]; }
 
     WORD getFlags();

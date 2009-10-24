@@ -320,25 +320,32 @@ void VCpu::kill()
     this->code_memory = 0;
 }
 
+void VCpu::exec()
+{
+    /* TODO: Be more clever with this, it's mostly a waste of time. */
+    this->base_CS = getCS();
+    this->base_IP = getIP();
+
+    this->opcode = vomit_cpu_pfq_getbyte(this);
+    this->opcode_handler[this->opcode](this);
+}
+
 void vomit_cpu_main(vomit_cpu_t *cpu)
 {
 #ifdef VOMIT_PREFETCH_QUEUE
     vomit_cpu_pfq_flush(cpu);
 #endif
 
-    for (;;) {
-        /* HACK: This can be set by an external force to make us break out. */
-        if( g_vomit_exit_main_loop )
-            return;
+    forever {
 
-        /* TODO: Be more clever with this, it's mostly a waste of time. */
-        cpu->base_CS = cpu->CS;
-        cpu->base_IP = cpu->IP;
+        /* HACK: This can be set by an external force to make us break out. */
+        if (g_vomit_exit_main_loop)
+            return;
 
         /* TODO: Refactor this to spin in a separate mainloop when halted. */
         if (cpu->state == CPU_HALTED) {
             if (!cpu->getIF()) {
-                vlog(VM_ALERT, "%04X:%04X: Halted with IF=0", cpu->base_CS, cpu->base_IP);
+                vlog(VM_ALERT, "%04X:%04X: Halted with IF=0", cpu->getCS(), cpu->getIP());
                 return;
             }
 
@@ -350,13 +357,13 @@ void vomit_cpu_main(vomit_cpu_t *cpu)
 
 #ifdef VOMIT_TRACE
         if (options.trace) {
-            dump_disasm(cpu->base_CS, cpu->base_IP);
+            dump_disasm(cpu->getCS(), cpu->getIP());
             dump_regs(cpu);
         }
 #endif
 
-        cpu->opcode = vomit_cpu_pfq_getbyte(cpu);
-        cpu->opcode_handler[cpu->opcode](cpu);
+        /* Fetch & decode AKA execute the next instruction. */
+        cpu->exec();
 
         if (cpu->getTF()) {
             /* The Trap Flag is set, so we'll execute one instruction and
