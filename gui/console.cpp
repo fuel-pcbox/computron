@@ -63,6 +63,9 @@ static QTextEdit *textEdit;
 void
 vlog_hook( int category, const char *format, va_list ap )
 {
+    if (!Console::s_self)
+        return;
+
     const char *prefix = 0L;
     char buf[8192];
 

@@ -27,7 +27,7 @@ struct MainWindow::Private
 
     Worker *worker;
     Screen *screen;
-    Console console;
+    Console *console;
     MemoryView memview;
     CodeView codeview;
 
@@ -43,8 +43,9 @@ MainWindow::MainWindow(VCpu *cpu)
     : d(new Private)
 {
     d->worker = 0;
+    d->console = 0;
     d->screen = new Screen(cpu);
-    
+
     setCpu(cpu);
 
     setWindowTitle( "Vomit" );
@@ -65,7 +66,7 @@ MainWindow::MainWindow(VCpu *cpu)
     tabs->setTabPosition( QTabWidget::South );
     l->addWidget( tabs );
 
-    tabs->addTab( &d->console, tr("Console") );
+    tabs->addTab(d->console, tr("Console"));
 
     QWidget *memTab = new QWidget;
     QVBoxLayout *ml = new QVBoxLayout;
