@@ -49,7 +49,7 @@ Screen::Screen(VCpu *cpu, QWidget *parent)
     init();
     synchronizeFont();
     setTextMode( 80, 25 );
-    d->videoMemory = d->cpu->memory + 0xB8000;
+    d->videoMemory = d->cpu->memoryPointer(0xB800, 0x0000);
 
     m_screen12 = QImage( 640, 480, QImage::Format_Indexed8 );
     m_render12 = QImage( 640, 480, QImage::Format_Indexed8 );
@@ -106,29 +106,24 @@ Screen::putCharacter( QPainter &p, int row, int column, byte color, byte c )
 bool is_palette_dirty();
 void clear_palette_dirty();
 
-void
-Screen::refresh()
+void Screen::refresh()
 {
-    if ((d->cpu->memory[0x449] & 0x7F) == 0x12)
-    {
-        if( is_palette_dirty() )
-        {
+    BYTE currentVideoMode = d->cpu->readMemory8(0x449) & 0x7F;
+
+    if (currentVideoMode == 0x12) {
+        if (is_palette_dirty()) {
             synchronizeColors();
             clear_palette_dirty();
         }
-
         if (d->cpu->vgaMemory->isDirty()) {
             update(d->cpu->vgaMemory->dirtyRect());
             d->cpu->vgaMemory->clearDirty();
         }
-
-    } else if ((d->cpu->memory[0x449] & 0x7F) == 0x0D) {
-        if( is_palette_dirty() )
-        {
+    } else if (currentVideoMode == 0x0D) {
+        if (is_palette_dirty()) {
             synchronizeColors();
             clear_palette_dirty();
         }
-
         if (d->cpu->vgaMemory->isDirty()) {
             //vlog( VM_VIDEOMSG, "Painting mode0Dh screen" );
             renderMode0D(m_render0D);
@@ -168,8 +163,8 @@ Screen::refresh()
             m_screen0D = m_render0D;
             update( updateRect );
         }
-    } else if ((d->cpu->memory[0x449] & 0x7F) == 0x03) {
-        int rows = d->cpu->memory[0x484] + 1;
+    } else if (currentVideoMode == 0x03) {
+        int rows = d->cpu->readMemory8(0x484) + 1;
         switch( rows )
         {
             case 25:
@@ -289,8 +284,9 @@ void Screen::resizeEvent(QResizeEvent *e)
 
 void Screen::paintEvent(QPaintEvent *e)
 {
-    if ((d->cpu->memory[0x449] & 0x7F) == 0x12) {
+    BYTE currentVideoMode = d->cpu->readMemory8(0x449) & 0x7F;
 
+    if (currentVideoMode == 0x12) {
         setScreenSize(640, 480);
         QPainter wp(this);
         wp.setClipRegion(e->rect());
@@ -303,8 +299,7 @@ void Screen::paintEvent(QPaintEvent *e)
         return;
     }
 
-    if ((d->cpu->memory[0x449] & 0x7F) == 0x0D) {
-
+    if (currentVideoMode == 0x0D) {
         setScreenSize( 320, 200 );
         QPainter wp(this);
         wp.setClipRegion(e->rect());
@@ -378,7 +373,7 @@ Screen::synchronizeFont()
     m_characterHeight = 16;
     const QSize s( 8, 16 );
 
-    fontcharbitmap_t *fbmp = (fontcharbitmap_t *)(d->cpu->memory + 0xC4000);
+    fontcharbitmap_t *fbmp = (fontcharbitmap_t *)(d->cpu->memoryPointer(0xC400, 0x0000));
 
     for (int i = 0; i < 256; ++i) {
         d->character[i] = QBitmap::fromData(s, (const byte *)fbmp[i].data, QImage::Format_MonoLSB);

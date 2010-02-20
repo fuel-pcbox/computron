@@ -172,6 +172,8 @@ typedef struct __vomit_cpu_t {
     void cmpFlags8(DWORD result, BYTE dest, BYTE src);
     void cmpFlags16(DWORD result, WORD dest, WORD src);
 
+    BYTE readMemory8(DWORD flat_address) const;
+
     VgaMemory *vgaMemory;
 private:
     bool CF, DF, TF, PF, AF, ZF, SF, IF, OF;
@@ -192,7 +194,6 @@ WORD vomit_cpu_pfq_getword(vomit_cpu_t *cpu);
 #endif
 
 void vomit_cpu_jump(vomit_cpu_t *cpu, word segment, word offset);
-void vomit_cpu_genmap(vomit_cpu_t *cpu);
 void vomit_cpu_main(vomit_cpu_t *cpu);
 void vomit_cpu_jump_relative8(vomit_cpu_t *cpu, SIGNED_BYTE displacement);
 void vomit_cpu_jump_relative16(vomit_cpu_t *cpu, SIGNED_WORD displacement);
