@@ -198,7 +198,7 @@ Console::execute()
     }
     else if( parts[0] == "r" || parts[0] == "registers" )
     {
-        dump_all();
+        dump_all(g_cpu);
     }
     else if( parts[0] == "ivt" )
     {

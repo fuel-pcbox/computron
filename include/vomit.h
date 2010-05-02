@@ -55,7 +55,6 @@ void vm_exit(int);
 void config_reload();
 void vm_loadconf();
 void vm_cbreak(int);
-void vm_debug();
 
 void vm_kill();
 
@@ -73,7 +72,6 @@ void busmouse_event();
 void busmouse_press( int button );
 void busmouse_release( int button );
 
-void dump_all();
 void dump_try();
 void dump_ivt();
 int dump_disasm( word, word );
@@ -114,6 +112,7 @@ extern vomit_options_t options;
 #include "floppy.h"
 #include "vga.h"
 
+void dump_all(vomit_cpu_t *cpu);
 void pic_service_irq(vomit_cpu_t *cpu);
 
 void vm_listen(word, byte (*)(vomit_cpu_t *, word), void (*)(vomit_cpu_t *, word, byte));

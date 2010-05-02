@@ -132,6 +132,12 @@ typedef struct __vomit_cpu_t {
     void init();
     void kill();
 
+    void attachDebugger();
+    void detachDebugger();
+    bool inDebugger() const;
+
+    void debugger();
+
     void setIF(bool value) { this->IF = value; }
     void setCF(bool value) { this->CF = value; }
     void setDF(bool value) { this->DF = value; }
@@ -175,8 +181,16 @@ typedef struct __vomit_cpu_t {
     BYTE readMemory8(DWORD flat_address) const;
 
     VgaMemory *vgaMemory;
+
+    // TODO: make private
+    BYTE *codeMemory() { return this->memory; }
+
 private:
     bool CF, DF, TF, PF, AF, ZF, SF, IF, OF;
+#ifdef VOMIT_DEBUG
+    bool m_inDebugger;
+    bool m_debugOneStep;
+#endif
 } vomit_cpu_t;
 
 #define VCpu vomit_cpu_t

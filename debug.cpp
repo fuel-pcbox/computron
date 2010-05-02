@@ -11,8 +11,6 @@
 #include <string.h>
 #include <stdio.h>
 
-bool g_debug_step = false;
-bool g_in_debug = false;
 static FILE *s_logfile = 0L;
 static void (*s_vlog_handler)(int, const char *, va_list);
 
@@ -72,7 +70,7 @@ vlog( int category, const char *format, ... )
 	vfprintf( s_logfile, format, ap );
 	va_end( ap );
 
-	if( g_in_debug || show_on_stdout )
+	if (g_cpu->inDebugger() || show_on_stdout)
 	{
 		if( prefix )
 			printf( "(%8s) ", prefix );
@@ -101,20 +99,18 @@ uasm( word seg, word off, int n )
 }
 
 #ifdef VOMIT_STDIO_DEBUGGER
-void
-vm_debug()
+void VCpu::debugger()
 {
 	char curcmd[256], *curtok;
-	word mseg, moff;
+	WORD mseg, moff;
 
-	memset( curcmd, 0, sizeof(curcmd) );
+	memset(curcmd, 0, sizeof(curcmd));
 
-	g_in_debug = true;
+	m_inDebugger = true;
 
-	if( g_debug_step )
-	{
-		dump_all();
-		g_debug_step = false;
+	if (m_debugOneStep) {
+		dump_all(this);
+		m_debugOneStep = false;
 	}
 
 	while( true )
@@ -131,19 +127,18 @@ vm_debug()
 		if ( curtok ) {
 			if( !strcmp( curtok, "g" ))
 				break;
-			if( !strcmp( curtok, "s" ))
-			{
-				g_debug_step = true;
-				break;
+			if (!strcmp( curtok, "s")) {
+				m_debugOneStep = true;
+                return;
 			}
 
-			if ( !strcmp( curtok, "c" ) )
-				dump_cpu();
-			if ( !strcmp( curtok, "reconf" ) )
+			if (!strcmp(curtok, "c"))
+				dump_cpu(this);
+			if (!strcmp(curtok, "reconf"))
 				config_reload();
-			else if ( !strcmp( curtok, "r" ) )
-				dump_all();
-			else if ( !strcmp( curtok, "i" ) )
+			else if (!strcmp(curtok, "r"))
+				dump_all(this);
+			else if (!strcmp(curtok, "i"))
 				dump_ivt();
 			else if ( curtok[0] == 'd' ) {
 				curtok = strtok(NULL, ": \n");
@@ -154,10 +149,10 @@ vm_debug()
 						moff = strtol(curtok,NULL,16);
 						dump_mem(mseg, moff, 16);
 					} else {
-						dump_mem( cpu.CS, mseg, 16 );
+						dump_mem(getCS(), mseg, 16);
 					}
 				} else {
-					dump_mem( cpu.CS, (cpu.IP&0xFFF0), 16 );
+					dump_mem(getCS(), (getIP() & 0xFFF0), 16);
 					curtok = &curcmd[0];
 				}
 			}
@@ -170,10 +165,10 @@ vm_debug()
 						moff = strtol(curtok,NULL,16);
 						uasm(mseg, moff, 16);
 					} else {
-						uasm( cpu.CS, mseg, 16 );
+						uasm(getCS(), mseg, 16);
 					}
 				} else {
-					uasm( cpu.CS, cpu.IP, 16 );
+					uasm(getCS(), getIP(), 16);
 					curtok = &curcmd[0];
 				}
 			}
@@ -192,6 +187,6 @@ vm_debug()
 			}
 		}
 	}
-	g_in_debug = false;
+	detachDebugger();
 }
 #endif

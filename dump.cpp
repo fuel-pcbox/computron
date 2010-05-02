@@ -78,35 +78,35 @@ void dump_regs(vomit_cpu_t *cpu)
     );
 }
 
-void dump_all() {
-#if 0
-	word *stacky = (void *)mem_space + (cpu->SS<<4)+cpu->regs.W.SP;
-	byte *csip = mem_space + (cpu->base_CS<<4) + cpu->base_IP;
+void dump_all(vomit_cpu_t *cpu)
+{
+	WORD *stacky = reinterpret_cast<WORD*>(cpu->memoryPointer(cpu->SS, cpu->regs.W.SP));
+	BYTE *csip = cpu->codeMemory();
 
-#ifndef VM_NOPFQ
-	byte x = (byte)cpu_pfq_current;
-	byte dpfq[6];
-	byte i;
+#ifdef VOMIT_PREFETCH_QUEUE
+	BYTE x = cpu->pfq_current;
+	BYTE dpfq[6];
+	BYTE i;
 
-	for(i=0;i<CPU_PFQ_SIZE;i++) {
-		dpfq[i] = cpu_pfq[x++];
-		if(x==CPU_PFQ_SIZE) x=0;
+	for (int i = 0; i < cpu->pfq_size; ++i) {
+		dpfq[i] = cpu->pfq[x++];
+		if (x == cpu->pfq_size)
+            x = 0;
 	}
 #endif
 
-	vlog( VM_DUMPMSG, "AX=%04X BX=%04X CX=%04X DX=%04X     SP=> %04X", cpu->regs.W.AX, cpu->regs.W.BX, cpu->regs.W.CX, cpu->regs.W.DX, *(stacky++) );
-	vlog( VM_DUMPMSG, "SP=%04X BP=%04X SI=%04X DI=%04X          %04X", cpu->regs.W.SP, cpu->regs.W.BP, cpu->regs.W.SI, cpu->regs.W.DI, *(stacky++) );
-	vlog( VM_DUMPMSG, "CS=%04X DS=%04X ES=%04X SS=%04X          %04X", cpu->CS, cpu->DS, cpu->ES, cpu->SS, *(stacky++) );
-	vlog( VM_DUMPMSG, "C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u          %04X", cpu->CF, cpu->PF, cpu->AF, cpu->ZF, cpu->SF, cpu->IF, cpu->DF, cpu->OF, *(stacky++) );
+	vlog(VM_DUMPMSG, "AX=%04X BX=%04X CX=%04X DX=%04X     SP=> %04X", cpu->regs.W.AX, cpu->regs.W.BX, cpu->regs.W.CX, cpu->regs.W.DX, *(stacky++));
+	vlog(VM_DUMPMSG, "SP=%04X BP=%04X SI=%04X DI=%04X          %04X", cpu->regs.W.SP, cpu->regs.W.BP, cpu->regs.W.SI, cpu->regs.W.DI, *(stacky++));
+	vlog(VM_DUMPMSG, "CS=%04X DS=%04X ES=%04X SS=%04X          %04X", cpu->CS, cpu->DS, cpu->ES, cpu->SS, *(stacky++) );
+	vlog(VM_DUMPMSG, "C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u          %04X", cpu->getCF(), cpu->getPF(), cpu->getAF(), cpu->getZF(), cpu->getSF(), cpu->getIF(), cpu->getDF(), cpu->getOF(), *(stacky++));
 
-	vlog( VM_DUMPMSG, "  -  (%02X %02X%02X%02X%02X%02X)", csip[0], csip[1], csip[2], csip[3], csip[4], csip[5] );
-#ifndef VM_NOPFQ
-	vlog( VM_DUMPMSG, "  -  [%02X %02X%02X%02X%02X%02X]", dpfq[0], dpfq[1], dpfq[2], dpfq[3], dpfq[4], dpfq[5] );
+	vlog(VM_DUMPMSG, "  -  (%02X %02X%02X%02X%02X%02X)", csip[0], csip[1], csip[2], csip[3], csip[4], csip[5]);
+#ifdef VOMIT_PREFETCH_QUEUE
+	vlog(VM_DUMPMSG, "  -  [%02X %02X%02X%02X%02X%02X]", dpfq[0], dpfq[1], dpfq[2], dpfq[3], dpfq[4], dpfq[5]);
 #endif
 
-	vlog( VM_DUMPMSG, "\n" );
-	dump_disasm( cpu->base_CS, cpu->base_IP );
-#endif
+	vlog(VM_DUMPMSG, "\n");
+	dump_disasm(cpu->base_CS, cpu->base_IP);
 }
 
 byte n(byte b) {					/* Nice it up for printing.		*/
