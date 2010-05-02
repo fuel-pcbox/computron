@@ -88,6 +88,8 @@ void VCpu::init()
     this->pfq = 0;
 #endif
 
+    m_inDebugger = false;
+
     vomit_cpu_install_default_handlers(this);
 }
 
@@ -342,6 +344,19 @@ void vomit_cpu_main(vomit_cpu_t *cpu)
         if (g_vomit_exit_main_loop)
             return;
 
+#ifdef VOMIT_DEBUG
+        if (cpu->inDebugger()) {
+
+            cpu->base_CS = cpu->getCS();
+            cpu->base_IP = cpu->getIP();
+
+            cpu->debugger();
+
+            if (!cpu->inDebugger())
+                continue;
+        }
+#endif
+
         /* TODO: Refactor this to spin in a separate mainloop when halted. */
         if (cpu->state == CPU_HALTED) {
             if (!cpu->getIF()) {
@@ -530,6 +545,23 @@ void _UNSUPP(vomit_cpu_t *cpu)
     /* We've come across an unsupported instruction, log it,
      * then vector to the "illegal instruction" ISR. */
     vlog(VM_ALERT, "%04X:%04X: Unsupported opcode %02X", cpu->base_CS, cpu->base_IP, cpu->opcode);
-    dump_all();
+    dump_all(cpu);
     vomit_cpu_isr_call(cpu, 6);
 }
+
+#ifdef VOMIT_DEBUG
+bool VCpu::inDebugger() const
+{
+    return m_inDebugger;
+}
+
+void VCpu::attachDebugger()
+{
+    m_inDebugger = true;
+}
+
+void VCpu::detachDebugger()
+{
+    m_inDebugger = false;
+}
+#endif
