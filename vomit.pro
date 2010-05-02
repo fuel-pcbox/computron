@@ -3,8 +3,10 @@ TARGET =
 DEPENDPATH += . 8086 bios disasm gui hw include disasm/include
 INCLUDEPATH += . include disasm/include gui hw
 CXXFLAGS += -std=gnu++0x -W -Wall -Wshadow
-DEFINES += VOMIT_DEBUG VOMIT_TRACE
+DEFINES += VOMIT_DEBUG
+DEFINES += VOMIT_TRACE
 DEFINES += VOMIT_STDIO_DEBUGGER
+DEFINES += VOMIT_DOS_ON_LINUX_IDLE_HACK
 CONFIG += silent
 CONFIG += debug
 

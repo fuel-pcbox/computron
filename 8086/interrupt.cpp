@@ -7,6 +7,10 @@
 #include "debug.h"
 #include <stdio.h>
 
+#ifdef VOMIT_DOS_ON_LINUX_IDLE_HACK
+#include <sched.h>
+#endif
+
 extern void bios_interrupt10();
 
 void _INT_imm8(vomit_cpu_t *cpu)
@@ -50,10 +54,10 @@ void vomit_cpu_isr_call(vomit_cpu_t *cpu, BYTE isr_index)
     }
 #endif
 
-#ifdef VOMIT_SLEEP_WHEN_DOS_IDLE
+#ifdef VOMIT_DOS_ON_LINUX_IDLE_HACK
     if (isr_index == 0x28) {
         /* DOS idle interrupt, catch a quick rest! */
-        usleep( 10 );
+        sched_yield();
     }
 #endif
 
