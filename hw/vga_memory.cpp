@@ -308,10 +308,12 @@ void VgaMemory::syncPalette()
 
 QImage *VgaMemory::modeImage(BYTE mode) const
 {
-    Q_ASSERT(mode == 0x12);
-
     if (mode == 0x12)
         return &d->screen12;
+
+#ifdef VOMIT_DEBUG
+    vlog(VM_ALERT, "Screen image for unknown mode 0x%02X requested. Crashing!", mode);
+#endif
     return 0;
 }
 
