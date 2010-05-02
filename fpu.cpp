@@ -16,7 +16,7 @@ void _ESCAPE(vomit_cpu_t *cpu)
         cpu->base_CS, cpu->base_IP,
         cpu->opcode, rmreg(vomit_cpu_memory_read8(cpu, cpu->base_CS, cpu->base_IP + 1)));
 
-    vm_exit(0);
+    //vm_exit(0);
 
     BYTE rm = vomit_cpu_pfq_getbyte(cpu);
     (void) vomit_cpu_modrm_read16(cpu, rm);
