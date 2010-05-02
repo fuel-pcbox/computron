@@ -24,7 +24,6 @@ static bool dma_io_enabled;
 static bool motor[4];
 static byte fdc_data_direction;
 static byte fdc_current_status_register;
-static byte fdc_main_status_register;
 static bool fdc_command_complete;
 static byte fdc_command[8];
 static byte fdc_command_size;
@@ -77,8 +76,23 @@ byte fdc_status_b(vomit_cpu_t *cpu, word port)
 
 byte fdc_main_status(vomit_cpu_t *cpu, word port)
 {
-	vlog(VM_FDCMSG, "Reading FDC main status register: %02X", fdc_main_status_register);
-	return fdc_main_status_register;
+    byte status = 0;
+
+    // 0x80 - MRQ  - main request (1: data register ready, 0: data register not ready)
+    // 0x40 - DIO  - data input/output (1: controller ? cpu, 0: cpu ? controller)
+    // 0x20 - NDMA - non-DMA mode (1: controller not in DMA mode, 0: controller in DMA mode)
+    // 0x10 - BUSY - device busy (1: busy, 0: ready)
+    // 0x08 - ACTD ..
+    // 0x04 - ACTC ..
+    // 0x02 - ACTB ..
+    // 0x01 - ACTA - drive X in positioning mode
+
+    status |= 0x80; // MRQ = 1
+    status |= fdc_data_direction;
+
+	vlog(VM_FDCMSG, "Reading FDC main status register: %02X (direction: %s)", status,(fdc_data_direction == DATA_FROM_CPU_TO_FDC) ? "to FDC" : "from FDC");
+
+	return status;
 }
 
 void fdc_digital_output(vomit_cpu_t *cpu, word port, byte data)
@@ -96,14 +110,16 @@ void fdc_digital_output(vomit_cpu_t *cpu, word port, byte data)
 	motor[2] = (data & 0x10) != 0;
 	motor[3] = (data & 0x10) != 0;
 
-	vlog(VM_FDCMSG, "Current drive: %u", current_drive);
-	vlog(VM_FDCMSG, "FDC enabled:   %s", fdc_enabled ? "yes" : "no");
-	vlog(VM_FDCMSG, "DMA+I/O mode:  %s", dma_io_enabled ? "yes" : "no");
+	vlog(VM_FDCMSG, "  Current drive: %u", current_drive);
+	vlog(VM_FDCMSG, "  FDC enabled:   %s", fdc_enabled ? "yes" : "no");
+	vlog(VM_FDCMSG, "  DMA+I/O mode:  %s", dma_io_enabled ? "yes" : "no");
 
-	vlog(VM_FDCMSG, "Motors:        %u %u %u %u", motor[0], motor[1], motor[2], motor[3]);
+	vlog(VM_FDCMSG, "  Motors:        %u %u %u %u", motor[0], motor[1], motor[2], motor[3]);
 
-	if (fdc_enabled != old_fdc_enabled)
+	if (fdc_enabled != old_fdc_enabled) {
+        vlog(VM_FDCMSG, "Raising IRQ");
 		irq(6);
+    }
 }
 
 void fdc_execute_command()
@@ -121,7 +137,7 @@ void fdc_data_fifo_write(vomit_cpu_t *cpu, word port, byte data)
 		switch (data) {
 			case 0x08:	// Sense Interrupt Status
 				vlog(VM_FDCMSG, "Sense interrupt");
-				fdc_data_direction = DATA_FROM_FDC_TO_CPU;
+				//fdc_data_direction = DATA_FROM_FDC_TO_CPU;
 				break;
 			default:
 				vlog(VM_FDCMSG, "DATA FIFO Wr: %02X", data);
@@ -149,4 +165,6 @@ byte fdc_data_fifo_read(vomit_cpu_t *cpu, word port)
 
 	if(fdc_current_status_register == 4)
 		fdc_current_status_register = 0;
+
+    return 0xAA;
 }
