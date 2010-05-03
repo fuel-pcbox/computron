@@ -132,11 +132,15 @@ typedef struct __vomit_cpu_t {
     void init();
     void kill();
 
+#ifdef VOMIT_DEBUG
     void attachDebugger();
     void detachDebugger();
     bool inDebugger() const;
 
     void debugger();
+#else
+    bool inDebugger() const { return false; }
+#endif
 
     void setIF(bool value) { this->IF = value; }
     void setCF(bool value) { this->CF = value; }

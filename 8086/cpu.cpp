@@ -88,7 +88,9 @@ void VCpu::init()
     this->pfq = 0;
 #endif
 
+#ifdef VOMIT_DEBUG
     m_inDebugger = false;
+#endif
 
     vomit_cpu_install_default_handlers(this);
 }

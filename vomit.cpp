@@ -11,16 +11,18 @@
 #include "debug.h"
 #include "iodevice.h"
 #include <QDebug>
+#ifdef VOMIT_DEBUG
 #include <signal.h>
+#endif
 
 vomit_options_t options;
 
+#ifdef VOMIT_DEBUG
 static void sigint_handler(int)
 {
-#ifdef VOMIT_DEBUG
     g_cpu->attachDebugger();
-#endif
 }
+#endif
 
 void vomit_init()
 {
@@ -50,7 +52,9 @@ void vomit_init()
 
     vm_loadconf();
 
+#ifdef VOMIT_DEBUG
     signal(SIGINT, sigint_handler);
+#endif
 }
 
 void vm_kill()

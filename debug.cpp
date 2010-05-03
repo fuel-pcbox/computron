@@ -98,7 +98,7 @@ uasm( word seg, word off, int n )
 	}
 }
 
-#ifdef VOMIT_STDIO_DEBUGGER
+#ifdef VOMIT_DEBUG
 void VCpu::debugger()
 {
 	char curcmd[256], *curtok;
