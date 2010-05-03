@@ -32,6 +32,6 @@ void _ESCAPE(vomit_cpu_t *cpu)
 
 #if 0
     /* 80286+: Coprocessor not available exception. */
-    vomit_cpu_isr_call(cpu, 7);
+    cpu->exception(7);
 #endif
 }

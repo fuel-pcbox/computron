@@ -159,14 +159,14 @@ void pic_service_irq(vomit_cpu_t *cpu)
         master_irr &= ~(1 << interrupt_to_service);
         master_isr |= (1 << interrupt_to_service);
 
-        vomit_cpu_isr_call(cpu,  master_addr_base | interrupt_to_service);
+        cpu->jumpToInterruptHandler(master_addr_base | interrupt_to_service);
     }
     else
     {
         slave_irr &= ~(1 << (interrupt_to_service - 8));
         slave_isr |= (1 << (interrupt_to_service - 8));
 
-        vomit_cpu_isr_call(cpu, slave_addr_base | interrupt_to_service);
+        cpu->jumpToInterruptHandler(slave_addr_base | interrupt_to_service);
     }
 
     UPDATE_PENDING_REQUESTS;

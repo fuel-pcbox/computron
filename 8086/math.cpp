@@ -265,7 +265,7 @@ void _DIV_RM8(vomit_cpu_t *cpu)
     if (value == 0) {
         /* Exceptions return to offending IP */
         cpu->IP = offend - 2;
-        vomit_cpu_isr_call(cpu, 0);
+        cpu->exception(0);
         return;
     }
 
@@ -282,7 +282,7 @@ void _DIV_RM16(vomit_cpu_t *cpu)
     if (value == 0) {
         /* Exceptions return to offending IP */
         cpu->IP = offend - 2;
-        vomit_cpu_isr_call(cpu, 0);
+        cpu->exception(0);
         return;
     }
 
@@ -299,7 +299,7 @@ void _IDIV_RM8(vomit_cpu_t *cpu)
     if (value == 0) {
         /* Exceptions return to offending IP */
         cpu->IP = offend - 2;
-        vomit_cpu_isr_call(cpu, 0);
+        cpu->exception(0);
         return;
     }
 
@@ -316,7 +316,7 @@ void _IDIV_RM16(vomit_cpu_t *cpu)
     if (value == 0) {
         /* Exceptions return to offending IP */
         cpu->IP = offend - 2;
-        vomit_cpu_isr_call(cpu, 0);
+        cpu->exception(0);
         return;
     }
     cpu->regs.W.AX = (SIGNED_WORD)(tDXAX / value); /* Quote      */

@@ -388,9 +388,9 @@ void vomit_cpu_main(vomit_cpu_t *cpu)
              *
              * This is used by tools like DEBUG to implement step-by-step
              * execution :-) */
-            vomit_cpu_isr_call(cpu, 1);
+            cpu->jumpToInterruptHandler(1);
 
-            /* NOTE: vomit_cpu_isr_call() just set IF=0. */
+            /* NOTE: jumpToInterruptHandler() just set IF=0. */
         }
 
         if (!--cpu->pit_counter) {
@@ -548,7 +548,7 @@ void _UNSUPP(vomit_cpu_t *cpu)
      * then vector to the "illegal instruction" ISR. */
     vlog(VM_ALERT, "%04X:%04X: Unsupported opcode %02X", cpu->base_CS, cpu->base_IP, cpu->opcode);
     dump_all(cpu);
-    vomit_cpu_isr_call(cpu, 6);
+    cpu->exception(6);
 }
 
 #ifdef VOMIT_DEBUG

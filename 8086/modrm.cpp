@@ -124,7 +124,7 @@ void _LEA_reg16_mem16(vomit_cpu_t *cpu)
             vlog(VM_ALERT, "LEA with register source!");
             /* LEA with register source, an invalid instruction.
              * Call INT6 (invalid opcode exception) */
-            vomit_cpu_isr_call(cpu, 6);
+            cpu->exception(6);
             break;
     }
     *cpu->treg16[rmreg(b)] = retv;

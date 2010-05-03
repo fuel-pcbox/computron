@@ -23,7 +23,7 @@ void _wrap_0x0F(vomit_cpu_t *cpu)
     case 0x0B:		/* UD2 */
     default:
         vlog(VM_ALERT, "Undefinded opcode 0F %02X", op);
-        vomit_cpu_isr_call(cpu, 6);
+        cpu->exception(6);
         break;
     }
 }
@@ -36,7 +36,7 @@ void _BOUND(vomit_cpu_t *cpu)
 
     if (index < LSW(value) || index > MSW(value)) {
         /* Raise BR exception */
-        vomit_cpu_isr_call(cpu, 5);
+        cpu->exception(5);
     }
 }
 

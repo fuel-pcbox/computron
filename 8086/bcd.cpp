@@ -28,7 +28,7 @@ void _AAM(vomit_cpu_t *cpu)
     if (imm == 0) {
         /* Exceptions return to offending IP. */
         --cpu->IP;
-        vomit_cpu_isr_call(cpu, 0);
+        cpu->exception(0);
         return;
     }
 

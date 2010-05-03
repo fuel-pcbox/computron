@@ -142,6 +142,10 @@ typedef struct __vomit_cpu_t {
     bool inDebugger() const { return false; }
 #endif
 
+    void jumpToInterruptHandler(int isr);
+
+    void exception(int ec) { jumpToInterruptHandler(ec); }
+
     void setIF(bool value) { this->IF = value; }
     void setCF(bool value) { this->CF = value; }
     void setDF(bool value) { this->DF = value; }
@@ -285,11 +289,6 @@ BYTE vomit_cpu_memory_read8(vomit_cpu_t *cpu, WORD segment, WORD offset);
 WORD vomit_cpu_memory_read16(vomit_cpu_t *cpu, WORD segment, WORD offset);
 void vomit_cpu_memory_write8(vomit_cpu_t *cpu, WORD segment, WORD offset, BYTE value);
 void vomit_cpu_memory_write16(vomit_cpu_t *cpu, WORD segment, WORD offset, WORD value);
-
-/*!
-    Transfers execution to an ISR (Interrupt Service Routine)
- */
-void vomit_cpu_isr_call(vomit_cpu_t *cpu, BYTE isr_index);
 
 inline WORD signext (byte b)
 {
