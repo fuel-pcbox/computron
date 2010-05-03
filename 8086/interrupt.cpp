@@ -70,8 +70,8 @@ void vomit_cpu_isr_call(vomit_cpu_t *cpu, BYTE isr_index)
     vomit_cpu_push(cpu, cpu->getFlags());
     cpu->setIF(0);
     cpu->setTF(0);
-    vomit_cpu_push(cpu, cpu->CS);
-    vomit_cpu_push(cpu, cpu->IP);
+    vomit_cpu_push(cpu, cpu->getCS());
+    vomit_cpu_push(cpu, cpu->getIP());
 
     WORD segment = (cpu->memory[isr_index * 4 + 3] << 8) | cpu->memory[isr_index * 4 + 2];
     WORD offset = (cpu->memory[isr_index * 4 + 1] << 8) | cpu->memory[isr_index * 4];

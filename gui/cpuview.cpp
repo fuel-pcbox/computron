@@ -69,7 +69,7 @@ CPUView::refresh()
     QString s;
 
     d->qtw->item( row, 0 )->setText( "CS:IP" );
-    d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X:%04X", g_cpu->CS, g_cpu->IP ));
+    d->qtw->item(row++, 1)->setText(s.sprintf("%04X:%04X", g_cpu->getCS(), g_cpu->getIP()));
 
     d->qtw->item( row, 0 )->setText( "SS:SP" );
     d->qtw->item( row++, 1 )->setText( s.sprintf( "%04X:%04X", g_cpu->SS, g_cpu->regs.W.SP ));

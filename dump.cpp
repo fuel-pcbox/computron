@@ -23,7 +23,7 @@ void dump_try(vomit_cpu_t *cpu)
 {
     printf("AX=%04X\nBX=%04X\nCX=%04X\nDX=%04X\n", cpu->regs.W.AX, cpu->regs.W.BX, cpu->regs.W.CX, cpu->regs.W.DX );
     printf("SP=%04X\nBP=%04X\nSI=%04X\nDI=%04X\n", cpu->regs.W.SP, cpu->regs.W.BP, cpu->regs.W.SI, cpu->regs.W.DI );
-    printf("CS=%04X\nDS=%04X\nES=%04X\nSS=%04X\n", cpu->CS, cpu->DS, cpu->ES, cpu->SS );
+    printf("CS=%04X\nDS=%04X\nES=%04X\nSS=%04X\n", cpu->getCS(), cpu->DS, cpu->ES, cpu->SS );
     printf("CF=%x\nPF=%x\nAF=%x\nZF=%x\nSF=%x\nIF=%x\nDF=%x\nOF=%x\nTF=%x\n",
         cpu->getCF(), cpu->getPF(), cpu->getAF(), cpu->getZF(),
         cpu->getSF(), cpu->getIF(), cpu->getDF(), cpu->getOF(),
@@ -72,7 +72,7 @@ void dump_regs(vomit_cpu_t *cpu)
         "CS=%04X DS=%04X ES=%04X SS=%04X C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u",
         cpu->regs.W.AX, cpu->regs.W.BX, cpu->regs.W.CX, cpu->regs.W.DX,
         cpu->regs.W.SP, cpu->regs.W.BP, cpu->regs.W.SI, cpu->regs.W.DI,
-        cpu->CS, cpu->DS, cpu->ES, cpu->SS,
+        cpu->getCS(), cpu->DS, cpu->ES, cpu->SS,
         cpu->getCF(), cpu->getPF(), cpu->getAF(), cpu->getZF(),
         cpu->getSF(), cpu->getIF(), cpu->getDF(), cpu->getOF()
     );
@@ -97,7 +97,7 @@ void dump_all(vomit_cpu_t *cpu)
 
 	vlog(VM_DUMPMSG, "AX=%04X BX=%04X CX=%04X DX=%04X     SP=> %04X", cpu->regs.W.AX, cpu->regs.W.BX, cpu->regs.W.CX, cpu->regs.W.DX, *(stacky++));
 	vlog(VM_DUMPMSG, "SP=%04X BP=%04X SI=%04X DI=%04X          %04X", cpu->regs.W.SP, cpu->regs.W.BP, cpu->regs.W.SI, cpu->regs.W.DI, *(stacky++));
-	vlog(VM_DUMPMSG, "CS=%04X DS=%04X ES=%04X SS=%04X          %04X", cpu->CS, cpu->DS, cpu->ES, cpu->SS, *(stacky++) );
+	vlog(VM_DUMPMSG, "CS=%04X DS=%04X ES=%04X SS=%04X          %04X", cpu->getCS(), cpu->DS, cpu->ES, cpu->SS, *(stacky++) );
 	vlog(VM_DUMPMSG, "C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u          %04X", cpu->getCF(), cpu->getPF(), cpu->getAF(), cpu->getZF(), cpu->getSF(), cpu->getIF(), cpu->getDF(), cpu->getOF(), *(stacky++));
 
 	vlog(VM_DUMPMSG, "  -  (%02X %02X%02X%02X%02X%02X)", csip[0], csip[1], csip[2], csip[3], csip[4], csip[5]);

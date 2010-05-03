@@ -178,11 +178,12 @@ unspeakable_abomination()
             }
             else if( !reloading && !strcmp( curtok, "entry" ))
             {
+                WORD entry_cs, entry_ip;
                 curtok = strtok(NULL, ": \t\n");
-                g_cpu->CS = (word)strtol(curtok, NULL, 16);
+                entry_cs = (WORD)strtol(curtok, NULL, 16);
                 curtok = strtok(NULL, " \t\n");
-                g_cpu->IP = (word)strtol(curtok, NULL, 16);
-                vomit_cpu_jump(g_cpu, g_cpu->CS, g_cpu->IP);
+                entry_ip = (WORD)strtol(curtok, NULL, 16);
+                vomit_cpu_jump(g_cpu, entry_cs, entry_ip);
             }
             else if( !reloading && !strcmp( curtok, "addint" ))
             {

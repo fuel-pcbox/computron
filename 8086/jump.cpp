@@ -80,23 +80,23 @@ void _CALL_imm16_imm16(vomit_cpu_t *cpu)
 {
     WORD newip = vomit_cpu_pfq_getword(cpu);
     WORD segment = vomit_cpu_pfq_getword(cpu);
-    vomit_cpu_push(cpu, cpu->CS);
-    vomit_cpu_push(cpu, cpu->IP);
+    vomit_cpu_push(cpu, cpu->getCS());
+    vomit_cpu_push(cpu, cpu->getIP());
     vomit_cpu_jump(cpu, segment, newip);
 }
 
 void _CALL_FAR_mem16(vomit_cpu_t *cpu)
 {
     DWORD value = vomit_cpu_modrm_read32(cpu, cpu->rmbyte);
-    vomit_cpu_push(cpu, cpu->CS);
-    vomit_cpu_push(cpu, cpu->IP);
+    vomit_cpu_push(cpu, cpu->getCS());
+    vomit_cpu_push(cpu, cpu->getIP());
     vomit_cpu_jump(cpu, MSW(value), LSW(value));
 }
 
 void _CALL_RM16(vomit_cpu_t *cpu)
 {
     WORD value = vomit_cpu_modrm_read16(cpu, cpu->rmbyte);
-    vomit_cpu_push(cpu, cpu->IP);
+    vomit_cpu_push(cpu, cpu->getIP());
     vomit_cpu_jump_absolute16(cpu, value);
 }
 
