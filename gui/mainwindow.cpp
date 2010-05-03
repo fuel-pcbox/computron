@@ -176,7 +176,7 @@ void MainWindow::slotPauseMachine()
 
     d->screen->setTinted(true);
 
-    Q_ASSERT(d->worker);
+    VM_ASSERT(d->worker);
     d->worker->stopMachine();
 }
 
@@ -188,7 +188,7 @@ void MainWindow::slotStopMachine()
 
     d->screen->setTinted(true);
 
-    Q_ASSERT(d->worker);
+    VM_ASSERT(d->worker);
     d->worker->stopMachine();
 }
 
@@ -200,13 +200,13 @@ void MainWindow::slotStartMachine()
 
     d->screen->setTinted(false);
 
-    Q_ASSERT(d->worker);
+    VM_ASSERT(d->worker);
     d->worker->startMachine();
 }
 
 void MainWindow::slotRebootMachine()
 {
-    Q_ASSERT(d->worker);
+    VM_ASSERT(d->worker);
     d->worker->rebootMachine();
 }
 

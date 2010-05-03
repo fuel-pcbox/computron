@@ -5,7 +5,6 @@
 
 #include "vomit.h"
 #include "debug.h"
-#include <assert.h>
 
 void _MOV_RM8_imm8(vomit_cpu_t *cpu)
 {
@@ -25,7 +24,7 @@ void _MOV_RM16_seg(vomit_cpu_t *cpu)
 {
     BYTE rm = vomit_cpu_pfq_getbyte(cpu);
 
-    assert(rmreg(rm) >= 0 && rmreg(rm) <= 5);
+    VM_ASSERT(rmreg(rm) >= 0 && rmreg(rm) <= 5);
 
     vomit_cpu_modrm_write16(cpu, rm, *cpu->tseg[rmreg(rm)]);
 
@@ -40,7 +39,7 @@ void _MOV_seg_RM16(vomit_cpu_t *cpu)
 {
     BYTE rm = vomit_cpu_pfq_getbyte(cpu);
 
-    assert(rmreg(rm) >= 0 && rmreg(rm) <= 5);
+    VM_ASSERT(rmreg(rm) >= 0 && rmreg(rm) <= 5);
 
     *cpu->tseg[rmreg(rm)] = vomit_cpu_modrm_read16(cpu, rm);
 

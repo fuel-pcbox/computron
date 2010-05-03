@@ -295,14 +295,14 @@ WORD VgaMemory::read16(DWORD address)
 
 BYTE *VgaMemory::plane(int index) const
 {
-    Q_ASSERT(d);
-    Q_ASSERT(index >= 0 && index <= 3);
+    VM_ASSERT(d);
+    VM_ASSERT(index >= 0 && index <= 3);
     return d->plane[index];
 }
 
 void VgaMemory::syncPalette()
 {
-    Q_ASSERT(d);
+    VM_ASSERT(d);
     d->synchronizeColors();
 }
 
@@ -319,26 +319,26 @@ QImage *VgaMemory::modeImage(BYTE mode) const
 
 bool VgaMemory::isDirty() const
 {
-    Q_ASSERT(d);
+    VM_ASSERT(d);
     return d->dirty;
 }
 
 QRect VgaMemory::dirtyRect() const
 {
-    Q_ASSERT(d);
+    VM_ASSERT(d);
     return d->dirtyRect;
 }
 
 void VgaMemory::clearDirty()
 {
-    Q_ASSERT(d);
+    VM_ASSERT(d);
     d->dirtyRect = QRect();
     d->dirty = false;
 }
 
 void VgaMemory::setDirty()
 {
-    Q_ASSERT(d);
+    VM_ASSERT(d);
     d->dirtyRect = QRect(0, 0, 640, 480);
     d->dirty = true;
 }

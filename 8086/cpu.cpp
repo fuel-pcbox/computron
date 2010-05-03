@@ -508,7 +508,7 @@ void vomit_cpu_set_interrupt(vomit_cpu_t *cpu, BYTE isr, WORD segment, WORD offs
 
 bool VCpu::evaluate(BYTE condition_code)
 {
-    Q_ASSERT(condition_code <= 0xF);
+    VM_ASSERT(condition_code <= 0xF);
 
     switch (condition_code) {
     case  0: return this->OF;                            /* O          */
