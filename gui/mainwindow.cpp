@@ -4,6 +4,7 @@
 #include "screen.h"
 #include "memview.h"
 #include "codeview.h"
+#include "debug.h"
 #include <QToolBar>
 #include <QAction>
 #include <QFileDialog>
