@@ -15,12 +15,12 @@ static touttab vm_ioh_out[0x10000];
 
 void _OUT_imm8_AL(vomit_cpu_t *cpu)
 {
-    vomit_cpu_out(cpu, vomit_cpu_pfq_getbyte(cpu), cpu->regs.B.AL);
+    vomit_cpu_out(cpu, cpu->fetchOpcodeByte(), cpu->regs.B.AL);
 }
 
 void _OUT_imm8_AX(vomit_cpu_t *cpu)
 {
-    WORD port = vomit_cpu_pfq_getbyte(cpu);
+    WORD port = cpu->fetchOpcodeByte();
     vomit_cpu_out(cpu, port, cpu->regs.B.AL );
     vomit_cpu_out(cpu, port + 1, cpu->regs.B.AH);
 }
@@ -64,12 +64,12 @@ void _OUTSW(vomit_cpu_t *cpu)
 
 void _IN_AL_imm8(vomit_cpu_t *cpu)
 {
-    cpu->regs.B.AL = vomit_cpu_in(cpu, vomit_cpu_pfq_getbyte(cpu));
+    cpu->regs.B.AL = vomit_cpu_in(cpu, cpu->fetchOpcodeByte());
 }
 
 void _IN_AX_imm8(vomit_cpu_t *cpu)
 {
-    WORD port = vomit_cpu_pfq_getbyte(cpu);
+    WORD port = cpu->fetchOpcodeByte();
     cpu->regs.B.AL = vomit_cpu_in(cpu, port);
     cpu->regs.B.AH = vomit_cpu_in(cpu, port + 1);
 }

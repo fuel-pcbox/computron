@@ -163,12 +163,25 @@ unspeakable_abomination()
                 drv_sectsize[ldrv] = 512;
                 drv_status[ldrv] = 1;
                 drv_sectors[ldrv] = (megabytes * 1048576) / drv_sectsize[ldrv];
-            }
-            else if( !reloading && !strcmp( curtok, "cpu" ))
-            {
-                curtok = strtok(NULL, " \t\n");
-                g_cpu->type = (word)(strtol(curtok, NULL, 10));
-                vlog( VM_INITMSG, "Setting CPU type to %d", g_cpu->type );
+            } else if(!reloading && !strcmp(curtok, "cpu")) {
+                curtok = strtok(0, " \t\n");
+                int type = strtol(curtok, 0, 10);
+                switch (type) {
+                    case 0:
+                        g_cpu->setType(VCpu::Intel8086);
+                        break;
+                    case 1:
+                        g_cpu->setType(VCpu::Intel80186);
+                        break;
+                    case 2:
+                        g_cpu->setType(VCpu::Intel80286);
+                        break;
+                    default:
+                        vlog(VM_ALERT, "Unknown CPU type %d", type);
+                        break;
+                }
+
+                vlog(VM_INITMSG, "Setting CPU type to %d", type);
             }
             else if( !reloading && !strcmp( curtok, "memory" ))
             {
@@ -183,7 +196,7 @@ unspeakable_abomination()
                 entry_cs = (WORD)strtol(curtok, NULL, 16);
                 curtok = strtok(NULL, " \t\n");
                 entry_ip = (WORD)strtol(curtok, NULL, 16);
-                vomit_cpu_jump(g_cpu, entry_cs, entry_ip);
+                g_cpu->jump(entry_cs, entry_ip);
             }
             else if( !reloading && !strcmp( curtok, "addint" ))
             {

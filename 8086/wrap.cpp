@@ -9,7 +9,7 @@
 
 void _wrap_0x80(vomit_cpu_t *cpu)
 {
-    cpu->rmbyte = vomit_cpu_pfq_getbyte(cpu);
+    cpu->rmbyte = cpu->fetchOpcodeByte();
     switch(rmreg(cpu->rmbyte)) {
     case 0: _ADD_RM8_imm8(cpu); break;
     case 1:  _OR_RM8_imm8(cpu); break;
@@ -24,7 +24,7 @@ void _wrap_0x80(vomit_cpu_t *cpu)
 
 void _wrap_0x81(vomit_cpu_t *cpu)
 {
-    cpu->rmbyte = vomit_cpu_pfq_getbyte(cpu);
+    cpu->rmbyte = cpu->fetchOpcodeByte();
     switch(rmreg(cpu->rmbyte)) {
     case 0: _ADD_RM16_imm16(cpu); break;
     case 1:  _OR_RM16_imm16(cpu); break;
@@ -39,7 +39,7 @@ void _wrap_0x81(vomit_cpu_t *cpu)
 
 void _wrap_0x83(vomit_cpu_t *cpu)
 {
-    cpu->rmbyte = vomit_cpu_pfq_getbyte(cpu);
+    cpu->rmbyte = cpu->fetchOpcodeByte();
     switch(rmreg(cpu->rmbyte)) {
     case 0: _ADD_RM16_imm8(cpu); break;
     case 1:  _OR_RM16_imm8(cpu); break;
@@ -54,7 +54,7 @@ void _wrap_0x83(vomit_cpu_t *cpu)
 
 void _wrap_0x8F(vomit_cpu_t *cpu)
 {
-    cpu->rmbyte = vomit_cpu_pfq_getbyte(cpu);
+    cpu->rmbyte = cpu->fetchOpcodeByte();
     switch(rmreg(cpu->rmbyte)) {
     case 0: _POP_RM16(cpu); break;
     default:
@@ -64,9 +64,9 @@ void _wrap_0x8F(vomit_cpu_t *cpu)
 
 void _wrap_0xC0(vomit_cpu_t *cpu)
 {
-    BYTE rm = vomit_cpu_pfq_getbyte(cpu);
+    BYTE rm = cpu->fetchOpcodeByte();
     BYTE value = vomit_cpu_modrm_read8(cpu, rm);
-    BYTE imm = vomit_cpu_pfq_getbyte(cpu);
+    BYTE imm = cpu->fetchOpcodeByte();
 
     switch (rmreg(rm)) {
     case 0: vomit_cpu_modrm_update8(cpu, cpu_rol(cpu, value, imm, 8)); break;
@@ -82,9 +82,9 @@ void _wrap_0xC0(vomit_cpu_t *cpu)
 
 void _wrap_0xC1(vomit_cpu_t *cpu)
 {
-    BYTE rm = vomit_cpu_pfq_getbyte(cpu);
+    BYTE rm = cpu->fetchOpcodeByte();
     WORD value = vomit_cpu_modrm_read16(cpu, rm );
-    BYTE imm = vomit_cpu_pfq_getbyte(cpu);
+    BYTE imm = cpu->fetchOpcodeByte();
 
     switch (rmreg(rm)) {
     case 0: vomit_cpu_modrm_update16(cpu, cpu_rol(cpu, value, imm, 16)); break;
@@ -101,7 +101,7 @@ void _wrap_0xC1(vomit_cpu_t *cpu)
 
 void _wrap_0xD0(vomit_cpu_t *cpu)
 {
-    BYTE rm = vomit_cpu_pfq_getbyte(cpu);
+    BYTE rm = cpu->fetchOpcodeByte();
     BYTE value = vomit_cpu_modrm_read8(cpu, rm);
 
     switch (rmreg(rm)) {
@@ -119,7 +119,7 @@ void _wrap_0xD0(vomit_cpu_t *cpu)
 
 void _wrap_0xD1(vomit_cpu_t *cpu)
 {
-    BYTE rm = vomit_cpu_pfq_getbyte(cpu);
+    BYTE rm = cpu->fetchOpcodeByte();
     WORD value = vomit_cpu_modrm_read16(cpu, rm);
 
     switch (rmreg(rm)) {
@@ -137,7 +137,7 @@ void _wrap_0xD1(vomit_cpu_t *cpu)
 
 void _wrap_0xD2(vomit_cpu_t *cpu)
 {
-    byte rm = vomit_cpu_pfq_getbyte(cpu);
+    byte rm = cpu->fetchOpcodeByte();
     byte value = vomit_cpu_modrm_read8(cpu, rm);
 
     switch (rmreg(rm)) {
@@ -155,7 +155,7 @@ void _wrap_0xD2(vomit_cpu_t *cpu)
 
 void _wrap_0xD3(vomit_cpu_t *cpu)
 {
-    byte rm = vomit_cpu_pfq_getbyte(cpu);
+    byte rm = cpu->fetchOpcodeByte();
     word value = vomit_cpu_modrm_read16(cpu, rm);
 
     switch (rmreg(rm)) {
@@ -173,7 +173,7 @@ void _wrap_0xD3(vomit_cpu_t *cpu)
 
 void _wrap_0xF6(vomit_cpu_t *cpu)
 {
-    cpu->rmbyte = vomit_cpu_pfq_getbyte(cpu);
+    cpu->rmbyte = cpu->fetchOpcodeByte();
 
     switch (rmreg(cpu->rmbyte)) {
     case 0: _TEST_RM8_imm8(cpu); break;
@@ -190,7 +190,7 @@ void _wrap_0xF6(vomit_cpu_t *cpu)
 
 void _wrap_0xF7(vomit_cpu_t *cpu)
 {
-    cpu->rmbyte = vomit_cpu_pfq_getbyte(cpu);
+    cpu->rmbyte = cpu->fetchOpcodeByte();
 
     switch (rmreg(cpu->rmbyte)) {
     case 0: _TEST_RM16_imm16(cpu); break;
@@ -208,7 +208,7 @@ void _wrap_0xF7(vomit_cpu_t *cpu)
 
 void _wrap_0xFE(vomit_cpu_t *cpu)
 {
-    byte rm = vomit_cpu_pfq_getbyte(cpu);
+    byte rm = cpu->fetchOpcodeByte();
     byte value = vomit_cpu_modrm_read8(cpu, rm);
 
     word i = value;
@@ -235,7 +235,7 @@ void _wrap_0xFE(vomit_cpu_t *cpu)
 
 void _wrap_0xFF(vomit_cpu_t *cpu)
 {
-    cpu->rmbyte = vomit_cpu_pfq_getbyte(cpu);
+    cpu->rmbyte = cpu->fetchOpcodeByte();
     switch (rmreg(cpu->rmbyte)) {
     case 0: _INC_RM16(cpu); break;
     case 1: _DEC_RM16(cpu); break;

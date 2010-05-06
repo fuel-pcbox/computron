@@ -8,13 +8,13 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-void _NOP(vomit_cpu_t *cpu)
+void _NOP(vomit_cpu_t *)
 {
 }
 
 void _HLT(vomit_cpu_t *cpu)
 {
-    cpu->state = CPU_HALTED;
+    cpu->setState(VCpu::Halted);
     vlog(VM_CPUMSG, "%04X:%04X Halted", cpu->base_CS, cpu->base_IP);
 }
 
@@ -26,28 +26,28 @@ void _XLAT(vomit_cpu_t *cpu)
 void _CS(vomit_cpu_t *cpu)
 {
     SET_SEGMENT_PREFIX(cpu, CS);
-    cpu->opcode_handler[vomit_cpu_pfq_getbyte(cpu)](cpu);
+    cpu->opcode_handler[cpu->fetchOpcodeByte()](cpu);
     RESET_SEGMENT_PREFIX(cpu);
 }
 
 void _DS(vomit_cpu_t *cpu)
 {
     SET_SEGMENT_PREFIX(cpu, DS);
-    cpu->opcode_handler[vomit_cpu_pfq_getbyte(cpu)](cpu);
+    cpu->opcode_handler[cpu->fetchOpcodeByte()](cpu);
     RESET_SEGMENT_PREFIX(cpu);
 }
 
 void _ES(vomit_cpu_t *cpu)
 {
     SET_SEGMENT_PREFIX(cpu, ES);
-    cpu->opcode_handler[vomit_cpu_pfq_getbyte(cpu)](cpu);
+    cpu->opcode_handler[cpu->fetchOpcodeByte()](cpu);
     RESET_SEGMENT_PREFIX(cpu);
 }
 
 void _SS(vomit_cpu_t *cpu)
 {
     SET_SEGMENT_PREFIX(cpu, SS);
-    cpu->opcode_handler[vomit_cpu_pfq_getbyte(cpu)](cpu);
+    cpu->opcode_handler[cpu->fetchOpcodeByte()](cpu);
     RESET_SEGMENT_PREFIX(cpu);
 }
 
@@ -72,7 +72,7 @@ void _XCHG_AX_reg16(vomit_cpu_t *cpu)
 
 void _XCHG_reg8_RM8(vomit_cpu_t *cpu)
 {
-    BYTE rm = vomit_cpu_pfq_getbyte(cpu);
+    BYTE rm = cpu->fetchOpcodeByte();
     BYTE &reg(*cpu->treg8[rmreg(rm)]);
 
     BYTE value = vomit_cpu_modrm_read8(cpu, rm);
@@ -83,7 +83,7 @@ void _XCHG_reg8_RM8(vomit_cpu_t *cpu)
 
 void _XCHG_reg16_RM16(vomit_cpu_t *cpu)
 {
-    BYTE rm = vomit_cpu_pfq_getbyte(cpu);
+    BYTE rm = cpu->fetchOpcodeByte();
     WORD value = vomit_cpu_modrm_read16(cpu, rm);
     WORD tmp = *cpu->treg16[rmreg(rm)];
     *cpu->treg16[rmreg(rm)] = value;

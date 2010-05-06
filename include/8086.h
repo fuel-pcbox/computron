@@ -1,14 +1,6 @@
 #ifndef __8086_h__
 #define __8086_h__
 
-#define CPU_DEAD            0
-#define CPU_ALIVE            1
-#define CPU_HALTED            2
-
-#define INTEL_8086          0
-#define INTEL_80186         1
-#define INTEL_80286         2
-
 #define rmreg(b) (b>>3&7)    /* Extracts RegID from RM byte. */
 #define MODRM_ISREG(b) (((b)&0xC0)==0xC0)
 
@@ -22,6 +14,8 @@
 
 #define SET_SEGMENT_PREFIX(cpu, segment) do { (cpu)->SegmentPrefix = (cpu)->segment; (cpu)->CurrentSegment = &(cpu)->SegmentPrefix; } while(0);
 #define RESET_SEGMENT_PREFIX(cpu) do { (cpu)->CurrentSegment = &(cpu)->DS; } while(0);
+
+#define CPU_INSNS_PER_PIT_IRQ 400000
 
 typedef void (*vomit_opcode_handler) (struct __vomit_cpu_t *);
 
@@ -92,8 +86,6 @@ typedef struct __vomit_cpu_t {
     } regs;
     WORD CS, DS, ES, SS, FS, GS, SegmentPrefix, *CurrentSegment;
     WORD IP;
-    BYTE type;
-    BYTE state;
 
     WORD base_CS;
     WORD base_IP;
@@ -107,12 +99,6 @@ typedef struct __vomit_cpu_t {
     /* RAM */
     BYTE *memory;
 
-    /* This points to the base of CS for fast opcode fetches. */
-    BYTE *code_memory;
-
-    /* Cycle counter. May wrap arbitrarily. */
-    DWORD pit_counter;
-
     WORD *treg16[8];
     BYTE *treg8[8];
     WORD *tseg[8];
@@ -120,9 +106,9 @@ typedef struct __vomit_cpu_t {
     vomit_opcode_handler opcode_handler[0x100];
 
 #ifdef VOMIT_PREFETCH_QUEUE
-    BYTE *pfq;
-    BYTE pfq_current;
-    BYTE pfq_size;
+    BYTE *m_prefetchQueue;
+    BYTE m_prefetchQueueIndex;
+    BYTE m_prefetchQueueSize;
 #endif
 
 #ifndef __cplusplus
@@ -169,7 +155,27 @@ typedef struct __vomit_cpu_t {
     WORD getCS() const { return this->CS; }
     WORD getIP() const { return this->IP; }
 
+    void jump(WORD segment, WORD offset);
+
     void exec();
+
+#ifdef VOMIT_PREFETCH_QUEUE
+    void flushFetchQueue();
+    BYTE fetchOpcodeByte();
+    WORD fetchOpcodeWord();
+#else
+    void flushFetchQueue() {}
+    BYTE fetchOpcodeByte() { return m_codeMemory[this->IP++]; }
+    WORD fetchOpcodeWord()
+    {
+        WORD w = *(WORD *)(&m_codeMemory[getIP()]);
+#ifdef VOMIT_BIG_ENDIAN
+        w = V_BYTESWAP(w);
+#endif
+        this->IP += 2;
+        return w;
+    }
+#endif
 
     BYTE *memoryPointer(WORD segment, WORD offset) { return &this->memory[FLAT(segment, offset)]; }
 
@@ -190,32 +196,51 @@ typedef struct __vomit_cpu_t {
 
     VgaMemory *vgaMemory;
 
-    // TODO: make private
-    BYTE *codeMemory() { return this->code_memory; }
+    enum State { Dead, Alive, Halted };
+    State state() const { return m_state; }
+    void setState(State s) { m_state = s; }
+
+    enum Type { Intel8086, Intel80186, Intel80286 };
+    Type type() const { return m_type; }
+    void setType(Type t) { m_type = t; }
+
+    /* TODO: make private */
+    BYTE *codeMemory() const { return m_codeMemory; }
+
+    /* TODO: actual PIT implementation.. */
+    bool tick()
+    {
+        if (--m_pitCountdown == 0) {
+            m_pitCountdown = CPU_INSNS_PER_PIT_IRQ;
+            return true;
+        } else {
+            return false;
+        }
+    }
 
 private:
+    /* This points to the base of CS for fast opcode fetches. */
+    BYTE *m_codeMemory;
+
     bool CF, DF, TF, PF, AF, ZF, SF, IF, OF;
+
+    State m_state;
+    Type m_type;
+
 #ifdef VOMIT_DEBUG
     bool m_inDebugger;
     bool m_debugOneStep;
 #endif
+
+    /* Cycle counter. May wrap arbitrarily. */
+    DWORD m_pitCountdown;
+
 } vomit_cpu_t;
 
 #define VCpu vomit_cpu_t
 
 extern VCpu *g_cpu;
 
-#ifdef VOMIT_PREFETCH_QUEUE
-void vomit_cpu_pfq_flush(vomit_cpu_t *cpu);
-BYTE vomit_cpu_pfq_getbyte(vomit_cpu_t *cpu);
-WORD vomit_cpu_pfq_getword(vomit_cpu_t *cpu);
-#else
-#define vomit_cpu_pfq_flush(cpu)
-#define vomit_cpu_pfq_getbyte(cpu) (cpu->code_memory[cpu->IP++])
-WORD vomit_cpu_pfq_getword(vomit_cpu_t *cpu);
-#endif
-
-void vomit_cpu_jump(vomit_cpu_t *cpu, word segment, word offset);
 void vomit_cpu_main(vomit_cpu_t *cpu);
 void vomit_cpu_jump_relative8(vomit_cpu_t *cpu, SIGNED_BYTE displacement);
 void vomit_cpu_jump_relative16(vomit_cpu_t *cpu, SIGNED_WORD displacement);

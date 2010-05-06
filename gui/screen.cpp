@@ -290,7 +290,15 @@ void Screen::paintEvent(QPaintEvent *e)
         setScreenSize(640, 480);
         QPainter wp(this);
         wp.setClipRegion(e->rect());
-        wp.drawImage(rect(), *d->cpu->vgaMemory->modeImage(0x12));
+
+        QImage *screenImage = d->cpu->vgaMemory->modeImage(0x12);
+
+        if (screenImage)
+            wp.drawImage(rect(), *screenImage);
+        else {
+            vlog(VM_VIDEOMSG, "No screen buffer yet for mode 0x%02X", currentVideoMode);
+            wp.fillRect(rect(), Qt::red);
+        }
 
         if (m_tinted) {
             wp.setOpacity( 0.3 );

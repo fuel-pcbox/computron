@@ -95,7 +95,7 @@ WORD cpu_mul8(vomit_cpu_t *cpu, BYTE acc, BYTE multi)
     cpu->mathFlags8(result, acc, multi);
 
     /* 8086 CPUs set ZF on zero result */
-    if (cpu->type == INTEL_8086)
+    if (cpu->type() == VCpu::Intel8086)
         cpu->setZF(result == 0);
 
     return result;
@@ -107,7 +107,7 @@ DWORD cpu_mul16(vomit_cpu_t *cpu, WORD acc, WORD multi)
     cpu->mathFlags16(result, acc, multi);
 
     /* 8086 CPUs set ZF on zero result */
-    if (cpu->type == INTEL_8086)
+    if (cpu->type() == VCpu::Intel8086)
         cpu->setZF(result == 0);
 
     return result;
@@ -224,8 +224,8 @@ void _IMUL_RM8(vomit_cpu_t *cpu)
 
 void _IMUL_reg16_RM16_imm8(vomit_cpu_t *cpu)
 {
-    BYTE rm = vomit_cpu_pfq_getbyte(cpu);
-    BYTE imm = vomit_cpu_pfq_getbyte(cpu);
+    BYTE rm = cpu->fetchOpcodeByte();
+    BYTE imm = cpu->fetchOpcodeByte();
     SIGNED_WORD value = (SIGNED_WORD)vomit_cpu_modrm_read16(cpu, rm);
     SIGNED_WORD result = cpu_imul16(cpu, value, imm);
 

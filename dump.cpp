@@ -10,10 +10,10 @@
 
 void dump_cpu(vomit_cpu_t *cpu)
 {
-    vlog(VM_DUMPMSG, "CPU is an Intel %s", cpu->type == 0 ? "8086" : "80186");
+    vlog(VM_DUMPMSG, "CPU is an Intel %s", cpu->type() == VCpu::Intel8086 ? "8086" : "80186");
     vlog(VM_DUMPMSG, "Memory size: %dK", cpu->memory_size);
 #ifdef VOMIT_PREFETCH_QUEUE
-    vlog(VM_DUMPMSG, "Prefetch queue: %d bytes", cpu->pfq_size);
+    vlog(VM_DUMPMSG, "Prefetch queue: %d bytes", cpu->m_prefetchQueueSize);
 #else
     vlog(VM_DUMPMSG, "Prefetch queue: off");
 #endif
@@ -84,13 +84,12 @@ void dump_all(vomit_cpu_t *cpu)
 	BYTE *csip = cpu->codeMemory();
 
 #ifdef VOMIT_PREFETCH_QUEUE
-	BYTE x = cpu->pfq_current;
+	BYTE x = cpu->m_prefetchQueueIndex;
 	BYTE dpfq[6];
-	BYTE i;
 
-	for (int i = 0; i < cpu->pfq_size; ++i) {
-		dpfq[i] = cpu->pfq[x++];
-		if (x == cpu->pfq_size)
+	for (int i = 0; i < cpu->m_prefetchQueueSize; ++i) {
+		dpfq[i] = cpu->m_prefetchQueue[x++];
+		if (x == cpu->m_prefetchQueueSize)
             x = 0;
 	}
 #endif

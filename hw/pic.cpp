@@ -171,7 +171,7 @@ void pic_service_irq(vomit_cpu_t *cpu)
 
     UPDATE_PENDING_REQUESTS;
 
-    cpu->state = CPU_ALIVE;
+    cpu->setState(VCpu::Alive);
 }
 
 void

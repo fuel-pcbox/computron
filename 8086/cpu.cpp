@@ -10,8 +10,6 @@
 #include "debug.h"
 #include "vga_memory.h"
 
-#define INSNS_PER_PIT_IRQ 400000
-
 VCpu *g_cpu = 0;
 unsigned int g_vomit_exit_main_loop = 0;
 
@@ -40,12 +38,12 @@ void VCpu::init()
 	this->vgaMemory = new VgaMemory(this);
 
 #ifdef VOMIT_PREFETCH_QUEUE
-    if (this->pfq)
-        free(this->pfq);
+    if (m_prefetchQueue)
+        free(m_prefetchQueue);
 
-    this->pfq_size = 4;
-    this->pfq = malloc(this->pfq_size);
-    this->pfq_current = 0;
+    m_prefetchQueueSize = 4;
+    m_prefetchQueue = new BYTE[m_prefetchQueueSize];
+    m_prefetchQueueIndex = 0;
 #endif
 
     this->treg16[REG_AX] = &this->regs.W.AX;
@@ -77,16 +75,12 @@ void VCpu::init()
 
     this->CurrentSegment = &this->DS;
 
-    vomit_cpu_jump(this, 0xF000, 0x0000);
+    jump(0xF000, 0x0000);
 
     setFlags(0x0200 | vomit_cpu_static_flags(this));
 
-    this->pit_counter = INSNS_PER_PIT_IRQ;
-    this->state = CPU_ALIVE;
-
-#ifdef VOMIT_PREFETCH_QUEUE
-    this->pfq = 0;
-#endif
+    m_pitCountdown = CPU_INSNS_PER_PIT_IRQ;
+    m_state = Alive;
 
 #ifdef VOMIT_DEBUG
     m_inDebugger = false;
@@ -289,8 +283,7 @@ void vomit_cpu_install_default_handlers(vomit_cpu_t *cpu)
     vomit_cpu_set_handler(cpu, 0xC0, 0xC0, _wrap_0xC0        );
     vomit_cpu_set_handler(cpu, 0xC1, 0xC1, _wrap_0xC1        );
 
-    if( cpu->type >= INTEL_80186 )
-    {
+    if (cpu->type() >= VCpu::Intel80186) {
         vomit_cpu_set_handler(cpu, 0x0F, 0x0F, _wrap_0x0F    );
         vomit_cpu_set_handler(cpu, 0x60, 0x60, _PUSHA        );
         vomit_cpu_set_handler(cpu, 0x61, 0x61, _POPA         );
@@ -315,13 +308,13 @@ void vomit_cpu_install_default_handlers(vomit_cpu_t *cpu)
 void VCpu::kill()
 {
 #ifdef VOMIT_PREFETCH_QUEUE
-    free(this->pfq);
-    this->pfq = 0;
+    delete [] m_prefetchQueue;
+    m_prefetchQueue = 0;
 #endif
 
     free(this->memory);
     this->memory = 0;
-    this->code_memory = 0;
+    m_codeMemory = 0;
 }
 
 void VCpu::exec()
@@ -330,15 +323,13 @@ void VCpu::exec()
     this->base_CS = getCS();
     this->base_IP = getIP();
 
-    this->opcode = vomit_cpu_pfq_getbyte(this);
+    this->opcode = fetchOpcodeByte();
     this->opcode_handler[this->opcode](this);
 }
 
 void vomit_cpu_main(vomit_cpu_t *cpu)
 {
-#ifdef VOMIT_PREFETCH_QUEUE
-    vomit_cpu_pfq_flush(cpu);
-#endif
+    cpu->flushFetchQueue();
 
     forever {
 
@@ -360,7 +351,7 @@ void vomit_cpu_main(vomit_cpu_t *cpu)
 #endif
 
         /* TODO: Refactor this to spin in a separate mainloop when halted. */
-        if (cpu->state == CPU_HALTED) {
+        if (cpu->state() == VCpu::Halted) {
             if (!cpu->getIF()) {
                 vlog(VM_ALERT, "%04X:%04X: Halted with IF=0", cpu->getCS(), cpu->getIP());
                 return;
@@ -393,9 +384,8 @@ void vomit_cpu_main(vomit_cpu_t *cpu)
             /* NOTE: jumpToInterruptHandler() just set IF=0. */
         }
 
-        if (!--cpu->pit_counter) {
-            cpu->pit_counter = INSNS_PER_PIT_IRQ;
-
+        /* HACK: Countdown towards fake PIT interrupt. */
+        if (cpu->tick()) {
             /* Raise the timer IRQ. This is ugly, I know. */
             irq(0);
         }
@@ -407,79 +397,73 @@ void vomit_cpu_main(vomit_cpu_t *cpu)
 }
 
 #ifdef VOMIT_PREFETCH_QUEUE
-/* vomit_cpu_pfq_getbyte() is a macro if !VOMIT_PREFETCH_QUEUE */
+/* flushFetchQueue() is a macro if !VOMIT_PREFETCH_QUEUE */
 
-BYTE vomit_cpu_pfq_getbyte(vomit_cpu_t *cpu)
+BYTE VCpu::fetchOpcodeByte()
 {
-    BYTE b = cpu->pfq[cpu->pfq_current];
-    cpu_pfq[cpu_pfq_current] = cpu->code_memory[cpu->IP + cpu->pfq_size];
-    if (++cpu_pfq_current == cpu->pfq_size)
-        cpu->pfq_current = 0;
-    ++cpu->IP;
+    BYTE b = m_prefetchQueue[m_prefetchQueueIndex];
+    m_prefetchQueue[m_prefetchQueueIndex] = m_codeMemory[getIP() + m_prefetchQueueSize];
+    if (++m_prefetchQueueIndex == m_prefetchQueueSize)
+        m_prefetchQueueIndex = 0;
+    ++this->IP;
     return b;
 }
-#endif
 
-WORD vomit_cpu_pfq_getword(vomit_cpu_t *cpu)
+WORD VCpu::fetchOpcodeWord()
 {
-#ifdef VOMIT_PREFETCH_QUEUE
-    WORD w = cpu->pfq[cpu->pfq_current];
-    cpu->pfq[cpu->pfq_current] = code_memory[cpu->IP + cpu->pfq_size];
-    if (++cpu->pfq_current == cpu->pfq_size)
-        cpu_pfq_current = 0;
-    w |= cpu->pfq[cpu->pfq_current] << 8;
-    ++cpu->IP;
-    cpu->pfq[cpu->pfq_current] = code_memory[cpu->IP + cpu->pfq_size];
-    if (++cpu->pfq_current == cpu->pfq_size)
-        cpu_pfq_current = 0;
-    ++cpu->IP;
+    WORD w = m_prefetchQueue[m_prefetchQueueIndex];
+    m_prefetchQueue[m_prefetchQueueIndex] = this->m_codeMemory[getIP() + m_prefetchQueueSize];
+    if (++m_prefetchQueueIndex == m_prefetchQueueSize)
+        m_prefetchQueueIndex = 0;
+    w |= m_prefetchQueue[m_prefetchQueueIndex] << 8;
+    ++this->IP;
+    m_prefetchQueue[m_prefetchQueueIndex] = this->m_codeMemory[getIP() + m_prefetchQueueSize];
+    if (++m_prefetchQueueIndex == m_prefetchQueueSize)
+        m_prefetchQueueIndex = 0;
+    ++this->IP;
     return w;
-#else
-    WORD w = *(word *)(&cpu->code_memory[cpu->IP]);
-#ifdef VOMIT_BIG_ENDIAN
-    w = V_BYTESWAP(w);
-#endif
-    cpu->IP += 2;
-    return w;
-#endif
 }
 
-#ifdef VOMIT_PREFETCH_QUEUE
-void vomit_cpu_pfq_flush()
+void VCpu::flushFetchQueue()
 {
+    VM_ASSERT(this);
+    VM_ASSERT(m_prefetchQueue);
+    VM_ASSERT(m_codeMemory);
+
     /* Flush the prefetch queue. MUST be done after all jumps/calls. */
-    cpu->pfq_current = 0;
-    for (int i = 0; i < cpu->pfq_size; ++i)
-        cpu->pfq[i] = code_memory[cpu->IP + i];
+    m_prefetchQueueIndex = 0;
+    for (int i = 0; i < m_prefetchQueueSize; ++i)
+        m_prefetchQueue[i] = m_codeMemory[getIP() + i];
 }
 #endif
 
 void vomit_cpu_jump_relative8(vomit_cpu_t *cpu, SIGNED_BYTE displacement)
 {
     cpu->IP += displacement;
-    vomit_cpu_pfq_flush();
+    cpu->flushFetchQueue();
 }
 
 void vomit_cpu_jump_relative16(vomit_cpu_t *cpu, SIGNED_WORD displacement)
 {
     cpu->IP += displacement;
-    vomit_cpu_pfq_flush();
+    cpu->flushFetchQueue();
 }
 
 void vomit_cpu_jump_absolute16(vomit_cpu_t *cpu, WORD address)
 {
     cpu->IP = address;
-    vomit_cpu_pfq_flush(cpu);
+    cpu->flushFetchQueue();
 }
 
-void vomit_cpu_jump(vomit_cpu_t *cpu, WORD segment, WORD offset)
+void VCpu::jump(WORD segment, WORD offset)
 {
     /* Jump to specified location. */
-    cpu->CS = segment;
-    cpu->IP = offset;
+    this->CS = segment;
+    this->IP = offset;
 
-    cpu->code_memory = cpu->memory + (segment << 4);
-    vomit_cpu_pfq_flush(cpu);
+    /* Point m_codeMemory to CS:0 for fast opcode fetching. */
+    m_codeMemory = this->memory + (segment << 4);
+    flushFetchQueue();
 }
 
 void VCpu::setFlags(WORD flags)

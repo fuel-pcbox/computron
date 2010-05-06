@@ -266,7 +266,7 @@ void vm_handleE6(vomit_cpu_t *cpu)
 		break;
 
 	case 0x0002:
-		cpu->regs.W.AX = cpu->type;
+		cpu->regs.W.AX = cpu->type();
 		break;
 
 	/* 0x3333: Is Drive Present?

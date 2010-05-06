@@ -8,7 +8,7 @@
 
 void _JCXZ_imm8(vomit_cpu_t *cpu)
 {
-    SIGNED_BYTE imm = vomit_cpu_pfq_getbyte(cpu);
+    SIGNED_BYTE imm = cpu->fetchOpcodeByte();
 
     if (cpu->regs.W.CX == 0) {
         vomit_cpu_jump_relative8(cpu, imm);
@@ -17,20 +17,20 @@ void _JCXZ_imm8(vomit_cpu_t *cpu)
 
 void _JMP_imm16(vomit_cpu_t *cpu)
 {
-    SIGNED_WORD imm = vomit_cpu_pfq_getword(cpu);
+    SIGNED_WORD imm = cpu->fetchOpcodeWord();
     vomit_cpu_jump_relative16(cpu, imm);
 }
 
 void _JMP_imm16_imm16(vomit_cpu_t *cpu)
 {
-    WORD newIP = vomit_cpu_pfq_getword(cpu);
-    WORD newCS = vomit_cpu_pfq_getword(cpu);
-    vomit_cpu_jump(cpu, newCS, newIP);
+    WORD newIP = cpu->fetchOpcodeWord();
+    WORD newCS = cpu->fetchOpcodeWord();
+    cpu->jump(newCS, newIP);
 }
 
 void _JMP_short_imm8(vomit_cpu_t *cpu)
 {
-    SIGNED_BYTE imm = vomit_cpu_pfq_getbyte(cpu);
+    SIGNED_BYTE imm = cpu->fetchOpcodeByte();
     vomit_cpu_jump_relative8(cpu, imm);
 }
 
@@ -42,12 +42,12 @@ void _JMP_RM16(vomit_cpu_t *cpu)
 void _JMP_FAR_mem16(vomit_cpu_t *cpu)
 {
     DWORD value = vomit_cpu_modrm_read32(cpu, cpu->rmbyte);
-    vomit_cpu_jump(cpu, MSW(value), LSW(value));
+    cpu->jump(MSW(value), LSW(value));
 }
 
 #define DO_JCC_imm8(name, condition) \
 void _ ## name ## _imm8(vomit_cpu_t *cpu) { \
-	SIGNED_BYTE imm = vomit_cpu_pfq_getbyte(cpu); \
+	SIGNED_BYTE imm = cpu->fetchOpcodeByte(); \
 	if( (condition) ) \
 		vomit_cpu_jump_relative8(cpu, imm); \
 }
@@ -71,18 +71,18 @@ DO_JCC_imm8( JG,   !((cpu->getSF() ^ cpu->getOF()) | cpu->getZF()) )
 
 void _CALL_imm16(vomit_cpu_t *cpu)
 {
-    SIGNED_WORD imm = vomit_cpu_pfq_getword(cpu);
+    SIGNED_WORD imm = cpu->fetchOpcodeWord();
     vomit_cpu_push(cpu, cpu->IP);
     vomit_cpu_jump_relative16(cpu, imm);
 }
 
 void _CALL_imm16_imm16(vomit_cpu_t *cpu)
 {
-    WORD newip = vomit_cpu_pfq_getword(cpu);
-    WORD segment = vomit_cpu_pfq_getword(cpu);
+    WORD newip = cpu->fetchOpcodeWord();
+    WORD segment = cpu->fetchOpcodeWord();
     vomit_cpu_push(cpu, cpu->getCS());
     vomit_cpu_push(cpu, cpu->getIP());
-    vomit_cpu_jump(cpu, segment, newip);
+    cpu->jump(segment, newip);
 }
 
 void _CALL_FAR_mem16(vomit_cpu_t *cpu)
@@ -90,7 +90,7 @@ void _CALL_FAR_mem16(vomit_cpu_t *cpu)
     DWORD value = vomit_cpu_modrm_read32(cpu, cpu->rmbyte);
     vomit_cpu_push(cpu, cpu->getCS());
     vomit_cpu_push(cpu, cpu->getIP());
-    vomit_cpu_jump(cpu, MSW(value), LSW(value));
+    cpu->jump(MSW(value), LSW(value));
 }
 
 void _CALL_RM16(vomit_cpu_t *cpu)
@@ -107,7 +107,7 @@ void _RET(vomit_cpu_t *cpu)
 
 void _RET_imm16(vomit_cpu_t *cpu)
 {
-    WORD imm = vomit_cpu_pfq_getword(cpu);
+    WORD imm = cpu->fetchOpcodeWord();
     vomit_cpu_jump_absolute16(cpu, vomit_cpu_pop(cpu));
     cpu->regs.W.SP += imm;
 }
@@ -115,13 +115,13 @@ void _RET_imm16(vomit_cpu_t *cpu)
 void _RETF(vomit_cpu_t *cpu)
 {
     WORD nip = vomit_cpu_pop(cpu);
-    vomit_cpu_jump(cpu, vomit_cpu_pop(cpu), nip);
+    cpu->jump(vomit_cpu_pop(cpu), nip);
 }
 
 void _RETF_imm16(vomit_cpu_t *cpu)
 {
     WORD nip = vomit_cpu_pop(cpu);
-    WORD imm = vomit_cpu_pfq_getword(cpu);
-    vomit_cpu_jump(cpu, vomit_cpu_pop(cpu), nip);
+    WORD imm = cpu->fetchOpcodeWord();
+    cpu->jump(vomit_cpu_pop(cpu), nip);
     cpu->regs.W.SP += imm;
 }

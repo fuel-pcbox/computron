@@ -139,14 +139,14 @@ WORD vomit_cpu_pop(vomit_cpu_t *cpu)
 
 void _LDS_reg16_mem16(vomit_cpu_t *cpu)
 {
-    BYTE rm = vomit_cpu_pfq_getbyte(cpu);
+    BYTE rm = cpu->fetchOpcodeByte();
     DWORD value = vomit_cpu_modrm_read32(cpu, rm);
     *cpu->treg16[rmreg(rm)] = LSW(value);
     cpu->DS = MSW(value);
 }
 void _LES_reg16_mem16(vomit_cpu_t *cpu)
 {
-    BYTE rm = vomit_cpu_pfq_getbyte(cpu);
+    BYTE rm = cpu->fetchOpcodeByte();
     DWORD value = vomit_cpu_modrm_read32(cpu, rm);
     *cpu->treg16[rmreg(rm)] = LSW(value);
     cpu->ES = MSW(value);

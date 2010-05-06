@@ -30,9 +30,9 @@ void vomit_cpu_setAF(vomit_cpu_t *cpu, DWORD result, WORD src, WORD dest)
 
 WORD vomit_cpu_static_flags(vomit_cpu_t *cpu)
 {
-    switch( cpu->type ) {
-    case INTEL_8086:
-    case INTEL_80186:
+    switch (cpu->type()) {
+    case VCpu::Intel8086:
+    case VCpu::Intel80186:
         return 0xF002;
     default:
         return 0x0000;

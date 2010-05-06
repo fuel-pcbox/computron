@@ -15,7 +15,7 @@ extern void bios_interrupt10();
 
 void _INT_imm8(vomit_cpu_t *cpu)
 {
-    BYTE isr = vomit_cpu_pfq_getbyte(cpu);
+    BYTE isr = cpu->fetchOpcodeByte();
     cpu->jumpToInterruptHandler(isr);
 }
 
@@ -37,7 +37,7 @@ void _IRET(vomit_cpu_t *cpu)
 {
     WORD nip = vomit_cpu_pop(cpu);
     WORD ncs = vomit_cpu_pop(cpu);
-    vomit_cpu_jump(cpu, ncs, nip);
+    cpu->jump(ncs, nip);
     cpu->setFlags(vomit_cpu_pop(cpu));
 }
 
@@ -74,5 +74,5 @@ void VCpu::jumpToInterruptHandler(int isr)
     WORD segment = (this->memory[isr * 4 + 3] << 8) | this->memory[isr * 4 + 2];
     WORD offset = (this->memory[isr * 4 + 1] << 8) | this->memory[isr * 4];
 
-    vomit_cpu_jump(this, segment, offset);
+    jump(segment, offset);
 }

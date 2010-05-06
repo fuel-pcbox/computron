@@ -9,7 +9,7 @@
 void _PUSH_reg16(vomit_cpu_t *cpu)
 {
     /* PUSH SP will use the value AFTER the push on Intel 8086. */
-    if (cpu->type == INTEL_8086 && (cpu->opcode & 7) == REG_SP) {
+    if (cpu->type() == VCpu::Intel8086 && (cpu->opcode & 7) == REG_SP) {
         vomit_cpu_push(cpu, cpu->regs.W.SP + 2);
     } else {
         vomit_cpu_push(cpu, *cpu->treg16[cpu->opcode & 7]);
@@ -41,10 +41,10 @@ void _POP_CS(vomit_cpu_t *cpu)
 {
     vlog(VM_ALERT, "%04X:%04X: 286+ instruction (or possibly POP CS...)", cpu->base_CS, cpu->base_IP);
 
-    (void) vomit_cpu_pfq_getbyte(cpu);
-    (void) vomit_cpu_pfq_getbyte(cpu);
-    (void) vomit_cpu_pfq_getbyte(cpu);
-    (void) vomit_cpu_pfq_getbyte(cpu);
+    (void) cpu->fetchOpcodeByte();
+    (void) cpu->fetchOpcodeByte();
+    (void) cpu->fetchOpcodeByte();
+    (void) cpu->fetchOpcodeByte();
 }
 void _POP_seg(vomit_cpu_t *cpu)
 {

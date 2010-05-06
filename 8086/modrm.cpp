@@ -79,7 +79,7 @@ DWORD vomit_cpu_modrm_read32(vomit_cpu_t *cpu, byte rmbyte)
 void _LEA_reg16_mem16(vomit_cpu_t *cpu)
 {
     WORD retv = 0x0000;
-    BYTE b = vomit_cpu_pfq_getbyte(cpu);
+    BYTE b = cpu->fetchOpcodeByte();
     switch (b & 0xC0) {
         case 0:
             switch(b & 0x07)
@@ -90,34 +90,34 @@ void _LEA_reg16_mem16(vomit_cpu_t *cpu)
                 case 3: retv = cpu->regs.W.BP+cpu->regs.W.DI; break;
                 case 4: retv = cpu->regs.W.SI; break;
                 case 5: retv = cpu->regs.W.DI; break;
-                case 6: retv = vomit_cpu_pfq_getword(cpu); break;
+                case 6: retv = cpu->fetchOpcodeWord(); break;
                 default: retv = cpu->regs.W.BX; break;
             }
             break;
         case 64:
             switch(b & 0x07)
             {
-                case 0: retv = cpu->regs.W.BX+cpu->regs.W.SI + signext(vomit_cpu_pfq_getbyte(cpu)); break;
-                case 1: retv = cpu->regs.W.BX+cpu->regs.W.DI + signext(vomit_cpu_pfq_getbyte(cpu)); break;
-                case 2: retv = cpu->regs.W.BP+cpu->regs.W.SI + signext(vomit_cpu_pfq_getbyte(cpu)); break;
-                case 3: retv = cpu->regs.W.BP+cpu->regs.W.DI + signext(vomit_cpu_pfq_getbyte(cpu)); break;
-                case 4: retv = cpu->regs.W.SI + signext(vomit_cpu_pfq_getbyte(cpu)); break;
-                case 5: retv = cpu->regs.W.DI + signext(vomit_cpu_pfq_getbyte(cpu)); break;
-                case 6: retv = cpu->regs.W.BP + signext(vomit_cpu_pfq_getbyte(cpu)); break;
-                default: retv = cpu->regs.W.BX + signext(vomit_cpu_pfq_getbyte(cpu)); break;
+                case 0: retv = cpu->regs.W.BX+cpu->regs.W.SI + signext(cpu->fetchOpcodeByte()); break;
+                case 1: retv = cpu->regs.W.BX+cpu->regs.W.DI + signext(cpu->fetchOpcodeByte()); break;
+                case 2: retv = cpu->regs.W.BP+cpu->regs.W.SI + signext(cpu->fetchOpcodeByte()); break;
+                case 3: retv = cpu->regs.W.BP+cpu->regs.W.DI + signext(cpu->fetchOpcodeByte()); break;
+                case 4: retv = cpu->regs.W.SI + signext(cpu->fetchOpcodeByte()); break;
+                case 5: retv = cpu->regs.W.DI + signext(cpu->fetchOpcodeByte()); break;
+                case 6: retv = cpu->regs.W.BP + signext(cpu->fetchOpcodeByte()); break;
+                default: retv = cpu->regs.W.BX + signext(cpu->fetchOpcodeByte()); break;
             }
             break;
         case 128:
             switch(b & 0x07)
             {
-                case 0: retv = cpu->regs.W.BX+cpu->regs.W.SI+vomit_cpu_pfq_getword(cpu); break;
-                case 1: retv = cpu->regs.W.BX+cpu->regs.W.DI+vomit_cpu_pfq_getword(cpu); break;
-                case 2: retv = cpu->regs.W.BP+cpu->regs.W.SI+vomit_cpu_pfq_getword(cpu); break;
-                case 3: retv = cpu->regs.W.BP+cpu->regs.W.DI+vomit_cpu_pfq_getword(cpu); break;
-                case 4: retv = cpu->regs.W.SI + vomit_cpu_pfq_getword(cpu); break;
-                case 5: retv = cpu->regs.W.DI + vomit_cpu_pfq_getword(cpu); break;
-                case 6: retv = cpu->regs.W.BP + vomit_cpu_pfq_getword(cpu); break;
-                default: retv = cpu->regs.W.BX + vomit_cpu_pfq_getword(cpu); break;
+                case 0: retv = cpu->regs.W.BX+cpu->regs.W.SI+cpu->fetchOpcodeWord(); break;
+                case 1: retv = cpu->regs.W.BX+cpu->regs.W.DI+cpu->fetchOpcodeWord(); break;
+                case 2: retv = cpu->regs.W.BP+cpu->regs.W.SI+cpu->fetchOpcodeWord(); break;
+                case 3: retv = cpu->regs.W.BP+cpu->regs.W.DI+cpu->fetchOpcodeWord(); break;
+                case 4: retv = cpu->regs.W.SI + cpu->fetchOpcodeWord(); break;
+                case 5: retv = cpu->regs.W.DI + cpu->fetchOpcodeWord(); break;
+                case 6: retv = cpu->regs.W.BP + cpu->fetchOpcodeWord(); break;
+                default: retv = cpu->regs.W.BX + cpu->fetchOpcodeWord(); break;
             }
             break;
         case 192:
@@ -145,7 +145,7 @@ void *vomit_cpu_modrm_resolve8(vomit_cpu_t *cpu, BYTE rmbyte)
                 case 3: DEFAULT_TO_SS; offset = cpu->regs.W.BP + cpu->regs.W.DI; break;
                 case 4: offset = cpu->regs.W.SI; break;
                 case 5: offset = cpu->regs.W.DI; break;
-                case 6: offset = vomit_cpu_pfq_getword(cpu); break;
+                case 6: offset = cpu->fetchOpcodeWord(); break;
                 default: offset = cpu->regs.W.BX; break;
             }
             s_last_modrm_segment = segment;
@@ -154,7 +154,7 @@ void *vomit_cpu_modrm_resolve8(vomit_cpu_t *cpu, BYTE rmbyte)
             break;
         case 0x40:
             s_last_is_register = 0;
-            offset = signext( vomit_cpu_pfq_getbyte(cpu) );
+            offset = signext( cpu->fetchOpcodeByte() );
             switch (rmbyte & 0x07) {
                 case 0: offset += cpu->regs.W.BX + cpu->regs.W.SI; break;
                 case 1: offset += cpu->regs.W.BX + cpu->regs.W.DI; break;
@@ -171,7 +171,7 @@ void *vomit_cpu_modrm_resolve8(vomit_cpu_t *cpu, BYTE rmbyte)
             break;
         case 0x80:
             s_last_is_register = 0;
-            offset = vomit_cpu_pfq_getword(cpu);
+            offset = cpu->fetchOpcodeWord();
             switch (rmbyte & 0x07) {
                 case 0: offset += cpu->regs.W.BX + cpu->regs.W.SI; break;
                 case 1: offset += cpu->regs.W.BX + cpu->regs.W.DI; break;
@@ -218,7 +218,7 @@ void * vomit_cpu_modrm_resolve16(vomit_cpu_t *cpu, BYTE rmbyte)
                 case 3: DEFAULT_TO_SS; offset = cpu->regs.W.BP + cpu->regs.W.DI; break;
                 case 4: offset = cpu->regs.W.SI; break;
                 case 5: offset = cpu->regs.W.DI; break;
-                case 6: offset = vomit_cpu_pfq_getword(cpu); break;
+                case 6: offset = cpu->fetchOpcodeWord(); break;
                 default: offset = cpu->regs.W.BX; break;
             }
             s_last_modrm_segment = segment;
@@ -227,7 +227,7 @@ void * vomit_cpu_modrm_resolve16(vomit_cpu_t *cpu, BYTE rmbyte)
             break;
         case 0x40:
             s_last_is_register = 0;
-            offset = signext( vomit_cpu_pfq_getbyte(cpu) );
+            offset = signext( cpu->fetchOpcodeByte() );
             switch (rmbyte & 0x07) {
                 case 0: offset += cpu->regs.W.BX + cpu->regs.W.SI; break;
                 case 1: offset += cpu->regs.W.BX + cpu->regs.W.DI; break;
@@ -244,7 +244,7 @@ void * vomit_cpu_modrm_resolve16(vomit_cpu_t *cpu, BYTE rmbyte)
             break;
         case 0x80:
             s_last_is_register = 0;
-            offset = vomit_cpu_pfq_getword(cpu);
+            offset = cpu->fetchOpcodeWord();
             switch (rmbyte & 0x07) {
                 case 0: offset += cpu->regs.W.BX + cpu->regs.W.SI; break;
                 case 1: offset += cpu->regs.W.BX + cpu->regs.W.DI; break;

@@ -3,7 +3,7 @@
  *
  */
 
-#define MASK_STEPS_IF_80286 if( cpu->type >= INTEL_80186 ) { steps &= 0x1F; }
+#define MASK_STEPS_IF_80286 if (cpu->type() >= VCpu::Intel80186) { steps &= 0x1F; }
 
 #include "vomit.h"
 #include "templates.h"

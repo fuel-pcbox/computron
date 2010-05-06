@@ -23,7 +23,7 @@ void _AAA(vomit_cpu_t *cpu)
 
 void _AAM(vomit_cpu_t *cpu)
 {
-    BYTE imm = vomit_cpu_pfq_getbyte(cpu);
+    BYTE imm = cpu->fetchOpcodeByte();
 
     if (imm == 0) {
         /* Exceptions return to offending IP. */
@@ -42,7 +42,7 @@ void _AAD(vomit_cpu_t *cpu)
 {
     BYTE tempAL = cpu->regs.B.AL;
     BYTE tempAH = cpu->regs.B.AH;
-    BYTE imm = vomit_cpu_pfq_getbyte(cpu);
+    BYTE imm = cpu->fetchOpcodeByte();
 
     cpu->regs.B.AL = (tempAL + (tempAH * imm)) & 0xFF;
     cpu->regs.B.AH = 0x00;

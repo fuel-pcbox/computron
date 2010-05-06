@@ -18,7 +18,7 @@ void _ESCAPE(vomit_cpu_t *cpu)
 
     //vm_exit(0);
 
-    BYTE rm = vomit_cpu_pfq_getbyte(cpu);
+    BYTE rm = cpu->fetchOpcodeByte();
     (void) vomit_cpu_modrm_read16(cpu, rm);
 
     return;

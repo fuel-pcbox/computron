@@ -9,11 +9,11 @@
 
 void _wrap_0x0F(vomit_cpu_t *cpu)
 {
-    BYTE op = vomit_cpu_pfq_getbyte(cpu);
+    BYTE op = cpu->fetchOpcodeByte();
     switch (op) {
     case 0x01:
     {
-        BYTE rm = vomit_cpu_pfq_getbyte(cpu);
+        BYTE rm = cpu->fetchOpcodeByte();
         (void) vomit_cpu_modrm_read16(cpu, rm);
         vlog(VM_ALERT, "Sliding by 0F 01 /%d\n", rmreg(rm));
         break;
@@ -30,7 +30,7 @@ void _wrap_0x0F(vomit_cpu_t *cpu)
 
 void _BOUND(vomit_cpu_t *cpu)
 {
-    BYTE rm = vomit_cpu_pfq_getbyte(cpu);
+    BYTE rm = cpu->fetchOpcodeByte();
     DWORD value = vomit_cpu_modrm_read32(cpu, rm);
     WORD index = *cpu->treg16[rmreg(rm)];
 
@@ -42,18 +42,18 @@ void _BOUND(vomit_cpu_t *cpu)
 
 void _PUSH_imm8(vomit_cpu_t *cpu)
 {
-    vomit_cpu_push(cpu, signext(vomit_cpu_pfq_getbyte(cpu)));
+    vomit_cpu_push(cpu, signext(cpu->fetchOpcodeByte()));
 }
 
 void _PUSH_imm16(vomit_cpu_t *cpu)
 {
-    vomit_cpu_push(cpu, vomit_cpu_pfq_getword(cpu));
+    vomit_cpu_push(cpu, cpu->fetchOpcodeWord());
 }
 
 void _ENTER(vomit_cpu_t *cpu)
 {
-    WORD Size = vomit_cpu_pfq_getword(cpu);
-    BYTE NestingLevel = vomit_cpu_pfq_getbyte(cpu) % 32;
+    WORD Size = cpu->fetchOpcodeWord();
+    BYTE NestingLevel = cpu->fetchOpcodeByte() % 32;
     WORD FrameTemp;
     vomit_cpu_push(cpu, cpu->regs.W.BP);
     FrameTemp = cpu->regs.W.SP;

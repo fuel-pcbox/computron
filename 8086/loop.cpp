@@ -9,7 +9,7 @@
 
 void _LOOP_imm8(vomit_cpu_t *cpu)
 {
-    SIGNED_BYTE disp = vomit_cpu_pfq_getbyte(cpu);
+    SIGNED_BYTE disp = cpu->fetchOpcodeByte();
     --cpu->regs.W.CX;
     if (cpu->regs.W.CX)
         vomit_cpu_jump_relative8(cpu, disp);
@@ -17,7 +17,7 @@ void _LOOP_imm8(vomit_cpu_t *cpu)
 
 void _LOOPE_imm8(vomit_cpu_t *cpu)
 {
-    SIGNED_BYTE disp = vomit_cpu_pfq_getbyte(cpu);
+    SIGNED_BYTE disp = cpu->fetchOpcodeByte();
     --cpu->regs.W.CX;
     if (cpu->regs.W.CX && cpu->getZF())
         vomit_cpu_jump_relative8(cpu, disp);
@@ -25,7 +25,7 @@ void _LOOPE_imm8(vomit_cpu_t *cpu)
 
 void _LOOPNE_imm8(vomit_cpu_t *cpu)
 {
-    SIGNED_BYTE disp = vomit_cpu_pfq_getbyte(cpu);
+    SIGNED_BYTE disp = cpu->fetchOpcodeByte();
     --cpu->regs.W.CX;
     if (cpu->regs.W.CX && !cpu->getZF())
         vomit_cpu_jump_relative8(cpu, disp);
@@ -62,17 +62,17 @@ static void __rep(vomit_cpu_t *cpu, byte opcode, bool should_equal)
 
 	/* Recurse if this opcode was a segment prefix. */
 	/* FIXME: Infinite recursion IS possible here. */
-	__rep(cpu, vomit_cpu_pfq_getbyte(cpu), should_equal);
+	__rep(cpu, cpu->fetchOpcodeByte(), should_equal);
 }
 
 void _REP(vomit_cpu_t *cpu)
 {
-	__rep(cpu, vomit_cpu_pfq_getbyte(cpu), true);
+	__rep(cpu, cpu->fetchOpcodeByte(), true);
 	RESET_SEGMENT_PREFIX(cpu);
 }
 
 void _REPNE(vomit_cpu_t *cpu)
 {
-	__rep(cpu, vomit_cpu_pfq_getbyte(cpu), false);
+	__rep(cpu, cpu->fetchOpcodeByte(), false);
 	RESET_SEGMENT_PREFIX(cpu);
 }

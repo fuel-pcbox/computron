@@ -25,10 +25,9 @@ static byte rows();
 static void store_cursor( word cursor );
 static word load_cursor_word();
 static void set_dac_color_register();
-#if 0
 static void write_graphics_pixel_at_coordinate();
-#endif
 void load_cursor( byte *row, byte *column );
+static BYTE get_video_mode();
 
 void
 video_bios_init()
@@ -79,9 +78,7 @@ bios_interrupt10()
 #if 0
         case 0x0b: /*set_color_palette();*/ break;
 #endif
-#if 0
         case 0x0c: write_graphics_pixel_at_coordinate(); break;
-#endif
 #if 0
         case 0x0d: /*read_graphics_pixel_at_coordinate();*/ break;
 #endif
@@ -175,10 +172,9 @@ write_character_and_attribute_at_cursor()
     load_cursor( &row, &column );
     cursor = row * columns() + column;
 
-    if( g_cpu->memory[0x449] != 0x03 )
-    {
-        vlog( VM_VIDEOMSG, "Writing text to screen but not in mode 3.." );
-    }
+    if (get_video_mode() != 0x03)
+        vlog(VM_VIDEOMSG, "Writing text to screen but not in mode 3..");
+
     /* XXX: 0xB800 is hard-coded for now. */
     vomit_cpu_memory_write8(g_cpu, 0xB800, cursor << 1, g_cpu->regs.B.AL );
     vomit_cpu_memory_write8(g_cpu, 0xB800, (cursor << 1) + 1, g_cpu->regs.B.BL );
@@ -269,7 +265,7 @@ set_video_mode()
     byte mode = g_cpu->regs.B.AL;
     byte actual_mode = g_cpu->regs.B.AL & ~0x80;
 
-    byte last_mode = g_cpu->memory[0x449];
+    byte last_mode = get_video_mode();
 
     g_cpu->memory[0x449] = mode;
 
@@ -332,7 +328,7 @@ get_video_state()
     g_cpu->regs.B.BH = 0;
 
     /* Current video mode. */
-    g_cpu->regs.B.AL = g_cpu->memory[0x449];
+    g_cpu->regs.B.AL = get_video_mode();
 }
 
 void
@@ -499,27 +495,23 @@ set_dac_color_register()
 }
 
 
-#if 0
-
-void
-write_graphics_pixel_at_coordinate()
+void write_graphics_pixel_at_coordinate()
 {
     // AL = color value
     // BH = page#
     // CX = column
     // DX = row
 
-    if( g_cpu->memory[0x449] != 0x12 )
-    {
-        vlog( VM_ALERT, "Poking pixels in mode %02X, dunno how to handle that\n", g_cpu->memory[0x449] );
-        vm_exit( 1 );
+    if (get_video_mode() != 0x12) {
+        vlog(VM_ALERT, "Poking pixels in mode %02X, dunno how to handle that\n", get_video_mode());
+        vm_exit(1);
     }
 
     //vlog( VM_ALERT, "y = %03u, x = %03u, color = %02X\n", g_cpu->regs.W.DX, g_cpu->regs.W.CX, g_cpu->regs.B.AL );
-    extern byte vm_p0[];
-    extern byte vm_p1[];
-    extern byte vm_p2[];
-    extern byte vm_p3[];
+    BYTE *vm_p0 = g_cpu->vgaMemory->plane(0);
+    BYTE *vm_p1 = g_cpu->vgaMemory->plane(1);
+    BYTE *vm_p2 = g_cpu->vgaMemory->plane(2);
+    BYTE *vm_p3 = g_cpu->vgaMemory->plane(3);
 
     word offset = (g_cpu->regs.W.DX * 80) + (g_cpu->regs.W.CX / 8);
     byte bit = g_cpu->regs.W.CX % 8;
@@ -554,10 +546,10 @@ putpixel0D( word row, word column, byte pixel )
 
     //printf( "putpixel at %03u,%03u: %02X\n", row, column, pixel );
 
-    extern byte vm_p0[];
-    extern byte vm_p1[];
-    extern byte vm_p2[];
-    extern byte vm_p3[];
+    BYTE *vm_p0 = g_cpu->vgaMemory->plane(0);
+    BYTE *vm_p1 = g_cpu->vgaMemory->plane(1);
+    BYTE *vm_p2 = g_cpu->vgaMemory->plane(2);
+    BYTE *vm_p3 = g_cpu->vgaMemory->plane(3);
 
     word offset = (row * 40) + (g_cpu->regs.W.CX / 8);
     byte bit = g_cpu->regs.W.CX % 8;
@@ -582,15 +574,13 @@ putpixel0D( word row, word column, byte pixel )
     g_cpu->vgaMemory->setDirty();
 }
 
-#endif
-
 void
 vga_scrollup (byte x1, byte y1, byte x2, byte y2, byte num, byte attr) {
     byte x, y, i;
 
     byte *video_memory;
 
-    if( g_cpu->memory[0x449] == 0x0D || g_cpu->memory[0x449] == 0x12 )
+    if (get_video_mode() == 0x0D || get_video_mode() == 0x12)
         video_memory = g_cpu->memory + 0xB8000;
     else
         video_memory = g_cpu->memory + 0xB8000;
