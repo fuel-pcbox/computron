@@ -191,7 +191,7 @@ typedef struct __vomit_cpu_t {
     VgaMemory *vgaMemory;
 
     // TODO: make private
-    BYTE *codeMemory() { return this->memory; }
+    BYTE *codeMemory() { return this->code_memory; }
 
 private:
     bool CF, DF, TF, PF, AF, ZF, SF, IF, OF;
