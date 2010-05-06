@@ -53,12 +53,13 @@ WORD vomit_cpu_memory_read16(vomit_cpu_t *cpu, WORD segment, WORD offset)
 
     if (flat_address >= 0xA0000 && flat_address < 0xB0000)
 		return cpu->vgaMemory->read16(flat_address);
-#ifdef VOMIT_CORRECTNESS
-    if (off == 0xFFFF)
-        return cpu->memory[flat_address] | (cpu->memory[seg<<4]<<8);
-#endif
 
-    word w = *((word *)&cpu->memory[flat_address]);
+    // FIXME: This is wasted cycles on anything but 8086.
+    if (cpu->type() == VCpu::Intel8086 && offset == 0xFFFF) {
+        return cpu->memory[flat_address] | (cpu->memory[segment << 4] << 8);
+    }
+
+    WORD w = *((word *)&cpu->memory[flat_address]);
 #ifdef VOMIT_BIG_ENDIAN
     w = V_BYTESWAP(w);
 #endif
@@ -104,13 +105,13 @@ void vomit_cpu_memory_write16(vomit_cpu_t *cpu, WORD segment, WORD offset, WORD 
     }
 #endif
 
-#ifdef VOMIT_CORRECTNESS
-    if (off == 0xFFFF) {
-        cpu->memory[flat_address] = (BYTE)w;
-        cpu->memory[segment<<4] = (BYTE)(w>>8);
+    // FIXME: This is wasted cycles on anything but 8086.
+    if (cpu->type() == VCpu::Intel8086 && offset == 0xFFFF) {
+        cpu->memory[flat_address] = BYTE(value);
+        cpu->memory[segment << 4] = BYTE(value >> 8);
         return;
     }
-#endif
+
     if (flat_address >= 0xA0000 && flat_address < 0xB0000) {
 		cpu->vgaMemory->write16(flat_address, value);
     } else {
