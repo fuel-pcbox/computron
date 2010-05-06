@@ -42,12 +42,12 @@ void _BOUND(vomit_cpu_t *cpu)
 
 void _PUSH_imm8(vomit_cpu_t *cpu)
 {
-    vomit_cpu_push(cpu, signext(cpu->fetchOpcodeByte()));
+    cpu->push(signext(cpu->fetchOpcodeByte()));
 }
 
 void _PUSH_imm16(vomit_cpu_t *cpu)
 {
-    vomit_cpu_push(cpu, cpu->fetchOpcodeWord());
+    cpu->push(cpu->fetchOpcodeWord());
 }
 
 void _ENTER(vomit_cpu_t *cpu)
@@ -55,15 +55,15 @@ void _ENTER(vomit_cpu_t *cpu)
     WORD Size = cpu->fetchOpcodeWord();
     BYTE NestingLevel = cpu->fetchOpcodeByte() % 32;
     WORD FrameTemp;
-    vomit_cpu_push(cpu, cpu->regs.W.BP);
+    cpu->push(cpu->regs.W.BP);
     FrameTemp = cpu->regs.W.SP;
     if (NestingLevel != 0) {
         for (WORD i = 1; i <= (NestingLevel - 1); ++i) {
             cpu->regs.W.BP -= 2;
-            vomit_cpu_push(cpu, vomit_cpu_memory_read16(cpu, cpu->SS, cpu->regs.W.BP));
+            cpu->push(vomit_cpu_memory_read16(cpu, cpu->SS, cpu->regs.W.BP));
         }
     }
-    vomit_cpu_push(cpu, FrameTemp);
+    cpu->push(FrameTemp);
     cpu->regs.W.BP = FrameTemp;
     cpu->regs.W.SP = cpu->regs.W.BP - Size;
 }
@@ -71,30 +71,30 @@ void _ENTER(vomit_cpu_t *cpu)
 void _LEAVE(vomit_cpu_t *cpu)
 {
     cpu->regs.W.SP = cpu->regs.W.BP;
-    cpu->regs.W.BP = vomit_cpu_pop(cpu);
+    cpu->regs.W.BP = cpu->pop();
 }
 
 void _PUSHA(vomit_cpu_t *cpu)
 {
     WORD oldsp = cpu->regs.W.SP;
-    vomit_cpu_push(cpu, cpu->regs.W.AX);
-    vomit_cpu_push(cpu, cpu->regs.W.BX);
-    vomit_cpu_push(cpu, cpu->regs.W.CX);
-    vomit_cpu_push(cpu, cpu->regs.W.DX);
-    vomit_cpu_push(cpu, cpu->regs.W.BP);
-    vomit_cpu_push(cpu, oldsp);
-    vomit_cpu_push(cpu, cpu->regs.W.SI);
-    vomit_cpu_push(cpu, cpu->regs.W.DI);
+    cpu->push(cpu->regs.W.AX);
+    cpu->push(cpu->regs.W.BX);
+    cpu->push(cpu->regs.W.CX);
+    cpu->push(cpu->regs.W.DX);
+    cpu->push(cpu->regs.W.BP);
+    cpu->push(oldsp);
+    cpu->push(cpu->regs.W.SI);
+    cpu->push(cpu->regs.W.DI);
 }
 
 void _POPA(vomit_cpu_t *cpu)
 {
-    cpu->regs.W.DI = vomit_cpu_pop(cpu);
-    cpu->regs.W.SI = vomit_cpu_pop(cpu);
-    (void) vomit_cpu_pop(cpu);
-    cpu->regs.W.BP = vomit_cpu_pop(cpu);
-    cpu->regs.W.DX = vomit_cpu_pop(cpu);
-    cpu->regs.W.CX = vomit_cpu_pop(cpu);
-    cpu->regs.W.BX = vomit_cpu_pop(cpu);
-    cpu->regs.W.AX = vomit_cpu_pop(cpu);
+    cpu->regs.W.DI = cpu->pop();
+    cpu->regs.W.SI = cpu->pop();
+    (void) cpu->pop();
+    cpu->regs.W.BP = cpu->pop();
+    cpu->regs.W.DX = cpu->pop();
+    cpu->regs.W.CX = cpu->pop();
+    cpu->regs.W.BX = cpu->pop();
+    cpu->regs.W.AX = cpu->pop();
 }

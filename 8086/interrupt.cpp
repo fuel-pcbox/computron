@@ -1,11 +1,10 @@
-/* 8086/interrupt.c
+/* 8086/interrupt.cpp
  * Interrupt instructions
  *
  */
 
 #include "vomit.h"
 #include "debug.h"
-#include <stdio.h>
 
 #ifdef VOMIT_DOS_ON_LINUX_IDLE_HACK
 #include <sched.h>
@@ -35,10 +34,10 @@ void _INTO(vomit_cpu_t *cpu)
 
 void _IRET(vomit_cpu_t *cpu)
 {
-    WORD nip = vomit_cpu_pop(cpu);
-    WORD ncs = vomit_cpu_pop(cpu);
+    WORD nip = cpu->pop();
+    WORD ncs = cpu->pop();
     cpu->jump(ncs, nip);
-    cpu->setFlags(vomit_cpu_pop(cpu));
+    cpu->setFlags(cpu->pop());
 }
 
 void VCpu::jumpToInterruptHandler(int isr)
@@ -65,11 +64,11 @@ void VCpu::jumpToInterruptHandler(int isr)
         return;
     }
 
-    vomit_cpu_push(this, getFlags());
+    push(getFlags());
     setIF(0);
     setTF(0);
-    vomit_cpu_push(this, getCS());
-    vomit_cpu_push(this, getIP());
+    push(getCS());
+    push(getIP());
 
     WORD segment = (this->memory[isr * 4 + 3] << 8) | this->memory[isr * 4 + 2];
     WORD offset = (this->memory[isr * 4 + 1] << 8) | this->memory[isr * 4];

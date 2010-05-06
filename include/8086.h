@@ -177,6 +177,9 @@ typedef struct __vomit_cpu_t {
     }
 #endif
 
+    void push(WORD value);
+    WORD pop();
+
     BYTE *memoryPointer(WORD segment, WORD offset) { return &this->memory[FLAT(segment, offset)]; }
 
     WORD getFlags();
@@ -192,7 +195,7 @@ typedef struct __vomit_cpu_t {
     void cmpFlags8(DWORD result, BYTE dest, BYTE src);
     void cmpFlags16(DWORD result, WORD dest, WORD src);
 
-    BYTE readMemory8(DWORD flat_address) const;
+    BYTE readMemory8(DWORD address) const { return this->memory[address]; }
 
     VgaMemory *vgaMemory;
 
@@ -306,9 +309,6 @@ void vomit_cpu_modrm_update16(vomit_cpu_t *cpu, WORD value);
 
 void *vomit_cpu_modrm_resolve8(vomit_cpu_t *cpu, BYTE rm);
 void *vomit_cpu_modrm_resolve16(vomit_cpu_t *cpu, BYTE rm);
-
-void vomit_cpu_push(vomit_cpu_t *cpu, WORD value);
-WORD vomit_cpu_pop(vomit_cpu_t *cpu);
 
 BYTE vomit_cpu_memory_read8(vomit_cpu_t *cpu, WORD segment, WORD offset);
 WORD vomit_cpu_memory_read16(vomit_cpu_t *cpu, WORD segment, WORD offset);

@@ -515,11 +515,6 @@ bool VCpu::evaluate(BYTE condition_code)
     return 0;
 }
 
-BYTE VCpu::readMemory8(DWORD flat_address) const
-{
-    return this->memory[flat_address];
-}
-
 void _WAIT(vomit_cpu_t *cpu)
 {
     /* XXX: Do nothing? */

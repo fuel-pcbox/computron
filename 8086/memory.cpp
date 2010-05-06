@@ -5,7 +5,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 #include "vomit.h"
 #include "debug.h"
@@ -124,16 +123,16 @@ void vomit_cpu_memory_write16(vomit_cpu_t *cpu, WORD segment, WORD offset, WORD 
     }
 }
 
-void vomit_cpu_push(vomit_cpu_t *cpu, WORD value)
+void VCpu::push(WORD value)
 {
-    cpu->regs.W.SP -= 2;
-    vomit_cpu_memory_write16(cpu, cpu->SS, cpu->regs.W.SP, value);
+    this->regs.W.SP -= 2;
+    vomit_cpu_memory_write16(this, this->SS, this->regs.W.SP, value);
 }
 
-WORD vomit_cpu_pop(vomit_cpu_t *cpu)
+WORD VCpu::pop()
 {
-    WORD w = vomit_cpu_memory_read16(cpu, cpu->SS, cpu->regs.W.SP);
-    cpu->regs.W.SP += 2;
+    WORD w = vomit_cpu_memory_read16(this, this->SS, this->regs.W.SP);
+    this->regs.W.SP += 2;
     return w;
 }
 
