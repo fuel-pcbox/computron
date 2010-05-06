@@ -13,8 +13,6 @@ void _PUSH_SP(vomit_cpu_t *cpu)
      * do things that way.
      */
     cpu->push(cpu->regs.W.SP - 2);
-
-    vlog(VM_ALERT, "HAI!");
 }
 
 void _PUSH_reg16(vomit_cpu_t *cpu)
