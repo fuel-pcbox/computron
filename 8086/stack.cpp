@@ -6,14 +6,18 @@
 #include "vomit.h"
 #include "debug.h"
 
+void _PUSH_SP(vomit_cpu_t *cpu)
+{
+    /* PUSH SP will use the value of SP *after* pushing on Intel's 8086 and 80186.
+     * Since these are the only CPU's emulated by Vomit right now, we just
+     * do things that way.
+     */
+    cpu->push(cpu->regs.W.SP - 2);
+}
+
 void _PUSH_reg16(vomit_cpu_t *cpu)
 {
-    /* PUSH SP will use the value AFTER the push on Intel 8086. */
-    if (cpu->type() == VCpu::Intel8086 && (cpu->opcode & 7) == REG_SP) {
-        cpu->push(cpu->regs.W.SP + 2);
-    } else {
-        cpu->push(*cpu->treg16[cpu->opcode & 7]);
-    }
+    cpu->push(*cpu->treg16[cpu->opcode & 7]);
 }
 
 void

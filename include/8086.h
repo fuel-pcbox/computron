@@ -493,6 +493,7 @@ void _TEST_RM16_reg16(vomit_cpu_t *cpu);
 void _TEST_AX_imm16(vomit_cpu_t *cpu);
 void _TEST_AL_imm8(vomit_cpu_t *cpu);
 
+void _PUSH_SP(vomit_cpu_t *cpu);
 void _PUSH_reg16(vomit_cpu_t *cpu);
 void _PUSH_seg(vomit_cpu_t *cpu);
 void _PUSHF(vomit_cpu_t *cpu);

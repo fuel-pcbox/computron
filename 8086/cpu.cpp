@@ -283,6 +283,11 @@ void vomit_cpu_install_default_handlers(vomit_cpu_t *cpu)
     vomit_cpu_set_handler(cpu, 0xC0, 0xC0, _wrap_0xC0        );
     vomit_cpu_set_handler(cpu, 0xC1, 0xC1, _wrap_0xC1        );
 
+    if (cpu->type() == VCpu::Intel8086 || cpu->type() == VCpu::Intel80186) {
+        /* Specialized PUSH SP for Intel 8086/80186 */
+        vomit_cpu_set_handler(cpu, 0x54, 0x54, _PUSH_SP);
+    }
+
     if (cpu->type() >= VCpu::Intel80186) {
         vomit_cpu_set_handler(cpu, 0x0F, 0x0F, _wrap_0x0F    );
         vomit_cpu_set_handler(cpu, 0x60, 0x60, _PUSHA        );
