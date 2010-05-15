@@ -89,6 +89,7 @@ vlog_hook( int category, const char *format, va_list ap )
         case VM_DMAMSG: prefix = "dma";  break;
         case VM_KEYMSG: prefix = "keyb"; break;
         case VM_VOMCTL: prefix = "vomctl"; break;
+        case VLOG_CMOS: prefix = "cmos"; break;
     }
 
     if( prefix )

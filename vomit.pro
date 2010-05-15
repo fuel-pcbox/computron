@@ -25,6 +25,7 @@ HEADERS += gui/codeview.h \
            hw/iodevice.h \
            hw/vomctl.h \
            hw/vga_memory.h \
+           hw/cmos.h \
            include/186.h \
            include/8086.h \
            include/debug.h \
@@ -82,4 +83,5 @@ SOURCES += 186.cpp \
            hw/vga.cpp \
            hw/vomctl.cpp \
            hw/iodevice.cpp \
-           hw/vga_memory.cpp
+           hw/vga_memory.cpp \
+           hw/cmos.cpp

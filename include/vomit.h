@@ -34,6 +34,7 @@
 #define VM_DOSMSG       123
 #define VM_PICMSG       124
 #define VM_VOMCTL       125
+#define VLOG_CMOS       126
 
 typedef uint8_t byte;
 typedef uint16_t word;

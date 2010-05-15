@@ -46,6 +46,7 @@ vlog( int category, const char *format, ... )
 		case VM_FDCMSG: prefix = "fdc"; break;
 		case VM_DUMPMSG: show_on_stdout = false; break;
 		case VM_VOMCTL: prefix = "vomctl"; break;
+        case VLOG_CMOS: prefix = "cmos"; break;
 	}
 
 	if( s_vlog_handler && (show_on_stdout || category == VM_DUMPMSG) )
