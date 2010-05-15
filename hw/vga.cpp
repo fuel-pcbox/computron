@@ -227,12 +227,8 @@ void vga_setseq(vomit_cpu_t *, WORD, BYTE value)
     io_sequencer[current_sequencer] = value;
 }
 
-BYTE
-vga_status(vomit_cpu_t *, word)
+BYTE vga_status(vomit_cpu_t *, WORD)
 {
-    static bool last_bit0 = 0;
-    BYTE value;
-
     /*
      * 6845 - Port 3DA Status Register
      *
@@ -246,11 +242,7 @@ vga_status(vomit_cpu_t *, word)
      */
 
     /* 0000 1100 */
-    value = 0x0C;
-
-    /* Microsoft DEFRAG expects bit 0 to "blink", so we'll flip it between reads. */
-    /*last_bit0 = !last_bit0;
-    data |= last_bit0;*/
+    BYTE value = 0x0C;
 
     next_3c0_is_index = true;
 

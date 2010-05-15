@@ -57,40 +57,45 @@ video_bios_init()
     vga_write_register( 0x0B, 0x07 );
 }
 
-void
-bios_interrupt10()
+void bios_interrupt10()
 {
-    switch( g_cpu->regs.B.AH )
-    {
-        case 0x00: set_video_mode(); break;
-        case 0x01: set_cursor_type(); break;
-        case 0x02: set_cursor_position(); break;
-        case 0x03: get_cursor_position(); break;
-#if 0
-        case 0x04: read_light_pen(); break;
-#endif
-        case 0x05: select_active_display_page(); break;
-        case 0x06: scroll_active_page_up(); break;
-        case 0x07: scroll_active_page_down(); break;
-        case 0x08: read_character_and_attribute_at_cursor(); break;
-        case 0x09: write_character_and_attribute_at_cursor(); break;
-        case 0x0a: write_character_at_cursor(); break;
-#if 0
-        case 0x0b: /*set_color_palette();*/ break;
-#endif
-        case 0x0c: write_graphics_pixel_at_coordinate(); break;
-#if 0
-        case 0x0d: /*read_graphics_pixel_at_coordinate();*/ break;
-#endif
-        case 0x0e: write_text_in_teletype_mode(); break;
-        case 0x0f: get_video_state(); break;
-        case 0x12: video_subsystem_configuration(); break;
-        case 0x1a: video_display_combination(); break;
-        case 0x11: character_generator(); break;
-        case 0x10: set_dac_color_register(); break;
+    switch (g_cpu->regs.B.AH) {
+        case 0x00: set_video_mode(); return;
+        case 0x01: set_cursor_type(); return;
+        case 0x02: set_cursor_position(); return;
+        case 0x03: get_cursor_position(); return;
+        // case 0x04: read_light_pen(); return;
+        case 0x05: select_active_display_page(); return;
+        case 0x06: scroll_active_page_up(); return;
+        case 0x07: scroll_active_page_down(); return;
+        case 0x08: read_character_and_attribute_at_cursor(); return;
+        case 0x09: write_character_and_attribute_at_cursor(); return;
+        case 0x0a: write_character_at_cursor(); return;
+        // case 0x0b: set_color_palette(); return;
+        case 0x0c: write_graphics_pixel_at_coordinate(); return;
+        // case 0x0d: read_graphics_pixel_at_coordinate(); return;
+        case 0x0e: write_text_in_teletype_mode(); return;
+        case 0x0f: get_video_state(); return;
+        case 0x12: video_subsystem_configuration(); return;
+        case 0x1a: video_display_combination(); return;
+        case 0x11: character_generator(); return;
+        case 0x10: set_dac_color_register(); return;
+
+        case 0xCC:
+            switch (g_cpu->regs.B.AL) {
+                case 0x00:
+                    vlog(VM_VIDEOMSG, "UltraVision installation check detected (SI=%04X)", g_cpu->regs.W.SI);
+                    return;
+            }
+            break;
+
+        case 0xFA:
+            vlog(VM_VIDEOMSG, "EGARIL / FASTBUFF installation check");
+            return;
         default:
-            vlog( VM_VIDEOMSG, "Interrupt 10, function %02X requested, AL=%02X, BH=%02X", g_cpu->regs.B.AH, g_cpu->regs.B.AL, g_cpu->regs.B.BH );
+            break;
     }
+    vlog(VM_VIDEOMSG, "Interrupt 10, function %02X requested, AL=%02X, BH=%02X", g_cpu->regs.B.AH, g_cpu->regs.B.AL, g_cpu->regs.B.BH);
 }
 
 void
@@ -259,8 +264,7 @@ scroll_active_page_up()
     vga_scrollup( g_cpu->regs.B.CL, g_cpu->regs.B.CH, g_cpu->regs.B.DL, g_cpu->regs.B.DH, g_cpu->regs.B.AL, g_cpu->regs.B.BH );
 }
 
-void
-set_video_mode()
+void set_video_mode()
 {
     byte mode = g_cpu->regs.B.AL;
     byte actual_mode = g_cpu->regs.B.AL & ~0x80;
@@ -272,50 +276,41 @@ set_video_mode()
     g_cpu->memory[0x487] &= ~0x80;
     g_cpu->memory[0x487] |= mode & 0x80;
 
-    switch( actual_mode )
-    {
+    switch (actual_mode) {
         case 0x03:
             g_cpu->memory[0x44A] = 80;
             g_cpu->memory[0x44B] = 0;
             g_cpu->memory[0x484] = 24;
 
-            if( (mode & 0x80) == 0 )
-            {
+            if ((mode & 0x80) == 0) {
                 // Blank it!
                 word space = (0x07 << 8) | ' ';
-                int y, x, i = 0;
-                for( y = 0; y < 25; ++y )
-                {
-                    for( x = 0; x < 80; ++x )
-                    {
-                        //vomit_cpu_memory_write16(g_cpu, 0xB800, i++ << 1, space );
-                    }
-                }
+                int i = 0;
+                for (int y = 0; y < 25; ++y)
+                    for (int x = 0; x < 80; ++x)
+                        vomit_cpu_memory_write16(g_cpu, 0xB800, i++ << 1, space);
             }
-
             break;
     }
 
-    if( mode != last_mode )
-        vlog( VM_VIDEOMSG, "Mode %d (hex %02X) selected", mode, mode );
+    if (mode != last_mode)
+        vlog(VM_VIDEOMSG, "Mode %d (hex %02X) selected", mode, mode);
 
-#if 0
-    vlog( VM_VIDEOMSG, "=== Begin CRT register update ===" );
+    vlog(VM_VIDEOMSG, "=== Begin CRT register update ===");
 
-    (void) cpu_in( 0x3DA );
-    cpu_out( 0x3C0, 0x10 );
-    cpu_out( 0x3C0, actual_mode == 0x03 ? 0x0C : 0x01 );
-    cpu_out( 0x3C0, 0x11 );
-    cpu_out( 0x3C0, actual_mode == 0x03 ? 0x00 : 0x00 );
-    cpu_out( 0x3C0, 0x12 );
-    cpu_out( 0x3C0, actual_mode == 0x03 ? 0x0F : 0x0F );
-    cpu_out( 0x3C0, 0x13 );
-    cpu_out( 0x3C0, actual_mode == 0x03 ? 0x08 : 0x00 );
-    cpu_out( 0x3C0, 0x14 );
-    cpu_out( 0x3C0, actual_mode == 0x03 ? 0x00 : 0x00 );
+    (void) vomit_cpu_in(g_cpu, 0x3DA);
+    vomit_cpu_out(g_cpu, 0x3C0, 0x10);
+    vomit_cpu_out(g_cpu, 0x3C0, actual_mode == 0x03 ? 0x0C : 0x01);
+    vomit_cpu_out(g_cpu, 0x3C0, 0x11 );
+    vomit_cpu_out(g_cpu, 0x3C0, actual_mode == 0x03 ? 0x00 : 0x00);
+    vomit_cpu_out(g_cpu, 0x3C0, 0x12 );
+    vomit_cpu_out(g_cpu, 0x3C0, actual_mode == 0x03 ? 0x0F : 0x0F);
+    vomit_cpu_out(g_cpu, 0x3C0, 0x13 );
+    vomit_cpu_out(g_cpu, 0x3C0, actual_mode == 0x03 ? 0x08 : 0x00);
+    vomit_cpu_out(g_cpu, 0x3C0, 0x14 );
+    vomit_cpu_out(g_cpu, 0x3C0, actual_mode == 0x03 ? 0x00 : 0x00);
 
-    vlog( VM_VIDEOMSG, "=== End CRT register update ===" );
-#endif
+    vlog(VM_VIDEOMSG, "=== End CRT register update ===");
 }
 
 void
@@ -457,36 +452,30 @@ character_generator()
     vlog( VM_VIDEOMSG, "Unknown character generator request: AL=%02X, BH=%02X\n", g_cpu->regs.B.AL, g_cpu->regs.B.BH );
 }
 
-void
-set_dac_color_register()
+void set_dac_color_register()
 {
-    if( g_cpu->regs.B.AL == 0x00 )
-    {
-        vlog( VM_VIDEOMSG, "Set palette register %u to color %u", g_cpu->regs.B.BL, g_cpu->regs.B.BH );
-        vga_palette_register[g_cpu->regs.B.BL] = g_cpu->regs.B.BH;
-    }
-    if( g_cpu->regs.B.AL == 0x10 )
-    {
-        vlog( VM_VIDEOMSG, "Set color %d to #%02x%02x%02x", g_cpu->regs.W.BX, g_cpu->regs.B.DH<<2, g_cpu->regs.B.CH<<2, g_cpu->regs.B.CL<<2 );
+    switch (g_cpu->regs.B.AL) {
+        case 0x00:
+            vlog(VM_VIDEOMSG, "Set palette register %u to color %u", g_cpu->regs.B.BL, g_cpu->regs.B.BH);
+            vga_palette_register[g_cpu->regs.B.BL] = g_cpu->regs.B.BH;
+            break;
+        case 0x10:
+            vlog(VM_VIDEOMSG, "Set color %d to #%02x%02x%02x", g_cpu->regs.W.BX, g_cpu->regs.B.DH << 2, g_cpu->regs.B.CH << 2, g_cpu->regs.B.CL << 2);
 
-        vga_color_register[g_cpu->regs.W.BX & 0xFF].r = g_cpu->regs.B.DH;
-        vga_color_register[g_cpu->regs.W.BX & 0xFF].g = g_cpu->regs.B.CH;
-        vga_color_register[g_cpu->regs.W.BX & 0xFF].b = g_cpu->regs.B.CL;
-
-    }
-    else if( g_cpu->regs.B.AL == 0x02 )
-    {
-        int i;
-        vlog( VM_VIDEOMSG, "Loading palette from %04X:%04X", g_cpu->ES, g_cpu->regs.W.DX );
-        for( i = 0; i < 17; ++i )
-        {
-            vga_palette_register[i] = vomit_cpu_memory_read8(g_cpu, g_cpu->ES, g_cpu->regs.W.DX + i );
-            //vlog( VM_VIDEOMSG, "Palette(%u): %02X", i, vga_palette_register[i] );
-        }
-    }
-    else
-    {
-        vlog( VM_VIDEOMSG, "Unsupported palette operation %02X", g_cpu->regs.B.AL );
+            vga_color_register[g_cpu->regs.W.BX & 0xFF].r = g_cpu->regs.B.DH;
+            vga_color_register[g_cpu->regs.W.BX & 0xFF].g = g_cpu->regs.B.CH;
+            vga_color_register[g_cpu->regs.W.BX & 0xFF].b = g_cpu->regs.B.CL;
+            break;
+        case 0x02:
+            vlog(VM_VIDEOMSG, "Loading palette from %04X:%04X", g_cpu->ES, g_cpu->regs.W.DX);
+            for (int i = 0; i < 17; ++i) {
+                vga_palette_register[i] = vomit_cpu_memory_read8(g_cpu, g_cpu->ES, g_cpu->regs.W.DX + i);
+                //vlog(VM_VIDEOMSG, "Palette(%u): %02X", i, vga_palette_register[i]);
+            }
+            break;
+        default:
+            vlog(VM_VIDEOMSG, "Unsupported palette operation %02X", g_cpu->regs.B.AL);
+            break;
     }
 
     extern bool palette_dirty;
@@ -531,44 +520,6 @@ void write_graphics_pixel_at_coordinate()
         vm_p2[offset] |= (0x80 >> bit);
 
     if( g_cpu->regs.B.AL & 0x08 )
-        vm_p3[offset] |= (0x80 >> bit);
-
-    g_cpu->vgaMemory->setDirty();
-}
-
-void
-putpixel0D( word row, word column, byte pixel )
-{
-    // AL = color value
-    // BH = page#
-    // CX = column
-    // DX = row
-
-    //printf( "putpixel at %03u,%03u: %02X\n", row, column, pixel );
-
-    BYTE *vm_p0 = g_cpu->vgaMemory->plane(0);
-    BYTE *vm_p1 = g_cpu->vgaMemory->plane(1);
-    BYTE *vm_p2 = g_cpu->vgaMemory->plane(2);
-    BYTE *vm_p3 = g_cpu->vgaMemory->plane(3);
-
-    word offset = (row * 40) + (g_cpu->regs.W.CX / 8);
-    byte bit = g_cpu->regs.W.CX % 8;
-
-    vm_p0[offset] &= ~(0x80 >> bit);
-    vm_p1[offset] &= ~(0x80 >> bit);
-    vm_p2[offset] &= ~(0x80 >> bit);
-    vm_p3[offset] &= ~(0x80 >> bit);
-
-    if( pixel & 0x01 )
-        vm_p0[offset] |= (0x80 >> bit);
-
-    if( pixel & 0x02 )
-        vm_p1[offset] |= (0x80 >> bit);
-
-    if( pixel & 0x04 )
-        vm_p2[offset] |= (0x80 >> bit);
-
-    if( pixel & 0x08 )
         vm_p3[offset] |= (0x80 >> bit);
 
     g_cpu->vgaMemory->setDirty();
