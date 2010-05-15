@@ -103,9 +103,6 @@ Screen::putCharacter( QPainter &p, int row, int column, byte color, byte c )
     }
 }
 
-bool is_palette_dirty();
-void clear_palette_dirty();
-
 void Screen::refresh()
 {
     BYTE currentVideoMode = d->cpu->readMemory8(0x449) & 0x7F;

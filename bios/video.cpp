@@ -478,8 +478,7 @@ void set_dac_color_register()
             break;
     }
 
-    extern bool palette_dirty;
-    palette_dirty = true;
+    mark_palette_dirty();
     g_cpu->vgaMemory->syncPalette();
 }
 

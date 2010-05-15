@@ -5,6 +5,8 @@
 #include <string.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <QtCore/QMutex>
+#include <QtCore/QMutexLocker>
 
 static byte current_register = 0;
 static byte current_register2 = 0;
@@ -25,6 +27,8 @@ static byte index_palette = 0;
 static byte columns;
 static byte rows;
 
+static QMutex s_paletteMutex;
+
 static void vga_selreg(vomit_cpu_t *, word, byte );
 static void vga_setreg(vomit_cpu_t *, word, byte );
 static void vga_selreg2(vomit_cpu_t *, word, byte );
@@ -42,7 +46,7 @@ static byte vga_read_miscellaneous_output_register(vomit_cpu_t *, word port );
 
 static bool next_3c0_is_index = true;
 
-bool palette_dirty = true;
+static bool palette_dirty = true;
 
 byte vga_palette_register[17] =
 {
@@ -117,6 +121,7 @@ vga_init()
 void
 vga_write_3c0(vomit_cpu_t *, word port, byte data )
 {
+    QMutexLocker locker(&s_paletteMutex);
     (void) port;
 
     if( next_3c0_is_index )
@@ -130,11 +135,10 @@ vga_write_3c0(vomit_cpu_t *, word port, byte data )
     next_3c0_is_index = !next_3c0_is_index;
 }
 
-byte
-vga_read_3c1(vomit_cpu_t *, word port )
+BYTE vga_read_3c1(vomit_cpu_t *, WORD)
 {
-    (void) port;
-    //vlog( VM_VIDEOMSG, "Read PALETTE[%u] (=%02X)", index_palette, vga_palette_register[index_palette] );
+    QMutexLocker locker(&s_paletteMutex);
+    //vlog(VM_VIDEOMSG, "Read PALETTE[%u] (=%02X)", index_palette, vga_palette_register[index_palette]);
     return vga_palette_register[index_palette];
 }
 
@@ -297,14 +301,20 @@ vga_getreg2(vomit_cpu_t *, word port )
     return io_register2[current_register2];
 }
 
-void
-clear_palette_dirty()
+void mark_palette_dirty()
 {
+    QMutexLocker locker(&s_paletteMutex);
+    palette_dirty = true;
+}
+
+void clear_palette_dirty()
+{
+    QMutexLocker locker(&s_paletteMutex);
     palette_dirty = false;
 }
 
-bool
-is_palette_dirty()
+bool is_palette_dirty()
 {
+    QMutexLocker locker(&s_paletteMutex);
     return palette_dirty;
 }
