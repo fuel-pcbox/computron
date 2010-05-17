@@ -17,7 +17,7 @@
 
 #define CPU_INSNS_PER_PIT_IRQ 400000
 
-typedef void (*vomit_opcode_handler) (struct __vomit_cpu_t *);
+typedef void (*OpcodeHandler) (struct __vomit_cpu_t *);
 
 class VgaMemory;
 
@@ -103,7 +103,7 @@ typedef struct __vomit_cpu_t {
     BYTE *treg8[8];
     WORD *tseg[8];
 
-    vomit_opcode_handler opcode_handler[0x100];
+    OpcodeHandler opcode_handler[0x100];
 
 #ifdef VOMIT_PREFETCH_QUEUE
     BYTE *m_prefetchQueue;
@@ -221,7 +221,12 @@ typedef struct __vomit_cpu_t {
         }
     }
 
+    void registerDefaultOpcodeHandlers();
+
 private:
+    void setOpcodeHandler(BYTE rangeStart, BYTE rangeEnd, OpcodeHandler handler);
+
+
     /* This points to the base of CS for fast opcode fetches. */
     BYTE *m_codeMemory;
 
