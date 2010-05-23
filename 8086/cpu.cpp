@@ -364,6 +364,15 @@ void VCpu::exec()
     this->opcode_handler[this->opcode](this);
 }
 
+void VCpu::haltedLoop()
+{
+    while (state() == VCpu::Halted) {
+        usleep(500);
+        if (g_pic_pending_requests)
+            pic_service_irq(this);
+    }
+}
+
 void VCpu::mainLoop()
 {
     flushFetchQueue();
@@ -386,19 +395,6 @@ void VCpu::mainLoop()
                 continue;
         }
 #endif
-
-        // TODO: Refactor this to spin in a separate mainloop when halted.
-        if (state() == VCpu::Halted) {
-            if (!getIF()) {
-                vlog(VM_ALERT, "%04X:%04X: Halted with IF=0", getCS(), getIP());
-                return;
-            }
-
-            if (g_pic_pending_requests)
-                pic_service_irq(this);
-
-            continue;
-        }
 
 #ifdef VOMIT_TRACE
         if (options.trace) {
@@ -523,7 +519,15 @@ void _NOP(VCpu*)
 void _HLT(VCpu* cpu)
 {
     cpu->setState(VCpu::Halted);
-    vlog(VM_CPUMSG, "%04X:%04X Halted", cpu->base_CS, cpu->base_IP);
+
+    if (!cpu->getIF()) {
+        vlog(VM_ALERT, "%04X:%04X: Halted with IF=0", cpu->getBaseCS(), cpu->getBaseIP());
+        vm_exit(0);
+    }
+
+    vlog(VM_CPUMSG, "%04X:%04X Halted", cpu->getBaseCS(), cpu->getBaseIP());
+
+    cpu->haltedLoop();
 }
 
 void _XLAT(VCpu* cpu)

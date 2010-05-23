@@ -216,6 +216,9 @@ public:
     // CPU main loop - will fetch & decode until stopped
     void mainLoop();
 
+    // CPU main loop when halted (HLT) - will do nothing until an IRQ is raised
+    void haltedLoop();
+
 #ifdef VOMIT_PREFETCH_QUEUE
     void flushFetchQueue();
     BYTE fetchOpcodeByte();
