@@ -144,7 +144,7 @@ write_character_at_cursor()
     cursor = row * columns() + column;
 
     /* XXX: 0xB800 is hard-coded for now. */
-    vomit_cpu_memory_write8(g_cpu, 0xB800, cursor << 1, g_cpu->regs.B.AL );
+    g_cpu->writeMemory8(0xB800, cursor * 2, g_cpu->regs.B.AL);
 }
 
 void
@@ -156,8 +156,8 @@ read_character_and_attribute_at_cursor()
     word cursor = load_cursor_word();
 
     /* XXX: 0xB800 is hard-coded for now. */
-    g_cpu->regs.B.AH = vomit_cpu_memory_read8(g_cpu, 0xB800, (cursor << 1) + 1 );
-    g_cpu->regs.B.AL = vomit_cpu_memory_read8(g_cpu, 0xB800, cursor << 1 );
+    g_cpu->regs.B.AH = g_cpu->readMemory8(0xB800, cursor * 2 + 1);
+    g_cpu->regs.B.AL = g_cpu->readMemory8(0xB800, cursor * 2);
 }
 
 void
@@ -181,8 +181,8 @@ write_character_and_attribute_at_cursor()
         vlog(VM_VIDEOMSG, "Writing text to screen but not in mode 3..");
 
     /* XXX: 0xB800 is hard-coded for now. */
-    vomit_cpu_memory_write8(g_cpu, 0xB800, cursor << 1, g_cpu->regs.B.AL );
-    vomit_cpu_memory_write8(g_cpu, 0xB800, (cursor << 1) + 1, g_cpu->regs.B.BL );
+    g_cpu->writeMemory8(0xB800, cursor * 2, g_cpu->regs.B.AL );
+    g_cpu->writeMemory8(0xB800, cursor * 2 + 1, g_cpu->regs.B.BL );
 }
 
 void
@@ -219,18 +219,18 @@ write_text_in_teletype_mode()
             break;
         case '\t':
             {
-                word space = attr << 8 | ch;
+                WORD space = attr << 8 | ch;
 
                 /* 1 tab -- 4 spaces ;-) */
-                vomit_cpu_memory_write16(g_cpu, 0xB800, cursor++ << 1, space );
-                vomit_cpu_memory_write16(g_cpu, 0xB800, cursor++ << 1, space );
-                vomit_cpu_memory_write16(g_cpu, 0xB800, cursor++ << 1, space );
-                vomit_cpu_memory_write16(g_cpu, 0xB800, cursor++ << 1, space );
+                g_cpu->writeMemory16(0xB800, cursor++ * 2, space );
+                g_cpu->writeMemory16(0xB800, cursor++ * 2, space );
+                g_cpu->writeMemory16(0xB800, cursor++ * 2, space );
+                g_cpu->writeMemory16(0xB800, cursor++ * 2, space );
             }
             break;
         default:
-            vomit_cpu_memory_write8(g_cpu, 0xB800, cursor << 1, ch );
-            vomit_cpu_memory_write8(g_cpu, 0xB800, (cursor << 1) + 1, attr );
+            g_cpu->writeMemory8(0xB800, cursor * 2, ch);
+            g_cpu->writeMemory8(0xB800, cursor * 2 + 1, attr);
             cursor++;
     }
     if( columns() == 0 || rows() == 0 )
@@ -288,7 +288,7 @@ void set_video_mode()
                 int i = 0;
                 for (int y = 0; y < 25; ++y)
                     for (int x = 0; x < 80; ++x)
-                        vomit_cpu_memory_write16(g_cpu, 0xB800, i++ << 1, space);
+                        g_cpu->writeMemory16(0xB800, i++ * 2, space);
             }
             break;
     }
@@ -379,14 +379,14 @@ BYTE get_video_mode()
     return g_cpu->memory[0x449];
 }
 
-WORD columns()
+static WORD columns()
 {
-    return vomit_cpu_memory_read16(g_cpu, 0x0040, 0x004A);
+    return g_cpu->readUnmappedMemory16(0x44A);
 }
 
-BYTE rows()
+static BYTE rows()
 {
-    return g_cpu->memory[0x484] + 1;
+    return g_cpu->readUnmappedMemory8(0x484) + 1;
 }
 
 void
@@ -469,7 +469,7 @@ void set_dac_color_register()
         case 0x02:
             vlog(VM_VIDEOMSG, "Loading palette from %04X:%04X", g_cpu->ES, g_cpu->regs.W.DX);
             for (int i = 0; i < 17; ++i) {
-                vga_palette_register[i] = vomit_cpu_memory_read8(g_cpu, g_cpu->ES, g_cpu->regs.W.DX + i);
+                vga_palette_register[i] = g_cpu->readMemory8(g_cpu->ES, g_cpu->regs.W.DX + i);
                 //vlog(VM_VIDEOMSG, "Palette(%u): %02X", i, vga_palette_register[i]);
             }
             break;

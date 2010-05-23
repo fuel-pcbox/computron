@@ -8,7 +8,7 @@
 void _LODSB(VCpu* cpu)
 {
     /* Load byte at CurSeg:SI into AL */
-    cpu->regs.B.AL = vomit_cpu_memory_read8(cpu, *(cpu->CurrentSegment), cpu->regs.W.SI);
+    cpu->regs.B.AL = cpu->readMemory8(*(cpu->CurrentSegment), cpu->regs.W.SI);
 
     /* Modify SI according to DF */
     if (cpu->getDF() == 0)
@@ -20,7 +20,7 @@ void _LODSB(VCpu* cpu)
 void _LODSW(VCpu* cpu)
 {
     /* Load word at CurSeg:SI into AX */
-    cpu->regs.W.AX = vomit_cpu_memory_read16(cpu, *(cpu->CurrentSegment), cpu->regs.W.SI);
+    cpu->regs.W.AX = cpu->readMemory16(*(cpu->CurrentSegment), cpu->regs.W.SI);
 
     /* Modify SI according to DF */
     if (cpu->getDF() == 0)
@@ -31,7 +31,7 @@ void _LODSW(VCpu* cpu)
 
 void _STOSB(VCpu* cpu)
 {
-    vomit_cpu_memory_write8(cpu, cpu->ES, cpu->regs.W.DI, cpu->regs.B.AL);
+    cpu->writeMemory8(cpu->ES, cpu->regs.W.DI, cpu->regs.B.AL);
 
     if (cpu->getDF() == 0)
         ++cpu->regs.W.DI;
@@ -41,7 +41,7 @@ void _STOSB(VCpu* cpu)
 
 void _STOSW(VCpu* cpu)
 {
-    vomit_cpu_memory_write16(cpu, cpu->ES, cpu->regs.W.DI, cpu->regs.W.AX);
+    cpu->writeMemory16(cpu->ES, cpu->regs.W.DI, cpu->regs.W.AX);
 
     if (cpu->getDF() == 0)
         cpu->regs.W.DI += 2;
@@ -51,8 +51,8 @@ void _STOSW(VCpu* cpu)
 
 void _CMPSB(VCpu* cpu)
 {
-    BYTE src = vomit_cpu_memory_read8(cpu, *(cpu->CurrentSegment), cpu->regs.W.SI);
-    BYTE dest = vomit_cpu_memory_read8(cpu, cpu->ES, cpu->regs.W.DI);
+    BYTE src = cpu->readMemory8(*(cpu->CurrentSegment), cpu->regs.W.SI);
+    BYTE dest = cpu->readMemory8(cpu->ES, cpu->regs.W.DI);
 
     cpu->cmpFlags8(src - dest, src, dest);
 
@@ -64,8 +64,8 @@ void _CMPSB(VCpu* cpu)
 
 void _CMPSW(VCpu* cpu)
 {
-    WORD src = vomit_cpu_memory_read16(cpu, *(cpu->CurrentSegment), cpu->regs.W.SI);
-    WORD dest = vomit_cpu_memory_read16(cpu, cpu->ES, cpu->regs.W.DI);
+    WORD src = cpu->readMemory16(*(cpu->CurrentSegment), cpu->regs.W.SI);
+    WORD dest = cpu->readMemory16(cpu->ES, cpu->regs.W.DI);
 
     cpu->cmpFlags16(src - dest, src, dest);
 
@@ -77,7 +77,7 @@ void _CMPSW(VCpu* cpu)
 
 void _SCASB(VCpu* cpu)
 {
-    BYTE dest = vomit_cpu_memory_read8(cpu, cpu->ES, cpu->regs.W.DI);
+    BYTE dest = cpu->readMemory8(cpu->ES, cpu->regs.W.DI);
 
     cpu->cmpFlags8(cpu->regs.B.AL - dest, dest, cpu->regs.B.AL);
 
@@ -89,7 +89,7 @@ void _SCASB(VCpu* cpu)
 
 void _SCASW(VCpu* cpu)
 {
-    WORD dest = vomit_cpu_memory_read16(cpu, cpu->ES, cpu->regs.W.DI);
+    WORD dest = cpu->readMemory16(cpu->ES, cpu->regs.W.DI);
 
     cpu->cmpFlags16(cpu->regs.W.AX - dest, dest, cpu->regs.W.AX);
 
@@ -101,8 +101,8 @@ void _SCASW(VCpu* cpu)
 
 void _MOVSB(VCpu* cpu)
 {
-    BYTE tmpb = vomit_cpu_memory_read8(cpu, *(cpu->CurrentSegment), cpu->regs.W.SI);
-    vomit_cpu_memory_write8(cpu, cpu->ES, cpu->regs.W.DI, tmpb);
+    BYTE tmpb = cpu->readMemory8(*(cpu->CurrentSegment), cpu->regs.W.SI);
+    cpu->writeMemory8(cpu->ES, cpu->regs.W.DI, tmpb);
 
     if (cpu->getDF() == 0)
         ++cpu->regs.W.SI, ++cpu->regs.W.DI;
@@ -112,8 +112,8 @@ void _MOVSB(VCpu* cpu)
 
 void _MOVSW(VCpu* cpu)
 {
-    WORD tmpw = vomit_cpu_memory_read16(cpu, *(cpu->CurrentSegment), cpu->regs.W.SI);
-    vomit_cpu_memory_write16(cpu, cpu->ES, cpu->regs.W.DI, tmpw);
+    WORD tmpw = cpu->readMemory16(*(cpu->CurrentSegment), cpu->regs.W.SI);
+    cpu->writeMemory16(cpu->ES, cpu->regs.W.DI, tmpw);
 
     if (cpu->getDF() == 0)
         cpu->regs.W.SI += 2, cpu->regs.W.DI += 2;

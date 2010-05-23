@@ -14,7 +14,7 @@ void _ESCAPE(VCpu* cpu)
 {
     vlog(VM_CPUMSG, "%04X:%04X FPU escape via %02X /%u",
         cpu->base_CS, cpu->base_IP,
-        cpu->opcode, rmreg(vomit_cpu_memory_read8(cpu, cpu->base_CS, cpu->base_IP + 1)));
+        cpu->opcode, rmreg(cpu->readMemory8(cpu->getBaseCS(), cpu->getBaseIP() + 1)));
 
     //vm_exit(0);
 

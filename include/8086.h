@@ -18,6 +18,15 @@ inline void vomit_write16ToPointer(WORD* pointer, WORD value)
 #endif
 }
 
+inline WORD vomit_read16FromPointer(WORD* pointer)
+{
+#ifdef VOMIT_BIG_ENDIAN
+    return V_BYTESWAP(*pointer);
+#else
+    return *pointer;
+#endif
+}
+
 inline WORD signext(BYTE b)
 {
     WORD w = 0x0000 | b;
@@ -237,10 +246,16 @@ public:
 
     // These are faster than readMemory*() but will not access VGA memory, etc.
     inline BYTE readUnmappedMemory8(DWORD address) const;
+    inline WORD readUnmappedMemory16(DWORD address) const;
     inline void writeUnmappedMemory8(DWORD address, BYTE data);
     inline void writeUnmappedMemory16(DWORD address, WORD data);
 
     inline BYTE readMemory8(DWORD address) const;
+    inline BYTE readMemory8(WORD segment, WORD offset) const;
+    inline WORD readMemory16(DWORD address) const;
+    inline WORD readMemory16(WORD segment, WORD offset) const;
+    inline void writeMemory8(DWORD address, BYTE data);
+    inline void writeMemory8(WORD segment, WORD offset, BYTE data);
     inline void writeMemory16(DWORD address, WORD data);
     inline void writeMemory16(WORD segment, WORD offset, WORD data);
 
@@ -337,11 +352,6 @@ void vomit_cpu_modrm_update16(VCpu*, WORD value);
 
 void* vomit_cpu_modrm_resolve8(VCpu*, BYTE rm);
 void* vomit_cpu_modrm_resolve16(VCpu*, BYTE rm);
-
-BYTE vomit_cpu_memory_read8(VCpu*, WORD segment, WORD offset);
-WORD vomit_cpu_memory_read16(VCpu*, WORD segment, WORD offset);
-void vomit_cpu_memory_write8(VCpu*, WORD segment, WORD offset, BYTE value);
-void vomit_cpu_memory_write16(VCpu*, WORD segment, WORD offset, WORD value);
 
 #define REG_AL  0
 #define REG_CL  1
@@ -692,6 +702,11 @@ BYTE VCpu::readUnmappedMemory8(DWORD address) const
     return this->memory[address];
 }
 
+WORD VCpu::readUnmappedMemory16(DWORD address) const
+{
+    return vomit_read16FromPointer(reinterpret_cast<WORD*>(this->memory + address));
+}
+
 void VCpu::writeUnmappedMemory8(DWORD address, BYTE value)
 {
     this->memory[address] = value;
@@ -699,8 +714,7 @@ void VCpu::writeUnmappedMemory8(DWORD address, BYTE value)
 
 void VCpu::writeUnmappedMemory16(DWORD address, WORD value)
 {
-    WORD* ptr = reinterpret_cast<WORD*>(this->memory + address);
-    vomit_write16ToPointer(ptr, value);
+    vomit_write16ToPointer(reinterpret_cast<WORD*>(this->memory + address), value);
 }
 
 BYTE VCpu::readMemory8(DWORD address) const
@@ -708,6 +722,43 @@ BYTE VCpu::readMemory8(DWORD address) const
     if (IS_VGA_MEMORY(address))
         return this->vgaMemory->read8(address);
     return this->memory[address];
+}
+
+BYTE VCpu::readMemory8(WORD segment, WORD offset) const
+{
+    return readMemory8(vomit_toFlatAddress(segment, offset));
+}
+
+WORD VCpu::readMemory16(DWORD address) const
+{
+    if (IS_VGA_MEMORY(address))
+        return this->vgaMemory->read16(address);
+    return vomit_read16FromPointer(reinterpret_cast<WORD*>(this->memory + address));
+}
+
+WORD VCpu::readMemory16(WORD segment, WORD offset) const
+{
+#if VOMIT_CPU_LEVEL == 0
+    // FIXME: Broken for VGA read at 0xFFFF although that's beyond unlikely to occur.
+    if (offset == 0xFFFF)
+        return this->memory[vomit_toFlatAddress(segment, offset)] | (this->memory[vomit_toFlatAddress(segment, 0)] << 8);
+#endif
+    return readMemory16(vomit_toFlatAddress(segment, offset));
+}
+
+void VCpu::writeMemory8(DWORD address, BYTE value)
+{
+    if (IS_VGA_MEMORY(address)) {
+        this->vgaMemory->write8(address, value);
+        return;
+    }
+
+    this->memory[address] = value;
+}
+
+void VCpu::writeMemory8(WORD segment, WORD offset, BYTE value)
+{
+    writeMemory8(vomit_toFlatAddress(segment, offset), value);
 }
 
 void VCpu::writeMemory16(DWORD address, WORD value)
@@ -723,6 +774,15 @@ void VCpu::writeMemory16(DWORD address, WORD value)
 
 void VCpu::writeMemory16(WORD segment, WORD offset, WORD value)
 {
+#if VOMIT_CPU_LEVEL == 0
+    // FIXME: Broken for VGA write at 0xFFFF although that's beyond unlikely to occur.
+    if (offset == 0xFFFF) {
+        this->memory[vomit_toFlatAddress(segment, offset)] = value & 0xFF;
+        this->memory[vomit_toFlatAddress(segment, 0)] = value >> 8;
+        return;
+    }
+#endif
+
     writeMemory16(FLAT(segment, offset), value);
 }
 

@@ -38,7 +38,7 @@ void _OUT_DX_AX(VCpu* cpu)
 
 void _OUTSB(VCpu* cpu)
 {
-    BYTE b = vomit_cpu_memory_read8(cpu, *(cpu->CurrentSegment), cpu->regs.W.SI);
+    BYTE b = cpu->readMemory8(*(cpu->CurrentSegment), cpu->regs.W.SI);
     vomit_cpu_out(cpu, cpu->regs.W.DX, b);
 
     /* Modify SI according to DF */
@@ -50,8 +50,8 @@ void _OUTSB(VCpu* cpu)
 
 void _OUTSW(VCpu* cpu)
 {
-    BYTE lsb = vomit_cpu_memory_read8(cpu, *(cpu->CurrentSegment), cpu->regs.W.SI);
-    BYTE msb = vomit_cpu_memory_read8(cpu, *(cpu->CurrentSegment), cpu->regs.W.SI + 1);
+    BYTE lsb = cpu->readMemory8(*(cpu->CurrentSegment), cpu->regs.W.SI);
+    BYTE msb = cpu->readMemory8(*(cpu->CurrentSegment), cpu->regs.W.SI + 1);
     vomit_cpu_out(cpu, cpu->regs.W.DX, lsb);
     vomit_cpu_out(cpu, cpu->regs.W.DX + 1, msb);
 

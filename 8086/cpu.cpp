@@ -528,7 +528,7 @@ void _HLT(VCpu* cpu)
 
 void _XLAT(VCpu* cpu)
 {
-    cpu->regs.B.AL = vomit_cpu_memory_read8(cpu, *(cpu->CurrentSegment), cpu->regs.W.BX + cpu->regs.B.AL);
+    cpu->regs.B.AL = cpu->readMemory8(*(cpu->CurrentSegment), cpu->regs.W.BX + cpu->regs.B.AL);
 }
 
 void _CS(VCpu* cpu)

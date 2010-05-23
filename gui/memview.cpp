@@ -67,7 +67,7 @@ MemoryView::paintEvent( QPaintEvent * )
 
         for( int x = 0; x < 16; ++x )
         {
-            uint8_t b = vomit_cpu_memory_read8(g_cpu, d->segment, d->offset + ptr);
+            uint8_t b = g_cpu->readMemory8(d->segment, d->offset + ptr);
             ptr++;
 
             QString s;

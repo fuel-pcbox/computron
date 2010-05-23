@@ -60,7 +60,7 @@ void _ENTER(VCpu* cpu)
     if (NestingLevel != 0) {
         for (WORD i = 1; i <= (NestingLevel - 1); ++i) {
             cpu->regs.W.BP -= 2;
-            cpu->push(vomit_cpu_memory_read16(cpu, cpu->SS, cpu->regs.W.BP));
+            cpu->push(cpu->readMemory16(cpu->SS, cpu->regs.W.BP));
         }
     }
     cpu->push(FrameTemp);

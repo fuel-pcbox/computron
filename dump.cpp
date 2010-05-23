@@ -130,8 +130,8 @@ void dump_mem(word seg, word off, byte rows) {
 	}
 }
 
-static word iseg(byte isr) { return vomit_cpu_memory_read16(g_cpu, 0x0000, (isr*4)+2); }
-static word ioff(byte isr) { return vomit_cpu_memory_read16(g_cpu, 0x0000, (isr*4)); }
+static word iseg(byte isr) { return g_cpu->readMemory16(isr * 4) + 2; }
+static word ioff(byte isr) { return g_cpu->readMemory16(isr * 4); }
 
 void
 dump_ivt()

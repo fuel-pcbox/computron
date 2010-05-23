@@ -87,7 +87,7 @@ unspeakable_abomination()
                 {
                     tb = strtol(curtok,NULL,16);
                     //vlog( VM_INITMSG, "  [%04X] = %02X", loff, tb );
-                    vomit_cpu_memory_write16(g_cpu, lseg, loff++, tb);
+                    g_cpu->writeMemory16(lseg, loff++, tb);
                     curtok = strtok(NULL, " \t\n");
                 }
                 curtok=curline;
