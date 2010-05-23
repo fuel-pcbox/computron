@@ -10,15 +10,14 @@ void _JCXZ_imm8(VCpu* cpu)
 {
     SIGNED_BYTE imm = cpu->fetchOpcodeByte();
 
-    if (cpu->regs.W.CX == 0) {
-        vomit_cpu_jump_relative8(cpu, imm);
-    }
+    if (cpu->regs.W.CX == 0)
+        cpu->jumpRelative8(imm);
 }
 
 void _JMP_imm16(VCpu* cpu)
 {
     SIGNED_WORD imm = cpu->fetchOpcodeWord();
-    vomit_cpu_jump_relative16(cpu, imm);
+    cpu->jumpRelative16(imm);
 }
 
 void _JMP_imm16_imm16(VCpu* cpu)
@@ -31,12 +30,12 @@ void _JMP_imm16_imm16(VCpu* cpu)
 void _JMP_short_imm8(VCpu* cpu)
 {
     SIGNED_BYTE imm = cpu->fetchOpcodeByte();
-    vomit_cpu_jump_relative8(cpu, imm);
+    cpu->jumpRelative8(imm);
 }
 
 void _JMP_RM16(VCpu* cpu)
 {
-    vomit_cpu_jump_absolute16(cpu, vomit_cpu_modrm_read16(cpu, cpu->rmbyte));
+    cpu->jumpAbsolute16(vomit_cpu_modrm_read16(cpu, cpu->rmbyte));
 }
 
 void _JMP_FAR_mem16(VCpu* cpu)
@@ -49,31 +48,31 @@ void _JMP_FAR_mem16(VCpu* cpu)
 void _ ## name ## _imm8(VCpu* cpu) { \
 	SIGNED_BYTE imm = cpu->fetchOpcodeByte(); \
 	if( (condition) ) \
-		vomit_cpu_jump_relative8(cpu, imm); \
+		cpu->jumpRelative8(imm); \
 }
 
-DO_JCC_imm8( JO,   cpu->getOF() )
-DO_JCC_imm8( JNO,  !cpu->getOF() )
-DO_JCC_imm8( JC,   cpu->getCF() )
-DO_JCC_imm8( JNC,  !cpu->getCF() )
-DO_JCC_imm8( JZ,   cpu->getZF() )
-DO_JCC_imm8( JNZ,  !cpu->getZF() )
-DO_JCC_imm8( JNA,  cpu->getCF() | cpu->getZF() )
-DO_JCC_imm8( JA,   !(cpu->getCF() | cpu->getZF()) )
-DO_JCC_imm8( JS,   cpu->getSF() )
-DO_JCC_imm8( JNS,  !cpu->getSF() )
-DO_JCC_imm8( JP,   cpu->getPF() )
-DO_JCC_imm8( JNP,  !cpu->getPF() )
-DO_JCC_imm8( JL,   cpu->getSF() ^ cpu->getOF() )
-DO_JCC_imm8( JNL,  !(cpu->getSF() ^ cpu->getOF()) )
-DO_JCC_imm8( JNG,  (cpu->getSF() ^ cpu->getOF()) | cpu->getZF() )
-DO_JCC_imm8( JG,   !((cpu->getSF() ^ cpu->getOF()) | cpu->getZF()) )
+DO_JCC_imm8(JO,   cpu->getOF())
+DO_JCC_imm8(JNO,  !cpu->getOF())
+DO_JCC_imm8(JC,   cpu->getCF())
+DO_JCC_imm8(JNC,  !cpu->getCF())
+DO_JCC_imm8(JZ,   cpu->getZF())
+DO_JCC_imm8(JNZ,  !cpu->getZF())
+DO_JCC_imm8(JNA,  cpu->getCF() | cpu->getZF())
+DO_JCC_imm8(JA,   !(cpu->getCF() | cpu->getZF()))
+DO_JCC_imm8(JS,   cpu->getSF())
+DO_JCC_imm8(JNS,  !cpu->getSF())
+DO_JCC_imm8(JP,   cpu->getPF())
+DO_JCC_imm8(JNP,  !cpu->getPF())
+DO_JCC_imm8(JL,   cpu->getSF() ^ cpu->getOF())
+DO_JCC_imm8(JNL,  !(cpu->getSF() ^ cpu->getOF()))
+DO_JCC_imm8(JNG,  (cpu->getSF() ^ cpu->getOF()) | cpu->getZF())
+DO_JCC_imm8(JG,   !((cpu->getSF() ^ cpu->getOF()) | cpu->getZF()))
 
 void _CALL_imm16(VCpu* cpu)
 {
     SIGNED_WORD imm = cpu->fetchOpcodeWord();
     cpu->push(cpu->IP);
-    vomit_cpu_jump_relative16(cpu, imm);
+    cpu->jumpRelative16(imm);
 }
 
 void _CALL_imm16_imm16(VCpu* cpu)
@@ -97,18 +96,18 @@ void _CALL_RM16(VCpu* cpu)
 {
     WORD value = vomit_cpu_modrm_read16(cpu, cpu->rmbyte);
     cpu->push(cpu->getIP());
-    vomit_cpu_jump_absolute16(cpu, value);
+    cpu->jumpAbsolute16(value);
 }
 
 void _RET(VCpu* cpu)
 {
-    vomit_cpu_jump_absolute16(cpu, cpu->pop());
+    cpu->jumpAbsolute16(cpu->pop());
 }
 
 void _RET_imm16(VCpu* cpu)
 {
     WORD imm = cpu->fetchOpcodeWord();
-    vomit_cpu_jump_absolute16(cpu, cpu->pop());
+    cpu->jumpAbsolute16(cpu->pop());
     cpu->regs.W.SP += imm;
 }
 

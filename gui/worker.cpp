@@ -2,14 +2,14 @@
 #include <QMutexLocker>
 #include <QDebug>
 #include "../include/vomit.h"
-extern unsigned int g_vomit_exit_main_loop;
+extern bool g_vomit_exit_main_loop;
 extern bool vomit_reboot;
 
 struct Worker::Private
 {
     QMutex mutex;
     bool active;
-    VCpu *cpu;
+    VCpu* cpu;
 };
 
 Worker::Worker(VCpu *c, QObject *parent)
@@ -29,7 +29,7 @@ Worker::~Worker()
 void Worker::run()
 {
     while (d->active) {
-        vomit_cpu_main(d->cpu);
+        d->cpu->mainLoop();
         while (!d->active)
             msleep(50);
     }

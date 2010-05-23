@@ -9,26 +9,26 @@
 
 void _LOOP_imm8(VCpu* cpu)
 {
-    SIGNED_BYTE disp = cpu->fetchOpcodeByte();
+    SIGNED_BYTE displacement = cpu->fetchOpcodeByte();
     --cpu->regs.W.CX;
     if (cpu->regs.W.CX)
-        vomit_cpu_jump_relative8(cpu, disp);
+        cpu->jumpRelative8(displacement);
 }
 
 void _LOOPE_imm8(VCpu* cpu)
 {
-    SIGNED_BYTE disp = cpu->fetchOpcodeByte();
+    SIGNED_BYTE displacement = cpu->fetchOpcodeByte();
     --cpu->regs.W.CX;
     if (cpu->regs.W.CX && cpu->getZF())
-        vomit_cpu_jump_relative8(cpu, disp);
+        cpu->jumpRelative8(displacement);
 }
 
 void _LOOPNE_imm8(VCpu* cpu)
 {
-    SIGNED_BYTE disp = cpu->fetchOpcodeByte();
+    SIGNED_BYTE displacement = cpu->fetchOpcodeByte();
     --cpu->regs.W.CX;
     if (cpu->regs.W.CX && !cpu->getZF())
-        vomit_cpu_jump_relative8(cpu, disp);
+        cpu->jumpRelative8(displacement);
 }
 
 #define DO_REP(func) for (; cpu->regs.W.CX; --cpu->regs.W.CX) { func(cpu); }
@@ -60,8 +60,8 @@ static void __rep(VCpu* cpu, byte opcode, bool should_equal)
         return;
     }
 
-	/* Recurse if this opcode was a segment prefix. */
-	/* FIXME: Infinite recursion IS possible here. */
+	// Recurse if this opcode was a segment prefix.
+	// FIXME: Infinite recursion IS possible here.
 	__rep(cpu, cpu->fetchOpcodeByte(), should_equal);
 }
 

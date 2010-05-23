@@ -3,18 +3,15 @@
  *
  */
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
 #include "vomit.h"
 #include "debug.h"
 #include "vga_memory.h"
 
-VCpu *g_cpu = 0;
-unsigned int g_vomit_exit_main_loop = 0;
+VCpu* g_cpu = 0;
+bool g_vomit_exit_main_loop = 0;
 
-/* The black hole of 386 segment selectors. */
-static word segment_dummy;
+// The black hole of 386 segment selectors.
+static WORD segment_dummy;
 
 void _OpOverride(VCpu*)
 {
@@ -23,9 +20,10 @@ void _OpOverride(VCpu*)
 
 void VCpu::init()
 {
+    // FIXME: This is silly.
     memset(this, 0, sizeof(VCpu));
 
-    this->memory = (BYTE *)malloc(1048576 + 65536);
+    this->memory = new BYTE[1048576 + 65536];
     if (!this->memory) {
         vlog(VM_INITMSG, "Insufficient memory available.");
         vm_exit(1);
@@ -37,7 +35,7 @@ void VCpu::init()
 
 #ifdef VOMIT_PREFETCH_QUEUE
     if (m_prefetchQueue)
-        free(m_prefetchQueue);
+        delete [] m_prefetchQueue;
 
     m_prefetchQueueSize = 4;
     m_prefetchQueue = new BYTE[m_prefetchQueueSize];
@@ -94,9 +92,17 @@ void VCpu::setOpcodeHandler(BYTE rangeStart, BYTE rangeEnd, OpcodeHandler handle
 
 void VCpu::registerDefaultOpcodeHandlers()
 {
-    /* Install a default handler for unsupported instructions. */
+    // Install a default handler for unsupported instructions
     setOpcodeHandler(0x00, 0xFF, _UNSUPP           );
 
+    // Stubs
+    setOpcodeHandler(0x66, 0x66, _OpOverride       );
+
+    // FPU stubs
+    setOpcodeHandler(0x9B, 0x9B, _ESCAPE           );
+    setOpcodeHandler(0xD8, 0xDF, _ESCAPE           );
+
+    // 8086+ instructions
     setOpcodeHandler(0x00, 0x00, _ADD_RM8_reg8     );
     setOpcodeHandler(0x01, 0x01, _ADD_RM16_reg16   );
     setOpcodeHandler(0x02, 0x02, _ADD_reg8_RM8     );
@@ -279,31 +285,25 @@ void VCpu::registerDefaultOpcodeHandlers()
     setOpcodeHandler(0xC0, 0xC0, _wrap_0xC0        );
     setOpcodeHandler(0xC1, 0xC1, _wrap_0xC1        );
 
-    if (type() == VCpu::Intel8086 || type() == VCpu::Intel80186) {
-        /* Specialized PUSH SP for Intel 8086/80186 */
-        setOpcodeHandler(0x54, 0x54, _PUSH_SP);
-    }
+#if VOMIT_CPU_LEVEL <= 1
+    // Specialized PUSH SP for Intel 8086/80186
+    setOpcodeHandler(0x54, 0x54, _PUSH_SP          );
+#endif
 
-    if (type() >= VCpu::Intel80186) {
-        setOpcodeHandler(0x0F, 0x0F, _wrap_0x0F    );
-        setOpcodeHandler(0x60, 0x60, _PUSHA        );
-        setOpcodeHandler(0x61, 0x61, _POPA         );
-        setOpcodeHandler(0x62, 0x62, _BOUND        );
-        setOpcodeHandler(0x68, 0x68, _PUSH_imm16   );
-        setOpcodeHandler(0x6A, 0x6A, _PUSH_imm8    );
-        setOpcodeHandler(0x6B, 0x6B, _IMUL_reg16_RM16_imm8 );
-        setOpcodeHandler(0xC0, 0xC0, _wrap_0xC0    );
-        setOpcodeHandler(0xC1, 0xC1, _wrap_0xC1    );
-        setOpcodeHandler(0xC8, 0xC8, _ENTER        );
-        setOpcodeHandler(0xC9, 0xC9, _LEAVE        );
-    }
-
-    /* Some cheap solutions. */
-    setOpcodeHandler(0x66, 0x66, _OpOverride       );
-
-    /* There is no FPU yet. */
-    setOpcodeHandler(0x9B, 0x9B, _ESCAPE           );
-    setOpcodeHandler(0xD8, 0xDF, _ESCAPE           );
+#if VOMIT_CPU_LEVEL >= 1
+    // 80186+ instructions
+    setOpcodeHandler(0x0F, 0x0F, _wrap_0x0F        );
+    setOpcodeHandler(0x60, 0x60, _PUSHA            );
+    setOpcodeHandler(0x61, 0x61, _POPA             );
+    setOpcodeHandler(0x62, 0x62, _BOUND            );
+    setOpcodeHandler(0x68, 0x68, _PUSH_imm16       );
+    setOpcodeHandler(0x6A, 0x6A, _PUSH_imm8        );
+    setOpcodeHandler(0x6B, 0x6B, _IMUL_reg16_RM16_imm8 );
+    setOpcodeHandler(0xC0, 0xC0, _wrap_0xC0        );
+    setOpcodeHandler(0xC1, 0xC1, _wrap_0xC1        );
+    setOpcodeHandler(0xC8, 0xC8, _ENTER            );
+    setOpcodeHandler(0xC9, 0xC9, _LEAVE            );
+#endif
 }
 
 void VCpu::kill()
@@ -313,14 +313,14 @@ void VCpu::kill()
     m_prefetchQueue = 0;
 #endif
 
-    free(this->memory);
+    delete [] this->memory;
     this->memory = 0;
     m_codeMemory = 0;
 }
 
 void VCpu::exec()
 {
-    /* TODO: Be more clever with this, it's mostly a waste of time. */
+    // TODO: Be more clever with this, it's mostly a waste of time.
     this->base_CS = getCS();
     this->base_IP = getIP();
 
@@ -328,77 +328,76 @@ void VCpu::exec()
     this->opcode_handler[this->opcode](this);
 }
 
-void vomit_cpu_main(VCpu* cpu)
+void VCpu::mainLoop()
 {
-    cpu->flushFetchQueue();
+    flushFetchQueue();
 
     forever {
 
-        /* HACK: This can be set by an external force to make us break out. */
+        // HACK: This can be set by an external force to make us break out.
         if (g_vomit_exit_main_loop)
             return;
 
 #ifdef VOMIT_DEBUG
-        if (cpu->inDebugger()) {
+        if (inDebugger()) {
 
-            cpu->base_CS = cpu->getCS();
-            cpu->base_IP = cpu->getIP();
+            this->base_CS = getCS();
+            this->base_IP = getIP();
 
-            cpu->debugger();
+            debugger();
 
-            if (!cpu->inDebugger())
+            if (!inDebugger())
                 continue;
         }
 #endif
 
-        /* TODO: Refactor this to spin in a separate mainloop when halted. */
-        if (cpu->state() == VCpu::Halted) {
-            if (!cpu->getIF()) {
-                vlog(VM_ALERT, "%04X:%04X: Halted with IF=0", cpu->getCS(), cpu->getIP());
+        // TODO: Refactor this to spin in a separate mainloop when halted.
+        if (state() == VCpu::Halted) {
+            if (!getIF()) {
+                vlog(VM_ALERT, "%04X:%04X: Halted with IF=0", getCS(), getIP());
                 return;
             }
 
-            if (g_pic_pending_requests) {
-                pic_service_irq(cpu);
-            }
+            if (g_pic_pending_requests)
+                pic_service_irq(this);
+
             continue;
         }
 
 #ifdef VOMIT_TRACE
         if (options.trace) {
-            dump_disasm(cpu->getCS(), cpu->getIP());
-            dump_regs(cpu);
+            dump_disasm(getCS(), getIP());
+            dump_regs(this);
         }
 #endif
 
-        /* Fetch & decode AKA execute the next instruction. */
-        cpu->exec();
+        // Fetch & decode AKA execute the next instruction.
+        exec();
 
-        if (cpu->getTF()) {
-            /* The Trap Flag is set, so we'll execute one instruction and
-             * call ISR 1 as soon as it's finished.
-             *
-             * This is used by tools like DEBUG to implement step-by-step
-             * execution :-) */
-            cpu->jumpToInterruptHandler(1);
+        if (getTF()) {
+            // The Trap Flag is set, so we'll execute one instruction and
+            // call ISR 1 as soon as it's finished.
+            //
+            // This is used by tools like DEBUG to implement step-by-step
+            // execution :-)
+            jumpToInterruptHandler(1);
 
-            /* NOTE: jumpToInterruptHandler() just set IF=0. */
+            // NOTE: jumpToInterruptHandler() just set IF=0.
         }
 
-        /* HACK: Countdown towards fake PIT interrupt. */
-        if (cpu->tick()) {
-            /* Raise the timer IRQ. This is ugly, I know. */
+        // HACK: Countdown towards fake PIT interrupt.
+        if (tick()) {
+            // Raise the timer IRQ. This is ugly, I know.
             irq(0);
         }
 
-        if (g_pic_pending_requests && cpu->getIF()) {
-            pic_service_irq(cpu);
-        }
+        if (g_pic_pending_requests && getIF())
+            pic_service_irq(this);
     }
 }
 
 #ifdef VOMIT_PREFETCH_QUEUE
-/* flushFetchQueue() is a macro if !VOMIT_PREFETCH_QUEUE */
+//* flushFetchQueue() is inline !VOMIT_PREFETCH_QUEUE
 
 BYTE VCpu::fetchOpcodeByte()
 {
@@ -431,38 +430,38 @@ void VCpu::flushFetchQueue()
     VM_ASSERT(m_prefetchQueue);
     VM_ASSERT(m_codeMemory);
 
-    /* Flush the prefetch queue. MUST be done after all jumps/calls. */
+    // Flush the prefetch queue. MUST be done after all jumps/calls.
     m_prefetchQueueIndex = 0;
     for (int i = 0; i < m_prefetchQueueSize; ++i)
         m_prefetchQueue[i] = m_codeMemory[getIP() + i];
 }
 #endif
 
-void vomit_cpu_jump_relative8(VCpu* cpu, SIGNED_BYTE displacement)
+void VCpu::jumpRelative8(SIGNED_BYTE displacement)
 {
-    cpu->IP += displacement;
-    cpu->flushFetchQueue();
+    this->IP += displacement;
+    flushFetchQueue();
 }
 
-void vomit_cpu_jump_relative16(VCpu* cpu, SIGNED_WORD displacement)
+void VCpu::jumpRelative16(SIGNED_WORD displacement)
 {
-    cpu->IP += displacement;
-    cpu->flushFetchQueue();
+    this->IP += displacement;
+    flushFetchQueue();
 }
 
-void vomit_cpu_jump_absolute16(VCpu* cpu, WORD address)
+void VCpu::jumpAbsolute16(WORD address)
 {
-    cpu->IP = address;
-    cpu->flushFetchQueue();
+    this->IP = address;
+    flushFetchQueue();
 }
 
 void VCpu::jump(WORD segment, WORD offset)
 {
-    /* Jump to specified location. */
+    // Jump to specified location.
     this->CS = segment;
     this->IP = offset;
 
-    /* Point m_codeMemory to CS:0 for fast opcode fetching. */
+    // Point m_codeMemory to CS:0 for fast opcode fetching.
     m_codeMemory = this->memory + (segment << 4);
     flushFetchQueue();
 }
@@ -491,41 +490,9 @@ void VCpu::setInterruptHandler(BYTE isr, WORD segment, WORD offset)
     writeMemory16(0x0000, (isr * 4) + 2, segment);
 }
 
-bool VCpu::evaluate(BYTE condition_code)
-{
-    VM_ASSERT(condition_code <= 0xF);
-
-    switch (condition_code) {
-    case  0: return this->OF;                            /* O          */
-    case  1: return !this->OF;                           /* NO         */
-    case  2: return this->CF;                            /* B, C, NAE  */
-    case  3: return !this->CF;                           /* NB, NC, AE */
-    case  4: return this->ZF;                            /* E, Z       */
-    case  5: return !this->ZF;                           /* NE, NZ     */
-    case  6: return (this->CF | this->ZF);               /* BE, NA     */
-    case  7: return !(this->CF | this->ZF);              /* NBE, A     */
-    case  8: return this->SF;                            /* S          */
-    case  9: return !this->SF;                           /* NS         */
-    case 10: return this->PF;                            /* P, PE      */
-    case 11: return !this->PF;                           /* NP, PO     */
-    case 12: return this->SF ^ this->OF;                 /* L, NGE     */
-    case 13: return !(this->SF ^ this->OF);              /* NL, GE     */
-    case 14: return (this->SF ^ this->OF) | this->ZF;    /* LE, NG     */
-    case 15: return !((this->SF ^ this->OF) | this->ZF); /* NLE, G     */
-    }
-    return 0;
-}
-
-void _WAIT(VCpu* cpu)
-{
-    /* XXX: Do nothing? */
-    vlog(VM_ALERT, "%04X:%04X: WAIT", cpu->base_CS, cpu->base_IP);
-}
-
 void _UNSUPP(VCpu* cpu)
 {
-    /* We've come across an unsupported instruction, log it,
-     * then vector to the "illegal instruction" ISR. */
+    // We've come across an unsupported instruction, log it, then vector to the "illegal instruction" ISR.
     vlog(VM_ALERT, "%04X:%04X: Unsupported opcode %02X", cpu->base_CS, cpu->base_IP, cpu->opcode);
     dump_all(cpu);
     cpu->exception(6);

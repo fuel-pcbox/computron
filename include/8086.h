@@ -189,8 +189,15 @@ public:
     WORD getIP() const { return this->IP; }
 
     void jump(WORD segment, WORD offset);
+    void jumpRelative8(SIGNED_BYTE displacement);
+    void jumpRelative16(SIGNED_WORD displacement);
+    void jumpAbsolute16(WORD offset);
 
+    // Execute the next instruction at CS:IP
     void exec();
+
+    // CPU main loop - will fetch & decode until stopped
+    void mainLoop();
 
 #ifdef VOMIT_PREFETCH_QUEUE
     void flushFetchQueue();
@@ -210,7 +217,7 @@ public:
     WORD getFlags();
     void setFlags(WORD flags);
 
-    bool evaluate(BYTE);
+    inline bool evaluate(BYTE) const;
 
     void updateFlags(WORD value, BYTE bits);
     void updateFlags16(WORD value);
@@ -269,11 +276,6 @@ private:
 };
 
 extern VCpu* g_cpu;
-
-void vomit_cpu_main(VCpu*);
-void vomit_cpu_jump_relative8(VCpu*, SIGNED_BYTE displacement);
-void vomit_cpu_jump_relative16(VCpu*, SIGNED_WORD displacement);
-void vomit_cpu_jump_absolute16(VCpu*, WORD offset);
 
 /*!
     Writes an 8-bit value to an output port.
@@ -717,5 +719,34 @@ bool VCpu::tick()
     }
     return false;
 }
+
+#include "debug.h"
+
+bool VCpu::evaluate(BYTE conditionCode) const
+{
+    VM_ASSERT(conditionCode <= 0xF);
+
+    switch (conditionCode) {
+    case  0: return this->OF;                            // O
+    case  1: return !this->OF;                           // NO
+    case  2: return this->CF;                            // B, C, NAE
+    case  3: return !this->CF;                           // NB, NC, AE
+    case  4: return this->ZF;                            // E, Z
+    case  5: return !this->ZF;                           // NE, NZ
+    case  6: return (this->CF | this->ZF);               // BE, NA
+    case  7: return !(this->CF | this->ZF);              // NBE, A
+    case  8: return this->SF;                            // S
+    case  9: return !this->SF;                           // NS
+    case 10: return this->PF;                            // P, PE
+    case 11: return !this->PF;                           // NP, PO
+    case 12: return this->SF ^ this->OF;                 // L, NGE
+    case 13: return !(this->SF ^ this->OF);              // NL, GE
+    case 14: return (this->SF ^ this->OF) | this->ZF;    // LE, NG
+    case 15: return !((this->SF ^ this->OF) | this->ZF); // NLE, G
+    }
+    return 0;
+}
+
+
 
 #endif /* __8086_h__ */
