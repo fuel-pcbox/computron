@@ -6,12 +6,13 @@
 #include "vomit.h"
 #include "debug.h"
 #include "iodevice.h"
+#include <QtCore/QHash>
 
-typedef BYTE (*tintab) (VCpu*, WORD);
-typedef void (*touttab) (VCpu*, WORD, BYTE);
+typedef BYTE (*InputHandler) (VCpu*, WORD);
+typedef void (*OutputHandler) (VCpu*, WORD, BYTE);
 
-static tintab vm_ioh_in[0x10000];
-static touttab vm_ioh_out[0x10000];
+static QHash<WORD, InputHandler> s_inputHandlers;
+static QHash<WORD, OutputHandler> s_outputHandlers;
 
 void _OUT_imm8_AL(VCpu* cpu)
 {
@@ -97,11 +98,12 @@ void vomit_cpu_out(VCpu* cpu, WORD port, BYTE value)
         return;
     }
 
-    /* FIXME: Plug in via vm_listen() like everyone else. */
-    if( port >= 0xE0 && port <= 0xEF )
-        vm_call8(cpu, port, value);
-    else
-        vm_ioh_out[port](cpu, port, value);
+    if (!s_outputHandlers.contains(port)) {
+        vlog(VM_ALERT, "Unhandled I/O write to port %04X, data %02X", port, value);
+        return;
+    }
+
+    s_outputHandlers[port](cpu, port, value);
 }
 
 BYTE vomit_cpu_in(VCpu* cpu, WORD port)
@@ -114,25 +116,26 @@ BYTE vomit_cpu_in(VCpu* cpu, WORD port)
     if (Vomit::IODevice::readDevices().contains(port))
         return Vomit::IODevice::readDevices()[port]->in8();
 
-    return vm_ioh_in[port](cpu, port);
+    if (!s_inputHandlers.contains(port)) {
+        vlog(VM_ALERT, "Unhandled I/O read from port %04X", port);
+        return 0xFF;
+    }
+
+    return s_inputHandlers[port](cpu, port);
 }
 
-static void vm_ioh_nout(VCpu*, WORD port, BYTE value)
+void vm_listen(WORD port, InputHandler inputHandler, OutputHandler outputHandler)
 {
-    vlog(VM_ALERT, "Unhandled I/O write to port %04X, data %02X", port, value);
-}
+    if (inputHandler || outputHandler)
+	    vlog(VM_IOMSG, "Adding listener(s) for port %04X", port);
 
-static BYTE vm_ioh_nin(VCpu*, WORD port)
-{
-    vlog(VM_ALERT, "Unhandled I/O read from port %04X", port);
-    return 0xff;
-}
+    if (inputHandler)
+        s_inputHandlers.insert(port, inputHandler);
+    else
+        s_inputHandlers.remove(port);
 
-void vm_listen( word port, tintab ioh_in, touttab ioh_out )
-{
-    if (ioh_out || ioh_in)
-	vlog(VM_IOMSG, "Adding listener(s) for port %04X", port);
-
-    vm_ioh_in[port] = ioh_in ? ioh_in : vm_ioh_nin;
-    vm_ioh_out[port] = ioh_out ? ioh_out : vm_ioh_nout;
+    if (outputHandler)
+        s_outputHandlers.insert(port, outputHandler);
+    else
+        s_outputHandlers.remove(port);
 }

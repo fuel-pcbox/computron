@@ -31,9 +31,6 @@ void vomit_init()
     vlog( VM_INITMSG, "Initializing video BIOS" );
     video_bios_init();
 
-    for (dword i = 0; i <= 0xFFFF; ++i)
-        vm_listen(i, 0L, 0L);
-
     for (BYTE i = 0xE0; i <= 0xEF; ++i)
         vm_listen(i, 0L, vm_call8);
 
