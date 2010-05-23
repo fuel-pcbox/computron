@@ -44,10 +44,10 @@ void VCpu::jumpToInterruptHandler(int isr)
 {
 #ifdef VOMIT_DEBUG
     if (trapint)
-        vlog(VM_PICMSG, "%04X:%04X Interrupt %02X,%02X trapped", this->base_CS, this->base_IP, isr, this->regs.B.AH);
+        vlog(VM_PICMSG, "%04X:%04X Interrupt %02X,%02X trapped", getBaseCS(), getBaseIP(), isr, this->regs.B.AH);
 
     if (isr == 0x06) {
-        vlog(VM_CPUMSG, "Invalid opcode trap at %04X:%04X (%02X)", this->base_CS, this->base_IP, codeMemory() + this->base_IP);
+        vlog(VM_CPUMSG, "Invalid opcode trap at %04X:%04X (%02X)", getBaseCS(), getBaseIP(), codeMemory() + this->getBaseIP());
     }
 #endif
 

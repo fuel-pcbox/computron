@@ -80,8 +80,8 @@ CodeView::paintEvent( QPaintEvent * )
 {
     QPainter p( this );
 
-    d->segment = g_cpu->base_CS;
-    d->offset = g_cpu->base_IP;
+    d->segment = g_cpu->getBaseCS();
+    d->offset = g_cpu->getBaseIP();
 
     p.fillRect( rect(), Qt::white );
 

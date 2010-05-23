@@ -357,8 +357,8 @@ void VCpu::kill()
 void VCpu::exec()
 {
     // TODO: Be more clever with this, it's mostly a waste of time.
-    this->base_CS = getCS();
-    this->base_IP = getIP();
+    m_baseCS = getCS();
+    m_baseIP = getIP();
 
     this->opcode = fetchOpcodeByte();
     this->opcode_handler[this->opcode](this);
@@ -386,8 +386,8 @@ void VCpu::mainLoop()
 #ifdef VOMIT_DEBUG
         if (inDebugger()) {
 
-            this->base_CS = getCS();
-            this->base_IP = getIP();
+            m_baseCS = getCS();
+            m_baseIP = getIP();
 
             debugger();
 
@@ -507,7 +507,7 @@ void VCpu::setInterruptHandler(BYTE isr, WORD segment, WORD offset)
 void _UNSUPP(VCpu* cpu)
 {
     // We've come across an unsupported instruction, log it, then vector to the "illegal instruction" ISR.
-    vlog(VM_ALERT, "%04X:%04X: Unsupported opcode %02X", cpu->base_CS, cpu->base_IP, cpu->opcode);
+    vlog(VM_ALERT, "%04X:%04X: Unsupported opcode %02X", cpu->getBaseCS(), cpu->getBaseIP(), cpu->opcode);
     dump_all(cpu);
     cpu->exception(6);
 }

@@ -126,9 +126,6 @@ public:
     WORD IP;
     WORD* CurrentSegment;
 
-    WORD base_CS;
-    WORD base_IP;
-
     BYTE opcode;
     BYTE rmbyte;
 
@@ -202,8 +199,8 @@ public:
     WORD getSS() const { return this->SS; }
 
     // Base CS:IP is the start address of the currently executing instruction
-    WORD getBaseCS() const { return this->base_CS; }
-    WORD getBaseIP() const { return this->base_IP; }
+    WORD getBaseCS() const { return m_baseCS; }
+    WORD getBaseIP() const { return m_baseIP; }
 
     void jump(WORD segment, WORD offset);
     void jumpRelative8(SIGNED_BYTE displacement);
@@ -294,6 +291,10 @@ private:
 
     // Cycle counter. May wrap arbitrarily.
     DWORD m_pitCountdown;
+
+    // Actual CS:IP (when we started fetching the instruction)
+    WORD m_baseCS;
+    WORD m_baseIP;
 };
 
 extern VCpu* g_cpu;

@@ -89,7 +89,7 @@ void vomit_cpu_out(VCpu* cpu, WORD port, BYTE value)
 {
 #ifdef VOMIT_DEBUG
     if( iopeek )
-        vlog(VM_IOMSG, "[%04X:%04X] cpu_out: %02X --> %04X", cpu->base_CS, cpu->base_IP, value, port);
+        vlog(VM_IOMSG, "[%04X:%04X] cpu_out: %02X --> %04X", cpu->getBaseCS(), cpu->getBaseIP(), value, port);
 #endif
 
     if (Vomit::IODevice::writeDevices().contains(port)) {
@@ -108,7 +108,7 @@ BYTE vomit_cpu_in(VCpu* cpu, WORD port)
 {
 #ifdef VOMIT_DEBUG
     if (iopeek)
-        vlog(VM_IOMSG, "[%04X:%04X] vomit_cpu_in: %04X", cpu->base_CS, cpu->base_IP, port);
+        vlog(VM_IOMSG, "[%04X:%04X] vomit_cpu_in: %04X", cpu->getBaseCS(), cpu->getBaseIP(), port);
 #endif
 
     if (Vomit::IODevice::readDevices().contains(port))

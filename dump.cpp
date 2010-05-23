@@ -105,7 +105,7 @@ void dump_all(VCpu* cpu)
 #endif
 
 	vlog(VM_DUMPMSG, "\n");
-	dump_disasm(cpu->base_CS, cpu->base_IP);
+	dump_disasm(cpu->getBaseCS(), cpu->getBaseIP());
 }
 
 byte n(byte b) {					/* Nice it up for printing.		*/
