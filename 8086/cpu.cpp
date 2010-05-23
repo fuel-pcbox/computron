@@ -109,15 +109,15 @@ void VCpu::registerDefaultOpcodeHandlers()
     setOpcodeHandler(0x03, 0x03, _ADD_reg16_RM16   );
     setOpcodeHandler(0x04, 0x04, _ADD_AL_imm8      );
     setOpcodeHandler(0x05, 0x05, _ADD_AX_imm16     );
-    setOpcodeHandler(0x06, 0x06, _PUSH_seg         );
-    setOpcodeHandler(0x07, 0x07, _POP_seg          );
+    setOpcodeHandler(0x06, 0x06, _PUSH_ES          );
+    setOpcodeHandler(0x07, 0x07, _POP_ES           );
     setOpcodeHandler(0x08, 0x08, _OR_RM8_reg8      );
     setOpcodeHandler(0x09, 0x09, _OR_RM16_reg16    );
     setOpcodeHandler(0x0A, 0x0A, _OR_reg8_RM8      );
     setOpcodeHandler(0x0B, 0x0B, _OR_reg16_RM16    );
     setOpcodeHandler(0x0C, 0x0C, _OR_AL_imm8       );
     setOpcodeHandler(0x0D, 0x0D, _OR_AX_imm16      );
-    setOpcodeHandler(0x0E, 0x0E, _PUSH_seg         );
+    setOpcodeHandler(0x0E, 0x0E, _PUSH_CS          );
     setOpcodeHandler(0x0F, 0x0F, _POP_CS           );
     setOpcodeHandler(0x10, 0x10, _ADC_RM8_reg8     );
     setOpcodeHandler(0x11, 0x11, _ADC_RM16_reg16   );
@@ -125,16 +125,16 @@ void VCpu::registerDefaultOpcodeHandlers()
     setOpcodeHandler(0x13, 0x13, _ADC_reg16_RM16   );
     setOpcodeHandler(0x14, 0x14, _ADC_AL_imm8      );
     setOpcodeHandler(0x15, 0x15, _ADC_AX_imm16     );
-    setOpcodeHandler(0x16, 0x16, _PUSH_seg         );
-    setOpcodeHandler(0x17, 0x17, _POP_seg          );
+    setOpcodeHandler(0x16, 0x16, _PUSH_SS          );
+    setOpcodeHandler(0x17, 0x17, _POP_SS           );
     setOpcodeHandler(0x18, 0x18, _SBB_RM8_reg8     );
     setOpcodeHandler(0x19, 0x19, _SBB_RM16_reg16   );
     setOpcodeHandler(0x1A, 0x1A, _SBB_reg8_RM8     );
     setOpcodeHandler(0x1B, 0x1B, _SBB_reg16_RM16   );
     setOpcodeHandler(0x1C, 0x1C, _SBB_AL_imm8      );
     setOpcodeHandler(0x1D, 0x1D, _SBB_AX_imm16     );
-    setOpcodeHandler(0x1E, 0x1E, _PUSH_seg         );
-    setOpcodeHandler(0x1F, 0x1F, _POP_seg          );
+    setOpcodeHandler(0x1E, 0x1E, _PUSH_DS          );
+    setOpcodeHandler(0x1F, 0x1F, _POP_DS           );
     setOpcodeHandler(0x20, 0x20, _AND_RM8_reg8     );
     setOpcodeHandler(0x21, 0x21, _AND_RM16_reg16   );
     setOpcodeHandler(0x22, 0x22, _AND_reg8_RM8     );
@@ -169,8 +169,25 @@ void VCpu::registerDefaultOpcodeHandlers()
     setOpcodeHandler(0x3F, 0x3F, _AAS              );
     setOpcodeHandler(0x40, 0x47, _INC_reg16        );
     setOpcodeHandler(0x48, 0x4F, _DEC_reg16        );
-    setOpcodeHandler(0x50, 0x57, _PUSH_reg16       );
-    setOpcodeHandler(0x58, 0x5F, _POP_reg16        );
+
+    setOpcodeHandler(0x50, 0x50, _PUSH_AX          );
+    setOpcodeHandler(0x51, 0x51, _PUSH_CX          );
+    setOpcodeHandler(0x52, 0x52, _PUSH_DX          );
+    setOpcodeHandler(0x53, 0x53, _PUSH_BX          );
+    setOpcodeHandler(0x54, 0x54, _PUSH_SP          );
+    setOpcodeHandler(0x55, 0x55, _PUSH_BP          );
+    setOpcodeHandler(0x56, 0x56, _PUSH_SI          );
+    setOpcodeHandler(0x57, 0x57, _PUSH_DI          );
+
+    setOpcodeHandler(0x58, 0x58, _POP_AX           );
+    setOpcodeHandler(0x59, 0x59, _POP_CX           );
+    setOpcodeHandler(0x5A, 0x5A, _POP_DX           );
+    setOpcodeHandler(0x5B, 0x5B, _POP_BX           );
+    setOpcodeHandler(0x5C, 0x5C, _POP_SP           );
+    setOpcodeHandler(0x5D, 0x5D, _POP_BP           );
+    setOpcodeHandler(0x5E, 0x5E, _POP_SI           );
+    setOpcodeHandler(0x5F, 0x5F, _POP_DI           );
+
     setOpcodeHandler(0x6E, 0x6E, _OUTSB            );
     setOpcodeHandler(0x6F, 0x6F, _OUTSW            );
     setOpcodeHandler(0x70, 0x70, _JO_imm8          );
@@ -302,9 +319,11 @@ void VCpu::registerDefaultOpcodeHandlers()
     setOpcodeHandler(0xC0, 0xC0, _wrap_0xC0        );
     setOpcodeHandler(0xC1, 0xC1, _wrap_0xC1        );
 
+    setOpcodeHandler(0x54, 0x54, _PUSH_SP_8086_80186);
+
 #if VOMIT_CPU_LEVEL <= 1
     // Specialized PUSH SP for Intel 8086/80186
-    setOpcodeHandler(0x54, 0x54, _PUSH_SP          );
+    setOpcodeHandler(0x54, 0x54, _PUSH_SP_8086_80186);
 #endif
 
 #if VOMIT_CPU_LEVEL >= 1

@@ -6,24 +6,90 @@
 #include "vomit.h"
 #include "debug.h"
 
-void _PUSH_SP(VCpu* cpu)
+void _PUSH_SP_8086_80186(VCpu* cpu)
 {
-    /* PUSH SP will use the value of SP *after* pushing on Intel's 8086 and 80186.
-     * Since these are the only CPU's emulated by Vomit right now, we just
-     * do things that way.
-     */
+    // PUSH SP will use the value of SP *after* pushing on Intel's 8086 and 80186.
     cpu->push(cpu->regs.W.SP - 2);
 }
 
-void _PUSH_reg16(VCpu* cpu)
+void _PUSH_AX(VCpu* cpu)
 {
-    cpu->push(*cpu->treg16[cpu->opcode & 7]);
+    cpu->push(cpu->regs.W.AX);
 }
 
-void
-_POP_reg16(VCpu* cpu)
+void _PUSH_BX(VCpu* cpu)
 {
-    *cpu->treg16[cpu->opcode & 7] = cpu->pop();
+    cpu->push(cpu->regs.W.BX);
+}
+
+void _PUSH_CX(VCpu* cpu)
+{
+    cpu->push(cpu->regs.W.CX);
+}
+
+void _PUSH_DX(VCpu* cpu)
+{
+    cpu->push(cpu->regs.W.DX);
+}
+
+void _PUSH_BP(VCpu* cpu)
+{
+    cpu->push(cpu->regs.W.BP);
+}
+
+void _PUSH_SP(VCpu* cpu)
+{
+    cpu->push(cpu->regs.W.SP);
+}
+
+void _PUSH_SI(VCpu* cpu)
+{
+    cpu->push(cpu->regs.W.SI);
+}
+
+void _PUSH_DI(VCpu* cpu)
+{
+    cpu->push(cpu->regs.W.DI);
+}
+
+void _POP_AX(VCpu* cpu)
+{
+    cpu->regs.W.AX = cpu->pop();
+}
+
+void _POP_BX(VCpu* cpu)
+{
+    cpu->regs.W.BX = cpu->pop();
+}
+
+void _POP_CX(VCpu* cpu)
+{
+    cpu->regs.W.CX = cpu->pop();
+}
+
+void _POP_DX(VCpu* cpu)
+{
+    cpu->regs.W.DX = cpu->pop();
+}
+
+void _POP_BP(VCpu* cpu)
+{
+    cpu->regs.W.BP = cpu->pop();
+}
+
+void _POP_SP(VCpu* cpu)
+{
+    cpu->regs.W.SP = cpu->pop();
+}
+
+void _POP_SI(VCpu* cpu)
+{
+    cpu->regs.W.SI = cpu->pop();
+}
+
+void _POP_DI(VCpu* cpu)
+{
+    cpu->regs.W.DI = cpu->pop();
 }
 
 void _PUSH_RM16(VCpu* cpu)
@@ -36,23 +102,49 @@ void _POP_RM16(VCpu* cpu)
     vomit_cpu_modrm_write16(cpu, cpu->rmbyte, cpu->pop());
 }
 
-void _PUSH_seg(VCpu* cpu)
+void _PUSH_CS(VCpu* cpu)
 {
-    cpu->push(*cpu->tseg[rmreg(cpu->opcode)]);
+    cpu->push(cpu->getCS());
+}
+
+void _PUSH_DS(VCpu* cpu)
+{
+    cpu->push(cpu->getDS());
+}
+
+void _PUSH_ES(VCpu* cpu)
+{
+    cpu->push(cpu->getES());
+}
+
+void _PUSH_SS(VCpu* cpu)
+{
+    cpu->push(cpu->getSS());
 }
 
 void _POP_CS(VCpu* cpu)
 {
-    vlog(VM_ALERT, "%04X:%04X: 286+ instruction (or possibly POP CS...)", cpu->base_CS, cpu->base_IP);
+    vlog(VM_ALERT, "%04X:%04X: 286+ instruction (or possibly POP CS...)", cpu->getBaseCS(), cpu->getBaseIP());
 
     (void) cpu->fetchOpcodeByte();
     (void) cpu->fetchOpcodeByte();
     (void) cpu->fetchOpcodeByte();
     (void) cpu->fetchOpcodeByte();
 }
-void _POP_seg(VCpu* cpu)
+
+void _POP_DS(VCpu* cpu)
 {
-    *cpu->tseg[rmreg(cpu->opcode)] = cpu->pop();
+    cpu->DS = cpu->pop();
+}
+
+void _POP_ES(VCpu* cpu)
+{
+    cpu->ES = cpu->pop();
+}
+
+void _POP_SS(VCpu* cpu)
+{
+    cpu->SS = cpu->pop();
 }
 
 void _PUSHF(VCpu* cpu)

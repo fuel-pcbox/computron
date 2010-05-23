@@ -188,6 +188,14 @@ public:
     WORD getCS() const { return this->CS; }
     WORD getIP() const { return this->IP; }
 
+    WORD getDS() const { return this->DS; }
+    WORD getES() const { return this->ES; }
+    WORD getSS() const { return this->SS; }
+
+    // Base CS:IP is the start address of the currently executing instruction
+    WORD getBaseCS() const { return this->base_CS; }
+    WORD getBaseIP() const { return this->base_IP; }
+
     void jump(WORD segment, WORD offset);
     void jumpRelative8(SIGNED_BYTE displacement);
     void jumpRelative16(SIGNED_WORD displacement);
@@ -520,14 +528,33 @@ void _TEST_RM16_reg16(VCpu*);
 void _TEST_AX_imm16(VCpu*);
 void _TEST_AL_imm8(VCpu*);
 
+void _PUSH_SP_8086_80186(VCpu*);
+void _PUSH_AX(VCpu*);
+void _PUSH_BX(VCpu*);
+void _PUSH_CX(VCpu*);
+void _PUSH_DX(VCpu*);
+void _PUSH_BP(VCpu*);
 void _PUSH_SP(VCpu*);
-void _PUSH_reg16(VCpu*);
-void _PUSH_seg(VCpu*);
+void _PUSH_SI(VCpu*);
+void _PUSH_DI(VCpu*);
+void _POP_AX(VCpu*);
+void _POP_BX(VCpu*);
+void _POP_CX(VCpu*);
+void _POP_DX(VCpu*);
+void _POP_BP(VCpu*);
+void _POP_SP(VCpu*);
+void _POP_SI(VCpu*);
+void _POP_DI(VCpu*);
+void _PUSH_CS(VCpu*);
+void _PUSH_DS(VCpu*);
+void _PUSH_ES(VCpu*);
+void _PUSH_SS(VCpu*);
 void _PUSHF(VCpu*);
 
-void _POP_reg16(VCpu*);
-void _POP_seg(VCpu*);
 void _POP_CS(VCpu*);
+void _POP_DS(VCpu*);
+void _POP_ES(VCpu*);
+void _POP_SS(VCpu*);
 void _POPF(VCpu*);
 
 void _LAHF(VCpu*);
