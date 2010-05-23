@@ -1,9 +1,10 @@
 #ifndef __vomit_h__
 #define __vomit_h__
 
-#include <stdint.h>
 #include <stdbool.h>
 #include <stdarg.h>
+
+#include "types.h"
 
 #define MAX_FILESIZE	524288		/* 512kB is max "loadfile" size */
 #define MAX_FN_LENGTH	128
@@ -35,22 +36,6 @@
 #define VM_PICMSG       124
 #define VM_VOMCTL       125
 #define VLOG_CMOS       126
-
-typedef uint8_t byte;
-typedef uint16_t word;
-typedef uint32_t dword;
-typedef int8_t sigbyte;
-typedef int16_t sigword;
-typedef int32_t sigdword;
-
-typedef uint8_t BYTE;
-typedef uint16_t WORD;
-typedef uint32_t DWORD;
-typedef int8_t SIGNED_BYTE;
-typedef int16_t SIGNED_WORD;
-typedef int32_t SIGNED_DWORD;
-
-extern word g_pic_pending_requests;
 
 void vm_exit(int);
 void config_reload();
@@ -109,17 +94,16 @@ typedef struct {
 extern vomit_options_t options;
 
 #include "8086.h"
-#include "186.h"
 #include "floppy.h"
 #include "vga.h"
 
-void dump_all(vomit_cpu_t *cpu);
-void pic_service_irq(vomit_cpu_t *cpu);
+void dump_all(VCpu*);
+void pic_service_irq(VCpu*);
 
-void vm_listen(word, byte (*)(vomit_cpu_t *, word), void (*)(vomit_cpu_t *, word, byte));
-void vm_call8(vomit_cpu_t *cpu, WORD port, BYTE value);
-void dump_cpu(vomit_cpu_t *cpu);
-void dump_regs(vomit_cpu_t *cpu);
+void vm_listen(word, byte (*)(VCpu*, word), void (*)(VCpu*, word, byte));
+void vm_call8(VCpu*, WORD port, BYTE value);
+void dump_cpu(VCpu*);
+void dump_regs(VCpu*);
 
 template <typename T> inline void swap(T &a, T &b)
 {

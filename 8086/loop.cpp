@@ -7,7 +7,7 @@
 #include "vomit.h"
 #include "debug.h"
 
-void _LOOP_imm8(vomit_cpu_t *cpu)
+void _LOOP_imm8(VCpu* cpu)
 {
     SIGNED_BYTE disp = cpu->fetchOpcodeByte();
     --cpu->regs.W.CX;
@@ -15,7 +15,7 @@ void _LOOP_imm8(vomit_cpu_t *cpu)
         vomit_cpu_jump_relative8(cpu, disp);
 }
 
-void _LOOPE_imm8(vomit_cpu_t *cpu)
+void _LOOPE_imm8(VCpu* cpu)
 {
     SIGNED_BYTE disp = cpu->fetchOpcodeByte();
     --cpu->regs.W.CX;
@@ -23,7 +23,7 @@ void _LOOPE_imm8(vomit_cpu_t *cpu)
         vomit_cpu_jump_relative8(cpu, disp);
 }
 
-void _LOOPNE_imm8(vomit_cpu_t *cpu)
+void _LOOPNE_imm8(VCpu* cpu)
 {
     SIGNED_BYTE disp = cpu->fetchOpcodeByte();
     --cpu->regs.W.CX;
@@ -34,7 +34,7 @@ void _LOOPNE_imm8(vomit_cpu_t *cpu)
 #define DO_REP(func) for (; cpu->regs.W.CX; --cpu->regs.W.CX) { func(cpu); }
 #define DO_REPZ(func) for (cpu->setZF(should_equal); cpu->regs.W.CX && (cpu->getZF() == should_equal); --cpu->regs.W.CX) { func(cpu); }
 
-static void __rep(vomit_cpu_t *cpu, byte opcode, bool should_equal)
+static void __rep(VCpu* cpu, byte opcode, bool should_equal)
 {
     switch(opcode) {
     case 0x26: SET_SEGMENT_PREFIX(cpu, ES); break;
@@ -65,13 +65,13 @@ static void __rep(vomit_cpu_t *cpu, byte opcode, bool should_equal)
 	__rep(cpu, cpu->fetchOpcodeByte(), should_equal);
 }
 
-void _REP(vomit_cpu_t *cpu)
+void _REP(VCpu* cpu)
 {
 	__rep(cpu, cpu->fetchOpcodeByte(), true);
 	RESET_SEGMENT_PREFIX(cpu);
 }
 
-void _REPNE(vomit_cpu_t *cpu)
+void _REPNE(VCpu* cpu)
 {
 	__rep(cpu, cpu->fetchOpcodeByte(), false);
 	RESET_SEGMENT_PREFIX(cpu);

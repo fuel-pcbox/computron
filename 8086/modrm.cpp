@@ -9,7 +9,7 @@ static int s_last_is_register = 0;
 static word s_last_modrm_segment = 0;
 static word s_last_modrm_offset = 0;
 
-void vomit_cpu_modrm_write16(vomit_cpu_t *cpu, BYTE rmbyte, WORD value)
+void vomit_cpu_modrm_write16(VCpu* cpu, BYTE rmbyte, WORD value)
 {
     BYTE *rmp = (BYTE *)vomit_cpu_modrm_resolve16(cpu, rmbyte);
     if (MODRM_ISREG(rmbyte)) {
@@ -19,7 +19,7 @@ void vomit_cpu_modrm_write16(vomit_cpu_t *cpu, BYTE rmbyte, WORD value)
     }
 }
 
-void vomit_cpu_modrm_write8(vomit_cpu_t *cpu, BYTE rmbyte, BYTE value)
+void vomit_cpu_modrm_write8(VCpu* cpu, BYTE rmbyte, BYTE value)
 {
     BYTE *rmp = (BYTE *)vomit_cpu_modrm_resolve8(cpu, rmbyte);
     if (MODRM_ISREG(rmbyte)) {
@@ -29,7 +29,7 @@ void vomit_cpu_modrm_write8(vomit_cpu_t *cpu, BYTE rmbyte, BYTE value)
     }
 }
 
-WORD vomit_cpu_modrm_read16(vomit_cpu_t *cpu, BYTE rmbyte)
+WORD vomit_cpu_modrm_read16(VCpu* cpu, BYTE rmbyte)
 {
     BYTE *rmp = (BYTE *)vomit_cpu_modrm_resolve16(cpu, rmbyte);
     if (MODRM_ISREG(rmbyte))
@@ -37,7 +37,7 @@ WORD vomit_cpu_modrm_read16(vomit_cpu_t *cpu, BYTE rmbyte)
     return vomit_cpu_memory_read16(cpu, s_last_modrm_segment, s_last_modrm_offset);
 }
 
-BYTE vomit_cpu_modrm_read8(vomit_cpu_t *cpu, BYTE rmbyte)
+BYTE vomit_cpu_modrm_read8(VCpu* cpu, BYTE rmbyte)
 {
     BYTE *rmp = (BYTE *)vomit_cpu_modrm_resolve8(cpu, rmbyte);
     if (MODRM_ISREG(rmbyte))
@@ -45,7 +45,7 @@ BYTE vomit_cpu_modrm_read8(vomit_cpu_t *cpu, BYTE rmbyte)
     return vomit_cpu_memory_read8(cpu, s_last_modrm_segment, s_last_modrm_offset);
 }
 
-void vomit_cpu_modrm_update16(vomit_cpu_t *cpu, WORD value)
+void vomit_cpu_modrm_update16(VCpu* cpu, WORD value)
 {
     if (s_last_is_register) {
         *((WORD *)s_last_modrm_ptr) = value;
@@ -54,7 +54,7 @@ void vomit_cpu_modrm_update16(vomit_cpu_t *cpu, WORD value)
     }
 }
 
-void vomit_cpu_modrm_update8(vomit_cpu_t *cpu, BYTE value)
+void vomit_cpu_modrm_update8(VCpu* cpu, BYTE value)
 {
     if (s_last_is_register) {
         *((BYTE *)s_last_modrm_ptr) = value;
@@ -63,7 +63,7 @@ void vomit_cpu_modrm_update8(vomit_cpu_t *cpu, BYTE value)
     }
 }
 
-DWORD vomit_cpu_modrm_read32(vomit_cpu_t *cpu, byte rmbyte)
+DWORD vomit_cpu_modrm_read32(VCpu* cpu, byte rmbyte)
 {
     /* NOTE: We don't need modrm_resolve32() at the moment. */
     BYTE *rmp = (BYTE *)vomit_cpu_modrm_resolve8(cpu, rmbyte);
@@ -76,7 +76,7 @@ DWORD vomit_cpu_modrm_read32(vomit_cpu_t *cpu, byte rmbyte)
     return rmp[0] | (rmp[1]<<8) | (rmp[2]<<16) | (rmp[3]<<24);
 }
 
-void _LEA_reg16_mem16(vomit_cpu_t *cpu)
+void _LEA_reg16_mem16(VCpu* cpu)
 {
     WORD retv = 0x0000;
     BYTE b = cpu->fetchOpcodeByte();
@@ -130,7 +130,7 @@ void _LEA_reg16_mem16(vomit_cpu_t *cpu)
     *cpu->treg16[rmreg(b)] = retv;
 }
 
-void *vomit_cpu_modrm_resolve8(vomit_cpu_t *cpu, BYTE rmbyte)
+void *vomit_cpu_modrm_resolve8(VCpu* cpu, BYTE rmbyte)
 {
     WORD segment = *cpu->CurrentSegment;
     WORD offset = 0x0000;
@@ -203,7 +203,7 @@ void *vomit_cpu_modrm_resolve8(vomit_cpu_t *cpu, BYTE rmbyte)
     return s_last_modrm_ptr;
 }
 
-void * vomit_cpu_modrm_resolve16(vomit_cpu_t *cpu, BYTE rmbyte)
+void * vomit_cpu_modrm_resolve16(VCpu* cpu, BYTE rmbyte)
 {
     WORD segment = *cpu->CurrentSegment;
     WORD offset = 0x0000;

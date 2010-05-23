@@ -15,9 +15,9 @@
 #include <time.h>
 #include <sys/time.h>
 
-static void vm_handleE6(vomit_cpu_t *cpu);
+static void vm_handleE6(VCpu* cpu);
 
-void vm_call8(vomit_cpu_t *cpu, word port, byte data)
+void vm_call8(VCpu* cpu, word port, byte data)
 {
 	switch( port )
 	{
@@ -47,7 +47,7 @@ void vm_call8(vomit_cpu_t *cpu, word port, byte data)
     }
 }
 
-void vm_handleE6(vomit_cpu_t *cpu)
+void vm_handleE6(VCpu* cpu)
 {
 	struct	tm *t;
 	time_t	curtime;
@@ -82,8 +82,8 @@ void vm_handleE6(vomit_cpu_t *cpu)
 		tick_count += timv.tv_usec / 54926.9471602768;	/* precision is healthy */
 		cpu->regs.W.CX = tick_count >> 16;
 		cpu->regs.W.DX = tick_count & 0xFFFF;
-		vomit_cpu_memory_write16(cpu, 0x0040, 0x006C, tick_count & 0xFFFF );
-		vomit_cpu_memory_write16(cpu, 0x0040, 0x006D, tick_count >> 16 );
+		cpu->writeUnmappedMemory16(0x046C, tick_count & 0xFFFF);
+		cpu->writeUnmappedMemory16(0x046D, tick_count >> 16);
 		break;
 	case 0x1300:
 		drive = cpu->regs.B.DL;
@@ -96,7 +96,7 @@ void vm_handleE6(vomit_cpu_t *cpu)
 			cpu->regs.B.AH = FD_CHANGED_OR_REMOVED;
 			cpu->setCF(1);
 		}
-		vomit_cpu_memory_write8(cpu, 0x0040, drive < 2 ? 0x0041 : 0x0072, cpu->regs.B.AH);
+		cpu->writeUnmappedMemory8(drive < 2 ? 0x0441 : 0x0472, cpu->regs.B.AH);
 		break;
 #if 0
 	case 0x1305:

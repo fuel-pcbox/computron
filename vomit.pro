@@ -26,7 +26,6 @@ HEADERS += gui/codeview.h \
            hw/vomctl.h \
            hw/vga_memory.h \
            hw/cmos.h \
-           include/186.h \
            include/8086.h \
            include/debug.h \
            include/floppy.h \

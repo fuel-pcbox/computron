@@ -7,7 +7,7 @@
 #include "vomit.h"
 #include "debug.h"
 
-void _wrap_0x80(vomit_cpu_t *cpu)
+void _wrap_0x80(VCpu* cpu)
 {
     cpu->rmbyte = cpu->fetchOpcodeByte();
     switch(rmreg(cpu->rmbyte)) {
@@ -22,7 +22,7 @@ void _wrap_0x80(vomit_cpu_t *cpu)
     }
 }
 
-void _wrap_0x81(vomit_cpu_t *cpu)
+void _wrap_0x81(VCpu* cpu)
 {
     cpu->rmbyte = cpu->fetchOpcodeByte();
     switch(rmreg(cpu->rmbyte)) {
@@ -37,7 +37,7 @@ void _wrap_0x81(vomit_cpu_t *cpu)
     }
 }
 
-void _wrap_0x83(vomit_cpu_t *cpu)
+void _wrap_0x83(VCpu* cpu)
 {
     cpu->rmbyte = cpu->fetchOpcodeByte();
     switch(rmreg(cpu->rmbyte)) {
@@ -52,7 +52,7 @@ void _wrap_0x83(vomit_cpu_t *cpu)
     }
 }
 
-void _wrap_0x8F(vomit_cpu_t *cpu)
+void _wrap_0x8F(VCpu* cpu)
 {
     cpu->rmbyte = cpu->fetchOpcodeByte();
     switch(rmreg(cpu->rmbyte)) {
@@ -62,7 +62,7 @@ void _wrap_0x8F(vomit_cpu_t *cpu)
     }
 }
 
-void _wrap_0xC0(vomit_cpu_t *cpu)
+void _wrap_0xC0(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
     BYTE value = vomit_cpu_modrm_read8(cpu, rm);
@@ -80,7 +80,7 @@ void _wrap_0xC0(vomit_cpu_t *cpu)
     }
 }
 
-void _wrap_0xC1(vomit_cpu_t *cpu)
+void _wrap_0xC1(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
     WORD value = vomit_cpu_modrm_read16(cpu, rm );
@@ -99,7 +99,7 @@ void _wrap_0xC1(vomit_cpu_t *cpu)
     }
 }
 
-void _wrap_0xD0(vomit_cpu_t *cpu)
+void _wrap_0xD0(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
     BYTE value = vomit_cpu_modrm_read8(cpu, rm);
@@ -117,7 +117,7 @@ void _wrap_0xD0(vomit_cpu_t *cpu)
     }
 }
 
-void _wrap_0xD1(vomit_cpu_t *cpu)
+void _wrap_0xD1(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
     WORD value = vomit_cpu_modrm_read16(cpu, rm);
@@ -135,7 +135,7 @@ void _wrap_0xD1(vomit_cpu_t *cpu)
     }
 }
 
-void _wrap_0xD2(vomit_cpu_t *cpu)
+void _wrap_0xD2(VCpu* cpu)
 {
     byte rm = cpu->fetchOpcodeByte();
     byte value = vomit_cpu_modrm_read8(cpu, rm);
@@ -153,7 +153,7 @@ void _wrap_0xD2(vomit_cpu_t *cpu)
     }
 }
 
-void _wrap_0xD3(vomit_cpu_t *cpu)
+void _wrap_0xD3(VCpu* cpu)
 {
     byte rm = cpu->fetchOpcodeByte();
     word value = vomit_cpu_modrm_read16(cpu, rm);
@@ -171,7 +171,7 @@ void _wrap_0xD3(vomit_cpu_t *cpu)
     }
 }
 
-void _wrap_0xF6(vomit_cpu_t *cpu)
+void _wrap_0xF6(VCpu* cpu)
 {
     cpu->rmbyte = cpu->fetchOpcodeByte();
 
@@ -188,7 +188,7 @@ void _wrap_0xF6(vomit_cpu_t *cpu)
     }
 }
 
-void _wrap_0xF7(vomit_cpu_t *cpu)
+void _wrap_0xF7(VCpu* cpu)
 {
     cpu->rmbyte = cpu->fetchOpcodeByte();
 
@@ -206,7 +206,7 @@ void _wrap_0xF7(vomit_cpu_t *cpu)
 }
 
 
-void _wrap_0xFE(vomit_cpu_t *cpu)
+void _wrap_0xFE(VCpu* cpu)
 {
     byte rm = cpu->fetchOpcodeByte();
     byte value = vomit_cpu_modrm_read8(cpu, rm);
@@ -233,7 +233,7 @@ void _wrap_0xFE(vomit_cpu_t *cpu)
     }
 }
 
-void _wrap_0xFF(vomit_cpu_t *cpu)
+void _wrap_0xFF(VCpu* cpu)
 {
     cpu->rmbyte = cpu->fetchOpcodeByte();
     switch (rmreg(cpu->rmbyte)) {

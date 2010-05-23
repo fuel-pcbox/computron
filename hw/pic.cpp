@@ -1,10 +1,10 @@
 #include "vomit.h"
 #include "debug.h"
 
-static void pic_master_write(vomit_cpu_t *cpu, word, byte );
-static byte pic_master_read(vomit_cpu_t *cpu, word );
-static void pic_slave_write(vomit_cpu_t *cpu, word, byte );
-static byte pic_slave_read(vomit_cpu_t *cpu, word );
+static void pic_master_write(VCpu* cpu, word, byte );
+static byte pic_master_read(VCpu* cpu, word );
+static void pic_slave_write(VCpu* cpu, word, byte );
+static byte pic_slave_read(VCpu* cpu, word );
 
 static bool master_read_irr = 1;
 static bool slave_read_irr = 1;
@@ -40,7 +40,7 @@ pic_init()
 }
 
 void
-pic_master_write(vomit_cpu_t *cpu, word port, byte data )
+pic_master_write(VCpu* cpu, word port, byte data )
 {
     if( port == 0x20 && data == 0x20 ) // non-specific EOI
     {
@@ -100,7 +100,7 @@ pic_master_write(vomit_cpu_t *cpu, word port, byte data )
 }
 
 byte
-pic_master_read(vomit_cpu_t *cpu, word port )
+pic_master_read(VCpu* cpu, word port )
 {
     //master_irr = 0;
     //master_isr = 0;
@@ -138,7 +138,7 @@ irq( byte num )
     UPDATE_PENDING_REQUESTS;
 }
 
-void pic_service_irq(vomit_cpu_t *cpu)
+void pic_service_irq(VCpu* cpu)
 {
     int i;
 
@@ -175,7 +175,7 @@ void pic_service_irq(vomit_cpu_t *cpu)
 }
 
 void
-pic_slave_write(vomit_cpu_t *cpu, word port, byte data )
+pic_slave_write(VCpu* cpu, word port, byte data )
 {
     if( port == 0xA0 && data == 0x20 ) // non-specific EOI
     {
@@ -235,7 +235,7 @@ pic_slave_write(vomit_cpu_t *cpu, word port, byte data )
 }
 
 byte
-pic_slave_read(vomit_cpu_t *cpu, word port )
+pic_slave_read(VCpu* cpu, word port )
 {
     (void) port;
     vlog( VM_PICMSG, "Can't read from slave yet!" );

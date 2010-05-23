@@ -18,19 +18,19 @@ static byte sector[2];
 static byte nsectors[2];
 static byte error[2];
 
-static byte ide_status(vomit_cpu_t *cpu, word );
-static void ide_command(vomit_cpu_t *cpu, word, byte );
-static byte get_sector_count(vomit_cpu_t *cpu, word );
-static void set_sector_count(vomit_cpu_t *cpu, word, byte );
-static byte get_sector(vomit_cpu_t *cpu, word );
-static void set_sector(vomit_cpu_t *cpu, word, byte );
-static byte get_cylinder_lsb(vomit_cpu_t *cpu, word );
-static void set_cylinder_lsb(vomit_cpu_t *cpu, word, byte );
-static byte get_cylinder_msb(vomit_cpu_t *cpu, word );
-static void set_cylinder_msb(vomit_cpu_t *cpu, word, byte );
-static byte get_head(vomit_cpu_t *cpu, word );
-static void set_head(vomit_cpu_t *cpu, word, byte );
-static byte ide_error(vomit_cpu_t *cpu, word port );
+static byte ide_status(VCpu* cpu, word );
+static void ide_command(VCpu* cpu, word, byte );
+static byte get_sector_count(VCpu* cpu, word );
+static void set_sector_count(VCpu* cpu, word, byte );
+static byte get_sector(VCpu* cpu, word );
+static void set_sector(VCpu* cpu, word, byte );
+static byte get_cylinder_lsb(VCpu* cpu, word );
+static void set_cylinder_lsb(VCpu* cpu, word, byte );
+static byte get_cylinder_msb(VCpu* cpu, word );
+static void set_cylinder_msb(VCpu* cpu, word, byte );
+static byte get_head(VCpu* cpu, word );
+static void set_head(VCpu* cpu, word, byte );
+static byte ide_error(VCpu* cpu, word port );
 
 void
 ide_init()
@@ -52,13 +52,13 @@ ide_init()
 }
 
 static void
-ide_command(vomit_cpu_t *cpu, word port, byte data )
+ide_command(VCpu* cpu, word port, byte data )
 {
 	vlog( VM_DISKLOG, "ide%d received cmd %02X", CONTROLLER, data );
 }
 
 static byte
-ide_status(vomit_cpu_t *cpu, word port )
+ide_status(VCpu* cpu, word port )
 {
 	vlog( VM_DISKLOG, "ide%d status queried", CONTROLLER );
 	(void) port;
@@ -66,7 +66,7 @@ ide_status(vomit_cpu_t *cpu, word port )
 }
 
 static byte
-ide_error(vomit_cpu_t *cpu, word port )
+ide_error(VCpu* cpu, word port )
 {
 	vlog( VM_DISKLOG, "ide%d error queried", CONTROLLER );
 	return error[CONTROLLER];
@@ -74,42 +74,42 @@ ide_error(vomit_cpu_t *cpu, word port )
 
 
 static byte
-get_sector_count(vomit_cpu_t *cpu, word port )
+get_sector_count(VCpu* cpu, word port )
 {
 	vlog( VM_DISKLOG, "ide%d sector count queried", CONTROLLER );
 	return nsectors[CONTROLLER];
 }
 
 static void
-set_sector_count(vomit_cpu_t *cpu, word port, byte data )
+set_sector_count(VCpu* cpu, word port, byte data )
 {
 	vlog( VM_DISKLOG, "ide%d sector count set to %d", CONTROLLER, data );
 	nsectors[CONTROLLER] = data;
 }
 
 static byte
-get_sector(vomit_cpu_t *cpu, word port )
+get_sector(VCpu* cpu, word port )
 {
 	vlog( VM_DISKLOG, "ide%d sector queried", CONTROLLER );
 	return sector[CONTROLLER];
 }
 
 static void
-set_sector(vomit_cpu_t *cpu, word port, byte data )
+set_sector(VCpu* cpu, word port, byte data )
 {
 	vlog( VM_DISKLOG, "ide%d sector set to %d", CONTROLLER, data );
 	sector[CONTROLLER] = data;
 }
 
 static byte
-get_cylinder_lsb(vomit_cpu_t *cpu, word port )
+get_cylinder_lsb(VCpu* cpu, word port )
 {
 	vlog( VM_DISKLOG, "ide%d cylinder LSB queried", CONTROLLER );
 	return cylinder[CONTROLLER] & 0xFF;
 }
 
 static void
-set_cylinder_lsb(vomit_cpu_t *cpu, word port, byte data )
+set_cylinder_lsb(VCpu* cpu, word port, byte data )
 {
 	vlog( VM_DISKLOG, "ide%d cylinder LSB set to 0x%02X", CONTROLLER, data );
 	cylinder[CONTROLLER] &= 0xFF00;
@@ -117,14 +117,14 @@ set_cylinder_lsb(vomit_cpu_t *cpu, word port, byte data )
 }
 
 static byte
-get_cylinder_msb(vomit_cpu_t *cpu, word port )
+get_cylinder_msb(VCpu* cpu, word port )
 {
 	vlog( VM_DISKLOG, "ide%d cylinder MSB queried", CONTROLLER );
 	return (cylinder[CONTROLLER] >> 8) & 0xFF;
 }
 
 static void
-set_cylinder_msb(vomit_cpu_t *cpu, word port, byte data )
+set_cylinder_msb(VCpu* cpu, word port, byte data )
 {
 	vlog( VM_DISKLOG, "ide%d cylinder MSB set to 0x%02X", CONTROLLER, data );
 	cylinder[CONTROLLER] &= 0x00FF;
@@ -132,14 +132,14 @@ set_cylinder_msb(vomit_cpu_t *cpu, word port, byte data )
 }
 
 static byte
-get_head(vomit_cpu_t *cpu, word port )
+get_head(VCpu* cpu, word port )
 {
 	vlog( VM_DISKLOG, "ide%d head queried", CONTROLLER );
 	return head[CONTROLLER];
 }
 
 static void
-set_head(vomit_cpu_t *cpu, word port, byte data )
+set_head(VCpu* cpu, word port, byte data )
 {
 	vlog( VM_DISKLOG, "ide%d head set to %d", CONTROLLER, data );
 	head[CONTROLLER] = data;

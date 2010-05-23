@@ -105,7 +105,7 @@ Screen::putCharacter( QPainter &p, int row, int column, byte color, byte c )
 
 void Screen::refresh()
 {
-    BYTE currentVideoMode = d->cpu->readMemory8(0x449) & 0x7F;
+    BYTE currentVideoMode = d->cpu->readUnmappedMemory8(0x449) & 0x7F;
 
     if (currentVideoMode == 0x12) {
         if (is_palette_dirty()) {
@@ -161,7 +161,7 @@ void Screen::refresh()
             update( updateRect );
         }
     } else if (currentVideoMode == 0x03) {
-        int rows = d->cpu->readMemory8(0x484) + 1;
+        int rows = d->cpu->readUnmappedMemory8(0x484) + 1;
         switch( rows )
         {
             case 25:
@@ -281,7 +281,7 @@ void Screen::resizeEvent(QResizeEvent *e)
 
 void Screen::paintEvent(QPaintEvent *e)
 {
-    BYTE currentVideoMode = d->cpu->readMemory8(0x449) & 0x7F;
+    BYTE currentVideoMode = d->cpu->readUnmappedMemory8(0x449) & 0x7F;
 
     if (currentVideoMode == 0x12) {
         setScreenSize(640, 480);

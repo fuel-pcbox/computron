@@ -1,4 +1,4 @@
-#include "vga_memory.h"
+#include "vomit.h"
 #include "debug.h"
 #include "disasm.h" // MAKEWORD
 #include <QtGui/QImage>

@@ -41,7 +41,7 @@ CodeView::setAddress( uint16_t segment, uint16_t offset )
     update();
 }
 
-static int dump_disasm(vomit_cpu_t *, QString &output, unsigned int segment, unsigned int offset)
+static int dump_disasm(VCpu*, QString &output, unsigned int segment, unsigned int offset)
 {
     char disasm[64];
     int width, i;

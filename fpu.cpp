@@ -10,7 +10,7 @@
 #include "vomit.h"
 #include "debug.h"
 
-void _ESCAPE(vomit_cpu_t *cpu)
+void _ESCAPE(VCpu* cpu)
 {
     vlog(VM_CPUMSG, "%04X:%04X FPU escape via %02X /%u",
         cpu->base_CS, cpu->base_IP,

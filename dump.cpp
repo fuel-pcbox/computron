@@ -8,7 +8,7 @@
 #include "debug.h"
 #include "disasm.h"
 
-void dump_cpu(vomit_cpu_t *cpu)
+void dump_cpu(VCpu* cpu)
 {
     vlog(VM_DUMPMSG, "CPU is an Intel %s", cpu->type() == VCpu::Intel8086 ? "8086" : "80186");
     vlog(VM_DUMPMSG, "Memory size: %dK", cpu->memory_size);
@@ -19,7 +19,7 @@ void dump_cpu(vomit_cpu_t *cpu)
 #endif
 }
 
-void dump_try(vomit_cpu_t *cpu)
+void dump_try(VCpu* cpu)
 {
     printf("AX=%04X\nBX=%04X\nCX=%04X\nDX=%04X\n", cpu->regs.W.AX, cpu->regs.W.BX, cpu->regs.W.CX, cpu->regs.W.DX );
     printf("SP=%04X\nBP=%04X\nSI=%04X\nDI=%04X\n", cpu->regs.W.SP, cpu->regs.W.BP, cpu->regs.W.SI, cpu->regs.W.DI );
@@ -65,7 +65,7 @@ dump_disasm( word segment, word offset )
 	return width;
 }
 
-void dump_regs(vomit_cpu_t *cpu)
+void dump_regs(VCpu* cpu)
 {
     vlog(VM_DUMPMSG,
         "AX=%04X BX=%04X CX=%04X DX=%04X SP=%04X BP=%04X SI=%04X DI=%04X "
@@ -78,7 +78,7 @@ void dump_regs(vomit_cpu_t *cpu)
     );
 }
 
-void dump_all(vomit_cpu_t *cpu)
+void dump_all(VCpu* cpu)
 {
 	WORD *stacky = reinterpret_cast<WORD*>(cpu->memoryPointer(cpu->SS, cpu->regs.W.SP));
 	BYTE *csip = cpu->codeMemory();

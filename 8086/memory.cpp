@@ -10,7 +10,7 @@
 #include "debug.h"
 #include "vga_memory.h"
 
-BYTE vomit_cpu_memory_read8(vomit_cpu_t *cpu, WORD segment, WORD offset)
+BYTE vomit_cpu_memory_read8(VCpu* cpu, WORD segment, WORD offset)
 {
     DWORD flat_address = FLAT(segment, offset);
 
@@ -35,7 +35,7 @@ BYTE vomit_cpu_memory_read8(vomit_cpu_t *cpu, WORD segment, WORD offset)
 
     return cpu->memory[flat_address];
 }
-WORD vomit_cpu_memory_read16(vomit_cpu_t *cpu, WORD segment, WORD offset)
+WORD vomit_cpu_memory_read16(VCpu* cpu, WORD segment, WORD offset)
 {
     DWORD flat_address = FLAT(segment, offset);
 
@@ -66,7 +66,7 @@ WORD vomit_cpu_memory_read16(vomit_cpu_t *cpu, WORD segment, WORD offset)
     return w;
 }
 
-void vomit_cpu_memory_write8(vomit_cpu_t *cpu, WORD segment, WORD offset, BYTE value)
+void vomit_cpu_memory_write8(VCpu* cpu, WORD segment, WORD offset, BYTE value)
 {
     DWORD flat_address = FLAT(segment, offset);
 
@@ -89,7 +89,7 @@ void vomit_cpu_memory_write8(vomit_cpu_t *cpu, WORD segment, WORD offset, BYTE v
     }
 }
 
-void vomit_cpu_memory_write16(vomit_cpu_t *cpu, WORD segment, WORD offset, WORD value)
+void vomit_cpu_memory_write16(VCpu* cpu, WORD segment, WORD offset, WORD value)
 {
     DWORD flat_address = FLAT(segment, offset);
 
@@ -137,14 +137,14 @@ WORD VCpu::pop()
     return w;
 }
 
-void _LDS_reg16_mem16(vomit_cpu_t *cpu)
+void _LDS_reg16_mem16(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
     DWORD value = vomit_cpu_modrm_read32(cpu, rm);
     *cpu->treg16[rmreg(rm)] = LSW(value);
     cpu->DS = MSW(value);
 }
-void _LES_reg16_mem16(vomit_cpu_t *cpu)
+void _LES_reg16_mem16(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
     DWORD value = vomit_cpu_modrm_read32(cpu, rm);

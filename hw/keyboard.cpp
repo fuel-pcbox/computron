@@ -15,10 +15,10 @@
 #define ATKBD_INPUT_STATUS  0x02
 #define ATKBD_OUTPUT_STATUS 0x01
 
-static byte keyboard_data(vomit_cpu_t *cpu, word port );
-static byte keyboard_status(vomit_cpu_t *cpu, word );
-static byte system_control_read(vomit_cpu_t *cpu, word );
-static void system_control_write(vomit_cpu_t *cpu, word, byte );
+static byte keyboard_data(VCpu* cpu, word port );
+static byte keyboard_status(VCpu* cpu, word );
+static byte system_control_read(VCpu* cpu, word );
+static void system_control_write(VCpu* cpu, word, byte );
 
 static byte system_control_port_data;
 
@@ -33,7 +33,7 @@ keyboard_init()
 }
 
 byte
-keyboard_status(vomit_cpu_t *cpu, word port )
+keyboard_status(VCpu* cpu, word port )
 {
 	/* Keyboard not locked, POST completed successfully. */
 	//vlog( VM_KEYMSG, "Keyboard status queried." );
@@ -54,21 +54,21 @@ keyboard_status(vomit_cpu_t *cpu, word port )
  */
 
 byte
-system_control_read(vomit_cpu_t *cpu, word port )
+system_control_read(VCpu* cpu, word port )
 {
 	//vlog( VM_KEYMSG, "%02X <- System control port", system_control_port_data );
 	return system_control_port_data;
 }
 
 void
-system_control_write(vomit_cpu_t *cpu, word port, byte data )
+system_control_write(VCpu* cpu, word port, byte data )
 {
 	system_control_port_data = data;
 	//vlog( VM_KEYMSG, "System control port <- %02X", data );
 }
 
 byte
-keyboard_data(vomit_cpu_t *cpu, word port )
+keyboard_data(VCpu* cpu, word port )
 {
 	byte key = kbd_pop_raw();
 	//vlog( VM_KEYMSG, "keyboard_data = %02X", key );

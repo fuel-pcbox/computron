@@ -16,7 +16,7 @@ unsigned int g_vomit_exit_main_loop = 0;
 /* The black hole of 386 segment selectors. */
 static word segment_dummy;
 
-void _OpOverride(vomit_cpu_t *)
+void _OpOverride(VCpu*)
 {
     vlog(VM_LOGMSG, "Operation size override detected!");
 }
@@ -328,7 +328,7 @@ void VCpu::exec()
     this->opcode_handler[this->opcode](this);
 }
 
-void vomit_cpu_main(vomit_cpu_t *cpu)
+void vomit_cpu_main(VCpu* cpu)
 {
     cpu->flushFetchQueue();
 
@@ -438,19 +438,19 @@ void VCpu::flushFetchQueue()
 }
 #endif
 
-void vomit_cpu_jump_relative8(vomit_cpu_t *cpu, SIGNED_BYTE displacement)
+void vomit_cpu_jump_relative8(VCpu* cpu, SIGNED_BYTE displacement)
 {
     cpu->IP += displacement;
     cpu->flushFetchQueue();
 }
 
-void vomit_cpu_jump_relative16(vomit_cpu_t *cpu, SIGNED_WORD displacement)
+void vomit_cpu_jump_relative16(VCpu* cpu, SIGNED_WORD displacement)
 {
     cpu->IP += displacement;
     cpu->flushFetchQueue();
 }
 
-void vomit_cpu_jump_absolute16(vomit_cpu_t *cpu, WORD address)
+void vomit_cpu_jump_absolute16(VCpu* cpu, WORD address)
 {
     cpu->IP = address;
     cpu->flushFetchQueue();
@@ -485,10 +485,10 @@ WORD VCpu::getFlags()
     return this->CF | (this->PF << 2) | (this->AF << 4) | (this->ZF << 6) | (this->SF << 7) | (this->TF << 8) | (this->IF << 9) | (this->DF << 10) | (this->OF << 11) | vomit_cpu_static_flags(this);
 }
 
-void vomit_cpu_set_interrupt(vomit_cpu_t *cpu, BYTE isr, WORD segment, WORD offset)
+void VCpu::setInterruptHandler(BYTE isr, WORD segment, WORD offset)
 {
-    vomit_cpu_memory_write16(cpu, 0x0000, (isr << 2), offset);
-    vomit_cpu_memory_write16(cpu, 0x0000, (isr << 2) + 2, segment);
+    writeMemory16(0x0000, (isr * 4), offset);
+    writeMemory16(0x0000, (isr * 4) + 2, segment);
 }
 
 bool VCpu::evaluate(BYTE condition_code)
@@ -516,13 +516,13 @@ bool VCpu::evaluate(BYTE condition_code)
     return 0;
 }
 
-void _WAIT(vomit_cpu_t *cpu)
+void _WAIT(VCpu* cpu)
 {
     /* XXX: Do nothing? */
     vlog(VM_ALERT, "%04X:%04X: WAIT", cpu->base_CS, cpu->base_IP);
 }
 
-void _UNSUPP(vomit_cpu_t *cpu)
+void _UNSUPP(VCpu* cpu)
 {
     /* We've come across an unsupported instruction, log it,
      * then vector to the "illegal instruction" ISR. */

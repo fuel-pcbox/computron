@@ -1,7 +1,7 @@
 #ifndef __iodevice_h__
 #define __iodevice_h__
 
-#include <stdint.h>
+#include "types.h"
 #include <QList>
 #include <QHash>
 
@@ -11,19 +11,19 @@ namespace Vomit
 class IODevice
 {
 public:
-	IODevice( const char *name );
+	IODevice(const char *name);
 	virtual ~IODevice();
 
 	const char *name() const;
 
-	virtual uint8_t in8();
-	virtual void out8( uint8_t );
+	virtual BYTE in8();
+	virtual void out8(BYTE);
 
-	static QList<IODevice *> & devices();
-	static QHash<uint16_t, IODevice *> & readDevices();
-	static QHash<uint16_t, IODevice *> & writeDevices();
+	static QList<IODevice*> & devices();
+	static QHash<WORD, IODevice*>& readDevices();
+	static QHash<WORD, IODevice*>& writeDevices();
 
-	QList<uint16_t> ports() const;
+	QList<WORD> ports() const;
 
 protected:
 	enum ListenMask {
@@ -31,11 +31,11 @@ protected:
 		Write = 2,
 		ReadWrite = 3
 	};
-	virtual void listen( uint16_t port, ListenMask mask );
+	virtual void listen(WORD port, ListenMask mask);
 
 private:
 	const char *m_name;
-	QList<uint16_t> m_ports;
+	QList<WORD> m_ports;
 };
 
 }

@@ -48,12 +48,12 @@ READONLY_RM16_imm8( cpu_and, _TEST_RM16_imm8 )
 READONLY_AL_imm8( cpu_and, _TEST_AL_imm8 )
 READONLY_AX_imm16( cpu_and, _TEST_AX_imm16 )
 
-void _CBW(vomit_cpu_t *cpu)
+void _CBW(VCpu* cpu)
 {
     cpu->regs.W.AX = signext(cpu->regs.B.AL);
 }
 
-void _CWD(vomit_cpu_t *cpu)
+void _CWD(VCpu* cpu)
 {
     if (cpu->regs.B.AH & 0x80)
         cpu->regs.W.DX = 0xFFFF;
@@ -61,12 +61,12 @@ void _CWD(vomit_cpu_t *cpu)
         cpu->regs.W.DX = 0x0000;
 }
 
-void _SALC(vomit_cpu_t *cpu)
+void _SALC(VCpu* cpu)
 {
     cpu->regs.B.AL = cpu->getCF() ? 0xFF : 0x00;
 }
 
-BYTE cpu_or8(vomit_cpu_t *cpu, BYTE dest, BYTE src)
+BYTE cpu_or8(VCpu* cpu, BYTE dest, BYTE src)
 {
     BYTE result = dest | src;
     cpu->updateFlags8(result);
@@ -75,7 +75,7 @@ BYTE cpu_or8(vomit_cpu_t *cpu, BYTE dest, BYTE src)
     return result;
 }
 
-WORD cpu_or16(vomit_cpu_t *cpu, WORD dest, WORD src)
+WORD cpu_or16(VCpu* cpu, WORD dest, WORD src)
 {
     WORD result = dest | src;
     cpu->updateFlags16(result);
@@ -84,7 +84,7 @@ WORD cpu_or16(vomit_cpu_t *cpu, WORD dest, WORD src)
     return result;
 }
 
-BYTE cpu_xor8(vomit_cpu_t *cpu, BYTE dest, BYTE src)
+BYTE cpu_xor8(VCpu* cpu, BYTE dest, BYTE src)
 {
     BYTE result = dest ^ src;
     cpu->updateFlags8(result);
@@ -93,7 +93,7 @@ BYTE cpu_xor8(vomit_cpu_t *cpu, BYTE dest, BYTE src)
     return result;
 }
 
-WORD cpu_xor16(vomit_cpu_t *cpu, WORD dest, WORD src)
+WORD cpu_xor16(VCpu* cpu, WORD dest, WORD src)
 {
     WORD result = dest ^ src;
     cpu->updateFlags16(result);
@@ -102,7 +102,7 @@ WORD cpu_xor16(vomit_cpu_t *cpu, WORD dest, WORD src)
     return result;
 }
 
-BYTE cpu_and8(vomit_cpu_t *cpu, BYTE dest, BYTE src)
+BYTE cpu_and8(VCpu* cpu, BYTE dest, BYTE src)
 {
     BYTE result = dest & src;
     cpu->updateFlags8(result);
@@ -111,7 +111,7 @@ BYTE cpu_and8(vomit_cpu_t *cpu, BYTE dest, BYTE src)
     return result;
 }
 
-WORD cpu_and16(vomit_cpu_t *cpu, WORD dest, WORD src)
+WORD cpu_and16(VCpu* cpu, WORD dest, WORD src)
 {
     WORD result = dest & src;
     cpu->updateFlags16(result);
@@ -120,7 +120,7 @@ WORD cpu_and16(vomit_cpu_t *cpu, WORD dest, WORD src)
     return result;
 }
 
-DWORD cpu_shl(vomit_cpu_t *cpu, WORD data, BYTE steps, BYTE bits)
+DWORD cpu_shl(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 {
     DWORD result = (DWORD)data;
 
@@ -146,7 +146,7 @@ DWORD cpu_shl(vomit_cpu_t *cpu, WORD data, BYTE steps, BYTE bits)
     return result;
 }
 
-DWORD cpu_shr(vomit_cpu_t *cpu, WORD data, BYTE steps, BYTE bits)
+DWORD cpu_shr(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 {
     DWORD result = (DWORD)data;
 
@@ -172,7 +172,7 @@ DWORD cpu_shr(vomit_cpu_t *cpu, WORD data, BYTE steps, BYTE bits)
     return result;
 }
 
-DWORD cpu_sar(vomit_cpu_t *cpu, WORD data, BYTE steps, BYTE bits)
+DWORD cpu_sar(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 {
     DWORD result = (DWORD)data;
     word n;
@@ -201,7 +201,7 @@ DWORD cpu_sar(vomit_cpu_t *cpu, WORD data, BYTE steps, BYTE bits)
     return result;
 }
 
-DWORD cpu_rol(vomit_cpu_t *cpu, WORD data, BYTE steps, BYTE bits)
+DWORD cpu_rol(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 {
     DWORD result = (DWORD)data;
 
@@ -226,7 +226,7 @@ DWORD cpu_rol(vomit_cpu_t *cpu, WORD data, BYTE steps, BYTE bits)
     return result;
 }
 
-DWORD cpu_ror(vomit_cpu_t *cpu, WORD data, BYTE steps, BYTE bits)
+DWORD cpu_ror(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 {
     DWORD result = (DWORD)data;
 
@@ -251,7 +251,7 @@ DWORD cpu_ror(vomit_cpu_t *cpu, WORD data, BYTE steps, BYTE bits)
     return result;
 }
 
-DWORD cpu_rcl(vomit_cpu_t *cpu, WORD data, BYTE steps, BYTE bits)
+DWORD cpu_rcl(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 {
     DWORD result = (DWORD)data;
     WORD n;
@@ -279,7 +279,7 @@ DWORD cpu_rcl(vomit_cpu_t *cpu, WORD data, BYTE steps, BYTE bits)
     return result;
 }
 
-DWORD cpu_rcr(vomit_cpu_t *cpu, WORD data, BYTE steps, BYTE bits)
+DWORD cpu_rcr(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 {
     DWORD result = (DWORD)data;
     word n;
@@ -307,19 +307,19 @@ DWORD cpu_rcr(vomit_cpu_t *cpu, WORD data, BYTE steps, BYTE bits)
     return result;
 }
 
-void _NOT_RM8(vomit_cpu_t *cpu)
+void _NOT_RM8(VCpu* cpu)
 {
     BYTE value = vomit_cpu_modrm_read8(cpu, cpu->rmbyte);
     vomit_cpu_modrm_update8(cpu, ~value);
 }
 
-void _NOT_RM16(vomit_cpu_t *cpu)
+void _NOT_RM16(VCpu* cpu)
 {
     word value = vomit_cpu_modrm_read16(cpu, cpu->rmbyte);
     vomit_cpu_modrm_update16(cpu, ~value);
 }
 
-void _NEG_RM8(vomit_cpu_t *cpu)
+void _NEG_RM8(VCpu* cpu)
 {
     BYTE value = vomit_cpu_modrm_read8(cpu, cpu->rmbyte);
     BYTE old = value;
@@ -334,7 +334,7 @@ void _NEG_RM8(vomit_cpu_t *cpu)
     vomit_cpu_setAF(cpu, value, 0, old);
 }
 
-void _NEG_RM16(vomit_cpu_t *cpu)
+void _NEG_RM16(VCpu* cpu)
 {
     WORD value = vomit_cpu_modrm_read16(cpu, cpu->rmbyte);
     WORD old = value;

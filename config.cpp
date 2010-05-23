@@ -39,7 +39,7 @@ unspeakable_abomination()
 
     FILE *fconf, *ftmp;
     char curline[256], *curtok; char lfname[MAX_FN_LENGTH];
-    byte tb, lnum;
+    byte tb;
     word lseg, loff, ldrv, lspt, lhds, lsect, lsectsize;
 
     fconf = fopen("vm.conf", "r");
@@ -198,13 +198,12 @@ unspeakable_abomination()
                 entry_ip = (WORD)strtol(curtok, NULL, 16);
                 g_cpu->jump(entry_cs, entry_ip);
             }
-            else if( !reloading && !strcmp( curtok, "addint" ))
-            {
-                lnum = (byte)strtol(strtok(NULL, " \t\n"), NULL, 16);
-                lseg = (word)strtol(strtok(NULL, ": \t\n"), NULL, 16);
-                loff = (word)strtol(strtok(NULL, " \t\n"), NULL, 16);
-                vlog( VM_INITMSG, "Software interrupt %02X at %04X:%04X", lnum, lseg, loff );
-                vomit_cpu_set_interrupt(g_cpu, lnum, lseg, loff);
+            else if (!reloading && !strcmp(curtok, "addint")) {
+                BYTE isr = strtol(strtok(NULL, " \t\n"), NULL, 16);
+                WORD segment = strtol(strtok(NULL, ": \t\n"), NULL, 16);
+                WORD offset = strtol(strtok(NULL, " \t\n"), NULL, 16);
+                vlog(VM_INITMSG, "Software interrupt %02X at %04X:%04X", isr, segment, offset);
+                g_cpu->setInterruptHandler(isr, segment, offset);
             }
         }
     }

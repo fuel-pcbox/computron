@@ -17,11 +17,11 @@
 
 #define CPU_INSNS_PER_PIT_IRQ 400000
 
-typedef void (*OpcodeHandler) (struct __vomit_cpu_t *);
-
 class VgaMemory;
 
-typedef struct __vomit_cpu_t {
+class VCpu
+{
+public:
     union {
         struct {
             DWORD EAX, EBX, ECX, EDX;
@@ -103,6 +103,7 @@ typedef struct __vomit_cpu_t {
     BYTE *treg8[8];
     WORD *tseg[8];
 
+    typedef void (*OpcodeHandler) (VCpu*);
     OpcodeHandler opcode_handler[0x100];
 
 #ifdef VOMIT_PREFETCH_QUEUE
@@ -129,6 +130,7 @@ typedef struct __vomit_cpu_t {
 #endif
 
     void jumpToInterruptHandler(int isr);
+    void setInterruptHandler(BYTE isr, WORD segment, WORD offset);
 
     void exception(int ec) { jumpToInterruptHandler(ec); }
 
@@ -195,7 +197,12 @@ typedef struct __vomit_cpu_t {
     void cmpFlags8(DWORD result, BYTE dest, BYTE src);
     void cmpFlags16(DWORD result, WORD dest, WORD src);
 
-    BYTE readMemory8(DWORD address) const { return this->memory[address]; }
+    // These are faster than readMemory*() but will not access VGA memory, etc.
+    inline BYTE readUnmappedMemory8(DWORD address) const;
+
+    inline BYTE readMemory8(DWORD address) const;
+    inline void writeMemory16(DWORD address, WORD data);
+    inline void writeMemory16(WORD segment, WORD offset, WORD data);
 
     VgaMemory *vgaMemory;
 
@@ -243,31 +250,28 @@ private:
     /* Cycle counter. May wrap arbitrarily. */
     DWORD m_pitCountdown;
 
-} vomit_cpu_t;
-
-#define VCpu vomit_cpu_t
+};
 
 extern VCpu *g_cpu;
 
-void vomit_cpu_main(vomit_cpu_t *cpu);
-void vomit_cpu_jump_relative8(vomit_cpu_t *cpu, SIGNED_BYTE displacement);
-void vomit_cpu_jump_relative16(vomit_cpu_t *cpu, SIGNED_WORD displacement);
-void vomit_cpu_jump_absolute16(vomit_cpu_t *cpu, WORD offset);
-void vomit_cpu_set_interrupt(vomit_cpu_t *cpu, BYTE isr_index, WORD segment, WORD offset);
+void vomit_cpu_main(VCpu*);
+void vomit_cpu_jump_relative8(VCpu*, SIGNED_BYTE displacement);
+void vomit_cpu_jump_relative16(VCpu*, SIGNED_WORD displacement);
+void vomit_cpu_jump_absolute16(VCpu*, WORD offset);
 
 /*!
     Writes an 8-bit value to an output port.
  */
-void vomit_cpu_out(vomit_cpu_t *cpu, WORD port, BYTE value);
+void vomit_cpu_out(VCpu*, WORD port, BYTE value);
 
 /*!
     Reads an 8-bit value from an input port.
  */
-BYTE vomit_cpu_in(vomit_cpu_t *cpu, WORD port);
+BYTE vomit_cpu_in(VCpu*, WORD port);
 
-WORD vomit_cpu_static_flags(vomit_cpu_t *cpu);
+WORD vomit_cpu_static_flags(VCpu*);
 
-void vomit_cpu_setAF(vomit_cpu_t *cpu, DWORD result, WORD dest, WORD src);
+void vomit_cpu_setAF(VCpu*, DWORD result, WORD dest, WORD src);
 
 WORD cpu_add8( byte, byte );
 WORD cpu_sub8( byte, byte );
@@ -275,50 +279,50 @@ WORD cpu_mul8( byte, byte );
 WORD cpu_div8( byte, byte );
 sigword cpu_imul8( sigbyte, sigbyte );
 
-DWORD cpu_add16(vomit_cpu_t *cpu, WORD, WORD);
-DWORD cpu_sub16(vomit_cpu_t *cpu, WORD, WORD);
-DWORD cpu_mul16(vomit_cpu_t *cpu, WORD, WORD);
-DWORD cpu_div16(vomit_cpu_t *cpu, WORD, WORD);
-SIGNED_DWORD cpu_imul16(vomit_cpu_t *cpu, SIGNED_WORD, SIGNED_WORD);
+DWORD cpu_add16(VCpu*, WORD, WORD);
+DWORD cpu_sub16(VCpu*, WORD, WORD);
+DWORD cpu_mul16(VCpu*, WORD, WORD);
+DWORD cpu_div16(VCpu*, WORD, WORD);
+SIGNED_DWORD cpu_imul16(VCpu*, SIGNED_WORD, SIGNED_WORD);
 
-BYTE cpu_or8(vomit_cpu_t *cpu, BYTE, BYTE);
-BYTE cpu_and8(vomit_cpu_t *cpu, BYTE, BYTE);
-BYTE cpu_xor8(vomit_cpu_t *cpu, BYTE, BYTE);
-WORD cpu_or16(vomit_cpu_t *cpu, WORD, WORD);
-WORD cpu_and16(vomit_cpu_t *cpu, WORD, WORD);
-WORD cpu_xor16(vomit_cpu_t *cpu, WORD, WORD);
+BYTE cpu_or8(VCpu*, BYTE, BYTE);
+BYTE cpu_and8(VCpu*, BYTE, BYTE);
+BYTE cpu_xor8(VCpu*, BYTE, BYTE);
+WORD cpu_or16(VCpu*, WORD, WORD);
+WORD cpu_and16(VCpu*, WORD, WORD);
+WORD cpu_xor16(VCpu*, WORD, WORD);
 
-DWORD cpu_shl(vomit_cpu_t *cpu, word, byte, byte);
-DWORD cpu_shr(vomit_cpu_t *cpu, word, byte, byte);
-DWORD cpu_sar(vomit_cpu_t *cpu, word, byte, byte);
-DWORD cpu_rcl(vomit_cpu_t *cpu, word, byte, byte);
-DWORD cpu_rcr(vomit_cpu_t *cpu, word, byte, byte);
-DWORD cpu_rol(vomit_cpu_t *cpu, word, byte, byte);
-DWORD cpu_ror(vomit_cpu_t *cpu, word, byte, byte);
+DWORD cpu_shl(VCpu*, word, byte, byte);
+DWORD cpu_shr(VCpu*, word, byte, byte);
+DWORD cpu_sar(VCpu*, word, byte, byte);
+DWORD cpu_rcl(VCpu*, word, byte, byte);
+DWORD cpu_rcr(VCpu*, word, byte, byte);
+DWORD cpu_rol(VCpu*, word, byte, byte);
+DWORD cpu_ror(VCpu*, word, byte, byte);
 
-BYTE vomit_cpu_modrm_read8(vomit_cpu_t *cpu, BYTE rm);
-WORD vomit_cpu_modrm_read16(vomit_cpu_t *cpu, BYTE rm);
-DWORD vomit_cpu_modrm_read32(vomit_cpu_t *cpu, BYTE rm);
-void vomit_cpu_modrm_write8(vomit_cpu_t *cpu, BYTE rm, BYTE value);
-void vomit_cpu_modrm_write16(vomit_cpu_t *cpu, BYTE rm, WORD value);
+BYTE vomit_cpu_modrm_read8(VCpu*, BYTE rm);
+WORD vomit_cpu_modrm_read16(VCpu*, BYTE rm);
+DWORD vomit_cpu_modrm_read32(VCpu*, BYTE rm);
+void vomit_cpu_modrm_write8(VCpu*, BYTE rm, BYTE value);
+void vomit_cpu_modrm_write16(VCpu*, BYTE rm, WORD value);
 
 /*!
     Writes an 8-bit value back to the most recently resolved ModR/M location.
  */
-void vomit_cpu_modrm_update8(vomit_cpu_t *cpu, BYTE value);
+void vomit_cpu_modrm_update8(VCpu*, BYTE value);
 
 /*!
     Writes a 16-bit value back to the most recently resolved ModR/M location.
  */
-void vomit_cpu_modrm_update16(vomit_cpu_t *cpu, WORD value);
+void vomit_cpu_modrm_update16(VCpu*, WORD value);
 
-void *vomit_cpu_modrm_resolve8(vomit_cpu_t *cpu, BYTE rm);
-void *vomit_cpu_modrm_resolve16(vomit_cpu_t *cpu, BYTE rm);
+void *vomit_cpu_modrm_resolve8(VCpu*, BYTE rm);
+void *vomit_cpu_modrm_resolve16(VCpu*, BYTE rm);
 
-BYTE vomit_cpu_memory_read8(vomit_cpu_t *cpu, WORD segment, WORD offset);
-WORD vomit_cpu_memory_read16(vomit_cpu_t *cpu, WORD segment, WORD offset);
-void vomit_cpu_memory_write8(vomit_cpu_t *cpu, WORD segment, WORD offset, BYTE value);
-void vomit_cpu_memory_write16(vomit_cpu_t *cpu, WORD segment, WORD offset, WORD value);
+BYTE vomit_cpu_memory_read8(VCpu*, WORD segment, WORD offset);
+WORD vomit_cpu_memory_read16(VCpu*, WORD segment, WORD offset);
+void vomit_cpu_memory_write8(VCpu*, WORD segment, WORD offset, BYTE value);
+void vomit_cpu_memory_write16(VCpu*, WORD segment, WORD offset, WORD value);
 
 inline WORD signext (byte b)
 {
@@ -354,269 +358,338 @@ inline WORD signext (byte b)
 #define REG_FS  4
 #define REG_GS  5
 
-void _UNSUPP(vomit_cpu_t *cpu);
-void _ESCAPE(vomit_cpu_t *cpu);
+void _UNSUPP(VCpu*);
+void _ESCAPE(VCpu*);
 
-void _NOP(vomit_cpu_t *cpu);
-void _HLT(vomit_cpu_t *cpu);
-void _INT_imm8(vomit_cpu_t *cpu);
-void _INT3(vomit_cpu_t *cpu);
-void _INTO(vomit_cpu_t *cpu);
-void _IRET(vomit_cpu_t *cpu);
+void _NOP(VCpu*);
+void _HLT(VCpu*);
+void _INT_imm8(VCpu*);
+void _INT3(VCpu*);
+void _INTO(VCpu*);
+void _IRET(VCpu*);
 
-void _AAA(vomit_cpu_t *cpu);
-void _AAM(vomit_cpu_t *cpu);
-void _AAD(vomit_cpu_t *cpu);
-void _AAS(vomit_cpu_t *cpu);
+void _AAA(VCpu*);
+void _AAM(VCpu*);
+void _AAD(VCpu*);
+void _AAS(VCpu*);
 
-void _DAA(vomit_cpu_t *cpu);
-void _DAS(vomit_cpu_t *cpu);
+void _DAA(VCpu*);
+void _DAS(VCpu*);
 
-void _STC(vomit_cpu_t *cpu);
-void _STD(vomit_cpu_t *cpu);
-void _STI(vomit_cpu_t *cpu);
-void _CLC(vomit_cpu_t *cpu);
-void _CLD(vomit_cpu_t *cpu);
-void _CLI(vomit_cpu_t *cpu);
-void _CMC(vomit_cpu_t *cpu);
+void _STC(VCpu*);
+void _STD(VCpu*);
+void _STI(VCpu*);
+void _CLC(VCpu*);
+void _CLD(VCpu*);
+void _CLI(VCpu*);
+void _CMC(VCpu*);
 
-void _CBW(vomit_cpu_t *cpu);
-void _CWD(vomit_cpu_t *cpu);
+void _CBW(VCpu*);
+void _CWD(VCpu*);
 
-void _XLAT(vomit_cpu_t *cpu);
+void _XLAT(VCpu*);
 
-void _CS(vomit_cpu_t *cpu);
-void _DS(vomit_cpu_t *cpu);
-void _ES(vomit_cpu_t *cpu);
-void _SS(vomit_cpu_t *cpu);
+void _CS(VCpu*);
+void _DS(VCpu*);
+void _ES(VCpu*);
+void _SS(VCpu*);
 
-void _SALC(vomit_cpu_t *cpu);
+void _SALC(VCpu*);
 
-void _JMP_imm16(vomit_cpu_t *cpu);
-void _JMP_imm16_imm16(vomit_cpu_t *cpu);
-void _JMP_short_imm8(vomit_cpu_t *cpu);
-void _Jcc_imm8(vomit_cpu_t *cpu);
-void _JCXZ_imm8(vomit_cpu_t *cpu);
+void _JMP_imm16(VCpu*);
+void _JMP_imm16_imm16(VCpu*);
+void _JMP_short_imm8(VCpu*);
+void _Jcc_imm8(VCpu*);
+void _JCXZ_imm8(VCpu*);
 
-void _JO_imm8(vomit_cpu_t *cpu);
-void _JNO_imm8(vomit_cpu_t *cpu);
-void _JC_imm8(vomit_cpu_t *cpu);
-void _JNC_imm8(vomit_cpu_t *cpu);
-void _JZ_imm8(vomit_cpu_t *cpu);
-void _JNZ_imm8(vomit_cpu_t *cpu);
-void _JNA_imm8(vomit_cpu_t *cpu);
-void _JA_imm8(vomit_cpu_t *cpu);
-void _JS_imm8(vomit_cpu_t *cpu);
-void _JNS_imm8(vomit_cpu_t *cpu);
-void _JP_imm8(vomit_cpu_t *cpu);
-void _JNP_imm8(vomit_cpu_t *cpu);
-void _JL_imm8(vomit_cpu_t *cpu);
-void _JNL_imm8(vomit_cpu_t *cpu);
-void _JNG_imm8(vomit_cpu_t *cpu);
-void _JG_imm8(vomit_cpu_t *cpu);
+void _JO_imm8(VCpu*);
+void _JNO_imm8(VCpu*);
+void _JC_imm8(VCpu*);
+void _JNC_imm8(VCpu*);
+void _JZ_imm8(VCpu*);
+void _JNZ_imm8(VCpu*);
+void _JNA_imm8(VCpu*);
+void _JA_imm8(VCpu*);
+void _JS_imm8(VCpu*);
+void _JNS_imm8(VCpu*);
+void _JP_imm8(VCpu*);
+void _JNP_imm8(VCpu*);
+void _JL_imm8(VCpu*);
+void _JNL_imm8(VCpu*);
+void _JNG_imm8(VCpu*);
+void _JG_imm8(VCpu*);
 
-void _CALL_imm16(vomit_cpu_t *cpu);
-void _RET(vomit_cpu_t *cpu);
-void _RET_imm16(vomit_cpu_t *cpu);
-void _RETF(vomit_cpu_t *cpu);
-void _RETF_imm16(vomit_cpu_t *cpu);
+void _CALL_imm16(VCpu*);
+void _RET(VCpu*);
+void _RET_imm16(VCpu*);
+void _RETF(VCpu*);
+void _RETF_imm16(VCpu*);
 
-void _LOOP_imm8(vomit_cpu_t *cpu);
-void _LOOPE_imm8(vomit_cpu_t *cpu);
-void _LOOPNE_imm8(vomit_cpu_t *cpu);
+void _LOOP_imm8(VCpu*);
+void _LOOPE_imm8(VCpu*);
+void _LOOPNE_imm8(VCpu*);
 
-void _REP(vomit_cpu_t *cpu);
-void _REPNE(vomit_cpu_t *cpu);
+void _REP(VCpu*);
+void _REPNE(VCpu*);
 
-void _XCHG_AX_reg16(vomit_cpu_t *cpu);
-void _XCHG_reg8_RM8(vomit_cpu_t *cpu);
-void _XCHG_reg16_RM16(vomit_cpu_t *cpu);
+void _XCHG_AX_reg16(VCpu*);
+void _XCHG_reg8_RM8(VCpu*);
+void _XCHG_reg16_RM16(VCpu*);
 
-void _CMPSB(vomit_cpu_t *cpu);
-void _CMPSW(vomit_cpu_t *cpu);
-void _LODSB(vomit_cpu_t *cpu);
-void _LODSW(vomit_cpu_t *cpu);
-void _SCASB(vomit_cpu_t *cpu);
-void _SCASW(vomit_cpu_t *cpu);
-void _STOSB(vomit_cpu_t *cpu);
-void _STOSW(vomit_cpu_t *cpu);
-void _MOVSB(vomit_cpu_t *cpu);
-void _MOVSW(vomit_cpu_t *cpu);
+void _CMPSB(VCpu*);
+void _CMPSW(VCpu*);
+void _LODSB(VCpu*);
+void _LODSW(VCpu*);
+void _SCASB(VCpu*);
+void _SCASW(VCpu*);
+void _STOSB(VCpu*);
+void _STOSW(VCpu*);
+void _MOVSB(VCpu*);
+void _MOVSW(VCpu*);
 
-void _LEA_reg16_mem16(vomit_cpu_t *cpu);
+void _LEA_reg16_mem16(VCpu*);
 
-void _LDS_reg16_mem16(vomit_cpu_t *cpu);
-void _LES_reg16_mem16(vomit_cpu_t *cpu);
+void _LDS_reg16_mem16(VCpu*);
+void _LES_reg16_mem16(VCpu*);
 
-void _MOV_reg8_imm8(vomit_cpu_t *cpu);
-void _MOV_reg16_imm16(vomit_cpu_t *cpu);
-void _MOV_seg_RM16(vomit_cpu_t *cpu);
-void _MOV_RM16_seg(vomit_cpu_t *cpu);
-void _MOV_AL_moff8(vomit_cpu_t *cpu);
-void _MOV_AX_moff16(vomit_cpu_t *cpu);
-void _MOV_moff8_AL(vomit_cpu_t *cpu);
-void _MOV_moff16_AX(vomit_cpu_t *cpu);
-void _MOV_reg8_RM8(vomit_cpu_t *cpu);
-void _MOV_reg16_RM16(vomit_cpu_t *cpu);
-void _MOV_RM8_reg8(vomit_cpu_t *cpu);
-void _MOV_RM16_reg16(vomit_cpu_t *cpu);
-void _MOV_RM8_imm8(vomit_cpu_t *cpu);
-void _MOV_RM16_imm16(vomit_cpu_t *cpu);
+void _MOV_reg8_imm8(VCpu*);
+void _MOV_reg16_imm16(VCpu*);
+void _MOV_seg_RM16(VCpu*);
+void _MOV_RM16_seg(VCpu*);
+void _MOV_AL_moff8(VCpu*);
+void _MOV_AX_moff16(VCpu*);
+void _MOV_moff8_AL(VCpu*);
+void _MOV_moff16_AX(VCpu*);
+void _MOV_reg8_RM8(VCpu*);
+void _MOV_reg16_RM16(VCpu*);
+void _MOV_RM8_reg8(VCpu*);
+void _MOV_RM16_reg16(VCpu*);
+void _MOV_RM8_imm8(VCpu*);
+void _MOV_RM16_imm16(VCpu*);
 
-void _XOR_RM8_reg8(vomit_cpu_t *cpu);
-void _XOR_RM16_reg16(vomit_cpu_t *cpu);
-void _XOR_reg8_RM8(vomit_cpu_t *cpu);
-void _XOR_reg16_RM16(vomit_cpu_t *cpu);
-void _XOR_RM8_imm8(vomit_cpu_t *cpu);
-void _XOR_RM16_imm16(vomit_cpu_t *cpu);
-void _XOR_RM16_imm8(vomit_cpu_t *cpu);
-void _XOR_AX_imm16(vomit_cpu_t *cpu);
-void _XOR_AL_imm8(vomit_cpu_t *cpu);
+void _XOR_RM8_reg8(VCpu*);
+void _XOR_RM16_reg16(VCpu*);
+void _XOR_reg8_RM8(VCpu*);
+void _XOR_reg16_RM16(VCpu*);
+void _XOR_RM8_imm8(VCpu*);
+void _XOR_RM16_imm16(VCpu*);
+void _XOR_RM16_imm8(VCpu*);
+void _XOR_AX_imm16(VCpu*);
+void _XOR_AL_imm8(VCpu*);
 
-void _OR_RM8_reg8(vomit_cpu_t *cpu);
-void _OR_RM16_reg16(vomit_cpu_t *cpu);
-void _OR_reg8_RM8(vomit_cpu_t *cpu);
-void _OR_reg16_RM16(vomit_cpu_t *cpu);
-void _OR_RM8_imm8(vomit_cpu_t *cpu);
-void _OR_RM16_imm16(vomit_cpu_t *cpu);
-void _OR_RM16_imm8(vomit_cpu_t *cpu);
-void _OR_AX_imm16(vomit_cpu_t *cpu);
-void _OR_AL_imm8(vomit_cpu_t *cpu);
+void _OR_RM8_reg8(VCpu*);
+void _OR_RM16_reg16(VCpu*);
+void _OR_reg8_RM8(VCpu*);
+void _OR_reg16_RM16(VCpu*);
+void _OR_RM8_imm8(VCpu*);
+void _OR_RM16_imm16(VCpu*);
+void _OR_RM16_imm8(VCpu*);
+void _OR_AX_imm16(VCpu*);
+void _OR_AL_imm8(VCpu*);
 
-void _AND_RM8_reg8(vomit_cpu_t *cpu);
-void _AND_RM16_reg16(vomit_cpu_t *cpu);
-void _AND_reg8_RM8(vomit_cpu_t *cpu);
-void _AND_reg16_RM16(vomit_cpu_t *cpu);
-void _AND_RM8_imm8(vomit_cpu_t *cpu);
-void _AND_RM16_imm16(vomit_cpu_t *cpu);
-void _AND_RM16_imm8(vomit_cpu_t *cpu);
-void _AND_AX_imm16(vomit_cpu_t *cpu);
-void _AND_AL_imm8(vomit_cpu_t *cpu);
+void _AND_RM8_reg8(VCpu*);
+void _AND_RM16_reg16(VCpu*);
+void _AND_reg8_RM8(VCpu*);
+void _AND_reg16_RM16(VCpu*);
+void _AND_RM8_imm8(VCpu*);
+void _AND_RM16_imm16(VCpu*);
+void _AND_RM16_imm8(VCpu*);
+void _AND_AX_imm16(VCpu*);
+void _AND_AL_imm8(VCpu*);
 
-void _TEST_RM8_reg8(vomit_cpu_t *cpu);
-void _TEST_RM16_reg16(vomit_cpu_t *cpu);
-void _TEST_AX_imm16(vomit_cpu_t *cpu);
-void _TEST_AL_imm8(vomit_cpu_t *cpu);
+void _TEST_RM8_reg8(VCpu*);
+void _TEST_RM16_reg16(VCpu*);
+void _TEST_AX_imm16(VCpu*);
+void _TEST_AL_imm8(VCpu*);
 
-void _PUSH_SP(vomit_cpu_t *cpu);
-void _PUSH_reg16(vomit_cpu_t *cpu);
-void _PUSH_seg(vomit_cpu_t *cpu);
-void _PUSHF(vomit_cpu_t *cpu);
+void _PUSH_SP(VCpu*);
+void _PUSH_reg16(VCpu*);
+void _PUSH_seg(VCpu*);
+void _PUSHF(VCpu*);
 
-void _POP_reg16(vomit_cpu_t *cpu);
-void _POP_seg(vomit_cpu_t *cpu);
-void _POP_CS(vomit_cpu_t *cpu);
-void _POPF(vomit_cpu_t *cpu);
+void _POP_reg16(VCpu*);
+void _POP_seg(VCpu*);
+void _POP_CS(VCpu*);
+void _POPF(VCpu*);
 
-void _LAHF(vomit_cpu_t *cpu);
-void _SAHF(vomit_cpu_t *cpu);
+void _LAHF(VCpu*);
+void _SAHF(VCpu*);
 
-void _OUT_imm8_AL(vomit_cpu_t *cpu);
-void _OUT_imm8_AX(vomit_cpu_t *cpu);
-void _OUT_DX_AL(vomit_cpu_t *cpu);
-void _OUT_DX_AX(vomit_cpu_t *cpu);
-void _OUTSB(vomit_cpu_t *cpu);
-void _OUTSW(vomit_cpu_t *cpu);
+void _OUT_imm8_AL(VCpu*);
+void _OUT_imm8_AX(VCpu*);
+void _OUT_DX_AL(VCpu*);
+void _OUT_DX_AX(VCpu*);
+void _OUTSB(VCpu*);
+void _OUTSW(VCpu*);
 
-void _IN_AL_imm8(vomit_cpu_t *cpu);
-void _IN_AX_imm8(vomit_cpu_t *cpu);
-void _IN_AL_DX(vomit_cpu_t *cpu);
-void _IN_AX_DX(vomit_cpu_t *cpu);
+void _IN_AL_imm8(VCpu*);
+void _IN_AX_imm8(VCpu*);
+void _IN_AL_DX(VCpu*);
+void _IN_AX_DX(VCpu*);
 
-void _ADD_RM8_reg8(vomit_cpu_t *cpu);
-void _ADD_RM16_reg16(vomit_cpu_t *cpu);
-void _ADD_reg8_RM8(vomit_cpu_t *cpu);
-void _ADD_reg16_RM16(vomit_cpu_t *cpu);
-void _ADD_AL_imm8(vomit_cpu_t *cpu);
-void _ADD_AX_imm16(vomit_cpu_t *cpu);
-void _ADD_RM8_imm8(vomit_cpu_t *cpu);
-void _ADD_RM16_imm16(vomit_cpu_t *cpu);
-void _ADD_RM16_imm8(vomit_cpu_t *cpu);
+void _ADD_RM8_reg8(VCpu*);
+void _ADD_RM16_reg16(VCpu*);
+void _ADD_reg8_RM8(VCpu*);
+void _ADD_reg16_RM16(VCpu*);
+void _ADD_AL_imm8(VCpu*);
+void _ADD_AX_imm16(VCpu*);
+void _ADD_RM8_imm8(VCpu*);
+void _ADD_RM16_imm16(VCpu*);
+void _ADD_RM16_imm8(VCpu*);
 
-void _SUB_RM8_reg8(vomit_cpu_t *cpu);
-void _SUB_RM16_reg16(vomit_cpu_t *cpu);
-void _SUB_reg8_RM8(vomit_cpu_t *cpu);
-void _SUB_reg16_RM16(vomit_cpu_t *cpu);
-void _SUB_AL_imm8(vomit_cpu_t *cpu);
-void _SUB_AX_imm16(vomit_cpu_t *cpu);
-void _SUB_RM8_imm8(vomit_cpu_t *cpu);
-void _SUB_RM16_imm16(vomit_cpu_t *cpu);
-void _SUB_RM16_imm8(vomit_cpu_t *cpu);
+void _SUB_RM8_reg8(VCpu*);
+void _SUB_RM16_reg16(VCpu*);
+void _SUB_reg8_RM8(VCpu*);
+void _SUB_reg16_RM16(VCpu*);
+void _SUB_AL_imm8(VCpu*);
+void _SUB_AX_imm16(VCpu*);
+void _SUB_RM8_imm8(VCpu*);
+void _SUB_RM16_imm16(VCpu*);
+void _SUB_RM16_imm8(VCpu*);
 
-void _ADC_RM8_reg8(vomit_cpu_t *cpu);
-void _ADC_RM16_reg16(vomit_cpu_t *cpu);
-void _ADC_reg8_RM8(vomit_cpu_t *cpu);
-void _ADC_reg16_RM16(vomit_cpu_t *cpu);
-void _ADC_AL_imm8(vomit_cpu_t *cpu);
-void _ADC_AX_imm16(vomit_cpu_t *cpu);
-void _ADC_RM8_imm8(vomit_cpu_t *cpu);
-void _ADC_RM16_imm16(vomit_cpu_t *cpu);
-void _ADC_RM16_imm8(vomit_cpu_t *cpu);
+void _ADC_RM8_reg8(VCpu*);
+void _ADC_RM16_reg16(VCpu*);
+void _ADC_reg8_RM8(VCpu*);
+void _ADC_reg16_RM16(VCpu*);
+void _ADC_AL_imm8(VCpu*);
+void _ADC_AX_imm16(VCpu*);
+void _ADC_RM8_imm8(VCpu*);
+void _ADC_RM16_imm16(VCpu*);
+void _ADC_RM16_imm8(VCpu*);
 
-void _SBB_RM8_reg8(vomit_cpu_t *cpu);
-void _SBB_RM16_reg16(vomit_cpu_t *cpu);
-void _SBB_reg8_RM8(vomit_cpu_t *cpu);
-void _SBB_reg16_RM16(vomit_cpu_t *cpu);
-void _SBB_AL_imm8(vomit_cpu_t *cpu);
-void _SBB_AX_imm16(vomit_cpu_t *cpu);
-void _SBB_RM8_imm8(vomit_cpu_t *cpu);
-void _SBB_RM16_imm16(vomit_cpu_t *cpu);
-void _SBB_RM16_imm8(vomit_cpu_t *cpu);
+void _SBB_RM8_reg8(VCpu*);
+void _SBB_RM16_reg16(VCpu*);
+void _SBB_reg8_RM8(VCpu*);
+void _SBB_reg16_RM16(VCpu*);
+void _SBB_AL_imm8(VCpu*);
+void _SBB_AX_imm16(VCpu*);
+void _SBB_RM8_imm8(VCpu*);
+void _SBB_RM16_imm16(VCpu*);
+void _SBB_RM16_imm8(VCpu*);
 
-void _CMP_RM8_reg8(vomit_cpu_t *cpu);
-void _CMP_RM16_reg16(vomit_cpu_t *cpu);
-void _CMP_reg8_RM8(vomit_cpu_t *cpu);
-void _CMP_reg16_RM16(vomit_cpu_t *cpu);
-void _CMP_AL_imm8(vomit_cpu_t *cpu);
-void _CMP_AX_imm16(vomit_cpu_t *cpu);
-void _CMP_RM8_imm8(vomit_cpu_t *cpu);
-void _CMP_RM16_imm16(vomit_cpu_t *cpu);
-void _CMP_RM16_imm8(vomit_cpu_t *cpu);
+void _CMP_RM8_reg8(VCpu*);
+void _CMP_RM16_reg16(VCpu*);
+void _CMP_reg8_RM8(VCpu*);
+void _CMP_reg16_RM16(VCpu*);
+void _CMP_AL_imm8(VCpu*);
+void _CMP_AX_imm16(VCpu*);
+void _CMP_RM8_imm8(VCpu*);
+void _CMP_RM16_imm16(VCpu*);
+void _CMP_RM16_imm8(VCpu*);
 
-void _MUL_RM8(vomit_cpu_t *cpu);
-void _MUL_RM16(vomit_cpu_t *cpu);
-void _DIV_RM8(vomit_cpu_t *cpu);
-void _DIV_RM16(vomit_cpu_t *cpu);
-void _IMUL_RM8(vomit_cpu_t *cpu);
-void _IMUL_RM16(vomit_cpu_t *cpu);
-void _IDIV_RM8(vomit_cpu_t *cpu);
-void _IDIV_RM16(vomit_cpu_t *cpu);
+void _MUL_RM8(VCpu*);
+void _MUL_RM16(VCpu*);
+void _DIV_RM8(VCpu*);
+void _DIV_RM16(VCpu*);
+void _IMUL_RM8(VCpu*);
+void _IMUL_RM16(VCpu*);
+void _IDIV_RM8(VCpu*);
+void _IDIV_RM16(VCpu*);
 
-void _TEST_RM8_imm8(vomit_cpu_t *cpu);
-void _TEST_RM16_imm16(vomit_cpu_t *cpu);
-void _NOT_RM8(vomit_cpu_t *cpu);
-void _NOT_RM16(vomit_cpu_t *cpu);
-void _NEG_RM8(vomit_cpu_t *cpu);
-void _NEG_RM16(vomit_cpu_t *cpu);
+void _TEST_RM8_imm8(VCpu*);
+void _TEST_RM16_imm16(VCpu*);
+void _NOT_RM8(VCpu*);
+void _NOT_RM16(VCpu*);
+void _NEG_RM8(VCpu*);
+void _NEG_RM16(VCpu*);
 
-void _INC_RM16(vomit_cpu_t *cpu);
-void _INC_reg16(vomit_cpu_t *cpu);
-void _DEC_RM16(vomit_cpu_t *cpu);
-void _DEC_reg16(vomit_cpu_t *cpu);
+void _INC_RM16(VCpu*);
+void _INC_reg16(VCpu*);
+void _DEC_RM16(VCpu*);
+void _DEC_reg16(VCpu*);
 
-void _CALL_RM16(vomit_cpu_t *cpu);
-void _CALL_FAR_mem16(vomit_cpu_t *cpu);
-void _CALL_imm16_imm16(vomit_cpu_t *cpu);
+void _CALL_RM16(VCpu*);
+void _CALL_FAR_mem16(VCpu*);
+void _CALL_imm16_imm16(VCpu*);
 
-void _JMP_RM16(vomit_cpu_t *cpu);
-void _JMP_FAR_mem16(vomit_cpu_t *cpu);
+void _JMP_RM16(VCpu*);
+void _JMP_FAR_mem16(VCpu*);
 
-void _PUSH_RM16(vomit_cpu_t *cpu);
-void _POP_RM16(vomit_cpu_t *cpu);
+void _PUSH_RM16(VCpu*);
+void _POP_RM16(VCpu*);
 
-void _wrap_0x80(vomit_cpu_t *cpu);
-void _wrap_0x81(vomit_cpu_t *cpu);
-void _wrap_0x83(vomit_cpu_t *cpu);
-void _wrap_0x8F(vomit_cpu_t *cpu);
-void _wrap_0xC0(vomit_cpu_t *cpu);
-void _wrap_0xC1(vomit_cpu_t *cpu);
-void _wrap_0xD0(vomit_cpu_t *cpu);
-void _wrap_0xD1(vomit_cpu_t *cpu);
-void _wrap_0xD2(vomit_cpu_t *cpu);
-void _wrap_0xD3(vomit_cpu_t *cpu);
-void _wrap_0xF6(vomit_cpu_t *cpu);
-void _wrap_0xF7(vomit_cpu_t *cpu);
-void _wrap_0xFE(vomit_cpu_t *cpu);
-void _wrap_0xFF(vomit_cpu_t *cpu);
+void _wrap_0x80(VCpu*);
+void _wrap_0x81(VCpu*);
+void _wrap_0x83(VCpu*);
+void _wrap_0x8F(VCpu*);
+void _wrap_0xC0(VCpu*);
+void _wrap_0xC1(VCpu*);
+void _wrap_0xD0(VCpu*);
+void _wrap_0xD1(VCpu*);
+void _wrap_0xD2(VCpu*);
+void _wrap_0xD3(VCpu*);
+void _wrap_0xF6(VCpu*);
+void _wrap_0xF7(VCpu*);
+void _wrap_0xFE(VCpu*);
+void _wrap_0xFF(VCpu*);
+
+// 80186+ INSTRUCTIONS
+
+void _wrap_0x0F(VCpu*);
+
+void _BOUND(VCpu*);
+void _ENTER(VCpu*);
+void _LEAVE(VCpu*);
+
+void _PUSHA(VCpu*);
+void _POPA(VCpu*);
+void _PUSH_imm8(VCpu*);
+void _PUSH_imm16(VCpu*);
+
+void _IMUL_reg16_RM16_imm8(VCpu*);
+
+// INLINE IMPLEMENTATIONS
+#include "vga_memory.h"
+
+BYTE VCpu::readUnmappedMemory8(DWORD address) const
+{
+    return this->memory[address];
+}
+
+void VCpu::writeUnmappedMemory16(DWORD address, WORD value)
+{
+    WORD* ptr = reinterpret_cast<WORD*>(this->memory + address);
+    vomit_write16ToPointer(ptr, value);
+}
+
+
+#define IS_VGA_MEMORY(address) ((address) >= 0xA0000 && (address) < 0xB0000)
+
+BYTE VCpu::readMemory8(DWORD address) const
+{
+    if (IS_VGA_MEMORY(address))
+        return this->vgaMemory->read8(address);
+    return this->memory[address];
+}
+
+inline DWORD vomit_toFlatAddress(WORD segment, WORD offset)
+{
+    return (segment << 4) + offset;
+}
+
+inline void vomit_write16ToPointer(WORD* pointer, WORD value)
+{
+#ifdef VOMIT_BIG_ENDIAN
+    *pointer = V_BYTESWAP(value);
+#else
+    *pointer = value;
+#endif
+}
+
+void VCpu::writeMemory16(DWORD address, WORD value)
+{
+    if (IS_VGA_MEMORY(address)) {
+        this->vgaMemory->write16(address, value);
+        return;
+    }
+
+    WORD* ptr = reinterpret_cast<WORD*>(this->memory + address);
+    vomit_write16ToPointer(ptr, value);
+}
+
+void VCpu::writeMemory16(WORD segment, WORD offset, WORD value)
+{
+    writeMemory16(FLAT(segment, offset), value);
+}
 
 #endif /* __8086_h__ */

@@ -23,12 +23,12 @@ static const byte parity_table[0x100] = {
     1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1
 };
 
-void vomit_cpu_setAF(vomit_cpu_t *cpu, DWORD result, WORD src, WORD dest)
+void vomit_cpu_setAF(VCpu* cpu, DWORD result, WORD src, WORD dest)
 {
     cpu->setAF((((result ^ (src ^ dest)) & 0x10) >> 4) & 1);
 }
 
-WORD vomit_cpu_static_flags(vomit_cpu_t *cpu)
+WORD vomit_cpu_static_flags(VCpu* cpu)
 {
     switch (cpu->type()) {
     case VCpu::Intel8086:
@@ -66,37 +66,37 @@ void VCpu::updateFlags(WORD data, BYTE bits)
     this->ZF = data == 0;
 }
 
-void _STC(vomit_cpu_t *cpu)
+void _STC(VCpu* cpu)
 {
     cpu->setCF(1);
 }
 
-void _STD(vomit_cpu_t *cpu)
+void _STD(VCpu* cpu)
 {
     cpu->setDF(1);
 }
 
-void _STI(vomit_cpu_t *cpu)
+void _STI(VCpu* cpu)
 {
     cpu->setIF(1);
 }
 
-void _CLI(vomit_cpu_t *cpu)
+void _CLI(VCpu* cpu)
 {
     cpu->setIF(0);
 }
 
-void _CLC(vomit_cpu_t *cpu)
+void _CLC(VCpu* cpu)
 {
     cpu->setCF(0);
 }
 
-void _CLD(vomit_cpu_t *cpu)
+void _CLD(VCpu* cpu)
 {
     cpu->setDF(0);
 }
 
-void _CMC(vomit_cpu_t *cpu)
+void _CMC(VCpu* cpu)
 {
     cpu->setCF(!cpu->getCF());
 }

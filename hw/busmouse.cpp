@@ -5,8 +5,8 @@
 #include "vomit.h"
 #include "debug.h"
 
-static BYTE busmouse_read(vomit_cpu_t *cpu, WORD port);
-static void busmouse_write(vomit_cpu_t *cpu, WORD port, BYTE data);
+static BYTE busmouse_read(VCpu* cpu, WORD port);
+static void busmouse_write(VCpu* cpu, WORD port, BYTE data);
 
 static bool interrupts = true;
 static BYTE busmouse_command = 0;
@@ -21,7 +21,7 @@ void busmouse_init()
 }
 
 void
-busmouse_write(vomit_cpu_t *, WORD port, BYTE data)
+busmouse_write(VCpu*, WORD port, BYTE data)
 {
     switch (port) {
     case 0x23e:
@@ -102,7 +102,7 @@ void busmouse_release(int button)
         irq(5);
 }
 
-BYTE busmouse_read(vomit_cpu_t *, WORD port)
+BYTE busmouse_read(VCpu*, WORD port)
 {
     static BYTE interrupt_val = 0x01;
 

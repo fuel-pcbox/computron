@@ -7,7 +7,7 @@
 #include "templates.h"
 #include "debug.h"
 
-WORD cpu_add8(vomit_cpu_t *cpu, BYTE dest, BYTE src)
+WORD cpu_add8(VCpu* cpu, BYTE dest, BYTE src)
 {
     WORD result = dest + src;
     cpu->mathFlags8(result, dest, src);
@@ -18,7 +18,7 @@ WORD cpu_add8(vomit_cpu_t *cpu, BYTE dest, BYTE src)
     return result;
 }
 
-DWORD cpu_add16(vomit_cpu_t *cpu, WORD dest, WORD src)
+DWORD cpu_add16(VCpu* cpu, WORD dest, WORD src)
 {
     DWORD result = dest + src;
     cpu->mathFlags16(result, dest, src);
@@ -29,7 +29,7 @@ DWORD cpu_add16(vomit_cpu_t *cpu, WORD dest, WORD src)
     return result;
 }
 
-WORD cpu_adc8(vomit_cpu_t *cpu, WORD dest, WORD src)
+WORD cpu_adc8(VCpu* cpu, WORD dest, WORD src)
 {
     WORD result;
     src += cpu->getCF();
@@ -43,7 +43,7 @@ WORD cpu_adc8(vomit_cpu_t *cpu, WORD dest, WORD src)
     return result;
 }
 
-DWORD cpu_adc16(vomit_cpu_t *cpu, WORD dest, WORD src)
+DWORD cpu_adc16(VCpu* cpu, WORD dest, WORD src)
 {
     DWORD result;
     src += cpu->getCF();
@@ -57,21 +57,21 @@ DWORD cpu_adc16(vomit_cpu_t *cpu, WORD dest, WORD src)
     return result;
 }
 
-WORD cpu_sub8(vomit_cpu_t *cpu, BYTE dest, BYTE src)
+WORD cpu_sub8(VCpu* cpu, BYTE dest, BYTE src)
 {
     WORD result = dest - src;
     cpu->cmpFlags8(result, dest, src);
     return result;
 }
 
-DWORD cpu_sub16(vomit_cpu_t *cpu, WORD dest, WORD src)
+DWORD cpu_sub16(VCpu* cpu, WORD dest, WORD src)
 {
     DWORD result = dest - src;
     cpu->cmpFlags16(result, dest, src);
     return result;
 }
 
-WORD cpu_sbb8(vomit_cpu_t *cpu, BYTE dest, BYTE src)
+WORD cpu_sbb8(VCpu* cpu, BYTE dest, BYTE src)
 {
     WORD result;
     src += cpu->getCF();
@@ -80,7 +80,7 @@ WORD cpu_sbb8(vomit_cpu_t *cpu, BYTE dest, BYTE src)
     return result;
 }
 
-DWORD cpu_sbb16(vomit_cpu_t *cpu, WORD dest, WORD src)
+DWORD cpu_sbb16(VCpu* cpu, WORD dest, WORD src)
 {
     DWORD result;
     src += cpu->getCF();
@@ -89,7 +89,7 @@ DWORD cpu_sbb16(vomit_cpu_t *cpu, WORD dest, WORD src)
     return result;
 }
 
-WORD cpu_mul8(vomit_cpu_t *cpu, BYTE acc, BYTE multi)
+WORD cpu_mul8(VCpu* cpu, BYTE acc, BYTE multi)
 {
     WORD result = acc * multi;
     cpu->mathFlags8(result, acc, multi);
@@ -101,7 +101,7 @@ WORD cpu_mul8(vomit_cpu_t *cpu, BYTE acc, BYTE multi)
     return result;
 }
 
-DWORD cpu_mul16(vomit_cpu_t *cpu, WORD acc, WORD multi)
+DWORD cpu_mul16(VCpu* cpu, WORD acc, WORD multi)
 {
     DWORD result = acc * multi;
     cpu->mathFlags16(result, acc, multi);
@@ -113,7 +113,7 @@ DWORD cpu_mul16(vomit_cpu_t *cpu, WORD acc, WORD multi)
     return result;
 }
 
-SIGNED_WORD cpu_imul8(vomit_cpu_t *cpu, SIGNED_BYTE acc, SIGNED_BYTE multi)
+SIGNED_WORD cpu_imul8(VCpu* cpu, SIGNED_BYTE acc, SIGNED_BYTE multi)
 {
     SIGNED_WORD result = acc * multi;
     cpu->mathFlags8(result, acc, multi);
@@ -121,7 +121,7 @@ SIGNED_WORD cpu_imul8(vomit_cpu_t *cpu, SIGNED_BYTE acc, SIGNED_BYTE multi)
 }
 
 
-SIGNED_DWORD cpu_imul16(vomit_cpu_t *cpu, SIGNED_WORD acc, SIGNED_WORD multi)
+SIGNED_DWORD cpu_imul16(VCpu* cpu, SIGNED_WORD acc, SIGNED_WORD multi)
 {
     SIGNED_DWORD result = acc * multi;
     cpu->mathFlags16(result, acc, multi);
@@ -178,7 +178,7 @@ READONLY_RM16_imm8( cpu_sub, _CMP_RM16_imm8 )
 READONLY_AL_imm8( cpu_sub, _CMP_AL_imm8 )
 READONLY_AX_imm16( cpu_sub, _CMP_AX_imm16 )
 
-void _MUL_RM8(vomit_cpu_t *cpu)
+void _MUL_RM8(VCpu* cpu)
 {
     BYTE value = vomit_cpu_modrm_read8(cpu, cpu->rmbyte);
     cpu->regs.W.AX = cpu_mul8(cpu, cpu->regs.B.AL, value);
@@ -192,7 +192,7 @@ void _MUL_RM8(vomit_cpu_t *cpu)
     }
 }
 
-void _MUL_RM16(vomit_cpu_t *cpu)
+void _MUL_RM16(VCpu* cpu)
 {
     WORD value = vomit_cpu_modrm_read16(cpu, cpu->rmbyte);
     DWORD result = cpu_mul16(cpu, cpu->regs.W.AX, value);
@@ -208,7 +208,7 @@ void _MUL_RM16(vomit_cpu_t *cpu)
     }
 }
 
-void _IMUL_RM8(vomit_cpu_t *cpu)
+void _IMUL_RM8(VCpu* cpu)
 {
     SIGNED_BYTE value = (SIGNED_BYTE)vomit_cpu_modrm_read8(cpu, cpu->rmbyte);
     cpu->regs.W.AX = (SIGNED_WORD)cpu_imul8(cpu, cpu->regs.B.AL, value);
@@ -222,7 +222,7 @@ void _IMUL_RM8(vomit_cpu_t *cpu)
     }
 }
 
-void _IMUL_reg16_RM16_imm8(vomit_cpu_t *cpu)
+void _IMUL_reg16_RM16_imm8(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
     BYTE imm = cpu->fetchOpcodeByte();
@@ -240,7 +240,7 @@ void _IMUL_reg16_RM16_imm8(vomit_cpu_t *cpu)
     }
 }
 
-void _IMUL_RM16(vomit_cpu_t *cpu)
+void _IMUL_RM16(VCpu* cpu)
 {
     SIGNED_WORD value = vomit_cpu_modrm_read16(cpu, cpu->rmbyte);
     SIGNED_DWORD result = cpu_imul16(cpu, cpu->regs.W.AX, value);
@@ -256,7 +256,7 @@ void _IMUL_RM16(vomit_cpu_t *cpu)
     }
 }
 
-void _DIV_RM8(vomit_cpu_t *cpu)
+void _DIV_RM8(VCpu* cpu)
 {
     WORD offend = cpu->IP;
     BYTE value = vomit_cpu_modrm_read8(cpu, cpu->rmbyte);
@@ -273,7 +273,7 @@ void _DIV_RM8(vomit_cpu_t *cpu)
     cpu->regs.B.AH = (byte)(tAX % value); /* Remainder    */
 }
 
-void _DIV_RM16(vomit_cpu_t *cpu)
+void _DIV_RM16(VCpu* cpu)
 {
     WORD offend = cpu->IP;
     WORD value = vomit_cpu_modrm_read16(cpu, cpu->rmbyte);
@@ -290,7 +290,7 @@ void _DIV_RM16(vomit_cpu_t *cpu)
     cpu->regs.W.DX = (WORD)(tDXAX % value); /* Remainder  */
 }
 
-void _IDIV_RM8(vomit_cpu_t *cpu)
+void _IDIV_RM8(VCpu* cpu)
 {
     WORD offend = cpu->IP;
     SIGNED_BYTE value = (SIGNED_BYTE)vomit_cpu_modrm_read8(cpu, cpu->rmbyte);
@@ -307,7 +307,7 @@ void _IDIV_RM8(vomit_cpu_t *cpu)
     cpu->regs.B.AH = (SIGNED_BYTE)(tAX % value); /* Remainder    */
 }
 
-void _IDIV_RM16(vomit_cpu_t *cpu)
+void _IDIV_RM16(VCpu* cpu)
 {
     WORD offend = cpu->IP;
     SIGNED_WORD value = vomit_cpu_modrm_read16(cpu, cpu->rmbyte);

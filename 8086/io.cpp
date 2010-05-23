@@ -7,36 +7,36 @@
 #include "debug.h"
 #include "iodevice.h"
 
-typedef BYTE (*tintab) (vomit_cpu_t *, WORD);
-typedef void (*touttab) (vomit_cpu_t *, WORD, BYTE);
+typedef BYTE (*tintab) (VCpu*, WORD);
+typedef void (*touttab) (VCpu*, WORD, BYTE);
 
 static tintab vm_ioh_in[0x10000];
 static touttab vm_ioh_out[0x10000];
 
-void _OUT_imm8_AL(vomit_cpu_t *cpu)
+void _OUT_imm8_AL(VCpu* cpu)
 {
     vomit_cpu_out(cpu, cpu->fetchOpcodeByte(), cpu->regs.B.AL);
 }
 
-void _OUT_imm8_AX(vomit_cpu_t *cpu)
+void _OUT_imm8_AX(VCpu* cpu)
 {
     WORD port = cpu->fetchOpcodeByte();
     vomit_cpu_out(cpu, port, cpu->regs.B.AL );
     vomit_cpu_out(cpu, port + 1, cpu->regs.B.AH);
 }
 
-void _OUT_DX_AL(vomit_cpu_t *cpu)
+void _OUT_DX_AL(VCpu* cpu)
 {
     vomit_cpu_out(cpu, cpu->regs.W.DX, cpu->regs.B.AL );
 }
 
-void _OUT_DX_AX(vomit_cpu_t *cpu)
+void _OUT_DX_AX(VCpu* cpu)
 {
     vomit_cpu_out(cpu, cpu->regs.W.DX, cpu->regs.B.AL);
     vomit_cpu_out(cpu, cpu->regs.W.DX + 1, cpu->regs.B.AH);
 }
 
-void _OUTSB(vomit_cpu_t *cpu)
+void _OUTSB(VCpu* cpu)
 {
     BYTE b = vomit_cpu_memory_read8(cpu, *(cpu->CurrentSegment), cpu->regs.W.SI);
     vomit_cpu_out(cpu, cpu->regs.W.DX, b);
@@ -48,7 +48,7 @@ void _OUTSB(vomit_cpu_t *cpu)
         --cpu->regs.W.SI;
 }
 
-void _OUTSW(vomit_cpu_t *cpu)
+void _OUTSW(VCpu* cpu)
 {
     BYTE lsb = vomit_cpu_memory_read8(cpu, *(cpu->CurrentSegment), cpu->regs.W.SI);
     BYTE msb = vomit_cpu_memory_read8(cpu, *(cpu->CurrentSegment), cpu->regs.W.SI + 1);
@@ -62,30 +62,30 @@ void _OUTSW(vomit_cpu_t *cpu)
         cpu->regs.W.SI -= 2;
 }
 
-void _IN_AL_imm8(vomit_cpu_t *cpu)
+void _IN_AL_imm8(VCpu* cpu)
 {
     cpu->regs.B.AL = vomit_cpu_in(cpu, cpu->fetchOpcodeByte());
 }
 
-void _IN_AX_imm8(vomit_cpu_t *cpu)
+void _IN_AX_imm8(VCpu* cpu)
 {
     WORD port = cpu->fetchOpcodeByte();
     cpu->regs.B.AL = vomit_cpu_in(cpu, port);
     cpu->regs.B.AH = vomit_cpu_in(cpu, port + 1);
 }
 
-void _IN_AL_DX(vomit_cpu_t *cpu)
+void _IN_AL_DX(VCpu* cpu)
 {
     cpu->regs.B.AL = vomit_cpu_in(cpu, cpu->regs.W.DX);
 }
 
-void _IN_AX_DX(vomit_cpu_t *cpu)
+void _IN_AX_DX(VCpu* cpu)
 {
     cpu->regs.B.AL = vomit_cpu_in(cpu, cpu->regs.W.DX);
     cpu->regs.B.AH = vomit_cpu_in(cpu, cpu->regs.W.DX + 1);
 }
 
-void vomit_cpu_out(vomit_cpu_t *cpu, WORD port, BYTE value)
+void vomit_cpu_out(VCpu* cpu, WORD port, BYTE value)
 {
 #ifdef VOMIT_DEBUG
     if( iopeek )
@@ -104,7 +104,7 @@ void vomit_cpu_out(vomit_cpu_t *cpu, WORD port, BYTE value)
         vm_ioh_out[port](cpu, port, value);
 }
 
-BYTE vomit_cpu_in(vomit_cpu_t *cpu, WORD port)
+BYTE vomit_cpu_in(VCpu* cpu, WORD port)
 {
 #ifdef VOMIT_DEBUG
     if (iopeek)
@@ -117,12 +117,12 @@ BYTE vomit_cpu_in(vomit_cpu_t *cpu, WORD port)
     return vm_ioh_in[port](cpu, port);
 }
 
-static void vm_ioh_nout(vomit_cpu_t *, WORD port, BYTE value)
+static void vm_ioh_nout(VCpu*, WORD port, BYTE value)
 {
     vlog(VM_ALERT, "Unhandled I/O write to port %04X, data %02X", port, value);
 }
 
-static BYTE vm_ioh_nin(vomit_cpu_t *, WORD port)
+static BYTE vm_ioh_nin(VCpu*, WORD port)
 {
     vlog(VM_ALERT, "Unhandled I/O read from port %04X", port);
     return 0xff;

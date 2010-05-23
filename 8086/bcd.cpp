@@ -7,7 +7,7 @@
 
 #include "vomit.h"
 
-void _AAA(vomit_cpu_t *cpu)
+void _AAA(VCpu* cpu)
 {
     if (((cpu->regs.B.AL & 0x0F)>9) || cpu->getAF()) {
         cpu->regs.B.AL += 6;
@@ -21,7 +21,7 @@ void _AAA(vomit_cpu_t *cpu)
     cpu->regs.B.AL &= 0x0F;
 }
 
-void _AAM(vomit_cpu_t *cpu)
+void _AAM(VCpu* cpu)
 {
     BYTE imm = cpu->fetchOpcodeByte();
 
@@ -38,7 +38,7 @@ void _AAM(vomit_cpu_t *cpu)
     cpu->updateFlags8(cpu->regs.B.AL);
 }
 
-void _AAD(vomit_cpu_t *cpu)
+void _AAD(VCpu* cpu)
 {
     BYTE tempAL = cpu->regs.B.AL;
     BYTE tempAH = cpu->regs.B.AH;
@@ -49,7 +49,7 @@ void _AAD(vomit_cpu_t *cpu)
     cpu->updateFlags8(cpu->regs.B.AL);
 }
 
-void _AAS(vomit_cpu_t *cpu)
+void _AAS(VCpu* cpu)
 {
     if (((cpu->regs.B.AL & 0x0F) > 9) || cpu->getAF()) {
         cpu->regs.B.AL -= 6;
@@ -62,7 +62,7 @@ void _AAS(vomit_cpu_t *cpu)
     }
 }
 
-void _DAS(vomit_cpu_t *cpu)
+void _DAS(VCpu* cpu)
 {
     bool oldCF = cpu->getCF();
     BYTE oldAL = cpu->regs.B.AL;
@@ -86,7 +86,7 @@ void _DAS(vomit_cpu_t *cpu)
     }
 }
 
-void _DAA(vomit_cpu_t *cpu)
+void _DAA(VCpu* cpu)
 {
     bool oldCF = cpu->getCF();
     BYTE oldAL = cpu->regs.B.AL;

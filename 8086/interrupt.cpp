@@ -12,18 +12,18 @@
 
 extern void bios_interrupt10();
 
-void _INT_imm8(vomit_cpu_t *cpu)
+void _INT_imm8(VCpu* cpu)
 {
     BYTE isr = cpu->fetchOpcodeByte();
     cpu->jumpToInterruptHandler(isr);
 }
 
-void _INT3(vomit_cpu_t *cpu)
+void _INT3(VCpu* cpu)
 {
     cpu->jumpToInterruptHandler(3);
 }
 
-void _INTO(vomit_cpu_t *cpu)
+void _INTO(VCpu* cpu)
 {
     /* XXX: I've never seen this used, so it's probably good to log it. */
     vlog(VM_ALERT, "INTO used, can you believe it?");
@@ -32,7 +32,7 @@ void _INTO(vomit_cpu_t *cpu)
         cpu->jumpToInterruptHandler(4);
 }
 
-void _IRET(vomit_cpu_t *cpu)
+void _IRET(VCpu* cpu)
 {
     WORD nip = cpu->pop();
     WORD ncs = cpu->pop();

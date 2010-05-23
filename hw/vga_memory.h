@@ -1,10 +1,11 @@
 #ifndef __vga_memory_h__
 #define __vga_memory_h__
 
-#include "vomit.h"
+#include "types.h"
 #include <QtCore/QRect>
 
 class QImage;
+class VCpu;
 
 class VgaMemory
 {

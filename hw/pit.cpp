@@ -1,8 +1,8 @@
 #include "vomit.h"
 #include <stdlib.h>
 
-static byte pit_read(vomit_cpu_t *cpu, word port);
-static void pit_write(vomit_cpu_t *cpu, word port, byte data);
+static byte pit_read(VCpu* cpu, word port);
+static void pit_write(VCpu* cpu, word port, byte data);
 
 void
 pit_init()
@@ -13,14 +13,14 @@ pit_init()
 }
 
 byte
-pit_read(vomit_cpu_t *cpu, word port )
+pit_read(VCpu* cpu, word port )
 {
     (void) port;
     return rand() % 0xff;
 }
 
 void
-pit_write(vomit_cpu_t *cpu, word port, byte data )
+pit_write(VCpu* cpu, word port, byte data )
 {
     (void) data;
     switch( port )

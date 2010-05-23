@@ -29,20 +29,20 @@ static byte rows;
 
 static QMutex s_paletteMutex;
 
-static void vga_selreg(vomit_cpu_t *, word, byte );
-static void vga_setreg(vomit_cpu_t *, word, byte );
-static void vga_selreg2(vomit_cpu_t *, word, byte );
-static void vga_setreg2(vomit_cpu_t *, word, byte );
-static byte vga_getreg2(vomit_cpu_t *, word );
-static void vga_selseq(vomit_cpu_t *, word, byte );
-static void vga_setseq(vomit_cpu_t *, word, byte );
-static byte vga_getseq(vomit_cpu_t *, word );
-static byte vga_getreg(vomit_cpu_t *, word );
-static byte vga_status(vomit_cpu_t *, word );
-static byte vga_get_current_register(vomit_cpu_t *, word );
-static void vga_write_3c0(vomit_cpu_t *, word port, byte data );
-static byte vga_read_3c1(vomit_cpu_t *, word port );
-static byte vga_read_miscellaneous_output_register(vomit_cpu_t *, word port );
+static void vga_selreg(VCpu*, word, byte );
+static void vga_setreg(VCpu*, word, byte );
+static void vga_selreg2(VCpu*, word, byte );
+static void vga_setreg2(VCpu*, word, byte );
+static byte vga_getreg2(VCpu*, word );
+static void vga_selseq(VCpu*, word, byte );
+static void vga_setseq(VCpu*, word, byte );
+static byte vga_getseq(VCpu*, word );
+static byte vga_getreg(VCpu*, word );
+static byte vga_status(VCpu*, word );
+static byte vga_get_current_register(VCpu*, word );
+static void vga_write_3c0(VCpu*, word port, byte data );
+static byte vga_read_3c1(VCpu*, word port );
+static byte vga_read_miscellaneous_output_register(VCpu*, word port );
 
 static bool next_3c0_is_index = true;
 
@@ -119,7 +119,7 @@ vga_init()
 }
 
 void
-vga_write_3c0(vomit_cpu_t *, word port, byte data )
+vga_write_3c0(VCpu*, word port, byte data )
 {
     QMutexLocker locker(&s_paletteMutex);
     (void) port;
@@ -135,7 +135,7 @@ vga_write_3c0(vomit_cpu_t *, word port, byte data )
     next_3c0_is_index = !next_3c0_is_index;
 }
 
-BYTE vga_read_3c1(vomit_cpu_t *, WORD)
+BYTE vga_read_3c1(VCpu*, WORD)
 {
     QMutexLocker locker(&s_paletteMutex);
     //vlog(VM_VIDEOMSG, "Read PALETTE[%u] (=%02X)", index_palette, vga_palette_register[index_palette]);
@@ -143,7 +143,7 @@ BYTE vga_read_3c1(vomit_cpu_t *, WORD)
 }
 
 byte
-vga_read_miscellaneous_output_register(vomit_cpu_t *, word port )
+vga_read_miscellaneous_output_register(VCpu*, word port )
 {
     (void) port;
 
@@ -183,14 +183,14 @@ vga_kill()
 }
 
 byte
-vga_get_current_register(vomit_cpu_t *, word port )
+vga_get_current_register(VCpu*, word port )
 {
     (void) port;
     return current_register;
 }
 
 void
-vga_selreg(vomit_cpu_t *, word port, byte data )
+vga_selreg(VCpu*, word port, byte data )
 {
     (void) port;
     /* mask off unused bits */
@@ -198,40 +198,40 @@ vga_selreg(vomit_cpu_t *, word port, byte data )
 }
 
 void
-vga_setreg(vomit_cpu_t *, word port, byte data )
+vga_setreg(VCpu*, word port, byte data )
 {
     (void) port;
     io_register[current_register] = data;
 }
 
 byte
-vga_getreg(vomit_cpu_t *, word port )
+vga_getreg(VCpu*, word port )
 {
     (void) port;
     return io_register[current_register];
 }
 
 void
-vga_selseq(vomit_cpu_t *, word port, byte data )
+vga_selseq(VCpu*, word port, byte data )
 {
     (void) port;
     /* mask off unused bits */
     current_sequencer = data & 0x1F;
 }
 
-BYTE vga_getseq(vomit_cpu_t *, WORD)
+BYTE vga_getseq(VCpu*, WORD)
 {
     //vlog( VM_VIDEOMSG, "reading seq %d, data is %02X", current_sequencer, io_sequencer[current_sequencer] );
     return io_sequencer[current_sequencer];
 }
 
-void vga_setseq(vomit_cpu_t *, WORD, BYTE value)
+void vga_setseq(VCpu*, WORD, BYTE value)
 {
     //vlog( VM_VIDEOMSG, "writing to seq %d, data is %02X", current_sequencer, data );
     io_sequencer[current_sequencer] = value;
 }
 
-BYTE vga_status(vomit_cpu_t *, WORD)
+BYTE vga_status(VCpu*, WORD)
 {
     /*
      * 6845 - Port 3DA Status Register
@@ -279,14 +279,14 @@ void vga_write_register(BYTE index, BYTE value)
 }
 
 void
-vga_selreg2(vomit_cpu_t *, word port, byte data)
+vga_selreg2(VCpu*, word port, byte data)
 {
     (void) port;
     current_register2 = data;
 }
 
 void
-vga_setreg2(vomit_cpu_t *, word port, byte data )
+vga_setreg2(VCpu*, word port, byte data )
 {
     (void) port;
     //vlog( VM_VIDEOMSG, "writing to reg2 %d, data is %02X", current_register2, data );
@@ -294,7 +294,7 @@ vga_setreg2(vomit_cpu_t *, word port, byte data )
 }
 
 byte
-vga_getreg2(vomit_cpu_t *, word port )
+vga_getreg2(VCpu*, word port )
 {
     (void) port;
     //vlog( VM_VIDEOMSG, "reading reg2 %d, data is %02X", current_register2, io_register2[current_register2] );

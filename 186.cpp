@@ -7,7 +7,7 @@
 #include "vomit.h"
 #include "debug.h"
 
-void _wrap_0x0F(vomit_cpu_t *cpu)
+void _wrap_0x0F(VCpu* cpu)
 {
     BYTE op = cpu->fetchOpcodeByte();
     switch (op) {
@@ -28,7 +28,7 @@ void _wrap_0x0F(vomit_cpu_t *cpu)
     }
 }
 
-void _BOUND(vomit_cpu_t *cpu)
+void _BOUND(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
     DWORD value = vomit_cpu_modrm_read32(cpu, rm);
@@ -40,17 +40,17 @@ void _BOUND(vomit_cpu_t *cpu)
     }
 }
 
-void _PUSH_imm8(vomit_cpu_t *cpu)
+void _PUSH_imm8(VCpu* cpu)
 {
     cpu->push(signext(cpu->fetchOpcodeByte()));
 }
 
-void _PUSH_imm16(vomit_cpu_t *cpu)
+void _PUSH_imm16(VCpu* cpu)
 {
     cpu->push(cpu->fetchOpcodeWord());
 }
 
-void _ENTER(vomit_cpu_t *cpu)
+void _ENTER(VCpu* cpu)
 {
     WORD Size = cpu->fetchOpcodeWord();
     BYTE NestingLevel = cpu->fetchOpcodeByte() % 32;
@@ -68,13 +68,13 @@ void _ENTER(vomit_cpu_t *cpu)
     cpu->regs.W.SP = cpu->regs.W.BP - Size;
 }
 
-void _LEAVE(vomit_cpu_t *cpu)
+void _LEAVE(VCpu* cpu)
 {
     cpu->regs.W.SP = cpu->regs.W.BP;
     cpu->regs.W.BP = cpu->pop();
 }
 
-void _PUSHA(vomit_cpu_t *cpu)
+void _PUSHA(VCpu* cpu)
 {
     WORD oldsp = cpu->regs.W.SP;
     cpu->push(cpu->regs.W.AX);
@@ -87,7 +87,7 @@ void _PUSHA(vomit_cpu_t *cpu)
     cpu->push(cpu->regs.W.DI);
 }
 
-void _POPA(vomit_cpu_t *cpu)
+void _POPA(VCpu* cpu)
 {
     cpu->regs.W.DI = cpu->pop();
     cpu->regs.W.SI = cpu->pop();
