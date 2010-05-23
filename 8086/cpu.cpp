@@ -229,8 +229,25 @@ void VCpu::registerDefaultOpcodeHandlers()
     setOpcodeHandler(0xAD, 0xAD, _LODSW            );
     setOpcodeHandler(0xAE, 0xAE, _SCASB            );
     setOpcodeHandler(0xAF, 0xAF, _SCASW            );
-    setOpcodeHandler(0xB0, 0xB7, _MOV_reg8_imm8    );
-    setOpcodeHandler(0xB8, 0xBF, _MOV_reg16_imm16  );
+
+    setOpcodeHandler(0xB0, 0xB0, _MOV_AL_imm8      );
+    setOpcodeHandler(0xB1, 0xB1, _MOV_CL_imm8      );
+    setOpcodeHandler(0xB2, 0xB2, _MOV_DL_imm8      );
+    setOpcodeHandler(0xB3, 0xB3, _MOV_BL_imm8      );
+    setOpcodeHandler(0xB4, 0xB4, _MOV_AH_imm8      );
+    setOpcodeHandler(0xB5, 0xB5, _MOV_CH_imm8      );
+    setOpcodeHandler(0xB6, 0xB6, _MOV_DH_imm8      );
+    setOpcodeHandler(0xB7, 0xB7, _MOV_BH_imm8      );
+
+    setOpcodeHandler(0xB8, 0xB8, _MOV_AX_imm16     );
+    setOpcodeHandler(0xB9, 0xB9, _MOV_CX_imm16     );
+    setOpcodeHandler(0xBA, 0xBA, _MOV_DX_imm16     );
+    setOpcodeHandler(0xBB, 0xBB, _MOV_BX_imm16     );
+    setOpcodeHandler(0xBC, 0xBC, _MOV_SP_imm16     );
+    setOpcodeHandler(0xBD, 0xBD, _MOV_BP_imm16     );
+    setOpcodeHandler(0xBE, 0xBE, _MOV_SI_imm16     );
+    setOpcodeHandler(0xBF, 0xBF, _MOV_DI_imm16     );
+
     setOpcodeHandler(0xC2, 0xC2, _RET_imm16        );
     setOpcodeHandler(0xC3, 0xC3, _RET              );
     setOpcodeHandler(0xC4, 0xC4, _LES_reg16_mem16  );

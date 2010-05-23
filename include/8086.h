@@ -461,8 +461,24 @@ void _LEA_reg16_mem16(VCpu*);
 void _LDS_reg16_mem16(VCpu*);
 void _LES_reg16_mem16(VCpu*);
 
-void _MOV_reg8_imm8(VCpu*);
-void _MOV_reg16_imm16(VCpu*);
+void _MOV_AL_imm8(VCpu*);
+void _MOV_BL_imm8(VCpu*);
+void _MOV_CL_imm8(VCpu*);
+void _MOV_DL_imm8(VCpu*);
+void _MOV_AH_imm8(VCpu*);
+void _MOV_BH_imm8(VCpu*);
+void _MOV_CH_imm8(VCpu*);
+void _MOV_DH_imm8(VCpu*);
+
+void _MOV_AX_imm16(VCpu*);
+void _MOV_BX_imm16(VCpu*);
+void _MOV_CX_imm16(VCpu*);
+void _MOV_DX_imm16(VCpu*);
+void _MOV_BP_imm16(VCpu*);
+void _MOV_SP_imm16(VCpu*);
+void _MOV_SI_imm16(VCpu*);
+void _MOV_DI_imm16(VCpu*);
+
 void _MOV_seg_RM16(VCpu*);
 void _MOV_RM16_seg(VCpu*);
 void _MOV_AL_moff8(VCpu*);

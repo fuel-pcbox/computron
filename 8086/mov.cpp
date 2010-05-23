@@ -74,14 +74,84 @@ void _MOV_reg16_RM16(VCpu* cpu)
     *cpu->treg16[rmreg(rm)] = vomit_cpu_modrm_read16(cpu, rm);
 }
 
-void _MOV_reg8_imm8(VCpu* cpu)
+void _MOV_AL_imm8(VCpu* cpu)
 {
-    *cpu->treg8[cpu->opcode&7] = cpu->fetchOpcodeByte();
+    cpu->regs.B.AL = cpu->fetchOpcodeByte();
 }
 
-void _MOV_reg16_imm16(VCpu* cpu)
+void _MOV_BL_imm8(VCpu* cpu)
 {
-    *cpu->treg16[cpu->opcode&7] = cpu->fetchOpcodeWord();
+    cpu->regs.B.BL = cpu->fetchOpcodeByte();
+}
+
+void _MOV_CL_imm8(VCpu* cpu)
+{
+    cpu->regs.B.CL = cpu->fetchOpcodeByte();
+}
+
+void _MOV_DL_imm8(VCpu* cpu)
+{
+    cpu->regs.B.DL = cpu->fetchOpcodeByte();
+}
+
+void _MOV_AH_imm8(VCpu* cpu)
+{
+    cpu->regs.B.AH = cpu->fetchOpcodeByte();
+}
+
+void _MOV_BH_imm8(VCpu* cpu)
+{
+    cpu->regs.B.BH = cpu->fetchOpcodeByte();
+}
+
+void _MOV_CH_imm8(VCpu* cpu)
+{
+    cpu->regs.B.CH = cpu->fetchOpcodeByte();
+}
+
+void _MOV_DH_imm8(VCpu* cpu)
+{
+    cpu->regs.B.DH = cpu->fetchOpcodeByte();
+}
+
+void _MOV_AX_imm16(VCpu* cpu)
+{
+    cpu->regs.W.AX = cpu->fetchOpcodeWord();
+}
+
+void _MOV_BX_imm16(VCpu* cpu)
+{
+    cpu->regs.W.BX = cpu->fetchOpcodeWord();
+}
+
+void _MOV_CX_imm16(VCpu* cpu)
+{
+    cpu->regs.W.CX = cpu->fetchOpcodeWord();
+}
+
+void _MOV_DX_imm16(VCpu* cpu)
+{
+    cpu->regs.W.DX = cpu->fetchOpcodeWord();
+}
+
+void _MOV_BP_imm16(VCpu* cpu)
+{
+    cpu->regs.W.BP = cpu->fetchOpcodeWord();
+}
+
+void _MOV_SP_imm16(VCpu* cpu)
+{
+    cpu->regs.W.SP = cpu->fetchOpcodeWord();
+}
+
+void _MOV_SI_imm16(VCpu* cpu)
+{
+    cpu->regs.W.SI = cpu->fetchOpcodeWord();
+}
+
+void _MOV_DI_imm16(VCpu* cpu)
+{
+    cpu->regs.W.DI = cpu->fetchOpcodeWord();
 }
 
 void _MOV_AL_moff8(VCpu* cpu)
