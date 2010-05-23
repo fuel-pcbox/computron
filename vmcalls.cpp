@@ -96,7 +96,7 @@ void vm_handleE6(VCpu* cpu)
 			cpu->regs.B.AH = FD_CHANGED_OR_REMOVED;
 			cpu->setCF(1);
 		}
-		cpu->writeUnmappedMemory8(drive < 2 ? 0x0441 : 0x0472, cpu->regs.B.AH);
+		cpu->writeUnmappedMemory8(drive < 2 ? 0x0441 : 0x0474, cpu->regs.B.AH);
 		break;
 #if 0
 	case 0x1305:
