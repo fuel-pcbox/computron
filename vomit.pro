@@ -53,7 +53,6 @@ SOURCES += 186.cpp \
            8086/jump.cpp \
            8086/loop.cpp \
            8086/math.cpp \
-           8086/memory.cpp \
            8086/modrm.cpp \
            8086/mov.cpp \
            8086/stack.cpp \

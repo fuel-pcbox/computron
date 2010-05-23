@@ -6,6 +6,19 @@
 #include "vomit.h"
 #include "debug.h"
 
+void VCpu::push(WORD value)
+{
+    this->regs.W.SP -= 2;
+    writeMemory16(getSS(), this->regs.W.SP, value);
+}
+
+WORD VCpu::pop()
+{
+    WORD w = readMemory16(getSS(), this->regs.W.SP);
+    this->regs.W.SP += 2;
+    return w;
+}
+
 void _PUSH_SP_8086_80186(VCpu* cpu)
 {
     // PUSH SP will use the value of SP *after* pushing on Intel's 8086 and 80186.

@@ -641,6 +641,21 @@ void _DEC_RM16(VCpu* cpu)
     vomit_cpu_modrm_update16(cpu, value - 1);
 }
 
+void _LDS_reg16_mem16(VCpu* cpu)
+{
+    BYTE rm = cpu->fetchOpcodeByte();
+    DWORD value = vomit_cpu_modrm_read32(cpu, rm);
+    *cpu->treg16[rmreg(rm)] = LSW(value);
+    cpu->DS = MSW(value);
+}
+void _LES_reg16_mem16(VCpu* cpu)
+{
+    BYTE rm = cpu->fetchOpcodeByte();
+    DWORD value = vomit_cpu_modrm_read32(cpu, rm);
+    *cpu->treg16[rmreg(rm)] = LSW(value);
+    cpu->ES = MSW(value);
+}
+
 #ifdef VOMIT_DEBUG
 bool VCpu::inDebugger() const
 {
