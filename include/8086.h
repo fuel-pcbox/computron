@@ -1,6 +1,8 @@
 #ifndef __8086_h__
 #define __8086_h__
 
+#include "types.h"
+
 // MACROS AND CONVENIENCE METHODS
 #define IS_VGA_MEMORY(address) ((address) >= 0xA0000 && (address) < 0xB0000)
 

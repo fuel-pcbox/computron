@@ -1,8 +1,6 @@
 #include "vomctl.h"
-#include <stdio.h>
-#include "vomit.h"
+#include "8086.h"
 #include "debug.h"
-#include <string.h>
 
 namespace Vomit
 {

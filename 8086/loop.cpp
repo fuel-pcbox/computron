@@ -4,7 +4,7 @@
  *
  */
 
-#include "vomit.h"
+#include "8086.h"
 #include "debug.h"
 
 void _LOOP_imm8(VCpu* cpu)

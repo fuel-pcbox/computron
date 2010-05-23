@@ -1,4 +1,6 @@
 #include "vomit.h"
+#include "8086.h"
+#include "vga.h"
 #include "debug.h"
 #include "disasm.h" // MAKEWORD
 #include <QtGui/QImage>

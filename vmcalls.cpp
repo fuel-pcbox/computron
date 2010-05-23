@@ -7,6 +7,9 @@
  */
 
 #include "vomit.h"
+#include "8086.h"
+#include "floppy.h"
+#include "vga.h"
 #include "debug.h"
 
 #include <stdio.h>

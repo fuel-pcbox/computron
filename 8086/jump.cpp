@@ -3,7 +3,7 @@
  *
  */
 
-#include "vomit.h"
+#include "8086.h"
 #include <stdio.h>
 
 void _JCXZ_imm8(VCpu* cpu)

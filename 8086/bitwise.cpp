@@ -10,7 +10,7 @@
 #define MASK_STEPS_IF_80286
 #endif
 
-#include "vomit.h"
+#include "8086.h"
 #include "templates.h"
 
 DEFAULT_RM8_reg8( cpu_and, _AND_RM8_reg8 )

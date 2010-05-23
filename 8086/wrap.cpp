@@ -3,8 +3,7 @@
  *
  */
 
-#include <stdio.h>
-#include "vomit.h"
+#include "8086.h"
 #include "debug.h"
 
 void _wrap_0x80(VCpu* cpu)

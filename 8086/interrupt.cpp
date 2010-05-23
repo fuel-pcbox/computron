@@ -4,6 +4,7 @@
  */
 
 #include "vomit.h"
+#include "8086.h"
 #include "debug.h"
 
 #ifdef VOMIT_DOS_ON_LINUX_IDLE_HACK

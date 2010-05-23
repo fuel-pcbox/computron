@@ -1,6 +1,6 @@
 #include "vomit.h"
+#include "8086.h"
 #include "debug.h"
-#include <stdlib.h>
 
 #define DEFAULT_TO_SS if (cpu->CurrentSegment != &cpu->SegmentPrefix ) { segment = cpu->SS; }
 static void *s_last_modrm_ptr = 0L;

@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "vomit.h"
+#include "floppy.h"
 #include "debug.h"
 
 static bool reloading = false;

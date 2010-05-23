@@ -3,9 +3,8 @@
  *
  */
 
-#include "vomit.h"
+#include "8086.h"
 #include "templates.h"
-#include "debug.h"
 
 WORD cpu_add8(VCpu* cpu, BYTE dest, BYTE src)
 {

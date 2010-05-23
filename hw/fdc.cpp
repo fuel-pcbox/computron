@@ -5,6 +5,7 @@
  */
 
 #include "vomit.h"
+#include "floppy.h"
 #include "debug.h"
 
 #define DATA_REGISTER_READY 0x80

@@ -3,7 +3,7 @@
  *
  */
 
-#include "vomit.h"
+#include "8086.h"
 
 void _LODSB(VCpu* cpu)
 {

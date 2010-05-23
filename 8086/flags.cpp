@@ -2,7 +2,7 @@
  * Handler of the hell that is flags
  */
 
-#include "vomit.h"
+#include "8086.h"
 
 static const byte parity_table[0x100] = {
     1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,

@@ -1,7 +1,8 @@
 #include "vomit.h"
+#include "8086.h"
+#include "vga.h"
 #include "debug.h"
 #include "disasm.h"
-#include <stdio.h>
 #include <string.h>
 #include <assert.h>
 #include <stdlib.h>

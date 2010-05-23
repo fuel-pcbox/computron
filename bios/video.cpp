@@ -1,6 +1,7 @@
 #include "vomit.h"
 #include "8086.h"
 #include "debug.h"
+#include "vga.h"
 #include "vga_memory.h"
 #include <string.h>
 #include <stdio.h>

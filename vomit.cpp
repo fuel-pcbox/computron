@@ -8,8 +8,10 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include "vomit.h"
+#include "8086.h"
 #include "debug.h"
 #include "iodevice.h"
+#include "vga.h"
 #include <QDebug>
 #ifdef VOMIT_DEBUG
 #include <signal.h>

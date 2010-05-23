@@ -10,6 +10,8 @@
  */
 
 #include "vomit.h"
+#include "8086.h"
+#include "floppy.h"
 #include "debug.h"
 #include <stdio.h>
 #include <stdlib.h>
