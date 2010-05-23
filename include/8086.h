@@ -1,6 +1,32 @@
 #ifndef __8086_h__
 #define __8086_h__
 
+// MACROS AND CONVENIENCE METHODS
+#define IS_VGA_MEMORY(address) ((address) >= 0xA0000 && (address) < 0xB0000)
+
+inline DWORD vomit_toFlatAddress(WORD segment, WORD offset)
+{
+    return (segment << 4) + offset;
+}
+
+inline void vomit_write16ToPointer(WORD* pointer, WORD value)
+{
+#ifdef VOMIT_BIG_ENDIAN
+    *pointer = V_BYTESWAP(value);
+#else
+    *pointer = value;
+#endif
+}
+
+inline WORD signext(BYTE b)
+{
+    WORD w = 0x0000 | b;
+    if (w & 0x80)
+        return w | 0xFF00;
+    else
+        return w & 0x00FF;
+}
+
 #define rmreg(b) (b>>3&7)    /* Extracts RegID from RM byte. */
 #define MODRM_ISREG(b) (((b)&0xC0)==0xC0)
 
@@ -16,6 +42,9 @@
 #define RESET_SEGMENT_PREFIX(cpu) do { (cpu)->CurrentSegment = &(cpu)->DS; } while(0);
 
 #define CPU_INSNS_PER_PIT_IRQ 400000
+
+
+// VCPU MONSTROSITY
 
 class VgaMemory;
 
@@ -84,8 +113,9 @@ public:
         } B;
 #endif
     } regs;
-    WORD CS, DS, ES, SS, FS, GS, SegmentPrefix, *CurrentSegment;
+    WORD CS, DS, ES, SS, FS, GS, SegmentPrefix;
     WORD IP;
+    WORD* CurrentSegment;
 
     WORD base_CS;
     WORD base_IP;
@@ -93,21 +123,22 @@ public:
     BYTE opcode;
     BYTE rmbyte;
 
-    /* Memory size in KiB (will be reported by BIOS) */
+    // Memory size in KiB (will be reported by BIOS)
     WORD memory_size;
 
-    /* RAM */
-    BYTE *memory;
+    // RAM
+    BYTE* memory;
 
-    WORD *treg16[8];
-    BYTE *treg8[8];
-    WORD *tseg[8];
+    // ID-to-Register maps
+    WORD* treg16[8];
+    BYTE* treg8[8];
+    WORD* tseg[8];
 
     typedef void (*OpcodeHandler) (VCpu*);
     OpcodeHandler opcode_handler[0x100];
 
 #ifdef VOMIT_PREFETCH_QUEUE
-    BYTE *m_prefetchQueue;
+    BYTE* m_prefetchQueue;
     BYTE m_prefetchQueueIndex;
     BYTE m_prefetchQueueSize;
 #endif
@@ -168,21 +199,13 @@ public:
 #else
     void flushFetchQueue() {}
     BYTE fetchOpcodeByte() { return m_codeMemory[this->IP++]; }
-    WORD fetchOpcodeWord()
-    {
-        WORD w = *(WORD *)(&m_codeMemory[getIP()]);
-#ifdef VOMIT_BIG_ENDIAN
-        w = V_BYTESWAP(w);
-#endif
-        this->IP += 2;
-        return w;
-    }
+    inline WORD fetchOpcodeWord();
 #endif
 
     void push(WORD value);
     WORD pop();
 
-    BYTE *memoryPointer(WORD segment, WORD offset) { return &this->memory[FLAT(segment, offset)]; }
+    inline BYTE* memoryPointer(WORD segment, WORD offset) const;
 
     WORD getFlags();
     void setFlags(WORD flags);
@@ -199,12 +222,14 @@ public:
 
     // These are faster than readMemory*() but will not access VGA memory, etc.
     inline BYTE readUnmappedMemory8(DWORD address) const;
+    inline void writeUnmappedMemory8(DWORD address, BYTE data);
+    inline void writeUnmappedMemory16(DWORD address, WORD data);
 
     inline BYTE readMemory8(DWORD address) const;
     inline void writeMemory16(DWORD address, WORD data);
     inline void writeMemory16(WORD segment, WORD offset, WORD data);
 
-    VgaMemory *vgaMemory;
+    VgaMemory* vgaMemory;
 
     enum State { Dead, Alive, Halted };
     State state() const { return m_state; }
@@ -214,19 +239,11 @@ public:
     Type type() const { return m_type; }
     void setType(Type t) { m_type = t; }
 
-    /* TODO: make private */
-    BYTE *codeMemory() const { return m_codeMemory; }
+    // TODO: make private
+    inline BYTE* codeMemory() const;
 
     /* TODO: actual PIT implementation.. */
-    bool tick()
-    {
-        if (--m_pitCountdown == 0) {
-            m_pitCountdown = CPU_INSNS_PER_PIT_IRQ;
-            return true;
-        } else {
-            return false;
-        }
-    }
+    inline bool tick();
 
     void registerDefaultOpcodeHandlers();
 
@@ -234,8 +251,8 @@ private:
     void setOpcodeHandler(BYTE rangeStart, BYTE rangeEnd, OpcodeHandler handler);
 
 
-    /* This points to the base of CS for fast opcode fetches. */
-    BYTE *m_codeMemory;
+    // This points to the base of CS for fast opcode fetches.
+    BYTE* m_codeMemory;
 
     bool CF, DF, TF, PF, AF, ZF, SF, IF, OF;
 
@@ -247,12 +264,11 @@ private:
     bool m_debugOneStep;
 #endif
 
-    /* Cycle counter. May wrap arbitrarily. */
+    // Cycle counter. May wrap arbitrarily.
     DWORD m_pitCountdown;
-
 };
 
-extern VCpu *g_cpu;
+extern VCpu* g_cpu;
 
 void vomit_cpu_main(VCpu*);
 void vomit_cpu_jump_relative8(VCpu*, SIGNED_BYTE displacement);
@@ -316,22 +332,13 @@ void vomit_cpu_modrm_update8(VCpu*, BYTE value);
  */
 void vomit_cpu_modrm_update16(VCpu*, WORD value);
 
-void *vomit_cpu_modrm_resolve8(VCpu*, BYTE rm);
-void *vomit_cpu_modrm_resolve16(VCpu*, BYTE rm);
+void* vomit_cpu_modrm_resolve8(VCpu*, BYTE rm);
+void* vomit_cpu_modrm_resolve16(VCpu*, BYTE rm);
 
 BYTE vomit_cpu_memory_read8(VCpu*, WORD segment, WORD offset);
 WORD vomit_cpu_memory_read16(VCpu*, WORD segment, WORD offset);
 void vomit_cpu_memory_write8(VCpu*, WORD segment, WORD offset, BYTE value);
 void vomit_cpu_memory_write16(VCpu*, WORD segment, WORD offset, WORD value);
-
-inline WORD signext (byte b)
-{
-    WORD w = 0x0000 | b;
-    if ((w&0x80))
-        return (w | 0xff00);
-    else
-        return (w & 0x00ff);
-}
 
 #define REG_AL  0
 #define REG_CL  1
@@ -639,11 +646,17 @@ void _PUSH_imm16(VCpu*);
 void _IMUL_reg16_RM16_imm8(VCpu*);
 
 // INLINE IMPLEMENTATIONS
+
 #include "vga_memory.h"
 
 BYTE VCpu::readUnmappedMemory8(DWORD address) const
 {
     return this->memory[address];
+}
+
+void VCpu::writeUnmappedMemory8(DWORD address, BYTE value)
+{
+    this->memory[address] = value;
 }
 
 void VCpu::writeUnmappedMemory16(DWORD address, WORD value)
@@ -652,28 +665,11 @@ void VCpu::writeUnmappedMemory16(DWORD address, WORD value)
     vomit_write16ToPointer(ptr, value);
 }
 
-
-#define IS_VGA_MEMORY(address) ((address) >= 0xA0000 && (address) < 0xB0000)
-
 BYTE VCpu::readMemory8(DWORD address) const
 {
     if (IS_VGA_MEMORY(address))
         return this->vgaMemory->read8(address);
     return this->memory[address];
-}
-
-inline DWORD vomit_toFlatAddress(WORD segment, WORD offset)
-{
-    return (segment << 4) + offset;
-}
-
-inline void vomit_write16ToPointer(WORD* pointer, WORD value)
-{
-#ifdef VOMIT_BIG_ENDIAN
-    *pointer = V_BYTESWAP(value);
-#else
-    *pointer = value;
-#endif
 }
 
 void VCpu::writeMemory16(DWORD address, WORD value)
@@ -690,6 +686,36 @@ void VCpu::writeMemory16(DWORD address, WORD value)
 void VCpu::writeMemory16(WORD segment, WORD offset, WORD value)
 {
     writeMemory16(FLAT(segment, offset), value);
+}
+
+BYTE* VCpu::codeMemory() const
+{
+    return m_codeMemory;
+}
+
+BYTE* VCpu::memoryPointer(WORD segment, WORD offset) const
+{
+    return this->memory + vomit_toFlatAddress(segment, offset);
+}
+
+WORD VCpu::fetchOpcodeWord()
+{
+    WORD w = *reinterpret_cast<WORD*>(&m_codeMemory[getIP()]);
+    this->IP += 2;
+#ifdef VOMIT_BIG_ENDIAN
+    return V_BYTESWAP(w);
+#else
+    return w;
+#endif
+}
+
+bool VCpu::tick()
+{
+    if (--m_pitCountdown == 0) {
+        m_pitCountdown = CPU_INSNS_PER_PIT_IRQ;
+        return true;
+    }
+    return false;
 }
 
 #endif /* __8086_h__ */
