@@ -73,7 +73,7 @@ void VCpu::init()
 
     jump(0xF000, 0x0000);
 
-    setFlags(0x0200 | vomit_cpu_static_flags(this));
+    setFlags(0x0200);
 
     m_pitCountdown = CPU_INSNS_PER_PIT_IRQ;
     m_state = Alive;
@@ -483,24 +483,6 @@ void VCpu::jump(WORD segment, WORD offset)
     flushFetchQueue();
 }
 
-void VCpu::setFlags(WORD flags)
-{
-    this->CF = (flags & 0x0001) != 0;
-    this->PF = (flags & 0x0004) != 0;
-    this->AF = (flags & 0x0010) != 0;
-    this->ZF = (flags & 0x0040) != 0;
-    this->SF = (flags & 0x0080) != 0;
-    this->TF = (flags & 0x0100) != 0;
-    this->IF = (flags & 0x0200) != 0;
-    this->DF = (flags & 0x0400) != 0;
-    this->OF = (flags & 0x0800) != 0;
-}
-
-WORD VCpu::getFlags()
- {
-    return this->CF | (this->PF << 2) | (this->AF << 4) | (this->ZF << 6) | (this->SF << 7) | (this->TF << 8) | (this->IF << 9) | (this->DF << 10) | (this->OF << 11) | vomit_cpu_static_flags(this);
-}
-
 void VCpu::setInterruptHandler(BYTE isr, WORD segment, WORD offset)
 {
     writeMemory16(0x0000, (isr * 4), offset);
@@ -556,20 +538,6 @@ void _SS(VCpu* cpu)
     SET_SEGMENT_PREFIX(cpu, SS);
     cpu->opcode_handler[cpu->fetchOpcodeByte()](cpu);
     RESET_SEGMENT_PREFIX(cpu);
-}
-
-void _LAHF(VCpu* cpu)
-{
-    cpu->regs.B.AH = cpu->getCF() | (cpu->getPF() * 4) | (cpu->getAF() * 16) | (cpu->getZF() * 64) | (cpu->getSF() * 128) | 2;
-}
-
-void _SAHF(VCpu* cpu)
-{
-    cpu->setCF(cpu->regs.B.AH & 0x01);
-    cpu->setPF(cpu->regs.B.AH & 0x04);
-    cpu->setAF(cpu->regs.B.AH & 0x10);
-    cpu->setZF(cpu->regs.B.AH & 0x40);
-    cpu->setSF(cpu->regs.B.AH & 0x80);
 }
 
 void _XCHG_AX_reg16(VCpu* cpu)

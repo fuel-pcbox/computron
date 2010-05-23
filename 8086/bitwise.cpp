@@ -3,7 +3,12 @@
  *
  */
 
-#define MASK_STEPS_IF_80286 if (cpu->type() >= VCpu::Intel80186) { steps &= 0x1F; }
+// FIXME: Is this really correct? I seem to recall 80286 should be the first CPU to mask shift counts.
+#if VOMIT_CPU_LEVEL >= 1
+#define MASK_STEPS_IF_80286 do { steps &= 0x1F; } while(0);
+#else
+#define MASK_STEPS_IF_80286
+#endif
 
 #include "vomit.h"
 #include "templates.h"

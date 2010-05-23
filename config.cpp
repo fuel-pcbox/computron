@@ -163,25 +163,6 @@ unspeakable_abomination()
                 drv_sectsize[ldrv] = 512;
                 drv_status[ldrv] = 1;
                 drv_sectors[ldrv] = (megabytes * 1048576) / drv_sectsize[ldrv];
-            } else if(!reloading && !strcmp(curtok, "cpu")) {
-                curtok = strtok(0, " \t\n");
-                int type = strtol(curtok, 0, 10);
-                switch (type) {
-                    case 0:
-                        g_cpu->setType(VCpu::Intel8086);
-                        break;
-                    case 1:
-                        g_cpu->setType(VCpu::Intel80186);
-                        break;
-                    case 2:
-                        g_cpu->setType(VCpu::Intel80286);
-                        break;
-                    default:
-                        vlog(VM_ALERT, "Unknown CPU type %d", type);
-                        break;
-                }
-
-                vlog(VM_INITMSG, "Setting CPU type to %d", type);
             }
             else if( !reloading && !strcmp( curtok, "memory" ))
             {

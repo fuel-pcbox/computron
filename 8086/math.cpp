@@ -94,9 +94,10 @@ WORD cpu_mul8(VCpu* cpu, BYTE acc, BYTE multi)
     WORD result = acc * multi;
     cpu->mathFlags8(result, acc, multi);
 
-    /* 8086 CPUs set ZF on zero result */
-    if (cpu->type() == VCpu::Intel8086)
-        cpu->setZF(result == 0);
+#if VOMIT_CPU_LEVEL == 0
+    // 8086 CPUs set ZF on zero result
+    cpu->setZF(result == 0);
+#endif
 
     return result;
 }
@@ -106,9 +107,10 @@ DWORD cpu_mul16(VCpu* cpu, WORD acc, WORD multi)
     DWORD result = acc * multi;
     cpu->mathFlags16(result, acc, multi);
 
-    /* 8086 CPUs set ZF on zero result */
-    if (cpu->type() == VCpu::Intel8086)
-        cpu->setZF(result == 0);
+#if VOMIT_CPU_LEVEL == 0
+    // 8086 CPUs set ZF on zero result
+    cpu->setZF(result == 0);
+#endif
 
     return result;
 }

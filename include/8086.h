@@ -242,10 +242,6 @@ public:
     State state() const { return m_state; }
     void setState(State s) { m_state = s; }
 
-    enum Type { Intel8086, Intel80186, Intel80286 };
-    Type type() const { return m_type; }
-    void setType(Type t) { m_type = t; }
-
     // TODO: make private
     inline BYTE* codeMemory() const;
 
@@ -264,7 +260,6 @@ private:
     bool CF, DF, TF, PF, AF, ZF, SF, IF, OF;
 
     State m_state;
-    Type m_type;
 
 #ifdef VOMIT_DEBUG
     bool m_inDebugger;
@@ -286,8 +281,6 @@ void vomit_cpu_out(VCpu*, WORD port, BYTE value);
     Reads an 8-bit value from an input port.
  */
 BYTE vomit_cpu_in(VCpu*, WORD port);
-
-WORD vomit_cpu_static_flags(VCpu*);
 
 void vomit_cpu_setAF(VCpu*, DWORD result, WORD dest, WORD src);
 

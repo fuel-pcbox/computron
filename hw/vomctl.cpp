@@ -31,7 +31,7 @@ VomCtl::in8()
             return 0;
 
         case 0x01: /* Get CPU type */
-            return g_cpu->type();
+            return VOMIT_CPU_LEVEL;
 
         case 0x02: /* RAM size LSB */
             return LSB(g_cpu->memory_size);

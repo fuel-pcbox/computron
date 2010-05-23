@@ -10,7 +10,7 @@
 
 void dump_cpu(VCpu* cpu)
 {
-    vlog(VM_DUMPMSG, "CPU is an Intel %s", cpu->type() == VCpu::Intel8086 ? "8086" : "80186");
+    vlog(VM_DUMPMSG, "CPU level: %u", VOMIT_CPU_LEVEL);
     vlog(VM_DUMPMSG, "Memory size: %dK", cpu->memory_size);
 #ifdef VOMIT_PREFETCH_QUEUE
     vlog(VM_DUMPMSG, "Prefetch queue: %d bytes", cpu->m_prefetchQueueSize);
