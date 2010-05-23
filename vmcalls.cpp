@@ -265,10 +265,6 @@ void vm_handleE6(VCpu* cpu)
 		vm_exit( 0 );
 		break;
 
-	case 0x0002:
-		cpu->regs.W.AX = VOMIT_CPU_LEVEL;
-		break;
-
 	/* 0x3333: Is Drive Present?
 	 * DL = Drive
 	 *
