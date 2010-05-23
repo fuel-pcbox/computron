@@ -8,6 +8,18 @@
 ; vim:set syntax=nasm et sts=4 sw=4:
 
 %define VOMCTL 0xD6
+%define LEGACY_VM_CALL 0xE6
+
+%macro stub 1
+    push    ax
+    push    bx
+
+    mov     bl, %1
+    out     0xE0, al
+
+    pop     bx
+    pop     ax
+%endmacro
 
 [org 0]
 [bits 16]
@@ -19,7 +31,7 @@ reboot_on_any_key:
     call    safe_putString
 .loop:
     mov     ax, 0x1600
-    out     0xE6, al
+    out     LEGACY_VM_CALL, al
     or      ax, 0
     jz      .loop
     jmp     0xF000:0
@@ -476,13 +488,13 @@ _bios_init_data:
     xor     bp, bp
     mov     dl, 0x00
     mov     ax, 0x1300
-    out     0xE6, al
+    out     LEGACY_VM_CALL, al
     or      ah, 0x00
     jz      .setDisk00
 .check01:   
     mov     dl, 0x01
     mov     ax, 0x1300
-    out     0xE6, al
+    out     LEGACY_VM_CALL, al
     or      ah, 0x00
     jz      .setDisk01
 .check80:                                       ; We'll skip this for now.
@@ -513,19 +525,19 @@ _bios_init_data:
 _bios_find_bootdrv:
     mov     dl, 0x00
     mov     ax, 0x3333
-    out     0xE6, al
+    out     LEGACY_VM_CALL, al
     jnc     .end
     mov     dl, 0x01
     mov     ax, 0x3333
-    out     0xE6, al
+    out     LEGACY_VM_CALL, al
     jnc     .end
     mov     dl, 0x80
     mov     ax, 0x3333
-    out     0xE6, al
+    out     LEGACY_VM_CALL, al
     jnc     .end
     mov     dl, 0x81
     mov     ax, 0x3333
-    out     0xE6, al
+    out     LEGACY_VM_CALL, al
     jnc     .end
 .error:
     ret
@@ -597,23 +609,10 @@ _bios_interrupt10:                  ; BIOS Video Interrupt
     je      .getVideoState
     cmp     ah, 0x12
     je      .vgaConf
-    cmp     ah, 0x13
-    je      .putString
     cmp     ah, 0x1a
     je      .video_display_combination
 
-    push    ax
-    mov     al, 0x10
-    out     0xE0, al                ; VM call 0xA0 - What the fuck is up?
-    pop     ax                      ; AL = INT, AH = function
-    jmp     .end
-.putString:
-    push    ax
-    mov     ax, 0x1013
-    out     0xE6, al
-    pop     ax
-    jmp     .end
-
+    stub    0x10
 .addrOfCharacterGenerator:
     jmp     addrOfCharacterGenerator
 
@@ -652,7 +651,7 @@ _bios_interrupt10:                  ; BIOS Video Interrupt
     jmp     .end
 .selectPage:
     mov     ax, 0x1005
-    out     0xE6, al
+    out     LEGACY_VM_CALL, al
 .end:
     iret
 
@@ -661,6 +660,7 @@ video_display_combination:
     xor     bx, bx
     mov     ds, bx
     cmp     al, 0x01
+
     je      .set
 
 .get:
@@ -1094,10 +1094,7 @@ _bios_interrupt13:
     je      .readDASDType
     cmp     ah, 0x18
     je      .setMediaType
-    push    ax
-    mov     al, 0x13
-    out     0xE0, al                ; VM call 0x00 - What the fuck is up?
-    pop     ax                      ; AL = INT, AH = function
+    stub    0x13
     jmp     .end
 .resetDisk:
     and     dl, 0x80
@@ -1106,7 +1103,7 @@ _bios_interrupt13:
     jmp     .end
 .reset_floppy_drive:
     mov     ax, 0x1300
-    out     0xE6, al
+    out     LEGACY_VM_CALL, al
     jmp     .end
 .getDiskStatus:
     push    ds
@@ -1127,25 +1124,25 @@ _bios_interrupt13:
 .getDriveParams:
     mov     byte [cs:temp], al
     mov     ax, 0x1308
-    out     0xE6, al
+    out     LEGACY_VM_CALL, al
     mov     al, byte [cs:temp]
     jmp     .end
 .readDASDType:
     mov     byte [cs:temp], al
     mov     ax, 0x1315
-    out     0xE6, al
+    out     LEGACY_VM_CALL, al
     mov     al, byte [cs:temp]
     jmp     .end
 .setMediaType:
     mov     byte [cs:temp], al
     mov     ax, 0x1318
-    out     0xE6, al
+    out     LEGACY_VM_CALL, al
     mov     al, byte [cs:temp]
     jmp     .end
 .formatTrack:
     mov     byte [cs:temp], al
     mov     ax, 0x1305
-    out     0xE6, al
+    out     LEGACY_VM_CALL, al
     mov     al, byte [cs:temp]
     jmp     .end
     ; no jmp .end here ;-)
@@ -1166,10 +1163,7 @@ _bios_interrupt14:
     jz      .fn0x00
     cmp     ah, 0x03
     je      .fn0x03
-    push    ax
-    mov     al, 0x14
-    out     0xE0, al                ; VM call 0x00 - What the fuck is up?
-    pop     ax                      ; AL = INT, AH = function
+    stub    0x14
     jmp     .end
 .fn0x00:
     mov     ax, 0x0000              ; That's right. I'm not about to emulate a fucking RS232 port.
@@ -1198,10 +1192,7 @@ _bios_interrupt15:
     je      .fn0x41
     cmp     ah, 0x88
     je      .fn0x88
-    push    ax
-    mov     al, 0x15
-    out     0xE0, al                ; VM call 0x00 - What the fuck is up?
-    pop     ax                      ; AL = INT, AH = function
+    stub    0x15
     jmp     .end
 .getSysConf:
     clc
@@ -1249,10 +1240,7 @@ _bios_interrupt16:
     je      .checkCapa10
     cmp     ah, 0xA2
     je      .checkCapa20
-    push    ax
-    mov     al, 0x16
-    out     0xE0, al                ; VM call 0x00 - What the fuck is up?
-    pop     ax                      ; AL = INT, AH = function
+    stub    0x16
     jmp     .end
 .getFlags:
     push    ds
@@ -1271,19 +1259,18 @@ _bios_interrupt16:
     jmp     .end
 .checkCapa10:
     mov     ah, 0x80                ; Functions 0x10, 0x11 and 0x12 supported
-    jmp     .end
 .checkCapa20:
     jmp     .end                    ; Functions 0x20, 0x21 and 0x22 NOT supported
 .waitKey:
     sti                             ; Allow clock fucking during this.
     mov     ax, 0x1600
-    out     0xE6, al                ; Send 0x1600 to port 0xE6, VM handler of assorted crap.
+    out     LEGACY_VM_CALL, al      ; Send 0x1600 to port 0xE6, VM handler of assorted crap.
     cmp     ax, 0
     jz      .waitKey
     jmp     .end
 .kbhit:
     mov     ax, 0x1601
-    out     0xE6, al
+    out     LEGACY_VM_CALL, al
     push    bp
     mov     bp, sp                  ; This whole mekk can be optimized
     jz      .zero                   ; to make DOS run speedier.
@@ -1303,16 +1290,13 @@ _bios_interrupt17:
     je      .fn0x01
     cmp     ah, 0x02
     je      .fn0x02
-    push    ax
-    mov     al, 0x17
-    out     0xE0, al                ; VM call 0x00 - What the fuck is up?
-    pop     ax                      ; AL = INT, AH = function
+    stub    0x17
     jmp     .end
 .printChar:
     push    cx
     mov     cl, al
     mov     ax, 0x1700
-    out     0xE6, al
+    out     LEGACY_VM_CALL, al
     pop     cx
     jmp     .end
 .fn0x01:
@@ -1328,16 +1312,13 @@ _bios_interrupt1a:
     je      .getticks
     cmp     ah, 0x05
     jle     .vmcall
-    push    ax
-    mov     al, 0x1a
-    out     0xE0, al                ; VM call 0x00 - What the fuck is up?
-    pop     ax                      ; AL = INT, AH = function
+    stub    0x1A
     jmp     .end
 .vmcall:
     push    ax
     xchg    al, ah
     mov     ah, 0x1A
-    out     0xE6, al
+    out     LEGACY_VM_CALL, al
     pop     ax                      ; there used to be a 'jmp .end' here. phwa.
 .end:
     push    bp
@@ -1352,7 +1333,7 @@ _bios_interrupt1a:
     iret
 .getticks:                          ; This thingie is placed separately for
     mov     ax, 0x1A00              ; optimization. DOS calls it all the time
-    out     0xE6, al                ; and a speed boost can't hurt :-)
+    out     LEGACY_VM_CALL, al      ; and a speed boost can't hurt :-)
     iret
 
 ide_init:
