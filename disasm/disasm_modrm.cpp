@@ -1,8 +1,7 @@
 #include "insn-types.h"
 #include "disasm.h"
-#include <stdlib.h>
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
 
 /* Table of *printf() format strings for the 24 non-register ModR/M address
  * specifications.

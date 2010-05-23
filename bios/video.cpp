@@ -3,8 +3,6 @@
 #include "debug.h"
 #include "vga.h"
 #include "vga_memory.h"
-#include <string.h>
-#include <stdio.h>
 
 static void set_video_mode();
 static void select_active_display_page();

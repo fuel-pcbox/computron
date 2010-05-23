@@ -1,7 +1,6 @@
 #include "insn-types.h"
 #include "disasm.h"
-#include <stdio.h>
-#include <assert.h>
+#include "debug.h"
 
 /* int insn_width ( BYTE *data )
  *
@@ -15,7 +14,7 @@ int insn_width(BYTE *p) {
 	int ret, wrapped = 0;
 	const insn_t *i;
 
-	assert(p != NULL);
+	VM_ASSERT(p != NULL);
 
 	ret = 0;
 	i = &insn_table[p[0]];
@@ -54,9 +53,9 @@ bool disassemble(BYTE *p, long unsigned int offset, char *buf, int len) {
 	WORD w;
 	int base_width = 0;
 
-	assert(p != NULL);
-	assert(buf != NULL);
-	assert(len != 0);
+	VM_ASSERT(p != NULL);
+	VM_ASSERT(buf != NULL);
+	VM_ASSERT(len != 0);
 
 	ptr = buf;
 
@@ -77,7 +76,7 @@ bool disassemble(BYTE *p, long unsigned int offset, char *buf, int len) {
 	ptr += snprintf(ptr, len, "%s ", i->name);
 	len -= (ptr - buf);
 
-	assert(len > 1);
+	VM_ASSERT(len > 1);
 
 	switch (i->type) {
 	case OP: break;

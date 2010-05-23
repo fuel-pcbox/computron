@@ -13,9 +13,6 @@
 #include "8086.h"
 #include "floppy.h"
 #include "debug.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 char drv_imgfile[4][MAX_FN_LENGTH];
 char drv_title[4][MAX_DRV_TITLESIZE+1];

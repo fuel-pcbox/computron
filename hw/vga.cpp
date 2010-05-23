@@ -4,8 +4,6 @@
 #include "debug.h"
 #include "disasm.h"
 #include <string.h>
-#include <assert.h>
-#include <stdlib.h>
 #include <QtCore/QMutex>
 #include <QtCore/QMutexLocker>
 
@@ -256,26 +254,26 @@ BYTE vga_status(VCpu*, WORD)
 
 BYTE vga_read_register(BYTE index)
 {
-    assert(index <= 0x12);
+    VM_ASSERT(index <= 0x12);
     return io_register[index];
 }
 
 BYTE vga_read_register2(BYTE index)
 {
 	// TODO: Check if 12 is the right number here...
-    assert(index <= 0x12);
+    VM_ASSERT(index <= 0x12);
     return io_register2[index];
 }
 
 BYTE vga_read_sequencer(BYTE index)
 {
-    assert(index <= 0x4);
+    VM_ASSERT(index <= 0x4);
     return io_sequencer[index];
 }
 
 void vga_write_register(BYTE index, BYTE value)
 {
-    assert(index <= 0x12);
+    VM_ASSERT(index <= 0x12);
     io_register[index] = value;
 }
 
