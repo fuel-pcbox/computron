@@ -3,11 +3,10 @@
  *
  */
 
-// FIXME: Is this really correct? I seem to recall 80286 should be the first CPU to mask shift counts.
 #if VOMIT_CPU_LEVEL >= 1
-#define MASK_STEPS_IF_80286 do { steps &= 0x1F; } while(0);
+#define MASK_STEPS_UNLESS_8086 do { steps &= 0x1F; } while(0);
 #else
-#define MASK_STEPS_IF_80286
+#define MASK_STEPS_UNLESS_8086
 #endif
 
 #include "8086.h"
@@ -129,7 +128,7 @@ DWORD cpu_shl(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 {
     DWORD result = (DWORD)data;
 
-    MASK_STEPS_IF_80286;
+    MASK_STEPS_UNLESS_8086;
 
     if (bits == 8) {
         for (BYTE i = 0; i < steps; ++i) {
@@ -155,7 +154,7 @@ DWORD cpu_shr(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 {
     DWORD result = (DWORD)data;
 
-    MASK_STEPS_IF_80286;
+    MASK_STEPS_UNLESS_8086;
 
     if (bits == 8) {
         for (BYTE i = 0; i < steps; ++i) {
@@ -182,7 +181,7 @@ DWORD cpu_sar(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
     DWORD result = (DWORD)data;
     word n;
 
-    MASK_STEPS_IF_80286;
+    MASK_STEPS_UNLESS_8086;
 
     if( bits == 8 ) {
         for (BYTE i = 0; i < steps; ++i) {
@@ -210,7 +209,7 @@ DWORD cpu_rol(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 {
     DWORD result = (DWORD)data;
 
-    MASK_STEPS_IF_80286;
+    MASK_STEPS_UNLESS_8086;
 
     if (bits == 8) {
         for (BYTE i = 0; i < steps; ++i) {
@@ -235,7 +234,7 @@ DWORD cpu_ror(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 {
     DWORD result = (DWORD)data;
 
-    MASK_STEPS_IF_80286;
+    MASK_STEPS_UNLESS_8086;
 
     if (bits == 8) {
         for (BYTE i = 0; i < steps; ++i) {
@@ -261,7 +260,7 @@ DWORD cpu_rcl(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
     DWORD result = (DWORD)data;
     WORD n;
 
-    MASK_STEPS_IF_80286;
+    MASK_STEPS_UNLESS_8086;
 
     if (bits == 8) {
         for (BYTE i = 0; i < steps; ++i) {
@@ -289,7 +288,7 @@ DWORD cpu_rcr(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
     DWORD result = (DWORD)data;
     word n;
 
-    MASK_STEPS_IF_80286;
+    MASK_STEPS_UNLESS_8086;
 
     if (bits == 8) {
         for (BYTE i = 0; i < steps; ++i) {

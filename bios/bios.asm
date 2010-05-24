@@ -403,7 +403,6 @@ _bios_setup_ints:
     pop     ax
     ret
 
-    ; INCORRECT CODE! 286 is the first cpu to mask shift/rotate count
 check_for_8086:
     mov     al, 0xff
     mov     cl, 0x80
