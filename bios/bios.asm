@@ -617,7 +617,7 @@ _bios_interrupt10:                  ; BIOS Video Interrupt
     cmp     ah, 0x0f
     je      .getVideoState
     cmp     ah, 0x12
-    je      .vgaConf
+    je      .videoSubsystemConfiguration
     cmp     ah, 0x1a
     je      .video_display_combination
 
@@ -643,13 +643,8 @@ _bios_interrupt10:                  ; BIOS Video Interrupt
     jmp     vga_get_cursor_position_and_size
 .getVideoState:
     jmp     vga_get_video_state
-.vgaConf:
-    cmp     bl, 0x10
-    jne     .end
-.getconf:
-    mov     bh, 0                   ; color mode
-    mov     bl, 0                   ; 64k EGA mem
-    iret    ; we want to return in AX
+.videoSubsystemConfiguration:
+    jmp     vga_video_subsystem_configuration
 .scrollWindow:
     out     0xE7, al
     jmp     .end
@@ -734,6 +729,39 @@ vga_set_video_mode:
     pop     ax
     pop     bx
     pop     ds
+    iret
+
+; Interrupt 10, 12
+; Video Subsystem Configuration (EGA/VGA)
+;
+; Input:
+;    AL = 12
+;    BL = function
+;
+; Functions:
+;    10 = Return video configuration information
+;    XX = Unimplemented
+
+vga_video_subsystem_configuration:
+
+    cmp     bl, 0x10
+    je      .returnVideoConfigurationInformation
+    stub    0x10
+    jmp     .end
+
+.returnVideoConfigurationInformation:
+    ; BH = color mode (0=color, 1=mono)
+    ; BL = EGA memory size (0=64k, 1=128k, 2=192k, 3=256k)
+    ; CH = feature bits
+    ; CL = switch settings
+
+    mov     bh, 0
+    mov     bl, 3
+    mov     ch, 0
+    mov     cl, 0
+    jmp     .end
+
+.end:
     iret
 
 ; Interrupt 10, 0F
