@@ -12,11 +12,12 @@
 
 %define BDA_CURRENT_VIDEO_MODE 0x449
 %define BDA_NUMBER_OF_SCREEN_COLUMNS 0x44A
+%define BDA_CURSOR_LOCATION_ARRAY 0x450
+%define BDA_CURSOR_ENDING_SCANLINE 0x460
+%define BDA_CURSOR_STARTING_SCANLINE 0x461
 %define BDA_CURRENT_VIDEO_PAGE 0x462
 %define BDA_NUMBER_OF_SCREEN_ROWS 0x484
-%define BDA_CURSOR_STARTING_SCANLINE 0x461
-%define BDA_CURSOR_ENDING_SCANLINE 0x460
-%define BDA_CURSOR_LOCATION_ARRAY 0x450
+%define BDA_VIDEO_MODE_OPTIONS 0x487
 
 %macro stub 1
     push    ax
@@ -633,7 +634,7 @@ _bios_interrupt10:                  ; BIOS Video Interrupt
 .outCharStill:
     jmp     vga_putc
 .setVideoMode:
-    jmp     vga_set_mode
+    jmp     vga_set_video_mode
 .setCursorType:
     jmp     vga_set_cursor_type
 .setCursor:
@@ -700,35 +701,35 @@ addrOfCharacterGenerator:
 .end:
     iret
 
-; vga_set_mode
+; Interrupt 10, 00
+; Set Video Mode
 ;
-;    Sets the VGA mode
-;    Called by INT 10,00
-;
-; Parameters:
-;
+; Input:
+;    AH = 00
 ;    AL = Video mode
 ;
+; Notes:
+;    If AL bit 7=1, prevents EGA, MCGA & VGA from clearing display.
 
-vga_set_mode:
+vga_set_video_mode:
 
     push    ds
     push    bx
     push    ax
 
     mov     ah, al
-    and     al, 0x80                ; AL bit 7=1 prevents EGA,MCGA & VGA
-                                    ; from clearing display.
-    jnz     .noClear
+    and     al, 0x80
+    jnz     .dontClear
     call    vga_clear
-.noClear:
 
+.dontClear:
     xor     bx, bx
     mov     ds, bx
     mov     [BDA_CURRENT_VIDEO_MODE], ah
 
-    and     byte [0x487], 0x7f      ; Update the video mode options
-    or      [0x487], al             ; (AND to clear, OR to set)
+    ; Update bit 7 of BDA_VIDEO_MODE_OPTIONS
+    and     byte [BDA_VIDEO_MODE_OPTIONS], 0x7f
+    or      [BDA_VIDEO_MODE_OPTIONS], al
 
     pop     ax
     pop     bx
