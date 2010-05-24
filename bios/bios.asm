@@ -10,6 +10,11 @@
 %define VOMCTL 0xD6
 %define LEGACY_VM_CALL 0xE6
 
+%define VGA_PALETTE_REGISTER 0x3C0
+%define VGA_DAC_WRITE_ADDRESS 0x3C8
+%define VGA_DAC_WRITE_DATA 0x3C9
+%define VGA_STATUS_REGISTER 0x3DA
+
 %define BDA_CURRENT_VIDEO_MODE 0x449
 %define BDA_NUMBER_OF_SCREEN_COLUMNS 0x44A
 %define BDA_CURSOR_LOCATION_ARRAY 0x450
@@ -612,6 +617,8 @@ _bios_interrupt10:                  ; BIOS Video Interrupt
     je      .outCharStill
     cmp     ah, 0x11
     je      .addrOfCharacterGenerator
+    cmp     ah, 0x10
+    je      .setGetPaletteRegisters
     cmp     ah, 0x0e
     je      .outChar
     cmp     ah, 0x0f
@@ -624,7 +631,8 @@ _bios_interrupt10:                  ; BIOS Video Interrupt
     stub    0x10
 .addrOfCharacterGenerator:
     jmp     addrOfCharacterGenerator
-
+.setGetPaletteRegisters:
+    jmp     vga_set_get_palette_registers
 .video_display_combination:
     jmp     video_display_combination
 .readChar:
@@ -693,6 +701,117 @@ addrOfCharacterGenerator:
     mov     es, ax
 
     pop     ax
+.end:
+    iret
+
+; Interrupt 10, 10
+; Set/Get Palette Registers (EGA/VGA)
+;
+; Input:
+;    AH = 10
+;    AL = function
+;
+; Functions:
+;    00 = Set individual palette registers
+;    02 = Set all palette registers and border
+;    10 = Set DAC color register
+;    XX = Unimplemented
+
+vga_set_get_palette_registers:
+
+    cmp     al, 0x00
+    je      .setIndividualPaletteRegisters
+    cmp     al, 0x02
+    je      .setAllPaletteRegistersAndBorder
+    cmp     al, 0x10
+    je      .setDACColorRegister
+    stub    0x10
+    jmp     .end
+
+.setIndividualPaletteRegisters:
+    ; BH = color value
+    ; BL = palette register
+
+    push    ax
+    push    dx
+
+    ; Reading from VGA_STATUS_REGISTER means that the next write
+    ; to VGA_PALETTE_REGISTER contains an index.
+    mov     dx, VGA_STATUS_REGISTER
+    in      al, dx
+
+    mov     dx, VGA_PALETTE_REGISTER
+    mov     al, bl
+    out     dx, al
+
+    mov     al, bh
+    out     dx, al
+
+    pop     dx
+    pop     ax
+    jmp     .end
+
+.setAllPaletteRegistersAndBorder:
+    ; ES:DX = pointer to 17-byte table (0-15 palette registers, 16 border color register)
+
+    push    ax
+    push    bx
+    push    dx
+
+    mov     bx, dx
+
+    ; Reading from VGA_STATUS_REGISTER means that the next write
+    ; to VGA_PALETTE_REGISTER contains an index.
+    mov     dx, VGA_STATUS_REGISTER
+    in      al, dx
+
+    mov     ah, 0
+    mov     dx, VGA_PALETTE_REGISTER
+.setAllPaletteRegistersAndBorderLoop:
+    mov     al, ah
+    out     dx, al
+
+    mov     al, [es:bx]
+    out     dx, al
+    inc     bx
+    inc     ah
+
+    cmp     ah, 16
+    jne     .setAllPaletteRegistersAndBorderLoop
+
+    pop     dx
+    pop     bx
+    pop     dx
+
+    jmp     .end
+
+.setDACColorRegister:
+    ; BX = color register
+    ; CH = green
+    ; CL = blue
+    ; DH = red
+
+    push    ax
+    push    dx
+
+    mov     dx, VGA_DAC_WRITE_ADDRESS
+    mov     al, bl
+    out     dx, al
+
+    mov     dx, VGA_DAC_WRITE_DATA
+    pop     ax
+    push    ax
+    mov     al, ah
+    out     dx, al
+    mov     al, ch
+    out     dx, al
+    mov     al, cl
+    out     dx, al
+
+    pop     dx
+    pop     ax
+    jmp     .end
+
 .end:
     iret
 
