@@ -10,6 +10,10 @@
 %define VOMCTL 0xD6
 %define LEGACY_VM_CALL 0xE6
 
+%define BDA_CURRENT_VIDEO_MODE 0x449
+%define BDA_NUMBER_OF_SCREEN_COLUMNS 0x44A
+%define BDA_CURRENT_VIDEO_PAGE 0x462
+
 %macro stub 1
     push    ax
     push    bx
@@ -635,10 +639,7 @@ _bios_interrupt10:                  ; BIOS Video Interrupt
     call    vga_getcur
     jmp     .end
 .getVideoState:
-    mov     ah, 80                  ; 80 columns. No argument.
-    mov     al, 3                   ; 80x25*16colors
-    mov     bh, 0                   ; display page 0
-    jmp     .end
+    jmp     vga_get_video_state
 .vgaConf:
     cmp     bl, 0x10
     jne     .end
@@ -722,13 +723,39 @@ vga_set_mode:
 
     xor     bx, bx
     mov     ds, bx
-    mov     [0x449], ah             ; Store new video mode in BDA
+    mov     [BDA_CURRENT_VIDEO_MODE], ah
 
     and     byte [0x487], 0x7f      ; Update the video mode options
     or      [0x487], al             ; (AND to clear, OR to set)
 
     pop     ax
     pop     bx
+    pop     ds
+    iret
+
+; Interrupt 10, 0F
+; Get Video State
+;
+; Input:
+;    AH = 0F
+;
+; Output:
+;    AH = number of screen columns
+;    AL = mode currently set
+;    BH = current display page
+
+vga_get_video_state:
+
+    push    ds
+    push    dx
+    xor     dx, dx
+    mov     ds, dx
+
+    mov     al, [BDA_CURRENT_VIDEO_MODE]
+    mov     ah, [BDA_NUMBER_OF_SCREEN_COLUMNS]
+    mov     bh, [BDA_CURRENT_VIDEO_PAGE]
+    
+    pop     dx
     pop     ds
     iret
 
