@@ -616,7 +616,7 @@ _bios_interrupt10:                  ; BIOS Video Interrupt
     cmp     ah, 0x09
     je      .outCharStill
     cmp     ah, 0x11
-    je      .addrOfCharacterGenerator
+    je      .characterGeneratorRoutine
     cmp     ah, 0x10
     je      .setGetPaletteRegisters
     cmp     ah, 0x0e
@@ -629,8 +629,8 @@ _bios_interrupt10:                  ; BIOS Video Interrupt
     je      .video_display_combination
 
     stub    0x10
-.addrOfCharacterGenerator:
-    jmp     addrOfCharacterGenerator
+.characterGeneratorRoutine:
+    jmp     vga_character_generator_routine
 .setGetPaletteRegisters:
     jmp     vga_set_get_palette_registers
 .video_display_combination:
@@ -686,21 +686,79 @@ video_display_combination:
 
     iret
 
-addrOfCharacterGenerator:
+; Interrupt 10, 11
+; Character Generator Routine
+;
+; Input:
+;    AH = 11
+;    AL = function
+;
+; Functions:
+;    30 = Get current character generator information
+;    XX = Unimplemented
+
+vga_character_generator_routine:
+
     cmp     al, 0x30
-    jne     .end
+    je      .getCurrentCharacterGeneratorInformation
+    stub    0x10
+    jmp     .end
+
+.getCurrentCharacterGeneratorInformation:
+    ; BH = Pointer desired (0=Int1F, 1=Int44, 6=8x16 chartable, X=Unimplemented)
+    ;
+    ; Output:
+    ;    ES:BP = pointer to table
+    ;    CX = bytes per character
+    ;    DL = rows (less 1)
+
     cmp     bh, 0x00
-    jne     .end
-    push    ax
+    je      .getInt1FPointer
+    cmp     bh, 0x01
+    je      .getInt44Pointer
+    cmp     bh, 0x06
+    je      .get8x16CharacterTablePointer
+    stub    0x10
+    jmp     .end
 
-    xor     ax, ax
-    mov     es, ax
+.getInt1FPointer:
+    mov     dl, 0x1f
+    jmp     .returnInterruptPointer
 
-    mov     bp, [es:(0x1F * 4)]
-    mov     ax, [es:(0x1F * 4 + 2)]
-    mov     es, ax
+.getInt44Pointer:
+    mov     dl, 0x44
+    jmp     .returnInterruptPointer
 
-    pop     ax
+.returnInterruptPointer:
+    push    bx
+
+    xor     cx, cx
+    mov     es, cx
+
+    xor     bx, bx
+    mov     bl, dl
+    shl     bl, 1
+    shl     bl, 1
+
+    mov     bp, [es:bx]
+    mov     cx, [es:bx + 2]
+    mov     es, cx
+
+    xor     cx, cx
+    xor     dl, dl
+
+    pop     bx
+    jmp     .end
+
+.get8x16CharacterTablePointer:
+    mov     cx, 0xC400
+    mov     es, cx
+    xor     bp, bp
+    mov     cx, 16
+    mov     dl, 8
+
+    jmp     .end
+
 .end:
     iret
 
