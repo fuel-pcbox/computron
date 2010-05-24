@@ -22,13 +22,18 @@ static BYTE fdc_data_fifo_read(VCpu* cpu, WORD);
 static BYTE current_drive;
 static bool fdc_enabled;
 static bool dma_io_enabled;
-static bool motor[4];
+static bool motor[2];
 static BYTE fdc_data_direction;
 static BYTE fdc_current_status_register;
-static bool fdc_command_complete;
+static BYTE fdc_status_register[4];
 static BYTE fdc_command[8];
 static BYTE fdc_command_size;
 static BYTE fdc_command_index;
+static BYTE fdc_current_drive_cylinder[2];
+static BYTE fdc_current_drive_head[2];
+static QList<BYTE> fdc_command_result;
+
+static void fdc_raise_irq();
 
 void fdc_init()
 {
@@ -48,12 +53,17 @@ void fdc_init()
 	fdc_command_index = 0;
 	fdc_command_size = 0;
 	fdc_command[0] = 0;
-	fdc_command_complete = true;
 
-	motor[0] = false;
-	motor[1] = false;
-	motor[2] = false;
-	motor[3] = false;
+    for (int i = 0; i < 2; ++i) {
+        motor[i] = false;
+        fdc_current_drive_cylinder[i] = 0;
+        fdc_current_drive_head[i] = 0;
+    }
+
+    fdc_status_register[0] = 0;
+    fdc_status_register[1] = 0;
+    fdc_status_register[2] = 0;
+    fdc_status_register[3] = 0;
 }
 
 BYTE fdc_status_a(VCpu*, WORD port)
@@ -94,7 +104,8 @@ BYTE fdc_main_status(VCpu*, WORD port)
     if (!dma_io_enabled)
         status |= 0x20;
 
-	vlog(VM_FDCMSG, "Reading FDC main status register: %02X (direction: %s)", status,(fdc_data_direction == DATA_FROM_CPU_TO_FDC) ? "to FDC" : "from FDC");
+
+	vlog(VM_FDCMSG, "Reading FDC main status register: %02X (direction: %s)", status, (fdc_data_direction == DATA_FROM_CPU_TO_FDC) ? "to FDC" : "from FDC");
 
 	return status;
 }
@@ -110,65 +121,75 @@ void fdc_digital_output(VCpu*, WORD port, BYTE data)
 	dma_io_enabled = (data & 0x08) != 0;
 
 	motor[0] = (data & 0x10) != 0;
-	motor[1] = (data & 0x10) != 0;
-	motor[2] = (data & 0x10) != 0;
-	motor[3] = (data & 0x10) != 0;
+	motor[1] = (data & 0x20) != 0;
 
 	vlog(VM_FDCMSG, "  Current drive: %u", current_drive);
 	vlog(VM_FDCMSG, "  FDC enabled:   %s", fdc_enabled ? "yes" : "no");
 	vlog(VM_FDCMSG, "  DMA+I/O mode:  %s", dma_io_enabled ? "yes" : "no");
 
-	vlog(VM_FDCMSG, "  Motors:        %u %u %u %u", motor[0], motor[1], motor[2], motor[3]);
+	vlog(VM_FDCMSG, "  Motors:        %u %u", motor[0], motor[1]);
 
 	if (fdc_enabled != old_fdc_enabled) {
         vlog(VM_FDCMSG, "Raising IRQ");
-		irq(6);
+		fdc_raise_irq();
     }
 }
 
 void fdc_execute_command()
 {
-	vlog(VM_FDCMSG, "Executing command %02X", fdc_command[0]);
+    vlog(VM_FDCMSG, "Executing command %02X", fdc_command[0]);
+
+    switch (fdc_command[0]) {
+    case 0x08: // Sense Interrupt Status
+        vlog(VM_FDCMSG, "Sense interrupt");
+        fdc_data_direction = DATA_FROM_FDC_TO_CPU;
+        fdc_command_result.clear();
+        fdc_command_result.append(fdc_status_register[0]);
+        fdc_command_result.append(fdc_current_drive_cylinder[0]);
+        break;
+    default:
+        vlog(VM_FDCMSG, "Unknown command! %02X", fdc_command[0]);
+    }
 }
 
 void fdc_data_fifo_write(VCpu*, WORD port, BYTE data)
 {
-	if (fdc_command_complete) {
-		fdc_command[0] = data;
-		fdc_command_index = 1;
-		fdc_command_complete = 0;
+    vlog(VM_FDCMSG, "Command: %02X", data);
 
-		switch (data) {
-			case 0x08:	// Sense Interrupt Status
-				vlog(VM_FDCMSG, "Sense interrupt");
-				//fdc_data_direction = DATA_FROM_FDC_TO_CPU;
-				break;
-			default:
-				vlog(VM_FDCMSG, "DATA FIFO Wr: %02X", data);
-		}
-	} else {
-		fdc_command[fdc_command_index++] = data;
-	}
+    if (fdc_command_index == 0) {
+        // Determine the command length
+        switch (data) {
+        case 0x08:
+            fdc_command_size = 0;
+            break;
+        }
+    }
 
-	if (fdc_command_index == fdc_command_size) {
-		fdc_execute_command();
-		fdc_command_complete = 1;
-	}
+    fdc_command[fdc_command_index++] = data;
+
+    if (fdc_command_index >= fdc_command_size) {
+        fdc_execute_command();
+        fdc_command_index = 0;
+    }
 }
 
 BYTE fdc_data_fifo_read(VCpu*, WORD port)
 {
-	switch (fdc_current_status_register) {
-		case 0:
-			break;
-	}
+    if (fdc_command_result.isEmpty()) {
+        vlog(VM_FDCMSG, "Read from empty command result register");
+        return 0xAA;
+    }
 
-	vlog(VM_FDCMSG, "Read command status register %u\n", fdc_current_status_register);
+    BYTE value = fdc_command_result.takeFirst();
+    vlog(VM_FDCMSG, "Read command result byte %02X\n", value);
 
-	fdc_current_status_register++;
+    return value;
+}
 
-	if(fdc_current_status_register == 4)
-		fdc_current_status_register = 0;
-
-    return 0xAA;
+void fdc_raise_irq()
+{
+    fdc_status_register[0] = current_drive;
+    fdc_status_register[0] |= (fdc_current_drive_head[current_drive] * 0x02);
+    fdc_status_register[0] |= 0x20;
+    irq(6);
 }
