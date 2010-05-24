@@ -26,8 +26,6 @@ void _AAM(VCpu* cpu)
     BYTE imm = cpu->fetchOpcodeByte();
 
     if (imm == 0) {
-        /* Exceptions return to offending IP. */
-        --cpu->IP;
         cpu->exception(0);
         return;
     }

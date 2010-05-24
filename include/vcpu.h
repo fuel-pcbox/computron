@@ -168,7 +168,7 @@ public:
     void jumpToInterruptHandler(int isr);
     void setInterruptHandler(BYTE isr, WORD segment, WORD offset);
 
-    void exception(int ec) { jumpToInterruptHandler(ec); }
+    void exception(int ec) { this->IP = getBaseIP(); jumpToInterruptHandler(ec); }
 
     void setIF(bool value) { this->IF = value; }
     void setCF(bool value) { this->CF = value; }

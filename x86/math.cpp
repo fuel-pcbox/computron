@@ -264,8 +264,6 @@ void _DIV_RM8(VCpu* cpu)
     WORD tAX = cpu->regs.W.AX;
 
     if (value == 0) {
-        /* Exceptions return to offending IP */
-        cpu->IP = offend - 2;
         cpu->exception(0);
         return;
     }
@@ -281,8 +279,6 @@ void _DIV_RM16(VCpu* cpu)
     DWORD tDXAX = cpu->regs.W.AX + (cpu->regs.W.DX << 16);
 
     if (value == 0) {
-        /* Exceptions return to offending IP */
-        cpu->IP = offend - 2;
         cpu->exception(0);
         return;
     }
@@ -298,8 +294,6 @@ void _IDIV_RM8(VCpu* cpu)
     SIGNED_WORD tAX = (SIGNED_WORD)cpu->regs.W.AX;
 
     if (value == 0) {
-        /* Exceptions return to offending IP */
-        cpu->IP = offend - 2;
         cpu->exception(0);
         return;
     }
@@ -315,8 +309,6 @@ void _IDIV_RM16(VCpu* cpu)
     SIGNED_DWORD tDXAX = (cpu->regs.W.AX + (cpu->regs.W.DX << 16));
 
     if (value == 0) {
-        /* Exceptions return to offending IP */
-        cpu->IP = offend - 2;
         cpu->exception(0);
         return;
     }
