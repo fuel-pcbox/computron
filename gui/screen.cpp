@@ -573,10 +573,10 @@ static void addKey(int key, word normal, word shift, word ctrl, word alt, bool i
 #define K_Minus 0x14
 #define K_Slash 0x3D
 
-#define K_Up 0x62
-#define K_Down 0x68
-#define K_Left 0x64
-#define K_Right 0x66
+#define K_Up 0x6F
+#define K_Down 0x74
+#define K_Left 0x71
+#define K_Right 0x72
 
 #define K_PageUp 0x63
 #define K_PageDown 0x69
@@ -737,7 +737,7 @@ Screen::keyPressEvent( QKeyEvent *e )
 {
     QMutexLocker l( &d->keyQueueLock );
 
-    qDebug() << "nativeVirtualKey" << e->nativeVirtualKey() << "key" << e->key() << "modifiers" << e->modifiers();
+    qDebug() << "nativeScanCode" << e->nativeScanCode() << "nativeVirtualKey" << e->nativeVirtualKey() << "key" << e->key() << "modifiers" << e->modifiers();
 
     int nativeScanCode = e->nativeScanCode();
     //printf( "native scancode = %04X\n", nativeScanCode );
