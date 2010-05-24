@@ -13,6 +13,10 @@
 %define BDA_CURRENT_VIDEO_MODE 0x449
 %define BDA_NUMBER_OF_SCREEN_COLUMNS 0x44A
 %define BDA_CURRENT_VIDEO_PAGE 0x462
+%define BDA_NUMBER_OF_SCREEN_ROWS 0x484
+%define BDA_CURSOR_STARTING_SCANLINE 0x461
+%define BDA_CURSOR_ENDING_SCANLINE 0x460
+%define BDA_CURSOR_LOCATION_ARRAY 0x450
 
 %macro stub 1
     push    ax
@@ -472,9 +476,9 @@ _bios_init_data:
     mov     byte [0x044A], 80
     mov     byte [0x044B], 0
 
-    mov     byte [0x0484], 24 ; rows on screen
-    mov     byte [0x0460], 0x0E
-    mov     byte [0x0461], 0x0D
+    mov     byte [BDA_NUMBER_OF_SCREEN_ROWS], 24
+    mov     byte [BDA_CURSOR_ENDING_SCANLINE], 0x0E
+    mov     byte [BDA_CURSOR_STARTING_SCANLINE], 0x0D
 
     ; Video displays (active: color VGA, inactive: none)
     mov     word [0x048a], 0x0008
@@ -633,11 +637,9 @@ _bios_interrupt10:                  ; BIOS Video Interrupt
 .setCursorType:
     jmp     vga_set_cursor_type
 .setCursor:
-    call    vga_setcur
-    jmp     .end
+    jmp     vga_set_cursor_position
 .getCursor:
-    call    vga_getcur
-    jmp     .end
+    jmp     vga_get_cursor_position_and_size
 .getVideoState:
     jmp     vga_get_video_state
 .vgaConf:
@@ -1027,11 +1029,32 @@ vga_store_cursor:
     out     dx, ax
     ret
 
-vga_setcur:
-    push    ax
-    push    dx
+; Interrupt 10, 02
+; Set Cursor Position
+;
+; Input:
+;    AH = 02
+;    BH = display page
+;    DH = row
+;    DL = column
 
-    xor     ah, ah
+vga_set_cursor_position:
+
+    push    ds
+    push    ax
+    push    bx
+    push    dx
+    push    si
+
+    xor     ax, ax
+    mov     ds, ax
+
+    mov     bl, bh
+    xor     bh, bh
+    mov     si, BDA_CURSOR_LOCATION_ARRAY
+    mov     [bx + si], dl
+    mov     [bx + si + 1], dh
+
     mov     al, dh
     mov     dh, 80
     mul     byte dh             ; AX = row offset
@@ -1040,31 +1063,51 @@ vga_setcur:
 
     call    vga_store_cursor
     
+    pop     si
     pop     dx
+    pop     bx
     pop     ax
-    ret
+    pop     ds
+    iret 
+
+; Interrupt 10, 03
+; Get Cursor Position And Size
+;
+; Input:
+;    AH = 03
+;    BH = display page
+;
+; Output:
+;    CH = cursor starting scan line (top) (low order 5 bits)
+;    CL = cursor ending scan line (bottom) (low order 5 bits)
+;    DH = row
+;    DL = column
     
-vga_getcur:
+vga_get_cursor_position_and_size:
+
+    push    ds
     push    ax
-    call    vga_load_cursor
-    
-    mov     cl, 80
-    div     cl
-    mov     dh, al
-    mov     dl, ah
+    push    bx
+    push    si
 
-    mul     byte dh                 ; AX = row offset
-
-    mov     ax, ds                  ; Point DS to BIOS Data Area
-    xor     cx, cx
-    mov     ds, cx
-
-    mov     cx, [0x460]             ; Get cursor size from BDA:60
+    xor     ax, ax
     mov     ds, ax
 
+    mov     bl, bh
+    xor     bh, bh
+    mov     si, BDA_CURSOR_LOCATION_ARRAY
+    mov     dl, [bx + si]
+    mov     dh, [bx + si + 1]
+
+    mov     ch, [BDA_CURSOR_STARTING_SCANLINE]
+    mov     cl, [BDA_CURSOR_ENDING_SCANLINE]
+
+    pop     si
+    pop     bx
     pop     ax
+    pop     ds
     
-    ret
+    iret
 
 vga_readchr:
     push    ds
