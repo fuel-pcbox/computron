@@ -65,6 +65,9 @@ VgaMemory::VgaMemory(VCpu *cpu)
     d->latch[2] = 0;
     d->latch[3] = 0;
 
+    d->synchronizeColors();
+    mark_palette_dirty();
+
     d->dirty = true;
 }
 
