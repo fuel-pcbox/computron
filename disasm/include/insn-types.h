@@ -45,5 +45,6 @@
 #define OP_RM16					40
 #define OP_RM8_reg8				41
 #define OP_reg8_CL              42
+#define OP_dummy_mem16          43
 
 #endif

@@ -202,6 +202,10 @@ bool disassemble(BYTE *p, long unsigned int offset, char *buf, int len) {
 	case OP_reg8_CL:
 		snprintf(ptr, len, "%s, CL", R8(*p));
 		break;
+    case OP_dummy_mem16:
+		++p;
+		snprintf(ptr, len, "[%04X]", MAKEWORD(p[1], p[2]));
+        break;
 	default:
 		snprintf(ptr, len, "???");
 		return false;

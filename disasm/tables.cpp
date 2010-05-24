@@ -357,9 +357,9 @@ wrapped_insn_table[0xD3][7] = (insn_t){ "SAR", OP_reg8_CL };
 wrapped_insn_table[0xFF][0] = (insn_t){ "INC", OP_RM16 };
 wrapped_insn_table[0xFF][1] = (insn_t){ "DEC", OP_RM16 };
 wrapped_insn_table[0xFF][2] = (insn_t){ "CALL", OP_RM16 };
-wrapped_insn_table[0xFF][3] = (insn_t){ "CALL", OP_RM16 };
+wrapped_insn_table[0xFF][3] = (insn_t){ "CALL", OP_dummy_mem16 };
 wrapped_insn_table[0xFF][4] = (insn_t){ "JMP", OP_RM16 };
-wrapped_insn_table[0xFF][5] = (insn_t){ 0, OP_UNASSIGNED };
+wrapped_insn_table[0xFF][5] = (insn_t){ "JMP", OP_dummy_mem16 };
 wrapped_insn_table[0xFF][6] = (insn_t){ "PUSH", OP_RM16 };
 wrapped_insn_table[0xFF][7] = (insn_t){ 0, OP_UNASSIGNED };
 
@@ -413,6 +413,7 @@ wrapped_insn_table[0xFE][7] = (insn_t){ 0, OP_UNASSIGNED };
 	insn_base_width[OP_RM8] = 1;
 	insn_base_width[OP_RM16] = 1;
 	insn_base_width[OP_reg8_CL] = 2;
+	insn_base_width[OP_dummy_mem16] = 4;
 }
 
 const char segname[4][3] = {
