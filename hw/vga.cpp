@@ -26,6 +26,9 @@ static byte index_palette = 0;
 static byte columns;
 static byte rows;
 
+static byte dac_data_index = 0;
+static byte dac_data_subindex = 0;
+
 static QMutex s_paletteMutex;
 
 static void vga_selreg(VCpu*, word, byte );
@@ -42,6 +45,8 @@ static byte vga_get_current_register(VCpu*, word );
 static void vga_write_3c0(VCpu*, word port, byte data );
 static byte vga_read_3c1(VCpu*, word port );
 static byte vga_read_miscellaneous_output_register(VCpu*, word port );
+static void vga_dac_write_address(VCpu*, WORD, BYTE);
+static void vga_dac_write_data(VCpu*, WORD, BYTE);
 
 static bool next_3c0_is_index = true;
 
@@ -64,29 +69,6 @@ rgb_t vga_color_register[256] =
     {0x15,0x15,0x15}, {0x15,0x15,0x3f}, {0x15,0x3f,0x15}, {0x15,0x3f,0x3f}, {0x3f,0x15,0x15}, {0x3f,0x15,0x3f}, {0x3f,0x3f,0x15}, {0x3f,0x3f,0x3f},
 };
 
-
-#if 0
-rgb_t vga_color_register[256] =
-{
-    { 0, 0, 0 },
-    { 0, 0, 31 },
-    { 0, 31, 0 },
-    { 0, 31, 31 },
-    { 31, 0, 0 },
-    { 31, 0, 31 },
-    { 31, 31, 0 },
-    { 31, 31, 31 },
-    { 47, 47, 47},
-    { 0, 0, 63 },
-    { 0, 63, 0 },
-    { 0, 63, 63 },
-    { 63, 0, 0 },
-    { 63, 0, 63 },
-    { 63, 63, 0 },
-    { 63, 63, 63 },
-};
-#endif
-
 void
 vga_init()
 {
@@ -99,6 +81,8 @@ vga_init()
 
     vm_listen( 0x3c4, 0L, vga_selseq );
     vm_listen( 0x3c5, vga_getseq, vga_setseq );
+    vm_listen(0x3c8, 0L, vga_dac_write_address);
+    vm_listen(0x3c9, 0L, vga_dac_write_data);
     vm_listen( 0x3ce, 0L, vga_selreg2 );
     vm_listen( 0x3cf, vga_getreg2, vga_setreg2 );
 
@@ -115,6 +99,9 @@ vga_init()
     memset( io_register2, 0, sizeof(io_register2) );
 
     io_sequencer[2] = 0x0F;
+
+    dac_data_index = 0;
+    dac_data_subindex = 0;
 }
 
 void
@@ -316,4 +303,34 @@ bool is_palette_dirty()
 {
     QMutexLocker locker(&s_paletteMutex);
     return palette_dirty;
+}
+
+void vga_dac_write_address(VCpu*, WORD, BYTE data)
+{
+    vlog(VM_VIDEOMSG, "DAC register %02X selected", data);
+    dac_data_index = data;
+    dac_data_subindex = 0;
+}
+
+void vga_dac_write_data(VCpu* cpu, WORD, BYTE data)
+{
+    vlog(VM_VIDEOMSG, "Setting component %u of color %02X to %02X", dac_data_subindex, dac_data_index, data);
+    switch (dac_data_subindex) {
+    case 0:
+        vga_color_register[dac_data_index].r = data;
+        break;
+    case 1:
+        vga_color_register[dac_data_index].g = data;
+        break;
+    case 2:
+        vga_color_register[dac_data_index].b = data;
+        break;
+    }
+
+    if (++dac_data_subindex >= 3) {
+        dac_data_subindex = 0;
+    }
+
+    mark_palette_dirty();
+    cpu->vgaMemory->syncPalette();
 }
