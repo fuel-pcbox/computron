@@ -91,6 +91,9 @@ BYTE fdc_main_status(VCpu*, WORD port)
     status |= 0x80; // MRQ = 1
     status |= fdc_data_direction;
 
+    if (!dma_io_enabled)
+        status |= 0x20;
+
 	vlog(VM_FDCMSG, "Reading FDC main status register: %02X (direction: %s)", status,(fdc_data_direction == DATA_FROM_CPU_TO_FDC) ? "to FDC" : "from FDC");
 
 	return status;
