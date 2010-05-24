@@ -936,21 +936,17 @@ vga_ttyecho:
     
     iret
 
-; INT 10,01 - Set cursor type
+; Interrupt 10, 01
+; Set Cursor Type
 ;
-;    Sets the starting and ending scanline of the cursor
-;
-; Parameters:
-;
-;    CH = cursor starting scan line (cursor top) (low order 5 bits)
-;    CL = cursor ending scan line (cursor bottom) (low order 5 bits)
-;
-; BDA information:
-;
-;    Writes CX to BDA:60
+; Input:
+;    AH = 01
+;    CH = cursor starting scan line (top) (low order 5 bits)
+;    CL = cursor ending scan line (bottom) (low order 5 bits)
 
 vga_set_cursor_type:
 
+    push    ds
     push    ax
     push    cx
     push    dx
@@ -958,7 +954,7 @@ vga_set_cursor_type:
     and     cx, 0x1f1f                      ; Mask 5 LSB's of CH and CL
 
     mov     dx, 0x3d4                       ; Select register
-    mov     al, 0x0a                        ; Starting scanline
+    mov     al, 0x0a                        ; 6845 register 0A: Starting scanline
     out     dx, al
 
     inc     dx
@@ -966,22 +962,22 @@ vga_set_cursor_type:
     out     dx, al
 
     dec     dx                              ; Select register
-    mov     al, 0x0b                        ; End scanline
+    mov     al, 0x0b                        ; 6845 register 0B: End scanline
     out     dx, al
 
     inc     dx
     mov     al, cl
     out     dx, al
 
-    mov     ax, ds
-    xor     dx, dx
-    mov     ds, dx
-    mov     word [0x460], cx
+    xor     ax, ax
     mov     ds, ax
+    mov     [BDA_CURSOR_STARTING_SCANLINE], ch
+    mov     [BDA_CURSOR_ENDING_SCANLINE], cl
 
     pop     dx
     pop     cx
     pop     ax
+    pop     ds
 
     iret
 
