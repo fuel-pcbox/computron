@@ -75,7 +75,8 @@ void VCpu::init()
 
     setFlags(0x0200);
 
-    m_pitCountdown = CPU_INSNS_PER_PIT_IRQ;
+    m_instructionsPerTick = 0x50000;
+    m_pitCountdown = m_instructionsPerTick;
     m_state = Alive;
 
 #ifdef VOMIT_DEBUG

@@ -52,9 +52,6 @@ inline WORD signext(BYTE b)
 #define SET_SEGMENT_PREFIX(cpu, segment) do { (cpu)->SegmentPrefix = (cpu)->segment; (cpu)->CurrentSegment = &(cpu)->SegmentPrefix; } while(0);
 #define RESET_SEGMENT_PREFIX(cpu) do { (cpu)->CurrentSegment = &(cpu)->DS; } while(0);
 
-#define CPU_INSNS_PER_PIT_IRQ 400000
-
-
 // VCPU MONSTROSITY
 
 class VgaMemory;
@@ -278,6 +275,7 @@ public:
 private:
     void setOpcodeHandler(BYTE rangeStart, BYTE rangeEnd, OpcodeHandler handler);
 
+    DWORD m_instructionsPerTick;
 
     // This points to the base of CS for fast opcode fetches.
     BYTE* m_codeMemory;
@@ -816,7 +814,7 @@ WORD VCpu::fetchOpcodeWord()
 bool VCpu::tick()
 {
     if (--m_pitCountdown == 0) {
-        m_pitCountdown = CPU_INSNS_PER_PIT_IRQ;
+        m_pitCountdown = m_instructionsPerTick;
         return true;
     }
     return false;
