@@ -46,6 +46,7 @@ static void vga_write_3c0(VCpu*, word port, byte data );
 static byte vga_read_3c1(VCpu*, word port );
 static byte vga_read_miscellaneous_output_register(VCpu*, word port );
 static void vga_dac_write_address(VCpu*, WORD, BYTE);
+static BYTE vga_dac_read_data(VCpu*, WORD);
 static void vga_dac_write_data(VCpu*, WORD, BYTE);
 static BYTE vga_fcr_read(VCpu*, WORD);
 static void vga_fcr_write(VCpu*, WORD, BYTE);
@@ -84,7 +85,7 @@ vga_init()
     vm_listen( 0x3c4, 0L, vga_selseq );
     vm_listen( 0x3c5, vga_getseq, vga_setseq );
     vm_listen(0x3c8, 0L, vga_dac_write_address);
-    vm_listen(0x3c9, 0L, vga_dac_write_data);
+    vm_listen(0x3c9, vga_dac_read_data, vga_dac_write_data);
     vm_listen(0x3ca, vga_fcr_read, 0L);
     vm_listen( 0x3ce, 0L, vga_selreg2 );
     vm_listen( 0x3cf, vga_getreg2, vga_setreg2 );
@@ -313,6 +314,31 @@ void vga_dac_write_address(VCpu*, WORD, BYTE data)
     vlog(VM_VIDEOMSG, "DAC register %02X selected", data);
     dac_data_index = data;
     dac_data_subindex = 0;
+}
+
+BYTE vga_dac_read_data(VCpu*, WORD)
+{
+    BYTE data = 0;
+    switch (dac_data_subindex) {
+    case 0:
+        data = vga_color_register[dac_data_index].r;
+        break;
+    case 1:
+        data = vga_color_register[dac_data_index].g;
+        break;
+    case 2:
+        data = vga_color_register[dac_data_index].b;
+        break;
+    }
+
+    vlog(VM_VIDEOMSG, "Reading component %u of color %02X (%02X)", dac_data_subindex, dac_data_index, data);
+
+    if (++dac_data_subindex >= 3) {
+        dac_data_subindex = 0;
+        ++dac_data_index;
+    }
+
+    return data;
 }
 
 void vga_dac_write_data(VCpu* cpu, WORD, BYTE data)

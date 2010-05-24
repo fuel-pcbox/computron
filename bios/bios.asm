@@ -11,7 +11,9 @@
 %define LEGACY_VM_CALL 0xE6
 
 %define VGA_PALETTE_REGISTER 0x3C0
+%define VGA_DAC_READ_ADDRESS 0x3C7
 %define VGA_DAC_WRITE_ADDRESS 0x3C8
+%define VGA_DAC_READ_DATA 0x3C9
 %define VGA_DAC_WRITE_DATA 0x3C9
 %define VGA_STATUS_REGISTER 0x3DA
 
@@ -783,6 +785,8 @@ vga_set_get_palette_registers:
     je      .setAllPaletteRegistersAndBorder
     cmp     al, 0x10
     je      .setDACColorRegister
+    cmp     al, 0x17
+    je      .readBlockOfDACColorRegisters
     stub    0x10
     jmp     .end
 
@@ -868,6 +872,42 @@ vga_set_get_palette_registers:
 
     pop     dx
     pop     ax
+    jmp     .end
+
+.readBlockOfDACColorRegisters:
+    ; BX = first color register to read
+    ; CX = number of color registers to read
+    ; ES:DX = pointer to buffer for color registers
+
+    push    ax
+    push    bx
+    push    cx
+    push    dx
+
+    mov     dx, VGA_DAC_READ_ADDRESS
+    mov     al, bl
+    pop     dx
+    push    dx
+    mov     bx, dx
+    mov     dx, VGA_DAC_READ_DATA
+.readBlockOfDACColorRegistersLoop:
+    in      al, dx
+    mov     [es:bx], al
+    inc     bx
+    in      al, dx
+    mov     [es:bx], al
+    inc     bx
+    in      al, dx
+    mov     [es:bx], al
+    inc     bx
+    dec     cx
+    jnz     .readBlockOfDACColorRegistersLoop
+
+    pop     dx
+    pop     cx
+    pop     bx
+    pop     ax
+
     jmp     .end
 
 .end:
