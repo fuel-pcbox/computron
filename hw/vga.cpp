@@ -47,6 +47,8 @@ static byte vga_read_3c1(VCpu*, word port );
 static byte vga_read_miscellaneous_output_register(VCpu*, word port );
 static void vga_dac_write_address(VCpu*, WORD, BYTE);
 static void vga_dac_write_data(VCpu*, WORD, BYTE);
+static BYTE vga_fcr_read(VCpu*, WORD);
+static void vga_fcr_write(VCpu*, WORD, BYTE);
 
 static bool next_3c0_is_index = true;
 
@@ -74,7 +76,7 @@ vga_init()
 {
     vm_listen( 0x3b4, vga_get_current_register, vga_selreg );
     vm_listen( 0x3b5, vga_getreg, vga_setreg );
-    vm_listen( 0x3ba, vga_status, 0L );
+    vm_listen(0x3ba, vga_status, vga_fcr_write);
 
     vm_listen( 0x3c0, 0L, vga_write_3c0 );
     vm_listen( 0x3c1, vga_read_3c1, 0L );
@@ -83,6 +85,7 @@ vga_init()
     vm_listen( 0x3c5, vga_getseq, vga_setseq );
     vm_listen(0x3c8, 0L, vga_dac_write_address);
     vm_listen(0x3c9, 0L, vga_dac_write_data);
+    vm_listen(0x3ca, vga_fcr_read, 0L);
     vm_listen( 0x3ce, 0L, vga_selreg2 );
     vm_listen( 0x3cf, vga_getreg2, vga_setreg2 );
 
@@ -333,4 +336,13 @@ void vga_dac_write_data(VCpu* cpu, WORD, BYTE data)
 
     mark_palette_dirty();
     cpu->vgaMemory->syncPalette();
+}
+
+BYTE vga_fcr_read(VCpu*, WORD)
+{
+    return 0x00;
+}
+
+void vga_fcr_write(VCpu*, WORD, BYTE)
+{
 }
