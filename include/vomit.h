@@ -66,7 +66,7 @@ typedef struct {
 
 extern vomit_options_t options;
 
-#include "8086.h"
+#include "vcpu.h"
 
 void dump_all(VCpu*);
 void pic_service_irq(VCpu*);

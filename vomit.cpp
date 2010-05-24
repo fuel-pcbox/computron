@@ -8,7 +8,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include "vomit.h"
-#include "8086.h"
+#include "vcpu.h"
 #include "debug.h"
 #include "iodevice.h"
 #include "vga.h"

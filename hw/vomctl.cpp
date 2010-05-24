@@ -1,5 +1,5 @@
 #include "vomctl.h"
-#include "8086.h"
+#include "vcpu.h"
 #include "debug.h"
 
 namespace Vomit

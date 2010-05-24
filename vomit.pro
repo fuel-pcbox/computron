@@ -1,6 +1,6 @@
 TEMPLATE = app
 TARGET = 
-DEPENDPATH += . 8086 bios disasm gui hw include disasm/include
+DEPENDPATH += . x86 bios disasm gui hw include disasm/include
 INCLUDEPATH += . include disasm/include gui hw
 CXXFLAGS += -std=gnu++0x -W -Wall -Wshadow
 DEFINES += VOMIT_CPU_LEVEL=1
@@ -28,7 +28,7 @@ HEADERS += gui/codeview.h \
            hw/vga_memory.h \
            hw/cmos.h \
            include/types.h \
-           include/8086.h \
+           include/vcpu.h \
            include/debug.h \
            include/floppy.h \
            include/templates.h \
@@ -36,27 +36,27 @@ HEADERS += gui/codeview.h \
            include/vomit.h \
            disasm/include/disasm.h \
            disasm/include/insn-types.h
-SOURCES += 186.cpp \
-           config.cpp \
+SOURCES += config.cpp \
            debug.cpp \
            dump.cpp \
            fpu.cpp \
            vmcalls.cpp \
            vomit.cpp \
-           8086/bcd.cpp \
-           8086/bitwise.cpp \
-           8086/cpu.cpp \
-           8086/flags.cpp \
-           8086/interrupt.cpp \
-           8086/io.cpp \
-           8086/jump.cpp \
-           8086/loop.cpp \
-           8086/math.cpp \
-           8086/modrm.cpp \
-           8086/mov.cpp \
-           8086/stack.cpp \
-           8086/string.cpp \
-           8086/wrap.cpp \
+           x86/186.cpp \
+           x86/bcd.cpp \
+           x86/bitwise.cpp \
+           x86/cpu.cpp \
+           x86/flags.cpp \
+           x86/interrupt.cpp \
+           x86/io.cpp \
+           x86/jump.cpp \
+           x86/loop.cpp \
+           x86/math.cpp \
+           x86/modrm.cpp \
+           x86/mov.cpp \
+           x86/stack.cpp \
+           x86/string.cpp \
+           x86/wrap.cpp \
            bios/floppy.cpp \
            bios/video.cpp \
            disasm/disasm.cpp \

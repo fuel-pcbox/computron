@@ -9,7 +9,7 @@
 #define MASK_STEPS_UNLESS_8086
 #endif
 
-#include "8086.h"
+#include "vcpu.h"
 #include "templates.h"
 
 DEFAULT_RM8_reg8( cpu_and, _AND_RM8_reg8 )

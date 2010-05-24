@@ -4,7 +4,7 @@
 #include <QDebug>
 #include <QApplication>
 #include "../include/vomit.h"
-#include "../include/8086.h"
+#include "../include/vcpu.h"
 #include "../disasm/include/disasm.h"
 #include <QTextEdit>
 #include <QLineEdit>

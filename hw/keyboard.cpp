@@ -4,7 +4,7 @@
  */
 
 #include "vomit.h"
-#include "8086.h"
+#include "vcpu.h"
 #include "debug.h"
 
 #define ATKBD_PARITY_ERROR  0x80

@@ -1,5 +1,5 @@
 #include "vomit.h"
-#include "8086.h"
+#include "vcpu.h"
 #include "debug.h"
 
 #define DEFAULT_TO_SS if (cpu->CurrentSegment != &cpu->SegmentPrefix ) { segment = cpu->SS; }

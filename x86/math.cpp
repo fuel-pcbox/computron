@@ -3,7 +3,7 @@
  *
  */
 
-#include "8086.h"
+#include "vcpu.h"
 #include "templates.h"
 
 WORD cpu_add8(VCpu* cpu, BYTE dest, BYTE src)

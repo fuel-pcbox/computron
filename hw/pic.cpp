@@ -1,5 +1,5 @@
 #include "vomit.h"
-#include "8086.h"
+#include "vcpu.h"
 #include "debug.h"
 
 static void pic_master_write(VCpu* cpu, word, byte );

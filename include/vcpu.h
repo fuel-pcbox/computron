@@ -1,5 +1,5 @@
-#ifndef __8086_h__
-#define __8086_h__
+#ifndef VCPU_H
+#define VCPU_H
 
 #include "types.h"
 
@@ -849,4 +849,4 @@ bool VCpu::evaluate(BYTE conditionCode) const
 
 
 
-#endif /* __8086_h__ */
+#endif

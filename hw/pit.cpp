@@ -1,5 +1,5 @@
 #include "vomit.h"
-#include "8086.h"
+#include "vcpu.h"
 
 static byte pit_read(VCpu* cpu, word port);
 static void pit_write(VCpu* cpu, word port, byte data);

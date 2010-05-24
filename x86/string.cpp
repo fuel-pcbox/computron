@@ -3,7 +3,7 @@
  *
  */
 
-#include "8086.h"
+#include "vcpu.h"
 
 void _LODSB(VCpu* cpu)
 {

@@ -1,7 +1,7 @@
 #ifdef VOMIT_C_VGA_BIOS
 
 #include "vomit.h"
-#include "8086.h"
+#include "vcpu.h"
 #include "debug.h"
 #include "vga.h"
 #include "vga_memory.h"

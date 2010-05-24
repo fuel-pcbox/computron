@@ -3,7 +3,7 @@
 #include <QTimer>
 
 #include "../include/vomit.h"
-#include "../include/8086.h"
+#include "../include/vcpu.h"
 
 struct MemoryView::Private
 {
