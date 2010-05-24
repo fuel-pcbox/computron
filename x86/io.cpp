@@ -13,6 +13,7 @@ typedef void (*OutputHandler) (VCpu*, WORD, BYTE);
 
 static QHash<WORD, InputHandler> s_inputHandlers;
 static QHash<WORD, OutputHandler> s_outputHandlers;
+static QSet<WORD> s_ignorePorts;
 
 void _OUT_imm8_AL(VCpu* cpu)
 {
@@ -99,7 +100,8 @@ void vomit_cpu_out(VCpu* cpu, WORD port, BYTE value)
     }
 
     if (!s_outputHandlers.contains(port)) {
-        vlog(VM_ALERT, "Unhandled I/O write to port %04X, data %02X", port, value);
+        if (!s_ignorePorts.contains(port))
+            vlog(VM_ALERT, "Unhandled I/O write to port %04X, data %02X", port, value);
         return;
     }
 
@@ -138,4 +140,9 @@ void vm_listen(WORD port, InputHandler inputHandler, OutputHandler outputHandler
         s_outputHandlers.insert(port, outputHandler);
     else
         s_outputHandlers.remove(port);
+}
+
+void vomit_ignore_io_port(WORD port)
+{
+    s_ignorePorts.insert(port);
 }

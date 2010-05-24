@@ -186,6 +186,11 @@ unspeakable_abomination()
                 WORD offset = strtol(strtok(NULL, " \t\n"), NULL, 16);
                 vlog(VM_INITMSG, "Software interrupt %02X at %04X:%04X", isr, segment, offset);
                 g_cpu->setInterruptHandler(isr, segment, offset);
+            } else if(!reloading && !strcmp(curtok, "io_ignore")) {
+                curtok = strtok(NULL, " \t\n");
+                WORD port = strtol(curtok, NULL, 16);
+                vlog(VM_INITMSG, "Ignoring I/O port 0x%04X", port);
+                vomit_ignore_io_port(port);
             }
         }
     }

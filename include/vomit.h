@@ -71,6 +71,7 @@ extern vomit_options_t options;
 void dump_all(VCpu*);
 void pic_service_irq(VCpu*);
 
+void vomit_ignore_io_port(WORD port);
 void vm_listen(word, byte (*)(VCpu*, word), void (*)(VCpu*, word, byte));
 void vm_call8(VCpu*, WORD port, BYTE value);
 void dump_cpu(VCpu*);
