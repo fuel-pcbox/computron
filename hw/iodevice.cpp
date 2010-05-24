@@ -1,6 +1,6 @@
 #include "iodevice.h"
+#include "debug.h"
 #include <QList>
-#include <QDebug>
 
 namespace Vomit
 {
@@ -58,17 +58,15 @@ IODevice::name() const
 	return m_name;
 }
 
-void
-IODevice::out8( uint8_t )
+void IODevice::out8(WORD port, BYTE data)
 {
-	qDebug() << "FIXME: IODevice::out8()";
+    vlog(VM_ALERT, "FIXME: IODevice::out8(%04X, %02X)", port, data);
 }
 
-uint8_t
-IODevice::in8()
+BYTE IODevice::in8(WORD port)
 {
-	qDebug() << "FIXME: IODevice::in8()";
-	return 0;
+    vlog(VM_ALERT, "FIXME: IODevice::in8(%04X)", port);
+    return 0;
 }
 
 }

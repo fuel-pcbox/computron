@@ -3,7 +3,8 @@
 ;
 ; vim:set syntax=nasm et sts=4 sw=4:
 
-%define VOMCTL 0xD6
+%define VOMCTL_REGISTER 0xD6
+%define VOMCTL_CONSOLE_WRITE 0xD7
 %define LEGACY_VM_CALL 0xE6
 
 %define VGA_PALETTE_REGISTER 0x3C0
@@ -211,6 +212,27 @@ safe_putString:
     call    vga_ttyecho
     jmp     .nextchar
 .end:
+    pop     bx
+    pop     ax
+    pop     ds
+    ret
+
+vomit_console_write:
+    push    ds
+    push    cs
+    pop     ds
+    push    ax
+    push    bx
+
+    mov     bl, 0x02
+.nextchar:
+    lodsb
+    or      al, 0x00
+    jz      .end
+    out     VOMCTL_CONSOLE_WRITE, al
+    jmp     .nextchar
+.end:
+    in      al, VOMCTL_CONSOLE_WRITE
     pop     bx
     pop     ax
     pop     ds
@@ -453,13 +475,13 @@ _bios_init_data:
 
 .checkMem:
     mov     al, 0x03            ; VomCtl[03] = RAM size MSB
-    out     VOMCTL, al
-    in      al, VOMCTL
+    out     VOMCTL_REGISTER, al
+    in      al, VOMCTL_REGISTER
     xchg    al, ah
 
     mov     al, 0x02            ; VomCtl[02] = RAM size LSB
-    out     VOMCTL, al
-    in      al, VOMCTL 
+    out     VOMCTL_REGISTER, al
+    in      al, VOMCTL_REGISTER
 
     call    print_integer
 
@@ -604,8 +626,8 @@ _bios_interrupt10:                  ; BIOS Video Interrupt
     je      .setCursor
     cmp     ah, 0x03
     je      .getCursor
-    cmp     ah, 0x05                ; 5 - Select active page
-    je      .selectPage             ; Nah. Paging? Pahh.
+    cmp     ah, 0x05
+    je      .selectActiveDisplayPage
     cmp     ah, 0x06
     je      .scrollWindow
     cmp     ah, 0x08
@@ -653,9 +675,8 @@ _bios_interrupt10:                  ; BIOS Video Interrupt
 .scrollWindow:
     out     0xE7, al
     jmp     .end
-.selectPage:
-    mov     ax, 0x1005
-    out     LEGACY_VM_CALL, al
+.selectActiveDisplayPage:
+    jmp     vga_select_active_display_page
 .end:
     iret
 
@@ -755,6 +776,35 @@ vga_character_generator_routine:
     mov     dl, 8
 
     jmp     .end
+
+.end:
+    iret
+
+
+; Interrupt 10, 05
+; Select Active Display Page
+;
+; Input:
+;    AH = 05
+;    AL = new page number
+
+vga_select_active_display_page:
+
+    push    ds
+    push    bx
+    push    si
+
+    xor     bx, bx
+    mov     ds, bx
+
+    mov     [BDA_CURRENT_VIDEO_PAGE], al
+
+    mov     si, msg_page_changed
+    call    vomit_console_write
+
+    pop     si
+    pop     bx
+    pop     ds
 
 .end:
     iret
@@ -1772,6 +1822,8 @@ reset_ide_drive:
     msg_ready          db  " ready.", 0x0d, 0x0a, 0
 
     bios_date          db  "11/02/03"
+
+    msg_page_changed   db "Display page changed (not fully supported)", 0
 
     ; this pretty much violates the whole ROM concept
     temp               dw  0x0000

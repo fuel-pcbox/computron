@@ -18,7 +18,7 @@ CMOS::~CMOS()
 {
 }
 
-BYTE CMOS::in8()
+BYTE CMOS::in8(WORD)
 {
     BYTE value = 0;
 
@@ -30,7 +30,7 @@ BYTE CMOS::in8()
     return value;
 }
 
-void CMOS::out8(BYTE data)
+void CMOS::out8(WORD, BYTE data)
 {
     vlog(VLOG_CMOS, "Select register %02X", data);
     m_registerIndex = data;

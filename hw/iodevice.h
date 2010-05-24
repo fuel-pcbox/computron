@@ -16,8 +16,8 @@ public:
 
 	const char *name() const;
 
-	virtual BYTE in8();
-	virtual void out8(BYTE);
+	virtual BYTE in8(WORD port);
+	virtual void out8(WORD port, BYTE data);
 
 	static QList<IODevice*> & devices();
 	static QHash<WORD, IODevice*>& readDevices();

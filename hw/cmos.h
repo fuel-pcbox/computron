@@ -13,8 +13,8 @@ public:
     CMOS();
     ~CMOS();
 
-    void out8(BYTE);
-    BYTE in8();
+    void out8(WORD port, BYTE data);
+    BYTE in8(WORD port);
 
 private:
     BYTE m_register[256];

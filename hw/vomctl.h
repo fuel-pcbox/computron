@@ -14,12 +14,15 @@ public:
     VomCtl();
     virtual ~VomCtl();
 
-    virtual void out8(BYTE);
-    virtual BYTE in8();
+    virtual void out8(WORD port, BYTE data);
+    virtual BYTE in8(WORD port);
 
 private:
     BYTE m_registerIndex;
     VCpu* m_cpu;
+
+    struct Private;
+    Private* d;
 };
 
 }

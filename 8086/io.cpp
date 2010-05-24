@@ -94,7 +94,7 @@ void vomit_cpu_out(VCpu* cpu, WORD port, BYTE value)
 #endif
 
     if (Vomit::IODevice::writeDevices().contains(port)) {
-        Vomit::IODevice::writeDevices()[port]->out8(value);
+        Vomit::IODevice::writeDevices()[port]->out8(port, value);
         return;
     }
 
@@ -114,7 +114,7 @@ BYTE vomit_cpu_in(VCpu* cpu, WORD port)
 #endif
 
     if (Vomit::IODevice::readDevices().contains(port))
-        return Vomit::IODevice::readDevices()[port]->in8();
+        return Vomit::IODevice::readDevices()[port]->in8(port);
 
     if (!s_inputHandlers.contains(port)) {
         vlog(VM_ALERT, "Unhandled I/O read from port %04X", port);
