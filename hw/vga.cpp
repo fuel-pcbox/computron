@@ -358,6 +358,7 @@ void vga_dac_write_data(VCpu* cpu, WORD, BYTE data)
 
     if (++dac_data_subindex >= 3) {
         dac_data_subindex = 0;
+        ++dac_data_index;
     }
 
     mark_palette_dirty();
