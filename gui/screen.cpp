@@ -136,8 +136,8 @@ void Screen::refresh()
             // that needs to be updated.
             for( int y = 0; y < 200; ++y )
             {
-                uchar *newPixels = &newBits[y*640];
-                uchar *oldPixels = &oldBits[y*640];
+                uchar *newPixels = &newBits[y*320];
+                uchar *oldPixels = &oldBits[y*320];
                 for( int x = 0; x < 320; ++x )
                 {
                     if( newPixels[x] != oldPixels[x] )
