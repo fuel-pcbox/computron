@@ -50,6 +50,7 @@ void load_cursor( byte *row, byte *column );
 void vomit_init();
 
 void irq( byte num );
+void keyboard_raise_irq_if_enabled();
 
 extern bool disklog, trapint, iopeek, mempeek, callpeek;
 

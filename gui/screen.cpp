@@ -774,7 +774,7 @@ Screen::keyPressEvent( QKeyEvent *e )
     qDebug() << "++++:" << s;
 #endif
 
-    irq( 1 );
+    keyboard_raise_irq_if_enabled();
 }
 
 void
@@ -795,7 +795,7 @@ Screen::keyReleaseEvent( QKeyEvent *e )
     qDebug() << "----:"<< s;
 #endif
 
-    irq( 1 );
+    keyboard_raise_irq_if_enabled();
 
     e->ignore();
 }
@@ -847,5 +847,5 @@ Screen::flushKeyBuffer()
     QMutexLocker l( &d->keyQueueLock );
 
     if( !d->rawQueue.isEmpty() && d->cpu->getIF())
-        irq( 1 );
+        keyboard_raise_irq_if_enabled();
 }
