@@ -1,3 +1,5 @@
+#ifdef VOMIT_C_VGA_BIOS
+
 #include "vomit.h"
 #include "8086.h"
 #include "debug.h"
@@ -523,41 +525,4 @@ void write_graphics_pixel_at_coordinate()
     g_cpu->vgaMemory->setDirty();
 }
 
-void
-vga_scrollup (byte x1, byte y1, byte x2, byte y2, byte num, byte attr) {
-    byte x, y, i;
-
-    byte *video_memory;
-
-    if (get_video_mode() == 0x0D || get_video_mode() == 0x12)
-        video_memory = g_cpu->memory + 0xB8000;
-    else
-        video_memory = g_cpu->memory + 0xB8000;
-
-    // TODO: Scroll graphics when in graphics mode (using text coordinates)
-
-    //vlog( VM_VIDEOMSG, "vga_scrollup( %d, %d, %d, %d, %d )", x1, y1, x2, y2, num);
-    if ( (num == 0 ) || ( num > rows() ) ) {
-        for( y = y1; y <= y2; ++y ) {
-            for( x = x1; x < x2; ++x) {
-                video_memory[( y * 160 + x * 2 ) + 0] = 0x20;
-                video_memory[( y * 160 + x * 2 ) + 1] = attr;
-            }
-        }
-        return;
-    }
-    for ( i = 0; i < num; ++i ) {
-        for ( y = y1; y < y2; ++y ) {
-            for ( x = x1; x < x2; ++x ) {
-                video_memory[( y * 160 + x * 2 ) + 0] = video_memory[(((y+1)*160)+x*2)+0];
-                video_memory[( y * 160 + x * 2 ) + 1] = video_memory[(((y+1)*160)+x*2)+1];
-            }
-        }
-        for ( x = x1; x < x2; ++x ) {
-            video_memory[( y2 * 160 + x * 2 ) + 0] = 0x20;
-            video_memory[( y2 * 160 + x * 2 ) + 1] = attr;
-        }
-        y2--;
-    }
-}
-
+#endif // VOMIT_C_VGA_BIOS

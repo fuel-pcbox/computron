@@ -324,10 +324,11 @@ void Screen::paintEvent(QPaintEvent *e)
 
     byte *v = d->videoMemory;
 
-    byte cx, cy;
-    load_cursor( &cy, &cx );
+    WORD rawCursor = vga_read_register(0x0E) << 8 | vga_read_register(0x0F);
+    BYTE row = rawCursor / d->cpu->readUnmappedMemory8(0x44A);
+    BYTE column = rawCursor % d->cpu->readUnmappedMemory8(0x44A);
 
-    Cursor cursor(cy, cx);
+    Cursor cursor(row, column);
 
     // Repaint everything
     for (int y = 0; y < m_rows; ++y) {

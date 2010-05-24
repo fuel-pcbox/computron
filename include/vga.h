@@ -12,7 +12,6 @@ BYTE vga_read_register(BYTE index);
 BYTE vga_read_register2(BYTE index);
 BYTE vga_read_sequencer(BYTE index);
 void vga_write_register(BYTE index, BYTE value);
-void vga_scrollup(byte, byte, byte, byte, byte, byte);
 
 typedef struct {
 	byte r;

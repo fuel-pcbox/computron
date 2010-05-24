@@ -28,8 +28,10 @@ static void sigint_handler(int)
 
 void vomit_init()
 {
+#ifdef VOMIT_C_VGA_BIOS
     vlog( VM_INITMSG, "Initializing video BIOS" );
     video_bios_init();
+#endif
 
     for (BYTE i = 0xE0; i <= 0xEF; ++i)
         vm_listen(i, 0L, vm_call8);

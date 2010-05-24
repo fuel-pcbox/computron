@@ -18,6 +18,8 @@
 #include <time.h>
 #include <sys/time.h>
 
+
+static void vga_scrollup(BYTE x1, BYTE y1, BYTE x2, BYTE y2, BYTE num, BYTE attr);
 static void vm_handleE6(VCpu* cpu);
 
 void vm_call8(VCpu* cpu, word port, byte data)
@@ -295,4 +297,35 @@ void vm_handleE6(VCpu* cpu)
 		//vm_exit( 0 );
 		break;
 	}
+}
+
+void vga_scrollup(BYTE x1, BYTE y1, BYTE x2, BYTE y2, BYTE num, BYTE attr)
+{
+    BYTE *videoMemory = g_cpu->memoryPointer(0xB800, 0x0000);
+
+    // TODO: Scroll graphics when in graphics mode (using text coordinates)
+
+    //vlog( VM_VIDEOMSG, "vga_scrollup( %d, %d, %d, %d, %d )", x1, y1, x2, y2, num);
+    if ((num == 0) || (num > g_cpu->readUnmappedMemory8(0x484) + 1)) {
+        for (BYTE y = y1; y <= y2; ++y) {
+            for (BYTE x = x1; x < x2; ++x) {
+                videoMemory[(y * 160 + x * 2) + 0] = 0x20;
+                videoMemory[(y * 160 + x * 2) + 1] = attr;
+            }
+        }
+        return;
+    }
+    for (BYTE i = 0; i < num; ++i) {
+        for (BYTE y = y1; y < y2; ++y) {
+            for (BYTE x = x1; x < x2; ++x) {
+                videoMemory[(y * 160 + x * 2) + 0] = videoMemory[(((y+1)*160)+x*2)+0];
+                videoMemory[(y * 160 + x * 2) + 1] = videoMemory[(((y+1)*160)+x*2)+1];
+            }
+        }
+        for (BYTE x = x1; x < x2; ++x) {
+            videoMemory[(y2 * 160 + x * 2) + 0] = 0x20;
+            videoMemory[(y2 * 160 + x * 2) + 1] = attr;
+        }
+        y2--;
+    }
 }
