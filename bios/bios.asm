@@ -1,10 +1,6 @@
 ; Vomit BIOS
 ; (C) Andreas Kling 2003-2010
 ;
-; NOTE: The video BIOS part of this file is currently unused,
-;       8086/interrupt.cpp calls into bios/video.cpp for ISR 0x10.
-;       This is due to bugs and missing functionality in this implementation.
-;
 ; vim:set syntax=nasm et sts=4 sw=4:
 
 %define VOMCTL 0xD6
