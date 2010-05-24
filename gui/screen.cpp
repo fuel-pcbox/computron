@@ -56,12 +56,10 @@ Screen::Screen(VCpu *cpu, QWidget *parent)
     m_screen12 = QImage( 640, 480, QImage::Format_Indexed8 );
     m_render12 = QImage( 640, 480, QImage::Format_Indexed8 );
 
-    m_screen0D = QImage( 320, 200, QImage::Format_Indexed8 );
     m_render0D = QImage( 320, 200, QImage::Format_Indexed8 );
 
     m_screen12.fill(0);
     m_render12.fill(0);
-    m_screen0D.fill(0);
     m_render0D.fill(0);
 
     synchronizeColors();
@@ -126,41 +124,7 @@ void Screen::refresh()
         if (d->cpu->vgaMemory->isDirty()) {
             //vlog( VM_VIDEOMSG, "Painting mode0Dh screen" );
             renderMode0D(m_render0D);
-
-            QRect updateRect;
-
-            uchar *newBits = m_render0D.bits();
-            uchar *oldBits = m_screen0D.bits();
-
-            // Compare screen rendition to what's showing ATM, to find the region
-            // that needs to be updated.
-            for( int y = 0; y < 200; ++y )
-            {
-                uchar *newPixels = &newBits[y*320];
-                uchar *oldPixels = &oldBits[y*320];
-                for( int x = 0; x < 320; ++x )
-                {
-                    if( newPixels[x] != oldPixels[x] )
-                    {
-                        if( updateRect.isNull() )
-                            updateRect.setCoords( x, y, x, y );
-                        else
-                        {
-                            if( x < updateRect.left() )
-                                updateRect.setLeft( x );
-                            if( x > updateRect.right() )
-                                updateRect.setRight( x );
-                            if( y < updateRect.top() )
-                                updateRect.setTop( y );
-                            if( y > updateRect.bottom() )
-                                updateRect.setBottom( y );
-                        }
-                    }
-                }
-            }
-
-            m_screen0D = m_render0D;
-            update( updateRect );
+            update();
         }
     } else if (currentVideoMode == 0x03) {
         int rows = d->cpu->readUnmappedMemory8(0x484) + 1;
@@ -307,14 +271,13 @@ void Screen::paintEvent(QPaintEvent *e)
     }
 
     if (currentVideoMode == 0x0D) {
-        setScreenSize( 320, 200 );
-        QPainter wp(this);
-        wp.setClipRegion(e->rect());
-        wp.drawImage(rect(), m_screen0D);
+        setScreenSize(640, 400);
+        QPainter p(this);
+        p.drawImage(0, 0, m_render0D.scaled(640, 400));
 
         if (m_tinted) {
-            wp.setOpacity( 0.3 );
-            wp.fillRect( e->rect(), Qt::blue );
+            p.setOpacity( 0.3 );
+            p.fillRect(rect(), Qt::blue);
         }
         return;
     }
@@ -407,7 +370,6 @@ Screen::synchronizeColors()
     {
         m_screen12.setColor( i, d->color[i].rgb() );
         m_render12.setColor( i, d->color[i].rgb() );
-        m_screen0D.setColor( i, d->color[i].rgb() );
         m_render0D.setColor( i, d->color[i].rgb() );
     }
 }

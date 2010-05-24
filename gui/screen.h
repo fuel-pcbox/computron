@@ -65,7 +65,6 @@ private:
     QImage m_screen12;
     QImage m_render12;
 
-    QImage m_screen0D;
     QImage m_render0D;
 
     void renderMode12( QImage &target );
