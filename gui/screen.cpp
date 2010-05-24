@@ -711,25 +711,25 @@ Screen::init()
     loadKeymap("keymaps/default.vkmap");
 }
 
-word
-keyToScanCode( Qt::KeyboardModifiers mod, int key )
+static WORD keyToScanCode(Qt::KeyboardModifiers mod, int key)
 {
-    if( key == Qt::Key_unknown )
+    if (key == Qt::Key_unknown)
         return 0xffff;
 
-    if( mod == Qt::NoModifier )
+    if (mod == Qt::NoModifier)
         return normals[key];
 
-    if( mod & Qt::ShiftModifier )
+    if (mod & Qt::ShiftModifier)
         return shifts[key];
 
-    if( mod & Qt::AltModifier )
+    if (mod & Qt::AltModifier)
         return alts[key];
 
-    if( mod & Qt::ControlModifier )
+    if (mod & Qt::ControlModifier)
         return ctrls[key];
 
     qDebug() << Q_FUNC_INFO << "Unhandled key" << mod << key;
+    return 0xffff;
 }
 
 void
@@ -737,7 +737,7 @@ Screen::keyPressEvent( QKeyEvent *e )
 {
     QMutexLocker l( &d->keyQueueLock );
 
-    qDebug() << "nativeScanCode" << e->nativeScanCode() << "nativeVirtualKey" << e->nativeVirtualKey() << "key" << e->key() << "modifiers" << e->modifiers();
+    //qDebug() << "nativeScanCode" << e->nativeScanCode() << "nativeVirtualKey" << e->nativeVirtualKey() << "key" << e->key() << "modifiers" << e->modifiers();
 
     int nativeScanCode = e->nativeScanCode();
     //printf( "native scancode = %04X\n", nativeScanCode );
