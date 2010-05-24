@@ -259,7 +259,6 @@ void _IMUL_RM16(VCpu* cpu)
 
 void _DIV_RM8(VCpu* cpu)
 {
-    WORD offend = cpu->IP;
     BYTE value = vomit_cpu_modrm_read8(cpu, cpu->rmbyte);
     WORD tAX = cpu->regs.W.AX;
 
@@ -274,7 +273,6 @@ void _DIV_RM8(VCpu* cpu)
 
 void _DIV_RM16(VCpu* cpu)
 {
-    WORD offend = cpu->IP;
     WORD value = vomit_cpu_modrm_read16(cpu, cpu->rmbyte);
     DWORD tDXAX = cpu->regs.W.AX + (cpu->regs.W.DX << 16);
 
@@ -289,7 +287,6 @@ void _DIV_RM16(VCpu* cpu)
 
 void _IDIV_RM8(VCpu* cpu)
 {
-    WORD offend = cpu->IP;
     SIGNED_BYTE value = (SIGNED_BYTE)vomit_cpu_modrm_read8(cpu, cpu->rmbyte);
     SIGNED_WORD tAX = (SIGNED_WORD)cpu->regs.W.AX;
 
@@ -304,7 +301,6 @@ void _IDIV_RM8(VCpu* cpu)
 
 void _IDIV_RM16(VCpu* cpu)
 {
-    WORD offend = cpu->IP;
     SIGNED_WORD value = vomit_cpu_modrm_read16(cpu, cpu->rmbyte);
     SIGNED_DWORD tDXAX = (cpu->regs.W.AX + (cpu->regs.W.DX << 16));
 
