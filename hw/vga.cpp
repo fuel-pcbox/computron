@@ -314,7 +314,7 @@ bool is_palette_dirty()
 
 void vga_dac_write_address(VCpu*, WORD, BYTE data)
 {
-    vlog(VM_VIDEOMSG, "DAC register %02X selected", data);
+    // vlog(VM_VIDEOMSG, "DAC register %02X selected", data);
     dac_data_index = data;
     dac_data_subindex = 0;
 }
@@ -334,7 +334,7 @@ BYTE vga_dac_read_data(VCpu*, WORD)
         break;
     }
 
-    vlog(VM_VIDEOMSG, "Reading component %u of color %02X (%02X)", dac_data_subindex, dac_data_index, data);
+    // vlog(VM_VIDEOMSG, "Reading component %u of color %02X (%02X)", dac_data_subindex, dac_data_index, data);
 
     if (++dac_data_subindex >= 3) {
         dac_data_subindex = 0;
@@ -346,7 +346,7 @@ BYTE vga_dac_read_data(VCpu*, WORD)
 
 void vga_dac_write_data(VCpu* cpu, WORD, BYTE data)
 {
-    vlog(VM_VIDEOMSG, "Setting component %u of color %02X to %02X", dac_data_subindex, dac_data_index, data);
+    // vlog(VM_VIDEOMSG, "Setting component %u of color %02X to %02X", dac_data_subindex, dac_data_index, data);
     switch (dac_data_subindex) {
     case 0:
         vga_color_register[dac_data_index].r = data;
