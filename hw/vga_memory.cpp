@@ -98,6 +98,12 @@ void VgaMemory::write8(DWORD address, BYTE value)
 
     address -= 0xA0000;
 
+    // FIXME: Don't get current video mode from BDA
+    if (g_cpu->readUnmappedMemory8(0x449) == 0x13) {
+        d->plane[0][address] = value;
+        return;
+    }
+
     if (WRITE_MODE == 2) {
 
         BYTE bitmask = BIT_MASK;
@@ -273,6 +279,11 @@ BYTE VgaMemory::read8(dword address) {
 
     if (address < 0xB0000) {
         address -= 0xA0000;
+
+        // FIXME: Don't get current video mode from BDA
+        if (g_cpu->readUnmappedMemory8(0x449) == 0x13)
+            return d->plane[0][address];
+
         d->latch[0] = d->plane[0][address];
         d->latch[1] = d->plane[1][address];
         d->latch[2] = d->plane[2][address];

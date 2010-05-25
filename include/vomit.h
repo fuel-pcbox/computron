@@ -77,6 +77,8 @@ void vm_call8(VCpu*, WORD port, BYTE value);
 void dump_cpu(VCpu*);
 void dump_regs(VCpu*);
 
+bool vomit_in_vretrace();
+
 template <typename T> inline void swap(T &a, T &b)
 {
 	T c(a);

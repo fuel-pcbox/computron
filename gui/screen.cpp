@@ -57,10 +57,12 @@ Screen::Screen(VCpu *cpu, QWidget *parent)
     m_render12 = QImage( 640, 480, QImage::Format_Indexed8 );
 
     m_render0D = QImage( 320, 200, QImage::Format_Indexed8 );
+    m_render13 = QImage(320, 200, QImage::Format_Indexed8);
 
     m_screen12.fill(0);
     m_render12.fill(0);
     m_render0D.fill(0);
+    m_render13.fill(0);
 
     synchronizeColors();
 
@@ -103,8 +105,17 @@ Screen::putCharacter( QPainter &p, int row, int column, byte color, byte c )
     }
 }
 
+static bool in_refresh = false;
+
+bool vomit_in_vretrace()
+{
+    return !in_refresh;
+}
+
 void Screen::refresh()
 {
+    in_refresh = true;
+
     BYTE currentVideoMode = d->cpu->readUnmappedMemory8(0x449) & 0x7F;
 
     if (currentVideoMode == 0x12) {
@@ -122,8 +133,16 @@ void Screen::refresh()
             clear_palette_dirty();
         }
         if (d->cpu->vgaMemory->isDirty()) {
-            //vlog( VM_VIDEOMSG, "Painting mode0Dh screen" );
             renderMode0D(m_render0D);
+            update();
+        }
+    } else if (currentVideoMode == 0x13) {
+        if (is_palette_dirty()) {
+            synchronizeColors();
+            clear_palette_dirty();
+        }
+        if (d->cpu->vgaMemory->isDirty()) {
+            renderMode13(m_render13);
             update();
         }
     } else if (currentVideoMode == 0x03) {
@@ -144,6 +163,7 @@ void Screen::refresh()
     {
         update();
     }
+    in_refresh = false;
 }
 
 void
@@ -156,6 +176,12 @@ Screen::setScreenSize( int width, int height )
     m_height = height;
 
     setFixedSize( m_width, m_height );
+}
+
+void Screen::renderMode13(QImage& target)
+{
+    const BYTE* videoMemory = d->cpu->vgaMemory->plane(0);
+    memcpy(target.bits(), videoMemory, 320 * 200);
 }
 
 void
@@ -282,6 +308,18 @@ void Screen::paintEvent(QPaintEvent *e)
         return;
     }
 
+    if (currentVideoMode == 0x13) {
+        setScreenSize(640, 400);
+        QPainter p(this);
+        p.drawImage(0, 0, m_render13.scaled(640, 400));
+
+        if (m_tinted) {
+            p.setOpacity( 0.3 );
+            p.fillRect(rect(), Qt::blue);
+        }
+        return;
+    }
+
     QPainter p( this );
     //synchronizeFont();
 
@@ -354,23 +392,28 @@ Screen::synchronizeFont()
 void
 Screen::synchronizeColors()
 {
-    for( int i = 0; i < 16; ++i )
+    for (int i = 0; i < 16; ++i)
     {
         d->color[i].setRgb(
             vga_color_register[vga_palette_register[i]].r << 2,
             vga_color_register[vga_palette_register[i]].g << 2,
             vga_color_register[vga_palette_register[i]].b << 2
         );
-    }
+        d->brush[i] = QBrush(d->color[i]);
 
-    for( int i = 0; i < 16; ++i )
-        d->brush[i] = QBrush( d->color[i] );
-
-    for( int i = 0; i < 16; ++i )
-    {
         m_screen12.setColor( i, d->color[i].rgb() );
         m_render12.setColor( i, d->color[i].rgb() );
         m_render0D.setColor( i, d->color[i].rgb() );
+    }
+
+    for (int i = 0; i < 256; ++i) {
+        QColor color;
+        color.setRgb(
+            vga_color_register[i].r << 2,
+            vga_color_register[i].g << 2,
+            vga_color_register[i].b << 2
+        );
+        m_render13.setColor(i, color.rgb());
     }
 }
 

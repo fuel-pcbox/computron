@@ -226,7 +226,7 @@ BYTE vga_status(VCpu*, WORD)
     /*
      * 6845 - Port 3DA Status Register
      *
-         *  |7|6|5|4|3|2|1|0|  3DA Status Register
+     * |7|6|5|4|3|2|1|0|  3DA Status Register
      *  | | | | | | | `---- 1 = display enable, RAM access is OK
      *  | | | | | | `----- 1 = light pen trigger set
      *  | | | | | `------ 0 = light pen on, 1 = light pen off
@@ -235,8 +235,11 @@ BYTE vga_status(VCpu*, WORD)
      *
      */
 
-    /* 0000 1100 */
-    BYTE value = 0x0C;
+    /* 0000 0100 */
+    BYTE value = 0x04;
+
+    if (vomit_in_vretrace())
+        value |= 0x08;
 
     next_3c0_is_index = true;
 
