@@ -72,60 +72,6 @@ DWORD vomit_cpu_modrm_read32(VCpu* cpu, byte rmbyte)
     return rmp[0] | (rmp[1]<<8) | (rmp[2]<<16) | (rmp[3]<<24);
 }
 
-void _LEA_reg16_mem16(VCpu* cpu)
-{
-    WORD retv = 0x0000;
-    BYTE b = cpu->fetchOpcodeByte();
-    switch (b & 0xC0) {
-        case 0:
-            switch(b & 0x07)
-            {
-                case 0: retv = cpu->regs.W.BX+cpu->regs.W.SI; break;
-                case 1: retv = cpu->regs.W.BX+cpu->regs.W.DI; break;
-                case 2: retv = cpu->regs.W.BP+cpu->regs.W.SI; break;
-                case 3: retv = cpu->regs.W.BP+cpu->regs.W.DI; break;
-                case 4: retv = cpu->regs.W.SI; break;
-                case 5: retv = cpu->regs.W.DI; break;
-                case 6: retv = cpu->fetchOpcodeWord(); break;
-                default: retv = cpu->regs.W.BX; break;
-            }
-            break;
-        case 64:
-            switch(b & 0x07)
-            {
-                case 0: retv = cpu->regs.W.BX+cpu->regs.W.SI + signext(cpu->fetchOpcodeByte()); break;
-                case 1: retv = cpu->regs.W.BX+cpu->regs.W.DI + signext(cpu->fetchOpcodeByte()); break;
-                case 2: retv = cpu->regs.W.BP+cpu->regs.W.SI + signext(cpu->fetchOpcodeByte()); break;
-                case 3: retv = cpu->regs.W.BP+cpu->regs.W.DI + signext(cpu->fetchOpcodeByte()); break;
-                case 4: retv = cpu->regs.W.SI + signext(cpu->fetchOpcodeByte()); break;
-                case 5: retv = cpu->regs.W.DI + signext(cpu->fetchOpcodeByte()); break;
-                case 6: retv = cpu->regs.W.BP + signext(cpu->fetchOpcodeByte()); break;
-                default: retv = cpu->regs.W.BX + signext(cpu->fetchOpcodeByte()); break;
-            }
-            break;
-        case 128:
-            switch(b & 0x07)
-            {
-                case 0: retv = cpu->regs.W.BX+cpu->regs.W.SI+cpu->fetchOpcodeWord(); break;
-                case 1: retv = cpu->regs.W.BX+cpu->regs.W.DI+cpu->fetchOpcodeWord(); break;
-                case 2: retv = cpu->regs.W.BP+cpu->regs.W.SI+cpu->fetchOpcodeWord(); break;
-                case 3: retv = cpu->regs.W.BP+cpu->regs.W.DI+cpu->fetchOpcodeWord(); break;
-                case 4: retv = cpu->regs.W.SI + cpu->fetchOpcodeWord(); break;
-                case 5: retv = cpu->regs.W.DI + cpu->fetchOpcodeWord(); break;
-                case 6: retv = cpu->regs.W.BP + cpu->fetchOpcodeWord(); break;
-                default: retv = cpu->regs.W.BX + cpu->fetchOpcodeWord(); break;
-            }
-            break;
-        case 192:
-            vlog(VM_ALERT, "LEA with register source!");
-            /* LEA with register source, an invalid instruction.
-             * Call INT6 (invalid opcode exception) */
-            cpu->exception(6);
-            break;
-    }
-    *cpu->treg16[rmreg(b)] = retv;
-}
-
 void *vomit_cpu_modrm_resolve8(VCpu* cpu, BYTE rmbyte)
 {
     WORD segment = *cpu->CurrentSegment;
@@ -271,4 +217,3 @@ void * vomit_cpu_modrm_resolve16(VCpu* cpu, BYTE rmbyte)
     }
     return s_last_modrm_ptr;
 }
-
