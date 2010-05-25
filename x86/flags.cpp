@@ -4,6 +4,12 @@
 
 #include "vcpu.h"
 
+#if VOMIT_CPU_LEVEL <= 1
+#define VOMIT_CPU_STATIC_FLAGS 0xF002
+#else
+#define VOMIT_CPU_STATIC_FLAGS 0x0000
+#endif
+
 static const byte parity_table[0x100] = {
     1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
     0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
@@ -26,15 +32,6 @@ static const byte parity_table[0x100] = {
 void vomit_cpu_setAF(VCpu* cpu, DWORD result, WORD src, WORD dest)
 {
     cpu->setAF((((result ^ (src ^ dest)) & 0x10) >> 4) & 1);
-}
-
-WORD vomit_cpu_static_flags(VCpu* cpu)
-{
-#if VOMIT_CPU_LEVEL <= 1
-    return 0xF002;
-#else
-    return 0x0000;
-#endif
 }
 
 void VCpu::updateFlags16(WORD data)
@@ -165,6 +162,6 @@ void VCpu::setFlags(WORD flags)
 
 WORD VCpu::getFlags()
  {
-    return this->CF | (this->PF << 2) | (this->AF << 4) | (this->ZF << 6) | (this->SF << 7) | (this->TF << 8) | (this->IF << 9) | (this->DF << 10) | (this->OF << 11) | vomit_cpu_static_flags(this);
+    return this->CF | (this->PF << 2) | (this->AF << 4) | (this->ZF << 6) | (this->SF << 7) | (this->TF << 8) | (this->IF << 9) | (this->DF << 10) | (this->OF << 11) | VOMIT_CPU_STATIC_FLAGS;
 }
 
