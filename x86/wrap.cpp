@@ -57,7 +57,8 @@ void _wrap_0x8F(VCpu* cpu)
     switch(rmreg(cpu->rmbyte)) {
     case 0: _POP_RM16(cpu); break;
     default:
-        vlog( VM_ALERT, "8F /%d not wrapped", rmreg(cpu->rmbyte));
+        vlog(VM_ALERT, "8F /%u not wrapped", rmreg(cpu->rmbyte));
+        cpu->exception(6);
     }
 }
 
@@ -74,8 +75,11 @@ void _wrap_0xC0(VCpu* cpu)
     case 3: vomit_cpu_modrm_update8(cpu, cpu_rcr(cpu, value, imm, 8)); break;
     case 4: vomit_cpu_modrm_update8(cpu, cpu_shl(cpu, value, imm, 8)); break;
     case 5: vomit_cpu_modrm_update8(cpu, cpu_shr(cpu, value, imm, 8)); break;
+    case 6:
+        vlog(VM_ALERT, "C0 /6 not wrapped");
+        cpu->exception(6);
+        break;
     case 7: vomit_cpu_modrm_update8(cpu, cpu_sar(cpu, value, imm, 8)); break;
-    default: vlog( VM_ALERT, "C0 /%d not wrapped", rmreg(rm));
     }
 }
 
@@ -92,9 +96,11 @@ void _wrap_0xC1(VCpu* cpu)
     case 3: vomit_cpu_modrm_update16(cpu, cpu_rcr(cpu, value, imm, 16)); break;
     case 4: vomit_cpu_modrm_update16(cpu, cpu_shl(cpu, value, imm, 16)); break;
     case 5: vomit_cpu_modrm_update16(cpu, cpu_shr(cpu, value, imm, 16)); break;
+    case 6:
+        vlog(VM_ALERT, "C1 /6 not wrapped");
+        cpu->exception(6);
+        break;
     case 7: vomit_cpu_modrm_update16(cpu, cpu_sar(cpu, value, imm, 16)); break;
-    default:
-        vlog(VM_ALERT, "C1 /%d not wrapped", rmreg(rm));
     }
 }
 
@@ -110,9 +116,11 @@ void _wrap_0xD0(VCpu* cpu)
     case 3: vomit_cpu_modrm_update8(cpu, cpu_rcr(cpu, value, 1, 8 )); break;
     case 4: vomit_cpu_modrm_update8(cpu, cpu_shl(cpu, value, 1, 8 )); break;
     case 5: vomit_cpu_modrm_update8(cpu, cpu_shr(cpu, value, 1, 8 )); break;
+    case 6:
+        vlog(VM_ALERT, "D0 /6 not wrapped");
+        cpu->exception(6);
+        break;
     case 7: vomit_cpu_modrm_update8(cpu, cpu_sar(cpu, value, 1, 8 )); break;
-    default:
-        vlog(VM_ALERT, "D0 /%d not wrapped", rmreg(rm));
     }
 }
 
@@ -128,9 +136,11 @@ void _wrap_0xD1(VCpu* cpu)
     case 3: vomit_cpu_modrm_update16(cpu, cpu_rcr(cpu, value, 1, 16 )); break;
     case 4: vomit_cpu_modrm_update16(cpu, cpu_shl(cpu, value, 1, 16 )); break;
     case 5: vomit_cpu_modrm_update16(cpu, cpu_shr(cpu, value, 1, 16 )); break;
+    case 6:
+        vlog(VM_ALERT, "D1 /6 not wrapped");
+        cpu->exception(6);
+        break;
     case 7: vomit_cpu_modrm_update16(cpu, cpu_sar(cpu, value, 1, 16 )); break;
-    default:
-        vlog(VM_ALERT, "D1 /%d not wrapped", rmreg(rm));
     }
 }
 
@@ -146,9 +156,11 @@ void _wrap_0xD2(VCpu* cpu)
     case 3: vomit_cpu_modrm_update8(cpu, cpu_rcr(cpu, value, cpu->regs.B.CL, 8 )); break;
     case 4: vomit_cpu_modrm_update8(cpu, cpu_shl(cpu, value, cpu->regs.B.CL, 8 )); break;
     case 5: vomit_cpu_modrm_update8(cpu, cpu_shr(cpu, value, cpu->regs.B.CL, 8 )); break;
+    case 6:
+        vlog(VM_ALERT, "D2 /6 not wrapped");
+        cpu->exception(6);
+        break;
     case 7: vomit_cpu_modrm_update8(cpu, cpu_sar(cpu, value, cpu->regs.B.CL, 8 )); break;
-    default:
-        vlog(VM_ALERT, "D2 /%d not wrapped", rmreg(rm));
     }
 }
 
@@ -164,9 +176,11 @@ void _wrap_0xD3(VCpu* cpu)
     case 3: vomit_cpu_modrm_update16(cpu, cpu_rcr(cpu, value, cpu->regs.B.CL, 16)); break;
     case 4: vomit_cpu_modrm_update16(cpu, cpu_shl(cpu, value, cpu->regs.B.CL, 16)); break;
     case 5: vomit_cpu_modrm_update16(cpu, cpu_shr(cpu, value, cpu->regs.B.CL, 16)); break;
+    case 6:
+        vlog(VM_ALERT, "D3 /6 not wrapped");
+        cpu->exception(6);
+        break;
     case 7: vomit_cpu_modrm_update16(cpu, cpu_sar(cpu, value, cpu->regs.B.CL, 16)); break;
-    default:
-        vlog(VM_ALERT, "D3 /%d not wrapped", rmreg(rm));
     }
 }
 
@@ -176,14 +190,16 @@ void _wrap_0xF6(VCpu* cpu)
 
     switch (rmreg(cpu->rmbyte)) {
     case 0: _TEST_RM8_imm8(cpu); break;
+    case 1:
+        vlog(VM_ALERT, "F6 /1 not wrapped");
+        cpu->exception(6);
+        break;
     case 2: _NOT_RM8(cpu); break;
     case 3: _NEG_RM8(cpu); break;
     case 4: _MUL_RM8(cpu); break;
     case 5: _IMUL_RM8(cpu); break;
     case 6: _DIV_RM8(cpu); break;
     case 7: _IDIV_RM8(cpu); break;
-    default:
-        vlog( VM_ALERT, "F6 /%d not wrapped", rmreg(cpu->rmbyte));
     }
 }
 
@@ -193,14 +209,16 @@ void _wrap_0xF7(VCpu* cpu)
 
     switch (rmreg(cpu->rmbyte)) {
     case 0: _TEST_RM16_imm16(cpu); break;
+    case 1:
+        vlog(VM_ALERT, "F7 /1 not wrapped");
+        cpu->exception(6);
+        break;
     case 2: _NOT_RM16(cpu); break;
     case 3: _NEG_RM16(cpu); break;
     case 4: _MUL_RM16(cpu); break;
     case 5: _IMUL_RM16(cpu); break;
     case 6: _DIV_RM16(cpu); break;
     case 7: _IDIV_RM16(cpu); break;
-    default:
-        vlog(VM_ALERT, "F7 /%d not wrapped", rmreg(cpu->rmbyte));
     }
 }
 
@@ -229,6 +247,8 @@ void _wrap_0xFE(VCpu* cpu)
         break;
     default:
         vlog(VM_ALERT, "FE /%d not wrapped", rmreg(rm));
+        cpu->exception(6);
+        break;
     }
 }
 
@@ -243,6 +263,9 @@ void _wrap_0xFF(VCpu* cpu)
     case 4: _JMP_RM16(cpu); break;
     case 5: _JMP_FAR_mem16(cpu); break;
     case 6: _PUSH_RM16(cpu); break;
-    case 7: vlog( VM_ALERT, "FF /%d not wrapped", rmreg( cpu->rmbyte ));
+    case 7:
+        vlog(VM_ALERT, "FF /7 not wrapped");
+        cpu->exception(6);
+        break;
     }
 }
