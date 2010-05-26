@@ -23,8 +23,8 @@ BYTE CMOS::in8(WORD)
     BYTE value = 0;
 
     switch (m_registerIndex) {
-    case 0x15: value = LSB(g_cpu->baseMemorySize()); break;
-    case 0x16: value = MSB(g_cpu->baseMemorySize()); break;
+    case 0x15: value = LSB(g_cpu->baseMemorySize() / 1024); break;
+    case 0x16: value = MSB(g_cpu->baseMemorySize() / 1024); break;
     }
 
     vlog(VLOG_CMOS, "Read register %02X (%02X)", m_registerIndex, value);
