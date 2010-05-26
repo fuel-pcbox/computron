@@ -60,7 +60,7 @@ byte floppy_read(byte drive, word cylinder, word head, word sector, word count, 
     if(lba>drv_sectors[drive]) {
         if( disklog )
         {
-            vlog( VM_DISKLOG, "Drive %d bogus sector request (LBA %d).\n", drive, lba );
+            vlog(VM_DISKLOG, "Drive %d bogus sector request (LBA %d)", drive, lba);
         }
         *fderr = FD_TIMEOUT;
         return *fderr;

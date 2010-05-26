@@ -171,7 +171,7 @@ write_character_and_attribute_at_cursor()
     /* Check count of characters to write. */
     if( g_cpu->regs.W.CX == 0 )
     {
-        vlog( VM_VIDEOMSG, "Asked to write zero chars!?\n" );
+        vlog(VM_VIDEOMSG, "Asked to write zero chars!?");
         return;
     }
 
@@ -450,7 +450,7 @@ character_generator()
         }
     }
 
-    vlog( VM_VIDEOMSG, "Unknown character generator request: AL=%02X, BH=%02X\n", g_cpu->regs.B.AL, g_cpu->regs.B.BH );
+    vlog(VM_VIDEOMSG, "Unknown character generator request: AL=%02X, BH=%02X", g_cpu->regs.B.AL, g_cpu->regs.B.BH);
 }
 
 void set_dac_color_register()
@@ -492,11 +492,11 @@ void write_graphics_pixel_at_coordinate()
     // DX = row
 
     if (get_video_mode() != 0x12) {
-        vlog(VM_ALERT, "Poking pixels in mode %02X, dunno how to handle that\n", get_video_mode());
+        vlog(VM_ALERT, "Poking pixels in mode %02X, dunno how to handle that", get_video_mode());
         vm_exit(1);
     }
 
-    //vlog( VM_ALERT, "y = %03u, x = %03u, color = %02X\n", g_cpu->regs.W.DX, g_cpu->regs.W.CX, g_cpu->regs.B.AL );
+    //vlog(VM_ALERT, "y = %03u, x = %03u, color = %02X", g_cpu->regs.W.DX, g_cpu->regs.W.CX, g_cpu->regs.B.AL);
     BYTE *vm_p0 = g_cpu->vgaMemory->plane(0);
     BYTE *vm_p1 = g_cpu->vgaMemory->plane(1);
     BYTE *vm_p2 = g_cpu->vgaMemory->plane(2);

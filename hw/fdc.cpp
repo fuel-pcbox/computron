@@ -181,7 +181,7 @@ BYTE fdc_data_fifo_read(VCpu*, WORD port)
     }
 
     BYTE value = fdc_command_result.takeFirst();
-    vlog(VM_FDCMSG, "Read command result byte %02X\n", value);
+    vlog(VM_FDCMSG, "Read command result byte %02X", value);
 
     return value;
 }
