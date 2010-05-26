@@ -1,12 +1,6 @@
 // x86/bitwise.cpp
 // Bitwise instructions
 
-#if VOMIT_CPU_LEVEL >= 1
-#define MASK_STEPS_UNLESS_8086 do { steps &= 0x1F; } while(0);
-#else
-#define MASK_STEPS_UNLESS_8086
-#endif
-
 #include "vcpu.h"
 #include "templates.h"
 
@@ -126,7 +120,7 @@ DWORD cpu_shl(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 {
     DWORD result = (DWORD)data;
 
-    MASK_STEPS_UNLESS_8086;
+    steps &= 0x1F;
 
     if (bits == 8) {
         for (BYTE i = 0; i < steps; ++i) {
@@ -151,7 +145,7 @@ DWORD cpu_shr(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 {
     DWORD result = (DWORD)data;
 
-    MASK_STEPS_UNLESS_8086;
+    steps &= 0x1F;
 
     if (bits == 8) {
         for (BYTE i = 0; i < steps; ++i) {
@@ -177,7 +171,7 @@ DWORD cpu_sar(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
     DWORD result = (DWORD)data;
     WORD n;
 
-    MASK_STEPS_UNLESS_8086;
+    steps &= 0x1F;
 
     if (bits == 8) {
         for (BYTE i = 0; i < steps; ++i) {
@@ -204,7 +198,7 @@ DWORD cpu_rol(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 {
     DWORD result = (DWORD)data;
 
-    MASK_STEPS_UNLESS_8086;
+    steps &= 0x1F;
 
     if (bits == 8) {
         for (BYTE i = 0; i < steps; ++i) {
@@ -228,7 +222,7 @@ DWORD cpu_ror(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 {
     DWORD result = (DWORD)data;
 
-    MASK_STEPS_UNLESS_8086;
+    steps &= 0x1F;
 
     if (bits == 8) {
         for (BYTE i = 0; i < steps; ++i) {
@@ -253,7 +247,7 @@ DWORD cpu_rcl(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
     DWORD result = (DWORD)data;
     WORD n;
 
-    MASK_STEPS_UNLESS_8086;
+    steps &= 0x1F;
 
     if (bits == 8) {
         for (BYTE i = 0; i < steps; ++i) {
@@ -280,7 +274,7 @@ DWORD cpu_rcr(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
     DWORD result = (DWORD)data;
     WORD n;
 
-    MASK_STEPS_UNLESS_8086;
+    steps &= 0x1F;
 
     if (bits == 8) {
         for (BYTE i = 0; i < steps; ++i) {

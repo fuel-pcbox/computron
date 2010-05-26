@@ -329,12 +329,6 @@ void VCpu::registerDefaultOpcodeHandlers()
     setOpcodeHandler(0xC0, 0xC0, _wrap_0xC0        );
     setOpcodeHandler(0xC1, 0xC1, _wrap_0xC1        );
 
-#if VOMIT_CPU_LEVEL <= 1
-    // Specialized PUSH SP for Intel 8086/80186
-    setOpcodeHandler(0x54, 0x54, _PUSH_SP_8086_80186);
-#endif
-
-#if VOMIT_CPU_LEVEL >= 1
     // 80186+ instructions
     setOpcodeHandler(0x0F, 0x0F, _wrap_0x0F        );
     setOpcodeHandler(0x60, 0x60, _PUSHA            );
@@ -347,7 +341,6 @@ void VCpu::registerDefaultOpcodeHandlers()
     setOpcodeHandler(0xC1, 0xC1, _wrap_0xC1        );
     setOpcodeHandler(0xC8, 0xC8, _ENTER            );
     setOpcodeHandler(0xC9, 0xC9, _LEAVE            );
-#endif
 }
 
 void VCpu::kill()
@@ -368,9 +361,7 @@ void VCpu::kill()
 
 void VCpu::exec()
 {
-    // TODO: Be more clever with this, it's mostly a waste of time.
-    m_baseCS = getCS();
-    m_baseIP = getIP();
+    saveBaseAddress();
 
     this->opcode = fetchOpcodeByte();
     this->opcode_handler[this->opcode](this);
@@ -397,12 +388,8 @@ void VCpu::mainLoop()
 
 #ifdef VOMIT_DEBUG
         if (inDebugger()) {
-
-            m_baseCS = getCS();
-            m_baseIP = getIP();
-
+            saveBaseAddress();
             debugger();
-
             if (!inDebugger())
                 continue;
         }

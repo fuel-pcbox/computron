@@ -148,6 +148,7 @@ public:
         } B;
 #endif
     } regs;
+<<<<<<< HEAD
     WORD CS, DS, ES, SS, FS, GS;
     WORD IP;
 
@@ -161,6 +162,49 @@ public:
     }
 
     void resetSegmentPrefix() { m_currentSegment = &this->DS; }
+=======
+
+    struct {
+	DWORD base;
+	WORD limit;
+    } GDTR;
+
+    struct {
+	DWORD base;
+	WORD limit;
+    } IDTR;
+
+    struct {
+	WORD segment;
+	DWORD base;
+	WORD limit;
+	// LDT's index in GDT
+	int index;
+    } LDTR;
+
+    DWORD CR0, CR1, CR2, CR3, CR4, CR5, CR6, CR7;
+    DWORD DR0, DR1, DR2, DR3, DR4, DR5, DR6, DR7;
+
+    union {
+	struct {
+#ifdef VOMIT_BIG_ENDIAN
+	    WORD __EIP_high_word, IP;
+#else
+	    WORD IP, __EIP_high_word;
+#endif
+	};
+	DWORD EIP;
+    };
+
+    struct {
+	WORD segment;
+	DWORD base;
+	WORD limit;
+    } TR;
+
+    WORD CS, DS, ES, SS, FS, GS, SegmentPrefix;
+    WORD* CurrentSegment;
+>>>>>>> 32bit: Adding basic registers etc.
 
     BYTE opcode;
     BYTE rmbyte;
@@ -219,10 +263,13 @@ public:
 
     WORD getCS() const { return this->CS; }
     WORD getIP() const { return this->IP; }
+    WORD getEIP() const { return this->EIP; }
 
     WORD getDS() const { return this->DS; }
     WORD getES() const { return this->ES; }
     WORD getSS() const { return this->SS; }
+    WORD getFS() const { return this->FS; }
+    WORD getGS() const { return this->GS; }
 
     WORD getAX() const { return this->regs.W.AX; }
     WORD getBX() const { return this->regs.W.BX; }
@@ -233,9 +280,10 @@ public:
     WORD getSP() const { return this->regs.W.SP; }
     WORD getBP() const { return this->regs.W.BP; }
 
-    // Base CS:IP is the start address of the currently executing instruction
+    // Base CS:EIP is the start address of the currently executing instruction
     WORD getBaseCS() const { return m_baseCS; }
-    WORD getBaseIP() const { return m_baseIP; }
+    WORD getBaseIP() const { return m_baseEIP & 0xFFFF; }
+    WORD getBaseEIP() const { return m_baseEIP; }
 
     void jump(WORD segment, WORD offset);
     void jumpRelative8(SIGNED_BYTE displacement);
@@ -327,6 +375,10 @@ public:
 
     VgaMemory* vgaMemory;
 
+    enum Mode { RealMode, ProtectedMode };
+    Mode mode() const { return m_mode; }
+    void setMode(Mode m) { m_mode = m; }
+
     enum State { Dead, Alive, Halted };
     State state() const { return m_state; }
     void setState(State s) { m_state = s; }
@@ -364,6 +416,12 @@ public:
 private:
     void setOpcodeHandler(BYTE rangeStart, BYTE rangeEnd, OpcodeHandler handler);
 
+    void saveBaseAddress()
+    {
+	m_baseCS = getCS();
+	m_baseEIP = getEIP();
+    }
+
     DWORD m_instructionsPerTick;
 
     // This points to the base of CS for fast opcode fetches.
@@ -371,7 +429,18 @@ private:
 
     bool CF, DF, TF, PF, AF, ZF, SF, IF, OF;
 
+    unsigned int IOPL;
+    bool NT;
+    bool RF;
+    bool VM;
+    bool AC;
+    bool VIF;
+    bool VIP;
+    bool ID;
+
     State m_state;
+
+    Mode m_mode;
 
 #ifdef VOMIT_DEBUG
     bool m_inDebugger;
@@ -381,9 +450,14 @@ private:
     // Cycle counter. May wrap arbitrarily.
     DWORD m_pitCountdown;
 
-    // Actual CS:IP (when we started fetching the instruction)
+    // Actual CS:EIP (when we started fetching the instruction)
     WORD m_baseCS;
+<<<<<<< HEAD
     WORD m_baseIP;
+=======
+    DWORD m_baseEIP;
+};
+>>>>>>> 32bit: Adding basic registers etc.
 
 #ifdef VOMIT_PREFETCH_QUEUE
     BYTE* m_prefetchQueue;
@@ -813,11 +887,6 @@ WORD VCpu::readMemory16(DWORD address) const
 
 WORD VCpu::readMemory16(WORD segment, WORD offset) const
 {
-#if VOMIT_CPU_LEVEL == 0
-    // FIXME: Broken for VGA read at 0xFFFF although that's beyond unlikely to occur.
-    if (offset == 0xFFFF)
-        return this->memory[vomit_toFlatAddress(segment, offset)] | (this->memory[vomit_toFlatAddress(segment, 0)] << 8);
-#endif
     return readMemory16(vomit_toFlatAddress(segment, offset));
 }
 
@@ -882,15 +951,6 @@ void VCpu::writeMemory16(DWORD address, WORD value)
 
 void VCpu::writeMemory16(WORD segment, WORD offset, WORD value)
 {
-#if VOMIT_CPU_LEVEL == 0
-    // FIXME: Broken for VGA write at 0xFFFF although that's beyond unlikely to occur.
-    if (offset == 0xFFFF) {
-        this->memory[vomit_toFlatAddress(segment, offset)] = value & 0xFF;
-        this->memory[vomit_toFlatAddress(segment, 0)] = value >> 8;
-        return;
-    }
-#endif
-
     writeMemory16(FLAT(segment, offset), value);
 }
 
@@ -952,7 +1012,5 @@ bool VCpu::evaluate(BYTE conditionCode) const
     }
     return 0;
 }
-
-
 
 #endif

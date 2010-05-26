@@ -3,13 +3,7 @@
 
 #include "vcpu.h"
 
-#if VOMIT_CPU_LEVEL <= 1
-#define VOMIT_CPU_STATIC_FLAGS 0xF002
-#else
-#define VOMIT_CPU_STATIC_FLAGS 0x0000
-#endif
-
-static const BYTE parity_table[0x100] = {
+static const byte parity_table[0x100] = {
     1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
     0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
     0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
@@ -159,7 +153,7 @@ void VCpu::setFlags(WORD flags)
 
 WORD VCpu::getFlags() const
 {
-    return VOMIT_CPU_STATIC_FLAGS
+    return 0
         | (getCF() << 0)
         | (getPF() << 2)
         | (getAF() << 4)
