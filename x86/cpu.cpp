@@ -14,11 +14,26 @@ static WORD segment_dummy;
 
 #define CALL_HANDLER(handler16, handler32) if (m_operationSize == OperationSize16) { handler16(this); } else { handler32(this); }
 
+void _UD0(VCpu* cpu)
+{
+    vlog(VM_ALERT, "Undefinded opcode 0F FF (UD0)");
+    cpu->exception(6);
+}
+
 void VCpu::decodeNext()
 {
     this->opcode = fetchOpcodeByte();
 
     switch (this->opcode) {
+    case 0x0F:
+        this->rmbyte = fetchOpcodeByte();
+        switch (this->rmbyte) {
+        case 0xB6: CALL_HANDLER(_MOVZX_reg16_RM8, _MOVZX_reg32_RM8); break;
+        case 0xB7: CALL_HANDLER(_UNSUPP, _MOVZX_reg32_RM16); break;
+        case 0xFF: _UD0(this); break;
+        default: goto fffuuu;
+        }
+        break;
     case 0x5B: CALL_HANDLER(_POP_BX, _POP_EBX); break;
     case 0x68: CALL_HANDLER(_PUSH_imm16, _PUSH_imm32); break;
     case 0x9C: CALL_HANDLER(_PUSHF, _PUSHFD); break;
@@ -26,6 +41,7 @@ void VCpu::decodeNext()
     case 0xF7: CALL_HANDLER(_TEST_RM16_imm16, _TEST_RM32_imm32); break;
     default:
         this->rmbyte = fetchOpcodeByte();
+fffuuu:
         vlog(VM_ALERT, "FFFFUUUU unsupported opcode %02X /%u or %02X %02X", this->opcode, vomit_modRMRegisterPart(this->rmbyte), this->opcode, this->rmbyte);
         vm_exit(0);
     }
@@ -81,6 +97,15 @@ void VCpu::init()
     m_prefetchQueueIndex = 0;
 #endif
 
+    this->treg32[RegisterAX] = &this->regs.D.EAX;
+    this->treg32[RegisterBX] = &this->regs.D.EBX;
+    this->treg32[RegisterCX] = &this->regs.D.ECX;
+    this->treg32[RegisterDX] = &this->regs.D.EDX;
+    this->treg32[RegisterSP] = &this->regs.D.ESP;
+    this->treg32[RegisterBP] = &this->regs.D.EBP;
+    this->treg32[RegisterSI] = &this->regs.D.ESI;
+    this->treg32[RegisterDI] = &this->regs.D.EDI;
+
     this->treg16[RegisterAX] = &this->regs.W.AX;
     this->treg16[RegisterBX] = &this->regs.W.BX;
     this->treg16[RegisterCX] = &this->regs.W.CX;
@@ -118,6 +143,9 @@ void VCpu::init()
     m_instructionsPerTick = 0x50000;
     m_pitCountdown = m_instructionsPerTick;
     m_state = Alive;
+
+    m_addressSize = AddressSize16;
+    m_operationSize = OperationSize16;
 
 #ifdef VOMIT_DEBUG
     m_inDebugger = false;

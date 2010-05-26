@@ -185,7 +185,7 @@ void VCpu::setEFlags(DWORD eflags)
 DWORD VCpu::getEFlags() const
 {
     return this->CF | (this->PF << 2) | (this->AF << 4) | (this->ZF << 6) | (this->SF << 7) | (this->TF << 8) | (this->IF << 9) | (this->DF << 10) | (this->OF << 11)
-         | (this->IOPL << 12)
+         | (this->IOPL << 13)
          | (this->NT << 14)
          | (this->RF << 16);
 }

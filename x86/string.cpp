@@ -114,3 +114,24 @@ void _MOVSW(VCpu* cpu)
     else
         cpu->regs.W.SI -= 2, cpu->regs.W.DI -= 2;
 }
+
+void _MOVSD(VCpu* cpu)
+{
+    if (cpu->addressSize() == VCpu::AddressSize16) {
+        DWORD tmpw = cpu->readMemory32(cpu->currentSegment(), cpu->regs.W.SI);
+        cpu->writeMemory32(cpu->ES, cpu->regs.W.DI, tmpw);
+
+        if (cpu->getDF() == 0)
+            cpu->regs.W.SI += 4, cpu->regs.W.DI += 4;
+        else
+            cpu->regs.W.SI -= 4, cpu->regs.W.DI -= 4;
+    } else {
+        DWORD tmpw = cpu->readMemory32(cpu->currentSegment(), cpu->regs.D.ESI);
+        cpu->writeMemory32(cpu->ES, cpu->regs.D.EDI, tmpw);
+
+        if (cpu->getDF() == 0)
+            cpu->regs.D.ESI += 4, cpu->regs.D.EDI += 4;
+        else
+            cpu->regs.D.ESI -= 4, cpu->regs.D.EDI -= 4;
+    }
+}

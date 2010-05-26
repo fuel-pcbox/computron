@@ -170,3 +170,20 @@ void _MOV_moff16_AX(VCpu* cpu)
     cpu->writeMemory16(cpu->currentSegment(), cpu->fetchOpcodeWord(), cpu->regs.W.AX);
 }
 
+void _MOVZX_reg16_RM8(VCpu* cpu)
+{
+    BYTE rm = cpu->fetchOpcodeByte();
+    *cpu->treg16[vomit_modRMRegisterPart(rm)] = cpu->readModRM8(rm);
+}
+
+void _MOVZX_reg32_RM8(VCpu* cpu)
+{
+    BYTE rm = cpu->fetchOpcodeByte();
+    *cpu->treg32[vomit_modRMRegisterPart(rm)] = cpu->readModRM8(rm);
+}
+
+void _MOVZX_reg32_RM16(VCpu* cpu)
+{
+    BYTE rm = cpu->fetchOpcodeByte();
+    *cpu->treg32[vomit_modRMRegisterPart(rm)] = cpu->readModRM16(rm);
+}

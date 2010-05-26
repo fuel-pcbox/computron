@@ -212,6 +212,8 @@ public:
     BYTE opcode;
     BYTE rmbyte;
 
+    DWORD extendedMemory() const { return 8 * 1024 * 1024; }
+
     // Memory size in KiB (will be reported by BIOS)
     DWORD baseMemorySize() const { return m_baseMemorySize; }
 
@@ -219,6 +221,7 @@ public:
     BYTE* memory;
 
     // ID-to-Register maps
+    DWORD* treg32[8];
     WORD* treg16[8];
     BYTE* treg8[8];
     WORD* tseg[8];
@@ -429,6 +432,15 @@ public:
     void markDirty(DWORD address) { m_dirtMap[address] = true; }
 #endif
 
+    enum AddressSize { AddressSize16, AddressSize32 };
+    AddressSize m_addressSize;
+
+    enum OperationSize { OperationSize16, OperationSize32 };
+    OperationSize m_operationSize;
+
+    AddressSize addressSize() const { return m_addressSize; }
+    OperationSize operationSize() const { return m_operationSize; }
+
 private:
     void setOpcodeHandler(BYTE rangeStart, BYTE rangeEnd, OpcodeHandler handler);
 
@@ -469,24 +481,6 @@ private:
     // Actual CS:EIP (when we started fetching the instruction)
     WORD m_baseCS;
     DWORD m_baseEIP;
-
-    friend void _OperationSizeOverride(VCpu*);
-    friend void _AddressSizeOverride(VCpu*);
-
-    enum AddressSize { AddressSize16, AddressSize32 };
-    AddressSize m_addressSize;
-
-    enum OperationSize { OperationSize16, OperationSize32 };
-    OperationSize m_operationSize;
-
-    AddressSize addressSize() const { return m_addressSize; }
-    OperationSize operationSize() const { return m_operationSize; }
-
-#ifdef VOMIT_PREFETCH_QUEUE
-    BYTE* m_prefetchQueue;
-    BYTE m_prefetchQueueIndex;
-    BYTE m_prefetchQueueSize;
-#endif
 
     WORD* m_currentSegment;
     WORD m_segmentPrefix;
@@ -872,6 +866,12 @@ void _POP_ESI(VCpu*);
 void _POP_EDI(VCpu*);
 
 void _TEST_RM32_imm32(VCpu*);
+
+void _MOVZX_reg16_RM8(VCpu*);
+void _MOVZX_reg32_RM8(VCpu*);
+void _MOVZX_reg32_RM16(VCpu*);
+
+void _MOVSD(VCpu*);
 
 // INLINE IMPLEMENTATIONS
 
