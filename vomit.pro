@@ -51,6 +51,7 @@ SOURCES += config.cpp \
            x86/math.cpp \
            x86/modrm.cpp \
            x86/mov.cpp \
+           x86/pmode.cpp \
            x86/stack.cpp \
            x86/string.cpp \
            x86/wrap.cpp \

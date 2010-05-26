@@ -714,6 +714,12 @@ void _LEA_reg16_mem16(VCpu* cpu)
     *cpu->treg16[vomit_modRMRegisterPart(b)] = retv;
 }
 
+void VCpu::writeMemory32(DWORD address, DWORD data)
+{
+    DWORD* ptr = reinterpret_cast<DWORD*>(this->memory + address);
+    vomit_write32ToPointer(ptr, data);
+}
+
 #ifdef VOMIT_DEBUG
 bool VCpu::inDebugger() const
 {

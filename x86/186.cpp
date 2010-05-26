@@ -13,9 +13,12 @@ void _wrap_0x0F(VCpu* cpu)
     switch (op) {
     case 0x01:
     {
-        BYTE rm = cpu->fetchOpcodeByte();
-        (void) cpu->readModRM16(rm);
-        vlog(VM_ALERT, "Sliding by 0F 01 /%d\n", vomit_modRMRegisterPart(rm));
+        cpu->rmbyte = cpu->fetchOpcodeByte();
+        switch (vomit_modRMRegisterPart(cpu->rmbyte)) {
+        case 0: _SGDT(cpu); return;
+        }
+        (void) cpu->readModRM16(cpu->rmbyte);
+        vlog(VM_ALERT, "Sliding by 0F 01 /%d\n", vomit_modRMRegisterPart(cpu->rmbyte));
         break;
     }
     case 0xFF: // UD0

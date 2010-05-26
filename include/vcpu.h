@@ -33,6 +33,15 @@ inline DWORD vomit_read32FromPointer(DWORD* pointer)
 #endif
 }
 
+inline void vomit_write32ToPointer(DWORD* pointer, DWORD value)
+{
+#ifdef VOMIT_BIG_ENDIAN
+#error IMPLEMENT ME
+#else
+    *pointer = value;
+#endif
+}
+
 inline WORD vomit_read16FromPointer(WORD* pointer)
 {
 #ifdef VOMIT_BIG_ENDIAN
@@ -148,9 +157,8 @@ public:
         } B;
 #endif
     } regs;
-<<<<<<< HEAD
+
     WORD CS, DS, ES, SS, FS, GS;
-    WORD IP;
 
     WORD currentSegment() const { return *m_currentSegment; }
     bool hasSegmentPrefix() const { return m_currentSegment == &m_segmentPrefix; }
@@ -162,49 +170,44 @@ public:
     }
 
     void resetSegmentPrefix() { m_currentSegment = &this->DS; }
-=======
 
     struct {
-	DWORD base;
-	WORD limit;
+        DWORD base;
+        WORD limit;
     } GDTR;
 
     struct {
-	DWORD base;
-	WORD limit;
+        DWORD base;
+        WORD limit;
     } IDTR;
 
     struct {
-	WORD segment;
-	DWORD base;
-	WORD limit;
-	// LDT's index in GDT
-	int index;
+        WORD segment;
+        DWORD base;
+        WORD limit;
+        // LDT's index in GDT
+        int index;
     } LDTR;
 
     DWORD CR0, CR1, CR2, CR3, CR4, CR5, CR6, CR7;
     DWORD DR0, DR1, DR2, DR3, DR4, DR5, DR6, DR7;
 
     union {
-	struct {
+        struct {
 #ifdef VOMIT_BIG_ENDIAN
-	    WORD __EIP_high_word, IP;
+            WORD __EIP_high_word, IP;
 #else
-	    WORD IP, __EIP_high_word;
+            WORD IP, __EIP_high_word;
 #endif
-	};
-	DWORD EIP;
+        };
+        DWORD EIP;
     };
 
     struct {
-	WORD segment;
-	DWORD base;
-	WORD limit;
+        WORD segment;
+        DWORD base;
+        WORD limit;
     } TR;
-
-    WORD CS, DS, ES, SS, FS, GS, SegmentPrefix;
-    WORD* CurrentSegment;
->>>>>>> 32bit: Adding basic registers etc.
 
     BYTE opcode;
     BYTE rmbyte;
@@ -353,6 +356,8 @@ public:
     inline void writeMemory8(WORD segment, WORD offset, BYTE data);
     inline void writeMemory16(DWORD address, WORD data);
     inline void writeMemory16(WORD segment, WORD offset, WORD data);
+    void writeMemory32(DWORD address, DWORD data);
+    inline void writeMemory32(WORD segment, WORD offset, DWORD data);
 
     BYTE readModRM8(BYTE rmbyte);
     WORD readModRM16(BYTE rmbyte);
@@ -418,8 +423,8 @@ private:
 
     void saveBaseAddress()
     {
-	m_baseCS = getCS();
-	m_baseEIP = getEIP();
+        m_baseCS = getCS();
+        m_baseEIP = getEIP();
     }
 
     DWORD m_instructionsPerTick;
@@ -452,12 +457,7 @@ private:
 
     // Actual CS:EIP (when we started fetching the instruction)
     WORD m_baseCS;
-<<<<<<< HEAD
-    WORD m_baseIP;
-=======
     DWORD m_baseEIP;
-};
->>>>>>> 32bit: Adding basic registers etc.
 
 #ifdef VOMIT_PREFETCH_QUEUE
     BYTE* m_prefetchQueue;
@@ -827,6 +827,11 @@ void _PUSH_imm16(VCpu*);
 
 void _IMUL_reg16_RM16_imm8(VCpu*);
 
+void _SGDT(VCpu*);
+void _LGDT(VCpu*);
+void _SIDT(VCpu*);
+void _LIDT(VCpu*);
+
 // INLINE IMPLEMENTATIONS
 
 #include "vga_memory.h"
@@ -952,6 +957,11 @@ void VCpu::writeMemory16(DWORD address, WORD value)
 void VCpu::writeMemory16(WORD segment, WORD offset, WORD value)
 {
     writeMemory16(FLAT(segment, offset), value);
+}
+
+void VCpu::writeMemory32(WORD segment, WORD offset, DWORD value)
+{
+    writeMemory32(FLAT(segment, offset), value);
 }
 
 BYTE* VCpu::codeMemory() const
