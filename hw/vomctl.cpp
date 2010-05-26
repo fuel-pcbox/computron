@@ -39,9 +39,9 @@ VomCtl::in8(WORD port)
         case 0x01: // Get CPU type
             return VOMIT_CPU_LEVEL;
         case 0x02: // RAM size LSB
-            return LSB(g_cpu->memory_size);
+            return LSB(g_cpu->baseMemorySize() / 1024);
         case 0x03: // RAM size MSB
-            return MSB(g_cpu->memory_size);
+            return MSB(g_cpu->baseMemorySize() / 1024);
         }
         vlog( VM_VOMCTL, "Invalid register %02X read", m_registerIndex );
         break;

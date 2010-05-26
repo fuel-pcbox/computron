@@ -129,7 +129,7 @@ public:
     BYTE rmbyte;
 
     // Memory size in KiB (will be reported by BIOS)
-    WORD memory_size;
+    DWORD baseMemorySize() const { return m_baseMemorySize; }
 
     // RAM
     BYTE* memory;
@@ -295,6 +295,10 @@ private:
     // Actual CS:IP (when we started fetching the instruction)
     WORD m_baseCS;
     WORD m_baseIP;
+
+    // FIXME: Don't befriend this... thing.
+    friend void unspeakable_abomination();
+    DWORD m_baseMemorySize;
 };
 
 extern VCpu* g_cpu;

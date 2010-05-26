@@ -11,7 +11,7 @@
 void dump_cpu(VCpu* cpu)
 {
     vlog(VM_DUMPMSG, "CPU level: %u", VOMIT_CPU_LEVEL);
-    vlog(VM_DUMPMSG, "Memory size: %dK", cpu->memory_size);
+    vlog(VM_DUMPMSG, "Base mem: %dK", cpu->baseMemorySize());
 #ifdef VOMIT_PREFETCH_QUEUE
     vlog(VM_DUMPMSG, "Prefetch queue: %d bytes", cpu->m_prefetchQueueSize);
 #else

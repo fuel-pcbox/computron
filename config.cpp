@@ -34,10 +34,8 @@ static disk_type_t floppy_types[] =
     { 0L,       0, 0,    0,   0, 0 }
 };
 
-static void
-unspeakable_abomination()
+void unspeakable_abomination()
 {
-
     FILE *fconf, *ftmp;
     char curline[256], *curtok; char lfname[MAX_FN_LENGTH];
     byte tb;
@@ -168,8 +166,8 @@ unspeakable_abomination()
             else if( !reloading && !strcmp( curtok, "memory" ))
             {
                 curtok = strtok(NULL, " \t\n");
-                g_cpu->memory_size = (word)(strtol(curtok, NULL, 10));
-                vlog(VM_INITMSG, "Memory size: %d kilobytes", g_cpu->memory_size);
+                g_cpu->m_baseMemorySize = strtol(curtok, NULL, 10) * 1024;
+                vlog(VM_INITMSG, "Memory size: %d kilobytes", g_cpu->baseMemorySize() / 1024);
             }
             else if( !reloading && !strcmp( curtok, "entry" ))
             {
