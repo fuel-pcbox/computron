@@ -293,6 +293,9 @@ public:
     void jumpRelative16(SIGNED_WORD displacement);
     void jumpAbsolute16(WORD offset);
 
+    // Execute the next instruction at CS:IP (huge switch version)
+    void decodeNext();
+
     // Execute the next instruction at CS:IP
     void exec();
 
@@ -306,11 +309,16 @@ public:
     void flushFetchQueue();
     BYTE fetchOpcodeByte();
     WORD fetchOpcodeWord();
+    DWORD fetchOpcodeDWord();
 #else
     void flushFetchQueue() {}
     BYTE fetchOpcodeByte() { return m_codeMemory[this->IP++]; }
     inline WORD fetchOpcodeWord();
+    inline DWORD fetchOpcodeDWord();
 #endif
+
+    void push32(DWORD value);
+    DWORD pop32();
 
     void push(WORD value);
     WORD pop();
@@ -327,12 +335,15 @@ public:
 
     inline BYTE* memoryPointer(WORD segment, WORD offset) const;
 
+    DWORD getEFlags() const;
     WORD getFlags() const;
+    void setEFlags(DWORD flags);
     void setFlags(WORD flags);
 
     inline bool evaluate(BYTE) const;
 
     void updateFlags(WORD value, BYTE bits);
+    void updateFlags32(DWORD value);
     void updateFlags16(WORD value);
     void updateFlags8(BYTE value);
     void mathFlags8(DWORD result, BYTE dest, BYTE src);
@@ -350,7 +361,7 @@ public:
     inline BYTE readMemory8(WORD segment, WORD offset) const;
     inline WORD readMemory16(DWORD address) const;
     inline WORD readMemory16(WORD segment, WORD offset) const;
-    inline DWORD readMemory32(DWORD address) const;
+    DWORD readMemory32(DWORD address) const;
     inline DWORD readMemory32(WORD segment, WORD offset) const;
     inline void writeMemory8(DWORD address, BYTE data);
     inline void writeMemory8(WORD segment, WORD offset, BYTE data);
@@ -459,6 +470,18 @@ private:
     WORD m_baseCS;
     DWORD m_baseEIP;
 
+    friend void _OperationSizeOverride(VCpu*);
+    friend void _AddressSizeOverride(VCpu*);
+
+    enum AddressSize { AddressSize16, AddressSize32 };
+    AddressSize m_addressSize;
+
+    enum OperationSize { OperationSize16, OperationSize32 };
+    OperationSize m_operationSize;
+
+    AddressSize addressSize() const { return m_addressSize; }
+    OperationSize operationSize() const { return m_operationSize; }
+
 #ifdef VOMIT_PREFETCH_QUEUE
     BYTE* m_prefetchQueue;
     BYTE m_prefetchQueueIndex;
@@ -503,6 +526,7 @@ BYTE cpu_xor8(VCpu*, BYTE, BYTE);
 WORD cpu_or16(VCpu*, WORD, WORD);
 WORD cpu_and16(VCpu*, WORD, WORD);
 WORD cpu_xor16(VCpu*, WORD, WORD);
+DWORD cpu_and32(VCpu*, DWORD, DWORD);
 
 DWORD cpu_shl(VCpu*, word, byte, byte);
 DWORD cpu_shr(VCpu*, word, byte, byte);
@@ -827,10 +851,27 @@ void _PUSH_imm16(VCpu*);
 
 void _IMUL_reg16_RM16_imm8(VCpu*);
 
+// 80386+ INSTRUCTIONS
+
 void _SGDT(VCpu*);
 void _LGDT(VCpu*);
 void _SIDT(VCpu*);
 void _LIDT(VCpu*);
+
+void _PUSHFD(VCpu*);
+void _POPFD(VCpu*);
+void _PUSH_imm32(VCpu*);
+
+void _POP_EAX(VCpu*);
+void _POP_EBX(VCpu*);
+void _POP_ECX(VCpu*);
+void _POP_EDX(VCpu*);
+void _POP_EBP(VCpu*);
+void _POP_ESP(VCpu*);
+void _POP_ESI(VCpu*);
+void _POP_EDI(VCpu*);
+
+void _TEST_RM32_imm32(VCpu*);
 
 // INLINE IMPLEMENTATIONS
 
@@ -895,27 +936,8 @@ WORD VCpu::readMemory16(WORD segment, WORD offset) const
     return readMemory16(vomit_toFlatAddress(segment, offset));
 }
 
-DWORD VCpu::readMemory32(DWORD address) const
-{
-    if (IS_VGA_MEMORY(address))
-        return this->vgaMemory->read16(address) | (this->vgaMemory->read16(address + 2) << 16);
-#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
-    if (!m_dirtMap[address] || !m_dirtMap[address + 1] || !m_dirtMap[address + 2] || !m_dirtMap[address + 3])
-        vlog(VM_MEMORYMSG, "%04X:%04X: Uninitialized read from %08X", getBaseCS(), getBaseIP(), address);
-#endif
-    return vomit_read32FromPointer(reinterpret_cast<DWORD*>(this->memory + address));
-}
-
 DWORD VCpu::readMemory32(WORD segment, WORD offset) const
 {
-#if VOMIT_CPU_LEVEL == 0
-    // FIXME: Broken for VGA read at 0xFFFF although that's beyond unlikely to occur.
-    if (offset == 0xFFFF)
-        return this->memory[vomit_toFlatAddress(segment, offset)] |
-               (this->memory[vomit_toFlatAddress(segment, 0)] << 8) |
-               (this->memory[vomit_toFlatAddress(segment, 1)] << 16) |
-               (this->memory[vomit_toFlatAddress(segment, 2)] << 24);
-#endif
     return readMemory32(vomit_toFlatAddress(segment, offset));
 }
 
@@ -986,6 +1008,17 @@ WORD VCpu::fetchOpcodeWord()
 #endif
 }
 #endif
+
+DWORD VCpu::fetchOpcodeDWord()
+{
+    DWORD d = *reinterpret_cast<DWORD*>(&m_codeMemory[getIP()]);
+    this->IP += 4;
+#ifdef VOMIT_BIG_ENDIAN
+#error IMPLEMENT ME
+#else
+    return d;
+#endif
+}
 
 bool VCpu::tick()
 {

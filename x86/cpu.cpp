@@ -12,9 +12,40 @@ bool g_vomit_exit_main_loop = 0;
 // The black hole of 386 segment selectors.
 static WORD segment_dummy;
 
-void _OpOverride(VCpu*)
+#define CALL_HANDLER(handler16, handler32) if (m_operationSize == OperationSize16) { handler16(this); } else { handler32(this); }
+
+void VCpu::decodeNext()
 {
-    vlog(VM_LOGMSG, "Operation size override detected!");
+    this->opcode = fetchOpcodeByte();
+
+    switch (this->opcode) {
+    case 0x5B: CALL_HANDLER(_POP_BX, _POP_EBX); break;
+    case 0x68: CALL_HANDLER(_PUSH_imm16, _PUSH_imm32); break;
+    case 0x9C: CALL_HANDLER(_PUSHF, _PUSHFD); break;
+    case 0x9D: CALL_HANDLER(_POPF, _POPFD); break;
+    case 0xF7: CALL_HANDLER(_TEST_RM16_imm16, _TEST_RM32_imm32); break;
+    default:
+        this->rmbyte = fetchOpcodeByte();
+        vlog(VM_ALERT, "FFFFUUUU unsupported opcode %02X /%u or %02X %02X", this->opcode, vomit_modRMRegisterPart(this->rmbyte), this->opcode, this->rmbyte);
+        vm_exit(0);
+    }
+}
+
+void _OperationSizeOverride(VCpu*cpu)
+{
+    VCpu::OperationSize previousOperationSize = cpu->m_operationSize;
+
+    if (cpu->m_operationSize == VCpu::OperationSize16)
+        cpu->m_operationSize = VCpu::OperationSize32;
+    else
+        cpu->m_operationSize = VCpu::OperationSize16;
+
+    //vlog(VM_LOGMSG, "%04X:%08X Operation size override detected! Opcode: %02X ", cpu->getBaseCS(), cpu->getBaseEIP(), cpu->readMemory8(cpu->getCS(), cpu->getEIP()));
+    //dump_all(cpu);
+
+    cpu->decodeNext();
+
+    cpu->m_operationSize = previousOperationSize;
 }
 
 void VCpu::init()
@@ -106,7 +137,7 @@ void VCpu::registerDefaultOpcodeHandlers()
     setOpcodeHandler(0x00, 0xFF, _UNSUPP           );
 
     // Stubs
-    setOpcodeHandler(0x66, 0x66, _OpOverride       );
+    setOpcodeHandler(0x66, 0x66, _OperationSizeOverride);
 
     // FPU stubs
     setOpcodeHandler(0x9B, 0x9B, _ESCAPE           );
@@ -716,8 +747,29 @@ void _LEA_reg16_mem16(VCpu* cpu)
 
 void VCpu::writeMemory32(DWORD address, DWORD data)
 {
+#warning FIXME: writeMemory32 to VGA memory
+#if 0
+    if (IS_VGA_MEMORY(address)) {
+        this->vgaMemory->write8(address, value);
+        return;
+    }
+#endif
     DWORD* ptr = reinterpret_cast<DWORD*>(this->memory + address);
     vomit_write32ToPointer(ptr, data);
+}
+
+DWORD VCpu::readMemory32(DWORD address) const
+{
+#warning FIXME: readMemory32 from VGA memory
+#if 0
+    if (IS_VGA_MEMORY(address))
+        return this->vgaMemory->read16(address) | (this->vgaMemory->read16(address + 2) << 16);
+#endif
+#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
+    if (!m_dirtMap[address] || !m_dirtMap[address + 1] || !m_dirtMap[address + 2] || !m_dirtMap[address + 3])
+        vlog(VM_MEMORYMSG, "%04X:%04X: Uninitialized read from %08X", getBaseCS(), getBaseIP(), address);
+#endif
+    return vomit_read32FromPointer(reinterpret_cast<DWORD*>(this->memory + address));
 }
 
 #ifdef VOMIT_DEBUG

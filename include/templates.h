@@ -41,6 +41,12 @@
 		cpu->updateModRM16(helper ## 16(cpu, value, cpu->fetchOpcodeWord())); \
 	}
 
+#define DEFAULT_RM32_imm32(helper, name) \
+	void name(VCpu* cpu) { \
+		WORD value = cpu->readModRM32(cpu->rmbyte); \
+		cpu->updateModRM32(cpu, helper ## 32(cpu, value, cpu->fetchOpcodeDWord())); \
+	}
+
 #define DEFAULT_RM16_imm8(helper, name) \
 	void name(VCpu* cpu) { \
 		WORD value = cpu->readModRM16(cpu->rmbyte); \
@@ -91,6 +97,12 @@
 	void name(VCpu* cpu) { \
 		WORD value = cpu->readModRM16(cpu->rmbyte); \
 		helper ## 16(cpu, value, cpu->fetchOpcodeWord()); \
+	}
+
+#define READONLY_RM32_imm32( helper, name ) \
+	void name(VCpu* cpu) { \
+		DWORD value = cpu->readModRM32(cpu->rmbyte); \
+		helper ## 32(cpu, value, cpu->fetchOpcodeDWord()); \
 	}
 
 #define READONLY_RM16_imm8(helper, name) \

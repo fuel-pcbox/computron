@@ -59,10 +59,8 @@ DWORD VCpu::readModRM32(BYTE rmbyte)
     // NOTE: We don't need resolveModRM32() at the moment.
     BYTE* registerPointer = reinterpret_cast<BYTE*>(resolveModRM8(rmbyte));
 
-    if (registerPointer) {
-        vlog(VM_CPUMSG, "PANIC: Attempt to read 32-bit register.");
-        vm_exit(1);
-    }
+    if (registerPointer)
+        return *((DWORD*)registerPointer);
 
     return readMemory32(m_lastModRMSegment, m_lastModRMOffset);
 }

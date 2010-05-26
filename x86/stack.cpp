@@ -4,10 +4,23 @@
 #include "vcpu.h"
 #include "debug.h"
 
+void VCpu::push32(DWORD value)
+{
+    this->regs.W.SP -= 4;
+    writeMemory32(getSS(), this->regs.W.SP, value);
+}
+
 void VCpu::push(WORD value)
 {
     this->regs.W.SP -= 2;
     writeMemory16(getSS(), this->regs.W.SP, value);
+}
+
+DWORD VCpu::pop32()
+{
+    DWORD d = readMemory32(getSS(), this->regs.W.SP);
+    this->regs.W.SP += 4;
+    return d;
 }
 
 WORD VCpu::pop()
@@ -15,12 +28,6 @@ WORD VCpu::pop()
     WORD w = readMemory16(getSS(), this->regs.W.SP);
     this->regs.W.SP += 2;
     return w;
-}
-
-void _PUSH_SP_8086_80186(VCpu* cpu)
-{
-    // PUSH SP will use the value of SP *after* pushing on Intel's 8086 and 80186.
-    cpu->push(cpu->regs.W.SP - 2);
 }
 
 void _PUSH_AX(VCpu* cpu)
@@ -71,6 +78,11 @@ void _POP_AX(VCpu* cpu)
 void _POP_BX(VCpu* cpu)
 {
     cpu->regs.W.BX = cpu->pop();
+}
+
+void _POP_EBX(VCpu* cpu)
+{
+    cpu->regs.D.EBX = cpu->pop32();
 }
 
 void _POP_CX(VCpu* cpu)
@@ -158,6 +170,16 @@ void _POP_SS(VCpu* cpu)
     cpu->SS = cpu->pop();
 }
 
+void _PUSHFD(VCpu* cpu)
+{
+    cpu->push32(cpu->getEFlags());
+}
+
+void _PUSH_imm32(VCpu* cpu)
+{
+    cpu->push32(cpu->fetchOpcodeDWord());
+}
+
 void _PUSHF(VCpu* cpu)
 {
     cpu->push(cpu->getFlags());
@@ -166,4 +188,9 @@ void _PUSHF(VCpu* cpu)
 void _POPF(VCpu* cpu)
 {
     cpu->setFlags(cpu->pop());
+}
+
+void _POPFD(VCpu* cpu)
+{
+    cpu->setEFlags(cpu->pop32());
 }

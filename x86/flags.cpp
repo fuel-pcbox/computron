@@ -27,6 +27,13 @@ void vomit_cpu_setAF(VCpu* cpu, DWORD result, WORD src, WORD dest)
     cpu->setAF((((result ^ (src ^ dest)) & 0x10) >> 4) & 1);
 }
 
+void VCpu::updateFlags32(DWORD data)
+{
+    this->PF = parity_table[data & 0xFF];
+    this->SF = (data & 0x80000000) != 0;
+    this->ZF = data == 0;
+}
+
 void VCpu::updateFlags16(WORD data)
 {
     setPF(parity_table[data & 0xFF]);
@@ -163,4 +170,22 @@ WORD VCpu::getFlags() const
         | (getIF() << 9)
         | (getDF() << 10)
         | (getOF() << 11);
+}
+
+void VCpu::setEFlags(DWORD eflags)
+{
+    setFlags(eflags & 0xFFFF);
+
+    this->IOPL = (eflags & 0x3000) >> 12;
+    this->NT = (eflags & 0x4000) != 0;
+    this->RF = (eflags & 0x10000) != 0;
+    this->VM = (eflags & 0x20000) != 0;
+}
+
+DWORD VCpu::getEFlags() const
+{
+    return this->CF | (this->PF << 2) | (this->AF << 4) | (this->ZF << 6) | (this->SF << 7) | (this->TF << 8) | (this->IF << 9) | (this->DF << 10) | (this->OF << 11)
+         | (this->IOPL << 12)
+         | (this->NT << 14)
+         | (this->RF << 16);
 }

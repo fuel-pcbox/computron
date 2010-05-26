@@ -40,6 +40,7 @@ READONLY_reg8_RM8(cpu_and, _TEST_reg8_RM8)
 READONLY_reg16_RM16(cpu_and, _TEST_reg16_RM16)
 READONLY_RM8_imm8(cpu_and, _TEST_RM8_imm8)
 READONLY_RM16_imm16(cpu_and, _TEST_RM16_imm16)
+READONLY_RM32_imm32(cpu_and, _TEST_RM32_imm32)
 READONLY_RM16_imm8(cpu_and, _TEST_RM16_imm8)
 READONLY_AL_imm8(cpu_and, _TEST_AL_imm8)
 READONLY_AX_imm16(cpu_and, _TEST_AX_imm16)
@@ -111,6 +112,15 @@ WORD cpu_and16(VCpu* cpu, WORD dest, WORD src)
 {
     WORD result = dest & src;
     cpu->updateFlags16(result);
+    cpu->setOF(0);
+    cpu->setCF(0);
+    return result;
+}
+
+DWORD cpu_and32(VCpu* cpu, DWORD dest, DWORD src)
+{
+    DWORD result = dest & src;
+    cpu->updateFlags32(result);
     cpu->setOF(0);
     cpu->setCF(0);
     return result;
