@@ -42,6 +42,11 @@ static void __rep(VCpu* cpu, byte opcode, bool should_equal)
     case 0x36: SET_SEGMENT_PREFIX(cpu, SS); break;
     case 0x3E: SET_SEGMENT_PREFIX(cpu, DS); break;
 
+#if VOMIT_CPU_LEVEL >= 1
+    case 0x6E: DO_REP(_OUTSB); return;
+    case 0x6F: DO_REP(_OUTSW); return;
+#endif
+
     case 0xA4: DO_REP(_MOVSB); return;
     case 0xA5: DO_REP(_MOVSW); return;
     case 0xAA: DO_REP(_STOSB); return;
