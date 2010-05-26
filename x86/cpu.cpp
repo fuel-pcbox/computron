@@ -320,8 +320,6 @@ void VCpu::registerDefaultOpcodeHandlers()
     setOpcodeHandler(0xC0, 0xC0, _wrap_0xC0        );
     setOpcodeHandler(0xC1, 0xC1, _wrap_0xC1        );
 
-    setOpcodeHandler(0x54, 0x54, _PUSH_SP_8086_80186);
-
 #if VOMIT_CPU_LEVEL <= 1
     // Specialized PUSH SP for Intel 8086/80186
     setOpcodeHandler(0x54, 0x54, _PUSH_SP_8086_80186);
