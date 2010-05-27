@@ -13,8 +13,6 @@
 #include "debug.h"
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <time.h>
 #include <sys/time.h>
 
@@ -57,11 +55,7 @@ void vm_handleE6(VCpu* cpu)
 	struct	tm *t;
 	time_t	curtime;
 	struct	timeval timv;
-	byte	b1, b2, b3, b4;
-	byte	*fdata;
-	int		yr;
-	dword	tick_count, tracks, track;
-	word	head;
+	dword	tick_count, tracks;
 	byte	drive;
 	FILE	*fpdrv;
 
