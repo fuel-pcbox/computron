@@ -59,6 +59,22 @@ class VgaMemory;
 class VCpu
 {
 public:
+
+    enum {
+        RegisterAL, RegisterCL, RegisterDL, RegisterBL,
+        RegisterAH, RegisterCH, RegisterDH, RegisterBH
+    };
+
+    enum {
+        RegisterAX, RegisterCX, RegisterDX, RegisterBX,
+        RegisterSP, RegisterBP, RegisterSI, RegisterDI
+    };
+
+    enum {
+        RegisterES, RegisterCS, RegisterSS, RegisterDS,
+        RegisterFS, RegisterGS
+    };
+
     union {
         struct {
             DWORD EAX, EBX, ECX, EDX;
@@ -360,31 +376,6 @@ void vomit_cpu_modrm_update16(VCpu*, WORD value);
 
 void* vomit_cpu_modrm_resolve8(VCpu*, BYTE rm);
 void* vomit_cpu_modrm_resolve16(VCpu*, BYTE rm);
-
-#define REG_AL  0
-#define REG_CL  1
-#define REG_DL  2
-#define REG_BL  3
-#define REG_AH  4
-#define REG_CH  5
-#define REG_DH  6
-#define REG_BH  7
-
-#define REG_AX  0
-#define REG_CX  1
-#define REG_DX  2
-#define REG_BX  3
-#define REG_SP  4
-#define REG_BP  5
-#define REG_SI  6
-#define REG_DI  7
-
-#define REG_ES  0
-#define REG_CS  1
-#define REG_SS  2
-#define REG_DS  3
-#define REG_FS  4
-#define REG_GS  5
 
 void _UNSUPP(VCpu*);
 void _ESCAPE(VCpu*);

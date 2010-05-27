@@ -29,7 +29,7 @@ void _MOV_RM16_seg(VCpu* cpu)
     vomit_cpu_modrm_write16(cpu, rm, *cpu->tseg[rmreg(rm)]);
 
 #ifdef VOMIT_DEBUG
-    if (rmreg(rm) == REG_FS || rmreg(rm) == REG_GS) {
+    if (rmreg(rm) == VCpu::RegisterFS || rmreg(rm) == VCpu::RegisterGS) {
         vlog(VM_CPUMSG, "%04X:%04X: Read from 80386 segment register");
     }
 #endif
@@ -44,7 +44,7 @@ void _MOV_seg_RM16(VCpu* cpu)
     *cpu->tseg[rmreg(rm)] = vomit_cpu_modrm_read16(cpu, rm);
 
 #ifdef VOMIT_DEBUG
-    if (rmreg(rm) == REG_FS || rmreg(rm) == REG_GS) {
+    if (rmreg(rm) == VCpu::RegisterFS || rmreg(rm) == VCpu::RegisterGS) {
         vlog(VM_CPUMSG, "%04X:%04X: Write to 80386 segment register");
     }
 #endif

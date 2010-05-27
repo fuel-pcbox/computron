@@ -42,30 +42,30 @@ void VCpu::init()
     m_prefetchQueueIndex = 0;
 #endif
 
-    this->treg16[REG_AX] = &this->regs.W.AX;
-    this->treg16[REG_BX] = &this->regs.W.BX;
-    this->treg16[REG_CX] = &this->regs.W.CX;
-    this->treg16[REG_DX] = &this->regs.W.DX;
-    this->treg16[REG_SP] = &this->regs.W.SP;
-    this->treg16[REG_BP] = &this->regs.W.BP;
-    this->treg16[REG_SI] = &this->regs.W.SI;
-    this->treg16[REG_DI] = &this->regs.W.DI;
+    this->treg16[RegisterAX] = &this->regs.W.AX;
+    this->treg16[RegisterBX] = &this->regs.W.BX;
+    this->treg16[RegisterCX] = &this->regs.W.CX;
+    this->treg16[RegisterDX] = &this->regs.W.DX;
+    this->treg16[RegisterSP] = &this->regs.W.SP;
+    this->treg16[RegisterBP] = &this->regs.W.BP;
+    this->treg16[RegisterSI] = &this->regs.W.SI;
+    this->treg16[RegisterDI] = &this->regs.W.DI;
 
-    this->treg8[REG_AH] = &this->regs.B.AH;
-    this->treg8[REG_BH] = &this->regs.B.BH;
-    this->treg8[REG_CH] = &this->regs.B.CH;
-    this->treg8[REG_DH] = &this->regs.B.DH;
-    this->treg8[REG_AL] = &this->regs.B.AL;
-    this->treg8[REG_BL] = &this->regs.B.BL;
-    this->treg8[REG_CL] = &this->regs.B.CL;
-    this->treg8[REG_DL] = &this->regs.B.DL;
+    this->treg8[RegisterAH] = &this->regs.B.AH;
+    this->treg8[RegisterBH] = &this->regs.B.BH;
+    this->treg8[RegisterCH] = &this->regs.B.CH;
+    this->treg8[RegisterDH] = &this->regs.B.DH;
+    this->treg8[RegisterAL] = &this->regs.B.AL;
+    this->treg8[RegisterBL] = &this->regs.B.BL;
+    this->treg8[RegisterCL] = &this->regs.B.CL;
+    this->treg8[RegisterDL] = &this->regs.B.DL;
 
-    this->tseg[REG_CS] = &this->CS;
-    this->tseg[REG_DS] = &this->DS;
-    this->tseg[REG_ES] = &this->ES;
-    this->tseg[REG_SS] = &this->SS;
-    this->tseg[REG_FS] = &this->FS;
-    this->tseg[REG_GS] = &this->GS;
+    this->tseg[RegisterCS] = &this->CS;
+    this->tseg[RegisterDS] = &this->DS;
+    this->tseg[RegisterES] = &this->ES;
+    this->tseg[RegisterSS] = &this->SS;
+    this->tseg[RegisterFS] = &this->FS;
+    this->tseg[RegisterGS] = &this->GS;
     this->tseg[6] = &segment_dummy;
     this->tseg[7] = &segment_dummy;
 
