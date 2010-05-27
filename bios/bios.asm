@@ -7,6 +7,9 @@
 %define VOMCTL_CONSOLE_WRITE 0xD7
 %define LEGACY_VM_CALL 0xE6
 
+%define CMOS_REGISTER 0x70
+%define CMOS_DATA 0x71
+
 %define VGA_PALETTE_REGISTER 0x3C0
 %define VGA_DAC_READ_ADDRESS 0x3C7
 %define VGA_DAC_WRITE_ADDRESS 0x3C8
@@ -474,14 +477,14 @@ _bios_init_data:
     jmp     .cCend
 
 .checkMem:
-    mov     al, 0x03            ; VomCtl[03] = RAM size MSB
-    out     VOMCTL_REGISTER, al
-    in      al, VOMCTL_REGISTER
+    mov     al, 0x16            ; CMOS[16] = Base memory size MSB
+    out     CMOS_REGISTER, al
+    in      al, CMOS_DATA
     xchg    al, ah
 
-    mov     al, 0x02            ; VomCtl[02] = RAM size LSB
-    out     VOMCTL_REGISTER, al
-    in      al, VOMCTL_REGISTER
+    mov     al, 0x15            ; CMOS[15] = Base memory size LSB
+    out     CMOS_REGISTER, al
+    in      al, CMOS_DATA
 
     call    print_integer
 
