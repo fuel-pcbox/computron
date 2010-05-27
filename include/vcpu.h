@@ -39,7 +39,6 @@ inline WORD signext(BYTE b)
 }
 
 #define rmreg(b) (b>>3&7)    /* Extracts RegID from RM byte. */
-#define MODRM_ISREG(b) (((b)&0xC0)==0xC0)
 
 #define LSW(d) ((d)&0xFFFF)
 #define MSW(d) (((d)&0xFFFF0000)>>16)

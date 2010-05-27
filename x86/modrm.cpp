@@ -2,6 +2,11 @@
 #include "vcpu.h"
 #include "debug.h"
 
+static inline bool modrmIsRegister(BYTE rm)
+{
+    return (rm & 0xC0) == 0xC0;
+}
+
 #define DEFAULT_TO_SS if (cpu->CurrentSegment != &cpu->SegmentPrefix ) { segment = cpu->SS; }
 static void *s_last_modrm_ptr = 0L;
 static int s_last_is_register = 0;
@@ -12,7 +17,7 @@ static word s_last_modrm_offset = 0;
 void vomit_cpu_modrm_write16(VCpu* cpu, BYTE rmbyte, WORD value)
 {
     BYTE* rmp = (BYTE*)vomit_cpu_modrm_resolve16(cpu, rmbyte);
-    if (MODRM_ISREG(rmbyte))
+    if (modrmIsRegister(rmbyte))
         *((WORD*)rmp) = value;
     else
         cpu->writeMemory16(s_last_modrm_segment, s_last_modrm_offset, value);
@@ -21,7 +26,7 @@ void vomit_cpu_modrm_write16(VCpu* cpu, BYTE rmbyte, WORD value)
 void vomit_cpu_modrm_write8(VCpu* cpu, BYTE rmbyte, BYTE value)
 {
     BYTE* rmp = (BYTE*)vomit_cpu_modrm_resolve8(cpu, rmbyte);
-    if (MODRM_ISREG(rmbyte))
+    if (modrmIsRegister(rmbyte))
         *rmp = value;
     else
         cpu->writeMemory8(s_last_modrm_segment, s_last_modrm_offset, value);
@@ -30,7 +35,7 @@ void vomit_cpu_modrm_write8(VCpu* cpu, BYTE rmbyte, BYTE value)
 WORD vomit_cpu_modrm_read16(VCpu* cpu, BYTE rmbyte)
 {
     BYTE* rmp = (BYTE*)vomit_cpu_modrm_resolve16(cpu, rmbyte);
-    if (MODRM_ISREG(rmbyte))
+    if (modrmIsRegister(rmbyte))
         return *((WORD*)rmp);
     return cpu->readMemory16(s_last_modrm_segment, s_last_modrm_offset);
 }
@@ -38,7 +43,7 @@ WORD vomit_cpu_modrm_read16(VCpu* cpu, BYTE rmbyte)
 BYTE vomit_cpu_modrm_read8(VCpu* cpu, BYTE rmbyte)
 {
     BYTE* rmp = (BYTE*)vomit_cpu_modrm_resolve8(cpu, rmbyte);
-    if (MODRM_ISREG(rmbyte))
+    if (modrmIsRegister(rmbyte))
         return *rmp;
     return cpu->readMemory8(s_last_modrm_segment, s_last_modrm_offset);
 }
@@ -64,7 +69,7 @@ DWORD vomit_cpu_modrm_read32(VCpu* cpu, byte rmbyte)
     // NOTE: We don't need modrm_resolve32() at the moment.
     BYTE* rmp = (BYTE*)vomit_cpu_modrm_resolve8(cpu, rmbyte);
 
-    if (MODRM_ISREG(rmbyte)) {
+    if (modrmIsRegister(rmbyte)) {
         vlog(VM_CPUMSG, "PANIC: Attempt to read 32-bit register.");
         vm_exit(1);
     }
