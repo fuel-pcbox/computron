@@ -29,6 +29,15 @@ void VCpu::init()
         vm_exit(1);
     }
 
+#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
+    m_dirtMap = new bool[1048576 + 65536];
+    if (!m_dirtMap) {
+        vlog(VM_INITMSG, "Insufficient memory available.");
+        vm_exit(1);
+    }
+    memset(m_dirtMap, 0, 1048576 + 65536);
+#endif
+
     memset(this->memory, 0, 1048576 + 65536);
 
 	this->vgaMemory = new VgaMemory(this);
@@ -347,6 +356,10 @@ void VCpu::kill()
 #ifdef VOMIT_PREFETCH_QUEUE
     delete [] m_prefetchQueue;
     m_prefetchQueue = 0;
+#endif
+
+#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
+    delete [] m_dirtMap;
 #endif
 
     delete [] this->memory;

@@ -77,7 +77,11 @@ byte floppy_read(byte drive, word cylinder, word head, word sector, word count, 
     }
     fflush(fpdrv);
     fseek(fpdrv, lba*drv_sectsize[drive], SEEK_SET);
-    fread(g_cpu->memory+(segment*16)+(offset), drv_sectsize[drive], count, fpdrv);
+    ssize_t bytesRead = fread(g_cpu->memory+(segment*16)+(offset), drv_sectsize[drive], count, fpdrv);
+#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
+    for (DWORD address = segment * 16 + offset; address < segment * 16 + offset + bytesRead; ++address)
+        g_cpu->markDirty(address);
+#endif
     fclose(fpdrv);
     *fderr = FD_NO_ERROR;
     return FD_NO_ERROR;

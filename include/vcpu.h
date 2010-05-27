@@ -3,6 +3,10 @@
 
 #include "types.h"
 
+#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
+#include "debug.h"
+#endif
+
 // MACROS AND CONVENIENCE METHODS
 #define IS_VGA_MEMORY(address) ((address) >= 0xA0000 && (address) < 0xB0000)
 
@@ -17,6 +21,15 @@ inline void vomit_write16ToPointer(WORD* pointer, WORD value)
     *pointer = V_BYTESWAP(value);
 #else
     *pointer = value;
+#endif
+}
+
+inline DWORD vomit_read32FromPointer(DWORD* pointer)
+{
+#ifdef VOMIT_BIG_ENDIAN
+    return V_BYTESWAP(*pointer);
+#else
+    return *pointer;
 #endif
 }
 
@@ -275,6 +288,8 @@ public:
     inline BYTE readMemory8(WORD segment, WORD offset) const;
     inline WORD readMemory16(DWORD address) const;
     inline WORD readMemory16(WORD segment, WORD offset) const;
+    inline DWORD readMemory32(DWORD address) const;
+    inline DWORD readMemory32(WORD segment, WORD offset) const;
     inline void writeMemory8(DWORD address, BYTE data);
     inline void writeMemory8(WORD segment, WORD offset, BYTE data);
     inline void writeMemory16(DWORD address, WORD data);
@@ -299,6 +314,10 @@ public:
 
     // Dumps registers, flags & stack
     void dumpAll();
+
+#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
+    void markDirty(DWORD address) { m_dirtMap[address] = true; }
+#endif
 
 private:
     void setOpcodeHandler(BYTE rangeStart, BYTE rangeEnd, OpcodeHandler handler);
@@ -332,6 +351,10 @@ private:
 
     WORD* m_currentSegment;
     WORD m_segmentPrefix;
+
+#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
+    bool* m_dirtMap;
+#endif
 
     // FIXME: Don't befriend this... thing.
     friend void unspeakable_abomination();
@@ -719,11 +742,18 @@ WORD VCpu::readUnmappedMemory16(DWORD address) const
 
 void VCpu::writeUnmappedMemory8(DWORD address, BYTE value)
 {
+#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
+    m_dirtMap[address] = true;
+#endif
     this->memory[address] = value;
 }
 
 void VCpu::writeUnmappedMemory16(DWORD address, WORD value)
 {
+#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
+    m_dirtMap[address] = true;
+    m_dirtMap[address + 1] = true;
+#endif
     vomit_write16ToPointer(reinterpret_cast<WORD*>(this->memory + address), value);
 }
 
@@ -731,6 +761,10 @@ BYTE VCpu::readMemory8(DWORD address) const
 {
     if (IS_VGA_MEMORY(address))
         return this->vgaMemory->read8(address);
+#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
+    if (!m_dirtMap[address])
+        vlog(VM_MEMORYMSG, "%04X:%04X: Uninitialized read from %08X", getBaseCS(), getBaseIP(), address);
+#endif
     return this->memory[address];
 }
 
@@ -743,6 +777,10 @@ WORD VCpu::readMemory16(DWORD address) const
 {
     if (IS_VGA_MEMORY(address))
         return this->vgaMemory->read16(address);
+#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
+    if (!m_dirtMap[address] || !m_dirtMap[address + 1])
+        vlog(VM_MEMORYMSG, "%04X:%04X: Uninitialized read from %08X", getBaseCS(), getBaseIP(), address);
+#endif
     return vomit_read16FromPointer(reinterpret_cast<WORD*>(this->memory + address));
 }
 
@@ -756,12 +794,40 @@ WORD VCpu::readMemory16(WORD segment, WORD offset) const
     return readMemory16(vomit_toFlatAddress(segment, offset));
 }
 
+DWORD VCpu::readMemory32(DWORD address) const
+{
+    if (IS_VGA_MEMORY(address))
+        return this->vgaMemory->read16(address) | (this->vgaMemory->read16(address + 2) << 16);
+#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
+    if (!m_dirtMap[address] || !m_dirtMap[address + 1] || !m_dirtMap[address + 2] || !m_dirtMap[address + 3])
+        vlog(VM_MEMORYMSG, "%04X:%04X: Uninitialized read from %08X", getBaseCS(), getBaseIP(), address);
+#endif
+    return vomit_read32FromPointer(reinterpret_cast<DWORD*>(this->memory + address));
+}
+
+DWORD VCpu::readMemory32(WORD segment, WORD offset) const
+{
+#if VOMIT_CPU_LEVEL == 0
+    // FIXME: Broken for VGA read at 0xFFFF although that's beyond unlikely to occur.
+    if (offset == 0xFFFF)
+        return this->memory[vomit_toFlatAddress(segment, offset)] |
+               (this->memory[vomit_toFlatAddress(segment, 0)] << 8) |
+               (this->memory[vomit_toFlatAddress(segment, 1)] << 16) |
+               (this->memory[vomit_toFlatAddress(segment, 2)] << 24);
+#endif
+    return readMemory32(vomit_toFlatAddress(segment, offset));
+}
+
 void VCpu::writeMemory8(DWORD address, BYTE value)
 {
     if (IS_VGA_MEMORY(address)) {
         this->vgaMemory->write8(address, value);
         return;
     }
+
+#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
+    m_dirtMap[address] = true;
+#endif
 
     this->memory[address] = value;
 }
@@ -777,6 +843,11 @@ void VCpu::writeMemory16(DWORD address, WORD value)
         this->vgaMemory->write16(address, value);
         return;
     }
+
+#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
+    m_dirtMap[address] = true;
+    m_dirtMap[address + 1] = true;
+#endif
 
     WORD* ptr = reinterpret_cast<WORD*>(this->memory + address);
     vomit_write16ToPointer(ptr, value);

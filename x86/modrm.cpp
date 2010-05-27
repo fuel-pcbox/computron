@@ -10,7 +10,6 @@ static inline bool modrmIsRegister(BYTE rm)
 #define DEFAULT_TO_SS if (!cpu->hasSegmentPrefix()) { segment = cpu->getSS(); }
 
 static void *s_last_modrm_ptr = 0L;
-static int s_last_is_register = 0;
 
 static word s_last_modrm_segment = 0;
 static word s_last_modrm_offset = 0;
@@ -18,7 +17,7 @@ static word s_last_modrm_offset = 0;
 void vomit_cpu_modrm_write16(VCpu* cpu, BYTE rmbyte, WORD value)
 {
     BYTE* rmp = (BYTE*)vomit_cpu_modrm_resolve16(cpu, rmbyte);
-    if (modrmIsRegister(rmbyte))
+    if (rmp)
         *((WORD*)rmp) = value;
     else
         cpu->writeMemory16(s_last_modrm_segment, s_last_modrm_offset, value);
@@ -27,7 +26,7 @@ void vomit_cpu_modrm_write16(VCpu* cpu, BYTE rmbyte, WORD value)
 void vomit_cpu_modrm_write8(VCpu* cpu, BYTE rmbyte, BYTE value)
 {
     BYTE* rmp = (BYTE*)vomit_cpu_modrm_resolve8(cpu, rmbyte);
-    if (modrmIsRegister(rmbyte))
+    if (rmp)
         *rmp = value;
     else
         cpu->writeMemory8(s_last_modrm_segment, s_last_modrm_offset, value);
@@ -36,7 +35,7 @@ void vomit_cpu_modrm_write8(VCpu* cpu, BYTE rmbyte, BYTE value)
 WORD vomit_cpu_modrm_read16(VCpu* cpu, BYTE rmbyte)
 {
     BYTE* rmp = (BYTE*)vomit_cpu_modrm_resolve16(cpu, rmbyte);
-    if (modrmIsRegister(rmbyte))
+    if (rmp)
         return *((WORD*)rmp);
     return cpu->readMemory16(s_last_modrm_segment, s_last_modrm_offset);
 }
@@ -44,14 +43,14 @@ WORD vomit_cpu_modrm_read16(VCpu* cpu, BYTE rmbyte)
 BYTE vomit_cpu_modrm_read8(VCpu* cpu, BYTE rmbyte)
 {
     BYTE* rmp = (BYTE*)vomit_cpu_modrm_resolve8(cpu, rmbyte);
-    if (modrmIsRegister(rmbyte))
+    if (rmp)
         return *rmp;
     return cpu->readMemory8(s_last_modrm_segment, s_last_modrm_offset);
 }
 
 void vomit_cpu_modrm_update16(VCpu* cpu, WORD value)
 {
-    if (s_last_is_register)
+    if (s_last_modrm_ptr)
         *((WORD*)s_last_modrm_ptr) = value;
     else
         cpu->writeMemory16(s_last_modrm_segment, s_last_modrm_offset, value);
@@ -59,7 +58,7 @@ void vomit_cpu_modrm_update16(VCpu* cpu, WORD value)
 
 void vomit_cpu_modrm_update8(VCpu* cpu, BYTE value)
 {
-    if (s_last_is_register)
+    if (s_last_modrm_ptr)
         *((BYTE*)s_last_modrm_ptr) = value;
     else
         cpu->writeMemory8(s_last_modrm_segment, s_last_modrm_offset, value);
@@ -70,12 +69,12 @@ DWORD vomit_cpu_modrm_read32(VCpu* cpu, byte rmbyte)
     // NOTE: We don't need modrm_resolve32() at the moment.
     BYTE* rmp = (BYTE*)vomit_cpu_modrm_resolve8(cpu, rmbyte);
 
-    if (modrmIsRegister(rmbyte)) {
+    if (rmp) {
         vlog(VM_CPUMSG, "PANIC: Attempt to read 32-bit register.");
         vm_exit(1);
     }
 
-    return rmp[0] | (rmp[1]<<8) | (rmp[2]<<16) | (rmp[3]<<24);
+    return cpu->readMemory32(s_last_modrm_segment, s_last_modrm_offset);
 }
 
 void *vomit_cpu_modrm_resolve8(VCpu* cpu, BYTE rmbyte)
@@ -85,7 +84,6 @@ void *vomit_cpu_modrm_resolve8(VCpu* cpu, BYTE rmbyte)
 
     switch (rmbyte & 0xC0) {
         case 0x00:
-            s_last_is_register = 0;
             switch (rmbyte & 0x07) {
                 case 0: offset = cpu->regs.W.BX + cpu->regs.W.SI; break;
                 case 1: offset = cpu->regs.W.BX + cpu->regs.W.DI; break;
@@ -98,10 +96,9 @@ void *vomit_cpu_modrm_resolve8(VCpu* cpu, BYTE rmbyte)
             }
             s_last_modrm_segment = segment;
             s_last_modrm_offset = offset;
-            s_last_modrm_ptr = &cpu->memory[(segment<<4) + offset];
+            s_last_modrm_ptr = 0;
             break;
         case 0x40:
-            s_last_is_register = 0;
             offset = signext( cpu->fetchOpcodeByte() );
             switch (rmbyte & 0x07) {
                 case 0: offset += cpu->regs.W.BX + cpu->regs.W.SI; break;
@@ -115,10 +112,9 @@ void *vomit_cpu_modrm_resolve8(VCpu* cpu, BYTE rmbyte)
             }
             s_last_modrm_segment = segment;
             s_last_modrm_offset = offset;
-            s_last_modrm_ptr = &cpu->memory[(segment<<4) + offset];
+            s_last_modrm_ptr = 0;
             break;
         case 0x80:
-            s_last_is_register = 0;
             offset = cpu->fetchOpcodeWord();
             switch (rmbyte & 0x07) {
                 case 0: offset += cpu->regs.W.BX + cpu->regs.W.SI; break;
@@ -132,10 +128,9 @@ void *vomit_cpu_modrm_resolve8(VCpu* cpu, BYTE rmbyte)
             }
             s_last_modrm_segment = segment;
             s_last_modrm_offset = offset;
-            s_last_modrm_ptr = &cpu->memory[(segment<<4) + offset];
+            s_last_modrm_ptr = 0;
             break;
         case 0xC0:
-            s_last_is_register = 1;
             switch (rmbyte & 0x07) {
                 case 0: s_last_modrm_ptr = &cpu->regs.B.AL; break;
                 case 1: s_last_modrm_ptr = &cpu->regs.B.CL; break;
@@ -158,7 +153,6 @@ void * vomit_cpu_modrm_resolve16(VCpu* cpu, BYTE rmbyte)
 
     switch (rmbyte & 0xC0) {
         case 0x00:
-            s_last_is_register = 0;
             switch (rmbyte & 0x07) {
                 case 0: offset = cpu->regs.W.BX + cpu->regs.W.SI; break;
                 case 1: offset = cpu->regs.W.BX + cpu->regs.W.DI; break;
@@ -171,10 +165,9 @@ void * vomit_cpu_modrm_resolve16(VCpu* cpu, BYTE rmbyte)
             }
             s_last_modrm_segment = segment;
             s_last_modrm_offset = offset;
-            s_last_modrm_ptr = &cpu->memory[(segment<<4) + offset];
+            s_last_modrm_ptr = 0;
             break;
         case 0x40:
-            s_last_is_register = 0;
             offset = signext( cpu->fetchOpcodeByte() );
             switch (rmbyte & 0x07) {
                 case 0: offset += cpu->regs.W.BX + cpu->regs.W.SI; break;
@@ -188,10 +181,9 @@ void * vomit_cpu_modrm_resolve16(VCpu* cpu, BYTE rmbyte)
             }
             s_last_modrm_segment = segment;
             s_last_modrm_offset = offset;
-            s_last_modrm_ptr = &cpu->memory[(segment<<4) + offset];
+            s_last_modrm_ptr = 0;
             break;
         case 0x80:
-            s_last_is_register = 0;
             offset = cpu->fetchOpcodeWord();
             switch (rmbyte & 0x07) {
                 case 0: offset += cpu->regs.W.BX + cpu->regs.W.SI; break;
@@ -205,10 +197,9 @@ void * vomit_cpu_modrm_resolve16(VCpu* cpu, BYTE rmbyte)
             }
             s_last_modrm_segment = segment;
             s_last_modrm_offset = offset;
-            s_last_modrm_ptr = &cpu->memory[(segment<<4) + offset];
+            s_last_modrm_ptr = 0;
             break;
         case 0xC0:
-            s_last_is_register = 1;
             switch (rmbyte & 0x07) {
                 case 0: s_last_modrm_ptr = &cpu->regs.W.AX; break;
                 case 1: s_last_modrm_ptr = &cpu->regs.W.CX; break;

@@ -68,11 +68,18 @@ void unspeakable_abomination()
                     vm_exit(1);
                 }
 
-                if (!fread(g_cpu->memory+lseg*16+loff, 1, MAX_FILESIZE, ftmp)) {
+                size_t bytesRead = fread(g_cpu->memory+lseg*16+loff, 1, MAX_FILESIZE, ftmp);
+
+                if (!bytesRead) {
                     vlog(VM_CONFIGMSG, "Failure reading from %s", lfname);
                     vm_exit(1);
                 }
                 fclose(ftmp);
+
+#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
+                for (DWORD address = lseg * 16 + loff; address < lseg * 16 + loff + bytesRead; ++address)
+                    g_cpu->markDirty(address);
+#endif
             }
             else if( !reloading && !strcmp( curtok, "setbyte" ))
             {
