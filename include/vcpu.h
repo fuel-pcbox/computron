@@ -157,12 +157,6 @@ public:
     typedef void (*OpcodeHandler) (VCpu*);
     OpcodeHandler opcode_handler[0x100];
 
-#ifdef VOMIT_PREFETCH_QUEUE
-    BYTE* m_prefetchQueue;
-    BYTE m_prefetchQueueIndex;
-    BYTE m_prefetchQueueSize;
-#endif
-
 #ifndef __cplusplus
 #error Vomit is a C++ program nowadays
 #endif
@@ -287,6 +281,12 @@ public:
 
     void registerDefaultOpcodeHandlers();
 
+    // Dumps some basic information about this CPU
+    void dump();
+
+    // Dumps registers, flags & stack
+    void dumpAll();
+
 private:
     void setOpcodeHandler(BYTE rangeStart, BYTE rangeEnd, OpcodeHandler handler);
 
@@ -310,6 +310,12 @@ private:
     // Actual CS:IP (when we started fetching the instruction)
     WORD m_baseCS;
     WORD m_baseIP;
+
+#ifdef VOMIT_PREFETCH_QUEUE
+    BYTE* m_prefetchQueue;
+    BYTE m_prefetchQueueIndex;
+    BYTE m_prefetchQueueSize;
+#endif
 
     // FIXME: Don't befriend this... thing.
     friend void unspeakable_abomination();
@@ -794,6 +800,7 @@ BYTE* VCpu::memoryPointer(WORD segment, WORD offset) const
     return this->memory + vomit_toFlatAddress(segment, offset);
 }
 
+#ifndef VOMIT_PREFETCH_QUEUE
 WORD VCpu::fetchOpcodeWord()
 {
     WORD w = *reinterpret_cast<WORD*>(&m_codeMemory[getIP()]);
@@ -804,6 +811,7 @@ WORD VCpu::fetchOpcodeWord()
     return w;
 #endif
 }
+#endif
 
 bool VCpu::tick()
 {

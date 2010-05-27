@@ -507,7 +507,7 @@ void _UNSUPP(VCpu* cpu)
 {
     // We've come across an unsupported instruction, log it, then vector to the "illegal instruction" ISR.
     vlog(VM_ALERT, "%04X:%04X: Unsupported opcode %02X", cpu->getBaseCS(), cpu->getBaseIP(), cpu->opcode);
-    dump_all(cpu);
+    cpu->dumpAll();
     cpu->exception(6);
 }
 

@@ -110,7 +110,7 @@ void VCpu::debugger()
 	m_inDebugger = true;
 
 	if (m_debugOneStep) {
-		dump_all(this);
+		dumpAll();
 		m_debugOneStep = false;
 	}
 
@@ -134,11 +134,11 @@ void VCpu::debugger()
 			}
 
 			if (!strcmp(curtok, "c"))
-				dump_cpu(this);
+				dump();
 			if (!strcmp(curtok, "reconf"))
 				config_reload();
 			else if (!strcmp(curtok, "r"))
-				dump_all(this);
+				dumpAll();
 			else if (!strcmp(curtok, "i"))
 				dump_ivt();
 			else if ( curtok[0] == 'd' ) {
