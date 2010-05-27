@@ -177,7 +177,7 @@ _bios_post:                         ; Power On Self-Test ;-)
 
     mov     ax, 0xF000
     mov     es, ax
-    mov     [es:0xFFFE], word 0x00FE ; IBM XT(82) - 0x00FF is original IBM PC
+    mov     [es:0xFFFE], word 0x00FC ; IBM AT
 
     mov     si, bios_date
     mov     di, 0xFFF5
