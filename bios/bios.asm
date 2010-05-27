@@ -177,7 +177,7 @@ _bios_post:                         ; Power On Self-Test ;-)
 
     mov     ax, 0xF000
     mov     es, ax
-    mov     [es:0xFFFE], word 0x00FC ; IBM AT
+    mov     [es:0xFFFE], word 0x01FC ; IBM AT
 
     mov     si, bios_date
     mov     di, 0xFFF5
@@ -1582,7 +1582,7 @@ _bios_interrupt15:
     cmp     ah, 0x24
     je      .unsupported
     cmp     ah, 0xc0
-    je      .getSysConf
+    je      .getSystemConfigurationParameters
     cmp     ah, 0xc1
     je      .unsupported
     cmp     ah, 0x41
@@ -1591,9 +1591,9 @@ _bios_interrupt15:
     je      .fn0x88
     stub    0x15
     jmp     .end
-.getSysConf:
-    clc
-    xor     ah, ah
+.getSystemConfigurationParameters:
+    push    .end
+    jmp     bios_get_system_configuration_parameters
     jmp     .end
 .ps2mouse:
     out     0xE1, al
@@ -1784,6 +1784,27 @@ rtc_get_current_time:
     pop     ax
     ret
 
+; Interrupt 15, C0
+; Get System Configuration Parameters
+;
+; Input:
+;   AH = C0
+;
+; Output:
+;   CF = 0 if successful
+;   AH = only relevant if CF is set
+;   ES:BX = pointer to system descriptor table in ROM
+
+bios_get_system_configuration_parameters:
+
+    clc
+
+    mov     bx, cs
+    mov     es, bx
+    mov     bx, system_descriptor_table
+
+    ret
+
 ; Interrupt 1A, 04
 ; Read Date From RTC
 ;
@@ -1956,6 +1977,14 @@ reset_ide_drive:
     bios_date          db  "11/02/03"
 
     msg_page_changed   db "Display page changed (not fully supported)", 0
+
+system_descriptor_table:
+    dw 8               ; Length of table
+    db 0xFC            ; IBM AT (same as F000:FFFE)
+    db 0x01            ;        (same as F000:FFFF)
+    db 0x01            ; BIOS revision level
+    db 01100000b       ; Feature information
+    dw 0
 
     ; this pretty much violates the whole ROM concept
     temp               dw  0x0000
