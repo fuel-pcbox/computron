@@ -17,31 +17,31 @@ static QSet<WORD> s_ignorePorts;
 
 void _OUT_imm8_AL(VCpu* cpu)
 {
-    vomit_cpu_out(cpu, cpu->fetchOpcodeByte(), cpu->regs.B.AL);
+    cpu->out(cpu->fetchOpcodeByte(), cpu->regs.B.AL);
 }
 
 void _OUT_imm8_AX(VCpu* cpu)
 {
     WORD port = cpu->fetchOpcodeByte();
-    vomit_cpu_out(cpu, port, cpu->regs.B.AL );
-    vomit_cpu_out(cpu, port + 1, cpu->regs.B.AH);
+    cpu->out(port, cpu->regs.B.AL );
+    cpu->out(port + 1, cpu->regs.B.AH);
 }
 
 void _OUT_DX_AL(VCpu* cpu)
 {
-    vomit_cpu_out(cpu, cpu->regs.W.DX, cpu->regs.B.AL );
+    cpu->out(cpu->regs.W.DX, cpu->regs.B.AL );
 }
 
 void _OUT_DX_AX(VCpu* cpu)
 {
-    vomit_cpu_out(cpu, cpu->regs.W.DX, cpu->regs.B.AL);
-    vomit_cpu_out(cpu, cpu->regs.W.DX + 1, cpu->regs.B.AH);
+    cpu->out(cpu->regs.W.DX, cpu->regs.B.AL);
+    cpu->out(cpu->regs.W.DX + 1, cpu->regs.B.AH);
 }
 
 void _OUTSB(VCpu* cpu)
 {
     BYTE b = cpu->readMemory8(*(cpu->CurrentSegment), cpu->regs.W.SI);
-    vomit_cpu_out(cpu, cpu->regs.W.DX, b);
+    cpu->out(cpu->regs.W.DX, b);
 
     /* Modify SI according to DF */
     if (cpu->getDF() == 0)
@@ -54,8 +54,8 @@ void _OUTSW(VCpu* cpu)
 {
     BYTE lsb = cpu->readMemory8(*(cpu->CurrentSegment), cpu->regs.W.SI);
     BYTE msb = cpu->readMemory8(*(cpu->CurrentSegment), cpu->regs.W.SI + 1);
-    vomit_cpu_out(cpu, cpu->regs.W.DX, lsb);
-    vomit_cpu_out(cpu, cpu->regs.W.DX + 1, msb);
+    cpu->out(cpu->regs.W.DX, lsb);
+    cpu->out(cpu->regs.W.DX + 1, msb);
 
     /* Modify SI according to DF */
     if (cpu->getDF() == 0)
@@ -66,32 +66,32 @@ void _OUTSW(VCpu* cpu)
 
 void _IN_AL_imm8(VCpu* cpu)
 {
-    cpu->regs.B.AL = vomit_cpu_in(cpu, cpu->fetchOpcodeByte());
+    cpu->regs.B.AL = cpu->in(cpu->fetchOpcodeByte());
 }
 
 void _IN_AX_imm8(VCpu* cpu)
 {
     WORD port = cpu->fetchOpcodeByte();
-    cpu->regs.B.AL = vomit_cpu_in(cpu, port);
-    cpu->regs.B.AH = vomit_cpu_in(cpu, port + 1);
+    cpu->regs.B.AL = cpu->in(port);
+    cpu->regs.B.AH = cpu->in(port + 1);
 }
 
 void _IN_AL_DX(VCpu* cpu)
 {
-    cpu->regs.B.AL = vomit_cpu_in(cpu, cpu->regs.W.DX);
+    cpu->regs.B.AL = cpu->in(cpu->regs.W.DX);
 }
 
 void _IN_AX_DX(VCpu* cpu)
 {
-    cpu->regs.B.AL = vomit_cpu_in(cpu, cpu->regs.W.DX);
-    cpu->regs.B.AH = vomit_cpu_in(cpu, cpu->regs.W.DX + 1);
+    cpu->regs.B.AL = cpu->in(cpu->regs.W.DX);
+    cpu->regs.B.AH = cpu->in(cpu->regs.W.DX + 1);
 }
 
-void vomit_cpu_out(VCpu* cpu, WORD port, BYTE value)
+void VCpu::out(WORD port, BYTE value)
 {
 #ifdef VOMIT_DEBUG
-    if( iopeek )
-        vlog(VM_IOMSG, "[%04X:%04X] cpu_out: %02X --> %04X", cpu->getBaseCS(), cpu->getBaseIP(), value, port);
+    if (iopeek)
+        vlog(VM_IOMSG, "[%04X:%04X] VCpu::out: %02X --> %04X", getBaseCS(), getBaseIP(), value, port);
 #endif
 
     if (Vomit::IODevice::writeDevices().contains(port)) {
@@ -105,14 +105,14 @@ void vomit_cpu_out(VCpu* cpu, WORD port, BYTE value)
         return;
     }
 
-    s_outputHandlers[port](cpu, port, value);
+    s_outputHandlers[port](this, port, value);
 }
 
-BYTE vomit_cpu_in(VCpu* cpu, WORD port)
+BYTE VCpu::in(WORD port)
 {
 #ifdef VOMIT_DEBUG
     if (iopeek)
-        vlog(VM_IOMSG, "[%04X:%04X] vomit_cpu_in: %04X", cpu->getBaseCS(), cpu->getBaseIP(), port);
+        vlog(VM_IOMSG, "[%04X:%04X] VCpu::in: %04X", getBaseCS(), getBaseIP(), port);
 #endif
 
     if (Vomit::IODevice::readDevices().contains(port))
@@ -124,7 +124,7 @@ BYTE vomit_cpu_in(VCpu* cpu, WORD port)
         return 0xFF;
     }
 
-    return s_inputHandlers[port](cpu, port);
+    return s_inputHandlers[port](this, port);
 }
 
 void vm_listen(WORD port, InputHandler inputHandler, OutputHandler outputHandler)

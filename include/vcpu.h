@@ -237,6 +237,16 @@ public:
     void push(WORD value);
     WORD pop();
 
+    /*!
+        Writes an 8-bit value to an output port.
+     */
+    void out(WORD port, BYTE value);
+
+    /*!
+        Reads an 8-bit value from an input port.
+     */
+    BYTE in(WORD port);
+
     inline BYTE* memoryPointer(WORD segment, WORD offset) const;
 
     WORD getFlags();
@@ -323,16 +333,6 @@ private:
 };
 
 extern VCpu* g_cpu;
-
-/*!
-    Writes an 8-bit value to an output port.
- */
-void vomit_cpu_out(VCpu*, WORD port, BYTE value);
-
-/*!
-    Reads an 8-bit value from an input port.
- */
-BYTE vomit_cpu_in(VCpu*, WORD port);
 
 void vomit_cpu_setAF(VCpu*, DWORD result, WORD dest, WORD src);
 
