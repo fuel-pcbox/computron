@@ -236,11 +236,6 @@ void vm_handleE6(VCpu* cpu)
 		vlog( VM_ALERT, "INT 1A,05: Attempt to set BIOS date to %02X-%02X-%04X", cpu->regs.B.DH, cpu->regs.B.DL, cpu->regs.W.CX );
 		break;
 
-	case 0x0000:
-		vlog( VM_KILLMSG, "VM call 0 received -- shutting down" );
-		vm_exit( 0 );
-		break;
-
 	/* 0x3333: Is Drive Present?
 	 * DL = Drive
 	 *
