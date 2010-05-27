@@ -10,6 +10,16 @@
 %define CMOS_REGISTER 0x70
 %define CMOS_DATA 0x71
 
+%define CMOS_REG_RTC_SECOND 0x00
+%define CMOS_REG_RTC_MINUTE 0x02
+%define CMOS_REG_RTC_HOUR 0x04
+%define CMOS_REG_RTC_DAY_OF_WEEK 0x06
+%define CMOS_REG_RTC_DAY 0x07
+%define CMOS_REG_RTC_MONTH 0x08
+%define CMOS_REG_RTC_YEAR 0x09
+%define CMOS_REG_STATUS_B 0x0B
+%define CMOS_REG_RTC_CENTURY 0x32
+
 %define VGA_PALETTE_REGISTER 0x3C0
 %define VGA_DAC_READ_ADDRESS 0x3C7
 %define VGA_DAC_WRITE_ADDRESS 0x3C8
@@ -1697,10 +1707,20 @@ _bios_interrupt17:
 _bios_interrupt1a:
     or      ah, 0x00
     je      .getticks
+    cmp     ah, 0x02
+    je      .getCurrentTime
+    cmp     ah, 0x04
+    je      .getCurrentDate
     cmp     ah, 0x05
     jle     .vmcall
     stub    0x1A
     jmp     .end
+.getCurrentTime:
+    push    .end
+    jmp     rtc_get_current_time
+.getCurrentDate:
+    push    .end
+    jmp     rtc_get_current_date
 .vmcall:
     push    ax
     xchg    al, ah
@@ -1722,6 +1742,88 @@ _bios_interrupt1a:
     mov     ax, 0x1A00              ; optimization. DOS calls it all the time
     out     LEGACY_VM_CALL, al      ; and a speed boost can't hurt :-)
     iret
+
+; Interrupt 1A, 02
+; Read Time From RTC
+;
+; Input:
+;    AH = 02
+;
+; Output:
+;    CF = 0 if successful
+;    CH = hour in BCD
+;    CL = minute in BCD
+;    DH = second in BCD
+;    DL = 1 if DST option
+
+rtc_get_current_time:
+    push    ax
+
+    mov     al, CMOS_REG_RTC_SECOND
+    out     CMOS_REGISTER, al
+    in      al, CMOS_DATA
+    mov     dh, al
+
+    mov     al, CMOS_REG_RTC_MINUTE
+    out     CMOS_REGISTER, al
+    in      al, CMOS_DATA
+    mov     dh, al
+
+    mov     al, CMOS_REG_RTC_HOUR
+    out     CMOS_REGISTER, al
+    in      al, CMOS_DATA
+    mov     ch, al
+
+    mov     al, CMOS_REG_STATUS_B
+    out     CMOS_REGISTER, al
+    in      al, CMOS_DATA
+    mov     dl, al
+    and     dl, 0x01
+
+    clc
+    pop     ax
+    ret
+
+; Interrupt 1A, 04
+; Read Date From RTC
+;
+; Input:
+;   AH = 04
+;
+; Output:
+;   CF = 0 if successful
+;   CH = century in BCD
+;   CL = year in BCD
+;   DH = month in BCD
+;   DL = day in BCD
+
+rtc_get_current_date:
+    push    ax
+
+    mov     al, CMOS_REG_RTC_CENTURY
+    out     CMOS_REGISTER, al
+    in      al, CMOS_DATA
+    mov     ch, al
+
+    mov     al, CMOS_REG_RTC_YEAR
+    out     CMOS_REGISTER, al
+    in      al, CMOS_DATA
+    mov     cl, al
+
+    mov     al, CMOS_REG_RTC_MONTH
+    out     CMOS_REGISTER, al
+    in      al, CMOS_DATA
+    mov     dh, al
+
+    mov     al, CMOS_REG_RTC_DAY
+    out     CMOS_REGISTER, al
+    in      al, CMOS_DATA
+    mov     dl, al
+
+    clc
+    pop     ax
+    ret
+
 
 ide_init:
     push    ax

@@ -79,7 +79,7 @@ void vm_handleE6(VCpu* cpu)
 		}
 		break;
 	case 0x1A00:	/* INT 1A, 00: Get RTC tick count */
-		cpu->regs.B.AL = 1; /* midnight flag */
+		cpu->regs.B.AL = 0; /* midnight flag */
 		curtime = time((time_t) NULL);
 		t = localtime(&curtime);
 		tick_count = ( (t->tm_hour*3600) + (t->tm_min*60) + (t->tm_sec) ) * 18.206; /* semi-disgusting */
@@ -230,35 +230,6 @@ void vm_handleE6(VCpu* cpu)
 
 	case 0x1A01:	/* INT 1A, 01: Set tick count */
 		vlog( VM_ALERT, "INT 1A,01: Attempt to set tick counter to %lu", (dword)(cpu->regs.W.CX<<16)|cpu->regs.W.DX );
-		break;
-
-	case 0x1A02:    /* INT 1A, 02: Get BCD current time */
-		curtime = time((time_t)NULL);
-		t = localtime(&curtime);
-		cpu->regs.B.CH = ((t->tm_hour/10)<<4) | (t->tm_hour-((t->tm_hour/10)*10));
-		cpu->regs.B.CL = ((t->tm_min /10)<<4) | (t->tm_min -((t->tm_min /10)*10));
-		cpu->regs.B.DH = ((t->tm_sec /10)<<4) | (t->tm_sec -((t->tm_sec /10)*10));
-		/* BIOSes from 6/10/85 and on return Daylight Savings Time support status in DL. Fuck that. */
-		cpu->setCF(0);
-		break;
-
-	case 0x1A04:    /* INT 1A, 04: Get BCD date */
-		curtime = time((time_t)NULL);
-		t = localtime(&curtime);
-		yr = t->tm_year + 1900;
-		b1 = yr / 1000;
-		b2 = (yr - (b1*1000)) / 100;
-		cpu->regs.B.CH = (b1<<4) | b2;
-		b3 = (yr - (b1*1000) - (b2*100)) / 10;
-		b4 = yr - (b1*1000) - (b2*100) - (b3*10);
-		cpu->regs.B.CL = (b3<<4) | b4;
-		b1 = (t->tm_mon+1) / 10;
-		b2 = (t->tm_mon+1) - (b1*10);
-		cpu->regs.B.DH = (b1<<4) | b2;
-		b1 = t->tm_mday / 10;
-		b2 = t->tm_mday - (b1*10);
-		cpu->regs.B.DL = (b1<<4) | b2;
-		cpu->setCF(0);
 		break;
 
 	case 0x1A05:
