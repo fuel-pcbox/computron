@@ -17,8 +17,11 @@ public:
     BYTE in8(WORD port);
 
 private:
-    BYTE m_register[256];
+    BYTE m_statusRegisterB;
     BYTE m_registerIndex;
+
+    bool inBinaryClockMode() const;
+    bool in24HourMode() const;
 };
 
 }
