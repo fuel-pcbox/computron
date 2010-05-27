@@ -17,14 +17,32 @@
 %define VGA_DAC_WRITE_DATA 0x3C9
 %define VGA_STATUS_REGISTER 0x3DA
 
+%define BDA_COM1_IOBASE 0x400
+%define BDA_COM2_IOBASE 0x402
+%define BDA_COM3_IOBASE 0x404
+%define BDA_COM4_IOBASE 0x406
+%define BDA_LPT1_IOBASE 0x408
+%define BDA_LPT2_IOBASE 0x40A
+%define BDA_LPT3_IOBASE 0x40C
+%define BDA_BASE_MEMORY_SIZE 0x413
 %define BDA_CURRENT_VIDEO_MODE 0x449
 %define BDA_NUMBER_OF_SCREEN_COLUMNS 0x44A
 %define BDA_CURSOR_LOCATION_ARRAY 0x450
 %define BDA_CURSOR_ENDING_SCANLINE 0x460
 %define BDA_CURSOR_STARTING_SCANLINE 0x461
 %define BDA_CURRENT_VIDEO_PAGE 0x462
+%define BDA_VGA_IOBASE 0x463
 %define BDA_NUMBER_OF_SCREEN_ROWS 0x484
 %define BDA_VIDEO_MODE_OPTIONS 0x487
+
+%define COM1_IOBASE 0x3F8
+%define COM2_IOBASE 0x2F8
+%define COM3_IOBASE 0x3E8
+%define COM4_IOBASE 0x2E8
+%define LPT1_IOBASE 0x3BC
+%define LPT2_IOBASE 0x378
+%define LPT3_IOBASE 0x278
+%define VGA_IOBASE 0x3D4
 
 %macro stub 1
     push    ax
@@ -456,6 +474,15 @@ _bios_init_data:
     xor     ax, ax
     mov     ds, ax
 
+    mov     [BDA_COM1_IOBASE], word COM1_IOBASE
+    mov     [BDA_COM2_IOBASE], word COM2_IOBASE
+    mov     [BDA_COM3_IOBASE], word COM3_IOBASE
+    mov     [BDA_COM4_IOBASE], word COM4_IOBASE
+    mov     [BDA_LPT1_IOBASE], word LPT1_IOBASE
+    mov     [BDA_LPT2_IOBASE], word LPT2_IOBASE
+    mov     [BDA_LPT3_IOBASE], word LPT3_IOBASE
+    mov     [BDA_VGA_IOBASE], word VGA_IOBASE
+
     call    check_for_8086
     je      .print8086
 
@@ -486,13 +513,13 @@ _bios_init_data:
     out     CMOS_REGISTER, al
     in      al, CMOS_DATA
 
+    mov     [BDA_BASE_MEMORY_SIZE], ax
+
     call    print_integer
 
     mov     si, msg_kb_memory
     call    safe_putString
         
-    mov     word [0x0413], ax   ; Store it.
-
     mov     byte [0x0496], 0x0E ; 0x0E = CTRL & ALT depressed;
                                 ; 101/102 ext. kbd.
     mov     byte [0x0417], 0x00
