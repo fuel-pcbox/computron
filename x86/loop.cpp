@@ -37,10 +37,10 @@ void _LOOPNE_imm8(VCpu* cpu)
 static void __rep(VCpu* cpu, byte opcode, bool should_equal)
 {
     switch(opcode) {
-    case 0x26: SET_SEGMENT_PREFIX(cpu, ES); break;
-    case 0x2E: SET_SEGMENT_PREFIX(cpu, CS); break;
-    case 0x36: SET_SEGMENT_PREFIX(cpu, SS); break;
-    case 0x3E: SET_SEGMENT_PREFIX(cpu, DS); break;
+    case 0x26: cpu->setSegmentPrefix(cpu->getES()); break;
+    case 0x2E: cpu->setSegmentPrefix(cpu->getCS()); break;
+    case 0x36: cpu->setSegmentPrefix(cpu->getSS()); break;
+    case 0x3E: cpu->setSegmentPrefix(cpu->getDS()); break;
 
 #if VOMIT_CPU_LEVEL >= 1
     case 0x6E: DO_REP(_OUTSB); return;
@@ -65,19 +65,19 @@ static void __rep(VCpu* cpu, byte opcode, bool should_equal)
         return;
     }
 
-	// Recurse if this opcode was a segment prefix.
-	// FIXME: Infinite recursion IS possible here.
-	__rep(cpu, cpu->fetchOpcodeByte(), should_equal);
+    // Recurse if this opcode was a segment prefix.
+    // FIXME: Infinite recursion IS possible here.
+    __rep(cpu, cpu->fetchOpcodeByte(), should_equal);
 }
 
 void _REP(VCpu* cpu)
 {
-	__rep(cpu, cpu->fetchOpcodeByte(), true);
-	RESET_SEGMENT_PREFIX(cpu);
+    __rep(cpu, cpu->fetchOpcodeByte(), true);
+    cpu->resetSegmentPrefix();
 }
 
 void _REPNE(VCpu* cpu)
 {
-	__rep(cpu, cpu->fetchOpcodeByte(), false);
-	RESET_SEGMENT_PREFIX(cpu);
+    __rep(cpu, cpu->fetchOpcodeByte(), false);
+    cpu->resetSegmentPrefix();
 }

@@ -7,7 +7,8 @@ static inline bool modrmIsRegister(BYTE rm)
     return (rm & 0xC0) == 0xC0;
 }
 
-#define DEFAULT_TO_SS if (cpu->CurrentSegment != &cpu->SegmentPrefix ) { segment = cpu->SS; }
+#define DEFAULT_TO_SS if (!cpu->hasSegmentPrefix()) { segment = cpu->getSS(); }
+
 static void *s_last_modrm_ptr = 0L;
 static int s_last_is_register = 0;
 
@@ -79,7 +80,7 @@ DWORD vomit_cpu_modrm_read32(VCpu* cpu, byte rmbyte)
 
 void *vomit_cpu_modrm_resolve8(VCpu* cpu, BYTE rmbyte)
 {
-    WORD segment = *cpu->CurrentSegment;
+    WORD segment = cpu->currentSegment();
     WORD offset = 0x0000;
 
     switch (rmbyte & 0xC0) {
@@ -152,7 +153,7 @@ void *vomit_cpu_modrm_resolve8(VCpu* cpu, BYTE rmbyte)
 
 void * vomit_cpu_modrm_resolve16(VCpu* cpu, BYTE rmbyte)
 {
-    WORD segment = *cpu->CurrentSegment;
+    WORD segment = cpu->currentSegment();
     WORD offset = 0x0000;
 
     switch (rmbyte & 0xC0) {

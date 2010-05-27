@@ -48,9 +48,6 @@ inline WORD signext(BYTE b)
 
 #define FLAT(s,o) (((s)<<4)+(o))
 
-#define SET_SEGMENT_PREFIX(cpu, segment) do { (cpu)->SegmentPrefix = (cpu)->segment; (cpu)->CurrentSegment = &(cpu)->SegmentPrefix; } while(0);
-#define RESET_SEGMENT_PREFIX(cpu) do { (cpu)->CurrentSegment = &(cpu)->DS; } while(0);
-
 // VCPU MONSTROSITY
 
 class VgaMemory;
@@ -136,9 +133,19 @@ public:
         } B;
 #endif
     } regs;
-    WORD CS, DS, ES, SS, FS, GS, SegmentPrefix;
+    WORD CS, DS, ES, SS, FS, GS;
     WORD IP;
-    WORD* CurrentSegment;
+
+    WORD currentSegment() const { return *m_currentSegment; }
+    bool hasSegmentPrefix() const { return m_currentSegment == &m_segmentPrefix; }
+
+    void setSegmentPrefix(WORD segment)
+    {
+        m_segmentPrefix = segment;
+        m_currentSegment = &m_segmentPrefix;
+    }
+
+    void resetSegmentPrefix() { m_currentSegment = &this->DS; }
 
     BYTE opcode;
     BYTE rmbyte;
@@ -326,6 +333,9 @@ private:
     BYTE m_prefetchQueueIndex;
     BYTE m_prefetchQueueSize;
 #endif
+
+    WORD* m_currentSegment;
+    WORD m_segmentPrefix;
 
     // FIXME: Don't befriend this... thing.
     friend void unspeakable_abomination();

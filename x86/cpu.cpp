@@ -69,7 +69,8 @@ void VCpu::init()
     this->tseg[6] = &segment_dummy;
     this->tseg[7] = &segment_dummy;
 
-    this->CurrentSegment = &this->DS;
+    m_segmentPrefix = 0x0000;
+    m_currentSegment = &this->DS;
 
     jump(0xF000, 0x0000);
 
@@ -531,35 +532,35 @@ void _HLT(VCpu* cpu)
 
 void _XLAT(VCpu* cpu)
 {
-    cpu->regs.B.AL = cpu->readMemory8(*(cpu->CurrentSegment), cpu->regs.W.BX + cpu->regs.B.AL);
+    cpu->regs.B.AL = cpu->readMemory8(cpu->currentSegment(), cpu->regs.W.BX + cpu->regs.B.AL);
 }
 
 void _CS(VCpu* cpu)
 {
-    SET_SEGMENT_PREFIX(cpu, CS);
+    cpu->setSegmentPrefix(cpu->getCS());
     cpu->opcode_handler[cpu->fetchOpcodeByte()](cpu);
-    RESET_SEGMENT_PREFIX(cpu);
+    cpu->resetSegmentPrefix();
 }
 
 void _DS(VCpu* cpu)
 {
-    SET_SEGMENT_PREFIX(cpu, DS);
+    cpu->setSegmentPrefix(cpu->getDS());
     cpu->opcode_handler[cpu->fetchOpcodeByte()](cpu);
-    RESET_SEGMENT_PREFIX(cpu);
+    cpu->resetSegmentPrefix();
 }
 
 void _ES(VCpu* cpu)
 {
-    SET_SEGMENT_PREFIX(cpu, ES);
+    cpu->setSegmentPrefix(cpu->getES());
     cpu->opcode_handler[cpu->fetchOpcodeByte()](cpu);
-    RESET_SEGMENT_PREFIX(cpu);
+    cpu->resetSegmentPrefix();
 }
 
 void _SS(VCpu* cpu)
 {
-    SET_SEGMENT_PREFIX(cpu, SS);
+    cpu->setSegmentPrefix(cpu->getSS());
     cpu->opcode_handler[cpu->fetchOpcodeByte()](cpu);
-    RESET_SEGMENT_PREFIX(cpu);
+    cpu->resetSegmentPrefix();
 }
 
 void _XCHG_AX_reg16(VCpu* cpu)

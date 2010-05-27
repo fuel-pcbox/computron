@@ -156,21 +156,21 @@ void _MOV_DI_imm16(VCpu* cpu)
 
 void _MOV_AL_moff8(VCpu* cpu)
 {
-    cpu->regs.B.AL = cpu->readMemory8(*(cpu->CurrentSegment), cpu->fetchOpcodeWord());
+    cpu->regs.B.AL = cpu->readMemory8(cpu->currentSegment(), cpu->fetchOpcodeWord());
 }
 
 void _MOV_AX_moff16(VCpu* cpu)
 {
-    cpu->regs.W.AX = cpu->readMemory16(*(cpu->CurrentSegment), cpu->fetchOpcodeWord());
+    cpu->regs.W.AX = cpu->readMemory16(cpu->currentSegment(), cpu->fetchOpcodeWord());
 }
 
 void _MOV_moff8_AL(VCpu* cpu)
 {
-    cpu->writeMemory8(*(cpu->CurrentSegment), cpu->fetchOpcodeWord(), cpu->regs.B.AL);
+    cpu->writeMemory8(cpu->currentSegment(), cpu->fetchOpcodeWord(), cpu->regs.B.AL);
 }
 
 void _MOV_moff16_AX(VCpu* cpu)
 {
-    cpu->writeMemory16(*(cpu->CurrentSegment), cpu->fetchOpcodeWord(), cpu->regs.W.AX);
+    cpu->writeMemory16(cpu->currentSegment(), cpu->fetchOpcodeWord(), cpu->regs.W.AX);
 }
 
