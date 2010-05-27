@@ -164,10 +164,6 @@ public:
     typedef void (*OpcodeHandler) (VCpu*);
     OpcodeHandler opcode_handler[0x100];
 
-#ifndef __cplusplus
-#error Vomit is a C++ program nowadays
-#endif
-
     void init();
     void kill();
 
