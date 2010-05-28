@@ -8,7 +8,7 @@
 #include "debug.h"
 #include "disasm.h"
 
-void VCpu::dump()
+void VCpu::dump() const
 {
     vlog(VM_DUMPMSG, "CPU level: %u", VOMIT_CPU_LEVEL);
     vlog(VM_DUMPMSG, "Base mem: %dK", baseMemorySize());
@@ -19,66 +19,53 @@ void VCpu::dump()
 #endif
 }
 
-void dump_try(VCpu* cpu)
+int VCpu::dumpDisassembled(WORD segment, WORD offset) const
 {
-    printf("AX=%04X\nBX=%04X\nCX=%04X\nDX=%04X\n", cpu->regs.W.AX, cpu->regs.W.BX, cpu->regs.W.CX, cpu->regs.W.DX );
-    printf("SP=%04X\nBP=%04X\nSI=%04X\nDI=%04X\n", cpu->regs.W.SP, cpu->regs.W.BP, cpu->regs.W.SI, cpu->regs.W.DI );
-    printf("CS=%04X\nDS=%04X\nES=%04X\nSS=%04X\n", cpu->getCS(), cpu->DS, cpu->ES, cpu->SS );
-    printf("CF=%x\nPF=%x\nAF=%x\nZF=%x\nSF=%x\nIF=%x\nDF=%x\nOF=%x\nTF=%x\n",
-        cpu->getCF(), cpu->getPF(), cpu->getAF(), cpu->getZF(),
-        cpu->getSF(), cpu->getIF(), cpu->getDF(), cpu->getOF(),
-        cpu->getTF());
+    char disasm[64];
+    int width;
+    char buf[512];
+    char *p = buf;
+    byte *opcode;
+
+    opcode = memoryPointer(segment, offset);
+    width = insn_width(opcode);
+    disassemble(opcode, offset, disasm, sizeof(disasm));
+
+    p += sprintf(p, "%04X:%04X ", segment, offset);
+
+    for (int i = 0; i < (width ? width : 7); ++i)
+        p += sprintf(p, "%02X", opcode[i]);
+
+    for (int i = 0; i < (14-((width?width:7)*2)); ++i)
+        p += sprintf(p, " ");
+
+    p += sprintf(p, " %s", disasm);
+
+    vlog(VM_DUMPMSG, buf);
+
+    /* Recurse if this is a prefix instruction. */
+    if (*opcode == 0x26 || *opcode == 0x2E || *opcode == 0x36 || *opcode == 0x3E || *opcode == 0xF2 || *opcode == 0xF3)
+        width += dumpDisassembled(segment, offset + width);
+
+    return width;
 }
 
-int
-dump_disasm( word segment, word offset )
-{
-	char disasm[64];
-	int width, i;
-	char buf[512];
-	char *p = buf;
-	byte *opcode;
-
-	opcode = g_cpu->memory + (segment << 4) + offset;
-	width = insn_width( opcode );
-	disassemble( opcode, offset, disasm, sizeof(disasm) );
-
-	p += sprintf( p, "%04X:%04X ", segment, offset );
-
-	for( i = 0; i < (width ? width : 7); ++i )
-	{
-		p += sprintf( p, "%02X", opcode[i] );
-	}
-	for( i = 0; i < (14-((width?width:7)*2)); ++i )
-	{
-		p += sprintf( p, " " );
-	}
-
-	p += sprintf( p, " %s", disasm );
-
-	vlog( VM_DUMPMSG, buf );
-
-	/* Recurse if this is a prefix instruction. */
-	if( *opcode == 0x26 || *opcode == 0x2E || *opcode == 0x36 || *opcode == 0x3E || *opcode == 0xF2 || *opcode == 0xF3 )
-		width += dump_disasm( segment, offset + width );
-
-	return width;
-}
-
-void dump_regs(VCpu* cpu)
+#ifdef VOMIT_TRACE
+void VCpu::dumpTrace() const
 {
     vlog(VM_DUMPMSG,
         "AX=%04X BX=%04X CX=%04X DX=%04X SP=%04X BP=%04X SI=%04X DI=%04X "
         "CS=%04X DS=%04X ES=%04X SS=%04X C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u",
-        cpu->regs.W.AX, cpu->regs.W.BX, cpu->regs.W.CX, cpu->regs.W.DX,
-        cpu->regs.W.SP, cpu->regs.W.BP, cpu->regs.W.SI, cpu->regs.W.DI,
-        cpu->getCS(), cpu->DS, cpu->ES, cpu->SS,
-        cpu->getCF(), cpu->getPF(), cpu->getAF(), cpu->getZF(),
-        cpu->getSF(), cpu->getIF(), cpu->getDF(), cpu->getOF()
+        this->regs.W.AX, this->regs.W.BX, this->regs.W.CX, this->regs.W.DX,
+        this->regs.W.SP, this->regs.W.BP, this->regs.W.SI, this->regs.W.DI,
+        getCS(), getDS(), getES(), getSS(),
+        getCF(), getPF(), getAF(), getZF(),
+        getSF(), getIF(), getDF(), getOF()
     );
 }
+#endif
 
-void VCpu::dumpAll()
+void VCpu::dumpAll() const
 {
     WORD* stacky = reinterpret_cast<WORD*>(memoryPointer(getSS(), this->regs.W.SP));
     BYTE* csip = codeMemory();
@@ -105,49 +92,46 @@ void VCpu::dumpAll()
 #endif
 
     vlog(VM_DUMPMSG, "\n");
-    dump_disasm(getBaseCS(), getBaseIP());
+    dumpDisassembled(getBaseCS(), getBaseIP());
 }
 
-byte n(byte b) {					/* Nice it up for printing.		*/
-	if(b<0x20) b='.';				/* MS Debug style ;-)			*/
-	if((b>127)&&(b<160)) b='.';		/* No control characters		*/
-	return b;
+static inline BYTE n(BYTE b)
+{
+    if (b < 0x20 || ((b > 127) && (b < 160)))
+        return '.';
+    return b;
 }
 
-void dump_mem(word seg, word off, byte rows) {
-	int i; byte *p = g_cpu->memory + (seg*16) + off;
-	if(rows==0) rows=5;
-	for(i=0;i<rows;i++) {
-		vlog( VM_DUMPMSG,
-			"%04X:%04X   %02X %02X %02X %02X %02X %02X %02X %02X - %02X %02X %02X %02X %02X %02X %02X %02X   %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
-			seg, (off+i*16),
-			p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7],
-			p[8], p[9], p[10], p[11], p[12], p[13], p[14], p[15],
-			n(p[0]), n(p[1]), n(p[2]), n(p[3]), n(p[4]), n(p[5]), n(p[6]), n(p[7]),
-			n(p[8]), n(p[9]), n(p[10]), n(p[11]), n(p[12]), n(p[13]), n(p[14]), n(p[15])
-		);
-		p+=16;
-	}
+void VCpu::dumpMemory(WORD segment, WORD offset, int rows) const
+{
+    BYTE* p = memoryPointer(segment, offset);
+
+    for (int i = 0; i < rows; ++i) {
+        vlog(VM_DUMPMSG,
+            "%04X:%04X   %02X %02X %02X %02X %02X %02X %02X %02X - %02X %02X %02X %02X %02X %02X %02X %02X   %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+            segment, (offset+i*16),
+            p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7],
+            p[8], p[9], p[10], p[11], p[12], p[13], p[14], p[15],
+            n(p[0]), n(p[1]), n(p[2]), n(p[3]), n(p[4]), n(p[5]), n(p[6]), n(p[7]),
+            n(p[8]), n(p[9]), n(p[10]), n(p[11]), n(p[12]), n(p[13]), n(p[14]), n(p[15])
+        );
+        p+=16;
+    }
 }
 
 static word iseg(byte isr) { return g_cpu->readMemory16(isr * 4) + 2; }
 static word ioff(byte isr) { return g_cpu->readMemory16(isr * 4); }
 
-void
-dump_ivt()
+void VCpu::dumpIVT() const
 {
-	word i;
-
-	/* XXX: For alignment reasons, we're skipping INT FF */
-	for( i = 0; i < 0xFF; i += 4 )
-	{
-		vlog( VM_DUMPMSG,
-			"%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X",
-			i, iseg(i), ioff(i),
-			i+1, iseg(i+1), ioff(i+1),
-			i+2, iseg(i+2), ioff(i+2),
-			i+3, iseg(i+3), ioff(i+3)
-			//,i+4, iseg(i+4), ioff(i+4)
-		);
-	}
+    /* XXX: For alignment reasons, we're skipping INT FF */
+    for (int i = 0; i < 0xFF; i += 4) {
+        vlog(VM_DUMPMSG,
+            "%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X",
+            i, iseg(i), ioff(i),
+            i+1, iseg(i+1), ioff(i+1),
+            i+2, iseg(i+2), ioff(i+2),
+            i+3, iseg(i+3), ioff(i+3)
+        );
+    }
 }

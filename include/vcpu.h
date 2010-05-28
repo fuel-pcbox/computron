@@ -310,10 +310,22 @@ public:
     void registerDefaultOpcodeHandlers();
 
     // Dumps some basic information about this CPU
-    void dump();
+    void dump() const;
 
     // Dumps registers, flags & stack
-    void dumpAll();
+    void dumpAll() const;
+
+    // Dumps all ISR handler pointers (0000:0000 - 0000:03FF)
+    void dumpIVT() const;
+
+    void dumpMemory(WORD segment, WORD offset, int rows) const;
+
+    int dumpDisassembled(WORD segment, WORD offset) const;
+
+#ifdef VOMIT_TRACE
+    // Dumps registers (used by --trace)
+    void dumpTrace() const;
+#endif
 
 #ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
     void markDirty(DWORD address) { m_dirtMap[address] = true; }

@@ -26,8 +26,6 @@ private slots:
     void slotStopMachine();
     void slotRebootMachine();
 
-    void slotUpdateMemView();
-
     void onAboutToQuit();
 
 private:

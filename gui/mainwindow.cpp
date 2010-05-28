@@ -1,9 +1,6 @@
 #include "mainwindow.h"
 #include "worker.h"
-#include "console.h"
 #include "screen.h"
-#include "memview.h"
-#include "codeview.h"
 #include "debug.h"
 #include <QToolBar>
 #include <QAction>
@@ -28,12 +25,6 @@ struct MainWindow::Private
 
     Worker *worker;
     Screen *screen;
-    Console *console;
-    MemoryView memview;
-    CodeView codeview;
-
-    HexSpinBox *segmentEdit;
-    HexSpinBox *offsetEdit;
 
     QTimer syncTimer;
 
@@ -44,7 +35,6 @@ MainWindow::MainWindow(VCpu *cpu)
     : d(new Private)
 {
     d->worker = 0;
-    d->console = 0;
     d->screen = new Screen(cpu);
 
     setCpu(cpu);
@@ -60,42 +50,6 @@ MainWindow::MainWindow(VCpu *cpu)
     l->setMargin( 0 );
     widget->setLayout( l );
     l->addWidget(d->screen);
-    //l->addWidget( activityBar );
-
-#if 0
-    QTabWidget *tabs = new QTabWidget;
-    tabs->setTabPosition( QTabWidget::South );
-    l->addWidget( tabs );
-
-    tabs->addTab(d->console, tr("Console"));
-
-    QWidget *memTab = new QWidget;
-    QVBoxLayout *ml = new QVBoxLayout;
-    ml->setSpacing( 0 );
-    ml->setMargin( 0 );
-
-    d->segmentEdit = new HexSpinBox;
-    d->offsetEdit = new HexSpinBox;
-
-    QHBoxLayout *mhl = new QHBoxLayout;
-    mhl->addWidget( new QLabel( tr("Segment:") ));
-    mhl->addWidget( d->segmentEdit );
-    mhl->addWidget( new QLabel( tr("Offset:") ));
-    mhl->addWidget( d->offsetEdit );
-    ml->addLayout( mhl );
-
-    connect( d->segmentEdit, SIGNAL(valueChanged(int)), SLOT(slotUpdateMemView()) );
-    connect( d->offsetEdit, SIGNAL(valueChanged(int)), SLOT(slotUpdateMemView()) );
-
-    ml->addWidget( &d->memview );
-
-    memTab->setLayout( ml );
-    tabs->addTab( memTab, tr("Memory") );
-
-    tabs->addTab( &d->codeview, tr("Code") );
-
-    //tabs->setCurrentWidget( &d->codeview );
-#endif
 
     d->screen->setFocus();
 
@@ -231,11 +185,6 @@ Screen *MainWindow::screen()
 VCpu *MainWindow::cpu()
 {
     return d->cpu;
-}
-
-void MainWindow::slotUpdateMemView()
-{
-    d->memview.setAddress(d->segmentEdit->value(), d->offsetEdit->value());
 }
 
 void MainWindow::onAboutToQuit()

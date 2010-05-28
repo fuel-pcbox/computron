@@ -92,7 +92,7 @@ uasm( word seg, word off, int n )
 	int i;
 	for( i = 0; i < n; ++i )
 	{
-		int w = dump_disasm( seg, off );
+		int w = g_cpu->dumpDisassembled( seg, off );
 		if( !w )
 			break;
 		off += w;
@@ -140,7 +140,7 @@ void VCpu::debugger()
 			else if (!strcmp(curtok, "r"))
 				dumpAll();
 			else if (!strcmp(curtok, "i"))
-				dump_ivt();
+				dumpIVT();
 			else if ( curtok[0] == 'd' ) {
 				curtok = strtok(NULL, ": \n");
 				if(curtok!=0) {
@@ -148,12 +148,12 @@ void VCpu::debugger()
 					curtok = mseg ? strtok(NULL, " \n") : NULL;
 					if(curtok!=0) {
 						moff = strtol(curtok,NULL,16);
-						dump_mem(mseg, moff, 16);
+						g_cpu->dumpMemory(mseg, moff, 16);
 					} else {
-						dump_mem(getCS(), mseg, 16);
+						g_cpu->dumpMemory(getCS(), mseg, 16);
 					}
 				} else {
-					dump_mem(getCS(), (getIP() & 0xFFF0), 16);
+					g_cpu->dumpMemory(getCS(), (getIP() & 0xFFF0), 16);
 					curtok = &curcmd[0];
 				}
 			}

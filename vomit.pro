@@ -2,7 +2,7 @@ TEMPLATE = app
 TARGET = 
 DEPENDPATH += . x86 bios disasm gui hw include disasm/include
 INCLUDEPATH += . include disasm/include gui hw
-CXXFLAGS += -std=gnu++0x -W -Wall -Wshadow
+CXXFLAGS += -std=gnu++0x -O0 -W -Wall -Wshadow
 DEFINES += VOMIT_CPU_LEVEL=1
 DEFINES += VOMIT_DEBUG
 DEFINES += VOMIT_TRACE
@@ -16,12 +16,7 @@ CONFIG -= app_bundle
 
 RESOURCES = vomit.qrc
 
-HEADERS += gui/codeview.h \
-           gui/console.h \
-           gui/cpuview.h \
-           gui/hexspinbox.h \
-           gui/mainwindow.h \
-           gui/memview.h \
+HEADERS += gui/mainwindow.h \
            gui/screen.h \
            gui/worker.h \
            hw/iodevice.h \
@@ -63,13 +58,8 @@ SOURCES += config.cpp \
            disasm/disasm.cpp \
            disasm/disasm_modrm.cpp \
            disasm/tables.cpp \
-           gui/codeview.cpp \
-           gui/console.cpp \
-           gui/cpuview.cpp \
-           gui/hexspinbox.cpp \
            gui/main.cpp \
            gui/mainwindow.cpp \
-           gui/memview.cpp \
            gui/screen.cpp \
            gui/worker.cpp \
            hw/busmouse.cpp \

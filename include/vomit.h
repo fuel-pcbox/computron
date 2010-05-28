@@ -30,11 +30,6 @@ void busmouse_event();
 void busmouse_press( int button );
 void busmouse_release( int button );
 
-void dump_try();
-void dump_ivt();
-int dump_disasm( word, word );
-void dump_mem(word,word,byte);
-
 void dma_init();
 void fdc_init();
 void pic_init();
@@ -68,14 +63,11 @@ extern vomit_options_t options;
 
 #include "vcpu.h"
 
-void dump_all(VCpu*);
 void pic_service_irq(VCpu*);
 
 void vomit_ignore_io_port(WORD port);
 void vm_listen(word, byte (*)(VCpu*, word), void (*)(VCpu*, word, byte));
 void vm_call8(VCpu*, WORD port, BYTE value);
-void dump_cpu(VCpu*);
-void dump_regs(VCpu*);
 
 bool vomit_in_vretrace();
 
