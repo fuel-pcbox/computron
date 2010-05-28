@@ -113,19 +113,16 @@ BYTE pic_master_read(VCpu* cpu, WORD port)
     return 0;
 }
 
-void
-irq(BYTE num)
+void irq(BYTE num)
 {
     //vlog(VM_PICMSG, "IRQ %u", num);
 
-    if (num < 8)
-    {
+    if (num < 8) {
         master_irr |= 1 << num;
         master_isr |= 1 << num;
-    }
-    else
-    {
+    } else {
         slave_irr |= 1 << (num - 8);
+        slave_isr |= 1 << (num - 8);
     }
 
     UPDATE_PENDING_REQUESTS;
