@@ -22,13 +22,11 @@ void VCpu::dump() const
 int VCpu::dumpDisassembled(WORD segment, WORD offset) const
 {
     char disasm[64];
-    int width;
     char buf[512];
-    char *p = buf;
-    byte *opcode;
+    char* p = buf;
 
-    opcode = memoryPointer(segment, offset);
-    width = insn_width(opcode);
+    BYTE* opcode = memoryPointer(segment, offset);
+    int width = insn_width(opcode);
     disassemble(opcode, offset, disasm, sizeof(disasm));
 
     p += sprintf(p, "%04X:%04X ", segment, offset);
@@ -119,12 +117,12 @@ void VCpu::dumpMemory(WORD segment, WORD offset, int rows) const
     }
 }
 
-static word iseg(byte isr) { return g_cpu->readMemory16(isr * 4) + 2; }
-static word ioff(byte isr) { return g_cpu->readMemory16(isr * 4); }
+static WORD iseg(BYTE isr) { return g_cpu->readMemory16(isr * 4) + 2; }
+static WORD ioff(BYTE isr) { return g_cpu->readMemory16(isr * 4); }
 
 void VCpu::dumpIVT() const
 {
-    /* XXX: For alignment reasons, we're skipping INT FF */
+    // XXX: For alignment reasons, we're skipping INT FF
     for (int i = 0; i < 0xFF; i += 4) {
         vlog(VM_DUMPMSG,
             "%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X",

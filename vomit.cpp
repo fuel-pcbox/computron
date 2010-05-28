@@ -29,17 +29,16 @@ static void sigint_handler(int)
 void vomit_init()
 {
 #ifdef VOMIT_C_VGA_BIOS
-    vlog( VM_INITMSG, "Initializing video BIOS" );
+    vlog(VM_INITMSG, "Initializing video BIOS");
     video_bios_init();
 #endif
 
-    for (BYTE i = 0xE0; i <= 0xEF; ++i)
+    for (int i = 0xE0; i <= 0xEF; ++i)
         vm_listen(i, 0L, vm_call8);
 
-    vlog( VM_INITMSG, "Registering I/O devices" );
-    foreach (Vomit::IODevice *device, Vomit::IODevice::devices()) {
+    vlog(VM_INITMSG, "Registering I/O devices");
+    foreach (Vomit::IODevice *device, Vomit::IODevice::devices())
         vlog(VM_INITMSG, "%s at 0x%p", device->name(), device);
-    }
 
     pic_init();
     dma_init();
