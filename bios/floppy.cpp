@@ -16,70 +16,60 @@
 
 char drv_imgfile[4][MAX_FN_LENGTH];
 char drv_title[4][MAX_DRV_TITLESIZE+1];
-byte drv_status[4], drv_type[4];
-dword drv_spt[4], drv_heads[4], drv_sectors[4], drv_sectsize[4];
+BYTE drv_status[4], drv_type[4];
+DWORD drv_spt[4], drv_heads[4], drv_sectors[4], drv_sectsize[4];
 
-void
-vomit_set_drive_image( int drive_id, const char *filename )
+void vomit_set_drive_image(int drive_id, const char* filename)
 {
-    strcpy( drv_imgfile[drive_id], filename );
-    vlog( VM_DISKLOG, "Drive %u image changed to %s", drive_id, filename );
+    strcpy(drv_imgfile[drive_id], filename);
+    vlog(VM_DISKLOG, "Drive %u image changed to %s", drive_id, filename);
 }
 
-word
-chs2lba( byte drive, word cyl, byte head, word sector )
+WORD chs2lba(BYTE drive, WORD cyl, BYTE head, WORD sector)
 {
     return (sector - 1) +
            (head * drv_spt[drive]) +
            (cyl * drv_spt[drive] * drv_heads[drive]);
 }
 
-byte floppy_read(byte drive, word cylinder, word head, word sector, word count, word segment, word offset) {
-    FILE *fpdrv;
+BYTE floppy_read(BYTE drive, WORD cylinder, WORD head, WORD sector, WORD count, WORD segment, WORD offset)
+{
+    WORD lba = chs2lba(drive, cylinder, head, sector);
+    BYTE* fderr = g_cpu->memoryPointer(0x0000, 0x0441); // fd status in bda
 
-    word lba = chs2lba(drive, cylinder, head, sector);
-    byte *fderr = (byte *)g_cpu->memory + 0x441;        /* fd status in bda */
-
-    if(!drv_status[drive]) {
-        if(disklog)
-        {
-            vlog( VM_DISKLOG, "Drive %02X not ready.", drive );
-        }
-        if(drive<2) *fderr = FD_CHANGED_OR_REMOVED;
-        else if(drive>1) *fderr = FD_TIMEOUT;
+    if (!drv_status[drive]) {
+        if (disklog)
+            vlog(VM_DISKLOG, "Drive %02X not ready.", drive);
+        if (drive < 2)
+            *fderr = FD_CHANGED_OR_REMOVED;
+        else if (drive > 1)
+            *fderr = FD_TIMEOUT;
         return *fderr;
     }
-    if((sector>drv_spt[drive])||(head>=drv_heads[drive])) {
-        if( disklog )
-        {
-            vlog( VM_DISKLOG, "%04X:%04X Drive %d read request out of geometrical bounds (%d/%d/%d)", g_cpu->getCS(), g_cpu->getIP(), drive, cylinder, head, sector );
-        }
+    if ((sector > drv_spt[drive])||(head >= drv_heads[drive])) {
+        if (disklog)
+            vlog(VM_DISKLOG, "%04X:%04X Drive %d read request out of geometrical bounds (%d/%d/%d)", g_cpu->getCS(), g_cpu->getIP(), drive, cylinder, head, sector);
         *fderr = FD_TIMEOUT;
         return *fderr;
     }
-    if(lba>drv_sectors[drive]) {
-        if( disklog )
-        {
+    if (lba > drv_sectors[drive]) {
+        if (disklog)
             vlog(VM_DISKLOG, "Drive %d bogus sector request (LBA %d)", drive, lba);
-        }
         *fderr = FD_TIMEOUT;
         return *fderr;
     }
-    if( disklog )
-    {
-        vlog( VM_DISKLOG, "Drive %d reading %d sectors at %d/%d/%d (LBA %d) to %04X:%04X [offset=0x%x]", drive, count, cylinder, head, sector, lba, segment, offset, lba*drv_sectsize[drive] );
-    }
-    fpdrv = fopen(drv_imgfile[drive], "rb");
-    if( !fpdrv )
-    {
-        vlog( VM_DISKLOG, "PANIC: Could not access drive %d image!", drive );
-        vm_exit( 1 );
+    if (disklog)
+        vlog(VM_DISKLOG, "Drive %d reading %d sectors at %d/%d/%d (LBA %d) to %04X:%04X [offset=0x%x]", drive, count, cylinder, head, sector, lba, segment, offset, lba*drv_sectsize[drive]);
+    FILE* fpdrv = fopen(drv_imgfile[drive], "rb");
+    if (!fpdrv) {
+        vlog(VM_DISKLOG, "PANIC: Could not access drive %d image!", drive);
+        vm_exit(1);
     }
     fflush(fpdrv);
     fseek(fpdrv, lba*drv_sectsize[drive], SEEK_SET);
     ssize_t bytesRead = fread(g_cpu->memory+(segment*16)+(offset), drv_sectsize[drive], count, fpdrv);
 #ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
-    for (DWORD address = segment * 16 + offset; address < segment * 16 + offset + bytesRead; ++address)
+    for (DWORD address = segment * 16 + offset; address < segment * 16 + offset + BYTEsRead; ++address)
         g_cpu->markDirty(address);
 #endif
     fclose(fpdrv);
@@ -87,66 +77,59 @@ byte floppy_read(byte drive, word cylinder, word head, word sector, word count, 
     return FD_NO_ERROR;
 }
 
-byte floppy_write(byte drive, word cylinder, word head, word sector, word count, word segment, word offset) {
-    FILE *fpdrv;
-    word lba = chs2lba(drive, cylinder, head, sector);
-    byte *fderr = (byte *)g_cpu->memory + 0x441;        /* fd status in bda */
+BYTE floppy_write(BYTE drive, WORD cylinder, WORD head, WORD sector, WORD count, WORD segment, WORD offset)
+{
+    WORD lba = chs2lba(drive, cylinder, head, sector);
+    BYTE* fderr = g_cpu->memoryPointer(0x0000, 0x0441); // fd status in bda
 
-    if(!drv_status[drive]) {
-        if( disklog )
-        {
-            vlog( VM_DISKLOG, "Drive %02X not ready", drive);
-        }
-        if(drive<2) *fderr = FD_CHANGED_OR_REMOVED;
-        else if(drive>1) *fderr = FD_TIMEOUT;
+    if (!drv_status[drive]) {
+        if (disklog)
+            vlog(VM_DISKLOG, "Drive %02X not ready", drive);
+        if (drive < 2)
+            *fderr = FD_CHANGED_OR_REMOVED;
+        else if (drive > 1)
+            *fderr = FD_TIMEOUT;
         return *fderr;
     }
-    if((sector>drv_spt[drive])||(head>=drv_heads[drive])) {
-        if( disklog )
-        {
-            vlog( VM_DISKLOG, "Drive %d write request out of geometrical bounds (%d/%d/%d)", drive, cylinder, head, sector);
-        }
+    if ((sector > drv_spt[drive])||(head>=drv_heads[drive])) {
+        if (disklog)
+            vlog(VM_DISKLOG, "Drive %d write request out of geometrical bounds (%d/%d/%d)", drive, cylinder, head, sector);
         *fderr = FD_TIMEOUT;
         return *fderr;
     }
-    if(lba>drv_sectors[drive]) {
-        if( disklog )
-        {
-            vlog( VM_DISKLOG, "Drive %d bogus sector request (LBA %d)", drive, lba );
-        }
+    if (lba > drv_sectors[drive]) {
+        if (disklog)
+            vlog(VM_DISKLOG, "Drive %d bogus sector request (LBA %d)", drive, lba);
         *fderr = FD_TIMEOUT;
         return *fderr;
     }
-    if( disklog )
-    {
-        vlog( VM_DISKLOG, "Drive %d writing %d sectors at %d/%d/%d (LBA %d) from %04X:%04X", drive, count, cylinder, head, sector, lba, segment, offset );
-    }
-    fpdrv = fopen(drv_imgfile[drive], "rb+");
-    if( !fpdrv )
-    {
-        vlog( VM_DISKLOG, "PANIC: Could not access drive %d image!", drive );
-        vm_exit( 1 );
+    if (disklog)
+        vlog(VM_DISKLOG, "Drive %d writing %d sectors at %d/%d/%d (LBA %d) from %04X:%04X", drive, count, cylinder, head, sector, lba, segment, offset);
+    FILE* fpdrv = fopen(drv_imgfile[drive], "rb+");
+    if (!fpdrv) {
+        vlog(VM_DISKLOG, "PANIC: Could not access drive %d image!", drive);
+        vm_exit(1);
     }
     fseek(fpdrv, lba*drv_sectsize[drive], SEEK_SET);
     fwrite(g_cpu->memory+(segment<<4)+offset, drv_sectsize[drive], count, fpdrv);
-    fflush(fpdrv); /* best make sure! */
+    fflush(fpdrv);
     fclose(fpdrv);
     *fderr = FD_NO_ERROR;
     return FD_NO_ERROR;
 }
 
-void
-bios_readsectors()
+void bios_readsectors()
 {
-    word cyl = g_cpu->regs.B.CH;
-    word sect = g_cpu->regs.B.CL;
-    byte drive = g_cpu->regs.B.DL;
+    WORD cyl = g_cpu->regs.B.CH;
+    WORD sect = g_cpu->regs.B.CL;
+    BYTE drive = g_cpu->regs.B.DL;
 
-    if(drive>=0x80) drive = drive - 0x80 + 2;
+    if (drive >= 0x80)
+        drive = drive - 0x80 + 2;
 
-    g_cpu->regs.B.AH = floppy_read( drive, cyl, g_cpu->regs.B.DH, sect, g_cpu->regs.B.AL, g_cpu->ES, g_cpu->regs.W.BX );
+    g_cpu->regs.B.AH = floppy_read(drive, cyl, g_cpu->regs.B.DH, sect, g_cpu->regs.B.AL, g_cpu->ES, g_cpu->regs.W.BX);
 
-    if( g_cpu->regs.B.AH == 0x00 )
+    if (g_cpu->regs.B.AH == 0x00)
         g_cpu->setCF(0);
     else {
         g_cpu->setCF(1);
@@ -154,18 +137,18 @@ bios_readsectors()
     }
 }
 
-void
-bios_writesectors()
+void bios_writesectors()
 {
-    word cyl = g_cpu->regs.B.CH;
-    word sect = g_cpu->regs.B.CL;
-    byte drive = g_cpu->regs.B.DL;
+    WORD cyl = g_cpu->regs.B.CH;
+    WORD sect = g_cpu->regs.B.CL;
+    BYTE drive = g_cpu->regs.B.DL;
 
-    if(drive>=0x80) drive = drive - 0x80 + 2;
+    if (drive >= 0x80)
+        drive = drive - 0x80 + 2;
 
-    g_cpu->regs.B.AH = floppy_write( drive, cyl, g_cpu->regs.B.DH, sect, g_cpu->regs.B.AL, g_cpu->ES, g_cpu->regs.W.BX );
+    g_cpu->regs.B.AH = floppy_write(drive, cyl, g_cpu->regs.B.DH, sect, g_cpu->regs.B.AL, g_cpu->ES, g_cpu->regs.W.BX);
 
-    if( g_cpu->regs.B.AH ==0x00 )
+    if (g_cpu->regs.B.AH == 0x00)
         g_cpu->setCF(0);
     else {
         g_cpu->setCF(1);
@@ -173,78 +156,64 @@ bios_writesectors()
     }
 }
 
-
-byte
-floppy_verify( byte drive, word cylinder, word head, word sector, word count, word segment, word offset )
+BYTE floppy_verify(BYTE drive, WORD cylinder, WORD head, WORD sector, WORD count, WORD segment, WORD offset)
 {
-    FILE *fpdrv;
-    byte *dummy;
-    word lba = chs2lba(drive, cylinder, head, sector);
-    word veri;
-    byte *fderr = (byte *)g_cpu->memory + 0x441;        /* fd status in bda */
-    (void) segment;
-    (void) offset;
+    WORD lba = chs2lba(drive, cylinder, head, sector);
+    BYTE* fderr = g_cpu->memoryPointer(0x0000, 0x0441); // fd status in bda
 
-    if(!drv_status[drive]) {
-        if( disklog )
-        {
-            vlog( VM_DISKLOG, "Drive %02X not ready", drive );
-        }
-        if(drive<2) *fderr = FD_CHANGED_OR_REMOVED;
-        else if(drive>1) *fderr = FD_TIMEOUT;
+    if (!drv_status[drive]) {
+        if (disklog)
+            vlog(VM_DISKLOG, "Drive %02X not ready", drive);
+        if (drive < 2)
+            *fderr = FD_CHANGED_OR_REMOVED;
+        else if (drive > 1)
+            *fderr = FD_TIMEOUT;
         return *fderr;
     }
-    if((sector>drv_spt[drive])||(head>=drv_heads[drive])) {
-        if( disklog )
-        {
-            vlog( VM_DISKLOG, "Drive %d verify request out of geometrical bounds", drive );
-        }
+    if ((sector > drv_spt[drive]) || (head >= drv_heads[drive])) {
+        if (disklog)
+            vlog(VM_DISKLOG, "Drive %d verify request out of geometrical bounds", drive);
         *fderr = FD_BAD_COMMAND;
         return *fderr;
     }
-    if(lba>drv_sectors[drive]) {
-        if( disklog )
-        {
-            vlog( VM_DISKLOG, "Drive %d bogus sector request (LBA %d)", drive, lba );
-        }
+    if (lba > drv_sectors[drive]) {
+        if (disklog)
+            vlog(VM_DISKLOG, "Drive %d bogus sector request (LBA %d)", drive, lba);
         *fderr = FD_BAD_COMMAND;
         return *fderr;
     }
-    if( disklog )
-    {
-        vlog( VM_DISKLOG, "Drive %d verifying %d sectors at %d/%d/%d (LBA %d)", drive, count, cylinder, head, sector, lba );
-    }
-    fpdrv = fopen(drv_imgfile[drive], "rb");
-    if( !fpdrv )
-    {
-        vlog( VM_DISKLOG, "PANIC: Could not access drive %d image!", drive );
-        vm_exit( 1 );
+    if (disklog)
+        vlog(VM_DISKLOG, "Drive %d verifying %d sectors at %d/%d/%d (LBA %d)", drive, count, cylinder, head, sector, lba);
+    FILE* fpdrv = fopen(drv_imgfile[drive], "rb");
+    if (!fpdrv) {
+        vlog(VM_DISKLOG, "PANIC: Could not access drive %d image!", drive);
+        vm_exit(1);
     }
     fflush(fpdrv);
     fseek(fpdrv, lba * drv_sectsize[drive], SEEK_SET);
 
-    dummy = (byte *)malloc(count * drv_sectsize[drive] * sizeof(byte));
-        veri = fread(dummy, drv_sectsize[drive], count, fpdrv);
-        /* XXX: Eh? */
-        if(veri!=count) printf("EYY!\n");
-    free(dummy);
+    BYTE* dummy = new BYTE[(count * drv_sectsize[drive])];
+    WORD veri = fread(dummy, drv_sectsize[drive], count, fpdrv);
+    if (veri != count)
+        vlog(VM_ALERT, "veri != count, something went wrong");
+    delete [] dummy;
     fclose(fpdrv);
     *fderr = FD_NO_ERROR;
     return FD_NO_ERROR;
 }
 
-void
-bios_verifysectors()
+void bios_verifysectors()
 {
-    word cyl = g_cpu->regs.B.CH;
-    word sect = g_cpu->regs.B.CL;
-    byte drive = g_cpu->regs.B.DL;
+    WORD cyl = g_cpu->regs.B.CH;
+    WORD sect = g_cpu->regs.B.CL;
+    BYTE drive = g_cpu->regs.B.DL;
 
-    if(drive>=0x80) drive = drive - 0x80 + 2;
+    if (drive >= 0x80)
+        drive = drive - 0x80 + 2;
 
-    g_cpu->regs.B.AH = floppy_verify( drive, cyl, g_cpu->regs.B.DH, sect, g_cpu->regs.B.AL, g_cpu->ES, g_cpu->regs.W.BX );
+    g_cpu->regs.B.AH = floppy_verify(drive, cyl, g_cpu->regs.B.DH, sect, g_cpu->regs.B.AL, g_cpu->ES, g_cpu->regs.W.BX);
 
-    if( g_cpu->regs.B.AH == 0x00 )
+    if (g_cpu->regs.B.AH == 0x00)
         g_cpu->setCF(0);
     else {
         g_cpu->setCF(1);

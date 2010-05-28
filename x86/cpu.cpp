@@ -40,7 +40,7 @@ void VCpu::init()
 
     memset(this->memory, 0, 1048576 + 65536);
 
-	this->vgaMemory = new VgaMemory(this);
+    this->vgaMemory = new VgaMemory(this);
 
 #ifdef VOMIT_PREFETCH_QUEUE
     if (m_prefetchQueue)

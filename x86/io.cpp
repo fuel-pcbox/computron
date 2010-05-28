@@ -23,13 +23,13 @@ void _OUT_imm8_AL(VCpu* cpu)
 void _OUT_imm8_AX(VCpu* cpu)
 {
     WORD port = cpu->fetchOpcodeByte();
-    cpu->out(port, cpu->regs.B.AL );
+    cpu->out(port, cpu->regs.B.AL);
     cpu->out(port + 1, cpu->regs.B.AH);
 }
 
 void _OUT_DX_AL(VCpu* cpu)
 {
-    cpu->out(cpu->regs.W.DX, cpu->regs.B.AL );
+    cpu->out(cpu->regs.W.DX, cpu->regs.B.AL);
 }
 
 void _OUT_DX_AX(VCpu* cpu)
@@ -130,7 +130,7 @@ BYTE VCpu::in(WORD port)
 void vm_listen(WORD port, InputHandler inputHandler, OutputHandler outputHandler)
 {
     if (inputHandler || outputHandler)
-	    vlog(VM_IOMSG, "Adding listener(s) for port %04X", port);
+        vlog(VM_IOMSG, "Adding listener(s) for port %04X", port);
 
     if (inputHandler)
         s_inputHandlers.insert(port, inputHandler);

@@ -13,12 +13,12 @@ struct VomCtl::Private
 };
 
 VomCtl::VomCtl()
-    : IODevice( "VomCtl" )
+    : IODevice("VomCtl")
     , d(new Private)
 {
     m_registerIndex = 0;
-    listen( 0xD6, Vomit::IODevice::ReadWrite );
-    listen( 0xD7, Vomit::IODevice::ReadWrite );
+    listen(0xD6, Vomit::IODevice::ReadWrite);
+    listen(0xD7, Vomit::IODevice::ReadWrite);
 }
 
 VomCtl::~VomCtl()
@@ -43,7 +43,7 @@ VomCtl::in8(WORD port)
         case 0x03: // RAM size MSB
             return MSB(g_cpu->baseMemorySize() / 1024);
         }
-        vlog( VM_VOMCTL, "Invalid register %02X read", m_registerIndex );
+        vlog(VM_VOMCTL, "Invalid register %02X read", m_registerIndex);
         break;
     case 0xD7: // VOMCTL_CONSOLE_WRITE
         vlog(VM_VOMCTL, "%s", d->consoleWriteBuffer.toLatin1().constData());

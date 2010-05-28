@@ -43,11 +43,11 @@ static bool keyboard_controller_has_command;
 
 void keyboard_init()
 {
-	vm_listen(0x60, keyboard_read_data, keyboard_write_data);
-	vm_listen(0x61, system_control_read, system_control_write);
-	vm_listen(0x64, keyboard_status, keyboard_command);
+    vm_listen(0x60, keyboard_read_data, keyboard_write_data);
+    vm_listen(0x61, system_control_read, system_control_write);
+    vm_listen(0x64, keyboard_status, keyboard_command);
 
-	system_control_port_data = 0;
+    system_control_port_data = 0;
     keyboard_controller_command = 0x00;
     keyboard_controller_has_command = false;
 
@@ -62,9 +62,9 @@ void keyboard_init()
 
 BYTE keyboard_status(VCpu* cpu, WORD port)
 {
-	/* Keyboard not locked, POST completed successfully. */
-	//vlog(VM_KEYMSG, "Keyboard status queried.");
-	return ATKBD_UNLOCKED | (keyboard_controller_ram[0] & ATKBD_SYSTEM_FLAG);
+    /* Keyboard not locked, POST completed successfully. */
+    //vlog(VM_KEYMSG, "Keyboard status queried.");
+    return ATKBD_UNLOCKED | (keyboard_controller_ram[0] & ATKBD_SYSTEM_FLAG);
 }
 
 /*
@@ -82,14 +82,14 @@ BYTE keyboard_status(VCpu* cpu, WORD port)
 
 BYTE system_control_read(VCpu* cpu, WORD port)
 {
-	//vlog( VM_KEYMSG, "%02X <- System control port", system_control_port_data);
-	return system_control_port_data;
+    //vlog(VM_KEYMSG, "%02X <- System control port", system_control_port_data);
+    return system_control_port_data;
 }
 
 void system_control_write(VCpu* cpu, WORD port, BYTE data)
 {
-	system_control_port_data = data;
-	//vlog(VM_KEYMSG, "System control port <- %02X", data);
+    system_control_port_data = data;
+    //vlog(VM_KEYMSG, "System control port <- %02X", data);
 }
 
 BYTE keyboard_read_data(VCpu* cpu, WORD port)
@@ -101,9 +101,9 @@ BYTE keyboard_read_data(VCpu* cpu, WORD port)
         return keyboard_controller_ram[ramIndex];
     }
 
-	BYTE key = kbd_pop_raw();
-	//vlog(VM_KEYMSG, "keyboard_data = %02X", key);
-	return key;
+    BYTE key = kbd_pop_raw();
+    //vlog(VM_KEYMSG, "keyboard_data = %02X", key);
+    return key;
 }
 
 void keyboard_write_data(VCpu* cpu, WORD port, BYTE data)
@@ -141,7 +141,7 @@ void keyboard_write_data(VCpu* cpu, WORD port, BYTE data)
 void keyboard_command(VCpu* cpu, WORD port, BYTE data)
 {
     keyboard_controller_command = data;
-	vlog(VM_KEYMSG, "Keyboard command <- %02X", data);
+    vlog(VM_KEYMSG, "Keyboard command <- %02X", data);
 }
 
 void keyboard_raise_irq_if_enabled()

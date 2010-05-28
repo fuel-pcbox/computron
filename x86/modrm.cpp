@@ -2,14 +2,9 @@
 #include "vcpu.h"
 #include "debug.h"
 
-static inline bool modrmIsRegister(BYTE rm)
-{
-    return (rm & 0xC0) == 0xC0;
-}
-
 #define DEFAULT_TO_SS if (!cpu->hasSegmentPrefix()) { segment = cpu->getSS(); }
 
-static void *s_last_modrm_ptr = 0L;
+static void* s_last_modrm_ptr = 0L;
 
 static word s_last_modrm_segment = 0;
 static word s_last_modrm_offset = 0;
@@ -99,7 +94,7 @@ void *vomit_cpu_modrm_resolve8(VCpu* cpu, BYTE rmbyte)
             s_last_modrm_ptr = 0;
             break;
         case 0x40:
-            offset = signext( cpu->fetchOpcodeByte() );
+            offset = signext(cpu->fetchOpcodeByte());
             switch (rmbyte & 0x07) {
                 case 0: offset += cpu->regs.W.BX + cpu->regs.W.SI; break;
                 case 1: offset += cpu->regs.W.BX + cpu->regs.W.DI; break;
@@ -168,7 +163,7 @@ void * vomit_cpu_modrm_resolve16(VCpu* cpu, BYTE rmbyte)
             s_last_modrm_ptr = 0;
             break;
         case 0x40:
-            offset = signext( cpu->fetchOpcodeByte() );
+            offset = signext(cpu->fetchOpcodeByte());
             switch (rmbyte & 0x07) {
                 case 0: offset += cpu->regs.W.BX + cpu->regs.W.SI; break;
                 case 1: offset += cpu->regs.W.BX + cpu->regs.W.DI; break;

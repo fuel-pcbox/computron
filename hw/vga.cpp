@@ -7,46 +7,46 @@
 #include <QtCore/QMutex>
 #include <QtCore/QMutexLocker>
 
-static byte current_register = 0;
-static byte current_register2 = 0;
-static byte current_sequencer = 0;
+static BYTE current_register = 0;
+static BYTE current_register2 = 0;
+static BYTE current_sequencer = 0;
 
-/* there are only 0x12, but let's avoid segfaults. */
-static byte io_register[0x20];
+// there are only 0x12, but let's avoid segfaults
+static BYTE io_register[0x20];
 
-/* there are only ???, but let's avoid segfaults. */
-static byte io_register2[0x20];
+// there are only ???, but let's avoid segfaults
+static BYTE io_register2[0x20];
 
-/* there are only 4, but let's avoid segfaults. */
-static byte io_sequencer[0x20];
+// there are only 4, but let's avoid segfaults
+static BYTE io_sequencer[0x20];
 
-/* there are only ??, but let's avoid segfaults. */
-static byte index_palette = 0;
+// there are only ??, but let's avoid segfaults
+static BYTE index_palette = 0;
 
-static byte columns;
-static byte rows;
+static BYTE columns;
+static BYTE rows;
 
-static byte dac_data_read_index = 0;
-static byte dac_data_read_subindex = 0;
-static byte dac_data_write_index = 0;
-static byte dac_data_write_subindex = 0;
+static BYTE dac_data_read_index = 0;
+static BYTE dac_data_read_subindex = 0;
+static BYTE dac_data_write_index = 0;
+static BYTE dac_data_write_subindex = 0;
 
 static QMutex s_paletteMutex;
 
-static void vga_selreg(VCpu*, word, byte );
-static void vga_setreg(VCpu*, word, byte );
-static void vga_selreg2(VCpu*, word, byte );
-static void vga_setreg2(VCpu*, word, byte );
-static byte vga_getreg2(VCpu*, word );
-static void vga_selseq(VCpu*, word, byte );
-static void vga_setseq(VCpu*, word, byte );
-static byte vga_getseq(VCpu*, word );
-static byte vga_getreg(VCpu*, word );
-static byte vga_status(VCpu*, word );
-static byte vga_get_current_register(VCpu*, word );
-static void vga_write_3c0(VCpu*, word port, byte data );
-static byte vga_read_3c1(VCpu*, word port );
-static byte vga_read_miscellaneous_output_register(VCpu*, word port );
+static void vga_selreg(VCpu*, WORD, BYTE);
+static void vga_setreg(VCpu*, WORD, BYTE);
+static void vga_selreg2(VCpu*, WORD, BYTE);
+static void vga_setreg2(VCpu*, WORD, BYTE);
+static BYTE vga_getreg2(VCpu*, WORD);
+static void vga_selseq(VCpu*, WORD, BYTE);
+static void vga_setseq(VCpu*, WORD, BYTE);
+static BYTE vga_getseq(VCpu*, WORD);
+static BYTE vga_getreg(VCpu*, WORD);
+static BYTE vga_status(VCpu*, WORD);
+static BYTE vga_get_current_register(VCpu*, WORD);
+static void vga_write_3c0(VCpu*, WORD port, BYTE data);
+static BYTE vga_read_3c1(VCpu*, WORD port);
+static BYTE vga_read_miscellaneous_output_register(VCpu*, WORD port);
 static void vga_dac_read_address(VCpu*, WORD, BYTE);
 static void vga_dac_write_address(VCpu*, WORD, BYTE);
 static BYTE vga_dac_read_data(VCpu*, WORD);
@@ -58,7 +58,7 @@ static bool next_3c0_is_index = true;
 
 static bool palette_dirty = true;
 
-byte vga_palette_register[17] =
+BYTE vga_palette_register[17] =
 {
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0x03
 };
@@ -75,36 +75,35 @@ rgb_t vga_color_register[256] =
     {0x15,0x15,0x15}, {0x15,0x15,0x3f}, {0x15,0x3f,0x15}, {0x15,0x3f,0x3f}, {0x3f,0x15,0x15}, {0x3f,0x15,0x3f}, {0x3f,0x3f,0x15}, {0x3f,0x3f,0x3f},
 };
 
-void
-vga_init()
+void vga_init()
 {
-    vm_listen( 0x3b4, vga_get_current_register, vga_selreg );
-    vm_listen( 0x3b5, vga_getreg, vga_setreg );
+    vm_listen(0x3b4, vga_get_current_register, vga_selreg);
+    vm_listen(0x3b5, vga_getreg, vga_setreg);
     vm_listen(0x3ba, vga_status, vga_fcr_write);
 
-    vm_listen( 0x3c0, 0L, vga_write_3c0 );
-    vm_listen( 0x3c1, vga_read_3c1, 0L );
+    vm_listen(0x3c0, 0L, vga_write_3c0);
+    vm_listen(0x3c1, vga_read_3c1, 0L);
 
-    vm_listen( 0x3c4, 0L, vga_selseq );
-    vm_listen( 0x3c5, vga_getseq, vga_setseq );
+    vm_listen(0x3c4, 0L, vga_selseq);
+    vm_listen(0x3c5, vga_getseq, vga_setseq);
     vm_listen(0x3c7, 0L, vga_dac_read_address);
     vm_listen(0x3c8, 0L, vga_dac_write_address);
     vm_listen(0x3c9, vga_dac_read_data, vga_dac_write_data);
     vm_listen(0x3ca, vga_fcr_read, 0L);
-    vm_listen( 0x3ce, 0L, vga_selreg2 );
-    vm_listen( 0x3cf, vga_getreg2, vga_setreg2 );
+    vm_listen(0x3ce, 0L, vga_selreg2);
+    vm_listen(0x3cf, vga_getreg2, vga_setreg2);
 
-    vm_listen( 0x3d4, vga_get_current_register, vga_selreg );
-    vm_listen( 0x3d5, vga_getreg, vga_setreg );
-    vm_listen( 0x3da, vga_status, 0L );
+    vm_listen(0x3d4, vga_get_current_register, vga_selreg);
+    vm_listen(0x3d5, vga_getreg, vga_setreg);
+    vm_listen(0x3da, vga_status, 0L);
 
-    vm_listen( 0x3cc, vga_read_miscellaneous_output_register, 0L );
+    vm_listen(0x3cc, vga_read_miscellaneous_output_register, 0L);
 
     columns = 80;
     rows = 25;
 
-    memset( io_register, 0, sizeof(io_register) );
-    memset( io_register2, 0, sizeof(io_register2) );
+    memset(io_register, 0, sizeof(io_register));
+    memset(io_register2, 0, sizeof(io_register2));
 
     io_sequencer[2] = 0x0F;
 
@@ -114,19 +113,14 @@ vga_init()
     dac_data_write_subindex = 0;
 }
 
-void
-vga_write_3c0(VCpu*, word port, byte data )
+void vga_write_3c0(VCpu*, WORD, BYTE data)
 {
     QMutexLocker locker(&s_paletteMutex);
-    (void) port;
 
-    if( next_3c0_is_index )
+    if (next_3c0_is_index)
         index_palette = data;
     else
-    {
         vga_palette_register[index_palette] = data;
-        //vlog( VM_VIDEOMSG, "PALETTE[%u] = %02X", index_palette, data );
-    }
 
     next_3c0_is_index = !next_3c0_is_index;
 }
@@ -138,92 +132,56 @@ BYTE vga_read_3c1(VCpu*, WORD)
     return vga_palette_register[index_palette];
 }
 
-byte
-vga_read_miscellaneous_output_register(VCpu*, word port )
+BYTE vga_read_miscellaneous_output_register(VCpu*, WORD)
 {
-    (void) port;
+    vlog(VM_VIDEOMSG, "Read MOR");
 
-    vlog( VM_VIDEOMSG, "Read MOR" );
-
-    /*
-     * 0x01: I/O at 0x3Dx (otherwise at 0x3Bx)
-     * 0x02: RAM access enabled?
-     */
+    // 0x01: I/O at 0x3Dx (otherwise at 0x3Bx)
+    // 0x02: RAM access enabled?
 
     return 0x03;
-
 }
 
-#ifdef VOMIT_DEBUG_VGA
-static void
-vga_dump()
+void vga_kill()
 {
-    int i, j;
-    FILE *scrot = fopen( "page0.txt", "w" );
-    for ( i = 0; i < 25 ; ++i ) {
-        for ( j = 0; j < 160; j += 2) {
-            fputc( mem_getbyte( 0xB800, i * 160 + j ), scrot );
-        }
-        fprintf( scrot, "\n" );
-    }
-    fclose( scrot );
-}
-#endif
-
-void
-vga_kill()
-{
-#ifdef VOMIT_DEBUG_VGA
-    vga_dump();
-#endif
 }
 
-byte
-vga_get_current_register(VCpu*, word port )
+BYTE vga_get_current_register(VCpu*, WORD)
 {
-    (void) port;
     return current_register;
 }
 
-void
-vga_selreg(VCpu*, word port, byte data )
+void vga_selreg(VCpu*, WORD, BYTE data)
 {
-    (void) port;
-    /* mask off unused bits */
+    // mask off unused bits
     current_register = data & 0x1F;
 }
 
-void
-vga_setreg(VCpu*, word port, byte data )
+void vga_setreg(VCpu*, WORD, BYTE data)
 {
-    (void) port;
     io_register[current_register] = data;
 }
 
-byte
-vga_getreg(VCpu*, word port )
+BYTE vga_getreg(VCpu*, WORD)
 {
-    (void) port;
     return io_register[current_register];
 }
 
-void
-vga_selseq(VCpu*, word port, byte data )
+void vga_selseq(VCpu*, WORD, BYTE data)
 {
-    (void) port;
-    /* mask off unused bits */
+    // mask off unused bits
     current_sequencer = data & 0x1F;
 }
 
 BYTE vga_getseq(VCpu*, WORD)
 {
-    //vlog( VM_VIDEOMSG, "reading seq %d, data is %02X", current_sequencer, io_sequencer[current_sequencer] );
+    //vlog(VM_VIDEOMSG, "reading seq %d, data is %02X", current_sequencer, io_sequencer[current_sequencer]);
     return io_sequencer[current_sequencer];
 }
 
 void vga_setseq(VCpu*, WORD, BYTE value)
 {
-    //vlog( VM_VIDEOMSG, "writing to seq %d, data is %02X", current_sequencer, data );
+    //vlog(VM_VIDEOMSG, "writing to seq %d, data is %02X", current_sequencer, data);
     io_sequencer[current_sequencer] = value;
 }
 
@@ -260,7 +218,7 @@ BYTE vga_read_register(BYTE index)
 
 BYTE vga_read_register2(BYTE index)
 {
-	// TODO: Check if 12 is the right number here...
+    // TODO: Check if 12 is the right number here...
     VM_ASSERT(index <= 0x12);
     return io_register2[index];
 }
@@ -277,26 +235,20 @@ void vga_write_register(BYTE index, BYTE value)
     io_register[index] = value;
 }
 
-void
-vga_selreg2(VCpu*, word port, byte data)
+void vga_selreg2(VCpu*, WORD, BYTE data)
 {
-    (void) port;
     current_register2 = data;
 }
 
-void
-vga_setreg2(VCpu*, word port, byte data )
+void vga_setreg2(VCpu*, WORD, BYTE data)
 {
-    (void) port;
-    //vlog( VM_VIDEOMSG, "writing to reg2 %d, data is %02X", current_register2, data );
+    //vlog(VM_VIDEOMSG, "writing to reg2 %d, data is %02X", current_register2, data);
     io_register2[current_register2] = data;
 }
 
-byte
-vga_getreg2(VCpu*, word port )
+BYTE vga_getreg2(VCpu*, WORD)
 {
-    (void) port;
-    //vlog( VM_VIDEOMSG, "reading reg2 %d, data is %02X", current_register2, io_register2[current_register2] );
+    //vlog(VM_VIDEOMSG, "reading reg2 %d, data is %02X", current_register2, io_register2[current_register2]);
     return io_register2[current_register2];
 }
 

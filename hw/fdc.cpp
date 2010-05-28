@@ -37,22 +37,22 @@ static void fdc_raise_irq();
 
 void fdc_init()
 {
-	vm_listen(0x3f0, fdc_status_a, 0L);
-	vm_listen(0x3f1, fdc_status_b, 0L);
-	vm_listen(0x3f2, 0L, fdc_digital_output);
-	vm_listen(0x3f4, fdc_main_status, 0L);
-	vm_listen(0x3f5, fdc_data_fifo_read, fdc_data_fifo_write);
-	// etc..
+    vm_listen(0x3f0, fdc_status_a, 0L);
+    vm_listen(0x3f1, fdc_status_b, 0L);
+    vm_listen(0x3f2, 0L, fdc_digital_output);
+    vm_listen(0x3f4, fdc_main_status, 0L);
+    vm_listen(0x3f5, fdc_data_fifo_read, fdc_data_fifo_write);
+    // etc..
 
-	current_drive = 0;
-	fdc_enabled = false;
-	dma_io_enabled = false;
-	fdc_data_direction = DATA_FROM_CPU_TO_FDC;
-	fdc_current_status_register = 0;
+    current_drive = 0;
+    fdc_enabled = false;
+    dma_io_enabled = false;
+    fdc_data_direction = DATA_FROM_CPU_TO_FDC;
+    fdc_current_status_register = 0;
 
-	fdc_command_index = 0;
-	fdc_command_size = 0;
-	fdc_command[0] = 0;
+    fdc_command_index = 0;
+    fdc_command_size = 0;
+    fdc_command[0] = 0;
 
     for (int i = 0; i < 2; ++i) {
         motor[i] = false;
@@ -68,21 +68,21 @@ void fdc_init()
 
 BYTE fdc_status_a(VCpu*, WORD port)
 {
-	BYTE data = 0x00;
+    BYTE data = 0x00;
 
-	if (drv_status[1] != 0) {
-		/* Second drive installed */
-		data |= 0x40;
-	}
+    if (drv_status[1] != 0) {
+        /* Second drive installed */
+        data |= 0x40;
+    }
 
-	vlog(VM_FDCMSG, "Reading FDC status register A, data: %02X", data);
-	return data;
+    vlog(VM_FDCMSG, "Reading FDC status register A, data: %02X", data);
+    return data;
 }
 
 BYTE fdc_status_b(VCpu*, WORD port)
 {
-	vlog(VM_FDCMSG, "Reading FDC status register B");
-	return 0;
+    vlog(VM_FDCMSG, "Reading FDC status register B");
+    return 0;
 }
 
 BYTE fdc_main_status(VCpu*, WORD port)
@@ -105,33 +105,33 @@ BYTE fdc_main_status(VCpu*, WORD port)
         status |= 0x20;
 
 
-	vlog(VM_FDCMSG, "Reading FDC main status register: %02X (direction: %s)", status, (fdc_data_direction == DATA_FROM_CPU_TO_FDC) ? "to FDC" : "from FDC");
+    vlog(VM_FDCMSG, "Reading FDC main status register: %02X (direction: %s)", status, (fdc_data_direction == DATA_FROM_CPU_TO_FDC) ? "to FDC" : "from FDC");
 
-	return status;
+    return status;
 }
 
 void fdc_digital_output(VCpu*, WORD port, BYTE data)
 {
-	bool old_fdc_enabled = fdc_enabled;
+    bool old_fdc_enabled = fdc_enabled;
 
-	vlog(VM_FDCMSG, "Writing to FDC digital output, data: %02X", data);
+    vlog(VM_FDCMSG, "Writing to FDC digital output, data: %02X", data);
 
-	current_drive = data & 3;
-	fdc_enabled = (data & 0x04) != 0;
-	dma_io_enabled = (data & 0x08) != 0;
+    current_drive = data & 3;
+    fdc_enabled = (data & 0x04) != 0;
+    dma_io_enabled = (data & 0x08) != 0;
 
-	motor[0] = (data & 0x10) != 0;
-	motor[1] = (data & 0x20) != 0;
+    motor[0] = (data & 0x10) != 0;
+    motor[1] = (data & 0x20) != 0;
 
-	vlog(VM_FDCMSG, "  Current drive: %u", current_drive);
-	vlog(VM_FDCMSG, "  FDC enabled:   %s", fdc_enabled ? "yes" : "no");
-	vlog(VM_FDCMSG, "  DMA+I/O mode:  %s", dma_io_enabled ? "yes" : "no");
+    vlog(VM_FDCMSG, "  Current drive: %u", current_drive);
+    vlog(VM_FDCMSG, "  FDC enabled:   %s", fdc_enabled ? "yes" : "no");
+    vlog(VM_FDCMSG, "  DMA+I/O mode:  %s", dma_io_enabled ? "yes" : "no");
 
-	vlog(VM_FDCMSG, "  Motors:        %u %u", motor[0], motor[1]);
+    vlog(VM_FDCMSG, "  Motors:        %u %u", motor[0], motor[1]);
 
-	if (fdc_enabled != old_fdc_enabled) {
+    if (fdc_enabled != old_fdc_enabled) {
         vlog(VM_FDCMSG, "Raising IRQ");
-		fdc_raise_irq();
+        fdc_raise_irq();
     }
 }
 

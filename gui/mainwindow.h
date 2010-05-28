@@ -11,11 +11,11 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 public:
-    MainWindow(VCpu *);
+    MainWindow(VCpu*);
     ~MainWindow();
 
-    void setCpu(VCpu *);
-    VCpu *cpu();
+    void setCpu(VCpu*);
+    VCpu* cpu();
     Screen *screen();
 
 private slots:
@@ -33,4 +33,4 @@ private:
     Private *d;
 };
 
-#endif // __mainwindow_h__
+#endif

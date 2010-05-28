@@ -23,7 +23,7 @@ struct VgaMemory::Private
 {
     VCpu *cpu;
 
-    BYTE *plane[4];
+    BYTE* plane[4];
     BYTE latch[4];
 
     QImage screen12;
@@ -52,7 +52,7 @@ VgaMemory::VgaMemory(VCpu *cpu)
 {
     d->cpu = cpu;
 
-    d->screen12 = QImage( 640, 480, QImage::Format_Indexed8 );
+    d->screen12 = QImage(640, 480, QImage::Format_Indexed8);
     d->screen12.fill(0);
 
     d->plane[0] = new BYTE[0x10000];

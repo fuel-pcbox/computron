@@ -129,55 +129,55 @@ SIGNED_DWORD cpu_imul16(VCpu* cpu, SIGNED_WORD acc, SIGNED_WORD multi)
     return result;
 }
 
-DEFAULT_RM8_reg8( cpu_add, _ADD_RM8_reg8 )
-DEFAULT_RM16_reg16( cpu_add, _ADD_RM16_reg16 )
-DEFAULT_reg8_RM8( cpu_add, _ADD_reg8_RM8 )
-DEFAULT_reg16_RM16( cpu_add, _ADD_reg16_RM16 )
-DEFAULT_RM8_imm8( cpu_add, _ADD_RM8_imm8 )
-DEFAULT_RM16_imm16( cpu_add, _ADD_RM16_imm16 )
-DEFAULT_RM16_imm8( cpu_add, _ADD_RM16_imm8 )
-DEFAULT_AL_imm8( cpu_add, _ADD_AL_imm8 )
-DEFAULT_AX_imm16( cpu_add, _ADD_AX_imm16 )
+DEFAULT_RM8_reg8(cpu_add, _ADD_RM8_reg8)
+DEFAULT_RM16_reg16(cpu_add, _ADD_RM16_reg16)
+DEFAULT_reg8_RM8(cpu_add, _ADD_reg8_RM8)
+DEFAULT_reg16_RM16(cpu_add, _ADD_reg16_RM16)
+DEFAULT_RM8_imm8(cpu_add, _ADD_RM8_imm8)
+DEFAULT_RM16_imm16(cpu_add, _ADD_RM16_imm16)
+DEFAULT_RM16_imm8(cpu_add, _ADD_RM16_imm8)
+DEFAULT_AL_imm8(cpu_add, _ADD_AL_imm8)
+DEFAULT_AX_imm16(cpu_add, _ADD_AX_imm16)
 
-DEFAULT_RM8_reg8( cpu_adc, _ADC_RM8_reg8 )
-DEFAULT_RM16_reg16( cpu_adc, _ADC_RM16_reg16 )
-DEFAULT_reg8_RM8( cpu_adc, _ADC_reg8_RM8 )
-DEFAULT_reg16_RM16( cpu_adc, _ADC_reg16_RM16 )
-DEFAULT_RM8_imm8( cpu_adc, _ADC_RM8_imm8 )
-DEFAULT_RM16_imm16( cpu_adc, _ADC_RM16_imm16 )
-DEFAULT_RM16_imm8( cpu_adc, _ADC_RM16_imm8 )
-DEFAULT_AL_imm8( cpu_adc, _ADC_AL_imm8 )
-DEFAULT_AX_imm16( cpu_adc, _ADC_AX_imm16 )
+DEFAULT_RM8_reg8(cpu_adc, _ADC_RM8_reg8)
+DEFAULT_RM16_reg16(cpu_adc, _ADC_RM16_reg16)
+DEFAULT_reg8_RM8(cpu_adc, _ADC_reg8_RM8)
+DEFAULT_reg16_RM16(cpu_adc, _ADC_reg16_RM16)
+DEFAULT_RM8_imm8(cpu_adc, _ADC_RM8_imm8)
+DEFAULT_RM16_imm16(cpu_adc, _ADC_RM16_imm16)
+DEFAULT_RM16_imm8(cpu_adc, _ADC_RM16_imm8)
+DEFAULT_AL_imm8(cpu_adc, _ADC_AL_imm8)
+DEFAULT_AX_imm16(cpu_adc, _ADC_AX_imm16)
 
-DEFAULT_RM8_reg8( cpu_sub, _SUB_RM8_reg8 )
-DEFAULT_RM16_reg16( cpu_sub, _SUB_RM16_reg16 )
-DEFAULT_reg8_RM8( cpu_sub, _SUB_reg8_RM8 )
-DEFAULT_reg16_RM16( cpu_sub, _SUB_reg16_RM16 )
-DEFAULT_RM8_imm8( cpu_sub, _SUB_RM8_imm8 )
-DEFAULT_RM16_imm16( cpu_sub, _SUB_RM16_imm16 )
-DEFAULT_RM16_imm8( cpu_sub, _SUB_RM16_imm8 )
-DEFAULT_AL_imm8( cpu_sub, _SUB_AL_imm8 )
-DEFAULT_AX_imm16( cpu_sub, _SUB_AX_imm16 )
+DEFAULT_RM8_reg8(cpu_sub, _SUB_RM8_reg8)
+DEFAULT_RM16_reg16(cpu_sub, _SUB_RM16_reg16)
+DEFAULT_reg8_RM8(cpu_sub, _SUB_reg8_RM8)
+DEFAULT_reg16_RM16(cpu_sub, _SUB_reg16_RM16)
+DEFAULT_RM8_imm8(cpu_sub, _SUB_RM8_imm8)
+DEFAULT_RM16_imm16(cpu_sub, _SUB_RM16_imm16)
+DEFAULT_RM16_imm8(cpu_sub, _SUB_RM16_imm8)
+DEFAULT_AL_imm8(cpu_sub, _SUB_AL_imm8)
+DEFAULT_AX_imm16(cpu_sub, _SUB_AX_imm16)
 
-DEFAULT_RM8_reg8( cpu_sbb, _SBB_RM8_reg8 )
-DEFAULT_RM16_reg16( cpu_sbb, _SBB_RM16_reg16 )
-DEFAULT_reg8_RM8( cpu_sbb, _SBB_reg8_RM8 )
-DEFAULT_reg16_RM16( cpu_sbb, _SBB_reg16_RM16 )
-DEFAULT_RM8_imm8( cpu_sbb, _SBB_RM8_imm8 )
-DEFAULT_RM16_imm16( cpu_sbb, _SBB_RM16_imm16 )
-DEFAULT_RM16_imm8( cpu_sbb, _SBB_RM16_imm8 )
-DEFAULT_AL_imm8( cpu_sbb, _SBB_AL_imm8 )
-DEFAULT_AX_imm16( cpu_sbb, _SBB_AX_imm16 )
+DEFAULT_RM8_reg8(cpu_sbb, _SBB_RM8_reg8)
+DEFAULT_RM16_reg16(cpu_sbb, _SBB_RM16_reg16)
+DEFAULT_reg8_RM8(cpu_sbb, _SBB_reg8_RM8)
+DEFAULT_reg16_RM16(cpu_sbb, _SBB_reg16_RM16)
+DEFAULT_RM8_imm8(cpu_sbb, _SBB_RM8_imm8)
+DEFAULT_RM16_imm16(cpu_sbb, _SBB_RM16_imm16)
+DEFAULT_RM16_imm8(cpu_sbb, _SBB_RM16_imm8)
+DEFAULT_AL_imm8(cpu_sbb, _SBB_AL_imm8)
+DEFAULT_AX_imm16(cpu_sbb, _SBB_AX_imm16)
 
-READONLY_RM8_reg8( cpu_sub, _CMP_RM8_reg8 )
-READONLY_RM16_reg16( cpu_sub, _CMP_RM16_reg16 )
-READONLY_reg8_RM8( cpu_sub, _CMP_reg8_RM8 )
-READONLY_reg16_RM16( cpu_sub, _CMP_reg16_RM16 )
-READONLY_RM8_imm8( cpu_sub, _CMP_RM8_imm8 )
-READONLY_RM16_imm16( cpu_sub, _CMP_RM16_imm16 )
-READONLY_RM16_imm8( cpu_sub, _CMP_RM16_imm8 )
-READONLY_AL_imm8( cpu_sub, _CMP_AL_imm8 )
-READONLY_AX_imm16( cpu_sub, _CMP_AX_imm16 )
+READONLY_RM8_reg8(cpu_sub, _CMP_RM8_reg8)
+READONLY_RM16_reg16(cpu_sub, _CMP_RM16_reg16)
+READONLY_reg8_RM8(cpu_sub, _CMP_reg8_RM8)
+READONLY_reg16_RM16(cpu_sub, _CMP_reg16_RM16)
+READONLY_RM8_imm8(cpu_sub, _CMP_RM8_imm8)
+READONLY_RM16_imm16(cpu_sub, _CMP_RM16_imm16)
+READONLY_RM16_imm8(cpu_sub, _CMP_RM16_imm8)
+READONLY_AL_imm8(cpu_sub, _CMP_AL_imm8)
+READONLY_AX_imm16(cpu_sub, _CMP_AX_imm16)
 
 void _MUL_RM8(VCpu* cpu)
 {
@@ -267,8 +267,8 @@ void _DIV_RM8(VCpu* cpu)
         return;
     }
 
-    cpu->regs.B.AL = (byte)(tAX / value); /* Quote        */
-    cpu->regs.B.AH = (byte)(tAX % value); /* Remainder    */
+    cpu->regs.B.AL = (byte)(tAX / value); // Quote
+    cpu->regs.B.AH = (byte)(tAX % value); // Remainder
 }
 
 void _DIV_RM16(VCpu* cpu)
@@ -281,8 +281,8 @@ void _DIV_RM16(VCpu* cpu)
         return;
     }
 
-    cpu->regs.W.AX = (WORD)(tDXAX / value); /* Quote      */
-    cpu->regs.W.DX = (WORD)(tDXAX % value); /* Remainder  */
+    cpu->regs.W.AX = (WORD)(tDXAX / value); // Quote
+    cpu->regs.W.DX = (WORD)(tDXAX % value); // Remainder
 }
 
 void _IDIV_RM8(VCpu* cpu)
@@ -295,8 +295,8 @@ void _IDIV_RM8(VCpu* cpu)
         return;
     }
 
-    cpu->regs.B.AL = (SIGNED_BYTE)(tAX / value); /* Quote        */
-    cpu->regs.B.AH = (SIGNED_BYTE)(tAX % value); /* Remainder    */
+    cpu->regs.B.AL = (SIGNED_BYTE)(tAX / value); // Quote
+    cpu->regs.B.AH = (SIGNED_BYTE)(tAX % value); // Remainder
 }
 
 void _IDIV_RM16(VCpu* cpu)
@@ -308,6 +308,6 @@ void _IDIV_RM16(VCpu* cpu)
         cpu->exception(0);
         return;
     }
-    cpu->regs.W.AX = (SIGNED_WORD)(tDXAX / value); /* Quote      */
-    cpu->regs.W.DX = (SIGNED_WORD)(tDXAX % value); /* Remainder  */
+    cpu->regs.W.AX = (SIGNED_WORD)(tDXAX / value); // Quote
+    cpu->regs.W.DX = (SIGNED_WORD)(tDXAX % value); // Remainder
 }

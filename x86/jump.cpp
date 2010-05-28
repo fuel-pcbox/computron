@@ -8,7 +8,6 @@
 void _JCXZ_imm8(VCpu* cpu)
 {
     SIGNED_BYTE imm = cpu->fetchOpcodeByte();
-
     if (cpu->regs.W.CX == 0)
         cpu->jumpRelative8(imm);
 }
@@ -45,9 +44,9 @@ void _JMP_FAR_mem16(VCpu* cpu)
 
 #define DO_JCC_imm8(name, condition) \
 void _ ## name ## _imm8(VCpu* cpu) { \
-	SIGNED_BYTE imm = cpu->fetchOpcodeByte(); \
-	if( (condition) ) \
-		cpu->jumpRelative8(imm); \
+    SIGNED_BYTE imm = cpu->fetchOpcodeByte(); \
+    if ((condition)) \
+        cpu->jumpRelative8(imm); \
 }
 
 DO_JCC_imm8(JO,   cpu->getOF())
