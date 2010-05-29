@@ -19,22 +19,15 @@ void vm_kill();
 word kbd_hit();
 word kbd_getc();
 byte kbd_pop_raw();
-int get_current_x();
-int get_current_y();
 
 #ifdef VOMIT_DIRECT_SCREEN
 void screen_direct_update( word );
 #endif
 
-void busmouse_event();
-void busmouse_press( int button );
-void busmouse_release( int button );
-
 void dma_init();
 void fdc_init();
 void pic_init();
 void pit_init();
-void busmouse_init();
 void keyboard_init();
 void ide_init();
 void gameport_init();

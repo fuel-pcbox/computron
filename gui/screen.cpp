@@ -4,6 +4,7 @@
 #include "debug.h"
 #include "vga.h"
 #include "vga_memory.h"
+#include "busmouse.h"
 
 #include <QtGui/QPainter>
 #include <QtGui/QPaintEvent>
@@ -25,7 +26,6 @@ struct Screen::Private
     QColor color[16];
 
     QMutex keyQueueLock;
-    QMutex mouseLock;
 
     QQueue<WORD> keyQueue;
     QQueue<BYTE> rawQueue;
@@ -383,74 +383,40 @@ void Screen::synchronizeColors()
     }
 }
 
-static int currentX = 0;
-static int currentY = 0;
-
-void Screen::mouseMoveEvent(QMouseEvent *e)
+void Screen::mouseMoveEvent(QMouseEvent* e)
 {
-    {
-        QMutexLocker l(&d->mouseLock);
-        currentX = e->x();
-        currentY = e->y();
-    }
-
     QWidget::mouseMoveEvent(e);
-
-    busmouse_event();
+    Vomit::BusMouse::the()->moveEvent(e->x(), e->y());
 }
 
-void Screen::mousePressEvent(QMouseEvent *e)
+void Screen::mousePressEvent(QMouseEvent* e)
 {
-    {
-        QMutexLocker l(&d->mouseLock);
-        currentX = e->x();
-        currentY = e->y();
-    }
-
     QWidget::mousePressEvent(e);
-    switch(e->button())
-    {
-        case Qt::LeftButton:
-            busmouse_press(1);
-            break;
-        case Qt::RightButton:
-            busmouse_press(2);
-            break;
+    switch (e->button()) {
+    case Qt::LeftButton:
+        Vomit::BusMouse::the()->buttonPressEvent(e->x(), e->y(), Vomit::BusMouse::LeftButton);
+        break;
+    case Qt::RightButton:
+        Vomit::BusMouse::the()->buttonPressEvent(e->x(), e->y(), Vomit::BusMouse::RightButton);
+        break;
+    default:
+        break;
     }
 }
 
 void Screen::mouseReleaseEvent(QMouseEvent *e)
 {
-    {
-        QMutexLocker l(&d->mouseLock);
-        currentX = e->x();
-        currentY = e->y();
-    }
-
     QWidget::mouseReleaseEvent(e);
-    switch(e->button())
-    {
-        case Qt::LeftButton:
-            busmouse_release(1);
-            break;
-        case Qt::RightButton:
-            busmouse_release(2);
-            break;
+    switch (e->button()) {
+    case Qt::LeftButton:
+        Vomit::BusMouse::the()->buttonReleaseEvent(e->x(), e->y(), Vomit::BusMouse::LeftButton);
+        break;
+    case Qt::RightButton:
+        Vomit::BusMouse::the()->buttonReleaseEvent(e->x(), e->y(), Vomit::BusMouse::RightButton);
+        break;
+    default:
+        break;
     }
-}
-
-int
-get_current_x()
-{
-    QMutexLocker l(&s_self->d->mouseLock);
-    return currentX;
-}
-
-int
-get_current_y()
-{
-    QMutexLocker l(&s_self->d->mouseLock);
-    return currentY;
 }
 
 void Screen::setTinted(bool t)

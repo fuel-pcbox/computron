@@ -2,41 +2,53 @@
  * busmouse... based on... guesswork and bochs peeking
  */
 
+#include "busmouse.h"
 #include "vomit.h"
+#include "vcpu.h"
 #include "debug.h"
+#include <QtCore/QMutexLocker>
 
-static BYTE busmouse_read(VCpu* cpu, WORD port);
-static void busmouse_write(VCpu* cpu, WORD port, BYTE data);
-
-static bool interrupts = true;
-static BYTE busmouse_command = 0;
-static BYTE busmouse_buttons = 0;
-
-void busmouse_init()
+namespace Vomit
 {
-    vm_listen(0x23c, busmouse_read, busmouse_write);
-    vm_listen(0x23d, busmouse_read, 0L);
-    vm_listen(0x23e, busmouse_read, busmouse_write);
-    vm_listen(0x23f, 0L, 0L);
+
+static BusMouse theMouse;
+
+BusMouse* BusMouse::the()
+{
+    return &theMouse;
 }
 
-void
-busmouse_write(VCpu*, WORD port, BYTE data)
+BusMouse::BusMouse()
+    : IODevice("BusMouse")
+    , m_interrupts(true)
+    , m_command(0x00)
+    , m_buttons(0x00)
+{
+    listen(0x23c, IODevice::ReadWrite);
+    listen(0x23d, IODevice::Read);
+    listen(0x23e, IODevice::ReadWrite);
+}
+
+BusMouse::~BusMouse()
+{
+}
+
+void BusMouse::out8(WORD port, BYTE data)
 {
     switch (port) {
     case 0x23e:
-        busmouse_command = data;
+        m_command = data;
         break;
 
     case 0x23f:
         switch (data) {
         case 0x10:
             vlog(VM_MOUSEMSG, "Bus mouse interrupt disabled");
-            interrupts = false;
+            m_interrupts = false;
             break;
         case 0x11:
             vlog(VM_MOUSEMSG, "Bus mouse interrupt enabled");
-            interrupts = true;
+            m_interrupts = true;
             break;
         default:
             vlog(VM_MOUSEMSG, "Write %02X to %03X, don't know what to do", data, port);
@@ -51,87 +63,99 @@ busmouse_write(VCpu*, WORD port, BYTE data)
     }
 }
 
-static int delta_x = 0;
-static int delta_y = 0;
-
-static int last_x = 0;
-static int last_y = 0;
-
-static int current_x = 0;
-static int current_y = 0;
-
-void busmouse_event()
+void BusMouse::moveEvent(WORD x, WORD y)
 {
-    current_x = get_current_x();
-    current_y = get_current_y();
+    {
+        QMutexLocker locker(&m_mutex);
+        m_currentX = x;
+        m_currentY = y;
+    }
 
-    delta_x = current_x - last_x;
-    delta_y = current_y - last_y;
+    m_deltaX = m_currentX - m_lastX;
+    m_deltaY = m_currentY - m_lastY;
 
-    //vlog(VM_MOUSEMSG, "busmouse_event(): dX = %d, dY = %d", delta_x, delta_y);
+    //vlog(VM_MOUSEMSG, "BusMouse::moveEvent(): dX = %d, dY = %d", m_deltaX, m_deltaY);
 
-    if (interrupts)
+    if (m_interrupts)
         irq(5);
 }
 
-void busmouse_press(int button)
+void BusMouse::buttonPressEvent(WORD x, WORD y, Button button)
 {
-    if (button == 1)
-        busmouse_buttons &= ~(1 << 7);
-    else
-        busmouse_buttons &= ~(1 << 5);
+    {
+        QMutexLocker locker(&m_mutex);
+        if (button == LeftButton)
+            m_buttons &= ~(1 << 7);
+        else
+            m_buttons &= ~(1 << 5);
 
-    delta_x = 0;
-    delta_y = 0;
+        m_currentX = x;
+        m_currentY = y;
+    }
 
-    if (interrupts)
+    m_lastX = m_currentX;
+    m_lastY = m_currentY;
+    m_deltaX = 0;
+    m_deltaY = 0;
+
+    if (m_interrupts)
         irq(5);
 }
 
-void busmouse_release(int button)
+void BusMouse::buttonReleaseEvent(WORD x, WORD y, Button button)
 {
-    if (button == 1)
-        busmouse_buttons |= (1 << 7);
-    else
-        busmouse_buttons |= (1 << 5);
+    {
+        QMutexLocker locker(&m_mutex);
+        if (button == LeftButton)
+            m_buttons |= (1 << 7);
+        else
+            m_buttons |= (1 << 5);
 
-    delta_x = 0;
-    delta_y = 0;
+        m_currentX = x;
+        m_currentY = y;
+    }
 
-    if (interrupts)
+    m_lastX = m_currentX;
+    m_lastY = m_currentY;
+    m_deltaX = 0;
+    m_deltaY = 0;
+
+    if (m_interrupts)
         irq(5);
 }
 
-BYTE busmouse_read(VCpu*, WORD port)
+BYTE BusMouse::in8(WORD port)
 {
     static BYTE interrupt_val = 0x01;
 
     BYTE ret = 0;
 
+    QMutexLocker locker(&m_mutex);
+
     switch (port) {
     case 0x23c:
-        switch (busmouse_command) {
+        switch (m_command) {
         case 0x90:
         case 0x80: // X LSB
-            ret = delta_x & 0xF;
+            ret = m_deltaX & 0xF;
             break;
         case 0xb0:
         case 0xa0: // X MSB
-            ret = (delta_x >> 4) & 0xF;
-            last_x = current_x;
+            ret = (m_deltaX >> 4) & 0xF;
+            m_lastX = m_currentX;
             break;
         case 0xd0:
         case 0xc0: // Y LSB
-            ret = delta_y & 0xF;
+            ret = m_deltaY & 0xF;
             break;
         case 0xf0:
         case 0xe0: // Y MSB
-            ret = (delta_y >> 4) & 0xF;
-            ret |= busmouse_buttons;
-            last_y = current_y;
+            ret = (m_deltaY >> 4) & 0xF;
+            ret |= m_buttons;
+            m_lastY = m_currentY;
             break;
         default:
-            vlog(VM_MOUSEMSG, "Unknown BusMouse command %02X", busmouse_command);
+            vlog(VM_MOUSEMSG, "Unknown BusMouse command %02X", m_command);
         }
         break;
 
@@ -156,5 +180,7 @@ BYTE busmouse_read(VCpu*, WORD port)
     }
 
     return ret;
+}
+
 }
 

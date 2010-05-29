@@ -46,7 +46,6 @@ void vomit_init()
     fdc_init();
     ide_init();
     pit_init();
-    busmouse_init();
     keyboard_init();
     gameport_init();
 
