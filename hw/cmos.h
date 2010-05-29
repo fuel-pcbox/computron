@@ -4,10 +4,7 @@
 #include "iodevice.h"
 #include "vomit.h"
 
-namespace Vomit
-{
-
-class CMOS : public Vomit::IODevice
+class CMOS : public IODevice
 {
 public:
     CMOS();
@@ -23,7 +20,5 @@ private:
     bool inBinaryClockMode() const;
     bool in24HourMode() const;
 };
-
-}
 
 #endif

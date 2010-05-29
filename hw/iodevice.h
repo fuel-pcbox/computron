@@ -5,39 +5,34 @@
 #include <QList>
 #include <QHash>
 
-namespace Vomit
-{
-
 class IODevice
 {
 public:
-	IODevice(const char *name);
-	virtual ~IODevice();
+    IODevice(const char* name);
+    virtual ~IODevice();
 
-	const char *name() const;
+    const char* name() const;
 
-	virtual BYTE in8(WORD port);
-	virtual void out8(WORD port, BYTE data);
+    virtual BYTE in8(WORD port);
+    virtual void out8(WORD port, BYTE data);
 
-	static QList<IODevice*> & devices();
-	static QHash<WORD, IODevice*>& readDevices();
-	static QHash<WORD, IODevice*>& writeDevices();
+    static QList<IODevice*>& devices();
+    static QHash<WORD, IODevice*>& readDevices();
+    static QHash<WORD, IODevice*>& writeDevices();
 
-	QList<WORD> ports() const;
+    QList<WORD> ports() const;
 
 protected:
-	enum ListenMask {
-		Read = 1,
-		Write = 2,
-		ReadWrite = 3
-	};
-	virtual void listen(WORD port, ListenMask mask);
+    enum ListenMask {
+        Read = 1,
+        Write = 2,
+        ReadWrite = 3
+    };
+    virtual void listen(WORD port, ListenMask mask);
 
 private:
-	const char *m_name;
-	QList<WORD> m_ports;
+    const char* m_name;
+    QList<WORD> m_ports;
 };
-
-}
 
 #endif

@@ -386,7 +386,7 @@ void Screen::synchronizeColors()
 void Screen::mouseMoveEvent(QMouseEvent* e)
 {
     QWidget::mouseMoveEvent(e);
-    Vomit::BusMouse::the()->moveEvent(e->x(), e->y());
+    BusMouse::the()->moveEvent(e->x(), e->y());
 }
 
 void Screen::mousePressEvent(QMouseEvent* e)
@@ -394,10 +394,10 @@ void Screen::mousePressEvent(QMouseEvent* e)
     QWidget::mousePressEvent(e);
     switch (e->button()) {
     case Qt::LeftButton:
-        Vomit::BusMouse::the()->buttonPressEvent(e->x(), e->y(), Vomit::BusMouse::LeftButton);
+        BusMouse::the()->buttonPressEvent(e->x(), e->y(), BusMouse::LeftButton);
         break;
     case Qt::RightButton:
-        Vomit::BusMouse::the()->buttonPressEvent(e->x(), e->y(), Vomit::BusMouse::RightButton);
+        BusMouse::the()->buttonPressEvent(e->x(), e->y(), BusMouse::RightButton);
         break;
     default:
         break;
@@ -409,10 +409,10 @@ void Screen::mouseReleaseEvent(QMouseEvent *e)
     QWidget::mouseReleaseEvent(e);
     switch (e->button()) {
     case Qt::LeftButton:
-        Vomit::BusMouse::the()->buttonReleaseEvent(e->x(), e->y(), Vomit::BusMouse::LeftButton);
+        BusMouse::the()->buttonReleaseEvent(e->x(), e->y(), BusMouse::LeftButton);
         break;
     case Qt::RightButton:
-        Vomit::BusMouse::the()->buttonReleaseEvent(e->x(), e->y(), Vomit::BusMouse::RightButton);
+        BusMouse::the()->buttonReleaseEvent(e->x(), e->y(), BusMouse::RightButton);
         break;
     default:
         break;

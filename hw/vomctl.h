@@ -5,10 +5,7 @@
 
 class VCpu;
 
-namespace Vomit
-{
-
-class VomCtl : public Vomit::IODevice
+class VomCtl : public IODevice
 {
 public:
     VomCtl();
@@ -24,7 +21,5 @@ private:
     struct Private;
     Private* d;
 };
-
-}
 
 #endif

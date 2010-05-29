@@ -8,9 +8,6 @@
 #include "debug.h"
 #include <QtCore/QMutexLocker>
 
-namespace Vomit
-{
-
 static BusMouse theMouse;
 
 BusMouse* BusMouse::the()
@@ -181,6 +178,3 @@ BYTE BusMouse::in8(WORD port)
 
     return ret;
 }
-
-}
-

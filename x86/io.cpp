@@ -94,8 +94,8 @@ void VCpu::out(WORD port, BYTE value)
         vlog(VM_IOMSG, "[%04X:%04X] VCpu::out: %02X --> %04X", getBaseCS(), getBaseIP(), value, port);
 #endif
 
-    if (Vomit::IODevice::writeDevices().contains(port)) {
-        Vomit::IODevice::writeDevices()[port]->out8(port, value);
+    if (IODevice::writeDevices().contains(port)) {
+        IODevice::writeDevices()[port]->out8(port, value);
         return;
     }
 
@@ -115,8 +115,8 @@ BYTE VCpu::in(WORD port)
         vlog(VM_IOMSG, "[%04X:%04X] VCpu::in: %04X", getBaseCS(), getBaseIP(), port);
 #endif
 
-    if (Vomit::IODevice::readDevices().contains(port))
-        return Vomit::IODevice::readDevices()[port]->in8(port);
+    if (IODevice::readDevices().contains(port))
+        return IODevice::readDevices()[port]->in8(port);
 
     if (!s_inputHandlers.contains(port)) {
         if (!s_ignorePorts.contains(port))

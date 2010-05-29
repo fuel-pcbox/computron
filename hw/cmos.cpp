@@ -3,9 +3,6 @@
 #include <QtCore/QDate>
 #include <QtCore/QTime>
 
-namespace Vomit
-{
-
 static CMOS the;
 
 CMOS::CMOS()
@@ -13,8 +10,8 @@ CMOS::CMOS()
 {
     m_registerIndex = 0;
     m_statusRegisterB = 0x00;
-    listen(0x70, Vomit::IODevice::Write);
-    listen(0x71, Vomit::IODevice::ReadWrite);
+    listen(0x70, IODevice::Write);
+    listen(0x71, IODevice::ReadWrite);
 }
 
 CMOS::~CMOS()
@@ -74,6 +71,4 @@ void CMOS::out8(WORD, BYTE data)
 {
     vlog(VLOG_CMOS, "Select register %02X", data);
     m_registerIndex = data;
-}
-
 }

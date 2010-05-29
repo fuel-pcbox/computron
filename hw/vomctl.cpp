@@ -2,9 +2,6 @@
 #include "vcpu.h"
 #include "debug.h"
 
-namespace Vomit
-{
-
 static VomCtl the;
 
 struct VomCtl::Private
@@ -17,8 +14,8 @@ VomCtl::VomCtl()
     , d(new Private)
 {
     m_registerIndex = 0;
-    listen(0xD6, Vomit::IODevice::ReadWrite);
-    listen(0xD7, Vomit::IODevice::ReadWrite);
+    listen(0xD6, IODevice::ReadWrite);
+    listen(0xD7, IODevice::ReadWrite);
 }
 
 VomCtl::~VomCtl()
@@ -65,6 +62,4 @@ void VomCtl::out8(WORD port, BYTE data)
         d->consoleWriteBuffer += QChar::fromLatin1(data);
         break;
     }
-}
-
 }
