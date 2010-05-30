@@ -528,11 +528,8 @@ _bios_init_data:
     mov     byte [0x0418], 0x00
     mov     byte [0x0497], 0x00
 
-    mov     byte [0x0449], 0x03
-
-    mov     byte [0x044A], 80
-    mov     byte [0x044B], 0
-
+    mov     byte [BDA_CURRENT_VIDEO_MODE], 0x03
+    mov     word [BDA_NUMBER_OF_SCREEN_COLUMNS], 80
     mov     byte [BDA_NUMBER_OF_SCREEN_ROWS], 24
     mov     byte [BDA_CURSOR_ENDING_SCANLINE], 0x0E
     mov     byte [BDA_CURSOR_STARTING_SCANLINE], 0x0D
