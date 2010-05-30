@@ -427,14 +427,6 @@ _bios_setup_ints:
     mov     dx, _cpu_default_softtimer
     call    .install
 
-;    mov     al, 0x74
-;    mov     dx, _bios_interrupt74
-;    call    .install
-
-;    mov     al, 0x0d
-;    mov     dx, _bios_interrupt74
-;    call    .install
-
     pop     ds
 
     ret
@@ -635,29 +627,10 @@ _bios_load_bootsector:
     call    safe_putString
     jmp     .end
 
-_bios_interrupt74:
-    out     0xE8, al
-    jc      .end
+; Interrupt 10
+; BIOS Video Interrupt
 
-    add      sp, byte 0x08
-
-    push    ax
-    mov     al, 0x20
-    out     0x20, al
-    pop     ax
-.end:
-    push    bp
-    mov     bp, sp
-    jc      .carry
-    and     byte [bp+6], 0xfe       ; No carry
-    pop     bp
-    iret
-.carry:
-    or      byte [bp+6], 0x01       ; Carry
-    pop     bp
-    iret
-
-_bios_interrupt10:                  ; BIOS Video Interrupt
+_bios_interrupt10:
     or      ah, 0x00
     jz      .setVideoMode
     cmp     ah, 0x01
