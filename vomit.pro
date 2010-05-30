@@ -23,6 +23,7 @@ HEADERS += gui/mainwindow.h \
            hw/vomctl.h \
            hw/vga_memory.h \
            hw/cmos.h \
+           hw/pic.h \
            include/types.h \
            include/vcpu.h \
            include/debug.h \

@@ -17,6 +17,4 @@ typedef int8_t SIGNED_BYTE;
 typedef int16_t SIGNED_WORD;
 typedef int32_t SIGNED_DWORD;
 
-extern word g_pic_pending_requests;
-
 #endif

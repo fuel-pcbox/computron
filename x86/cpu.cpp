@@ -6,6 +6,7 @@
 #include "vomit.h"
 #include "debug.h"
 #include "vga_memory.h"
+#include "pic.h"
 
 VCpu* g_cpu = 0;
 bool g_vomit_exit_main_loop = 0;
@@ -381,8 +382,8 @@ void VCpu::haltedLoop()
 {
     while (state() == VCpu::Halted) {
         usleep(500);
-        if (g_pic_pending_requests)
-            pic_service_irq(this);
+        if (PIC::hasPendingIRQ())
+            PIC::serviceIRQ(this);
     }
 }
 
@@ -436,8 +437,8 @@ void VCpu::mainLoop()
             irq(0);
         }
 
-        if (g_pic_pending_requests && getIF())
-            pic_service_irq(this);
+        if (PIC::hasPendingIRQ() && getIF())
+            PIC::serviceIRQ(this);
     }
 }
 

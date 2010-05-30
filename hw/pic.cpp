@@ -1,225 +1,171 @@
 #include "vomit.h"
 #include "vcpu.h"
+#include "pic.h"
 #include "debug.h"
 
-static void pic_master_write(VCpu* cpu, WORD, BYTE);
-static BYTE pic_master_read(VCpu* cpu, WORD);
-static void pic_slave_write(VCpu* cpu, WORD, BYTE);
-static BYTE pic_slave_read(VCpu* cpu, WORD);
+static PIC theMaster(0x20, 0x08);
+static PIC theSlave(0xA0, 0x70);
 
-static bool master_read_irr = 1;
-static bool slave_read_irr = 1;
+WORD PIC::s_pendingRequests = 0x0000;
+QMutex PIC::s_mutex;
 
-static BYTE master_irr = 0;
-static BYTE master_isr = 0;
-static BYTE master_imr = 0; // HACK - should be 0xff
-
-static BYTE slave_irr = 0;
-static BYTE slave_isr = 0;
-static BYTE slave_imr = 0; // HACK - should be 0xff
-
-static bool master_icw2_expected = false;
-static bool slave_icw2_expected = false;
-
-static BYTE master_addr_base = 0x08;
-static BYTE slave_addr_base = 0x70;
-
-WORD g_pic_pending_requests = 0;
-
-#define UPDATE_PENDING_REQUESTS do { g_pic_pending_requests = (master_irr & ~master_imr) | ((slave_irr & ~slave_imr) << 8); } while(0);
-
-void pic_init()
+void PIC::updatePendingRequests()
 {
-    vm_listen(0x0020, pic_master_read, pic_master_write);
-    vm_listen(0x0021, pic_master_read, pic_master_write);
-
-    vm_listen(0x00A0, pic_slave_read, pic_slave_write);
-    vm_listen(0x00A1, pic_slave_read, pic_slave_write);
-
-    UPDATE_PENDING_REQUESTS;
+    QMutexLocker locker(&s_mutex);
+    s_pendingRequests = (theMaster.getIRR() & ~theMaster.getIMR() ) | ((theSlave.getIRR() & ~theSlave.getIMR()) << 8);
 }
 
-void pic_master_write(VCpu* cpu, WORD port, BYTE data)
+bool PIC::hasPendingIRQ()
 {
-    if (port == 0x20 && data == 0x20) {
-        // NON-Specific EOI
-        master_isr = 0;
-        return;
-    }
-    if (port == 0x21 && ((data & 0x7) == 0x00) && master_icw2_expected) {
-        // ICW2
-        vlog(VM_ALERT, "Got ICW2 %02X on port %02X", data, port);
-        master_addr_base = data & 0xF8;
-        master_icw2_expected = false;
-    }
-    if (port == 0x20 && ((data & 0x18) == 0x08)) {
-        // OCW3
-        vlog(VM_PICMSG, "*** OCW3 *** %02X on port %02X", data, port);
-        if (data & 0x02)
-            master_read_irr = data & 0x01;
-        return;
-    }
-    if (port == 0x20 && data & 0x10) {
-        // ICW1
-        vlog(VM_PICMSG, "*** ICW1 *** %02X on port %02X", data, port);
-        // I'm not sure we'll ever see an ICW4...
-        // icw4_needed = data & 0x01;
-        vlog(VM_PICMSG, "[ICW1] Cascade = %s", (data & 2) ? "yes" : "no");
-        vlog(VM_PICMSG, "[ICW1] Vector size = %u", (data & 4) ? 4 : 8);
-        vlog(VM_PICMSG, "[ICW1] Level triggered = %s", (data & 8) ? "yes" : "no");
-        master_imr = 0;
-        master_isr = 0;
-        master_irr = 0;
-        master_read_irr = 1;
-        master_icw2_expected = 1;
-        UPDATE_PENDING_REQUESTS;
-        return;
-    }
-    if (port == 0x20 && ((data & 0x18) == 0x00)) {
-        vlog(VM_PICMSG, "*** OCW2 *** Data: %02X", data);
-        return;
-    }
-    if (port == 0x21) {
+    QMutexLocker locker(&s_mutex);
+    return s_pendingRequests != 0x0000;
+}
+
+PIC::PIC(WORD baseAddress, BYTE isrBase)
+    : IODevice("PIC")
+    , m_baseAddress(baseAddress)
+    , m_isrBase(isrBase)
+    , m_isr(0x00)
+    , m_irr(0x00)
+    , m_imr(0x00)
+    , m_icw2Expected(false)
+    , m_readIRR(true)
+{
+    listen(m_baseAddress, IODevice::ReadWrite);
+    listen(m_baseAddress + 1, IODevice::ReadWrite);
+}
+
+PIC::~PIC()
+{
+}
+
+void PIC::out8(WORD port, BYTE data)
+{
+    if ((port & 0x01) == 0x00) {
+        if (data == 0x20) {
+            // Nonspecific IOI
+            m_isr = 0x00;
+            return;
+        }
+        if ((data & 0x18) == 0x08) {
+            // OCW3
+            vlog(VM_PICMSG, "Got OCW3 %02X on port %02X", data, port);
+            if (data & 0x02)
+                m_readIRR = data & 0x01;
+            return;
+        }
+        if ((data & 0x18) == 0x00) {
+            // OCW2
+            vlog(VM_PICMSG, "Got OCW2 %02X on port %02X", data, port);
+            return;
+        }
+        if (data & 0x10) {
+            // ICW1
+            vlog(VM_PICMSG, "Got ICW1 %02X on port %02X", data, port);
+            // I'm not sure we'll ever see an ICW4...
+            // m_icw4Needed = data & 0x01;
+            vlog(VM_PICMSG, "[ICW1] Cascade = %s", (data & 2) ? "yes" : "no");
+            vlog(VM_PICMSG, "[ICW1] Vector size = %u", (data & 4) ? 4 : 8);
+            vlog(VM_PICMSG, "[ICW1] Level triggered = %s", (data & 8) ? "yes" : "no");
+            m_imr = 0;
+            m_isr = 0;
+            m_irr = 0;
+            m_readIRR = true;
+            m_icw2Expected = true;
+            updatePendingRequests();
+            return;
+        }
+
+    } else {
+        if (((data & 0x07) == 0x00) && m_icw2Expected) {
+            // ICW2
+            vlog(VM_PICMSG, "Got ICW2 %02X on port %02X", data, port);
+            m_isrBase = data & 0xF8;
+            m_icw2Expected = false;
+            return;
+        }
+
         // OCW1 - IMR write
         vlog(VM_PICMSG, "New IRQ mask set: %02X", data);
         for (int i = 0; i < 8; ++i)
             vlog(VM_PICMSG, " - IRQ %u: %s", i, (data & (1 << i)) ? "masked" : "service");
-        master_imr = data;
-        UPDATE_PENDING_REQUESTS;
+        m_imr = data;
+        updatePendingRequests();
         return;
     }
+
     vlog(VM_PICMSG, "Write PIC ICW on port %04X (data: %02X)", port, data);
     vlog(VM_PICMSG, "I can't handle that request, better quit!");
     vm_exit(1);
 }
 
-BYTE pic_master_read(VCpu* cpu, WORD port)
+BYTE PIC::in8(WORD)
 {
-    //master_irr = 0;
-    //master_isr = 0;
-    if (master_read_irr)
-    {
-        vlog(VM_PICMSG, "Read IRR (%02X)", master_irr);
-        return master_irr;
-    }
-    else
-    {
-        vlog(VM_PICMSG, "Read ISR (%02X)", master_isr);
-        return master_isr;
-    }
-    vlog(VM_PICMSG, "Read PIC ICW on port %04X", port);
-    vlog(VM_PICMSG, "I can't handle that request, better quit!");
-    vm_exit(1);
-    return 0;
-}
-
-void irq(BYTE num)
-{
-    //vlog(VM_PICMSG, "IRQ %u", num);
-
-    if (num < 8) {
-        master_irr |= 1 << num;
-        master_isr |= 1 << num;
+    if (m_readIRR) {
+        vlog(VM_PICMSG, "Read IRR (%02X)", m_irr);
+        return m_irr;
     } else {
-        slave_irr |= 1 << (num - 8);
-        slave_isr |= 1 << (num - 8);
+        vlog(VM_PICMSG, "Read ISR (%02X)", m_isr);
+        return m_isr;
     }
-
-    UPDATE_PENDING_REQUESTS;
 }
 
-void pic_service_irq(VCpu* cpu)
+void PIC::raise(BYTE num)
 {
-    if (!g_pic_pending_requests)
+    m_irr |= 1 << num;
+    m_isr |= 1 << num;
+}
+
+void PIC::raiseIRQ(BYTE num)
+{
+    if (num < 8)
+        theMaster.raise(num);
+    else
+        theSlave.raise(num - 8);
+
+    updatePendingRequests();
+}
+
+void PIC::serviceIRQ(VCpu* cpu)
+{
+    QMutexLocker lockerGlobal(&s_mutex);
+    QMutexLocker lockerMaster(&theMaster.m_mutex);
+    QMutexLocker lockerSlave(&theSlave.m_mutex);
+
+    if (!s_pendingRequests)
         return;
 
     BYTE interrupt_to_service = 0xFF;
 
     for (int i = 0; i < 16; ++i)
-        if (g_pic_pending_requests & (1 << i))
+        if (s_pendingRequests & (1 << i))
             interrupt_to_service = i;
 
     if (interrupt_to_service == 0xFF)
         return;
 
-    if (interrupt_to_service < 8)
-    {
-        master_irr &= ~(1 << interrupt_to_service);
-        master_isr |= (1 << interrupt_to_service);
+    if (interrupt_to_service < 8) {
+        theMaster.m_irr &= ~(1 << interrupt_to_service);
+        theMaster.m_isr |= (1 << interrupt_to_service);
 
-        cpu->jumpToInterruptHandler(master_addr_base | interrupt_to_service);
+        cpu->jumpToInterruptHandler(theMaster.m_isrBase | interrupt_to_service);
     }
     else
     {
-        slave_irr &= ~(1 << (interrupt_to_service - 8));
-        slave_isr |= (1 << (interrupt_to_service - 8));
+        theSlave.m_irr &= ~(1 << (interrupt_to_service - 8));
+        theSlave.m_isr |= (1 << (interrupt_to_service - 8));
 
-        cpu->jumpToInterruptHandler(slave_addr_base | interrupt_to_service);
+        cpu->jumpToInterruptHandler(theSlave.m_isrBase | interrupt_to_service);
     }
 
-    UPDATE_PENDING_REQUESTS;
+    lockerGlobal.unlock();
+    updatePendingRequests();
 
     cpu->setState(VCpu::Alive);
 }
 
-void pic_slave_write(VCpu* cpu, WORD port, BYTE data)
+void irq(BYTE num)
 {
-    if (port == 0xA0 && data == 0x20) {
-        // non-specific EOI
-        slave_isr = 0;
-        return;
-    }
-    if (port == 0xA1 && ((data & 0x7) == 0x00) && slave_icw2_expected) {
-        // ICW2
-        vlog(VM_ALERT, "Got ICW2 %02X on port %02X", data, port);
-        slave_addr_base = data & 0xF8;
-        slave_icw2_expected = false;
-    }
-    if (port == 0xA0 && ((data & 0x18) == 0x08)) {
-        // OCW3
-        vlog(VM_PICMSG, "*** OCW3 *** %02X on port %02X", data, port);
-        if (data & 0x02)
-            slave_read_irr = data & 0x01;
-        return;
-    }
-    if (port == 0xA0 && data & 0x10) {
-        // ICW1
-        vlog(VM_PICMSG, "*** ICW1 *** %02X on port %02X", data, port);
-        // I'm not sure we'll ever see an ICW4...
-        // icw4_needed = data & 0x01;
-        vlog(VM_PICMSG, "[ICW1] Cascade = %s", (data & 2) ? "yes" : "no");
-        vlog(VM_PICMSG, "[ICW1] Vector size = %u", (data & 4) ? 4 : 8);
-        vlog(VM_PICMSG, "[ICW1] Level triggered = %s", (data & 8) ? "yes" : "no");
-        slave_imr = 0;
-        slave_isr = 0;
-        slave_irr = 0;
-        slave_read_irr = 1;
-        slave_icw2_expected = 1;
-        UPDATE_PENDING_REQUESTS;
-        return;
-    }
-    if (port == 0xA0 && ((data & 0x18) == 0x00))
-    {
-        vlog(VM_PICMSG, "*** OCW2 *** Data: %02X", data);
-        return;
-    }
-    if (port == 0xA1) // OCW1 - IMR write
-    {
-        vlog(VM_PICMSG, "New IRQ mask set: %02X", data);
-        for (int i = 0; i < 8; ++i)
-            vlog(VM_PICMSG, " - IRQ %u: %s", i, (data & (1 << i)) ? "masked" : "service");
-        slave_imr = data;
-        UPDATE_PENDING_REQUESTS;
-        return;
-    }
-    vlog(VM_PICMSG, "Write PIC ICW on port %04X (data: %02X)", port, data);
-    vlog(VM_PICMSG, "I can't handle that request, better quit!");
-    vm_exit(1);
-}
-
-BYTE pic_slave_read(VCpu* cpu, WORD)
-{
-    vlog(VM_PICMSG, "Can't read from slave yet!");
-    vm_exit(1);
-    return 0;
+    //vlog(VM_PICMSG, "IRQ %u", num);
+    PIC::raiseIRQ(num);
 }

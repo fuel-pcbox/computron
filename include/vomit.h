@@ -26,7 +26,6 @@ void screen_direct_update( word );
 
 void dma_init();
 void fdc_init();
-void pic_init();
 void pit_init();
 void keyboard_init();
 void ide_init();
@@ -37,7 +36,7 @@ void load_cursor( byte *row, byte *column );
 
 void vomit_init();
 
-void irq( byte num );
+void irq(BYTE num);
 void keyboard_raise_irq_if_enabled();
 
 extern bool disklog, trapint, iopeek, mempeek, callpeek;
@@ -55,8 +54,6 @@ typedef struct {
 extern vomit_options_t options;
 
 #include "vcpu.h"
-
-void pic_service_irq(VCpu*);
 
 void vomit_ignore_io_port(WORD port);
 void vm_listen(word, byte (*)(VCpu*, word), void (*)(VCpu*, word, byte));
