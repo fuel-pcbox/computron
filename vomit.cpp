@@ -46,7 +46,6 @@ void vomit_init()
     ide_init();
     pit_init();
     keyboard_init();
-    gameport_init();
 
     vm_loadconf();
 

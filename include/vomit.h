@@ -29,7 +29,6 @@ void fdc_init();
 void pit_init();
 void keyboard_init();
 void ide_init();
-void gameport_init();
 
 void video_bios_init();
 void load_cursor( byte *row, byte *column );

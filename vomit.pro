@@ -66,7 +66,6 @@ SOURCES += config.cpp \
            hw/busmouse.cpp \
            hw/dma.cpp \
            hw/fdc.cpp \
-           hw/gameport.cpp \
            hw/ide.cpp \
            hw/keyboard.cpp \
            hw/pic.cpp \
