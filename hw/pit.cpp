@@ -1,22 +1,27 @@
 #include "vomit.h"
 #include "vcpu.h"
+#include "pit.h"
 
-static byte pit_read(VCpu*, WORD);
-static void pit_write(VCpu*, WORD, BYTE);
+static PIT thePIT;
 
-void pit_init()
+PIT::PIT()
+    : IODevice("PIT")
 {
-    vm_listen(0x40, pit_read, 0L);
-    vm_listen(0x42, 0L, pit_write);
-    vm_listen(0x43, 0L, pit_write);
+    listen(0x40, IODevice::Read);
+    listen(0x42, IODevice::Write);
+    listen(0x43, IODevice::Write);
 }
 
-BYTE pit_read(VCpu*, WORD)
+PIT::~PIT()
+{
+}
+
+BYTE PIT::in8(WORD)
 {
     return rand() % 0xff;
 }
 
-void pit_write(VCpu*, WORD port, BYTE data)
+void PIT::out8(WORD port, BYTE data)
 {
     switch (port) {
     case 0x43:

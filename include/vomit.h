@@ -26,7 +26,6 @@ void screen_direct_update( word );
 
 void dma_init();
 void fdc_init();
-void pit_init();
 void ide_init();
 
 void video_bios_init();
