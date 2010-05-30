@@ -1,7 +1,5 @@
-/* 8086/wrap.c
- * ModR/M Instruction Wrappers
- *
- */
+// x86/wrap.cpp
+// Multibyte opcode wrappers
 
 #include "vcpu.h"
 #include "debug.h"
@@ -146,8 +144,8 @@ void _wrap_0xD1(VCpu* cpu)
 
 void _wrap_0xD2(VCpu* cpu)
 {
-    byte rm = cpu->fetchOpcodeByte();
-    byte value = vomit_cpu_modrm_read8(cpu, rm);
+    BYTE rm = cpu->fetchOpcodeByte();
+    BYTE value = vomit_cpu_modrm_read8(cpu, rm);
 
     switch (rmreg(rm)) {
     case 0: vomit_cpu_modrm_update8(cpu, cpu_rol(cpu, value, cpu->regs.B.CL, 8 )); break;
@@ -166,8 +164,8 @@ void _wrap_0xD2(VCpu* cpu)
 
 void _wrap_0xD3(VCpu* cpu)
 {
-    byte rm = cpu->fetchOpcodeByte();
-    word value = vomit_cpu_modrm_read16(cpu, rm);
+    BYTE rm = cpu->fetchOpcodeByte();
+    WORD value = vomit_cpu_modrm_read16(cpu, rm);
 
     switch (rmreg(rm)) {
     case 0: vomit_cpu_modrm_update16(cpu, cpu_rol(cpu, value, cpu->regs.B.CL, 16)); break;
@@ -225,10 +223,10 @@ void _wrap_0xF7(VCpu* cpu)
 
 void _wrap_0xFE(VCpu* cpu)
 {
-    byte rm = cpu->fetchOpcodeByte();
-    byte value = vomit_cpu_modrm_read8(cpu, rm);
+    BYTE rm = cpu->fetchOpcodeByte();
+    BYTE value = vomit_cpu_modrm_read8(cpu, rm);
 
-    word i = value;
+    WORD i = value;
 
     switch (rmreg(rm)) {
     case 0:
@@ -246,7 +244,7 @@ void _wrap_0xFE(VCpu* cpu)
         vomit_cpu_modrm_update8(cpu, value - 1);
         break;
     default:
-        vlog(VM_ALERT, "FE /%d not wrapped", rmreg(rm));
+        vlog(VM_ALERT, "FE /%u not wrapped", rmreg(rm));
         cpu->exception(6);
         break;
     }

@@ -1,9 +1,7 @@
-/* 8086/mov.cpp
- * MOVe instructions
- *
- */
+// x86/mov.cpp
+// MOV instructions
 
-#include "vomit.h"
+#include "vcpu.h"
 #include "debug.h"
 
 void _MOV_RM8_imm8(VCpu* cpu)

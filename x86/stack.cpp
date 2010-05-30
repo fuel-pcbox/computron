@@ -1,9 +1,7 @@
-/* 8086/stack.cpp
- * Stack instructions
- *
- */
+// x86/stack.cpp
+// Stack instructions
 
-#include "vomit.h"
+#include "vcpu.h"
 #include "debug.h"
 
 void VCpu::push(WORD value)

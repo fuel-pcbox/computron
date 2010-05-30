@@ -1,7 +1,5 @@
-/* 8086/interrupt.cpp
- * Interrupt instructions
- *
- */
+// x86/interrupt.cpp
+// Interrupt instructions
 
 #include "vomit.h"
 #include "vcpu.h"
@@ -10,8 +8,6 @@
 #ifdef VOMIT_DOS_ON_LINUX_IDLE_HACK
 #include <sched.h>
 #endif
-
-extern void bios_interrupt10();
 
 void _INT_imm8(VCpu* cpu)
 {

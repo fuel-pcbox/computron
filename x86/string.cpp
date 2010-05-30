@@ -1,16 +1,12 @@
-/* 8086/string.c
- * String operations
- *
- */
+// x86/string.c
+// String instructions
 
 #include "vcpu.h"
 
 void _LODSB(VCpu* cpu)
 {
-    /* Load byte at CurSeg:SI into AL */
     cpu->regs.B.AL = cpu->readMemory8(cpu->currentSegment(), cpu->regs.W.SI);
 
-    /* Modify SI according to DF */
     if (cpu->getDF() == 0)
         ++cpu->regs.W.SI;
     else
@@ -19,10 +15,8 @@ void _LODSB(VCpu* cpu)
 
 void _LODSW(VCpu* cpu)
 {
-    /* Load word at CurSeg:SI into AX */
     cpu->regs.W.AX = cpu->readMemory16(cpu->currentSegment(), cpu->regs.W.SI);
 
-    /* Modify SI according to DF */
     if (cpu->getDF() == 0)
         cpu->regs.W.SI += 2;
     else

@@ -1,8 +1,5 @@
-/* 8086/loop.cpp
- * Loop instructions
- *
- *
- */
+// x86/loop.cpp
+// Loop & repetition instructions
 
 #include "vcpu.h"
 #include "debug.h"
@@ -34,7 +31,7 @@ void _LOOPNE_imm8(VCpu* cpu)
 #define DO_REP(func) for (; cpu->regs.W.CX; --cpu->regs.W.CX) { func(cpu); }
 #define DO_REPZ(func) for (cpu->setZF(should_equal); cpu->regs.W.CX && (cpu->getZF() == should_equal); --cpu->regs.W.CX) { func(cpu); }
 
-static void __rep(VCpu* cpu, byte opcode, bool should_equal)
+static void __rep(VCpu* cpu, BYTE opcode, bool should_equal)
 {
     switch(opcode) {
     case 0x26: cpu->setSegmentPrefix(cpu->getES()); break;

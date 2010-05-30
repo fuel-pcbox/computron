@@ -28,8 +28,10 @@ void dma_init();
 void fdc_init();
 void ide_init();
 
+#ifdef VOMIT_C_VGA_BIOS
 void video_bios_init();
-void load_cursor( byte *row, byte *column );
+void load_cursor(BYTE* row, BYTE* column);
+#endif
 
 void vomit_init();
 

@@ -264,7 +264,7 @@ public:
 
     inline BYTE* memoryPointer(WORD segment, WORD offset) const;
 
-    WORD getFlags();
+    WORD getFlags() const;
     void setFlags(WORD flags);
 
     inline bool evaluate(BYTE) const;

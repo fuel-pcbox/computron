@@ -1,7 +1,5 @@
-/* 8086/cpu.cpp
- * 8086 emulation
- *
- */
+// x86/cpu.cpp
+// Initialization, main loop, misc instructions
 
 #include "vomit.h"
 #include "debug.h"

@@ -6,8 +6,8 @@
 
 static void* s_last_modrm_ptr = 0L;
 
-static word s_last_modrm_segment = 0;
-static word s_last_modrm_offset = 0;
+static WORD s_last_modrm_segment = 0;
+static WORD s_last_modrm_offset = 0;
 
 void vomit_cpu_modrm_write16(VCpu* cpu, BYTE rmbyte, WORD value)
 {
@@ -59,7 +59,7 @@ void vomit_cpu_modrm_update8(VCpu* cpu, BYTE value)
         cpu->writeMemory8(s_last_modrm_segment, s_last_modrm_offset, value);
 }
 
-DWORD vomit_cpu_modrm_read32(VCpu* cpu, byte rmbyte)
+DWORD vomit_cpu_modrm_read32(VCpu* cpu, BYTE rmbyte)
 {
     // NOTE: We don't need modrm_resolve32() at the moment.
     BYTE* rmp = (BYTE*)vomit_cpu_modrm_resolve8(cpu, rmbyte);

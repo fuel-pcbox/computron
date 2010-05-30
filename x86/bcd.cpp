@@ -1,9 +1,5 @@
-/* 8086/bcd.cpp
- * BCD instruction handlers
- *
- * Based entirely on the Intel IA32 manual.
- *
- */
+// x86/bcd.cpp
+// BCD instructions
 
 #include "vcpu.h"
 
@@ -107,4 +103,3 @@ void _DAA(VCpu* cpu)
         cpu->setCF(0);
     }
 }
-

@@ -1,7 +1,5 @@
-/* 8086/bitwise.cpp
- * Bitwise instructions
- *
- */
+// x86/bitwise.cpp
+// Bitwise instructions
 
 #if VOMIT_CPU_LEVEL >= 1
 #define MASK_STEPS_UNLESS_8086 do { steps &= 0x1F; } while(0);
@@ -142,9 +140,8 @@ DWORD cpu_shl(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
         }
     }
 
-    if (steps == 1) {
+    if (steps == 1)
         cpu->setOF((data >> (bits - 1)) ^ cpu->getCF());
-    }
 
     cpu->updateFlags(result, bits);
     return result;
@@ -168,9 +165,8 @@ DWORD cpu_shr(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
         }
     }
 
-    if (steps == 1) {
+    if (steps == 1)
         cpu->setOF((data >> (bits - 1)) & 1);
-    }
 
     cpu->updateFlags(result, bits);
     return result;
@@ -179,7 +175,7 @@ DWORD cpu_shr(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 DWORD cpu_sar(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 {
     DWORD result = (DWORD)data;
-    word n;
+    WORD n;
 
     MASK_STEPS_UNLESS_8086;
 
@@ -197,9 +193,8 @@ DWORD cpu_sar(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
         }
     }
 
-    if (steps == 1) {
+    if (steps == 1)
         cpu->setOF(0);
-    }
 
     cpu->updateFlags(result, bits);
     return result;
@@ -223,9 +218,8 @@ DWORD cpu_rol(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
         }
     }
 
-    if (steps == 1) {
+    if (steps == 1)
         cpu->setOF(((result >> (bits - 1)) & 1) ^ cpu->getCF());
-    }
 
     return result;
 }
@@ -248,9 +242,8 @@ DWORD cpu_ror(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
         }
     }
 
-    if (steps == 1) {
+    if (steps == 1)
         cpu->setOF((result >> (bits - 1)) ^ ((result >> (bits - 2) & 1)));
-    }
 
     return result;
 }
@@ -276,9 +269,8 @@ DWORD cpu_rcl(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
         }
     }
 
-    if (steps == 1) {
+    if (steps == 1)
         cpu->setOF((result >> (bits - 1)) ^ cpu->getCF());
-    }
 
     return result;
 }
@@ -286,7 +278,7 @@ DWORD cpu_rcl(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 DWORD cpu_rcr(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 {
     DWORD result = (DWORD)data;
-    word n;
+    WORD n;
 
     MASK_STEPS_UNLESS_8086;
 
@@ -304,9 +296,8 @@ DWORD cpu_rcr(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
         }
     }
 
-    if (steps == 1) {
+    if (steps == 1)
         cpu->setOF((result >> (bits - 1)) ^ ((result >> (bits - 2) & 1)));
-    }
 
     return result;
 }
@@ -319,7 +310,7 @@ void _NOT_RM8(VCpu* cpu)
 
 void _NOT_RM16(VCpu* cpu)
 {
-    word value = vomit_cpu_modrm_read16(cpu, cpu->rmbyte);
+    WORD value = vomit_cpu_modrm_read16(cpu, cpu->rmbyte);
     vomit_cpu_modrm_update16(cpu, ~value);
 }
 

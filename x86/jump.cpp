@@ -1,7 +1,5 @@
-/* 8086/jump.cpp
- * Jump instructions
- *
- */
+// x86/jump.cpp
+// Jump, call & return instructions
 
 #include "vcpu.h"
 

@@ -1,7 +1,5 @@
-/* 8086/math.c
- * Mathematical instuctions
- *
- */
+// x86/math.cpp
+// Math (arithmetic) instuctions
 
 #include "vcpu.h"
 #include "templates.h"
@@ -308,6 +306,7 @@ void _IDIV_RM16(VCpu* cpu)
         cpu->exception(0);
         return;
     }
+
     cpu->regs.W.AX = (SIGNED_WORD)(tDXAX / value); // Quote
     cpu->regs.W.DX = (SIGNED_WORD)(tDXAX % value); // Remainder
 }

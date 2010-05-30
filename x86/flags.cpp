@@ -1,6 +1,5 @@
-/* 8086/flags.cpp
- * Handler of the hell that is flags
- */
+// x86/flags.cpp
+// Flag-related mess
 
 #include "vcpu.h"
 
@@ -10,7 +9,7 @@
 #define VOMIT_CPU_STATIC_FLAGS 0x0000
 #endif
 
-static const byte parity_table[0x100] = {
+static const BYTE parity_table[0x100] = {
     1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
     0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
     0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
@@ -36,29 +35,28 @@ void vomit_cpu_setAF(VCpu* cpu, DWORD result, WORD src, WORD dest)
 
 void VCpu::updateFlags16(WORD data)
 {
-    this->PF = parity_table[data & 0xFF];
-    this->SF = (data & 0x8000) != 0;
-    this->ZF = data == 0;
+    setPF(parity_table[data & 0xFF]);
+    setSF(data & 0x8000);
+    setZF(data == 0);
 }
 
 void VCpu::updateFlags8(BYTE data)
 {
-    this->PF = parity_table[data];
-    this->SF = (data & 0x80) != 0;
-    this->ZF = data == 0;
+    setPF(parity_table[data]);
+    setSF(data & 0x80);
+    setZF(data == 0);
 }
 
 void VCpu::updateFlags(WORD data, BYTE bits)
 {
     if (bits == 8) {
         data &= 0xFF;
-        this->PF = parity_table[data];
-        this->SF = (data & 0x80) != 0;
-    } else {
-        this->PF = parity_table[data & 0xFF];
-        this->SF = (data & 0x8000) != 0;
-    }
-    this->ZF = data == 0;
+        setSF(data & 0x80);
+    } else
+        setSF(data & 0x8000);
+
+    setPF(parity_table[data & 0xFF]);
+    setZF(data == 0);
 }
 
 void _STC(VCpu* cpu)
@@ -110,58 +108,65 @@ void _SAHF(VCpu* cpu)
     cpu->setSF(cpu->regs.B.AH & 0x80);
 }
 
-
 void VCpu::mathFlags8(DWORD result, BYTE dest, BYTE src)
 {
-    this->CF = (result & 0x0100) != 0;
-    this->SF = (result & 0x0080) != 0;
-    this->ZF = (result & 0x00FF) == 0;
-    this->PF = parity_table[result & 0xFF];
+    setCF(result & 0x0100);
+    setSF(result & 0x0080);
+    setZF((result & 0x00FF) == 0);
+    setPF(parity_table[result & 0xFF]);
     vomit_cpu_setAF(this, result, dest, src);
 }
 
 void VCpu::mathFlags16(DWORD result, WORD dest, WORD src)
 {
-    this->CF = (result & 0x10000) != 0;
-    this->SF = (result &  0x8000) != 0;
-    this->ZF = (result &  0xFFFF) == 0;
-    this->PF = parity_table[result & 0xFF];
+    setCF(result & 0x10000);
+    setSF(result & 0x8000);
+    setZF((result & 0xFFFF) == 0);
+    setPF(parity_table[result & 0xFF]);
     vomit_cpu_setAF(this, result, dest, src);
 }
 
 void VCpu::cmpFlags8(DWORD result, BYTE dest, BYTE src)
 {
     mathFlags8(result, dest, src);
-    this->OF = ((
+    setOF(((
         ((src)^(dest)) &
         ((src)^(src-dest))
-        )>>(7))&1;
+        )>>(7))&1);
 }
 
 void VCpu::cmpFlags16(DWORD result, WORD dest, WORD src )
 {
     mathFlags16(result, dest, src);
-    this->OF = ((
+    setOF(((
         ((src)^(dest)) &
         ((src)^(src-dest))
-        )>>(15))&1;
+        )>>(15))&1);
 }
 
 void VCpu::setFlags(WORD flags)
 {
-    this->CF = (flags & 0x0001) != 0;
-    this->PF = (flags & 0x0004) != 0;
-    this->AF = (flags & 0x0010) != 0;
-    this->ZF = (flags & 0x0040) != 0;
-    this->SF = (flags & 0x0080) != 0;
-    this->TF = (flags & 0x0100) != 0;
-    this->IF = (flags & 0x0200) != 0;
-    this->DF = (flags & 0x0400) != 0;
-    this->OF = (flags & 0x0800) != 0;
+    setCF(flags & 0x0001);
+    setPF(flags & 0x0004);
+    setAF(flags & 0x0010);
+    setZF(flags & 0x0040);
+    setSF(flags & 0x0080);
+    setTF(flags & 0x0100);
+    setIF(flags & 0x0200);
+    setDF(flags & 0x0400);
+    setOF(flags & 0x0800);
 }
 
-WORD VCpu::getFlags()
- {
-    return this->CF | (this->PF << 2) | (this->AF << 4) | (this->ZF << 6) | (this->SF << 7) | (this->TF << 8) | (this->IF << 9) | (this->DF << 10) | (this->OF << 11) | VOMIT_CPU_STATIC_FLAGS;
+WORD VCpu::getFlags() const
+{
+    return VOMIT_CPU_STATIC_FLAGS
+        | (getCF() << 0)
+        | (getPF() << 2)
+        | (getAF() << 4)
+        | (getZF() << 6)
+        | (getSF() << 7)
+        | (getTF() << 8)
+        | (getIF() << 9)
+        | (getDF() << 10)
+        | (getOF() << 11);
 }
-
