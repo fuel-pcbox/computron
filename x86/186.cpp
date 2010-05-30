@@ -42,7 +42,7 @@ void _BOUND(VCpu* cpu)
 
 void _PUSH_imm8(VCpu* cpu)
 {
-    cpu->push(signext(cpu->fetchOpcodeByte()));
+    cpu->push(vomit_signExtend(cpu->fetchOpcodeByte()));
 }
 
 void _PUSH_imm16(VCpu* cpu)

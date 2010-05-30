@@ -42,13 +42,12 @@ inline WORD vomit_read16FromPointer(WORD* pointer)
 #endif
 }
 
-inline WORD signext(BYTE b)
+inline WORD vomit_signExtend(BYTE b)
 {
-    WORD w = 0x0000 | b;
-    if (w & 0x80)
-        return w | 0xFF00;
+    if (b & 0x80)
+        return b | 0xFF00;
     else
-        return w & 0x00FF;
+        return b;
 }
 
 #define rmreg(b) (b>>3&7)    /* Extracts RegID from RM byte. */

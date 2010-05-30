@@ -44,7 +44,7 @@
 #define DEFAULT_RM16_imm8(helper, name) \
 	void name(VCpu* cpu) { \
 		WORD value = vomit_cpu_modrm_read16(cpu, cpu->rmbyte); \
-		vomit_cpu_modrm_update16(cpu, helper ## 16(cpu, value, signext(cpu->fetchOpcodeByte()))); \
+		vomit_cpu_modrm_update16(cpu, helper ## 16(cpu, value, vomit_signExtend(cpu->fetchOpcodeByte()))); \
 	}
 
 #define DEFAULT_AL_imm8(helper, name) \
@@ -96,7 +96,7 @@
 #define READONLY_RM16_imm8(helper, name) \
 	void name(VCpu* cpu) { \
 		WORD value = vomit_cpu_modrm_read16(cpu, cpu->rmbyte); \
-		helper ## 16(cpu, value, signext(cpu->fetchOpcodeByte())); \
+		helper ## 16(cpu, value, vomit_signExtend(cpu->fetchOpcodeByte())); \
 	}
 
 #define READONLY_AL_imm8(helper, name) \

@@ -54,7 +54,7 @@ READONLY_AX_imm16(cpu_and, _TEST_AX_imm16)
 
 void _CBW(VCpu* cpu)
 {
-    cpu->regs.W.AX = signext(cpu->regs.B.AL);
+    cpu->regs.W.AX = vomit_signExtend(cpu->regs.B.AL);
 }
 
 void _CWD(VCpu* cpu)
