@@ -5,6 +5,7 @@
 
 #include "vomit.h"
 #include "vcpu.h"
+#include "keyboard.h"
 #include "debug.h"
 
 #define ATKBD_PARITY_ERROR  0x80
@@ -28,124 +29,107 @@
 #define CMD_READ_CCB                  0x20
 #define CMD_WRITE_CCB                 0x60
 
-static BYTE keyboard_read_data(VCpu* cpu, WORD port);
-static void keyboard_write_data(VCpu* cpu, WORD, BYTE);
-static BYTE keyboard_status(VCpu* cpu, WORD);
-static BYTE system_control_read(VCpu* cpu, WORD);
-static void system_control_write(VCpu* cpu, WORD, BYTE);
-static void keyboard_command(VCpu* cpu, WORD, BYTE);
+static Keyboard theKeyboard;
 
-static BYTE system_control_port_data;
-
-static BYTE keyboard_controller_ram[32];
-static BYTE keyboard_controller_command;
-static bool keyboard_controller_has_command;
-
-void keyboard_init()
+Keyboard::Keyboard()
+    : IODevice("Keyboard")
 {
-    vm_listen(0x60, keyboard_read_data, keyboard_write_data);
-    vm_listen(0x61, system_control_read, system_control_write);
-    vm_listen(0x64, keyboard_status, keyboard_command);
+    memset(m_ram, 0, sizeof(m_ram));
 
-    system_control_port_data = 0;
-    keyboard_controller_command = 0x00;
-    keyboard_controller_has_command = false;
+    m_systemControlPortData = 0;
+    m_command = 0x00;
+    m_hasCommand = false;
 
-    memset(keyboard_controller_ram, 0, sizeof(keyboard_controller_ram));
-
-    keyboard_controller_ram[0] |= CCB_SYSTEM_FLAG;
+    m_ram[0] |= CCB_SYSTEM_FLAG;
 
     // FIXME: The BIOS should do this, no?
-    keyboard_controller_ram[0] |= CCB_KEYBOARD_ENABLE;
-    keyboard_controller_ram[0] |= CCB_KEYBOARD_INTERRUPT_ENABLE;
+    m_ram[0] |= CCB_KEYBOARD_ENABLE;
+    m_ram[0] |= CCB_KEYBOARD_INTERRUPT_ENABLE;
+
+    listen(0x60, IODevice::ReadWrite);
+    listen(0x61, IODevice::ReadWrite);
+    listen(0x64, IODevice::ReadWrite);
 }
 
-BYTE keyboard_status(VCpu* cpu, WORD port)
+Keyboard::~Keyboard()
 {
-    /* Keyboard not locked, POST completed successfully. */
-    //vlog(VM_KEYMSG, "Keyboard status queried.");
-    return ATKBD_UNLOCKED | (keyboard_controller_ram[0] & ATKBD_SYSTEM_FLAG);
 }
 
-/*
- * From http://courses.ece.uiuc.edu/ece390/books/labmanual/io-devices.html
- *
- * ...The only special requirement is that it acknowledges reception of
- * the keyboard event by toggling bit 7 of port 61h to 1 and back to 0.
- * The other bits of port 61h must not be modified, since they control
- * other hardware. This is only required for full original IBM PC
- * compatibility.
- *
- * This is why MS Windows flips the 0x80 bit of I/O port 0x61 after each
- * keypress. Took a while to catch that one... :)
- */
-
-BYTE system_control_read(VCpu* cpu, WORD port)
+BYTE Keyboard::in8(WORD port)
 {
-    //vlog(VM_KEYMSG, "%02X <- System control port", system_control_port_data);
-    return system_control_port_data;
-}
-
-void system_control_write(VCpu* cpu, WORD port, BYTE data)
-{
-    system_control_port_data = data;
-    //vlog(VM_KEYMSG, "System control port <- %02X", data);
-}
-
-BYTE keyboard_read_data(VCpu* cpu, WORD port)
-{
-    if (keyboard_controller_has_command && keyboard_controller_command <= 0x3F) {
-        BYTE ramIndex = keyboard_controller_command & 0x3F;
-        keyboard_controller_has_command = false;
-        vlog(VM_KEYMSG, "Reading 8042 RAM [%02] = %02X", ramIndex, keyboard_controller_ram[ramIndex]);
-        return keyboard_controller_ram[ramIndex];
-    }
-
-    BYTE key = kbd_pop_raw();
-    //vlog(VM_KEYMSG, "keyboard_data = %02X", key);
-    return key;
-}
-
-void keyboard_write_data(VCpu* cpu, WORD port, BYTE data)
-{
-    if (!keyboard_controller_has_command) {
-        vlog(VM_KEYMSG, "Got data (%02X) without command", data);
-        return;
-    }
-
-    keyboard_controller_has_command = false;
-
-    if (keyboard_controller_command >= 0x60 && keyboard_controller_command <= 0x7F) {
-        BYTE ramIndex = keyboard_controller_command & 0x3F;
-        keyboard_controller_ram[ramIndex] = data;
-
-        switch (ramIndex) {
-        case 0:
-            vlog(VM_KEYMSG, "Controller Command Byte set:", data);
-            vlog(VM_KEYMSG, "  Keyboard interrupt: %s", data & CCB_KEYBOARD_INTERRUPT_ENABLE ? "enabled" : "disabled");
-            vlog(VM_KEYMSG, "  Mouse interrupt:    %s", data & CCB_MOUSE_INTERRUPT_ENABLE ? "enabled" : "disabled");
-            vlog(VM_KEYMSG, "  System flag:        %s", data & CCB_SYSTEM_FLAG ? "enabled" : "disabled");
-            vlog(VM_KEYMSG, "  Keyboard enable:    %s", data & CCB_KEYBOARD_ENABLE ? "enabled" : "disabled");
-            vlog(VM_KEYMSG, "  Mouse enable:       %s", data & CCB_MOUSE_ENABLE ? "enabled" : "disabled");
-            vlog(VM_KEYMSG, "  Translation:        %s", data & CCB_TRANSLATE ? "enabled" : "disabled");
-            break;
-        default:
-            vlog(VM_KEYMSG, "Writing 8042 RAM [%02] = %02X", ramIndex, data);
+    if (port == 0x60) {
+        if (m_hasCommand && m_command <= 0x3F) {
+            BYTE ramIndex = m_command & 0x3F;
+            m_hasCommand = false;
+            vlog(VM_KEYMSG, "Reading 8042 RAM [%02] = %02X", ramIndex, m_ram[ramIndex]);
+            return m_ram[ramIndex];
         }
+
+        BYTE key = kbd_pop_raw();
+        //vlog(VM_KEYMSG, "keyboard_data = %02X", key);
+        return key;
+    }
+
+    if (port == 0x64) {
+        // Keyboard not locked, POST completed successfully.
+        //vlog(VM_KEYMSG, "Keyboard status queried");
+        return ATKBD_UNLOCKED | (m_ram[0] & ATKBD_SYSTEM_FLAG);
+    }
+
+    if (port == 0x61)
+        return m_systemControlPortData;
+
+    return 0xFF;
+}
+
+void Keyboard::out8(WORD port, BYTE data)
+{
+    if (port == 0x61) {
+        //vlog(VM_KEYMSG, "System control port <- %02X", data);
+        m_systemControlPortData = data;
         return;
     }
 
-    vlog(VM_KEYMSG, "Got data %02X for unknown command %02X", data, keyboard_controller_command);
+    if (port == 0x64) {
+        vlog(VM_KEYMSG, "Keyboard command <- %02X", data);
+        m_command = data;
+        return;
+    }
+
+    if (port == 0x60) {
+        if (!m_hasCommand) {
+            vlog(VM_KEYMSG, "Got data (%02X) without command", data);
+            return;
+        }
+
+        m_hasCommand = false;
+
+        if (m_command >= 0x60 && m_command <= 0x7F) {
+            BYTE ramIndex = m_command & 0x3F;
+            m_ram[ramIndex] = data;
+
+            switch (ramIndex) {
+            case 0:
+                vlog(VM_KEYMSG, "Controller Command Byte set:", data);
+                vlog(VM_KEYMSG, "  Keyboard interrupt: %s", data & CCB_KEYBOARD_INTERRUPT_ENABLE ? "enabled" : "disabled");
+                vlog(VM_KEYMSG, "  Mouse interrupt:    %s", data & CCB_MOUSE_INTERRUPT_ENABLE ? "enabled" : "disabled");
+                vlog(VM_KEYMSG, "  System flag:        %s", data & CCB_SYSTEM_FLAG ? "enabled" : "disabled");
+                vlog(VM_KEYMSG, "  Keyboard enable:    %s", data & CCB_KEYBOARD_ENABLE ? "enabled" : "disabled");
+                vlog(VM_KEYMSG, "  Mouse enable:       %s", data & CCB_MOUSE_ENABLE ? "enabled" : "disabled");
+                vlog(VM_KEYMSG, "  Translation:        %s", data & CCB_TRANSLATE ? "enabled" : "disabled");
+                break;
+            default:
+                vlog(VM_KEYMSG, "Writing 8042 RAM [%02] = %02X", ramIndex, data);
+            }
+            return;
+        }
+        vlog(VM_KEYMSG, "Got data %02X for unknown command %02X", data, m_command);
+        return;
+    }
 }
 
-void keyboard_command(VCpu* cpu, WORD port, BYTE data)
+void Keyboard::raiseIRQ()
 {
-    keyboard_controller_command = data;
-    vlog(VM_KEYMSG, "Keyboard command <- %02X", data);
-}
-
-void keyboard_raise_irq_if_enabled()
-{
-    if (keyboard_controller_ram[0] & CCB_KEYBOARD_INTERRUPT_ENABLE)
+    if (theKeyboard.m_ram[0] & CCB_KEYBOARD_INTERRUPT_ENABLE)
         irq(1);
 }

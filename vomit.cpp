@@ -45,7 +45,6 @@ void vomit_init()
     fdc_init();
     ide_init();
     pit_init();
-    keyboard_init();
 
     vm_loadconf();
 

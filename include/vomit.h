@@ -27,7 +27,6 @@ void screen_direct_update( word );
 void dma_init();
 void fdc_init();
 void pit_init();
-void keyboard_init();
 void ide_init();
 
 void video_bios_init();
@@ -36,7 +35,6 @@ void load_cursor( byte *row, byte *column );
 void vomit_init();
 
 void irq(BYTE num);
-void keyboard_raise_irq_if_enabled();
 
 extern bool disklog, trapint, iopeek, mempeek, callpeek;
 

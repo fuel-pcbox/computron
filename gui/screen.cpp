@@ -5,6 +5,7 @@
 #include "vga.h"
 #include "vga_memory.h"
 #include "busmouse.h"
+#include "keyboard.h"
 
 #include <QtGui/QPainter>
 #include <QtGui/QPaintEvent>
@@ -705,7 +706,7 @@ void Screen::keyPressEvent(QKeyEvent *e)
     qDebug() << "++++:" << s;
 #endif
 
-    keyboard_raise_irq_if_enabled();
+    Keyboard::raiseIRQ();
 }
 
 void Screen::keyReleaseEvent(QKeyEvent *e)
@@ -725,7 +726,7 @@ void Screen::keyReleaseEvent(QKeyEvent *e)
     qDebug() << "----:"<< s;
 #endif
 
-    keyboard_raise_irq_if_enabled();
+    Keyboard::raiseIRQ();
 
     e->ignore();
 }
@@ -773,5 +774,5 @@ void Screen::flushKeyBuffer()
     QMutexLocker l(&d->keyQueueLock);
 
     if (!d->rawQueue.isEmpty() && d->cpu->getIF())
-        keyboard_raise_irq_if_enabled();
+        Keyboard::raiseIRQ();
 }
