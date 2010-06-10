@@ -5,28 +5,28 @@
 	void name(VCpu* cpu) { \
 		BYTE rm = cpu->fetchOpcodeByte(); \
 		BYTE value = cpu->readModRM8(rm); \
-		cpu->updateModRM8(helper ## 8(cpu, value, *cpu->treg8[rmreg(rm)])); \
+		cpu->updateModRM8(helper ## 8(cpu, value, *cpu->treg8[vomit_modRMRegisterPart(rm)])); \
 	}
 
 #define DEFAULT_RM16_reg16(helper, name) \
 	void name(VCpu* cpu) { \
 		BYTE rm = cpu->fetchOpcodeByte(); \
 		WORD value = cpu->readModRM16(rm); \
-		cpu->updateModRM16(helper ## 16(cpu, value, *cpu->treg16[rmreg(rm)])); \
+		cpu->updateModRM16(helper ## 16(cpu, value, *cpu->treg16[vomit_modRMRegisterPart(rm)])); \
 	}
 
 #define DEFAULT_reg8_RM8(helper, name) \
 	void name(VCpu* cpu) { \
 		BYTE rm = cpu->fetchOpcodeByte(); \
 		BYTE value = cpu->readModRM8(rm); \
-		*cpu->treg8[rmreg(rm)] = helper ## 8(cpu, *cpu->treg8[rmreg(rm)], value); \
+		*cpu->treg8[vomit_modRMRegisterPart(rm)] = helper ## 8(cpu, *cpu->treg8[vomit_modRMRegisterPart(rm)], value); \
 	}
 
 #define DEFAULT_reg16_RM16(helper, name) \
 	void name(VCpu* cpu) { \
 		BYTE rm = cpu->fetchOpcodeByte(); \
 		WORD value = cpu->readModRM16(rm); \
-		*cpu->treg16[rmreg(rm)] = helper ## 16(cpu, *cpu->treg16[rmreg(rm)], value); \
+		*cpu->treg16[vomit_modRMRegisterPart(rm)] = helper ## 16(cpu, *cpu->treg16[vomit_modRMRegisterPart(rm)], value); \
 	}
 
 #define DEFAULT_RM8_imm8(helper, name) \
@@ -60,25 +60,25 @@
 #define READONLY_RM8_reg8(helper, name) \
 	void name(VCpu* cpu) { \
 		BYTE rm = cpu->fetchOpcodeByte(); \
-		helper ## 8(cpu, cpu->readModRM8(rm), *cpu->treg8[rmreg(rm)]); \
+		helper ## 8(cpu, cpu->readModRM8(rm), *cpu->treg8[vomit_modRMRegisterPart(rm)]); \
 	}
 
 #define READONLY_RM16_reg16(helper, name) \
 	void name(VCpu* cpu) { \
 		BYTE rm = cpu->fetchOpcodeByte(); \
-		helper ## 16(cpu, cpu->readModRM16(rm), *cpu->treg16[rmreg(rm)]); \
+		helper ## 16(cpu, cpu->readModRM16(rm), *cpu->treg16[vomit_modRMRegisterPart(rm)]); \
 	}
 
 #define READONLY_reg8_RM8(helper, name) \
 	void name(VCpu* cpu) { \
 		BYTE rm = cpu->fetchOpcodeByte(); \
-		helper ## 8(cpu, *cpu->treg8[rmreg(rm)], cpu->readModRM8(rm)); \
+		helper ## 8(cpu, *cpu->treg8[vomit_modRMRegisterPart(rm)], cpu->readModRM8(rm)); \
 	}
 
 #define READONLY_reg16_RM16(helper, name) \
 	void name(VCpu* cpu) { \
 		BYTE rm = cpu->fetchOpcodeByte(); \
-		helper ## 16(cpu, *cpu->treg16[rmreg(rm)], cpu->readModRM16(rm)); \
+		helper ## 16(cpu, *cpu->treg16[vomit_modRMRegisterPart(rm)], cpu->readModRM16(rm)); \
 	}
 
 #define READONLY_RM8_imm8(helper, name) \

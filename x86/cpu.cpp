@@ -583,7 +583,7 @@ void _XCHG_AX_reg16(VCpu* cpu)
 void _XCHG_reg8_RM8(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    BYTE &reg(*cpu->treg8[rmreg(rm)]);
+    BYTE &reg(*cpu->treg8[vomit_modRMRegisterPart(rm)]);
 
     BYTE value = cpu->readModRM8(rm);
     BYTE tmp = reg;
@@ -595,8 +595,8 @@ void _XCHG_reg16_RM16(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
     WORD value = cpu->readModRM16(rm);
-    WORD tmp = *cpu->treg16[rmreg(rm)];
-    *cpu->treg16[rmreg(rm)] = value;
+    WORD tmp = *cpu->treg16[vomit_modRMRegisterPart(rm)];
+    *cpu->treg16[vomit_modRMRegisterPart(rm)] = value;
     cpu->updateModRM16(tmp);
 }
 
@@ -662,14 +662,14 @@ void _LDS_reg16_mem16(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
     DWORD value = cpu->readModRM32(rm);
-    *cpu->treg16[rmreg(rm)] = LSW(value);
+    *cpu->treg16[vomit_modRMRegisterPart(rm)] = LSW(value);
     cpu->DS = MSW(value);
 }
 void _LES_reg16_mem16(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
     DWORD value = cpu->readModRM32(rm);
-    *cpu->treg16[rmreg(rm)] = LSW(value);
+    *cpu->treg16[vomit_modRMRegisterPart(rm)] = LSW(value);
     cpu->ES = MSW(value);
 }
 
@@ -724,7 +724,7 @@ void _LEA_reg16_mem16(VCpu* cpu)
             cpu->exception(6);
             break;
     }
-    *cpu->treg16[rmreg(b)] = retv;
+    *cpu->treg16[vomit_modRMRegisterPart(b)] = retv;
 }
 
 #ifdef VOMIT_DEBUG

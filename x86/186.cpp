@@ -15,7 +15,7 @@ void _wrap_0x0F(VCpu* cpu)
     {
         BYTE rm = cpu->fetchOpcodeByte();
         (void) cpu->readModRM16(rm);
-        vlog(VM_ALERT, "Sliding by 0F 01 /%d\n", rmreg(rm));
+        vlog(VM_ALERT, "Sliding by 0F 01 /%d\n", vomit_modRMRegisterPart(rm));
         break;
     }
     case 0xFF: // UD0
@@ -32,7 +32,7 @@ void _BOUND(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
     DWORD value = cpu->readModRM32(rm);
-    WORD index = *cpu->treg16[rmreg(rm)];
+    WORD index = *cpu->treg16[vomit_modRMRegisterPart(rm)];
 
     if (index < LSW(value) || index > MSW(value)) {
         /* Raise BR exception */

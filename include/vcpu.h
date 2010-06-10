@@ -50,7 +50,10 @@ inline WORD vomit_signExtend(BYTE b)
         return b;
 }
 
-#define rmreg(b) (b>>3&7)    /* Extracts RegID from RM byte. */
+inline int vomit_modRMRegisterPart(int rmbyte)
+{
+    return (rmbyte >> 3) & 7;
+}
 
 #define LSW(d) ((d)&0xFFFF)
 #define MSW(d) (((d)&0xFFFF0000)>>16)

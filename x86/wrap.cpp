@@ -7,7 +7,7 @@
 void _wrap_0x80(VCpu* cpu)
 {
     cpu->rmbyte = cpu->fetchOpcodeByte();
-    switch(rmreg(cpu->rmbyte)) {
+    switch(vomit_modRMRegisterPart(cpu->rmbyte)) {
     case 0: _ADD_RM8_imm8(cpu); break;
     case 1:  _OR_RM8_imm8(cpu); break;
     case 2: _ADC_RM8_imm8(cpu); break;
@@ -22,7 +22,7 @@ void _wrap_0x80(VCpu* cpu)
 void _wrap_0x81(VCpu* cpu)
 {
     cpu->rmbyte = cpu->fetchOpcodeByte();
-    switch(rmreg(cpu->rmbyte)) {
+    switch(vomit_modRMRegisterPart(cpu->rmbyte)) {
     case 0: _ADD_RM16_imm16(cpu); break;
     case 1:  _OR_RM16_imm16(cpu); break;
     case 2: _ADC_RM16_imm16(cpu); break;
@@ -37,7 +37,7 @@ void _wrap_0x81(VCpu* cpu)
 void _wrap_0x83(VCpu* cpu)
 {
     cpu->rmbyte = cpu->fetchOpcodeByte();
-    switch(rmreg(cpu->rmbyte)) {
+    switch(vomit_modRMRegisterPart(cpu->rmbyte)) {
     case 0: _ADD_RM16_imm8(cpu); break;
     case 1:  _OR_RM16_imm8(cpu); break;
     case 2: _ADC_RM16_imm8(cpu); break;
@@ -52,10 +52,10 @@ void _wrap_0x83(VCpu* cpu)
 void _wrap_0x8F(VCpu* cpu)
 {
     cpu->rmbyte = cpu->fetchOpcodeByte();
-    switch(rmreg(cpu->rmbyte)) {
+    switch(vomit_modRMRegisterPart(cpu->rmbyte)) {
     case 0: _POP_RM16(cpu); break;
     default:
-        vlog(VM_ALERT, "8F /%u not wrapped", rmreg(cpu->rmbyte));
+        vlog(VM_ALERT, "8F /%u not wrapped", vomit_modRMRegisterPart(cpu->rmbyte));
         cpu->exception(6);
     }
 }
@@ -66,7 +66,7 @@ void _wrap_0xC0(VCpu* cpu)
     BYTE value = cpu->readModRM8(rm);
     BYTE imm = cpu->fetchOpcodeByte();
 
-    switch (rmreg(rm)) {
+    switch (vomit_modRMRegisterPart(rm)) {
     case 0: cpu->updateModRM8(cpu_rol(cpu, value, imm, 8)); break;
     case 1: cpu->updateModRM8(cpu_ror(cpu, value, imm, 8)); break;
     case 2: cpu->updateModRM8(cpu_rcl(cpu, value, imm, 8)); break;
@@ -87,7 +87,7 @@ void _wrap_0xC1(VCpu* cpu)
     WORD value = cpu->readModRM16(rm );
     BYTE imm = cpu->fetchOpcodeByte();
 
-    switch (rmreg(rm)) {
+    switch (vomit_modRMRegisterPart(rm)) {
     case 0: cpu->updateModRM16(cpu_rol(cpu, value, imm, 16)); break;
     case 1: cpu->updateModRM16(cpu_ror(cpu, value, imm, 16)); break;
     case 2: cpu->updateModRM16(cpu_rcl(cpu, value, imm, 16)); break;
@@ -107,7 +107,7 @@ void _wrap_0xD0(VCpu* cpu)
     BYTE rm = cpu->fetchOpcodeByte();
     BYTE value = cpu->readModRM8(rm);
 
-    switch (rmreg(rm)) {
+    switch (vomit_modRMRegisterPart(rm)) {
     case 0: cpu->updateModRM8(cpu_rol(cpu, value, 1, 8 )); break;
     case 1: cpu->updateModRM8(cpu_ror(cpu, value, 1, 8 )); break;
     case 2: cpu->updateModRM8(cpu_rcl(cpu, value, 1, 8 )); break;
@@ -127,7 +127,7 @@ void _wrap_0xD1(VCpu* cpu)
     BYTE rm = cpu->fetchOpcodeByte();
     WORD value = cpu->readModRM16(rm);
 
-    switch (rmreg(rm)) {
+    switch (vomit_modRMRegisterPart(rm)) {
     case 0: cpu->updateModRM16(cpu_rol(cpu, value, 1, 16 )); break;
     case 1: cpu->updateModRM16(cpu_ror(cpu, value, 1, 16 )); break;
     case 2: cpu->updateModRM16(cpu_rcl(cpu, value, 1, 16 )); break;
@@ -147,7 +147,7 @@ void _wrap_0xD2(VCpu* cpu)
     BYTE rm = cpu->fetchOpcodeByte();
     BYTE value = cpu->readModRM8(rm);
 
-    switch (rmreg(rm)) {
+    switch (vomit_modRMRegisterPart(rm)) {
     case 0: cpu->updateModRM8(cpu_rol(cpu, value, cpu->regs.B.CL, 8 )); break;
     case 1: cpu->updateModRM8(cpu_ror(cpu, value, cpu->regs.B.CL, 8 )); break;
     case 2: cpu->updateModRM8(cpu_rcl(cpu, value, cpu->regs.B.CL, 8 )); break;
@@ -167,7 +167,7 @@ void _wrap_0xD3(VCpu* cpu)
     BYTE rm = cpu->fetchOpcodeByte();
     WORD value = cpu->readModRM16(rm);
 
-    switch (rmreg(rm)) {
+    switch (vomit_modRMRegisterPart(rm)) {
     case 0: cpu->updateModRM16(cpu_rol(cpu, value, cpu->regs.B.CL, 16)); break;
     case 1: cpu->updateModRM16(cpu_ror(cpu, value, cpu->regs.B.CL, 16)); break;
     case 2: cpu->updateModRM16(cpu_rcl(cpu, value, cpu->regs.B.CL, 16)); break;
@@ -186,7 +186,7 @@ void _wrap_0xF6(VCpu* cpu)
 {
     cpu->rmbyte = cpu->fetchOpcodeByte();
 
-    switch (rmreg(cpu->rmbyte)) {
+    switch (vomit_modRMRegisterPart(cpu->rmbyte)) {
     case 0: _TEST_RM8_imm8(cpu); break;
     case 1:
         vlog(VM_ALERT, "F6 /1 not wrapped");
@@ -205,7 +205,7 @@ void _wrap_0xF7(VCpu* cpu)
 {
     cpu->rmbyte = cpu->fetchOpcodeByte();
 
-    switch (rmreg(cpu->rmbyte)) {
+    switch (vomit_modRMRegisterPart(cpu->rmbyte)) {
     case 0: _TEST_RM16_imm16(cpu); break;
     case 1:
         vlog(VM_ALERT, "F7 /1 not wrapped");
@@ -228,7 +228,7 @@ void _wrap_0xFE(VCpu* cpu)
 
     WORD i = value;
 
-    switch (rmreg(rm)) {
+    switch (vomit_modRMRegisterPart(rm)) {
     case 0:
         cpu->setOF(value == 0x7F);
         i++;
@@ -244,7 +244,7 @@ void _wrap_0xFE(VCpu* cpu)
         cpu->updateModRM8(value - 1);
         break;
     default:
-        vlog(VM_ALERT, "FE /%u not wrapped", rmreg(rm));
+        vlog(VM_ALERT, "FE /%u not wrapped", vomit_modRMRegisterPart(rm));
         cpu->exception(6);
         break;
     }
@@ -253,7 +253,7 @@ void _wrap_0xFE(VCpu* cpu)
 void _wrap_0xFF(VCpu* cpu)
 {
     cpu->rmbyte = cpu->fetchOpcodeByte();
-    switch (rmreg(cpu->rmbyte)) {
+    switch (vomit_modRMRegisterPart(cpu->rmbyte)) {
     case 0: _INC_RM16(cpu); break;
     case 1: _DEC_RM16(cpu); break;
     case 2: _CALL_RM16(cpu); break;

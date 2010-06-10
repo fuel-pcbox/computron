@@ -20,12 +20,12 @@ void _MOV_RM16_seg(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
 
-    VM_ASSERT(rmreg(rm) >= 0 && rmreg(rm) <= 5);
+    VM_ASSERT(vomit_modRMRegisterPart(rm) >= 0 && vomit_modRMRegisterPart(rm) <= 5);
 
-    cpu->writeModRM16(rm, *cpu->tseg[rmreg(rm)]);
+    cpu->writeModRM16(rm, *cpu->tseg[vomit_modRMRegisterPart(rm)]);
 
 #ifdef VOMIT_DEBUG
-    if (rmreg(rm) == VCpu::RegisterFS || rmreg(rm) == VCpu::RegisterGS) {
+    if (vomit_modRMRegisterPart(rm) == VCpu::RegisterFS || vomit_modRMRegisterPart(rm) == VCpu::RegisterGS) {
         vlog(VM_CPUMSG, "%04X:%04X: Read from 80386 segment register");
     }
 #endif
@@ -35,12 +35,12 @@ void _MOV_seg_RM16(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
 
-    VM_ASSERT(rmreg(rm) >= 0 && rmreg(rm) <= 5);
+    VM_ASSERT(vomit_modRMRegisterPart(rm) >= 0 && vomit_modRMRegisterPart(rm) <= 5);
 
-    *cpu->tseg[rmreg(rm)] = cpu->readModRM16(rm);
+    *cpu->tseg[vomit_modRMRegisterPart(rm)] = cpu->readModRM16(rm);
 
 #ifdef VOMIT_DEBUG
-    if (rmreg(rm) == VCpu::RegisterFS || rmreg(rm) == VCpu::RegisterGS) {
+    if (vomit_modRMRegisterPart(rm) == VCpu::RegisterFS || vomit_modRMRegisterPart(rm) == VCpu::RegisterGS) {
         vlog(VM_CPUMSG, "%04X:%04X: Write to 80386 segment register");
     }
 #endif
@@ -49,25 +49,25 @@ void _MOV_seg_RM16(VCpu* cpu)
 void _MOV_RM8_reg8(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    cpu->writeModRM8(rm, *cpu->treg8[rmreg(rm)]);
+    cpu->writeModRM8(rm, *cpu->treg8[vomit_modRMRegisterPart(rm)]);
 }
 
 void _MOV_reg8_RM8(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    *cpu->treg8[rmreg(rm)] = cpu->readModRM8(rm);
+    *cpu->treg8[vomit_modRMRegisterPart(rm)] = cpu->readModRM8(rm);
 }
 
 void _MOV_RM16_reg16(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    cpu->writeModRM16(rm, *cpu->treg16[rmreg(rm)]);
+    cpu->writeModRM16(rm, *cpu->treg16[vomit_modRMRegisterPart(rm)]);
 }
 
 void _MOV_reg16_RM16(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    *cpu->treg16[rmreg(rm)] = cpu->readModRM16(rm);
+    *cpu->treg16[vomit_modRMRegisterPart(rm)] = cpu->readModRM16(rm);
 }
 
 void _MOV_AL_imm8(VCpu* cpu)
