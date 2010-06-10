@@ -304,22 +304,22 @@ DWORD cpu_rcr(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 
 void _NOT_RM8(VCpu* cpu)
 {
-    BYTE value = vomit_cpu_modrm_read8(cpu, cpu->rmbyte);
-    vomit_cpu_modrm_update8(cpu, ~value);
+    BYTE value = cpu->readModRM8(cpu->rmbyte);
+    cpu->updateModRM8(~value);
 }
 
 void _NOT_RM16(VCpu* cpu)
 {
-    WORD value = vomit_cpu_modrm_read16(cpu, cpu->rmbyte);
-    vomit_cpu_modrm_update16(cpu, ~value);
+    WORD value = cpu->readModRM16(cpu->rmbyte);
+    cpu->updateModRM16(~value);
 }
 
 void _NEG_RM8(VCpu* cpu)
 {
-    BYTE value = vomit_cpu_modrm_read8(cpu, cpu->rmbyte);
+    BYTE value = cpu->readModRM8(cpu->rmbyte);
     BYTE old = value;
     value = -value;
-    vomit_cpu_modrm_update8(cpu, value);
+    cpu->updateModRM8(value);
     cpu->setCF(old != 0);
     cpu->updateFlags8(value);
     cpu->setOF(((
@@ -331,10 +331,10 @@ void _NEG_RM8(VCpu* cpu)
 
 void _NEG_RM16(VCpu* cpu)
 {
-    WORD value = vomit_cpu_modrm_read16(cpu, cpu->rmbyte);
+    WORD value = cpu->readModRM16(cpu->rmbyte);
     WORD old = value;
     value = -value;
-    vomit_cpu_modrm_update16(cpu, value);
+    cpu->updateModRM16(value);
     cpu->setCF(old != 0);
     cpu->updateFlags16(value);
     cpu->setOF(((

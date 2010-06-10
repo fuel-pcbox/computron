@@ -221,6 +221,15 @@ public:
     WORD getES() const { return this->ES; }
     WORD getSS() const { return this->SS; }
 
+    WORD getAX() const { return this->regs.W.AX; }
+    WORD getBX() const { return this->regs.W.BX; }
+    WORD getCX() const { return this->regs.W.CX; }
+    WORD getDX() const { return this->regs.W.DX; }
+    WORD getSI() const { return this->regs.W.SI; }
+    WORD getDI() const { return this->regs.W.DI; }
+    WORD getSP() const { return this->regs.W.SP; }
+    WORD getBP() const { return this->regs.W.BP; }
+
     // Base CS:IP is the start address of the currently executing instruction
     WORD getBaseCS() const { return m_baseCS; }
     WORD getBaseIP() const { return m_baseIP; }
@@ -293,6 +302,25 @@ public:
     inline void writeMemory8(WORD segment, WORD offset, BYTE data);
     inline void writeMemory16(DWORD address, WORD data);
     inline void writeMemory16(WORD segment, WORD offset, WORD data);
+
+    BYTE readModRM8(BYTE rmbyte);
+    WORD readModRM16(BYTE rmbyte);
+    DWORD readModRM32(BYTE rmbyte);
+    void writeModRM8(BYTE rmbyte, BYTE value);
+    void writeModRM16(BYTE rmbyte, WORD value);
+
+    /*!
+        Writes an 8-bit value back to the most recently resolved ModR/M location.
+     */
+    void updateModRM8(BYTE value);
+
+    /*!
+        Writes a 16-bit value back to the most recently resolved ModR/M location.
+     */
+    void updateModRM16(WORD value);
+
+    void* resolveModRM8(BYTE rmbyte);
+    void* resolveModRM16(BYTE rmbyte);
 
     VgaMemory* vgaMemory;
 
@@ -367,6 +395,10 @@ private:
     bool* m_dirtMap;
 #endif
 
+    mutable void* m_lastModRMPointer;
+    mutable WORD m_lastModRMSegment;
+    mutable WORD m_lastModRMOffset;
+
     // FIXME: Don't befriend this... thing.
     friend void unspeakable_abomination();
     DWORD m_baseMemorySize;
@@ -402,25 +434,6 @@ DWORD cpu_rcl(VCpu*, word, byte, byte);
 DWORD cpu_rcr(VCpu*, word, byte, byte);
 DWORD cpu_rol(VCpu*, word, byte, byte);
 DWORD cpu_ror(VCpu*, word, byte, byte);
-
-BYTE vomit_cpu_modrm_read8(VCpu*, BYTE rm);
-WORD vomit_cpu_modrm_read16(VCpu*, BYTE rm);
-DWORD vomit_cpu_modrm_read32(VCpu*, BYTE rm);
-void vomit_cpu_modrm_write8(VCpu*, BYTE rm, BYTE value);
-void vomit_cpu_modrm_write16(VCpu*, BYTE rm, WORD value);
-
-/*!
-    Writes an 8-bit value back to the most recently resolved ModR/M location.
- */
-void vomit_cpu_modrm_update8(VCpu*, BYTE value);
-
-/*!
-    Writes a 16-bit value back to the most recently resolved ModR/M location.
- */
-void vomit_cpu_modrm_update16(VCpu*, WORD value);
-
-void* vomit_cpu_modrm_resolve8(VCpu*, BYTE rm);
-void* vomit_cpu_modrm_resolve16(VCpu*, BYTE rm);
 
 void _UNSUPP(VCpu*);
 void _ESCAPE(VCpu*);

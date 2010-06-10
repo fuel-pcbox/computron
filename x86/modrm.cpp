@@ -2,210 +2,205 @@
 #include "vcpu.h"
 #include "debug.h"
 
-#define DEFAULT_TO_SS if (!cpu->hasSegmentPrefix()) { segment = cpu->getSS(); }
+#define DEFAULT_TO_SS if (!hasSegmentPrefix()) { segment = getSS(); }
 
-static void* s_last_modrm_ptr = 0L;
-
-static WORD s_last_modrm_segment = 0;
-static WORD s_last_modrm_offset = 0;
-
-void vomit_cpu_modrm_write16(VCpu* cpu, BYTE rmbyte, WORD value)
+void VCpu::writeModRM16(BYTE rmbyte, WORD value)
 {
-    BYTE* rmp = (BYTE*)vomit_cpu_modrm_resolve16(cpu, rmbyte);
-    if (rmp)
-        *((WORD*)rmp) = value;
+    WORD* registerPointer = reinterpret_cast<WORD*>(resolveModRM16(rmbyte));
+    if (registerPointer)
+        *registerPointer = value;
     else
-        cpu->writeMemory16(s_last_modrm_segment, s_last_modrm_offset, value);
+        writeMemory16(m_lastModRMSegment, m_lastModRMOffset, value);
 }
 
-void vomit_cpu_modrm_write8(VCpu* cpu, BYTE rmbyte, BYTE value)
+void VCpu::writeModRM8(BYTE rmbyte, BYTE value)
 {
-    BYTE* rmp = (BYTE*)vomit_cpu_modrm_resolve8(cpu, rmbyte);
-    if (rmp)
-        *rmp = value;
+    BYTE* registerPointer = reinterpret_cast<BYTE*>(resolveModRM8(rmbyte));
+    if (registerPointer)
+        *registerPointer = value;
     else
-        cpu->writeMemory8(s_last_modrm_segment, s_last_modrm_offset, value);
+        writeMemory8(m_lastModRMSegment, m_lastModRMOffset, value);
 }
 
-WORD vomit_cpu_modrm_read16(VCpu* cpu, BYTE rmbyte)
+WORD VCpu::readModRM16(BYTE rmbyte)
 {
-    BYTE* rmp = (BYTE*)vomit_cpu_modrm_resolve16(cpu, rmbyte);
-    if (rmp)
-        return *((WORD*)rmp);
-    return cpu->readMemory16(s_last_modrm_segment, s_last_modrm_offset);
+    WORD* registerPointer = reinterpret_cast<WORD*>(resolveModRM16(rmbyte));
+    if (registerPointer)
+        return *registerPointer;
+    return readMemory16(m_lastModRMSegment, m_lastModRMOffset);
 }
 
-BYTE vomit_cpu_modrm_read8(VCpu* cpu, BYTE rmbyte)
+BYTE VCpu::readModRM8(BYTE rmbyte)
 {
-    BYTE* rmp = (BYTE*)vomit_cpu_modrm_resolve8(cpu, rmbyte);
-    if (rmp)
-        return *rmp;
-    return cpu->readMemory8(s_last_modrm_segment, s_last_modrm_offset);
+    BYTE* registerPointer = reinterpret_cast<BYTE*>(resolveModRM8(rmbyte));
+    if (registerPointer)
+        return *registerPointer;
+    return readMemory8(m_lastModRMSegment, m_lastModRMOffset);
 }
 
-void vomit_cpu_modrm_update16(VCpu* cpu, WORD value)
+void VCpu::updateModRM16(WORD value)
 {
-    if (s_last_modrm_ptr)
-        *((WORD*)s_last_modrm_ptr) = value;
+    if (m_lastModRMPointer)
+        *(reinterpret_cast<WORD*>(m_lastModRMPointer)) = value;
     else
-        cpu->writeMemory16(s_last_modrm_segment, s_last_modrm_offset, value);
+        writeMemory16(m_lastModRMSegment, m_lastModRMOffset, value);
 }
 
-void vomit_cpu_modrm_update8(VCpu* cpu, BYTE value)
+void VCpu::updateModRM8(BYTE value)
 {
-    if (s_last_modrm_ptr)
-        *((BYTE*)s_last_modrm_ptr) = value;
+    if (m_lastModRMPointer)
+        *(reinterpret_cast<BYTE*>(m_lastModRMPointer)) = value;
     else
-        cpu->writeMemory8(s_last_modrm_segment, s_last_modrm_offset, value);
+        writeMemory8(m_lastModRMSegment, m_lastModRMOffset, value);
 }
 
-DWORD vomit_cpu_modrm_read32(VCpu* cpu, BYTE rmbyte)
+DWORD VCpu::readModRM32(BYTE rmbyte)
 {
-    // NOTE: We don't need modrm_resolve32() at the moment.
-    BYTE* rmp = (BYTE*)vomit_cpu_modrm_resolve8(cpu, rmbyte);
+    // NOTE: We don't need resolveModRM32() at the moment.
+    BYTE* registerPointer = reinterpret_cast<BYTE*>(resolveModRM8(rmbyte));
 
-    if (rmp) {
+    if (registerPointer) {
         vlog(VM_CPUMSG, "PANIC: Attempt to read 32-bit register.");
         vm_exit(1);
     }
 
-    return cpu->readMemory32(s_last_modrm_segment, s_last_modrm_offset);
+    return readMemory32(m_lastModRMSegment, m_lastModRMOffset);
 }
 
-void *vomit_cpu_modrm_resolve8(VCpu* cpu, BYTE rmbyte)
+void *VCpu::resolveModRM8(BYTE rmbyte)
 {
-    WORD segment = cpu->currentSegment();
+    WORD segment = currentSegment();
     WORD offset = 0x0000;
 
     switch (rmbyte & 0xC0) {
-        case 0x00:
-            switch (rmbyte & 0x07) {
-                case 0: offset = cpu->regs.W.BX + cpu->regs.W.SI; break;
-                case 1: offset = cpu->regs.W.BX + cpu->regs.W.DI; break;
-                case 2: DEFAULT_TO_SS; offset = cpu->regs.W.BP + cpu->regs.W.SI; break;
-                case 3: DEFAULT_TO_SS; offset = cpu->regs.W.BP + cpu->regs.W.DI; break;
-                case 4: offset = cpu->regs.W.SI; break;
-                case 5: offset = cpu->regs.W.DI; break;
-                case 6: offset = cpu->fetchOpcodeWord(); break;
-                default: offset = cpu->regs.W.BX; break;
-            }
-            s_last_modrm_segment = segment;
-            s_last_modrm_offset = offset;
-            s_last_modrm_ptr = 0;
-            break;
-        case 0x40:
-            offset = vomit_signExtend(cpu->fetchOpcodeByte());
-            switch (rmbyte & 0x07) {
-                case 0: offset += cpu->regs.W.BX + cpu->regs.W.SI; break;
-                case 1: offset += cpu->regs.W.BX + cpu->regs.W.DI; break;
-                case 2: DEFAULT_TO_SS; offset += cpu->regs.W.BP + cpu->regs.W.SI; break;
-                case 3: DEFAULT_TO_SS; offset += cpu->regs.W.BP + cpu->regs.W.DI; break;
-                case 4: offset += cpu->regs.W.SI; break;
-                case 5: offset += cpu->regs.W.DI; break;
-                case 6: DEFAULT_TO_SS; offset += cpu->regs.W.BP; break;
-                default: offset += cpu->regs.W.BX; break;
-            }
-            s_last_modrm_segment = segment;
-            s_last_modrm_offset = offset;
-            s_last_modrm_ptr = 0;
-            break;
-        case 0x80:
-            offset = cpu->fetchOpcodeWord();
-            switch (rmbyte & 0x07) {
-                case 0: offset += cpu->regs.W.BX + cpu->regs.W.SI; break;
-                case 1: offset += cpu->regs.W.BX + cpu->regs.W.DI; break;
-                case 2: DEFAULT_TO_SS; offset += cpu->regs.W.BP + cpu->regs.W.SI; break;
-                case 3: DEFAULT_TO_SS; offset += cpu->regs.W.BP + cpu->regs.W.DI; break;
-                case 4: offset += cpu->regs.W.SI; break;
-                case 5: offset += cpu->regs.W.DI; break;
-                case 6: DEFAULT_TO_SS; offset += cpu->regs.W.BP; break;
-                default: offset += cpu->regs.W.BX; break;
-            }
-            s_last_modrm_segment = segment;
-            s_last_modrm_offset = offset;
-            s_last_modrm_ptr = 0;
-            break;
-        case 0xC0:
-            switch (rmbyte & 0x07) {
-                case 0: s_last_modrm_ptr = &cpu->regs.B.AL; break;
-                case 1: s_last_modrm_ptr = &cpu->regs.B.CL; break;
-                case 2: s_last_modrm_ptr = &cpu->regs.B.DL; break;
-                case 3: s_last_modrm_ptr = &cpu->regs.B.BL; break;
-                case 4: s_last_modrm_ptr = &cpu->regs.B.AH; break;
-                case 5: s_last_modrm_ptr = &cpu->regs.B.CH; break;
-                case 6: s_last_modrm_ptr = &cpu->regs.B.DH; break;
-                default: s_last_modrm_ptr = &cpu->regs.B.BH; break;
-            }
-            break;
+    case 0x00:
+        switch (rmbyte & 0x07) {
+        case 0: offset = getBX() + getSI(); break;
+        case 1: offset = getBX() + getDI(); break;
+        case 2: DEFAULT_TO_SS; offset = getBP() + getSI(); break;
+        case 3: DEFAULT_TO_SS; offset = getBP() + getDI(); break;
+        case 4: offset = getSI(); break;
+        case 5: offset = getDI(); break;
+        case 6: offset = fetchOpcodeWord(); break;
+        default: offset = getBX(); break;
+        }
+        m_lastModRMSegment = segment;
+        m_lastModRMOffset = offset;
+        m_lastModRMPointer = 0;
+        break;
+    case 0x40:
+        offset = vomit_signExtend(fetchOpcodeByte());
+        switch (rmbyte & 0x07) {
+        case 0: offset += getBX() + getSI(); break;
+        case 1: offset += getBX() + getDI(); break;
+        case 2: DEFAULT_TO_SS; offset += getBP() + getSI(); break;
+        case 3: DEFAULT_TO_SS; offset += getBP() + getDI(); break;
+        case 4: offset += getSI(); break;
+        case 5: offset += getDI(); break;
+        case 6: DEFAULT_TO_SS; offset += getBP(); break;
+        default: offset += getBX(); break;
+        }
+        m_lastModRMSegment = segment;
+        m_lastModRMOffset = offset;
+        m_lastModRMPointer = 0;
+        break;
+    case 0x80:
+        offset = fetchOpcodeWord();
+        switch (rmbyte & 0x07) {
+        case 0: offset += getBX() + getSI(); break;
+        case 1: offset += getBX() + getDI(); break;
+        case 2: DEFAULT_TO_SS; offset += getBP() + getSI(); break;
+        case 3: DEFAULT_TO_SS; offset += getBP() + getDI(); break;
+        case 4: offset += getSI(); break;
+        case 5: offset += getDI(); break;
+        case 6: DEFAULT_TO_SS; offset += getBP(); break;
+        default: offset += getBX(); break;
+        }
+        m_lastModRMSegment = segment;
+        m_lastModRMOffset = offset;
+        m_lastModRMPointer = 0;
+        break;
+    default: // 0xC0
+        switch (rmbyte & 0x07) {
+        case 0: m_lastModRMPointer = &this->regs.B.AL; break;
+        case 1: m_lastModRMPointer = &this->regs.B.CL; break;
+        case 2: m_lastModRMPointer = &this->regs.B.DL; break;
+        case 3: m_lastModRMPointer = &this->regs.B.BL; break;
+        case 4: m_lastModRMPointer = &this->regs.B.AH; break;
+        case 5: m_lastModRMPointer = &this->regs.B.CH; break;
+        case 6: m_lastModRMPointer = &this->regs.B.DH; break;
+        default: m_lastModRMPointer = &this->regs.B.BH; break;
+        }
+        break;
     }
-    return s_last_modrm_ptr;
+    return m_lastModRMPointer;
 }
 
-void * vomit_cpu_modrm_resolve16(VCpu* cpu, BYTE rmbyte)
+void* VCpu::resolveModRM16(BYTE rmbyte)
 {
-    WORD segment = cpu->currentSegment();
+    WORD segment = currentSegment();
     WORD offset = 0x0000;
 
     switch (rmbyte & 0xC0) {
-        case 0x00:
-            switch (rmbyte & 0x07) {
-                case 0: offset = cpu->regs.W.BX + cpu->regs.W.SI; break;
-                case 1: offset = cpu->regs.W.BX + cpu->regs.W.DI; break;
-                case 2: DEFAULT_TO_SS; offset = cpu->regs.W.BP + cpu->regs.W.SI; break;
-                case 3: DEFAULT_TO_SS; offset = cpu->regs.W.BP + cpu->regs.W.DI; break;
-                case 4: offset = cpu->regs.W.SI; break;
-                case 5: offset = cpu->regs.W.DI; break;
-                case 6: offset = cpu->fetchOpcodeWord(); break;
-                default: offset = cpu->regs.W.BX; break;
-            }
-            s_last_modrm_segment = segment;
-            s_last_modrm_offset = offset;
-            s_last_modrm_ptr = 0;
-            break;
-        case 0x40:
-            offset = vomit_signExtend(cpu->fetchOpcodeByte());
-            switch (rmbyte & 0x07) {
-                case 0: offset += cpu->regs.W.BX + cpu->regs.W.SI; break;
-                case 1: offset += cpu->regs.W.BX + cpu->regs.W.DI; break;
-                case 2: DEFAULT_TO_SS; offset += cpu->regs.W.BP + cpu->regs.W.SI; break;
-                case 3: DEFAULT_TO_SS; offset += cpu->regs.W.BP + cpu->regs.W.DI; break;
-                case 4: offset += cpu->regs.W.SI; break;
-                case 5: offset += cpu->regs.W.DI; break;
-                case 6: DEFAULT_TO_SS; offset += cpu->regs.W.BP; break;
-                default: offset += cpu->regs.W.BX; break;
-            }
-            s_last_modrm_segment = segment;
-            s_last_modrm_offset = offset;
-            s_last_modrm_ptr = 0;
-            break;
-        case 0x80:
-            offset = cpu->fetchOpcodeWord();
-            switch (rmbyte & 0x07) {
-                case 0: offset += cpu->regs.W.BX + cpu->regs.W.SI; break;
-                case 1: offset += cpu->regs.W.BX + cpu->regs.W.DI; break;
-                case 2: DEFAULT_TO_SS; offset += cpu->regs.W.BP + cpu->regs.W.SI; break;
-                case 3: DEFAULT_TO_SS; offset += cpu->regs.W.BP + cpu->regs.W.DI; break;
-                case 4: offset += cpu->regs.W.SI; break;
-                case 5: offset += cpu->regs.W.DI; break;
-                case 6: DEFAULT_TO_SS; offset += cpu->regs.W.BP; break;
-                default: offset += cpu->regs.W.BX; break;
-            }
-            s_last_modrm_segment = segment;
-            s_last_modrm_offset = offset;
-            s_last_modrm_ptr = 0;
-            break;
-        case 0xC0:
-            switch (rmbyte & 0x07) {
-                case 0: s_last_modrm_ptr = &cpu->regs.W.AX; break;
-                case 1: s_last_modrm_ptr = &cpu->regs.W.CX; break;
-                case 2: s_last_modrm_ptr = &cpu->regs.W.DX; break;
-                case 3: s_last_modrm_ptr = &cpu->regs.W.BX; break;
-                case 4: s_last_modrm_ptr = &cpu->regs.W.SP; break;
-                case 5: s_last_modrm_ptr = &cpu->regs.W.BP; break;
-                case 6: s_last_modrm_ptr = &cpu->regs.W.SI; break;
-                default: s_last_modrm_ptr = &cpu->regs.W.DI; break;
-            }
-            break;
+    case 0x00:
+        switch (rmbyte & 0x07) {
+        case 0: offset = getBX() + getSI(); break;
+        case 1: offset = getBX() + getDI(); break;
+        case 2: DEFAULT_TO_SS; offset = getBP() + getSI(); break;
+        case 3: DEFAULT_TO_SS; offset = getBP() + getDI(); break;
+        case 4: offset = getSI(); break;
+        case 5: offset = getDI(); break;
+        case 6: offset = fetchOpcodeWord(); break;
+        default: offset = getBX(); break;
+        }
+        m_lastModRMSegment = segment;
+        m_lastModRMOffset = offset;
+        m_lastModRMPointer = 0;
+        break;
+    case 0x40:
+        offset = vomit_signExtend(fetchOpcodeByte());
+        switch (rmbyte & 0x07) {
+        case 0: offset += getBX() + getSI(); break;
+        case 1: offset += getBX() + getDI(); break;
+        case 2: DEFAULT_TO_SS; offset += getBP() + getSI(); break;
+        case 3: DEFAULT_TO_SS; offset += getBP() + getDI(); break;
+        case 4: offset += getSI(); break;
+        case 5: offset += getDI(); break;
+        case 6: DEFAULT_TO_SS; offset += getBP(); break;
+        default: offset += getBX(); break;
+        }
+        m_lastModRMSegment = segment;
+        m_lastModRMOffset = offset;
+        m_lastModRMPointer = 0;
+        break;
+    case 0x80:
+        offset = fetchOpcodeWord();
+        switch (rmbyte & 0x07) {
+        case 0: offset += getBX() + getSI(); break;
+        case 1: offset += getBX() + getDI(); break;
+        case 2: DEFAULT_TO_SS; offset += getBP() + getSI(); break;
+        case 3: DEFAULT_TO_SS; offset += getBP() + getDI(); break;
+        case 4: offset += getSI(); break;
+        case 5: offset += getDI(); break;
+        case 6: DEFAULT_TO_SS; offset += getBP(); break;
+        default: offset += getBX(); break;
+        }
+        m_lastModRMSegment = segment;
+        m_lastModRMOffset = offset;
+        m_lastModRMPointer = 0;
+        break;
+    default: // 0xC0
+        switch (rmbyte & 0x07) {
+        case 0: m_lastModRMPointer = &this->regs.W.AX; break;
+        case 1: m_lastModRMPointer = &this->regs.W.CX; break;
+        case 2: m_lastModRMPointer = &this->regs.W.DX; break;
+        case 3: m_lastModRMPointer = &this->regs.W.BX; break;
+        case 4: m_lastModRMPointer = &this->regs.W.SP; break;
+        case 5: m_lastModRMPointer = &this->regs.W.BP; break;
+        case 6: m_lastModRMPointer = &this->regs.W.SI; break;
+        default: m_lastModRMPointer = &this->regs.W.DI; break;
+        }
+        break;
     }
-    return s_last_modrm_ptr;
+    return m_lastModRMPointer;
 }

@@ -14,7 +14,7 @@ void _wrap_0x0F(VCpu* cpu)
     case 0x01:
     {
         BYTE rm = cpu->fetchOpcodeByte();
-        (void) vomit_cpu_modrm_read16(cpu, rm);
+        (void) cpu->readModRM16(rm);
         vlog(VM_ALERT, "Sliding by 0F 01 /%d\n", rmreg(rm));
         break;
     }
@@ -31,7 +31,7 @@ void _wrap_0x0F(VCpu* cpu)
 void _BOUND(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    DWORD value = vomit_cpu_modrm_read32(cpu, rm);
+    DWORD value = cpu->readModRM32(rm);
     WORD index = *cpu->treg16[rmreg(rm)];
 
     if (index < LSW(value) || index > MSW(value)) {

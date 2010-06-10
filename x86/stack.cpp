@@ -105,12 +105,12 @@ void _POP_DI(VCpu* cpu)
 
 void _PUSH_RM16(VCpu* cpu)
 {
-    cpu->push(vomit_cpu_modrm_read16(cpu, cpu->rmbyte));
+    cpu->push(cpu->readModRM16(cpu->rmbyte));
 }
 
 void _POP_RM16(VCpu* cpu)
 {
-    vomit_cpu_modrm_write16(cpu, cpu->rmbyte, cpu->pop());
+    cpu->writeModRM16(cpu->rmbyte, cpu->pop());
 }
 
 void _PUSH_CS(VCpu* cpu)

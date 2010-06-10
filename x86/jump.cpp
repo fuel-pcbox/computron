@@ -31,12 +31,12 @@ void _JMP_short_imm8(VCpu* cpu)
 
 void _JMP_RM16(VCpu* cpu)
 {
-    cpu->jumpAbsolute16(vomit_cpu_modrm_read16(cpu, cpu->rmbyte));
+    cpu->jumpAbsolute16(cpu->readModRM16(cpu->rmbyte));
 }
 
 void _JMP_FAR_mem16(VCpu* cpu)
 {
-    DWORD value = vomit_cpu_modrm_read32(cpu, cpu->rmbyte);
+    DWORD value = cpu->readModRM32(cpu->rmbyte);
     cpu->jump(MSW(value), LSW(value));
 }
 
@@ -82,7 +82,7 @@ void _CALL_imm16_imm16(VCpu* cpu)
 
 void _CALL_FAR_mem16(VCpu* cpu)
 {
-    DWORD value = vomit_cpu_modrm_read32(cpu, cpu->rmbyte);
+    DWORD value = cpu->readModRM32(cpu->rmbyte);
     cpu->push(cpu->getCS());
     cpu->push(cpu->getIP());
     cpu->jump(MSW(value), LSW(value));
@@ -90,7 +90,7 @@ void _CALL_FAR_mem16(VCpu* cpu)
 
 void _CALL_RM16(VCpu* cpu)
 {
-    WORD value = vomit_cpu_modrm_read16(cpu, cpu->rmbyte);
+    WORD value = cpu->readModRM16(cpu->rmbyte);
     cpu->push(cpu->getIP());
     cpu->jumpAbsolute16(value);
 }

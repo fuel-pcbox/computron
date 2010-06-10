@@ -63,122 +63,122 @@ void _wrap_0x8F(VCpu* cpu)
 void _wrap_0xC0(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    BYTE value = vomit_cpu_modrm_read8(cpu, rm);
+    BYTE value = cpu->readModRM8(rm);
     BYTE imm = cpu->fetchOpcodeByte();
 
     switch (rmreg(rm)) {
-    case 0: vomit_cpu_modrm_update8(cpu, cpu_rol(cpu, value, imm, 8)); break;
-    case 1: vomit_cpu_modrm_update8(cpu, cpu_ror(cpu, value, imm, 8)); break;
-    case 2: vomit_cpu_modrm_update8(cpu, cpu_rcl(cpu, value, imm, 8)); break;
-    case 3: vomit_cpu_modrm_update8(cpu, cpu_rcr(cpu, value, imm, 8)); break;
-    case 4: vomit_cpu_modrm_update8(cpu, cpu_shl(cpu, value, imm, 8)); break;
-    case 5: vomit_cpu_modrm_update8(cpu, cpu_shr(cpu, value, imm, 8)); break;
+    case 0: cpu->updateModRM8(cpu_rol(cpu, value, imm, 8)); break;
+    case 1: cpu->updateModRM8(cpu_ror(cpu, value, imm, 8)); break;
+    case 2: cpu->updateModRM8(cpu_rcl(cpu, value, imm, 8)); break;
+    case 3: cpu->updateModRM8(cpu_rcr(cpu, value, imm, 8)); break;
+    case 4: cpu->updateModRM8(cpu_shl(cpu, value, imm, 8)); break;
+    case 5: cpu->updateModRM8(cpu_shr(cpu, value, imm, 8)); break;
     case 6:
         vlog(VM_ALERT, "C0 /6 not wrapped");
         cpu->exception(6);
         break;
-    case 7: vomit_cpu_modrm_update8(cpu, cpu_sar(cpu, value, imm, 8)); break;
+    case 7: cpu->updateModRM8(cpu_sar(cpu, value, imm, 8)); break;
     }
 }
 
 void _wrap_0xC1(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    WORD value = vomit_cpu_modrm_read16(cpu, rm );
+    WORD value = cpu->readModRM16(rm );
     BYTE imm = cpu->fetchOpcodeByte();
 
     switch (rmreg(rm)) {
-    case 0: vomit_cpu_modrm_update16(cpu, cpu_rol(cpu, value, imm, 16)); break;
-    case 1: vomit_cpu_modrm_update16(cpu, cpu_ror(cpu, value, imm, 16)); break;
-    case 2: vomit_cpu_modrm_update16(cpu, cpu_rcl(cpu, value, imm, 16)); break;
-    case 3: vomit_cpu_modrm_update16(cpu, cpu_rcr(cpu, value, imm, 16)); break;
-    case 4: vomit_cpu_modrm_update16(cpu, cpu_shl(cpu, value, imm, 16)); break;
-    case 5: vomit_cpu_modrm_update16(cpu, cpu_shr(cpu, value, imm, 16)); break;
+    case 0: cpu->updateModRM16(cpu_rol(cpu, value, imm, 16)); break;
+    case 1: cpu->updateModRM16(cpu_ror(cpu, value, imm, 16)); break;
+    case 2: cpu->updateModRM16(cpu_rcl(cpu, value, imm, 16)); break;
+    case 3: cpu->updateModRM16(cpu_rcr(cpu, value, imm, 16)); break;
+    case 4: cpu->updateModRM16(cpu_shl(cpu, value, imm, 16)); break;
+    case 5: cpu->updateModRM16(cpu_shr(cpu, value, imm, 16)); break;
     case 6:
         vlog(VM_ALERT, "C1 /6 not wrapped");
         cpu->exception(6);
         break;
-    case 7: vomit_cpu_modrm_update16(cpu, cpu_sar(cpu, value, imm, 16)); break;
+    case 7: cpu->updateModRM16(cpu_sar(cpu, value, imm, 16)); break;
     }
 }
 
 void _wrap_0xD0(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    BYTE value = vomit_cpu_modrm_read8(cpu, rm);
+    BYTE value = cpu->readModRM8(rm);
 
     switch (rmreg(rm)) {
-    case 0: vomit_cpu_modrm_update8(cpu, cpu_rol(cpu, value, 1, 8 )); break;
-    case 1: vomit_cpu_modrm_update8(cpu, cpu_ror(cpu, value, 1, 8 )); break;
-    case 2: vomit_cpu_modrm_update8(cpu, cpu_rcl(cpu, value, 1, 8 )); break;
-    case 3: vomit_cpu_modrm_update8(cpu, cpu_rcr(cpu, value, 1, 8 )); break;
-    case 4: vomit_cpu_modrm_update8(cpu, cpu_shl(cpu, value, 1, 8 )); break;
-    case 5: vomit_cpu_modrm_update8(cpu, cpu_shr(cpu, value, 1, 8 )); break;
+    case 0: cpu->updateModRM8(cpu_rol(cpu, value, 1, 8 )); break;
+    case 1: cpu->updateModRM8(cpu_ror(cpu, value, 1, 8 )); break;
+    case 2: cpu->updateModRM8(cpu_rcl(cpu, value, 1, 8 )); break;
+    case 3: cpu->updateModRM8(cpu_rcr(cpu, value, 1, 8 )); break;
+    case 4: cpu->updateModRM8(cpu_shl(cpu, value, 1, 8 )); break;
+    case 5: cpu->updateModRM8(cpu_shr(cpu, value, 1, 8 )); break;
     case 6:
         vlog(VM_ALERT, "D0 /6 not wrapped");
         cpu->exception(6);
         break;
-    case 7: vomit_cpu_modrm_update8(cpu, cpu_sar(cpu, value, 1, 8 )); break;
+    case 7: cpu->updateModRM8(cpu_sar(cpu, value, 1, 8 )); break;
     }
 }
 
 void _wrap_0xD1(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    WORD value = vomit_cpu_modrm_read16(cpu, rm);
+    WORD value = cpu->readModRM16(rm);
 
     switch (rmreg(rm)) {
-    case 0: vomit_cpu_modrm_update16(cpu, cpu_rol(cpu, value, 1, 16 )); break;
-    case 1: vomit_cpu_modrm_update16(cpu, cpu_ror(cpu, value, 1, 16 )); break;
-    case 2: vomit_cpu_modrm_update16(cpu, cpu_rcl(cpu, value, 1, 16 )); break;
-    case 3: vomit_cpu_modrm_update16(cpu, cpu_rcr(cpu, value, 1, 16 )); break;
-    case 4: vomit_cpu_modrm_update16(cpu, cpu_shl(cpu, value, 1, 16 )); break;
-    case 5: vomit_cpu_modrm_update16(cpu, cpu_shr(cpu, value, 1, 16 )); break;
+    case 0: cpu->updateModRM16(cpu_rol(cpu, value, 1, 16 )); break;
+    case 1: cpu->updateModRM16(cpu_ror(cpu, value, 1, 16 )); break;
+    case 2: cpu->updateModRM16(cpu_rcl(cpu, value, 1, 16 )); break;
+    case 3: cpu->updateModRM16(cpu_rcr(cpu, value, 1, 16 )); break;
+    case 4: cpu->updateModRM16(cpu_shl(cpu, value, 1, 16 )); break;
+    case 5: cpu->updateModRM16(cpu_shr(cpu, value, 1, 16 )); break;
     case 6:
         vlog(VM_ALERT, "D1 /6 not wrapped");
         cpu->exception(6);
         break;
-    case 7: vomit_cpu_modrm_update16(cpu, cpu_sar(cpu, value, 1, 16 )); break;
+    case 7: cpu->updateModRM16(cpu_sar(cpu, value, 1, 16 )); break;
     }
 }
 
 void _wrap_0xD2(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    BYTE value = vomit_cpu_modrm_read8(cpu, rm);
+    BYTE value = cpu->readModRM8(rm);
 
     switch (rmreg(rm)) {
-    case 0: vomit_cpu_modrm_update8(cpu, cpu_rol(cpu, value, cpu->regs.B.CL, 8 )); break;
-    case 1: vomit_cpu_modrm_update8(cpu, cpu_ror(cpu, value, cpu->regs.B.CL, 8 )); break;
-    case 2: vomit_cpu_modrm_update8(cpu, cpu_rcl(cpu, value, cpu->regs.B.CL, 8 )); break;
-    case 3: vomit_cpu_modrm_update8(cpu, cpu_rcr(cpu, value, cpu->regs.B.CL, 8 )); break;
-    case 4: vomit_cpu_modrm_update8(cpu, cpu_shl(cpu, value, cpu->regs.B.CL, 8 )); break;
-    case 5: vomit_cpu_modrm_update8(cpu, cpu_shr(cpu, value, cpu->regs.B.CL, 8 )); break;
+    case 0: cpu->updateModRM8(cpu_rol(cpu, value, cpu->regs.B.CL, 8 )); break;
+    case 1: cpu->updateModRM8(cpu_ror(cpu, value, cpu->regs.B.CL, 8 )); break;
+    case 2: cpu->updateModRM8(cpu_rcl(cpu, value, cpu->regs.B.CL, 8 )); break;
+    case 3: cpu->updateModRM8(cpu_rcr(cpu, value, cpu->regs.B.CL, 8 )); break;
+    case 4: cpu->updateModRM8(cpu_shl(cpu, value, cpu->regs.B.CL, 8 )); break;
+    case 5: cpu->updateModRM8(cpu_shr(cpu, value, cpu->regs.B.CL, 8 )); break;
     case 6:
         vlog(VM_ALERT, "D2 /6 not wrapped");
         cpu->exception(6);
         break;
-    case 7: vomit_cpu_modrm_update8(cpu, cpu_sar(cpu, value, cpu->regs.B.CL, 8 )); break;
+    case 7: cpu->updateModRM8(cpu_sar(cpu, value, cpu->regs.B.CL, 8 )); break;
     }
 }
 
 void _wrap_0xD3(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    WORD value = vomit_cpu_modrm_read16(cpu, rm);
+    WORD value = cpu->readModRM16(rm);
 
     switch (rmreg(rm)) {
-    case 0: vomit_cpu_modrm_update16(cpu, cpu_rol(cpu, value, cpu->regs.B.CL, 16)); break;
-    case 1: vomit_cpu_modrm_update16(cpu, cpu_ror(cpu, value, cpu->regs.B.CL, 16)); break;
-    case 2: vomit_cpu_modrm_update16(cpu, cpu_rcl(cpu, value, cpu->regs.B.CL, 16)); break;
-    case 3: vomit_cpu_modrm_update16(cpu, cpu_rcr(cpu, value, cpu->regs.B.CL, 16)); break;
-    case 4: vomit_cpu_modrm_update16(cpu, cpu_shl(cpu, value, cpu->regs.B.CL, 16)); break;
-    case 5: vomit_cpu_modrm_update16(cpu, cpu_shr(cpu, value, cpu->regs.B.CL, 16)); break;
+    case 0: cpu->updateModRM16(cpu_rol(cpu, value, cpu->regs.B.CL, 16)); break;
+    case 1: cpu->updateModRM16(cpu_ror(cpu, value, cpu->regs.B.CL, 16)); break;
+    case 2: cpu->updateModRM16(cpu_rcl(cpu, value, cpu->regs.B.CL, 16)); break;
+    case 3: cpu->updateModRM16(cpu_rcr(cpu, value, cpu->regs.B.CL, 16)); break;
+    case 4: cpu->updateModRM16(cpu_shl(cpu, value, cpu->regs.B.CL, 16)); break;
+    case 5: cpu->updateModRM16(cpu_shr(cpu, value, cpu->regs.B.CL, 16)); break;
     case 6:
         vlog(VM_ALERT, "D3 /6 not wrapped");
         cpu->exception(6);
         break;
-    case 7: vomit_cpu_modrm_update16(cpu, cpu_sar(cpu, value, cpu->regs.B.CL, 16)); break;
+    case 7: cpu->updateModRM16(cpu_sar(cpu, value, cpu->regs.B.CL, 16)); break;
     }
 }
 
@@ -224,7 +224,7 @@ void _wrap_0xF7(VCpu* cpu)
 void _wrap_0xFE(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    BYTE value = vomit_cpu_modrm_read8(cpu, rm);
+    BYTE value = cpu->readModRM8(rm);
 
     WORD i = value;
 
@@ -234,14 +234,14 @@ void _wrap_0xFE(VCpu* cpu)
         i++;
         vomit_cpu_setAF(cpu, i, value, 1);
         cpu->updateFlags8(i);
-        vomit_cpu_modrm_update8(cpu, value + 1);
+        cpu->updateModRM8(value + 1);
         break;
     case 1:
         cpu->setOF(value == 0x80);
         i--;
         vomit_cpu_setAF(cpu, i, value, 1);
         cpu->updateFlags8(i);
-        vomit_cpu_modrm_update8(cpu, value - 1);
+        cpu->updateModRM8(value - 1);
         break;
     default:
         vlog(VM_ALERT, "FE /%u not wrapped", rmreg(rm));

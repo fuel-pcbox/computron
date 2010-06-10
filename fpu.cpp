@@ -19,7 +19,7 @@ void _ESCAPE(VCpu* cpu)
     //vm_exit(0);
 
     BYTE rm = cpu->fetchOpcodeByte();
-    (void) vomit_cpu_modrm_read16(cpu, rm);
+    (void) cpu->readModRM16(rm);
 
     return;
 

@@ -585,19 +585,19 @@ void _XCHG_reg8_RM8(VCpu* cpu)
     BYTE rm = cpu->fetchOpcodeByte();
     BYTE &reg(*cpu->treg8[rmreg(rm)]);
 
-    BYTE value = vomit_cpu_modrm_read8(cpu, rm);
+    BYTE value = cpu->readModRM8(rm);
     BYTE tmp = reg;
     reg = value;
-    vomit_cpu_modrm_update8(cpu, tmp);
+    cpu->updateModRM8(tmp);
 }
 
 void _XCHG_reg16_RM16(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    WORD value = vomit_cpu_modrm_read16(cpu, rm);
+    WORD value = cpu->readModRM16(rm);
     WORD tmp = *cpu->treg16[rmreg(rm)];
     *cpu->treg16[rmreg(rm)] = value;
-    vomit_cpu_modrm_update16(cpu, tmp);
+    cpu->updateModRM16(tmp);
 }
 
 void _DEC_reg16(VCpu* cpu)
@@ -631,7 +631,7 @@ void _INC_reg16(VCpu* cpu)
 
 void _INC_RM16(VCpu* cpu)
 {
-    WORD value = vomit_cpu_modrm_read16(cpu, cpu->rmbyte);
+    WORD value = cpu->readModRM16(cpu->rmbyte);
     DWORD i = value;
 
     /* Overflow if we'll wrap. */
@@ -640,12 +640,13 @@ void _INC_RM16(VCpu* cpu)
     ++i;
     vomit_cpu_setAF(cpu, i, value, 1);
     cpu->updateFlags16(i);
-    vomit_cpu_modrm_update16(cpu, value + 1);
+    cpu->updateModRM16(value + 1);
+    cpu->updateModRM16(value + 1);
 }
 
 void _DEC_RM16(VCpu* cpu)
 {
-    WORD value = vomit_cpu_modrm_read16(cpu, cpu->rmbyte);
+    WORD value = cpu->readModRM16(cpu->rmbyte);
     DWORD i = value;
 
     /* Overflow if we'll wrap. */
@@ -654,20 +655,20 @@ void _DEC_RM16(VCpu* cpu)
     --i;
     vomit_cpu_setAF(cpu, i, value, 1); // XXX: i can be (dword)(-1)...
     cpu->updateFlags16(i);
-    vomit_cpu_modrm_update16(cpu, value - 1);
+    cpu->updateModRM16(value - 1);
 }
 
 void _LDS_reg16_mem16(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    DWORD value = vomit_cpu_modrm_read32(cpu, rm);
+    DWORD value = cpu->readModRM32(rm);
     *cpu->treg16[rmreg(rm)] = LSW(value);
     cpu->DS = MSW(value);
 }
 void _LES_reg16_mem16(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    DWORD value = vomit_cpu_modrm_read32(cpu, rm);
+    DWORD value = cpu->readModRM32(rm);
     *cpu->treg16[rmreg(rm)] = LSW(value);
     cpu->ES = MSW(value);
 }

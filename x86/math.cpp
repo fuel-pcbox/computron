@@ -179,7 +179,7 @@ READONLY_AX_imm16(cpu_sub, _CMP_AX_imm16)
 
 void _MUL_RM8(VCpu* cpu)
 {
-    BYTE value = vomit_cpu_modrm_read8(cpu, cpu->rmbyte);
+    BYTE value = cpu->readModRM8(cpu->rmbyte);
     cpu->regs.W.AX = cpu_mul8(cpu, cpu->regs.B.AL, value);
 
     if (cpu->regs.B.AH == 0x00) {
@@ -193,7 +193,7 @@ void _MUL_RM8(VCpu* cpu)
 
 void _MUL_RM16(VCpu* cpu)
 {
-    WORD value = vomit_cpu_modrm_read16(cpu, cpu->rmbyte);
+    WORD value = cpu->readModRM16(cpu->rmbyte);
     DWORD result = cpu_mul16(cpu, cpu->regs.W.AX, value);
     cpu->regs.W.AX = result & 0xFFFF;
     cpu->regs.W.DX = (result >> 16) & 0xFFFF;
@@ -209,7 +209,7 @@ void _MUL_RM16(VCpu* cpu)
 
 void _IMUL_RM8(VCpu* cpu)
 {
-    SIGNED_BYTE value = (SIGNED_BYTE)vomit_cpu_modrm_read8(cpu, cpu->rmbyte);
+    SIGNED_BYTE value = (SIGNED_BYTE)cpu->readModRM8(cpu->rmbyte);
     cpu->regs.W.AX = (SIGNED_WORD)cpu_imul8(cpu, cpu->regs.B.AL, value);
 
     if (cpu->regs.B.AH == 0x00 || cpu->regs.B.AH == 0xFF) {
@@ -225,7 +225,7 @@ void _IMUL_reg16_RM16_imm8(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
     BYTE imm = cpu->fetchOpcodeByte();
-    SIGNED_WORD value = (SIGNED_WORD)vomit_cpu_modrm_read16(cpu, rm);
+    SIGNED_WORD value = (SIGNED_WORD)cpu->readModRM16(rm);
     SIGNED_WORD result = cpu_imul16(cpu, value, imm);
 
     *cpu->treg16[rmreg(rm)] = result;
@@ -241,7 +241,7 @@ void _IMUL_reg16_RM16_imm8(VCpu* cpu)
 
 void _IMUL_RM16(VCpu* cpu)
 {
-    SIGNED_WORD value = vomit_cpu_modrm_read16(cpu, cpu->rmbyte);
+    SIGNED_WORD value = cpu->readModRM16(cpu->rmbyte);
     SIGNED_DWORD result = cpu_imul16(cpu, cpu->regs.W.AX, value);
     cpu->regs.W.AX = result;
     cpu->regs.W.DX = result >> 16;
@@ -257,7 +257,7 @@ void _IMUL_RM16(VCpu* cpu)
 
 void _DIV_RM8(VCpu* cpu)
 {
-    BYTE value = vomit_cpu_modrm_read8(cpu, cpu->rmbyte);
+    BYTE value = cpu->readModRM8(cpu->rmbyte);
     WORD tAX = cpu->regs.W.AX;
 
     if (value == 0) {
@@ -271,7 +271,7 @@ void _DIV_RM8(VCpu* cpu)
 
 void _DIV_RM16(VCpu* cpu)
 {
-    WORD value = vomit_cpu_modrm_read16(cpu, cpu->rmbyte);
+    WORD value = cpu->readModRM16(cpu->rmbyte);
     DWORD tDXAX = cpu->regs.W.AX + (cpu->regs.W.DX << 16);
 
     if (value == 0) {
@@ -285,7 +285,7 @@ void _DIV_RM16(VCpu* cpu)
 
 void _IDIV_RM8(VCpu* cpu)
 {
-    SIGNED_BYTE value = (SIGNED_BYTE)vomit_cpu_modrm_read8(cpu, cpu->rmbyte);
+    SIGNED_BYTE value = (SIGNED_BYTE)cpu->readModRM8(cpu->rmbyte);
     SIGNED_WORD tAX = (SIGNED_WORD)cpu->regs.W.AX;
 
     if (value == 0) {
@@ -299,7 +299,7 @@ void _IDIV_RM8(VCpu* cpu)
 
 void _IDIV_RM16(VCpu* cpu)
 {
-    SIGNED_WORD value = vomit_cpu_modrm_read16(cpu, cpu->rmbyte);
+    SIGNED_WORD value = cpu->readModRM16(cpu->rmbyte);
     SIGNED_DWORD tDXAX = (cpu->regs.W.AX + (cpu->regs.W.DX << 16));
 
     if (value == 0) {

@@ -4,47 +4,47 @@
 #define DEFAULT_RM8_reg8(helper, name) \
 	void name(VCpu* cpu) { \
 		BYTE rm = cpu->fetchOpcodeByte(); \
-		BYTE value = vomit_cpu_modrm_read8(cpu, rm); \
-		vomit_cpu_modrm_update8(cpu, helper ## 8(cpu, value, *cpu->treg8[rmreg(rm)])); \
+		BYTE value = cpu->readModRM8(rm); \
+		cpu->updateModRM8(helper ## 8(cpu, value, *cpu->treg8[rmreg(rm)])); \
 	}
 
 #define DEFAULT_RM16_reg16(helper, name) \
 	void name(VCpu* cpu) { \
 		BYTE rm = cpu->fetchOpcodeByte(); \
-		WORD value = vomit_cpu_modrm_read16(cpu, rm); \
-		vomit_cpu_modrm_update16(cpu, helper ## 16(cpu, value, *cpu->treg16[rmreg(rm)])); \
+		WORD value = cpu->readModRM16(rm); \
+		cpu->updateModRM16(helper ## 16(cpu, value, *cpu->treg16[rmreg(rm)])); \
 	}
 
 #define DEFAULT_reg8_RM8(helper, name) \
 	void name(VCpu* cpu) { \
 		BYTE rm = cpu->fetchOpcodeByte(); \
-		BYTE value = vomit_cpu_modrm_read8(cpu, rm); \
+		BYTE value = cpu->readModRM8(rm); \
 		*cpu->treg8[rmreg(rm)] = helper ## 8(cpu, *cpu->treg8[rmreg(rm)], value); \
 	}
 
 #define DEFAULT_reg16_RM16(helper, name) \
 	void name(VCpu* cpu) { \
 		BYTE rm = cpu->fetchOpcodeByte(); \
-		WORD value = vomit_cpu_modrm_read16(cpu, rm); \
+		WORD value = cpu->readModRM16(rm); \
 		*cpu->treg16[rmreg(rm)] = helper ## 16(cpu, *cpu->treg16[rmreg(rm)], value); \
 	}
 
 #define DEFAULT_RM8_imm8(helper, name) \
 	void name(VCpu* cpu) { \
-		BYTE value = vomit_cpu_modrm_read8(cpu, cpu->rmbyte); \
-		vomit_cpu_modrm_update8(cpu, helper ## 8(cpu, value, cpu->fetchOpcodeByte())); \
+		BYTE value = cpu->readModRM8(cpu->rmbyte); \
+		cpu->updateModRM8(helper ## 8(cpu, value, cpu->fetchOpcodeByte())); \
 	}
 
 #define DEFAULT_RM16_imm16(helper, name) \
 	void name(VCpu* cpu) { \
-		WORD value = vomit_cpu_modrm_read16(cpu, cpu->rmbyte); \
-		vomit_cpu_modrm_update16(cpu, helper ## 16(cpu, value, cpu->fetchOpcodeWord())); \
+		WORD value = cpu->readModRM16(cpu->rmbyte); \
+		cpu->updateModRM16(helper ## 16(cpu, value, cpu->fetchOpcodeWord())); \
 	}
 
 #define DEFAULT_RM16_imm8(helper, name) \
 	void name(VCpu* cpu) { \
-		WORD value = vomit_cpu_modrm_read16(cpu, cpu->rmbyte); \
-		vomit_cpu_modrm_update16(cpu, helper ## 16(cpu, value, vomit_signExtend(cpu->fetchOpcodeByte()))); \
+		WORD value = cpu->readModRM16(cpu->rmbyte); \
+		cpu->updateModRM16(helper ## 16(cpu, value, vomit_signExtend(cpu->fetchOpcodeByte()))); \
 	}
 
 #define DEFAULT_AL_imm8(helper, name) \
@@ -60,42 +60,42 @@
 #define READONLY_RM8_reg8(helper, name) \
 	void name(VCpu* cpu) { \
 		BYTE rm = cpu->fetchOpcodeByte(); \
-		helper ## 8(cpu, vomit_cpu_modrm_read8(cpu, rm), *cpu->treg8[rmreg(rm)]); \
+		helper ## 8(cpu, cpu->readModRM8(rm), *cpu->treg8[rmreg(rm)]); \
 	}
 
 #define READONLY_RM16_reg16(helper, name) \
 	void name(VCpu* cpu) { \
 		BYTE rm = cpu->fetchOpcodeByte(); \
-		helper ## 16(cpu, vomit_cpu_modrm_read16(cpu, rm), *cpu->treg16[rmreg(rm)]); \
+		helper ## 16(cpu, cpu->readModRM16(rm), *cpu->treg16[rmreg(rm)]); \
 	}
 
 #define READONLY_reg8_RM8(helper, name) \
 	void name(VCpu* cpu) { \
 		BYTE rm = cpu->fetchOpcodeByte(); \
-		helper ## 8(cpu, *cpu->treg8[rmreg(rm)], vomit_cpu_modrm_read8(cpu, rm)); \
+		helper ## 8(cpu, *cpu->treg8[rmreg(rm)], cpu->readModRM8(rm)); \
 	}
 
 #define READONLY_reg16_RM16(helper, name) \
 	void name(VCpu* cpu) { \
 		BYTE rm = cpu->fetchOpcodeByte(); \
-		helper ## 16(cpu, *cpu->treg16[rmreg(rm)], vomit_cpu_modrm_read16(cpu, rm)); \
+		helper ## 16(cpu, *cpu->treg16[rmreg(rm)], cpu->readModRM16(rm)); \
 	}
 
 #define READONLY_RM8_imm8(helper, name) \
 	void name(VCpu* cpu) { \
-		BYTE value = vomit_cpu_modrm_read8(cpu, cpu->rmbyte); \
+		BYTE value = cpu->readModRM8(cpu->rmbyte); \
 		helper ## 8(cpu, value, cpu->fetchOpcodeByte()); \
 	}
 
 #define READONLY_RM16_imm16( helper, name ) \
 	void name(VCpu* cpu) { \
-		WORD value = vomit_cpu_modrm_read16(cpu, cpu->rmbyte); \
+		WORD value = cpu->readModRM16(cpu->rmbyte); \
 		helper ## 16(cpu, value, cpu->fetchOpcodeWord()); \
 	}
 
 #define READONLY_RM16_imm8(helper, name) \
 	void name(VCpu* cpu) { \
-		WORD value = vomit_cpu_modrm_read16(cpu, cpu->rmbyte); \
+		WORD value = cpu->readModRM16(cpu->rmbyte); \
 		helper ## 16(cpu, value, vomit_signExtend(cpu->fetchOpcodeByte())); \
 	}
 

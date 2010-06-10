@@ -6,16 +6,14 @@
 
 void _MOV_RM8_imm8(VCpu* cpu)
 {
-    BYTE rm = cpu->fetchOpcodeByte();
-    (void) vomit_cpu_modrm_resolve8(cpu, rm);
-    vomit_cpu_modrm_update8(cpu, cpu->fetchOpcodeByte());
+    (void) cpu->resolveModRM8(cpu->fetchOpcodeByte());
+    cpu->updateModRM8(cpu->fetchOpcodeByte());
 }
 
 void _MOV_RM16_imm16(VCpu* cpu)
 {
-    BYTE rm = cpu->fetchOpcodeByte();
-    (void) vomit_cpu_modrm_resolve16(cpu, rm);
-    vomit_cpu_modrm_update16(cpu, cpu->fetchOpcodeWord());
+    (void) cpu->resolveModRM16(cpu->fetchOpcodeByte());
+    cpu->updateModRM16(cpu->fetchOpcodeWord());
 }
 
 void _MOV_RM16_seg(VCpu* cpu)
@@ -24,7 +22,7 @@ void _MOV_RM16_seg(VCpu* cpu)
 
     VM_ASSERT(rmreg(rm) >= 0 && rmreg(rm) <= 5);
 
-    vomit_cpu_modrm_write16(cpu, rm, *cpu->tseg[rmreg(rm)]);
+    cpu->writeModRM16(rm, *cpu->tseg[rmreg(rm)]);
 
 #ifdef VOMIT_DEBUG
     if (rmreg(rm) == VCpu::RegisterFS || rmreg(rm) == VCpu::RegisterGS) {
@@ -39,7 +37,7 @@ void _MOV_seg_RM16(VCpu* cpu)
 
     VM_ASSERT(rmreg(rm) >= 0 && rmreg(rm) <= 5);
 
-    *cpu->tseg[rmreg(rm)] = vomit_cpu_modrm_read16(cpu, rm);
+    *cpu->tseg[rmreg(rm)] = cpu->readModRM16(rm);
 
 #ifdef VOMIT_DEBUG
     if (rmreg(rm) == VCpu::RegisterFS || rmreg(rm) == VCpu::RegisterGS) {
@@ -51,25 +49,25 @@ void _MOV_seg_RM16(VCpu* cpu)
 void _MOV_RM8_reg8(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    vomit_cpu_modrm_write8(cpu, rm, *cpu->treg8[rmreg(rm)]);
+    cpu->writeModRM8(rm, *cpu->treg8[rmreg(rm)]);
 }
 
 void _MOV_reg8_RM8(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    *cpu->treg8[rmreg(rm)] = vomit_cpu_modrm_read8(cpu, rm);
+    *cpu->treg8[rmreg(rm)] = cpu->readModRM8(rm);
 }
 
 void _MOV_RM16_reg16(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    vomit_cpu_modrm_write16(cpu, rm, *cpu->treg16[rmreg(rm)]);
+    cpu->writeModRM16(rm, *cpu->treg16[rmreg(rm)]);
 }
 
 void _MOV_reg16_RM16(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    *cpu->treg16[rmreg(rm)] = vomit_cpu_modrm_read16(cpu, rm);
+    *cpu->treg16[rmreg(rm)] = cpu->readModRM16(rm);
 }
 
 void _MOV_AL_imm8(VCpu* cpu)
