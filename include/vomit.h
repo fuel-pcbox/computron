@@ -1,7 +1,6 @@
 #ifndef __vomit_h__
 #define __vomit_h__
 
-#include <stdbool.h>
 #include <stdarg.h>
 
 #include "types.h"

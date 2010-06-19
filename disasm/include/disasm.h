@@ -2,7 +2,6 @@
 #define __DISASM_H__
 
 #include <stdint.h>
-#include <stdbool.h>
 
 /* Create some handy type definitions */
 typedef uint16_t WORD;
