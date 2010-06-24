@@ -24,7 +24,7 @@ void _wrap_0x0F(VCpu* cpu)
     case 0xFF: // UD0
     case 0xB9: // UD1
     case 0x0B: // UD2
-        vlog(VM_ALERT, "Undefinded opcode 0F %02X", op);
+        vlog(VM_ALERT, "Undefined opcode 0F %02X", op);
         cpu->exception(6);
         break;
     default:

@@ -13,7 +13,7 @@ bool g_vomit_exit_main_loop = 0;
 
 void _UD0(VCpu* cpu)
 {
-    vlog(VM_ALERT, "Undefinded opcode 0F FF (UD0)");
+    vlog(VM_ALERT, "Undefined opcode 0F FF (UD0)");
     cpu->exception(6);
 }
 
