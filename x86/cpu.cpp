@@ -9,9 +9,6 @@
 VCpu* g_cpu = 0;
 bool g_vomit_exit_main_loop = 0;
 
-// The black hole of 386 segment selectors.
-static WORD segment_dummy;
-
 #define CALL_HANDLER(handler16, handler32) if (m_operationSize == OperationSize16) { handler16(this); } else { handler32(this); }
 
 void _UD0(VCpu* cpu)
@@ -130,8 +127,8 @@ void VCpu::init()
     this->tseg[RegisterSS] = &this->SS;
     this->tseg[RegisterFS] = &this->FS;
     this->tseg[RegisterGS] = &this->GS;
-    this->tseg[6] = &segment_dummy;
-    this->tseg[7] = &segment_dummy;
+    this->tseg[6] = 0;
+    this->tseg[7] = 0;
 
     m_segmentPrefix = 0x0000;
     m_currentSegment = &this->DS;
