@@ -20,7 +20,14 @@ void _JMP_imm16_imm16(VCpu* cpu)
 {
     WORD newIP = cpu->fetchOpcodeWord();
     WORD newCS = cpu->fetchOpcodeWord();
-    cpu->jump(newCS, newIP);
+    cpu->jump16(newCS, newIP);
+}
+
+void _JMP_imm16_imm32(VCpu* cpu)
+{
+    DWORD newEIP = cpu->fetchOpcodeDWord();
+    WORD newCS = cpu->fetchOpcodeWord();
+    cpu->jump32(newCS, newEIP);
 }
 
 void _JMP_short_imm8(VCpu* cpu)
@@ -37,7 +44,7 @@ void _JMP_RM16(VCpu* cpu)
 void _JMP_FAR_mem16(VCpu* cpu)
 {
     DWORD value = cpu->readModRM32(cpu->rmbyte);
-    cpu->jump(MSW(value), LSW(value));
+    cpu->jump16(MSW(value), LSW(value));
 }
 
 #define DO_JCC_imm8(name, condition) \
@@ -71,13 +78,20 @@ void _CALL_imm16(VCpu* cpu)
     cpu->jumpRelative16(imm);
 }
 
+void _CALL_imm32(VCpu* cpu)
+{
+    SIGNED_DWORD imm = cpu->fetchOpcodeWord();
+    cpu->push(cpu->EIP);
+    cpu->jumpRelative32(imm);
+}
+
 void _CALL_imm16_imm16(VCpu* cpu)
 {
     WORD newip = cpu->fetchOpcodeWord();
     WORD segment = cpu->fetchOpcodeWord();
     cpu->push(cpu->getCS());
     cpu->push(cpu->getIP());
-    cpu->jump(segment, newip);
+    cpu->jump16(segment, newip);
 }
 
 void _CALL_FAR_mem16(VCpu* cpu)
@@ -85,7 +99,7 @@ void _CALL_FAR_mem16(VCpu* cpu)
     DWORD value = cpu->readModRM32(cpu->rmbyte);
     cpu->push(cpu->getCS());
     cpu->push(cpu->getIP());
-    cpu->jump(MSW(value), LSW(value));
+    cpu->jump16(MSW(value), LSW(value));
 }
 
 void _CALL_RM16(VCpu* cpu)
@@ -110,13 +124,13 @@ void _RET_imm16(VCpu* cpu)
 void _RETF(VCpu* cpu)
 {
     WORD nip = cpu->pop();
-    cpu->jump(cpu->pop(), nip);
+    cpu->jump16(cpu->pop(), nip);
 }
 
 void _RETF_imm16(VCpu* cpu)
 {
     WORD nip = cpu->pop();
     WORD imm = cpu->fetchOpcodeWord();
-    cpu->jump(cpu->pop(), nip);
+    cpu->jump16(cpu->pop(), nip);
     cpu->regs.W.SP += imm;
 }

@@ -55,13 +55,18 @@
 
 #define DEFAULT_AL_imm8(helper, name) \
 	void name(VCpu* cpu) { \
-		cpu->regs.B.AL = helper ## 8(cpu, cpu->regs.B.AL, cpu->fetchOpcodeByte()); \
+                cpu->regs.B.AL = helper ## 8(cpu, cpu->getAL(), cpu->fetchOpcodeByte()); \
 	}
 
 #define DEFAULT_AX_imm16(helper, name) \
 	void name(VCpu* cpu) { \
-		cpu->regs.W.AX = helper ## 16(cpu, cpu->regs.W.AX, cpu->fetchOpcodeWord()); \
+                cpu->regs.W.AX = helper ## 16(cpu, cpu->getAX(), cpu->fetchOpcodeWord()); \
 	}
+
+#define DEFAULT_EAX_imm32(helper, name) \
+        void name(VCpu* cpu) { \
+                cpu->regs.D.EAX = helper ## 32(cpu, cpu->getEAX(), cpu->fetchOpcodeDWord()); \
+        }
 
 #define READONLY_RM8_reg8(helper, name) \
 	void name(VCpu* cpu) { \

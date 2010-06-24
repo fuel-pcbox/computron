@@ -27,15 +27,32 @@ void _OUT_imm8_AX(VCpu* cpu)
     cpu->out(port + 1, cpu->regs.B.AH);
 }
 
+void _OUT_imm8_EAX(VCpu* cpu)
+{
+    WORD port = cpu->fetchOpcodeByte();
+    cpu->out(port, cpu->regs.B.AL);
+    cpu->out(port + 1, cpu->regs.B.AH);
+    cpu->out(port + 2, LSB(cpu->regs.W.__EAX_high_word));
+    cpu->out(port + 3, MSB(cpu->regs.W.__EAX_high_word));
+}
+
 void _OUT_DX_AL(VCpu* cpu)
 {
-    cpu->out(cpu->regs.W.DX, cpu->regs.B.AL);
+    cpu->out(cpu->getDX(), cpu->regs.B.AL);
 }
 
 void _OUT_DX_AX(VCpu* cpu)
 {
-    cpu->out(cpu->regs.W.DX, cpu->regs.B.AL);
-    cpu->out(cpu->regs.W.DX + 1, cpu->regs.B.AH);
+    cpu->out(cpu->getDX(), cpu->regs.B.AL);
+    cpu->out(cpu->getDX() + 1, cpu->regs.B.AH);
+}
+
+void _OUT_DX_EAX(VCpu* cpu)
+{
+    cpu->out(cpu->getDX(), cpu->regs.B.AL);
+    cpu->out(cpu->getDX() + 1, cpu->regs.B.AH);
+    cpu->out(cpu->getDX() + 2, LSB(cpu->regs.W.__EAX_high_word));
+    cpu->out(cpu->getDX() + 3, MSB(cpu->regs.W.__EAX_high_word));
 }
 
 void _OUTSB(VCpu* cpu)
@@ -84,15 +101,30 @@ void _IN_AX_imm8(VCpu* cpu)
     cpu->regs.B.AH = cpu->in(port + 1);
 }
 
+void _IN_EAX_imm8(VCpu* cpu)
+{
+    WORD port = cpu->fetchOpcodeByte();
+    cpu->regs.B.AL = cpu->in(port);
+    cpu->regs.B.AH = cpu->in(port + 1);
+    cpu->regs.W.__EAX_high_word = MAKEWORD(cpu->in(port + 2), cpu->in(port + 3));
+}
+
 void _IN_AL_DX(VCpu* cpu)
 {
-    cpu->regs.B.AL = cpu->in(cpu->regs.W.DX);
+    cpu->regs.B.AL = cpu->in(cpu->getDX());
 }
 
 void _IN_AX_DX(VCpu* cpu)
 {
-    cpu->regs.B.AL = cpu->in(cpu->regs.W.DX);
-    cpu->regs.B.AH = cpu->in(cpu->regs.W.DX + 1);
+    cpu->regs.B.AL = cpu->in(cpu->getDX());
+    cpu->regs.B.AH = cpu->in(cpu->getDX() + 1);
+}
+
+void _IN_EAX_DX(VCpu* cpu)
+{
+    cpu->regs.B.AL = cpu->in(cpu->getDX());
+    cpu->regs.B.AH = cpu->in(cpu->getDX() + 1);
+    cpu->regs.W.__EAX_high_word = MAKEWORD(cpu->in(cpu->getDX() + 2), cpu->in(cpu->getDX() + 3));
 }
 
 void VCpu::out(WORD port, BYTE value)

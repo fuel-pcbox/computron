@@ -77,7 +77,31 @@ void _STI(VCpu* cpu)
 
 void _CLI(VCpu* cpu)
 {
-    cpu->setIF(0);
+    if (!cpu->getPE()) {
+        cpu->setIF(0);
+        return;
+    }
+
+    if (cpu->getVM()) {
+        if (cpu->getIOPL() >= cpu->getCPL()) {
+            cpu->setIF(0);
+        } else {
+            if ((cpu->getIOPL() < cpu->getCPL()) && cpu->getCPL() == 3 && cpu->getPVI())
+                cpu->setVIF(0);
+            else
+                cpu->GP(0);
+        }
+    } else {
+        if (cpu->getIOPL() == 3) {
+            cpu->setIF(0);
+        } else {
+            if (cpu->getIOPL() < 3 && cpu->getVME()) {
+                cpu->setVIF(0);
+            } else {
+                cpu->GP(0);
+            }
+        }
+    }
 }
 
 void _CLC(VCpu* cpu)

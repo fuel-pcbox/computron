@@ -72,6 +72,26 @@ void _PUSH_EDX(VCpu *cpu)
     cpu->push32(cpu->getEDX());
 }
 
+void _PUSH_ESP(VCpu *cpu)
+{
+    cpu->push32(cpu->getESP());
+}
+
+void _PUSH_EBP(VCpu *cpu)
+{
+    cpu->push32(cpu->getEBP());
+}
+
+void _PUSH_ESI(VCpu *cpu)
+{
+    cpu->push32(cpu->getESI());
+}
+
+void _PUSH_EDI(VCpu *cpu)
+{
+    cpu->push32(cpu->getEDI());
+}
+
 void _PUSH_AX(VCpu* cpu)
 {
     cpu->push(cpu->getAX());
@@ -140,6 +160,26 @@ void _POP_ECX(VCpu* cpu)
 void _POP_EDX(VCpu* cpu)
 {
     cpu->regs.D.EDX = cpu->pop32();
+}
+
+void _POP_ESP(VCpu* cpu)
+{
+    cpu->regs.D.ESP = cpu->pop32();
+}
+
+void _POP_EBP(VCpu* cpu)
+{
+    cpu->regs.D.EBP = cpu->pop32();
+}
+
+void _POP_ESI(VCpu* cpu)
+{
+    cpu->regs.D.ESI = cpu->pop32();
+}
+
+void _POP_EDI(VCpu* cpu)
+{
+    cpu->regs.D.EDI = cpu->pop32();
 }
 
 void _POP_CX(VCpu* cpu)

@@ -122,25 +122,46 @@ void _wrap_0xD0(VCpu* cpu)
     }
 }
 
-void _wrap_0xD1(VCpu* cpu)
+void _wrap_0xD1_16(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
     WORD value = cpu->readModRM16(rm);
 
     switch (vomit_modRMRegisterPart(rm)) {
-    case 0: cpu->updateModRM16(cpu_rol(cpu, value, 1, 16 )); break;
-    case 1: cpu->updateModRM16(cpu_ror(cpu, value, 1, 16 )); break;
-    case 2: cpu->updateModRM16(cpu_rcl(cpu, value, 1, 16 )); break;
-    case 3: cpu->updateModRM16(cpu_rcr(cpu, value, 1, 16 )); break;
-    case 4: cpu->updateModRM16(cpu_shl(cpu, value, 1, 16 )); break;
-    case 5: cpu->updateModRM16(cpu_shr(cpu, value, 1, 16 )); break;
+    case 0: cpu->updateModRM16(cpu_rol(cpu, value, 1, 16)); break;
+    case 1: cpu->updateModRM16(cpu_ror(cpu, value, 1, 16)); break;
+    case 2: cpu->updateModRM16(cpu_rcl(cpu, value, 1, 16)); break;
+    case 3: cpu->updateModRM16(cpu_rcr(cpu, value, 1, 16)); break;
+    case 4: cpu->updateModRM16(cpu_shl(cpu, value, 1, 16)); break;
+    case 5: cpu->updateModRM16(cpu_shr(cpu, value, 1, 16)); break;
     case 6:
-        vlog(VM_ALERT, "D1 /6 not wrapped");
+        vlog(VM_ALERT, "[16bit] D1 /6 not wrapped");
         cpu->exception(6);
         break;
-    case 7: cpu->updateModRM16(cpu_sar(cpu, value, 1, 16 )); break;
+    case 7: cpu->updateModRM16(cpu_sar(cpu, value, 1, 16)); break;
     }
 }
+
+void _wrap_0xD1_32(VCpu* cpu)
+{
+    BYTE rm = cpu->fetchOpcodeByte();
+    DWORD value = cpu->readModRM32(rm);
+
+    switch (vomit_modRMRegisterPart(rm)) {
+    case 0: cpu->updateModRM32(cpu_rol(cpu, value, 1, 32)); break;
+    case 1: cpu->updateModRM32(cpu_ror(cpu, value, 1, 32)); break;
+    case 2: cpu->updateModRM32(cpu_rcl(cpu, value, 1, 32)); break;
+    case 3: cpu->updateModRM32(cpu_rcr(cpu, value, 1, 32)); break;
+    case 4: cpu->updateModRM32(cpu_shl(cpu, value, 1, 32)); break;
+    case 5: cpu->updateModRM32(cpu_shr(cpu, value, 1, 32)); break;
+    case 6:
+        vlog(VM_ALERT, "[32bit] D1 /6 not wrapped");
+        cpu->exception(6);
+        break;
+    case 7: cpu->updateModRM32(cpu_sar(cpu, value, 1, 32)); break;
+    }
+}
+
 
 void _wrap_0xD2(VCpu* cpu)
 {

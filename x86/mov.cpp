@@ -46,6 +46,21 @@ void _MOV_seg_RM16(VCpu* cpu)
 #endif
 }
 
+void _MOV_seg_RM32(VCpu* cpu)
+{
+    BYTE rm = cpu->fetchOpcodeByte();
+
+    VM_ASSERT(vomit_modRMRegisterPart(rm) >= 0 && vomit_modRMRegisterPart(rm) <= 5);
+
+    *cpu->tseg[vomit_modRMRegisterPart(rm)] = cpu->readModRM32(rm);
+
+#ifdef VOMIT_DEBUG
+    if (vomit_modRMRegisterPart(rm) == VCpu::RegisterFS || vomit_modRMRegisterPart(rm) == VCpu::RegisterGS) {
+        vlog(VM_CPUMSG, "%04X:%04X: Write to 80386 segment register");
+    }
+#endif
+}
+
 void _MOV_RM8_reg8(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
@@ -62,6 +77,12 @@ void _MOV_RM16_reg16(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
     cpu->writeModRM16(rm, *cpu->treg16[vomit_modRMRegisterPart(rm)]);
+}
+
+void _MOV_RM32_reg32(VCpu* cpu)
+{
+    BYTE rm = cpu->fetchOpcodeByte();
+    cpu->writeModRM32(rm, *cpu->treg32[vomit_modRMRegisterPart(rm)]);
 }
 
 void _MOV_reg16_RM16(VCpu* cpu)
@@ -114,6 +135,46 @@ void _MOV_CH_imm8(VCpu* cpu)
 void _MOV_DH_imm8(VCpu* cpu)
 {
     cpu->regs.B.DH = cpu->fetchOpcodeByte();
+}
+
+void _MOV_EAX_imm32(VCpu* cpu)
+{
+    cpu->regs.D.EAX = cpu->fetchOpcodeDWord();
+}
+
+void _MOV_EBX_imm32(VCpu* cpu)
+{
+    cpu->regs.D.EBX = cpu->fetchOpcodeDWord();
+}
+
+void _MOV_ECX_imm32(VCpu* cpu)
+{
+    cpu->regs.D.ECX = cpu->fetchOpcodeDWord();
+}
+
+void _MOV_EDX_imm32(VCpu* cpu)
+{
+    cpu->regs.D.EDX = cpu->fetchOpcodeDWord();
+}
+
+void _MOV_EBP_imm32(VCpu* cpu)
+{
+    cpu->regs.D.EBP = cpu->fetchOpcodeDWord();
+}
+
+void _MOV_ESP_imm32(VCpu* cpu)
+{
+    cpu->regs.D.ESP = cpu->fetchOpcodeDWord();
+}
+
+void _MOV_ESI_imm32(VCpu* cpu)
+{
+    cpu->regs.D.ESI = cpu->fetchOpcodeDWord();
+}
+
+void _MOV_EDI_imm32(VCpu* cpu)
+{
+    cpu->regs.D.EDI = cpu->fetchOpcodeDWord();
 }
 
 void _MOV_AX_imm16(VCpu* cpu)

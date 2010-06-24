@@ -33,7 +33,7 @@ void _IRET(VCpu* cpu)
 {
     WORD nip = cpu->pop();
     WORD ncs = cpu->pop();
-    cpu->jump(ncs, nip);
+    cpu->jump16(ncs, nip);
     cpu->setFlags(cpu->pop());
 }
 
@@ -72,5 +72,5 @@ void VCpu::jumpToInterruptHandler(int isr)
     WORD segment = (this->memory[isr * 4 + 3] << 8) | this->memory[isr * 4 + 2];
     WORD offset = (this->memory[isr * 4 + 1] << 8) | this->memory[isr * 4];
 
-    jump(segment, offset);
+    jump16(segment, offset);
 }

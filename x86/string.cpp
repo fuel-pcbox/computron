@@ -25,6 +25,17 @@ void _LODSW(VCpu* cpu)
     }
 }
 
+void _LODSD(VCpu* cpu)
+{
+    if (cpu->a16()) {
+        cpu->regs.D.EAX = cpu->readMemory32(cpu->currentSegment(), cpu->getSI());
+        cpu->nextSI(4);
+    } else {
+        cpu->regs.D.EAX = cpu->readMemory32(cpu->currentSegment(), cpu->getESI());
+        cpu->nextESI(4);
+    }
+}
+
 void _STOSB(VCpu* cpu)
 {
     if (cpu->a16()) {

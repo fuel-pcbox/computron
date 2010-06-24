@@ -2,10 +2,7 @@
 #define VCPU_H
 
 #include "types.h"
-
-#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
 #include "debug.h"
-#endif
 
 // MACROS AND CONVENIENCE METHODS
 #define IS_VGA_MEMORY(address) ((address) >= 0xA0000 && (address) < 0xB0000)
@@ -63,6 +60,9 @@ inline int vomit_modRMRegisterPart(int rmbyte)
 {
     return (rmbyte >> 3) & 7;
 }
+
+/* Construct a 16-bit word from two 8-bit bytes */
+#define MAKEWORD(l, m)	(((m) << 8) | (l))
 
 #define LSW(d) ((d)&0xFFFF)
 #define MSW(d) (((d)&0xFFFF0000)>>16)
@@ -245,6 +245,8 @@ public:
     void jumpToInterruptHandler(int isr);
     void setInterruptHandler(BYTE isr, WORD segment, WORD offset);
 
+    void GP(int code);
+
     void exception(int ec) { this->IP = getBaseIP(); jumpToInterruptHandler(ec); }
 
     void setIF(bool value) { this->IF = value; }
@@ -256,6 +258,7 @@ public:
     void setOF(bool value) { this->OF = value; }
     void setPF(bool value) { this->PF = value; }
     void setZF(bool value) { this->ZF = value; }
+    void setVIF(bool value) { this->VIF = value; }
 
     bool getIF() const { return this->IF; }
     bool getCF() const { return this->CF; }
@@ -266,6 +269,13 @@ public:
     bool getOF() const { return this->OF; }
     bool getPF() const { return this->PF; }
     bool getZF() const { return this->ZF; }
+    unsigned int getIOPL() const { return this->IOPL; }
+    unsigned int getCPL() const { return this->CPL; }
+    bool getVIF() const { return this->VIF; }
+    bool getVM() const { return this->VM; }
+    bool getPE() const { return this->CR0 & 0x01; }
+    bool getVME() const { return this->CR4 & 0x01; }
+    bool getPVI() const { return this->CR4 & 0x02; }
 
     WORD getCS() const { return this->CS; }
     WORD getIP() const { return this->IP; }
@@ -284,6 +294,7 @@ public:
     DWORD getESI() const { return this->regs.D.ESI; }
     DWORD getEDI() const { return this->regs.D.EDI; }
     DWORD getESP() const { return this->regs.D.ESP; }
+    DWORD getEBP() const { return this->regs.D.EBP; }
 
     WORD getAX() const { return this->regs.W.AX; }
     WORD getBX() const { return this->regs.W.BX; }
@@ -301,13 +312,18 @@ public:
     WORD getBaseIP() const { return m_baseEIP & 0xFFFF; }
     WORD getBaseEIP() const { return m_baseEIP; }
 
-    void jump(WORD segment, WORD offset);
+    void jump32(WORD segment, DWORD offset);
+    void jump16(WORD segment, WORD offset);
     void jumpRelative8(SIGNED_BYTE displacement);
     void jumpRelative16(SIGNED_WORD displacement);
+    void jumpRelative32(SIGNED_DWORD displacement);
     void jumpAbsolute16(WORD offset);
 
     // Execute the next instruction at CS:IP (huge switch version)
     void decodeNext();
+
+    // Execute the specified instruction
+    void decode(BYTE op);
 
     // Execute the next instruction at CS:IP
     void exec();
@@ -389,6 +405,7 @@ public:
     DWORD readModRM32(BYTE rmbyte);
     void writeModRM8(BYTE rmbyte, BYTE value);
     void writeModRM16(BYTE rmbyte, WORD value);
+    void writeModRM32(BYTE rmbyte, DWORD value);
 
     /*!
         Writes an 8-bit value back to the most recently resolved ModR/M location.
@@ -407,6 +424,9 @@ public:
 
     void* resolveModRM8(BYTE rmbyte);
     void* resolveModRM16(BYTE rmbyte);
+    void* resolveModRM32(BYTE rmbyte);
+
+    DWORD evaluateSIB(BYTE sib);
 
     VgaMemory* vgaMemory;
 
@@ -483,6 +503,7 @@ private:
 
     bool CF, DF, TF, PF, AF, ZF, SF, IF, OF;
 
+    unsigned int CPL;
     unsigned int IOPL;
     bool NT;
     bool RF;
@@ -517,7 +538,7 @@ private:
 
     mutable void* m_lastModRMPointer;
     mutable WORD m_lastModRMSegment;
-    mutable WORD m_lastModRMOffset;
+    mutable DWORD m_lastModRMOffset;
 
     // FIXME: Don't befriend this... thing.
     friend void unspeakable_abomination();
@@ -547,6 +568,7 @@ BYTE cpu_xor8(VCpu*, BYTE, BYTE);
 WORD cpu_or16(VCpu*, WORD, WORD);
 WORD cpu_and16(VCpu*, WORD, WORD);
 WORD cpu_xor16(VCpu*, WORD, WORD);
+DWORD cpu_or32(VCpu*, DWORD, DWORD);
 DWORD cpu_xor32(VCpu*, DWORD, DWORD);
 DWORD cpu_and32(VCpu*, DWORD, DWORD);
 
@@ -620,6 +642,7 @@ void _JNG_imm8(VCpu*);
 void _JG_imm8(VCpu*);
 
 void _CALL_imm16(VCpu*);
+void _CALL_imm32(VCpu*);
 void _RET(VCpu*);
 void _RET_imm16(VCpu*);
 void _RETF(VCpu*);
@@ -640,6 +663,7 @@ void _CMPSB(VCpu*);
 void _CMPSW(VCpu*);
 void _LODSB(VCpu*);
 void _LODSW(VCpu*);
+void _LODSD(VCpu*);
 void _SCASB(VCpu*);
 void _SCASW(VCpu*);
 void _STOSB(VCpu*);
@@ -700,6 +724,7 @@ void _OR_reg16_RM16(VCpu*);
 void _OR_RM8_imm8(VCpu*);
 void _OR_RM16_imm16(VCpu*);
 void _OR_RM16_imm8(VCpu*);
+void _OR_EAX_imm32(VCpu*);
 void _OR_AX_imm16(VCpu*);
 void _OR_AL_imm8(VCpu*);
 
@@ -754,6 +779,7 @@ void _OUT_imm8_AL(VCpu*);
 void _OUT_imm8_AX(VCpu*);
 void _OUT_DX_AL(VCpu*);
 void _OUT_DX_AX(VCpu*);
+void _OUT_DX_EAX(VCpu*);
 void _OUTSB(VCpu*);
 void _OUTSW(VCpu*);
 
@@ -830,8 +856,10 @@ void _NEG_RM16(VCpu*);
 
 void _INC_RM16(VCpu*);
 void _INC_reg16(VCpu*);
+void _INC_reg32(VCpu*);
 void _DEC_RM16(VCpu*);
 void _DEC_reg16(VCpu*);
+void _DEC_reg32(VCpu*);
 
 void _CALL_RM16(VCpu*);
 void _CALL_FAR_mem16(VCpu*);
@@ -850,7 +878,8 @@ void _wrap_0x8F(VCpu*);
 void _wrap_0xC0(VCpu*);
 void _wrap_0xC1(VCpu*);
 void _wrap_0xD0(VCpu*);
-void _wrap_0xD1(VCpu*);
+void _wrap_0xD1_16(VCpu*);
+void _wrap_0xD1_32(VCpu*);
 void _wrap_0xD2(VCpu*);
 void _wrap_0xD3(VCpu*);
 void _wrap_0xF6(VCpu*);
@@ -927,8 +956,21 @@ void _GS(VCpu*);
 
 void _STOSD(VCpu*);
 
+void _MOV_RM32_reg32(VCpu*);
 void _MOV_reg32_RM32(VCpu*);
 void _MOV_moff32_EAX(VCpu*);
+void _MOV_EAX_imm32(VCpu*);
+void _MOV_EBX_imm32(VCpu*);
+void _MOV_ECX_imm32(VCpu*);
+void _MOV_EDX_imm32(VCpu*);
+void _MOV_EBP_imm32(VCpu*);
+void _MOV_ESP_imm32(VCpu*);
+void _MOV_ESI_imm32(VCpu*);
+void _MOV_EDI_imm32(VCpu*);
+
+void _MOV_seg_RM32(VCpu*);
+
+void _JMP_imm16_imm32(VCpu*);
 
 // INLINE IMPLEMENTATIONS
 

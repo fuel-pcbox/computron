@@ -164,7 +164,7 @@ void unspeakable_abomination()
                 entry_cs = (WORD)strtol(curtok, NULL, 16);
                 curtok = strtok(NULL, " \t\n");
                 entry_ip = (WORD)strtol(curtok, NULL, 16);
-                g_cpu->jump(entry_cs, entry_ip);
+                g_cpu->jump16(entry_cs, entry_ip);
             } else if (!reloading && !strcmp(curtok, "addint")) {
                 BYTE isr = strtol(strtok(NULL, " \t\n"), NULL, 16);
                 WORD segment = strtol(strtok(NULL, ": \t\n"), NULL, 16);

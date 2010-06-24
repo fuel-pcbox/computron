@@ -34,6 +34,7 @@ DEFAULT_RM16_imm16(cpu_or, _OR_RM16_imm16)
 DEFAULT_RM16_imm8(cpu_or, _OR_RM16_imm8)
 DEFAULT_AL_imm8(cpu_or, _OR_AL_imm8)
 DEFAULT_AX_imm16(cpu_or, _OR_AX_imm16)
+DEFAULT_EAX_imm32(cpu_or, _OR_EAX_imm32)
 
 READONLY_RM8_reg8(cpu_and, _TEST_RM8_reg8)
 READONLY_RM16_reg16(cpu_and, _TEST_RM16_reg16)
@@ -77,6 +78,15 @@ WORD cpu_or16(VCpu* cpu, WORD dest, WORD src)
 {
     WORD result = dest | src;
     cpu->updateFlags16(result);
+    cpu->setOF(0);
+    cpu->setCF(0);
+    return result;
+}
+
+DWORD cpu_or32(VCpu* cpu, DWORD dest, DWORD src)
+{
+    DWORD result = dest | src;
+    cpu->updateFlags32(result);
     cpu->setOF(0);
     cpu->setCF(0);
     return result;

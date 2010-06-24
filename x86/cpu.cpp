@@ -21,9 +21,19 @@ void _UD0(VCpu* cpu)
 void VCpu::decodeNext()
 {
     this->opcode = fetchOpcodeByte();
+    decode(this->opcode);
+}
 
+void VCpu::decode(BYTE op)
+{
+    this->opcode = op;
     switch (this->opcode) {
     case 0x01: CALL_HANDLER(_ADD_RM16_reg16, _ADD_RM32_reg32); break;
+    case 0x06: _PUSH_ES(this); break;
+    case 0x07: _POP_ES(this); break;
+    case 0x0C: _OR_AL_imm8(this); break;
+    case 0x0D: CALL_HANDLER(_OR_AX_imm16, _OR_EAX_imm32); break;
+    case 0x0E: _PUSH_CS(this); break;
     case 0x0F:
         this->rmbyte = fetchOpcodeByte();
         switch (this->rmbyte) {
@@ -36,24 +46,97 @@ void VCpu::decodeNext()
         default: goto fffuuu;
         }
         break;
+    case 0x1E: _PUSH_DS(this); break;
+    case 0x1F: _POP_DS(this); break;
+    case 0x26: _ES(this); break;
     case 0x31: CALL_HANDLER(_XOR_RM16_reg16, _XOR_RM32_reg32); break;
+    case 0x40:
+    case 0x41:
+    case 0x42:
+    case 0x43:
+    case 0x44:
+    case 0x45:
+    case 0x46:
+    case 0x47: CALL_HANDLER(_INC_reg16, _INC_reg32); break;
+    case 0x48:
+    case 0x49:
+    case 0x4A:
+    case 0x4B:
+    case 0x4C:
+    case 0x4D:
+    case 0x4E:
+    case 0x4F: CALL_HANDLER(_DEC_reg16, _DEC_reg32); break;
     case 0x50: CALL_HANDLER(_PUSH_AX, _PUSH_EAX); break;
     case 0x51: CALL_HANDLER(_PUSH_CX, _PUSH_ECX); break;
     case 0x52: CALL_HANDLER(_PUSH_DX, _PUSH_EDX); break;
     case 0x53: CALL_HANDLER(_PUSH_BX, _PUSH_EBX); break;
+    case 0x54: CALL_HANDLER(_PUSH_SP, _PUSH_ESP); break;
+    case 0x55: CALL_HANDLER(_PUSH_BP, _PUSH_EBP); break;
+    case 0x56: CALL_HANDLER(_PUSH_SI, _PUSH_ESI); break;
+    case 0x57: CALL_HANDLER(_PUSH_DI, _PUSH_EDI); break;
     case 0x58: CALL_HANDLER(_POP_AX, _POP_EAX); break;
     case 0x59: CALL_HANDLER(_POP_CX, _POP_ECX); break;
     case 0x5A: CALL_HANDLER(_POP_DX, _POP_EDX); break;
     case 0x5B: CALL_HANDLER(_POP_BX, _POP_EBX); break;
+    case 0x5C: CALL_HANDLER(_POP_SP, _POP_ESP); break;
+    case 0x5D: CALL_HANDLER(_POP_BP, _POP_EBP); break;
+    case 0x5E: CALL_HANDLER(_POP_SI, _POP_ESI); break;
+    case 0x5F: CALL_HANDLER(_POP_DI, _POP_EDI); break;
     case 0x64: _FS(this); break;
     case 0x65: _GS(this); break;
     case 0x68: CALL_HANDLER(_PUSH_imm16, _PUSH_imm32); break;
+    case 0x70: _JO_imm8(this); break;
+    case 0x71: _JNO_imm8(this); break;
+    case 0x72: _JC_imm8(this); break;
+    case 0x73: _JNC_imm8(this); break;
+    case 0x74: _JZ_imm8(this); break;
+    case 0x75: _JNZ_imm8(this); break;
+    case 0x76: _JNA_imm8(this); break;
+    case 0x77: _JA_imm8(this); break;
+    case 0x78: _JS_imm8(this); break;
+    case 0x79: _JNS_imm8(this); break;
+    case 0x7A: _JP_imm8(this); break;
+    case 0x7B: _JNP_imm8(this); break;
+    case 0x7C: _JL_imm8(this); break;
+    case 0x7D: _JNL_imm8(this); break;
+    case 0x7E: _JNG_imm8(this); break;
+    case 0x7F: _JG_imm8(this); break;
+    case 0x86: _XCHG_reg8_RM8(this); break;
+    case 0x89: CALL_HANDLER(_MOV_RM16_reg16, _MOV_RM32_reg32); break;
     case 0x8B: CALL_HANDLER(_MOV_reg16_RM16, _MOV_reg32_RM32); break;
+    case 0x8E: CALL_HANDLER(_MOV_seg_RM16, _MOV_seg_RM32); break;
     case 0x9C: CALL_HANDLER(_PUSHF, _PUSHFD); break;
     case 0x9D: CALL_HANDLER(_POPF, _POPFD); break;
     case 0xA3: CALL_HANDLER(_MOV_moff16_AX, _MOV_moff32_EAX); break;
     case 0xAB: CALL_HANDLER(_STOSW, _STOSD); break;
+    case 0xAC: _LODSB(this); break;
+    case 0xAD: CALL_HANDLER(_LODSW, _LODSD); break;
+    case 0xB0: _MOV_AL_imm8(this); break;
+    case 0xB1: _MOV_CL_imm8(this); break;
+    case 0xB2: _MOV_DL_imm8(this); break;
+    case 0xB3: _MOV_BL_imm8(this); break;
+    case 0xB4: _MOV_AH_imm8(this); break;
+    case 0xB5: _MOV_CH_imm8(this); break;
+    case 0xB6: _MOV_DH_imm8(this); break;
+    case 0xB7: _MOV_BH_imm8(this); break;
+    case 0xB8: CALL_HANDLER(_MOV_AX_imm16, _MOV_EAX_imm32); break;
+    case 0xB9: CALL_HANDLER(_MOV_CX_imm16, _MOV_ECX_imm32); break;
+    case 0xBA: CALL_HANDLER(_MOV_DX_imm16, _MOV_EDX_imm32); break;
+    case 0xBB: CALL_HANDLER(_MOV_BX_imm16, _MOV_EBX_imm32); break;
+    case 0xBC: CALL_HANDLER(_MOV_SP_imm16, _MOV_ESP_imm32); break;
+    case 0xBD: CALL_HANDLER(_MOV_BP_imm16, _MOV_EBP_imm32); break;
+    case 0xBE: CALL_HANDLER(_MOV_SI_imm16, _MOV_ESI_imm32); break;
+    case 0xBF: CALL_HANDLER(_MOV_DI_imm16, _MOV_EDI_imm32); break;
+    case 0xC3: _RET(this); break;
+    case 0xD1: CALL_HANDLER(_wrap_0xD1_16, _wrap_0xD1_32); break;
+    case 0xEC: _IN_AL_DX(this); break;
+    case 0xE8: CALL_HANDLER(_CALL_imm16, _CALL_imm32); break;
+    case 0xEA: CALL_HANDLER(_JMP_imm16_imm16, _JMP_imm16_imm32); break;
+    case 0xEE: _OUT_DX_AL(this); break;
+    case 0xEF: CALL_HANDLER(_OUT_DX_AX, _OUT_DX_EAX); break;
+    case 0xF3: _REP(this); break;
     case 0xF7: CALL_HANDLER(_TEST_RM16_imm16, _TEST_RM32_imm32); break;
+    case 0xFA: _CLI(this); break;
     default:
         this->rmbyte = fetchOpcodeByte();
 fffuuu:
@@ -77,6 +160,12 @@ void _OperationSizeOverride(VCpu*cpu)
     cpu->decodeNext();
 
     cpu->m_operationSize = previousOperationSize;
+}
+
+void VCpu::GP(int code)
+{
+    vlog(VM_CPUMSG, "#GP(%d) :-(", code);
+    vm_exit(1);
 }
 
 void VCpu::init()
@@ -151,7 +240,7 @@ void VCpu::init()
     m_segmentPrefix = 0x0000;
     m_currentSegment = &this->DS;
 
-    jump(0xF000, 0x0000);
+    jump32(0xF000, 0x00000000);
 
     setFlags(0x0200);
 
@@ -365,7 +454,7 @@ void VCpu::registerDefaultOpcodeHandlers()
     setOpcodeHandler(0xCE, 0xCE, _INTO             );
     setOpcodeHandler(0xCF, 0xCF, _IRET             );
     setOpcodeHandler(0xD0, 0xD0, _wrap_0xD0        );
-    setOpcodeHandler(0xD1, 0xD1, _wrap_0xD1        );
+    setOpcodeHandler(0xD1, 0xD1, _wrap_0xD1_16     );
     setOpcodeHandler(0xD2, 0xD2, _wrap_0xD2        );
     setOpcodeHandler(0xD3, 0xD3, _wrap_0xD3        );
     setOpcodeHandler(0xD4, 0xD4, _AAM              );
@@ -439,9 +528,11 @@ void VCpu::kill()
 void VCpu::exec()
 {
     saveBaseAddress();
-
+#if 0
     this->opcode = fetchOpcodeByte();
     this->opcode_handler[this->opcode](this);
+#endif
+    decodeNext();
 }
 
 void VCpu::haltedLoop()
@@ -557,21 +648,32 @@ void VCpu::jumpRelative16(SIGNED_WORD displacement)
     flushFetchQueue();
 }
 
+void VCpu::jumpRelative32(SIGNED_DWORD displacement)
+{
+    this->EIP += displacement;
+    flushFetchQueue();
+}
+
 void VCpu::jumpAbsolute16(WORD address)
 {
     this->IP = address;
     flushFetchQueue();
 }
 
-void VCpu::jump(WORD segment, WORD offset)
+void VCpu::jump32(WORD segment, DWORD offset)
 {
     // Jump to specified location.
     this->CS = segment;
-    this->IP = offset;
+    this->EIP = offset;
 
     // Point m_codeMemory to CS:0 for fast opcode fetching.
     m_codeMemory = this->memory + (segment << 4);
     flushFetchQueue();
+}
+
+void VCpu::jump16(WORD segment, WORD offset)
+{
+    jump32(segment, offset);
 }
 
 void VCpu::setInterruptHandler(BYTE isr, WORD segment, WORD offset)
@@ -691,7 +793,6 @@ void _XCHG_reg16_RM16(VCpu* cpu)
 void _DEC_reg16(VCpu* cpu)
 {
     WORD &reg(*cpu->treg16[cpu->opcode & 7]);
-
     DWORD i = reg;
 
     /* Overflow if we'll wrap. */
@@ -700,6 +801,20 @@ void _DEC_reg16(VCpu* cpu)
     --i;
     vomit_cpu_setAF(cpu, i, reg, 1);
     cpu->updateFlags16(i);
+    --reg;
+}
+
+void _DEC_reg32(VCpu* cpu)
+{
+    DWORD &reg(*cpu->treg32[cpu->opcode & 7]);
+    QWORD i = reg;
+
+    /* Overflow if we'll wrap. */
+    cpu->setOF(reg == 0x80000000);
+
+    --i;
+    vomit_cpu_setAF(cpu, i, reg, 1);
+    cpu->updateFlags32(i);
     --reg;
 }
 
@@ -714,6 +829,20 @@ void _INC_reg16(VCpu* cpu)
     ++i;
     vomit_cpu_setAF(cpu, i, reg, 1);
     cpu->updateFlags16(i);
+    ++reg;
+}
+
+void _INC_reg32(VCpu* cpu)
+{
+    DWORD &reg(*cpu->treg32[cpu->opcode & 7]);
+    QWORD i = reg;
+
+    /* Overflow if we'll wrap. */
+    cpu->setOF(i == 0x7FFFFFFF);
+
+    ++i;
+    vomit_cpu_setAF(cpu, i, reg, 1);
+    cpu->updateFlags32(i);
     ++reg;
 }
 
