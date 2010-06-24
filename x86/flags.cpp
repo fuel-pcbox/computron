@@ -169,13 +169,22 @@ void VCpu::cmpFlags8(DWORD result, BYTE dest, BYTE src)
         )>>(7))&1);
 }
 
-void VCpu::cmpFlags16(DWORD result, WORD dest, WORD src )
+void VCpu::cmpFlags16(DWORD result, WORD dest, WORD src)
 {
     mathFlags16(result, dest, src);
     setOF(((
         ((src)^(dest)) &
         ((src)^(src-dest))
         )>>(15))&1);
+}
+
+void VCpu::cmpFlags32(QWORD result, DWORD dest, DWORD src)
+{
+    mathFlags32(result, dest, src);
+    setOF(((
+        ((src)^(dest)) &
+        ((src)^(src-dest))
+        )>>(31))&1);
 }
 
 void VCpu::setFlags(WORD flags)

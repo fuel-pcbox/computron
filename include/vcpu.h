@@ -380,6 +380,7 @@ public:
     void mathFlags32(QWORD result, DWORD dest, DWORD src);
     void cmpFlags8(DWORD result, BYTE dest, BYTE src);
     void cmpFlags16(DWORD result, WORD dest, WORD src);
+    void cmpFlags32(QWORD result, DWORD dest, DWORD src);
 
     // These are faster than readMemory*() but will not access VGA memory, etc.
     inline BYTE readUnmappedMemory8(DWORD address) const;
@@ -558,6 +559,7 @@ SIGNED_WORD cpu_imul8(SIGNED_BYTE, SIGNED_BYTE);
 DWORD cpu_add16(VCpu*, WORD, WORD);
 QWORD cpu_add32(VCpu*, DWORD, DWORD);
 DWORD cpu_sub16(VCpu*, WORD, WORD);
+QWORD cpu_sub32(VCpu*, DWORD, DWORD);
 DWORD cpu_mul16(VCpu*, WORD, WORD);
 DWORD cpu_div16(VCpu*, WORD, WORD);
 SIGNED_DWORD cpu_imul16(VCpu*, SIGNED_WORD, SIGNED_WORD);
@@ -618,11 +620,13 @@ void _SS(VCpu*);
 
 void _SALC(VCpu*);
 
+void _JMP_imm32(VCpu*);
 void _JMP_imm16(VCpu*);
 void _JMP_imm16_imm16(VCpu*);
 void _JMP_short_imm8(VCpu*);
 void _Jcc_imm8(VCpu*);
 void _JCXZ_imm8(VCpu*);
+void _JECXZ_imm8(VCpu*);
 
 void _JO_imm8(VCpu*);
 void _JNO_imm8(VCpu*);
@@ -696,6 +700,7 @@ void _MOV_DI_imm16(VCpu*);
 
 void _MOV_seg_RM16(VCpu*);
 void _MOV_RM16_seg(VCpu*);
+void _MOV_RM32_seg(VCpu*);
 void _MOV_AL_moff8(VCpu*);
 void _MOV_AX_moff16(VCpu*);
 void _MOV_moff8_AL(VCpu*);
@@ -706,6 +711,7 @@ void _MOV_RM8_reg8(VCpu*);
 void _MOV_RM16_reg16(VCpu*);
 void _MOV_RM8_imm8(VCpu*);
 void _MOV_RM16_imm16(VCpu*);
+void _MOV_RM32_imm32(VCpu*);
 
 void _XOR_RM8_reg8(VCpu*);
 void _XOR_RM16_reg16(VCpu*);
@@ -719,8 +725,10 @@ void _XOR_AL_imm8(VCpu*);
 
 void _OR_RM8_reg8(VCpu*);
 void _OR_RM16_reg16(VCpu*);
+void _OR_RM32_reg32(VCpu*);
 void _OR_reg8_RM8(VCpu*);
 void _OR_reg16_RM16(VCpu*);
+void _OR_reg32_RM32(VCpu*);
 void _OR_RM8_imm8(VCpu*);
 void _OR_RM16_imm16(VCpu*);
 void _OR_RM16_imm8(VCpu*);
@@ -777,16 +785,20 @@ void _SAHF(VCpu*);
 
 void _OUT_imm8_AL(VCpu*);
 void _OUT_imm8_AX(VCpu*);
+void _OUT_imm8_EAX(VCpu*);
 void _OUT_DX_AL(VCpu*);
 void _OUT_DX_AX(VCpu*);
 void _OUT_DX_EAX(VCpu*);
 void _OUTSB(VCpu*);
 void _OUTSW(VCpu*);
+void _OUTSD(VCpu*);
 
 void _IN_AL_imm8(VCpu*);
 void _IN_AX_imm8(VCpu*);
+void _IN_EAX_imm8(VCpu*);
 void _IN_AL_DX(VCpu*);
 void _IN_AX_DX(VCpu*);
+void _IN_EAX_DX(VCpu*);
 
 void _ADD_RM8_reg8(VCpu*);
 void _ADD_RM16_reg16(VCpu*);
@@ -794,6 +806,7 @@ void _ADD_reg8_RM8(VCpu*);
 void _ADD_reg16_RM16(VCpu*);
 void _ADD_AL_imm8(VCpu*);
 void _ADD_AX_imm16(VCpu*);
+void _ADD_EAX_imm32(VCpu*);
 void _ADD_RM8_imm8(VCpu*);
 void _ADD_RM16_imm16(VCpu*);
 void _ADD_RM16_imm8(VCpu*);
@@ -834,6 +847,7 @@ void _CMP_reg8_RM8(VCpu*);
 void _CMP_reg16_RM16(VCpu*);
 void _CMP_AL_imm8(VCpu*);
 void _CMP_AX_imm16(VCpu*);
+void _CMP_EAX_imm32(VCpu*);
 void _CMP_RM8_imm8(VCpu*);
 void _CMP_RM16_imm16(VCpu*);
 void _CMP_RM16_imm8(VCpu*);
@@ -872,7 +886,8 @@ void _PUSH_RM16(VCpu*);
 void _POP_RM16(VCpu*);
 
 void _wrap_0x80(VCpu*);
-void _wrap_0x81(VCpu*);
+void _wrap_0x81_16(VCpu*);
+void _wrap_0x81_32(VCpu*);
 void _wrap_0x83(VCpu*);
 void _wrap_0x8F(VCpu*);
 void _wrap_0xC0(VCpu*);
@@ -883,7 +898,8 @@ void _wrap_0xD1_32(VCpu*);
 void _wrap_0xD2(VCpu*);
 void _wrap_0xD3(VCpu*);
 void _wrap_0xF6(VCpu*);
-void _wrap_0xF7(VCpu*);
+void _wrap_0xF7_16(VCpu*);
+void _wrap_0xF7_32(VCpu*);
 void _wrap_0xFE(VCpu*);
 void _wrap_0xFF(VCpu*);
 
@@ -971,6 +987,15 @@ void _MOV_EDI_imm32(VCpu*);
 void _MOV_seg_RM32(VCpu*);
 
 void _JMP_imm16_imm32(VCpu*);
+
+void _ADD_RM32_imm32(VCpu*);
+void _OR_RM32_imm32(VCpu*);
+void _ADC_RM32_imm32(VCpu*);
+void _SBB_RM32_imm32(VCpu*);
+void _AND_RM32_imm32(VCpu*);
+void _SUB_RM32_imm32(VCpu*);
+void _XOR_RM32_imm32(VCpu*);
+void _CMP_RM32_imm32(VCpu*);
 
 // INLINE IMPLEMENTATIONS
 

@@ -16,6 +16,12 @@ void _MOV_RM16_imm16(VCpu* cpu)
     cpu->updateModRM16(cpu->fetchOpcodeWord());
 }
 
+void _MOV_RM32_imm32(VCpu* cpu)
+{
+    (void) cpu->resolveModRM32(cpu->fetchOpcodeByte());
+    cpu->updateModRM32(cpu->fetchOpcodeDWord());
+}
+
 void _MOV_RM16_seg(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
@@ -26,7 +32,22 @@ void _MOV_RM16_seg(VCpu* cpu)
 
 #ifdef VOMIT_DEBUG
     if (vomit_modRMRegisterPart(rm) == VCpu::RegisterFS || vomit_modRMRegisterPart(rm) == VCpu::RegisterGS) {
-        vlog(VM_CPUMSG, "%04X:%04X: Read from 80386 segment register");
+        vlog(VM_CPUMSG, "%04X:%08X: Read from 80386 segment register", cpu->getCS(), cpu->getEIP());
+    }
+#endif
+}
+
+void _MOV_RM32_seg(VCpu* cpu)
+{
+    BYTE rm = cpu->fetchOpcodeByte();
+
+    VM_ASSERT(vomit_modRMRegisterPart(rm) >= 0 && vomit_modRMRegisterPart(rm) <= 5);
+
+    cpu->writeModRM32(rm, *cpu->tseg[vomit_modRMRegisterPart(rm)]);
+
+#ifdef VOMIT_DEBUG
+    if (vomit_modRMRegisterPart(rm) == VCpu::RegisterFS || vomit_modRMRegisterPart(rm) == VCpu::RegisterGS) {
+        vlog(VM_CPUMSG, "%04X:%08X: Read from 80386 segment register", cpu->getCS(), cpu->getEIP());
     }
 #endif
 }
@@ -41,7 +62,7 @@ void _MOV_seg_RM16(VCpu* cpu)
 
 #ifdef VOMIT_DEBUG
     if (vomit_modRMRegisterPart(rm) == VCpu::RegisterFS || vomit_modRMRegisterPart(rm) == VCpu::RegisterGS) {
-        vlog(VM_CPUMSG, "%04X:%04X: Write to 80386 segment register");
+        vlog(VM_CPUMSG, "%04X:%08X: Write to 80386 segment register", cpu->getCS(), cpu->getEIP());
     }
 #endif
 }
@@ -56,7 +77,7 @@ void _MOV_seg_RM32(VCpu* cpu)
 
 #ifdef VOMIT_DEBUG
     if (vomit_modRMRegisterPart(rm) == VCpu::RegisterFS || vomit_modRMRegisterPart(rm) == VCpu::RegisterGS) {
-        vlog(VM_CPUMSG, "%04X:%04X: Write to 80386 segment register");
+        vlog(VM_CPUMSG, "%04X:%08X: Write to 80386 segment register", cpu->getCS(), cpu->getEIP());
     }
 #endif
 }

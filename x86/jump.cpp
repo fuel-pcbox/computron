@@ -6,7 +6,14 @@
 void _JCXZ_imm8(VCpu* cpu)
 {
     SIGNED_BYTE imm = cpu->fetchOpcodeByte();
-    if (cpu->regs.W.CX == 0)
+    if (cpu->getCX() == 0)
+        cpu->jumpRelative8(imm);
+}
+
+void _JECXZ_imm8(VCpu* cpu)
+{
+    SIGNED_BYTE imm = cpu->fetchOpcodeByte();
+    if (cpu->getECX() == 0)
         cpu->jumpRelative8(imm);
 }
 
@@ -14,6 +21,12 @@ void _JMP_imm16(VCpu* cpu)
 {
     SIGNED_WORD imm = cpu->fetchOpcodeWord();
     cpu->jumpRelative16(imm);
+}
+
+void _JMP_imm32(VCpu* cpu)
+{
+    SIGNED_DWORD imm = cpu->fetchOpcodeDWord();
+    cpu->jumpRelative32(imm);
 }
 
 void _JMP_imm16_imm16(VCpu* cpu)

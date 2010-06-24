@@ -65,6 +65,20 @@ DWORD cpu_adc16(VCpu* cpu, WORD dest, WORD src)
     return result;
 }
 
+QWORD cpu_adc32(VCpu* cpu, DWORD dest, DWORD src)
+{
+    QWORD result;
+    src += cpu->getCF();
+    result = dest + src;
+
+    cpu->mathFlags32(result, dest, src);
+    cpu->setOF(((
+             ((result)^(dest)) &
+             ((result)^(src))
+             )>>(31))&1);
+    return result;
+}
+
 WORD cpu_sub8(VCpu* cpu, BYTE dest, BYTE src)
 {
     WORD result = dest - src;
@@ -76,6 +90,13 @@ DWORD cpu_sub16(VCpu* cpu, WORD dest, WORD src)
 {
     DWORD result = dest - src;
     cpu->cmpFlags16(result, dest, src);
+    return result;
+}
+
+QWORD cpu_sub32(VCpu* cpu, DWORD dest, DWORD src)
+{
+    QWORD result = dest - src;
+    cpu->cmpFlags32(result, dest, src);
     return result;
 }
 
@@ -94,6 +115,15 @@ DWORD cpu_sbb16(VCpu* cpu, WORD dest, WORD src)
     src += cpu->getCF();
     result = dest - src;
     cpu->cmpFlags16(result, dest, src);
+    return result;
+}
+
+QWORD cpu_sbb32(VCpu* cpu, DWORD dest, DWORD src)
+{
+    DWORD result;
+    src += cpu->getCF();
+    result = dest - src;
+    cpu->cmpFlags32(result, dest, src);
     return result;
 }
 
@@ -133,9 +163,11 @@ DEFAULT_reg8_RM8(cpu_add, _ADD_reg8_RM8)
 DEFAULT_reg16_RM16(cpu_add, _ADD_reg16_RM16)
 DEFAULT_RM8_imm8(cpu_add, _ADD_RM8_imm8)
 DEFAULT_RM16_imm16(cpu_add, _ADD_RM16_imm16)
+DEFAULT_RM32_imm32(cpu_add, _ADD_RM32_imm32)
 DEFAULT_RM16_imm8(cpu_add, _ADD_RM16_imm8)
 DEFAULT_AL_imm8(cpu_add, _ADD_AL_imm8)
 DEFAULT_AX_imm16(cpu_add, _ADD_AX_imm16)
+DEFAULT_EAX_imm32(cpu_add, _ADD_EAX_imm32)
 
 DEFAULT_RM8_reg8(cpu_adc, _ADC_RM8_reg8)
 DEFAULT_RM16_reg16(cpu_adc, _ADC_RM16_reg16)
@@ -143,6 +175,7 @@ DEFAULT_reg8_RM8(cpu_adc, _ADC_reg8_RM8)
 DEFAULT_reg16_RM16(cpu_adc, _ADC_reg16_RM16)
 DEFAULT_RM8_imm8(cpu_adc, _ADC_RM8_imm8)
 DEFAULT_RM16_imm16(cpu_adc, _ADC_RM16_imm16)
+DEFAULT_RM32_imm32(cpu_adc, _ADC_RM32_imm32)
 DEFAULT_RM16_imm8(cpu_adc, _ADC_RM16_imm8)
 DEFAULT_AL_imm8(cpu_adc, _ADC_AL_imm8)
 DEFAULT_AX_imm16(cpu_adc, _ADC_AX_imm16)
@@ -153,6 +186,7 @@ DEFAULT_reg8_RM8(cpu_sub, _SUB_reg8_RM8)
 DEFAULT_reg16_RM16(cpu_sub, _SUB_reg16_RM16)
 DEFAULT_RM8_imm8(cpu_sub, _SUB_RM8_imm8)
 DEFAULT_RM16_imm16(cpu_sub, _SUB_RM16_imm16)
+DEFAULT_RM32_imm32(cpu_sub, _SUB_RM32_imm32)
 DEFAULT_RM16_imm8(cpu_sub, _SUB_RM16_imm8)
 DEFAULT_AL_imm8(cpu_sub, _SUB_AL_imm8)
 DEFAULT_AX_imm16(cpu_sub, _SUB_AX_imm16)
@@ -163,6 +197,7 @@ DEFAULT_reg8_RM8(cpu_sbb, _SBB_reg8_RM8)
 DEFAULT_reg16_RM16(cpu_sbb, _SBB_reg16_RM16)
 DEFAULT_RM8_imm8(cpu_sbb, _SBB_RM8_imm8)
 DEFAULT_RM16_imm16(cpu_sbb, _SBB_RM16_imm16)
+DEFAULT_RM32_imm32(cpu_sbb, _SBB_RM32_imm32)
 DEFAULT_RM16_imm8(cpu_sbb, _SBB_RM16_imm8)
 DEFAULT_AL_imm8(cpu_sbb, _SBB_AL_imm8)
 DEFAULT_AX_imm16(cpu_sbb, _SBB_AX_imm16)
@@ -173,9 +208,11 @@ READONLY_reg8_RM8(cpu_sub, _CMP_reg8_RM8)
 READONLY_reg16_RM16(cpu_sub, _CMP_reg16_RM16)
 READONLY_RM8_imm8(cpu_sub, _CMP_RM8_imm8)
 READONLY_RM16_imm16(cpu_sub, _CMP_RM16_imm16)
+READONLY_RM32_imm32(cpu_sub, _CMP_RM32_imm32)
 READONLY_RM16_imm8(cpu_sub, _CMP_RM16_imm8)
 READONLY_AL_imm8(cpu_sub, _CMP_AL_imm8)
 READONLY_AX_imm16(cpu_sub, _CMP_AX_imm16)
+READONLY_EAX_imm32(cpu_sub, _CMP_EAX_imm32)
 
 void _MUL_RM8(VCpu* cpu)
 {

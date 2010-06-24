@@ -29,6 +29,13 @@
 		*cpu->treg16[vomit_modRMRegisterPart(rm)] = helper ## 16(cpu, *cpu->treg16[vomit_modRMRegisterPart(rm)], value); \
 	}
 
+#define DEFAULT_reg32_RM32(helper, name) \
+        void name(VCpu* cpu) { \
+                BYTE rm = cpu->fetchOpcodeByte(); \
+                DWORD value = cpu->readModRM32(rm); \
+                *cpu->treg32[vomit_modRMRegisterPart(rm)] = helper ## 32(cpu, *cpu->treg32[vomit_modRMRegisterPart(rm)], value); \
+        }
+
 #define DEFAULT_RM8_imm8(helper, name) \
 	void name(VCpu* cpu) { \
 		BYTE value = cpu->readModRM8(cpu->rmbyte); \
@@ -44,7 +51,7 @@
 #define DEFAULT_RM32_imm32(helper, name) \
 	void name(VCpu* cpu) { \
 		WORD value = cpu->readModRM32(cpu->rmbyte); \
-		cpu->updateModRM32(cpu, helper ## 32(cpu, value, cpu->fetchOpcodeDWord())); \
+                cpu->updateModRM32(helper ## 32(cpu, value, cpu->fetchOpcodeDWord())); \
 	}
 
 #define DEFAULT_RM16_imm8(helper, name) \
@@ -118,13 +125,18 @@
 
 #define READONLY_AL_imm8(helper, name) \
 	void name(VCpu* cpu) { \
-		helper ## 8(cpu, cpu->regs.B.AL, cpu->fetchOpcodeByte()); \
+                helper ## 8(cpu, cpu->getAL(), cpu->fetchOpcodeByte()); \
 	}
 
 #define READONLY_AX_imm16(helper, name) \
 	void name(VCpu* cpu) { \
-		helper ## 16(cpu, cpu->regs.W.AX, cpu->fetchOpcodeWord()); \
+                helper ## 16(cpu, cpu->getAX(), cpu->fetchOpcodeWord()); \
 	}
+
+#define READONLY_EAX_imm32(helper, name) \
+        void name(VCpu* cpu) { \
+                helper ## 32(cpu, cpu->getEAX(), cpu->fetchOpcodeDWord()); \
+        }
 
 #define DEFAULT_RM32_reg32(helper, name) \
         void name(VCpu* cpu) { \

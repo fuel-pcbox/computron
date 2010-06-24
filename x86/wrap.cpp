@@ -19,7 +19,7 @@ void _wrap_0x80(VCpu* cpu)
     }
 }
 
-void _wrap_0x81(VCpu* cpu)
+void _wrap_0x81_16(VCpu* cpu)
 {
     cpu->rmbyte = cpu->fetchOpcodeByte();
     switch(vomit_modRMRegisterPart(cpu->rmbyte)) {
@@ -31,6 +31,21 @@ void _wrap_0x81(VCpu* cpu)
     case 5: _SUB_RM16_imm16(cpu); break;
     case 6: _XOR_RM16_imm16(cpu); break;
     case 7: _CMP_RM16_imm16(cpu); break;
+    }
+}
+
+void _wrap_0x81_32(VCpu* cpu)
+{
+    cpu->rmbyte = cpu->fetchOpcodeByte();
+    switch(vomit_modRMRegisterPart(cpu->rmbyte)) {
+    case 0: _ADD_RM32_imm32(cpu); break;
+    case 1:  _OR_RM32_imm32(cpu); break;
+    case 2: _ADC_RM32_imm32(cpu); break;
+    case 3: _SBB_RM32_imm32(cpu); break;
+    case 4: _AND_RM32_imm32(cpu); break;
+    case 5: _SUB_RM32_imm32(cpu); break;
+    case 6: _XOR_RM32_imm32(cpu); break;
+    case 7: _CMP_RM32_imm32(cpu); break;
     }
 }
 
@@ -222,25 +237,46 @@ void _wrap_0xF6(VCpu* cpu)
     }
 }
 
-void _wrap_0xF7(VCpu* cpu)
+void _wrap_0xF7_16(VCpu* cpu)
 {
     cpu->rmbyte = cpu->fetchOpcodeByte();
 
     switch (vomit_modRMRegisterPart(cpu->rmbyte)) {
     case 0: _TEST_RM16_imm16(cpu); break;
-    case 1:
-        vlog(VM_ALERT, "F7 /1 not wrapped");
-        cpu->exception(6);
-        break;
     case 2: _NOT_RM16(cpu); break;
     case 3: _NEG_RM16(cpu); break;
     case 4: _MUL_RM16(cpu); break;
     case 5: _IMUL_RM16(cpu); break;
     case 6: _DIV_RM16(cpu); break;
     case 7: _IDIV_RM16(cpu); break;
+    default: // 1
+        vlog(VM_ALERT, "[16bit] F7 /1 not wrapped");
+        cpu->exception(6);
+        break;
     }
 }
 
+void _wrap_0xF7_32(VCpu* cpu)
+{
+    cpu->rmbyte = cpu->fetchOpcodeByte();
+
+    switch (vomit_modRMRegisterPart(cpu->rmbyte)) {
+    case 0: _TEST_RM32_imm32(cpu); break;
+#if 0
+    case 2: _NOT_RM32(cpu); break;
+    case 3: _NEG_RM32(cpu); break;
+    case 4: _MUL_RM32(cpu); break;
+    case 5: _IMUL_RM32(cpu); break;
+    case 6: _DIV_RM32(cpu); break;
+    case 7: _IDIV_RM32(cpu); break;
+#endif
+    default: // 1
+        vlog(VM_ALERT, "[32bit] F7 /1 not wrapped");
+        cpu->exception(6);
+        break;
+
+    }
+}
 
 void _wrap_0xFE(VCpu* cpu)
 {
