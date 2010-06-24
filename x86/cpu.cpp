@@ -25,6 +25,9 @@ void VCpu::decodeNext()
     case 0x0F:
         this->rmbyte = fetchOpcodeByte();
         switch (this->rmbyte) {
+        case 0xA0: _PUSH_FS(this); break;
+        case 0xB4: CALL_HANDLER(_LFS_reg16_mem16, _LFS_reg32_mem32); break;
+        case 0xB5: CALL_HANDLER(_LFS_reg16_mem16, _LFS_reg32_mem32); break;
         case 0xB6: CALL_HANDLER(_MOVZX_reg16_RM8, _MOVZX_reg32_RM8); break;
         case 0xB7: CALL_HANDLER(_UNSUPP, _MOVZX_reg32_RM16); break;
         case 0xFF: _UD0(this); break;
@@ -714,6 +717,36 @@ void _LES_reg16_mem16(VCpu* cpu)
     DWORD value = cpu->readModRM32(rm);
     *cpu->treg16[vomit_modRMRegisterPart(rm)] = LSW(value);
     cpu->ES = MSW(value);
+}
+
+void _LFS_reg16_mem16(VCpu* cpu)
+{
+    BYTE rm = cpu->fetchOpcodeByte();
+    DWORD value = cpu->readModRM32(rm);
+    *cpu->treg16[vomit_modRMRegisterPart(rm)] = LSW(value);
+    cpu->FS = MSW(value);
+}
+
+void _LFS_reg32_mem32(VCpu* cpu)
+{
+#warning FIXME: need readModRM48
+    vlog(VM_ALERT, "LFS reg32 mem32");
+    vm_exit(0);
+}
+
+void _LGS_reg16_mem16(VCpu* cpu)
+{
+    BYTE rm = cpu->fetchOpcodeByte();
+    DWORD value = cpu->readModRM32(rm);
+    *cpu->treg16[vomit_modRMRegisterPart(rm)] = LSW(value);
+    cpu->GS = MSW(value);
+}
+
+void _LGS_reg32_mem32(VCpu* cpu)
+{
+#warning FIXME: need readModRM48
+    vlog(VM_ALERT, "LGS reg32 mem32");
+    vm_exit(0);
 }
 
 void _LEA_reg16_mem16(VCpu* cpu)

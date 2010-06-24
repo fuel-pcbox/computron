@@ -167,6 +167,16 @@ void _PUSH_SS(VCpu* cpu)
     cpu->push(cpu->getSS());
 }
 
+void _PUSH_FS(VCpu* cpu)
+{
+    cpu->push(cpu->getFS());
+}
+
+void _PUSH_GS(VCpu* cpu)
+{
+    cpu->push(cpu->getGS());
+}
+
 void _POP_CS(VCpu* cpu)
 {
     vlog(VM_ALERT, "%04X:%04X: 286+ instruction (or possibly POP CS...)", cpu->getBaseCS(), cpu->getBaseIP());
@@ -190,6 +200,16 @@ void _POP_ES(VCpu* cpu)
 void _POP_SS(VCpu* cpu)
 {
     cpu->SS = cpu->pop();
+}
+
+void _POP_FS(VCpu* cpu)
+{
+    cpu->FS = cpu->pop();
+}
+
+void _POP_GS(VCpu* cpu)
+{
+    cpu->GS = cpu->pop();
 }
 
 void _PUSHFD(VCpu* cpu)

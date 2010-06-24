@@ -873,6 +873,16 @@ void _MOVZX_reg32_RM16(VCpu*);
 
 void _MOVSD(VCpu*);
 
+void _LFS_reg16_mem16(VCpu*);
+void _LFS_reg32_mem32(VCpu*);
+void _LGS_reg16_mem16(VCpu*);
+void _LGS_reg32_mem32(VCpu*);
+
+void _PUSH_FS(VCpu*);
+void _PUSH_GS(VCpu*);
+void _POP_FS(VCpu*);
+void _POP_GS(VCpu*);
+
 // INLINE IMPLEMENTATIONS
 
 #include "vga_memory.h"
