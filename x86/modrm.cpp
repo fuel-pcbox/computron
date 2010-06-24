@@ -38,6 +38,14 @@ BYTE VCpu::readModRM8(BYTE rmbyte)
     return readMemory8(m_lastModRMSegment, m_lastModRMOffset);
 }
 
+void VCpu::updateModRM32(DWORD value)
+{
+    if (m_lastModRMPointer)
+        *(reinterpret_cast<DWORD*>(m_lastModRMPointer)) = value;
+    else
+        writeMemory32(m_lastModRMSegment, m_lastModRMOffset, value);
+}
+
 void VCpu::updateModRM16(WORD value)
 {
     if (m_lastModRMPointer)

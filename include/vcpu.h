@@ -389,6 +389,11 @@ public:
      */
     void updateModRM16(WORD value);
 
+    /*!
+        Writes a 32-bit value back to the most recently resolved ModR/M location.
+     */
+    void updateModRM32(DWORD value);
+
     void* resolveModRM8(BYTE rmbyte);
     void* resolveModRM16(BYTE rmbyte);
 
@@ -520,6 +525,7 @@ BYTE cpu_xor8(VCpu*, BYTE, BYTE);
 WORD cpu_or16(VCpu*, WORD, WORD);
 WORD cpu_and16(VCpu*, WORD, WORD);
 WORD cpu_xor16(VCpu*, WORD, WORD);
+DWORD cpu_xor32(VCpu*, DWORD, DWORD);
 DWORD cpu_and32(VCpu*, DWORD, DWORD);
 
 DWORD cpu_shl(VCpu*, word, byte, byte);
@@ -866,6 +872,7 @@ void _POP_ESI(VCpu*);
 void _POP_EDI(VCpu*);
 
 void _TEST_RM32_imm32(VCpu*);
+void _XOR_RM32_reg32(VCpu*);
 
 void _MOVZX_reg16_RM8(VCpu*);
 void _MOVZX_reg32_RM8(VCpu*);
@@ -885,6 +892,10 @@ void _POP_GS(VCpu*);
 
 void _FS(VCpu*);
 void _GS(VCpu*);
+
+void _STOSD(VCpu*);
+
+void _MOV_reg32_RM32(VCpu*);
 
 // INLINE IMPLEMENTATIONS
 

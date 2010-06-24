@@ -23,6 +23,7 @@ DEFAULT_RM16_imm16(cpu_xor, _XOR_RM16_imm16)
 DEFAULT_RM16_imm8(cpu_xor, _XOR_RM16_imm8)
 DEFAULT_AL_imm8(cpu_xor, _XOR_AL_imm8)
 DEFAULT_AX_imm16(cpu_xor, _XOR_AX_imm16)
+DEFAULT_RM32_reg32(cpu_xor, _XOR_RM32_reg32)
 
 DEFAULT_RM8_reg8(cpu_or, _OR_RM8_reg8)
 DEFAULT_RM16_reg16(cpu_or, _OR_RM16_reg16)
@@ -94,6 +95,15 @@ WORD cpu_xor16(VCpu* cpu, WORD dest, WORD src)
 {
     WORD result = dest ^ src;
     cpu->updateFlags16(result);
+    cpu->setOF(0);
+    cpu->setCF(0);
+    return result;
+}
+
+DWORD cpu_xor32(VCpu* cpu, DWORD dest, DWORD src)
+{
+    DWORD result = dest ^ src;
+    cpu->updateFlags32(result);
     cpu->setOF(0);
     cpu->setCF(0);
     return result;

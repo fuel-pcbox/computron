@@ -70,6 +70,12 @@ void _MOV_reg16_RM16(VCpu* cpu)
     *cpu->treg16[vomit_modRMRegisterPart(rm)] = cpu->readModRM16(rm);
 }
 
+void _MOV_reg32_RM32(VCpu* cpu)
+{
+    BYTE rm = cpu->fetchOpcodeByte();
+    *cpu->treg32[vomit_modRMRegisterPart(rm)] = cpu->readModRM32(rm);
+}
+
 void _MOV_AL_imm8(VCpu* cpu)
 {
     cpu->regs.B.AL = cpu->fetchOpcodeByte();

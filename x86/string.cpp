@@ -43,6 +43,17 @@ void _STOSW(VCpu* cpu)
         cpu->regs.W.DI -= 2;
 }
 
+void _STOSD(VCpu* cpu)
+{
+    if (cpu->addressSize() == VCpu::AddressSize32) {
+        cpu->writeMemory32(cpu->ES, cpu->regs.D.EDI, cpu->regs.W.AX);
+        cpu->regs.D.EDI += (cpu->getDF() ? -4 : 4);
+    } else {
+        cpu->writeMemory32(cpu->ES, cpu->regs.W.DI, cpu->regs.W.AX);
+        cpu->regs.W.DI += (cpu->getDF() ? -2 : 2);
+    }
+}
+
 void _CMPSB(VCpu* cpu)
 {
     BYTE src = cpu->readMemory8(cpu->currentSegment(), cpu->regs.W.SI);

@@ -35,12 +35,15 @@ void VCpu::decodeNext()
         default: goto fffuuu;
         }
         break;
+    case 0x31: CALL_HANDLER(_XOR_RM16_reg16, _XOR_RM32_reg32); break;
     case 0x5B: CALL_HANDLER(_POP_BX, _POP_EBX); break;
     case 0x64: _FS(this); break;
     case 0x65: _GS(this); break;
     case 0x68: CALL_HANDLER(_PUSH_imm16, _PUSH_imm32); break;
+    case 0x8B: CALL_HANDLER(_MOV_reg16_RM16, _MOV_reg32_RM32); break;
     case 0x9C: CALL_HANDLER(_PUSHF, _PUSHFD); break;
     case 0x9D: CALL_HANDLER(_POPF, _POPFD); break;
+    case 0xAB: CALL_HANDLER(_STOSW, _STOSD); break;
     case 0xF7: CALL_HANDLER(_TEST_RM16_imm16, _TEST_RM32_imm32); break;
     default:
         this->rmbyte = fetchOpcodeByte();
