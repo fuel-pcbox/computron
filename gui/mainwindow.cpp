@@ -1,16 +1,13 @@
 #include "mainwindow.h"
 #include "worker.h"
 #include "screen.h"
-#include "debug.h"
-#include <QToolBar>
-#include <QAction>
-#include <QFileDialog>
-#include <QVBoxLayout>
-#include <QTimer>
-#include <QTabWidget>
-#include <QLabel>
-#include <QDebug>
-#include <QApplication>
+#include <QtGui/QToolBar>
+#include <QtGui/QAction>
+#include <QtGui/QFileDialog>
+#include <QtGui/QVBoxLayout>
+#include <QtCore/QCoreApplication>
+#include <QtCore/QTimer>
+#include <QtCore/QDebug>
 
 void vomit_set_drive_image(int drive_id, const char *filename);
 
