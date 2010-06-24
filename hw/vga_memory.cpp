@@ -269,7 +269,7 @@ void VgaMemory::write8(DWORD address, BYTE value)
     }
 }
 
-BYTE VgaMemory::read8(dword address) {
+BYTE VgaMemory::read8(DWORD address) {
     if (READ_MODE != 0) {
         vlog(VM_VIDEOMSG, "ZOMG! READ_MODE = %u", READ_MODE);
         vm_exit(1);

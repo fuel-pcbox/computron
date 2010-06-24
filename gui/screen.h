@@ -21,9 +21,9 @@ public:
     void synchronizeFont();
     void synchronizeColors();
 
-    word nextKey();
-    word peekKey();
-    byte popKeyData();
+    WORD nextKey();
+    WORD peekKey();
+    BYTE popKeyData();
 
     void setScreenSize( int width, int height );
 
@@ -56,7 +56,7 @@ private:
     void paintEvent( QPaintEvent * );
     void resizeEvent( QResizeEvent * );
     void init();
-    void putCharacter( QPainter &p, int row, int column, byte color, byte c );
+    void putCharacter(QPainter& p, int row, int column, BYTE color, BYTE c);
 
     bool m_inTextMode;
     int m_width, m_height;

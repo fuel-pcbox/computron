@@ -528,11 +528,11 @@ extern VCpu* g_cpu;
 
 void vomit_cpu_setAF(VCpu*, DWORD result, WORD dest, WORD src);
 
-WORD cpu_add8( byte, byte );
-WORD cpu_sub8( byte, byte );
-WORD cpu_mul8( byte, byte );
-WORD cpu_div8( byte, byte );
-sigword cpu_imul8( sigbyte, sigbyte );
+WORD cpu_add8(BYTE, BYTE);
+WORD cpu_sub8(BYTE, BYTE);
+WORD cpu_mul8(BYTE, BYTE);
+WORD cpu_div8(BYTE, BYTE);
+SIGNED_WORD cpu_imul8(SIGNED_BYTE, SIGNED_BYTE);
 
 DWORD cpu_add16(VCpu*, WORD, WORD);
 QWORD cpu_add32(VCpu*, DWORD, DWORD);
@@ -550,13 +550,13 @@ WORD cpu_xor16(VCpu*, WORD, WORD);
 DWORD cpu_xor32(VCpu*, DWORD, DWORD);
 DWORD cpu_and32(VCpu*, DWORD, DWORD);
 
-DWORD cpu_shl(VCpu*, word, byte, byte);
-DWORD cpu_shr(VCpu*, word, byte, byte);
-DWORD cpu_sar(VCpu*, word, byte, byte);
-DWORD cpu_rcl(VCpu*, word, byte, byte);
-DWORD cpu_rcr(VCpu*, word, byte, byte);
-DWORD cpu_rol(VCpu*, word, byte, byte);
-DWORD cpu_ror(VCpu*, word, byte, byte);
+DWORD cpu_shl(VCpu*, WORD, BYTE, BYTE);
+DWORD cpu_shr(VCpu*, WORD, BYTE, BYTE);
+DWORD cpu_sar(VCpu*, WORD, BYTE, BYTE);
+DWORD cpu_rcl(VCpu*, WORD, BYTE, BYTE);
+DWORD cpu_rcr(VCpu*, WORD, BYTE, BYTE);
+DWORD cpu_rol(VCpu*, WORD, BYTE, BYTE);
+DWORD cpu_ror(VCpu*, WORD, BYTE, BYTE);
 
 void _UNSUPP(VCpu*);
 void _ESCAPE(VCpu*);

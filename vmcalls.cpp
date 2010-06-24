@@ -16,7 +16,7 @@
 static void vga_scrollup(BYTE x1, BYTE y1, BYTE x2, BYTE y2, BYTE num, BYTE attr);
 static void vm_handleE6(VCpu* cpu);
 
-void vm_call8(VCpu* cpu, word port, byte data) {
+void vm_call8(VCpu* cpu, WORD port, BYTE data) {
     switch (port) {
     case 0xE0:
         vlog(VM_ALERT, "Interrupt %02X, function %04X requested", cpu->regs.B.BL, cpu->regs.W.AX);
@@ -49,8 +49,8 @@ void vm_handleE6(VCpu* cpu)
     struct    tm *t;
     time_t    curtime;
     struct    timeval timv;
-    dword    tick_count, tracks;
-    byte    drive;
+    DWORD    tick_count, tracks;
+    BYTE    drive;
     FILE    *fpdrv;
 
     switch (cpu->regs.W.AX) {
@@ -216,7 +216,7 @@ void vm_handleE6(VCpu* cpu)
 
     case 0x1A01:
         // Interrupt 1A, 01: Set RTC tick count
-        vlog(VM_ALERT, "INT 1A,01: Attempt to set tick counter to %lu", (dword)(cpu->regs.W.CX<<16)|cpu->regs.W.DX);
+        vlog(VM_ALERT, "INT 1A,01: Attempt to set tick counter to %lu", (DWORD)(cpu->regs.W.CX<<16)|cpu->regs.W.DX);
         break;
 
     case 0x1A05:

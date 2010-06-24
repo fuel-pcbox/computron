@@ -16,19 +16,19 @@
 #define FD_TIMEOUT              0x80
 #define FD_FIXED_NOT_READY      0xAA
 
-word chs2lba(byte, word, byte, word);
-byte floppy_read(byte, word, word, word, word, word, word);
+WORD chs2lba(BYTE, WORD, BYTE, WORD);
+BYTE floppy_read(BYTE, WORD, WORD, WORD, WORD, WORD, WORD);
 
 void bios_readsectors();
 void bios_writesectors();
 void bios_verifysectors();
 
-extern byte drv_status[];
+extern BYTE drv_status[];
 extern char drv_imgfile[][MAX_FN_LENGTH];
-extern dword drv_spt[];
-extern dword drv_heads[];
-extern dword drv_sectors[];
-extern dword drv_sectsize[];
-extern byte drv_type[];
+extern DWORD drv_spt[];
+extern DWORD drv_heads[];
+extern DWORD drv_sectors[];
+extern DWORD drv_sectsize[];
+extern BYTE drv_type[];
 
 #endif /* __floppy_h__ */

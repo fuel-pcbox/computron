@@ -15,12 +15,12 @@ void vm_cbreak(int);
 
 void vm_kill();
 
-word kbd_hit();
-word kbd_getc();
-byte kbd_pop_raw();
+WORD kbd_hit();
+WORD kbd_getc();
+BYTE kbd_pop_raw();
 
 #ifdef VOMIT_DIRECT_SCREEN
-void screen_direct_update( word );
+void screen_direct_update(WORD);
 #endif
 
 void dma_init();
@@ -53,7 +53,7 @@ extern vomit_options_t options;
 #include "vcpu.h"
 
 void vomit_ignore_io_port(WORD port);
-void vm_listen(word, byte (*)(VCpu*, word), void (*)(VCpu*, word, byte));
+void vm_listen(WORD, BYTE (*)(VCpu*, WORD), void (*)(VCpu*, WORD, BYTE));
 void vm_call8(VCpu*, WORD port, BYTE value);
 
 bool vomit_in_vretrace();

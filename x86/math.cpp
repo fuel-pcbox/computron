@@ -265,8 +265,8 @@ void _DIV_RM8(VCpu* cpu)
         return;
     }
 
-    cpu->regs.B.AL = (byte)(tAX / value); // Quote
-    cpu->regs.B.AH = (byte)(tAX % value); // Remainder
+    cpu->regs.B.AL = (BYTE)(tAX / value); // Quote
+    cpu->regs.B.AH = (BYTE)(tAX % value); // Remainder
 }
 
 void _DIV_RM16(VCpu* cpu)

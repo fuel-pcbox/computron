@@ -14,12 +14,12 @@ BYTE vga_read_sequencer(BYTE index);
 void vga_write_register(BYTE index, BYTE value);
 
 typedef struct {
-	byte r;
-	byte g;
-	byte b;
+    BYTE r;
+    BYTE g;
+    BYTE b;
 } rgb_t;
 
 extern rgb_t vga_color_register[];
-extern byte vga_palette_register[];
+extern BYTE vga_palette_register[];
 
 #endif /* __vga_h__ */
