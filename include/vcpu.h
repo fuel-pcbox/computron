@@ -883,6 +883,9 @@ void _PUSH_GS(VCpu*);
 void _POP_FS(VCpu*);
 void _POP_GS(VCpu*);
 
+void _FS(VCpu*);
+void _GS(VCpu*);
+
 // INLINE IMPLEMENTATIONS
 
 #include "vga_memory.h"

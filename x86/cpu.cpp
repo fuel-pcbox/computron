@@ -5,6 +5,7 @@
 #include "debug.h"
 #include "vga_memory.h"
 #include "pic.h"
+#include <QtCore/QStringList>
 
 VCpu* g_cpu = 0;
 bool g_vomit_exit_main_loop = 0;
@@ -35,6 +36,8 @@ void VCpu::decodeNext()
         }
         break;
     case 0x5B: CALL_HANDLER(_POP_BX, _POP_EBX); break;
+    case 0x64: _FS(this); break;
+    case 0x65: _GS(this); break;
     case 0x68: CALL_HANDLER(_PUSH_imm16, _PUSH_imm32); break;
     case 0x9C: CALL_HANDLER(_PUSHF, _PUSHFD); break;
     case 0x9D: CALL_HANDLER(_POPF, _POPFD); break;
@@ -256,6 +259,9 @@ void VCpu::registerDefaultOpcodeHandlers()
     setOpcodeHandler(0x5D, 0x5D, _POP_BP           );
     setOpcodeHandler(0x5E, 0x5E, _POP_SI           );
     setOpcodeHandler(0x5F, 0x5F, _POP_DI           );
+
+    setOpcodeHandler(0x64, 0x64, _FS               );
+    setOpcodeHandler(0x65, 0x65, _GS               );
 
     setOpcodeHandler(0x6E, 0x6E, _OUTSB            );
     setOpcodeHandler(0x6F, 0x6F, _OUTSW            );
@@ -566,6 +572,16 @@ void _UNSUPP(VCpu* cpu)
 {
     // We've come across an unsupported instruction, log it, then vector to the "illegal instruction" ISR.
     vlog(VM_ALERT, "%04X:%04X: Unsupported opcode %02X", cpu->getBaseCS(), cpu->getBaseIP(), cpu->opcode);
+    QString ndis = "db ";
+    DWORD baseEIP = cpu->getBaseEIP();
+    QStringList dbs;
+    for (int i = 0; i < 16; ++i) {
+        QString s;
+        s.sprintf("0x%02X", cpu->codeMemory()[baseEIP + i]);
+        dbs.append(s);
+    }
+    ndis.append(dbs.join(", "));
+    vlog(VM_ALERT, qPrintable(ndis));
     cpu->dumpAll();
     cpu->exception(6);
 }
@@ -617,6 +633,20 @@ void _ES(VCpu* cpu)
 void _SS(VCpu* cpu)
 {
     cpu->setSegmentPrefix(cpu->getSS());
+    cpu->opcode_handler[cpu->fetchOpcodeByte()](cpu);
+    cpu->resetSegmentPrefix();
+}
+
+void _FS(VCpu* cpu)
+{
+    cpu->setSegmentPrefix(cpu->getFS());
+    cpu->opcode_handler[cpu->fetchOpcodeByte()](cpu);
+    cpu->resetSegmentPrefix();
+}
+
+void _GS(VCpu* cpu)
+{
+    cpu->setSegmentPrefix(cpu->getGS());
     cpu->opcode_handler[cpu->fetchOpcodeByte()](cpu);
     cpu->resetSegmentPrefix();
 }
