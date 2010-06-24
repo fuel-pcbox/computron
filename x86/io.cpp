@@ -40,28 +40,36 @@ void _OUT_DX_AX(VCpu* cpu)
 
 void _OUTSB(VCpu* cpu)
 {
-    BYTE b = cpu->readMemory8(cpu->currentSegment(), cpu->regs.W.SI);
-    cpu->out(cpu->regs.W.DX, b);
+    BYTE data;
 
-    /* Modify SI according to DF */
-    if (cpu->getDF() == 0)
-        ++cpu->regs.W.SI;
-    else
-        --cpu->regs.W.SI;
+    if (cpu->a16()) {
+        data = cpu->readMemory8(cpu->currentSegment(), cpu->getSI());
+        cpu->nextSI(1);
+    } else {
+        data = cpu->readMemory8(cpu->currentSegment(), cpu->getESI());
+        cpu->nextESI(1);
+    }
+
+    cpu->out(cpu->getDX(), data);
 }
 
 void _OUTSW(VCpu* cpu)
 {
-    BYTE lsb = cpu->readMemory8(cpu->currentSegment(), cpu->regs.W.SI);
-    BYTE msb = cpu->readMemory8(cpu->currentSegment(), cpu->regs.W.SI + 1);
-    cpu->out(cpu->regs.W.DX, lsb);
-    cpu->out(cpu->regs.W.DX + 1, msb);
+    BYTE lsb;
+    BYTE msb;
 
-    /* Modify SI according to DF */
-    if (cpu->getDF() == 0)
-        cpu->regs.W.SI += 2;
-    else
-        cpu->regs.W.SI -= 2;
+    if (cpu->a16()) {
+        lsb = cpu->readMemory8(cpu->currentSegment(), cpu->regs.W.SI);
+        msb = cpu->readMemory8(cpu->currentSegment(), cpu->regs.W.SI + 1);
+        cpu->nextSI(2);
+    } else {
+        lsb = cpu->readMemory8(cpu->currentSegment(), cpu->getSI());
+        msb = cpu->readMemory8(cpu->currentSegment(), cpu->getESI() + 1);
+        cpu->nextESI(2);
+    }
+
+    cpu->out(cpu->getDX(), lsb);
+    cpu->out(cpu->getDX() + 1, msb);
 }
 
 void _IN_AL_imm8(VCpu* cpu)

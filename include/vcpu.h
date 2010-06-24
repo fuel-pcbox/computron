@@ -278,6 +278,9 @@ public:
     WORD getGS() const { return this->GS; }
 
     DWORD getEAX() const { return this->regs.D.EAX; }
+    DWORD getESI() const { return this->regs.D.ESI; }
+    DWORD getEDI() const { return this->regs.D.EDI; }
+    DWORD getESP() const { return this->regs.D.ESP; }
 
     WORD getAX() const { return this->regs.W.AX; }
     WORD getBX() const { return this->regs.W.BX; }
@@ -287,6 +290,8 @@ public:
     WORD getDI() const { return this->regs.W.DI; }
     WORD getSP() const { return this->regs.W.SP; }
     WORD getBP() const { return this->regs.W.BP; }
+
+    BYTE getAL() const { return this->regs.B.AL; }
 
     // Base CS:EIP is the start address of the currently executing instruction
     WORD getBaseCS() const { return m_baseCS; }
@@ -447,6 +452,16 @@ public:
 
     AddressSize addressSize() const { return m_addressSize; }
     OperationSize operationSize() const { return m_operationSize; }
+
+    bool a16() const { return m_addressSize == AddressSize16; }
+    bool a32() const { return m_addressSize == AddressSize32; }
+    bool o16() const { return m_operationSize == OperationSize16; }
+    bool o32() const { return m_operationSize == OperationSize32; }
+
+    void nextSI(int size) { this->regs.W.SI += (getDF() ? -size : size); }
+    void nextDI(int size) { this->regs.W.DI += (getDF() ? -size : size); }
+    void nextESI(int size) { this->regs.D.ESI += (getDF() ? -size : size); }
+    void nextEDI(int size) { this->regs.D.EDI += (getDF() ? -size : size); }
 
 private:
     void setOpcodeHandler(BYTE rangeStart, BYTE rangeEnd, OpcodeHandler handler);

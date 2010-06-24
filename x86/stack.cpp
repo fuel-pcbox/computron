@@ -6,34 +6,34 @@
 
 void VCpu::push32(DWORD value)
 {
-    if (addressSize() == AddressSize16) {
+    if (a16()) {
         this->regs.W.SP -= 4;
-        writeMemory32(getSS(), this->regs.W.SP, value);
+        writeMemory32(getSS(), this->getSP(), value);
     } else {
         this->regs.D.ESP -= 4;
-        writeMemory32(getSS(), this->regs.D.ESP, value);
+        writeMemory32(getSS(), this->getESP(), value);
     }
 }
 
 void VCpu::push(WORD value)
 {
-    if (addressSize() == AddressSize16) {
+    if (a16()) {
         this->regs.W.SP -= 2;
-        writeMemory16(getSS(), this->regs.W.SP, value);
+        writeMemory16(getSS(), this->getSP(), value);
     } else {
         this->regs.D.ESP -= 2;
-        writeMemory16(getSS(), this->regs.D.ESP, value);
+        writeMemory16(getSS(), this->getESP(), value);
     }
 }
 
 DWORD VCpu::pop32()
 {
     DWORD d;
-    if (addressSize() == AddressSize16) {
-        d = readMemory32(getSS(), this->regs.W.SP);
+    if (a16()) {
+        d = readMemory32(getSS(), this->getSP());
         this->regs.W.SP += 4;
     } else {
-        d = readMemory32(getSS(), this->regs.D.ESP);
+        d = readMemory32(getSS(), this->getESP());
         this->regs.D.ESP += 4;
     }
     return d;
@@ -42,11 +42,11 @@ DWORD VCpu::pop32()
 WORD VCpu::pop()
 {
     WORD w;
-    if (addressSize() == AddressSize16) {
-        w = readMemory16(getSS(), this->regs.W.SP);
+    if (a16()) {
+        w = readMemory16(getSS(), this->getSP());
         this->regs.W.SP += 2;
     } else {
-        w = readMemory16(getSS(), this->regs.D.ESP);
+        w = readMemory16(getSS(), this->getESP());
         this->regs.D.ESP += 2;
     }
     return w;
@@ -54,42 +54,42 @@ WORD VCpu::pop()
 
 void _PUSH_AX(VCpu* cpu)
 {
-    cpu->push(cpu->regs.W.AX);
+    cpu->push(cpu->getAX());
 }
 
 void _PUSH_BX(VCpu* cpu)
 {
-    cpu->push(cpu->regs.W.BX);
+    cpu->push(cpu->getBX());
 }
 
 void _PUSH_CX(VCpu* cpu)
 {
-    cpu->push(cpu->regs.W.CX);
+    cpu->push(cpu->getCX());
 }
 
 void _PUSH_DX(VCpu* cpu)
 {
-    cpu->push(cpu->regs.W.DX);
+    cpu->push(cpu->getDX());
 }
 
 void _PUSH_BP(VCpu* cpu)
 {
-    cpu->push(cpu->regs.W.BP);
+    cpu->push(cpu->getBP());
 }
 
 void _PUSH_SP(VCpu* cpu)
 {
-    cpu->push(cpu->regs.W.SP);
+    cpu->push(cpu->getSP());
 }
 
 void _PUSH_SI(VCpu* cpu)
 {
-    cpu->push(cpu->regs.W.SI);
+    cpu->push(cpu->getSI());
 }
 
 void _PUSH_DI(VCpu* cpu)
 {
-    cpu->push(cpu->regs.W.DI);
+    cpu->push(cpu->getDI());
 }
 
 void _POP_AX(VCpu* cpu)

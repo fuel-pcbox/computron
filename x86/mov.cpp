@@ -158,30 +158,42 @@ void _MOV_DI_imm16(VCpu* cpu)
 
 void _MOV_AL_moff8(VCpu* cpu)
 {
-    cpu->regs.B.AL = cpu->readMemory8(cpu->currentSegment(), cpu->fetchOpcodeWord());
+    if (cpu->a16())
+        cpu->regs.B.AL = cpu->readMemory8(cpu->currentSegment(), cpu->fetchOpcodeWord());
+    else
+        cpu->regs.B.AL = cpu->readMemory8(cpu->currentSegment(), cpu->fetchOpcodeDWord());
 }
 
 void _MOV_AX_moff16(VCpu* cpu)
 {
-    cpu->regs.W.AX = cpu->readMemory16(cpu->currentSegment(), cpu->fetchOpcodeWord());
+    if (cpu->a16())
+        cpu->regs.W.AX = cpu->readMemory16(cpu->currentSegment(), cpu->fetchOpcodeWord());
+    else
+        cpu->regs.W.AX = cpu->readMemory16(cpu->currentSegment(), cpu->fetchOpcodeDWord());
 }
 
 void _MOV_moff8_AL(VCpu* cpu)
 {
-    cpu->writeMemory8(cpu->currentSegment(), cpu->fetchOpcodeWord(), cpu->regs.B.AL);
+    if (cpu->a16())
+        cpu->writeMemory8(cpu->currentSegment(), cpu->fetchOpcodeWord(), cpu->getAL());
+    else
+        cpu->writeMemory8(cpu->currentSegment(), cpu->fetchOpcodeDWord(), cpu->getAL());
 }
 
 void _MOV_moff16_AX(VCpu* cpu)
 {
-    cpu->writeMemory16(cpu->currentSegment(), cpu->fetchOpcodeWord(), cpu->regs.W.AX);
+    if (cpu->a16())
+        cpu->writeMemory16(cpu->currentSegment(), cpu->fetchOpcodeWord(), cpu->getAX());
+    else
+        cpu->writeMemory16(cpu->currentSegment(), cpu->fetchOpcodeDWord(), cpu->getAX());
 }
 
 void _MOV_moff32_EAX(VCpu* cpu)
 {
-    if (cpu->addressSize() == VCpu::AddressSize32)
-        cpu->writeMemory32(cpu->currentSegment(), cpu->fetchOpcodeDWord(), cpu->getEAX());
-    else
+    if (cpu->a16())
         cpu->writeMemory32(cpu->currentSegment(), cpu->fetchOpcodeWord(), cpu->getEAX());
+    else
+        cpu->writeMemory32(cpu->currentSegment(), cpu->fetchOpcodeDWord(), cpu->getEAX());
 }
 
 void _MOVZX_reg16_RM8(VCpu* cpu)

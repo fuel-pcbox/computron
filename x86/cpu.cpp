@@ -10,7 +10,7 @@
 VCpu* g_cpu = 0;
 bool g_vomit_exit_main_loop = 0;
 
-#define CALL_HANDLER(handler16, handler32) if (m_operationSize == OperationSize16) { handler16(this); } else { handler32(this); }
+#define CALL_HANDLER(handler16, handler32) if (o16()) { handler16(this); } else { handler32(this); }
 
 void _UD0(VCpu* cpu)
 {
@@ -58,7 +58,7 @@ void _OperationSizeOverride(VCpu*cpu)
 {
     VCpu::OperationSize previousOperationSize = cpu->m_operationSize;
 
-    if (cpu->m_operationSize == VCpu::OperationSize16)
+    if (cpu->o16())
         cpu->m_operationSize = VCpu::OperationSize32;
     else
         cpu->m_operationSize = VCpu::OperationSize16;
