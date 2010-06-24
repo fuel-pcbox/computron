@@ -271,6 +271,7 @@ public:
     bool getZF() const { return this->ZF; }
     unsigned int getIOPL() const { return this->IOPL; }
     unsigned int getCPL() const { return this->CPL; }
+    bool getVIP() const { return this->VIP; }
     bool getVIF() const { return this->VIF; }
     bool getVM() const { return this->VM; }
     bool getPE() const { return this->CR0 & 0x01; }
@@ -676,8 +677,10 @@ void _MOVSB(VCpu*);
 void _MOVSW(VCpu*);
 
 void _LEA_reg16_mem16(VCpu*);
+void _LEA_reg32_mem32(VCpu*);
 
 void _LDS_reg16_mem16(VCpu*);
+void _LDS_reg32_mem32(VCpu*);
 void _LES_reg16_mem16(VCpu*);
 
 void _MOV_AL_imm8(VCpu*);
@@ -703,6 +706,7 @@ void _MOV_RM16_seg(VCpu*);
 void _MOV_RM32_seg(VCpu*);
 void _MOV_AL_moff8(VCpu*);
 void _MOV_AX_moff16(VCpu*);
+void _MOV_EAX_moff32(VCpu*);
 void _MOV_moff8_AL(VCpu*);
 void _MOV_moff16_AX(VCpu*);
 void _MOV_reg8_RM8(VCpu*);
@@ -717,6 +721,7 @@ void _XOR_RM8_reg8(VCpu*);
 void _XOR_RM16_reg16(VCpu*);
 void _XOR_reg8_RM8(VCpu*);
 void _XOR_reg16_RM16(VCpu*);
+void _XOR_reg32_RM32(VCpu*);
 void _XOR_RM8_imm8(VCpu*);
 void _XOR_RM16_imm16(VCpu*);
 void _XOR_RM16_imm8(VCpu*);
@@ -817,6 +822,7 @@ void _SUB_reg8_RM8(VCpu*);
 void _SUB_reg16_RM16(VCpu*);
 void _SUB_AL_imm8(VCpu*);
 void _SUB_AX_imm16(VCpu*);
+void _SUB_EAX_imm32(VCpu*);
 void _SUB_RM8_imm8(VCpu*);
 void _SUB_RM16_imm16(VCpu*);
 void _SUB_RM16_imm8(VCpu*);
@@ -827,6 +833,7 @@ void _ADC_reg8_RM8(VCpu*);
 void _ADC_reg16_RM16(VCpu*);
 void _ADC_AL_imm8(VCpu*);
 void _ADC_AX_imm16(VCpu*);
+void _ADC_EAX_imm32(VCpu*);
 void _ADC_RM8_imm8(VCpu*);
 void _ADC_RM16_imm16(VCpu*);
 void _ADC_RM16_imm8(VCpu*);
@@ -837,14 +844,17 @@ void _SBB_reg8_RM8(VCpu*);
 void _SBB_reg16_RM16(VCpu*);
 void _SBB_AL_imm8(VCpu*);
 void _SBB_AX_imm16(VCpu*);
+void _SBB_EAX_imm32(VCpu*);
 void _SBB_RM8_imm8(VCpu*);
 void _SBB_RM16_imm16(VCpu*);
 void _SBB_RM16_imm8(VCpu*);
 
 void _CMP_RM8_reg8(VCpu*);
 void _CMP_RM16_reg16(VCpu*);
+void _CMP_RM32_reg32(VCpu*);
 void _CMP_reg8_RM8(VCpu*);
 void _CMP_reg16_RM16(VCpu*);
+void _CMP_reg32_RM32(VCpu*);
 void _CMP_AL_imm8(VCpu*);
 void _CMP_AX_imm16(VCpu*);
 void _CMP_EAX_imm32(VCpu*);
@@ -884,19 +894,23 @@ void _JMP_FAR_mem16(VCpu*);
 
 void _PUSH_RM16(VCpu*);
 void _POP_RM16(VCpu*);
+void _POP_RM32(VCpu*);
 
 void _wrap_0x80(VCpu*);
 void _wrap_0x81_16(VCpu*);
 void _wrap_0x81_32(VCpu*);
-void _wrap_0x83(VCpu*);
-void _wrap_0x8F(VCpu*);
+void _wrap_0x83_16(VCpu*);
+void _wrap_0x83_32(VCpu*);
+void _wrap_0x8F_16(VCpu*);
+void _wrap_0x8F_32(VCpu*);
 void _wrap_0xC0(VCpu*);
 void _wrap_0xC1(VCpu*);
 void _wrap_0xD0(VCpu*);
 void _wrap_0xD1_16(VCpu*);
 void _wrap_0xD1_32(VCpu*);
 void _wrap_0xD2(VCpu*);
-void _wrap_0xD3(VCpu*);
+void _wrap_0xD3_16(VCpu*);
+void _wrap_0xD3_32(VCpu*);
 void _wrap_0xF6(VCpu*);
 void _wrap_0xF7_16(VCpu*);
 void _wrap_0xF7_32(VCpu*);
@@ -950,6 +964,8 @@ void _POP_EDI(VCpu*);
 void _TEST_RM32_imm32(VCpu*);
 void _XOR_RM32_reg32(VCpu*);
 void _ADD_RM32_reg32(VCpu*);
+void _ADC_RM32_reg32(VCpu*);
+void _SUB_RM32_reg32(VCpu*);
 
 void _MOVZX_reg16_RM8(VCpu*);
 void _MOVZX_reg32_RM8(VCpu*);
@@ -996,6 +1012,24 @@ void _AND_RM32_imm32(VCpu*);
 void _SUB_RM32_imm32(VCpu*);
 void _XOR_RM32_imm32(VCpu*);
 void _CMP_RM32_imm32(VCpu*);
+
+void _ADD_RM32_imm8(VCpu*);
+void _OR_RM32_imm8(VCpu*);
+void _ADC_RM32_imm8(VCpu*);
+void _SBB_RM32_imm8(VCpu*);
+void _AND_RM32_imm8(VCpu*);
+void _SUB_RM32_imm8(VCpu*);
+void _XOR_RM32_imm8(VCpu*);
+void _CMP_RM32_imm8(VCpu*);
+
+void _ADD_reg32_RM32(VCpu*);
+void _OR_reg32_RM32(VCpu*);
+void _ADC_reg32_RM32(VCpu*);
+void _SBB_reg32_RM32(VCpu*);
+void _AND_reg32_RM32(VCpu*);
+void _SUB_reg32_RM32(VCpu*);
+void _XOR_reg32_RM32(VCpu*);
+void _CMP_reg32_RM32(VCpu*);
 
 // INLINE IMPLEMENTATIONS
 

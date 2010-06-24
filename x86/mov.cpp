@@ -254,6 +254,14 @@ void _MOV_AX_moff16(VCpu* cpu)
         cpu->regs.W.AX = cpu->readMemory16(cpu->currentSegment(), cpu->fetchOpcodeDWord());
 }
 
+void _MOV_EAX_moff32(VCpu* cpu)
+{
+    if (cpu->a16())
+        cpu->regs.D.EAX = cpu->readMemory32(cpu->currentSegment(), cpu->fetchOpcodeWord());
+    else
+        cpu->regs.D.EAX = cpu->readMemory32(cpu->currentSegment(), cpu->fetchOpcodeDWord());
+}
+
 void _MOV_moff8_AL(VCpu* cpu)
 {
     if (cpu->a16())

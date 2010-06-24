@@ -222,6 +222,11 @@ void _POP_RM16(VCpu* cpu)
     cpu->writeModRM16(cpu->rmbyte, cpu->pop());
 }
 
+void _POP_RM32(VCpu* cpu)
+{
+    cpu->writeModRM32(cpu->rmbyte, cpu->pop32());
+}
+
 void _PUSH_CS(VCpu* cpu)
 {
     cpu->push(cpu->getCS());
