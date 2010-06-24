@@ -277,6 +277,8 @@ public:
     WORD getFS() const { return this->FS; }
     WORD getGS() const { return this->GS; }
 
+    DWORD getEAX() const { return this->regs.D.EAX; }
+
     WORD getAX() const { return this->regs.W.AX; }
     WORD getBX() const { return this->regs.W.BX; }
     WORD getCX() const { return this->regs.W.CX; }
@@ -896,6 +898,7 @@ void _GS(VCpu*);
 void _STOSD(VCpu*);
 
 void _MOV_reg32_RM32(VCpu*);
+void _MOV_moff32_EAX(VCpu*);
 
 // INLINE IMPLEMENTATIONS
 

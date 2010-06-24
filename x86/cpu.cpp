@@ -43,6 +43,7 @@ void VCpu::decodeNext()
     case 0x8B: CALL_HANDLER(_MOV_reg16_RM16, _MOV_reg32_RM32); break;
     case 0x9C: CALL_HANDLER(_PUSHF, _PUSHFD); break;
     case 0x9D: CALL_HANDLER(_POPF, _POPFD); break;
+    case 0xA3: CALL_HANDLER(_MOV_moff16_AX, _MOV_moff32_EAX); break;
     case 0xAB: CALL_HANDLER(_STOSW, _STOSD); break;
     case 0xF7: CALL_HANDLER(_TEST_RM16_imm16, _TEST_RM32_imm32); break;
     default:
