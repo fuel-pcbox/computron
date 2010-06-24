@@ -278,6 +278,9 @@ public:
     WORD getGS() const { return this->GS; }
 
     DWORD getEAX() const { return this->regs.D.EAX; }
+    DWORD getEBX() const { return this->regs.D.EBX; }
+    DWORD getECX() const { return this->regs.D.ECX; }
+    DWORD getEDX() const { return this->regs.D.EDX; }
     DWORD getESI() const { return this->regs.D.ESI; }
     DWORD getEDI() const { return this->regs.D.EDI; }
     DWORD getESP() const { return this->regs.D.ESP; }
@@ -358,6 +361,7 @@ public:
     void updateFlags8(BYTE value);
     void mathFlags8(DWORD result, BYTE dest, BYTE src);
     void mathFlags16(DWORD result, WORD dest, WORD src);
+    void mathFlags32(QWORD result, DWORD dest, DWORD src);
     void cmpFlags8(DWORD result, BYTE dest, BYTE src);
     void cmpFlags16(DWORD result, WORD dest, WORD src);
 
@@ -531,6 +535,7 @@ WORD cpu_div8( byte, byte );
 sigword cpu_imul8( sigbyte, sigbyte );
 
 DWORD cpu_add16(VCpu*, WORD, WORD);
+QWORD cpu_add32(VCpu*, DWORD, DWORD);
 DWORD cpu_sub16(VCpu*, WORD, WORD);
 DWORD cpu_mul16(VCpu*, WORD, WORD);
 DWORD cpu_div16(VCpu*, WORD, WORD);
@@ -879,6 +884,15 @@ void _PUSHFD(VCpu*);
 void _POPFD(VCpu*);
 void _PUSH_imm32(VCpu*);
 
+void _PUSH_EAX(VCpu*);
+void _PUSH_EBX(VCpu*);
+void _PUSH_ECX(VCpu*);
+void _PUSH_EDX(VCpu*);
+void _PUSH_EBP(VCpu*);
+void _PUSH_ESP(VCpu*);
+void _PUSH_ESI(VCpu*);
+void _PUSH_EDI(VCpu*);
+
 void _POP_EAX(VCpu*);
 void _POP_EBX(VCpu*);
 void _POP_ECX(VCpu*);
@@ -890,6 +904,7 @@ void _POP_EDI(VCpu*);
 
 void _TEST_RM32_imm32(VCpu*);
 void _XOR_RM32_reg32(VCpu*);
+void _ADD_RM32_reg32(VCpu*);
 
 void _MOVZX_reg16_RM8(VCpu*);
 void _MOVZX_reg32_RM8(VCpu*);

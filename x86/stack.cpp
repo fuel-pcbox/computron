@@ -52,6 +52,26 @@ WORD VCpu::pop()
     return w;
 }
 
+void _PUSH_EAX(VCpu *cpu)
+{
+    cpu->push32(cpu->getEAX());
+}
+
+void _PUSH_EBX(VCpu *cpu)
+{
+    cpu->push32(cpu->getEBX());
+}
+
+void _PUSH_ECX(VCpu *cpu)
+{
+    cpu->push32(cpu->getECX());
+}
+
+void _PUSH_EDX(VCpu *cpu)
+{
+    cpu->push32(cpu->getEDX());
+}
+
 void _PUSH_AX(VCpu* cpu)
 {
     cpu->push(cpu->getAX());
@@ -102,9 +122,24 @@ void _POP_BX(VCpu* cpu)
     cpu->regs.W.BX = cpu->pop();
 }
 
+void _POP_EAX(VCpu* cpu)
+{
+    cpu->regs.D.EAX = cpu->pop32();
+}
+
 void _POP_EBX(VCpu* cpu)
 {
     cpu->regs.D.EBX = cpu->pop32();
+}
+
+void _POP_ECX(VCpu* cpu)
+{
+    cpu->regs.D.ECX = cpu->pop32();
+}
+
+void _POP_EDX(VCpu* cpu)
+{
+    cpu->regs.D.EDX = cpu->pop32();
 }
 
 void _POP_CX(VCpu* cpu)

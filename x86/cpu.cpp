@@ -23,6 +23,7 @@ void VCpu::decodeNext()
     this->opcode = fetchOpcodeByte();
 
     switch (this->opcode) {
+    case 0x01: CALL_HANDLER(_ADD_RM16_reg16, _ADD_RM32_reg32); break;
     case 0x0F:
         this->rmbyte = fetchOpcodeByte();
         switch (this->rmbyte) {
@@ -36,6 +37,13 @@ void VCpu::decodeNext()
         }
         break;
     case 0x31: CALL_HANDLER(_XOR_RM16_reg16, _XOR_RM32_reg32); break;
+    case 0x50: CALL_HANDLER(_PUSH_AX, _PUSH_EAX); break;
+    case 0x51: CALL_HANDLER(_PUSH_CX, _PUSH_ECX); break;
+    case 0x52: CALL_HANDLER(_PUSH_DX, _PUSH_EDX); break;
+    case 0x53: CALL_HANDLER(_PUSH_BX, _PUSH_EBX); break;
+    case 0x58: CALL_HANDLER(_POP_AX, _POP_EAX); break;
+    case 0x59: CALL_HANDLER(_POP_CX, _POP_ECX); break;
+    case 0x5A: CALL_HANDLER(_POP_DX, _POP_EDX); break;
     case 0x5B: CALL_HANDLER(_POP_BX, _POP_EBX); break;
     case 0x64: _FS(this); break;
     case 0x65: _GS(this); break;

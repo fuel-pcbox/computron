@@ -127,6 +127,15 @@ void VCpu::mathFlags16(DWORD result, WORD dest, WORD src)
     vomit_cpu_setAF(this, result, dest, src);
 }
 
+void VCpu::mathFlags32(QWORD result, DWORD dest, DWORD src)
+{
+    setCF(result & 0x100000000);
+    setSF(result & 0x80000000);
+    setZF((result & 0xFFFFFFFF) == 0);
+    setPF(parity_table[result & 0xFF]);
+    vomit_cpu_setAF(this, result, dest, src);
+}
+
 void VCpu::cmpFlags8(DWORD result, BYTE dest, BYTE src)
 {
     mathFlags8(result, dest, src);

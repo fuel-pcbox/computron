@@ -26,6 +26,17 @@ DWORD cpu_add16(VCpu* cpu, WORD dest, WORD src)
     return result;
 }
 
+QWORD cpu_add32(VCpu* cpu, DWORD dest, DWORD src)
+{
+    QWORD result = dest + src;
+    cpu->mathFlags32(result, dest, src);
+    cpu->setOF(((
+             ((result)^(dest)) &
+             ((result)^(src))
+             )>>(31))&1);
+    return result;
+}
+
 WORD cpu_adc8(VCpu* cpu, WORD dest, WORD src)
 {
     WORD result;
@@ -117,6 +128,7 @@ SIGNED_DWORD cpu_imul16(VCpu* cpu, SIGNED_WORD acc, SIGNED_WORD multi)
 
 DEFAULT_RM8_reg8(cpu_add, _ADD_RM8_reg8)
 DEFAULT_RM16_reg16(cpu_add, _ADD_RM16_reg16)
+DEFAULT_RM32_reg32(cpu_add, _ADD_RM32_reg32)
 DEFAULT_reg8_RM8(cpu_add, _ADD_reg8_RM8)
 DEFAULT_reg16_RM16(cpu_add, _ADD_reg16_RM16)
 DEFAULT_RM8_imm8(cpu_add, _ADD_RM8_imm8)
