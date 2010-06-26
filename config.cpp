@@ -158,6 +158,10 @@ void unspeakable_abomination()
                 curtok = strtok(NULL, " \t\n");
                 g_cpu->m_baseMemorySize = strtol(curtok, NULL, 10) * 1024;
                 vlog(VM_INITMSG, "Memory size: %d kilobytes", g_cpu->baseMemorySize() / 1024);
+            } else if (!reloading && !strcmp(curtok, "ememory")) {
+                curtok = strtok(NULL, " \t\n");
+                g_cpu->m_extendedMemorySize = strtol(curtok, NULL, 10) * 1024;
+                vlog(VM_INITMSG, "Extended memory size: %d kilobytes", g_cpu->extendedMemorySize() / 1024);
             } else if (!reloading && !strcmp(curtok, "entry")) {
                 WORD entry_cs, entry_ip;
                 curtok = strtok(NULL, ": \t\n");

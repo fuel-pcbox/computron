@@ -212,9 +212,10 @@ public:
     BYTE opcode;
     BYTE rmbyte;
 
-    DWORD extendedMemory() const { return 8 * 1024 * 1024; }
+    // Extended memory size in KiB (will be reported by CMOS)
+    DWORD extendedMemorySize() const { return m_extendedMemorySize; }
 
-    // Memory size in KiB (will be reported by BIOS)
+    // Conventional memory size in KiB (will be reported by CMOS)
     DWORD baseMemorySize() const { return m_baseMemorySize; }
 
     // RAM
@@ -565,6 +566,7 @@ private:
     // FIXME: Don't befriend this... thing.
     friend void unspeakable_abomination();
     DWORD m_baseMemorySize;
+    DWORD m_extendedMemorySize;
 };
 
 extern VCpu* g_cpu;
