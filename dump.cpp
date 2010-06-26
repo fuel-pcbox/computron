@@ -19,7 +19,7 @@ void VCpu::dump() const
 #endif
 }
 
-int VCpu::dumpDisassembled(WORD segment, WORD offset) const
+int VCpu::dumpDisassembled(WORD segment, DWORD offset) const
 {
     char disasm[64];
     char buf[512];
@@ -39,6 +39,11 @@ int VCpu::dumpDisassembled(WORD segment, WORD offset) const
 
     p += sprintf(p, " %s", disasm);
 
+#ifdef VOMIT_TRACE
+    if (options.trace)
+        fprintf(stderr, "%s\n", buf);
+#endif
+
     vlog(VM_DUMPMSG, buf);
 
     /* Recurse if this is a prefix instruction. */
@@ -51,9 +56,9 @@ int VCpu::dumpDisassembled(WORD segment, WORD offset) const
 #ifdef VOMIT_TRACE
 void VCpu::dumpTrace() const
 {
-    vlog(VM_DUMPMSG,
+    fprintf(stderr,
         "AX=%04X BX=%04X CX=%04X DX=%04X SP=%04X BP=%04X SI=%04X DI=%04X "
-        "CS=%04X DS=%04X ES=%04X SS=%04X C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u",
+        "CS=%04X DS=%04X ES=%04X SS=%04X C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u\n",
         this->regs.W.AX, this->regs.W.BX, this->regs.W.CX, this->regs.W.DX,
         this->regs.W.SP, this->regs.W.BP, this->regs.W.SI, this->regs.W.DI,
         getCS(), getDS(), getES(), getSS(),
@@ -100,7 +105,7 @@ static inline BYTE n(BYTE b)
     return b;
 }
 
-void VCpu::dumpMemory(WORD segment, WORD offset, int rows) const
+void VCpu::dumpMemory(WORD segment, DWORD offset, int rows) const
 {
     BYTE* p = memoryPointer(segment, offset);
 

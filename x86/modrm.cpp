@@ -4,9 +4,33 @@
 
 #define DEFAULT_TO_SS if (!hasSegmentPrefix()) { segment = getSS(); }
 
+void* VCpu::resolveModRM8(BYTE rmbyte)
+{
+    BYTE* registerPointer = static_cast<BYTE*>(resolveModRM8_internal(rmbyte));
+    if (registerPointer)
+        return registerPointer;
+    return this->memoryPointer(m_lastModRMSegment, m_lastModRMOffset);
+}
+
+void* VCpu::resolveModRM16(BYTE rmbyte)
+{
+    WORD* registerPointer = static_cast<WORD*>(resolveModRM16_internal(rmbyte));
+    if (registerPointer)
+        return registerPointer;
+    return this->memoryPointer(m_lastModRMSegment, m_lastModRMOffset);
+}
+
+void* VCpu::resolveModRM32(BYTE rmbyte)
+{
+    DWORD* registerPointer = static_cast<DWORD*>(resolveModRM32_internal(rmbyte));
+    if (registerPointer)
+        return registerPointer;
+    return this->memoryPointer(m_lastModRMSegment, m_lastModRMOffset);
+}
+
 void VCpu::writeModRM32(BYTE rmbyte, DWORD value)
 {
-    DWORD* registerPointer = reinterpret_cast<DWORD*>(resolveModRM32(rmbyte));
+    DWORD* registerPointer = reinterpret_cast<DWORD*>(resolveModRM32_internal(rmbyte));
     if (registerPointer)
         *registerPointer = value;
     else
@@ -15,7 +39,7 @@ void VCpu::writeModRM32(BYTE rmbyte, DWORD value)
 
 void VCpu::writeModRM16(BYTE rmbyte, WORD value)
 {
-    WORD* registerPointer = reinterpret_cast<WORD*>(resolveModRM16(rmbyte));
+    WORD* registerPointer = reinterpret_cast<WORD*>(resolveModRM16_internal(rmbyte));
     if (registerPointer)
         *registerPointer = value;
     else
@@ -24,7 +48,7 @@ void VCpu::writeModRM16(BYTE rmbyte, WORD value)
 
 void VCpu::writeModRM8(BYTE rmbyte, BYTE value)
 {
-    BYTE* registerPointer = reinterpret_cast<BYTE*>(resolveModRM8(rmbyte));
+    BYTE* registerPointer = reinterpret_cast<BYTE*>(resolveModRM8_internal(rmbyte));
     if (registerPointer)
         *registerPointer = value;
     else
@@ -33,7 +57,7 @@ void VCpu::writeModRM8(BYTE rmbyte, BYTE value)
 
 WORD VCpu::readModRM16(BYTE rmbyte)
 {
-    WORD* registerPointer = reinterpret_cast<WORD*>(resolveModRM16(rmbyte));
+    WORD* registerPointer = reinterpret_cast<WORD*>(resolveModRM16_internal(rmbyte));
     if (registerPointer)
         return *registerPointer;
     return readMemory16(m_lastModRMSegment, m_lastModRMOffset);
@@ -41,7 +65,7 @@ WORD VCpu::readModRM16(BYTE rmbyte)
 
 BYTE VCpu::readModRM8(BYTE rmbyte)
 {
-    BYTE* registerPointer = reinterpret_cast<BYTE*>(resolveModRM8(rmbyte));
+    BYTE* registerPointer = reinterpret_cast<BYTE*>(resolveModRM8_internal(rmbyte));
     if (registerPointer)
         return *registerPointer;
     return readMemory8(m_lastModRMSegment, m_lastModRMOffset);
@@ -73,7 +97,7 @@ void VCpu::updateModRM8(BYTE value)
 
 DWORD VCpu::readModRM32(BYTE rmbyte)
 {
-    DWORD* registerPointer = reinterpret_cast<DWORD*>(resolveModRM32(rmbyte));
+    DWORD* registerPointer = reinterpret_cast<DWORD*>(resolveModRM32_internal(rmbyte));
 
     if (registerPointer)
         return *registerPointer;
@@ -81,7 +105,7 @@ DWORD VCpu::readModRM32(BYTE rmbyte)
     return readMemory32(m_lastModRMSegment, m_lastModRMOffset);
 }
 
-void *VCpu::resolveModRM8(BYTE rmbyte)
+void *VCpu::resolveModRM8_internal(BYTE rmbyte)
 {
     WORD segment = currentSegment();
     WORD offset = 0x0000;
@@ -150,7 +174,7 @@ void *VCpu::resolveModRM8(BYTE rmbyte)
     return m_lastModRMPointer;
 }
 
-void* VCpu::resolveModRM16(BYTE rmbyte)
+void* VCpu::resolveModRM16_internal(BYTE rmbyte)
 {
     WORD segment = currentSegment();
     WORD offset = 0x0000;
@@ -219,7 +243,7 @@ void* VCpu::resolveModRM16(BYTE rmbyte)
     return m_lastModRMPointer;
 }
 
-void* VCpu::resolveModRM32(BYTE rmbyte)
+void* VCpu::resolveModRM32_internal(BYTE rmbyte)
 {
     WORD segment = currentSegment();
     WORD offset = 0x00000000;

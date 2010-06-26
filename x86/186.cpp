@@ -38,10 +38,10 @@ void _wrap_0x0F(VCpu* cpu)
 void _BOUND(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    DWORD value = cpu->readModRM32(rm);
+    WORD* ptr = static_cast<WORD*>(cpu->resolveModRM8(rm));
     WORD index = *cpu->treg16[vomit_modRMRegisterPart(rm)];
 
-    if (index < LSW(value) || index > MSW(value)) {
+    if (index < ptr[0] || index > ptr[1]) {
         /* Raise BR exception */
         cpu->exception(5);
     }

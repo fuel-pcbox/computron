@@ -56,8 +56,8 @@ void _JMP_RM16(VCpu* cpu)
 
 void _JMP_FAR_mem16(VCpu* cpu)
 {
-    DWORD value = cpu->readModRM32(cpu->rmbyte);
-    cpu->jump16(MSW(value), LSW(value));
+    WORD* ptr = static_cast<WORD*>(cpu->resolveModRM8(cpu->rmbyte));
+    cpu->jump16(ptr[1], ptr[0]);
 }
 
 #define DO_JCC_imm8(name, condition) \
@@ -107,12 +107,21 @@ void _CALL_imm16_imm16(VCpu* cpu)
     cpu->jump16(segment, newip);
 }
 
+void _CALL_imm16_imm32(VCpu* cpu)
+{
+    DWORD neweip = cpu->fetchOpcodeDWord();
+    WORD segment = cpu->fetchOpcodeWord();
+    cpu->push(cpu->getCS());
+    cpu->push(cpu->getEIP());
+    cpu->jump16(segment, neweip);
+}
+
 void _CALL_FAR_mem16(VCpu* cpu)
 {
-    DWORD value = cpu->readModRM32(cpu->rmbyte);
+    WORD* ptr = static_cast<WORD*>(cpu->resolveModRM8(cpu->rmbyte));
     cpu->push(cpu->getCS());
     cpu->push(cpu->getIP());
-    cpu->jump16(MSW(value), LSW(value));
+    cpu->jump16(ptr[1], ptr[0]);
 }
 
 void _CALL_RM16(VCpu* cpu)

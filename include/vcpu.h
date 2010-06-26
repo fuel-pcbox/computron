@@ -308,6 +308,27 @@ public:
 
     BYTE getAL() const { return this->regs.B.AL; }
 
+    void setAL(BYTE value) { this->regs.B.AL = value; }
+    void setAH(BYTE value) { this->regs.B.AH = value; }
+
+    void setAX(WORD value) { this->regs.W.AX = value; }
+    void setBX(WORD value) { this->regs.W.BX = value; }
+    void setCX(WORD value) { this->regs.W.CX = value; }
+    void setDX(WORD value) { this->regs.W.DX = value; }
+    void setSP(WORD value) { this->regs.W.SP = value; }
+    void setBP(WORD value) { this->regs.W.BP = value; }
+    void setSI(WORD value) { this->regs.W.SI = value; }
+    void setDI(WORD value) { this->regs.W.DI = value; }
+
+    void setEAX(DWORD value) { this->regs.D.EAX = value; }
+    void setEBX(DWORD value) { this->regs.D.EBX = value; }
+    void setECX(DWORD value) { this->regs.D.ECX = value; }
+    void setEDX(DWORD value) { this->regs.D.EDX = value; }
+    void setESP(DWORD value) { this->regs.D.ESP = value; }
+    void setEBP(DWORD value) { this->regs.D.EBP = value; }
+    void setESI(DWORD value) { this->regs.D.ESI = value; }
+    void setEDI(DWORD value) { this->regs.D.EDI = value; }
+
     // Base CS:EIP is the start address of the currently executing instruction
     WORD getBaseCS() const { return m_baseCS; }
     WORD getBaseIP() const { return m_baseEIP & 0xFFFF; }
@@ -376,7 +397,7 @@ public:
     void updateFlags32(DWORD value);
     void updateFlags16(WORD value);
     void updateFlags8(BYTE value);
-    void mathFlags8(DWORD result, BYTE dest, BYTE src);
+    void mathFlags8(WORD result, BYTE dest, BYTE src);
     void mathFlags16(DWORD result, WORD dest, WORD src);
     void mathFlags32(QWORD result, DWORD dest, DWORD src);
     void cmpFlags8(DWORD result, BYTE dest, BYTE src);
@@ -457,9 +478,9 @@ public:
     // Dumps all ISR handler pointers (0000:0000 - 0000:03FF)
     void dumpIVT() const;
 
-    void dumpMemory(WORD segment, WORD offset, int rows) const;
+    void dumpMemory(WORD segment, DWORD offset, int rows) const;
 
-    int dumpDisassembled(WORD segment, WORD offset) const;
+    int dumpDisassembled(WORD segment, DWORD offset) const;
 
 #ifdef VOMIT_TRACE
     // Dumps registers (used by --trace)
@@ -490,7 +511,12 @@ public:
     void nextEDI(int size) { this->regs.D.EDI += (getDF() ? -size : size); }
 
 private:
+    // FIXME: Remove this
     void setOpcodeHandler(BYTE rangeStart, BYTE rangeEnd, OpcodeHandler handler);
+
+    void* resolveModRM8_internal(BYTE rmbyte);
+    void* resolveModRM16_internal(BYTE rmbyte);
+    void* resolveModRM32_internal(BYTE rmbyte);
 
     void saveBaseAddress()
     {
@@ -611,6 +637,8 @@ void _CMC(VCpu*);
 
 void _CBW(VCpu*);
 void _CWD(VCpu*);
+void _CWDE(VCpu*);
+void _CDQ(VCpu*);
 
 void _XLAT(VCpu*);
 
@@ -661,11 +689,14 @@ void _REP(VCpu*);
 void _REPNE(VCpu*);
 
 void _XCHG_AX_reg16(VCpu*);
+void _XCHG_EAX_reg32(VCpu*);
 void _XCHG_reg8_RM8(VCpu*);
 void _XCHG_reg16_RM16(VCpu*);
+void _XCHG_reg32_RM32(VCpu*);
 
 void _CMPSB(VCpu*);
 void _CMPSW(VCpu*);
+void _CMPSD(VCpu*);
 void _LODSB(VCpu*);
 void _LODSW(VCpu*);
 void _LODSD(VCpu*);
@@ -682,6 +713,7 @@ void _LEA_reg32_mem32(VCpu*);
 void _LDS_reg16_mem16(VCpu*);
 void _LDS_reg32_mem32(VCpu*);
 void _LES_reg16_mem16(VCpu*);
+void _LES_reg32_mem32(VCpu*);
 
 void _MOV_AL_imm8(VCpu*);
 void _MOV_BL_imm8(VCpu*);
@@ -748,13 +780,16 @@ void _AND_reg16_RM16(VCpu*);
 void _AND_RM8_imm8(VCpu*);
 void _AND_RM16_imm16(VCpu*);
 void _AND_RM16_imm8(VCpu*);
-void _AND_AX_imm16(VCpu*);
 void _AND_AL_imm8(VCpu*);
+void _AND_AX_imm16(VCpu*);
+void _AND_EAX_imm32(VCpu*);
 
 void _TEST_RM8_reg8(VCpu*);
 void _TEST_RM16_reg16(VCpu*);
-void _TEST_AX_imm16(VCpu*);
+void _TEST_RM32_reg32(VCpu*);
 void _TEST_AL_imm8(VCpu*);
+void _TEST_AX_imm16(VCpu*);
+void _TEST_EAX_imm32(VCpu*);
 
 void _PUSH_SP_8086_80186(VCpu*);
 void _PUSH_AX(VCpu*);
@@ -840,6 +875,7 @@ void _ADC_RM16_imm8(VCpu*);
 
 void _SBB_RM8_reg8(VCpu*);
 void _SBB_RM16_reg16(VCpu*);
+void _SBB_RM32_reg32(VCpu*);
 void _SBB_reg8_RM8(VCpu*);
 void _SBB_reg16_RM16(VCpu*);
 void _SBB_AL_imm8(VCpu*);
@@ -888,6 +924,7 @@ void _DEC_reg32(VCpu*);
 void _CALL_RM16(VCpu*);
 void _CALL_FAR_mem16(VCpu*);
 void _CALL_imm16_imm16(VCpu*);
+void _CALL_imm16_imm32(VCpu*);
 
 void _JMP_RM16(VCpu*);
 void _JMP_FAR_mem16(VCpu*);
@@ -915,7 +952,8 @@ void _wrap_0xF6(VCpu*);
 void _wrap_0xF7_16(VCpu*);
 void _wrap_0xF7_32(VCpu*);
 void _wrap_0xFE(VCpu*);
-void _wrap_0xFF(VCpu*);
+void _wrap_0xFF_16(VCpu*);
+void _wrap_0xFF_32(VCpu*);
 
 // 80186+ INSTRUCTIONS
 
@@ -1030,6 +1068,15 @@ void _AND_reg32_RM32(VCpu*);
 void _SUB_reg32_RM32(VCpu*);
 void _XOR_reg32_RM32(VCpu*);
 void _CMP_reg32_RM32(VCpu*);
+
+void _ADD_RM32_reg32(VCpu*);
+void _OR_RM32_reg32(VCpu*);
+void _ADC_RM32_reg32(VCpu*);
+void _SBB_RM32_reg32(VCpu*);
+void _AND_RM32_reg32(VCpu*);
+void _SUB_RM32_reg32(VCpu*);
+void _XOR_RM32_reg32(VCpu*);
+void _CMP_RM32_reg32(VCpu*);
 
 // INLINE IMPLEMENTATIONS
 

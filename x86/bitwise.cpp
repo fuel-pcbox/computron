@@ -8,6 +8,7 @@ DEFAULT_RM8_reg8(cpu_and, _AND_RM8_reg8)
 DEFAULT_RM16_reg16(cpu_and, _AND_RM16_reg16)
 DEFAULT_reg8_RM8(cpu_and, _AND_reg8_RM8)
 DEFAULT_reg16_RM16(cpu_and, _AND_reg16_RM16)
+DEFAULT_reg32_RM32(cpu_and, _AND_reg32_RM32)
 DEFAULT_RM8_imm8(cpu_and, _AND_RM8_imm8)
 DEFAULT_RM16_imm16(cpu_and, _AND_RM16_imm16)
 DEFAULT_RM32_imm32(cpu_and, _AND_RM32_imm32)
@@ -15,9 +16,11 @@ DEFAULT_RM32_imm8(cpu_and, _AND_RM32_imm8)
 DEFAULT_RM16_imm8(cpu_and, _AND_RM16_imm8)
 DEFAULT_AL_imm8(cpu_and, _AND_AL_imm8)
 DEFAULT_AX_imm16(cpu_and, _AND_AX_imm16)
+DEFAULT_EAX_imm32(cpu_and, _AND_EAX_imm32)
 
 DEFAULT_RM8_reg8(cpu_xor, _XOR_RM8_reg8)
 DEFAULT_RM16_reg16(cpu_xor, _XOR_RM16_reg16)
+DEFAULT_RM32_reg32(cpu_xor, _XOR_RM32_reg32)
 DEFAULT_reg8_RM8(cpu_xor, _XOR_reg8_RM8)
 DEFAULT_reg16_RM16(cpu_xor, _XOR_reg16_RM16)
 DEFAULT_reg32_RM32(cpu_xor, _XOR_reg32_RM32)
@@ -28,7 +31,7 @@ DEFAULT_RM16_imm8(cpu_xor, _XOR_RM16_imm8)
 DEFAULT_RM32_imm8(cpu_xor, _XOR_RM32_imm8)
 DEFAULT_AL_imm8(cpu_xor, _XOR_AL_imm8)
 DEFAULT_AX_imm16(cpu_xor, _XOR_AX_imm16)
-DEFAULT_RM32_reg32(cpu_xor, _XOR_RM32_reg32)
+DEFAULT_EAX_imm32(cpu_xor, _XOR_EAX_imm32)
 
 DEFAULT_RM8_reg8(cpu_or, _OR_RM8_reg8)
 DEFAULT_RM16_reg16(cpu_or, _OR_RM16_reg16)
@@ -47,26 +50,48 @@ DEFAULT_EAX_imm32(cpu_or, _OR_EAX_imm32)
 
 READONLY_RM8_reg8(cpu_and, _TEST_RM8_reg8)
 READONLY_RM16_reg16(cpu_and, _TEST_RM16_reg16)
+READONLY_RM32_reg32(cpu_and, _TEST_RM32_reg32)
 READONLY_reg8_RM8(cpu_and, _TEST_reg8_RM8)
 READONLY_reg16_RM16(cpu_and, _TEST_reg16_RM16)
+READONLY_reg32_RM32(cpu_and, _TEST_reg32_RM32)
 READONLY_RM8_imm8(cpu_and, _TEST_RM8_imm8)
 READONLY_RM16_imm16(cpu_and, _TEST_RM16_imm16)
 READONLY_RM32_imm32(cpu_and, _TEST_RM32_imm32)
 READONLY_RM16_imm8(cpu_and, _TEST_RM16_imm8)
 READONLY_AL_imm8(cpu_and, _TEST_AL_imm8)
 READONLY_AX_imm16(cpu_and, _TEST_AX_imm16)
+READONLY_EAX_imm32(cpu_and, _TEST_EAX_imm32)
 
 void _CBW(VCpu* cpu)
 {
-    cpu->regs.W.AX = vomit_signExtend(cpu->regs.B.AL);
+    if (cpu->getAL() & 0x80)
+        cpu->setAH(0xFF);
+    else
+        cpu->setAH(0x00);
 }
 
 void _CWD(VCpu* cpu)
 {
-    if (cpu->regs.B.AH & 0x80)
-        cpu->regs.W.DX = 0xFFFF;
+    if (cpu->getAX() & 0x8000)
+        cpu->setDX(0xFFFF);
     else
-        cpu->regs.W.DX = 0x0000;
+        cpu->setDX(0x0000);
+}
+
+void _CWDE(VCpu *cpu)
+{
+    if (cpu->getAX() & 0x8000)
+        cpu->regs.W.__EAX_high_word = 0xFFFF;
+    else
+        cpu->regs.W.__EAX_high_word = 0x0000;
+}
+
+void _CDQ(VCpu *cpu)
+{
+    if (cpu->getEAX() & 0x80000000)
+        cpu->setEDX(0xFFFFFFFF);
+    else
+        cpu->setEDX(0x00000000);
 }
 
 void _SALC(VCpu* cpu)

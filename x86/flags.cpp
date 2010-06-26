@@ -157,7 +157,7 @@ void _SAHF(VCpu* cpu)
     cpu->setSF(cpu->regs.B.AH & 0x80);
 }
 
-void VCpu::mathFlags8(DWORD result, BYTE dest, BYTE src)
+void VCpu::mathFlags8(WORD result, BYTE dest, BYTE src)
 {
     setCF(result & 0x0100);
     setSF(result & 0x0080);

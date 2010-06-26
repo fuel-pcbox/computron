@@ -109,6 +109,26 @@ void _CMPSW(VCpu* cpu)
     cpu->cmpFlags16(src - dest, src, dest);
 }
 
+void _CMPSD(VCpu* cpu)
+{
+    DWORD src;
+    DWORD dest;
+
+    if (cpu->a16()) {
+        src = cpu->readMemory32(cpu->currentSegment(), cpu->getSI());
+        dest = cpu->readMemory32(cpu->getES(), cpu->getDI());
+        cpu->nextSI(4);
+        cpu->nextDI(4);
+    } else {
+        src = cpu->readMemory32(cpu->currentSegment(), cpu->getESI());
+        dest = cpu->readMemory32(cpu->getES(), cpu->getEDI());
+        cpu->nextESI(4);
+        cpu->nextEDI(4);
+    }
+
+    cpu->cmpFlags32(src - dest, src, dest);
+}
+
 void _SCASB(VCpu* cpu)
 {
     BYTE dest;

@@ -353,7 +353,7 @@ void _wrap_0xFE(VCpu* cpu)
     }
 }
 
-void _wrap_0xFF(VCpu* cpu)
+void _wrap_0xFF_16(VCpu* cpu)
 {
     cpu->rmbyte = cpu->fetchOpcodeByte();
     switch (vomit_modRMRegisterPart(cpu->rmbyte)) {
@@ -365,8 +365,30 @@ void _wrap_0xFF(VCpu* cpu)
     case 5: _JMP_FAR_mem16(cpu); break;
     case 6: _PUSH_RM16(cpu); break;
     case 7:
-        vlog(VM_ALERT, "FF /7 not wrapped");
+        vlog(VM_ALERT, "[16bit] FF /7 not wrapped");
         cpu->exception(6);
         break;
     }
+}
+
+void _wrap_0xFF_32(VCpu* cpu)
+{
+    vlog(VM_ALERT, "NOT IMPLEMENTED: 32bit 0xFF");
+    cpu->exception(6);
+#if 0
+    cpu->rmbyte = cpu->fetchOpcodeByte();
+    switch (vomit_modRMRegisterPart(cpu->rmbyte)) {
+    case 0: _INC_RM16(cpu); break;
+    case 1: _DEC_RM16(cpu); break;
+    case 2: _CALL_RM16(cpu); break;
+    case 3: _CALL_FAR_mem16(cpu); break;
+    case 4: _JMP_RM16(cpu); break;
+    case 5: _JMP_FAR_mem16(cpu); break;
+    case 6: _PUSH_RM16(cpu); break;
+    case 7:
+        vlog(VM_ALERT, "[32bit] FF /7 not wrapped");
+        cpu->exception(6);
+        break;
+    }
+#endif
 }
