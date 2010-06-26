@@ -55,10 +55,12 @@ VgaMemory::VgaMemory(VCpu *cpu)
     d->screen12 = QImage(640, 480, QImage::Format_Indexed8);
     d->screen12.fill(0);
 
-    d->plane[0] = new BYTE[0x10000];
-    d->plane[1] = new BYTE[0x10000];
-    d->plane[2] = new BYTE[0x10000];
-    d->plane[3] = new BYTE[0x10000];
+    d->plane[0] = new BYTE[0x40000];
+    d->plane[1] = d->plane[0] + 0x10000;
+    d->plane[2] = d->plane[1] + 0x10000;
+    d->plane[3] = d->plane[2] + 0x10000;
+
+    memset(d->plane[0], 0x00, 0x40000);
 
     d->latch[0] = 0;
     d->latch[1] = 0;
@@ -73,9 +75,6 @@ VgaMemory::VgaMemory(VCpu *cpu)
 
 VgaMemory::~VgaMemory()
 {
-    delete [] d->plane[3];
-    delete [] d->plane[2];
-    delete [] d->plane[1];
     delete [] d->plane[0];
 
     delete d;
