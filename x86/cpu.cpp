@@ -36,6 +36,7 @@ void VCpu::decode(BYTE op)
     case 0x05: CALL_HANDLER(_ADD_AX_imm16, _ADD_EAX_imm32); break;
     case 0x06: _PUSH_ES(this); break;
     case 0x07: _POP_ES(this); break;
+    case 0x08: _OR_RM8_reg8(this); break;
     case 0x09: CALL_HANDLER(_OR_RM16_reg16, _OR_RM32_reg32); break;
     case 0x0A: _OR_reg8_RM8(this); break;
     case 0x0B: CALL_HANDLER(_OR_reg16_RM16, _OR_reg32_RM32); break;
@@ -242,7 +243,11 @@ void VCpu::decode(BYTE op)
     default:
         this->rmbyte = fetchOpcodeByte();
 fffuuu:
-        vlog(VM_ALERT, "FFFFUUUU unsupported opcode %02X /%u or %02X %02X", this->opcode, vomit_modRMRegisterPart(this->rmbyte), this->opcode, this->rmbyte);
+        vlog(VM_ALERT, "FFFFUUUU unsupported opcode %02X /%u or %02X %02X or %02X %02X /%u",
+             this->opcode, vomit_modRMRegisterPart(this->rmbyte),
+             this->opcode, this->rmbyte,
+             this->opcode, this->rmbyte, vomit_modRMRegisterPart(readMemory8(getCS(), getEIP()))
+        );
         vm_exit(0);
     }
 }
