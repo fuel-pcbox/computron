@@ -28,7 +28,7 @@ void _LOOPNE_imm8(VCpu* cpu)
         cpu->jumpRelative8(displacement);
 }
 
-#define CALL_HANDLER(handler16, handler32) if (cpu->operationSize() == VCpu::OperationSize16) { handler16(cpu); } else { handler32(cpu); }
+#define CALL_HANDLER(handler16, handler32) if (cpu->o16()) { handler16(cpu); } else { handler32(cpu); }
 #define DO_REP_NEW(handler16, handler32) for (; cpu->regs.W.CX; --cpu->regs.W.CX) { CALL_HANDLER(handler16, handler32); }
 #define DO_REP(func) for (; cpu->regs.W.CX; --cpu->regs.W.CX) { func(cpu); }
 #define DO_REPZ(func) for (cpu->setZF(should_equal); cpu->regs.W.CX && (cpu->getZF() == should_equal); --cpu->regs.W.CX) { func(cpu); }
@@ -42,11 +42,10 @@ static void __rep(VCpu* cpu, BYTE opcode, bool should_equal)
     case 0x3E: cpu->setSegmentPrefix(cpu->getDS()); break;
 
     case 0x66: {
-        VCpu::OperationSize previousOperationSize = cpu->m_operationSize;
-        cpu->m_operationSize = cpu->m_operationSize == VCpu::OperationSize16 ? VCpu::OperationSize32 : VCpu::OperationSize16;
+        cpu->m_operationSize32 = !cpu->m_operationSize32;
         BYTE op = cpu->fetchOpcodeByte();
 	    __rep(cpu, op, should_equal);
-        cpu->m_operationSize = previousOperationSize;
+        cpu->m_operationSize32 = !cpu->m_operationSize32;
         return;
     }
 

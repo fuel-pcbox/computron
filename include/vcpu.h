@@ -491,19 +491,13 @@ public:
     void markDirty(DWORD address) { m_dirtMap[address] = true; }
 #endif
 
-    enum AddressSize { AddressSize16, AddressSize32 };
-    AddressSize m_addressSize;
+    bool m_addressSize32;
+    bool m_operationSize32;
 
-    enum OperationSize { OperationSize16, OperationSize32 };
-    OperationSize m_operationSize;
-
-    AddressSize addressSize() const { return m_addressSize; }
-    OperationSize operationSize() const { return m_operationSize; }
-
-    bool a16() const { return m_addressSize == AddressSize16; }
-    bool a32() const { return m_addressSize == AddressSize32; }
-    bool o16() const { return m_operationSize == OperationSize16; }
-    bool o32() const { return m_operationSize == OperationSize32; }
+    bool a16() const { return !m_addressSize32; }
+    bool a32() const { return m_addressSize32; }
+    bool o16() const { return !m_operationSize32; }
+    bool o32() const { return m_operationSize32; }
 
     void nextSI(int size) { this->regs.W.SI += (getDF() ? -size : size); }
     void nextDI(int size) { this->regs.W.DI += (getDF() ? -size : size); }

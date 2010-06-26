@@ -20,19 +20,14 @@ void _UD0(VCpu* cpu)
 
 void _OperationSizeOverride(VCpu*cpu)
 {
-    VCpu::OperationSize previousOperationSize = cpu->m_operationSize;
+    cpu->m_operationSize32 = !cpu->m_operationSize32;
 
-    if (cpu->o16())
-        cpu->m_operationSize = VCpu::OperationSize32;
-    else
-        cpu->m_operationSize = VCpu::OperationSize16;
-
-    //vlog(VM_LOGMSG, "%04X:%08X Operation size override detected! Opcode: %02X ", cpu->getBaseCS(), cpu->getBaseEIP(), cpu->readMemory8(cpu->getCS(), cpu->getEIP()));
-    //dump_all(cpu);
+    vlog(VM_LOGMSG, "%04X:%08X Operation size override detected! Opcode: %02X ", cpu->getBaseCS(), cpu->getBaseEIP(), cpu->readMemory8(cpu->getCS(), cpu->getEIP()));
+    cpu->dumpAll();
 
     cpu->decodeNext();
 
-    cpu->m_operationSize = previousOperationSize;
+    cpu->m_operationSize32 = !cpu->m_operationSize32;
 }
 
 void VCpu::decodeNext()
@@ -391,8 +386,8 @@ void VCpu::init()
     m_pitCountdown = m_instructionsPerTick;
     m_state = Alive;
 
-    m_addressSize = AddressSize16;
-    m_operationSize = OperationSize16;
+    m_addressSize32 = false;
+    m_operationSize32 = false;
 
 #ifdef VOMIT_DEBUG
     m_inDebugger = false;
