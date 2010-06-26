@@ -159,6 +159,21 @@ void _SCASW(VCpu* cpu)
     cpu->cmpFlags16(cpu->getAX() - dest, dest, cpu->getAX());
 }
 
+void _SCASD(VCpu* cpu)
+{
+    DWORD dest;
+
+    if (cpu->a16()) {
+        dest = cpu->readMemory32(cpu->getES(), cpu->getDI());
+        cpu->nextDI(4);
+    } else {
+        dest = cpu->readMemory32(cpu->getES(), cpu->getEDI());
+        cpu->nextEDI(4);
+    }
+
+    cpu->cmpFlags16(cpu->getEAX() - dest, dest, cpu->getEAX());
+}
+
 void _MOVSB(VCpu* cpu)
 {
     if (cpu->a16()) {

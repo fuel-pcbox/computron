@@ -18,6 +18,23 @@ void _UD0(VCpu* cpu)
     cpu->exception(6);
 }
 
+void _OperationSizeOverride(VCpu*cpu)
+{
+    VCpu::OperationSize previousOperationSize = cpu->m_operationSize;
+
+    if (cpu->o16())
+        cpu->m_operationSize = VCpu::OperationSize32;
+    else
+        cpu->m_operationSize = VCpu::OperationSize16;
+
+    //vlog(VM_LOGMSG, "%04X:%08X Operation size override detected! Opcode: %02X ", cpu->getBaseCS(), cpu->getBaseEIP(), cpu->readMemory8(cpu->getCS(), cpu->getEIP()));
+    //dump_all(cpu);
+
+    cpu->decodeNext();
+
+    cpu->m_operationSize = previousOperationSize;
+}
+
 void VCpu::decodeNext()
 {
     this->opcode = fetchOpcodeByte();
@@ -26,6 +43,7 @@ void VCpu::decodeNext()
 
 void VCpu::decode(BYTE op)
 {
+    BYTE subrmbyte = 0;
     this->opcode = op;
     switch (this->opcode) {
     case 0x00: _ADD_RM8_reg8(this); break;
@@ -46,6 +64,14 @@ void VCpu::decode(BYTE op)
     case 0x0F:
         this->rmbyte = fetchOpcodeByte();
         switch (this->rmbyte) {
+        case 0x01:
+            subrmbyte = fetchOpcodeByte();
+            switch (vomit_modRMRegisterPart(subrmbyte)) {
+            case 0: _SGDT(this); break;
+            case 1: _SIDT(this); break;
+            default: goto fffuuu;
+            }
+            break;
         case 0xA0: _PUSH_FS(this); break;
         case 0xB4: CALL_HANDLER(_LFS_reg16_mem16, _LFS_reg32_mem32); break;
         case 0xB5: CALL_HANDLER(_LFS_reg16_mem16, _LFS_reg32_mem32); break;
@@ -56,19 +82,27 @@ void VCpu::decode(BYTE op)
         }
         break;
     case 0x11: CALL_HANDLER(_ADC_RM16_reg16, _ADC_RM32_reg32); break;
+    case 0x12: _ADC_reg8_RM8(this); break;
     case 0x13: CALL_HANDLER(_ADC_reg16_RM16, _ADC_reg32_RM32); break;
+    case 0x14: _ADC_AL_imm8(this); break;
+    case 0x15: CALL_HANDLER(_ADC_AX_imm16, _ADC_EAX_imm32); break;
     case 0x16: _PUSH_SS(this); break;
     case 0x17: _POP_SS(this); break;
     case 0x19: CALL_HANDLER(_SBB_RM16_reg16, _SBB_RM32_reg32); break;
     case 0x1A: _SBB_reg8_RM8(this); break;
     case 0x1B: CALL_HANDLER(_SBB_reg16_RM16, _SBB_reg32_RM32); break;
+    case 0x1C: _SBB_AL_imm8(this); break;
+    case 0x1D: CALL_HANDLER(_SBB_AX_imm16, _SBB_EAX_imm32); break;
     case 0x1E: _PUSH_DS(this); break;
     case 0x1F: _POP_DS(this); break;
+    case 0x20: _AND_RM8_reg8(this); break;
+    case 0x21: CALL_HANDLER(_AND_RM16_reg16, _AND_RM32_reg32); break;
     case 0x22: _AND_reg8_RM8(this); break;
     case 0x23: CALL_HANDLER(_AND_reg16_RM16, _AND_reg32_RM32); break;
     case 0x24: _AND_AL_imm8(this); break;
     case 0x25: CALL_HANDLER(_AND_AX_imm16, _AND_EAX_imm32); break;
     case 0x26: _ES(this); break;
+    case 0x28: _SUB_RM8_reg8(this); break;
     case 0x29: CALL_HANDLER(_SUB_RM16_reg16, _SUB_RM32_reg32); break;
     case 0x2A: _SUB_reg8_RM8(this); break;
     case 0x2B: CALL_HANDLER(_SUB_reg16_RM16, _SUB_reg32_RM32); break;
@@ -79,6 +113,8 @@ void VCpu::decode(BYTE op)
     case 0x31: CALL_HANDLER(_XOR_RM16_reg16, _XOR_RM32_reg32); break;
     case 0x32: _XOR_reg8_RM8(this); break;
     case 0x33: CALL_HANDLER(_XOR_reg16_RM16, _XOR_reg32_RM32); break;
+    case 0x34: _XOR_AL_imm8(this); break;
+    case 0x35: CALL_HANDLER(_XOR_AX_imm16, _XOR_EAX_imm32); break;
     case 0x36: _SS(this); break;
     case 0x38: _CMP_RM8_reg8(this); break;
     case 0x39: CALL_HANDLER(_CMP_RM16_reg16, _CMP_RM32_reg32); break;
@@ -121,6 +157,7 @@ void VCpu::decode(BYTE op)
     case 0x5F: CALL_HANDLER(_POP_DI, _POP_EDI); break;
     case 0x64: _FS(this); break;
     case 0x65: _GS(this); break;
+    case 0x66: _OperationSizeOverride(this); break;
     case 0x68: CALL_HANDLER(_PUSH_imm16, _PUSH_imm32); break;
     case 0x70: _JO_imm8(this); break;
     case 0x71: _JNO_imm8(this); break;
@@ -141,6 +178,7 @@ void VCpu::decode(BYTE op)
     case 0x80: _wrap_0x80(this); break;
     case 0x81: CALL_HANDLER(_wrap_0x81_16, _wrap_0x81_32); break;
     case 0x83: CALL_HANDLER(_wrap_0x83_16, _wrap_0x83_32); break;
+    case 0x84: _TEST_RM8_reg8(this); break;
     case 0x85: CALL_HANDLER(_TEST_RM16_reg16, _TEST_RM32_reg32); break;
     case 0x86: _XCHG_reg8_RM8(this); break;
     case 0x87: CALL_HANDLER(_XCHG_reg16_RM16, _XCHG_reg32_RM32); break;
@@ -182,6 +220,7 @@ void VCpu::decode(BYTE op)
     case 0xAC: _LODSB(this); break;
     case 0xAD: CALL_HANDLER(_LODSW, _LODSD); break;
     case 0xAE: _SCASB(this); break;
+    case 0xAF: CALL_HANDLER(_SCASW, _SCASD); break;
     case 0xB0: _MOV_AL_imm8(this); break;
     case 0xB1: _MOV_CL_imm8(this); break;
     case 0xB2: _MOV_DL_imm8(this); break;
@@ -198,6 +237,9 @@ void VCpu::decode(BYTE op)
     case 0xBD: CALL_HANDLER(_MOV_BP_imm16, _MOV_EBP_imm32); break;
     case 0xBE: CALL_HANDLER(_MOV_SI_imm16, _MOV_ESI_imm32); break;
     case 0xBF: CALL_HANDLER(_MOV_DI_imm16, _MOV_EDI_imm32); break;
+    case 0xC0: _wrap_0xC0(this); break;
+    case 0xC1: CALL_HANDLER(_wrap_0xC1_16, _wrap_0xC1_32); break;
+    case 0xC2: _RET_imm16(this); break;
     case 0xC3: _RET(this); break;
     case 0xC4: CALL_HANDLER(_LES_reg16_mem16, _LES_reg32_mem32); break;
     case 0xC5: CALL_HANDLER(_LDS_reg16_mem16, _LDS_reg32_mem32); break;
@@ -213,6 +255,16 @@ void VCpu::decode(BYTE op)
     case 0xD3: CALL_HANDLER(_wrap_0xD3_16, _wrap_0xD3_32); break;
     case 0xD5: _AAD(this); break;
     case 0xD7: _XLAT(this); break;
+    // BEGIN FPU STUBS
+    case 0xD8:
+    case 0xD9:
+    case 0xDA:
+    case 0xDB:
+    case 0xDC:
+    case 0xDD:
+    case 0xDE:
+    case 0xDF: _ESCAPE(this); break;
+    // END FPU STUBS
     case 0xE0: _LOOPNE_imm8(this); break;
     case 0xE1: _LOOPE_imm8(this); break;
     case 0xE2: _LOOP_imm8(this); break;
@@ -225,6 +277,7 @@ void VCpu::decode(BYTE op)
     case 0xEA: CALL_HANDLER(_JMP_imm16_imm16, _JMP_imm16_imm32); break;
     case 0xEB: _JMP_short_imm8(this); break;
     case 0xEC: _IN_AL_DX(this); break;
+    case 0xED: CALL_HANDLER(_IN_AX_DX, _IN_EAX_DX); break;
     case 0xEE: _OUT_DX_AL(this); break;
     case 0xEF: CALL_HANDLER(_OUT_DX_AX, _OUT_DX_EAX); break;
     case 0xF2: _REPNE(this); break;
@@ -246,27 +299,10 @@ fffuuu:
         vlog(VM_ALERT, "FFFFUUUU unsupported opcode %02X /%u or %02X %02X or %02X %02X /%u",
              this->opcode, vomit_modRMRegisterPart(this->rmbyte),
              this->opcode, this->rmbyte,
-             this->opcode, this->rmbyte, vomit_modRMRegisterPart(readMemory8(getCS(), getEIP()))
+             this->opcode, this->rmbyte, vomit_modRMRegisterPart(subrmbyte)
         );
         vm_exit(0);
     }
-}
-
-void _OperationSizeOverride(VCpu*cpu)
-{
-    VCpu::OperationSize previousOperationSize = cpu->m_operationSize;
-
-    if (cpu->o16())
-        cpu->m_operationSize = VCpu::OperationSize32;
-    else
-        cpu->m_operationSize = VCpu::OperationSize16;
-
-    //vlog(VM_LOGMSG, "%04X:%08X Operation size override detected! Opcode: %02X ", cpu->getBaseCS(), cpu->getBaseEIP(), cpu->readMemory8(cpu->getCS(), cpu->getEIP()));
-    //dump_all(cpu);
-
-    cpu->decodeNext();
-
-    cpu->m_operationSize = previousOperationSize;
 }
 
 void VCpu::GP(int code)
@@ -600,7 +636,7 @@ void VCpu::registerDefaultOpcodeHandlers()
     setOpcodeHandler(0xFF, 0xFF, _wrap_0xFF_16     );
 
     setOpcodeHandler(0xC0, 0xC0, _wrap_0xC0        );
-    setOpcodeHandler(0xC1, 0xC1, _wrap_0xC1        );
+    setOpcodeHandler(0xC1, 0xC1, _wrap_0xC1_16     );
 
     // 80186+ instructions
     setOpcodeHandler(0x0F, 0x0F, _wrap_0x0F        );
@@ -611,7 +647,7 @@ void VCpu::registerDefaultOpcodeHandlers()
     setOpcodeHandler(0x6A, 0x6A, _PUSH_imm8        );
     setOpcodeHandler(0x6B, 0x6B, _IMUL_reg16_RM16_imm8 );
     setOpcodeHandler(0xC0, 0xC0, _wrap_0xC0        );
-    setOpcodeHandler(0xC1, 0xC1, _wrap_0xC1        );
+    setOpcodeHandler(0xC1, 0xC1, _wrap_0xC1_16     );
     setOpcodeHandler(0xC8, 0xC8, _ENTER            );
     setOpcodeHandler(0xC9, 0xC9, _LEAVE            );
 }

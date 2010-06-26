@@ -6,6 +6,7 @@
 
 DEFAULT_RM8_reg8(cpu_and, _AND_RM8_reg8)
 DEFAULT_RM16_reg16(cpu_and, _AND_RM16_reg16)
+DEFAULT_RM32_reg32(cpu_and, _AND_RM32_reg32)
 DEFAULT_reg8_RM8(cpu_and, _AND_reg8_RM8)
 DEFAULT_reg16_RM16(cpu_and, _AND_reg16_RM16)
 DEFAULT_reg32_RM32(cpu_and, _AND_reg32_RM32)
