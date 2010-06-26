@@ -66,7 +66,7 @@ static void __rep(VCpu* cpu, BYTE opcode, bool should_equal)
 
     default:
         vlog(VM_ALERT, "SUSPICIOUS: Opcode %02X used with REP* prefix", opcode);
-        cpu->opcode_handler[opcode](cpu);
+        cpu->decode(opcode);
         return;
     }
 
