@@ -69,6 +69,7 @@ bool disassemble(BYTE* p, long unsigned int offset, char *buf, int len)
         ptr += snprintf(ptr, len, "%s ", i->name);
         len -= (ptr - buf);
         i = &insn_table[p[1]];
+        p++;
         base_width++;
     }
     base_width += insn_base_width[i->type];
