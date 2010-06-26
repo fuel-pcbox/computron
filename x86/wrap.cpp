@@ -329,16 +329,16 @@ void _wrap_0xF7_32(VCpu* cpu)
 
     switch (vomit_modRMRegisterPart(cpu->rmbyte)) {
     case 0: _TEST_RM32_imm32(cpu); break;
+    case 4: _MUL_RM32(cpu); break;
+    case 6: _DIV_RM32(cpu); break;
 #if 0
     case 2: _NOT_RM32(cpu); break;
     case 3: _NEG_RM32(cpu); break;
-    case 4: _MUL_RM32(cpu); break;
     case 5: _IMUL_RM32(cpu); break;
-    case 6: _DIV_RM32(cpu); break;
     case 7: _IDIV_RM32(cpu); break;
 #endif
     default: // 1
-        vlog(VM_ALERT, "[32bit] F7 /1 not wrapped");
+        vlog(VM_ALERT, "[32bit] F7 /%u not wrapped", vomit_modRMRegisterPart(cpu->rmbyte));
         cpu->exception(6);
         break;
 

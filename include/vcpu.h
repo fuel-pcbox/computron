@@ -900,12 +900,16 @@ void _CMP_RM16_imm8(VCpu*);
 
 void _MUL_RM8(VCpu*);
 void _MUL_RM16(VCpu*);
+void _MUL_RM32(VCpu*);
 void _DIV_RM8(VCpu*);
 void _DIV_RM16(VCpu*);
+void _DIV_RM32(VCpu*);
 void _IMUL_RM8(VCpu*);
 void _IMUL_RM16(VCpu*);
+void _IMUL_RM32(VCpu*);
 void _IDIV_RM8(VCpu*);
 void _IDIV_RM16(VCpu*);
+void _IDIV_RM32(VCpu*);
 
 void _TEST_RM8_imm8(VCpu*);
 void _TEST_RM16_imm16(VCpu*);

@@ -141,6 +141,13 @@ DWORD cpu_mul16(VCpu* cpu, WORD acc, WORD multi)
     return result;
 }
 
+QWORD cpu_mul32(VCpu* cpu, DWORD acc, DWORD multi)
+{
+    QWORD result = acc * multi;
+    cpu->mathFlags32(result, acc, multi);
+    return result;
+}
+
 SIGNED_WORD cpu_imul8(VCpu* cpu, SIGNED_BYTE acc, SIGNED_BYTE multi)
 {
     SIGNED_WORD result = acc * multi;
@@ -261,6 +268,22 @@ void _MUL_RM16(VCpu* cpu)
     }
 }
 
+void _MUL_RM32(VCpu* cpu)
+{
+    WORD value = cpu->readModRM32(cpu->rmbyte);
+    QWORD result = cpu_mul32(cpu, cpu->regs.W.AX, value);
+    cpu->setEAX(result & 0xFFFFFFFF);
+    cpu->setEDX((result >> 32) & 0xFFFFFFFF);
+
+    if (cpu->getEDX() == 0x00000000) {
+        cpu->setCF(0);
+        cpu->setOF(0);
+    } else {
+        cpu->setCF(1);
+        cpu->setOF(1);
+    }
+}
+
 void _IMUL_RM8(VCpu* cpu)
 {
     SIGNED_BYTE value = (SIGNED_BYTE)cpu->readModRM8(cpu->rmbyte);
@@ -335,6 +358,20 @@ void _DIV_RM16(VCpu* cpu)
 
     cpu->regs.W.AX = (WORD)(tDXAX / value); // Quote
     cpu->regs.W.DX = (WORD)(tDXAX % value); // Remainder
+}
+
+void _DIV_RM32(VCpu* cpu)
+{
+    DWORD value = cpu->readModRM32(cpu->rmbyte);
+    QWORD tEDXEAX = cpu->getEAX() | (cpu->getEDX() << 16);
+
+    if (value == 0) {
+        cpu->exception(0);
+        return;
+    }
+
+    cpu->setEAX(tEDXEAX / value); // Quote
+    cpu->setEDX(tEDXEAX % value); // Remainder
 }
 
 void _IDIV_RM8(VCpu* cpu)
