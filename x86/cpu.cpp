@@ -921,12 +921,12 @@ void _GS(VCpu* cpu)
 
 void _XCHG_AX_reg16(VCpu* cpu)
 {
-    swap(*cpu->treg16[cpu->opcode & 7], cpu->regs.W.AX);
+    qSwap(*cpu->treg16[cpu->opcode & 7], cpu->regs.W.AX);
 }
 
 void _XCHG_EAX_reg32(VCpu* cpu)
 {
-    swap(*cpu->treg32[cpu->opcode & 7], cpu->regs.D.EAX);
+    qSwap(*cpu->treg32[cpu->opcode & 7], cpu->regs.D.EAX);
 }
 
 void _XCHG_reg8_RM8(VCpu* cpu)

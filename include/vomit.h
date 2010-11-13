@@ -1,6 +1,7 @@
 #ifndef __vomit_h__
 #define __vomit_h__
 
+#include <qglobal.h>
 #include <stdarg.h>
 
 #include "types.h"
@@ -57,12 +58,5 @@ void vm_listen(WORD, BYTE (*)(VCpu*, WORD), void (*)(VCpu*, WORD, BYTE));
 void vm_call8(VCpu*, WORD port, BYTE value);
 
 bool vomit_in_vretrace();
-
-template <typename T> inline void swap(T &a, T &b)
-{
-	T c(a);
-	a = b;
-	b = c;
-}
 
 #endif
