@@ -227,9 +227,6 @@ public:
     BYTE* treg8[8];
     WORD* tseg[8];
 
-    typedef void (*OpcodeHandler) (VCpu*);
-    OpcodeHandler opcode_handler[0x100];
-
     void init();
     void kill();
 
@@ -468,8 +465,6 @@ public:
     /* TODO: actual PIT implementation.. */
     inline bool tick();
 
-    void registerDefaultOpcodeHandlers();
-
     // Dumps some basic information about this CPU
     void dump() const;
 
@@ -506,9 +501,6 @@ public:
     void nextEDI(int size) { this->regs.D.EDI += (getDF() ? -size : size); }
 
 private:
-    // FIXME: Remove this
-    void setOpcodeHandler(BYTE rangeStart, BYTE rangeEnd, OpcodeHandler handler);
-
     void* resolveModRM8_internal(BYTE rmbyte);
     void* resolveModRM16_internal(BYTE rmbyte);
     void* resolveModRM32_internal(BYTE rmbyte);

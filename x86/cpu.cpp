@@ -410,13 +410,7 @@ void VCpu::init()
 #endif
 }
 
-void VCpu::setOpcodeHandler(BYTE rangeStart, BYTE rangeEnd, OpcodeHandler handler)
-{
-    for (int i = rangeStart; i <= rangeEnd; ++i) {
-        this->opcode_handler[i] = handler;
-    }
-}
-
+#ifdef FOR_REFERENCE_ONLY
 void VCpu::registerDefaultOpcodeHandlers()
 {
     // Install a default handler for unsupported instructions
@@ -662,6 +656,7 @@ void VCpu::registerDefaultOpcodeHandlers()
     setOpcodeHandler(0xC8, 0xC8, _ENTER            );
     setOpcodeHandler(0xC9, 0xC9, _LEAVE            );
 }
+#endif
 
 void VCpu::kill()
 {
@@ -682,10 +677,6 @@ void VCpu::kill()
 void VCpu::exec()
 {
     saveBaseAddress();
-#if 0
-    this->opcode = fetchOpcodeByte();
-    this->opcode_handler[this->opcode](this);
-#endif
     decodeNext();
 }
 

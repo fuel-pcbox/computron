@@ -46,8 +46,6 @@ void vomit_init()
 
     vm_loadconf();
 
-    g_cpu->registerDefaultOpcodeHandlers();
-
 #ifdef VOMIT_DEBUG
     signal(SIGINT, sigint_handler);
 #endif
