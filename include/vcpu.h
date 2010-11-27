@@ -402,6 +402,8 @@ public:
     void cmpFlags16(DWORD result, WORD dest, WORD src);
     void cmpFlags32(QWORD result, DWORD dest, DWORD src);
 
+    void adjustFlag32(DWORD result, WORD dest, WORD src);
+
     // These are faster than readMemory*() but will not access VGA memory, etc.
     inline BYTE readUnmappedMemory8(DWORD address) const;
     inline WORD readUnmappedMemory16(DWORD address) const;
@@ -562,8 +564,6 @@ private:
 };
 
 extern VCpu* g_cpu;
-
-void vomit_cpu_setAF(VCpu*, DWORD result, WORD dest, WORD src);
 
 WORD cpu_add8(BYTE, BYTE);
 WORD cpu_sub8(BYTE, BYTE);

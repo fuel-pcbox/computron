@@ -958,7 +958,7 @@ void _DEC_reg16(VCpu* cpu)
     cpu->setOF(reg == 0x8000);
 
     --i;
-    vomit_cpu_setAF(cpu, i, reg, 1);
+    cpu->adjustFlag32(i, reg, 1);
     cpu->updateFlags16(i);
     --reg;
 }
@@ -972,7 +972,7 @@ void _DEC_reg32(VCpu* cpu)
     cpu->setOF(reg == 0x80000000);
 
     --i;
-    vomit_cpu_setAF(cpu, i, reg, 1);
+    cpu->adjustFlag32(i, reg, 1);
     cpu->updateFlags32(i);
     --reg;
 }
@@ -986,7 +986,7 @@ void _INC_reg16(VCpu* cpu)
     cpu->setOF(i == 0x7FFF);
 
     ++i;
-    vomit_cpu_setAF(cpu, i, reg, 1);
+    cpu->adjustFlag32(i, reg, 1);
     cpu->updateFlags16(i);
     ++reg;
 }
@@ -1000,7 +1000,7 @@ void _INC_reg32(VCpu* cpu)
     cpu->setOF(i == 0x7FFFFFFF);
 
     ++i;
-    vomit_cpu_setAF(cpu, i, reg, 1);
+    cpu->adjustFlag32(i, reg, 1);
     cpu->updateFlags32(i);
     ++reg;
 }
@@ -1014,7 +1014,7 @@ void _INC_RM16(VCpu* cpu)
     cpu->setOF(value == 0x7FFF);
 
     ++i;
-    vomit_cpu_setAF(cpu, i, value, 1);
+    cpu->adjustFlag32(i, value, 1);
     cpu->updateFlags16(i);
     cpu->updateModRM16(value + 1);
     cpu->updateModRM16(value + 1);
@@ -1029,7 +1029,7 @@ void _DEC_RM16(VCpu* cpu)
     cpu->setOF(value == 0x8000);
 
     --i;
-    vomit_cpu_setAF(cpu, i, value, 1); // XXX: i can be (dword)(-1)...
+    cpu->adjustFlag32(i, value, 1); // XXX: i can be (dword)(-1)...
     cpu->updateFlags16(i);
     cpu->updateModRM16(value - 1);
 }

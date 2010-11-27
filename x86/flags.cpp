@@ -22,9 +22,9 @@ static const BYTE parity_table[0x100] = {
     1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1
 };
 
-void vomit_cpu_setAF(VCpu* cpu, DWORD result, WORD src, WORD dest)
+void VCpu::adjustFlag32(DWORD result, WORD src, WORD dest)
 {
-    cpu->setAF((((result ^ (src ^ dest)) & 0x10) >> 4) & 1);
+    setAF((((result ^ (src ^ dest)) & 0x10) >> 4) & 1);
 }
 
 void VCpu::updateFlags32(DWORD data)
@@ -163,7 +163,7 @@ void VCpu::mathFlags8(WORD result, BYTE dest, BYTE src)
     setSF(result & 0x0080);
     setZF((result & 0x00FF) == 0);
     setPF(parity_table[result & 0xFF]);
-    vomit_cpu_setAF(this, result, dest, src);
+    adjustFlag32(result, dest, src);
 }
 
 void VCpu::mathFlags16(DWORD result, WORD dest, WORD src)
@@ -172,7 +172,7 @@ void VCpu::mathFlags16(DWORD result, WORD dest, WORD src)
     setSF(result & 0x8000);
     setZF((result & 0xFFFF) == 0);
     setPF(parity_table[result & 0xFF]);
-    vomit_cpu_setAF(this, result, dest, src);
+    adjustFlag32(result, dest, src);
 }
 
 void VCpu::mathFlags32(QWORD result, DWORD dest, DWORD src)
@@ -181,7 +181,7 @@ void VCpu::mathFlags32(QWORD result, DWORD dest, DWORD src)
     setSF(result & 0x80000000);
     setZF((result & 0xFFFFFFFF) == 0);
     setPF(parity_table[result & 0xFF]);
-    vomit_cpu_setAF(this, result, dest, src);
+    adjustFlag32(result, dest, src);
 }
 
 void VCpu::cmpFlags8(DWORD result, BYTE dest, BYTE src)

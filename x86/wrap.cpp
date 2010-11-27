@@ -356,14 +356,14 @@ void _wrap_0xFE(VCpu* cpu)
     case 0:
         cpu->setOF(value == 0x7F);
         i++;
-        vomit_cpu_setAF(cpu, i, value, 1);
+        cpu->adjustFlag32(i, value, 1);
         cpu->updateFlags8(i);
         cpu->updateModRM8(value + 1);
         break;
     case 1:
         cpu->setOF(value == 0x80);
         i--;
-        vomit_cpu_setAF(cpu, i, value, 1);
+        cpu->adjustFlag32(i, value, 1);
         cpu->updateFlags8(i);
         cpu->updateModRM8(value - 1);
         break;

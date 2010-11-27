@@ -385,7 +385,7 @@ void _NEG_RM8(VCpu* cpu)
         ((0)^(old)) &
         ((0)^(value))
         )>>(7))&1);
-    vomit_cpu_setAF(cpu, value, 0, old);
+    cpu->adjustFlag32(value, 0, old);
 }
 
 void _NEG_RM16(VCpu* cpu)
@@ -400,5 +400,5 @@ void _NEG_RM16(VCpu* cpu)
         ((0)^(old)) &
         ((0)^(value))
         )>>(15))&1);
-    vomit_cpu_setAF(cpu, value, 0, old);
+    cpu->adjustFlag32(value, 0, old);
 }
