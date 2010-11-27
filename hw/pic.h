@@ -4,6 +4,8 @@
 #include "iodevice.h"
 #include <QtCore/QMutex>
 
+class VCpu;
+
 class PIC : public IODevice
 {
 public:

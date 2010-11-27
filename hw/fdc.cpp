@@ -6,6 +6,7 @@
 
 #include "vomit.h"
 #include "floppy.h"
+#include "pic.h"
 #include "debug.h"
 
 #define DATA_REGISTER_READY 0x80
@@ -191,5 +192,5 @@ void fdc_raise_irq()
     fdc_status_register[0] = current_drive;
     fdc_status_register[0] |= (fdc_current_drive_head[current_drive] * 0x02);
     fdc_status_register[0] |= 0x20;
-    irq(6);
+    PIC::raiseIRQ(6);
 }

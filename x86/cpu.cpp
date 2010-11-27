@@ -732,7 +732,7 @@ void VCpu::mainLoop()
         // HACK: Countdown towards fake PIT interrupt.
         if (tick()) {
             // Raise the timer IRQ. This is ugly, I know.
-            irq(0);
+            PIC::raiseIRQ(0);
         }
 
         if (PIC::hasPendingIRQ() && getIF())

@@ -35,8 +35,6 @@ void load_cursor(BYTE* row, BYTE* column);
 
 void vomit_init();
 
-void irq(BYTE num);
-
 extern bool disklog, trapint, iopeek, mempeek, callpeek;
 
 extern bool g_try_run;

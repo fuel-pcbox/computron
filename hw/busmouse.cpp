@@ -3,6 +3,8 @@
  */
 
 #include "busmouse.h"
+
+#include "pic.h"
 #include "vomit.h"
 #include "vcpu.h"
 #include "debug.h"
@@ -74,7 +76,7 @@ void BusMouse::moveEvent(WORD x, WORD y)
     //vlog(VM_MOUSEMSG, "BusMouse::moveEvent(): dX = %d, dY = %d", m_deltaX, m_deltaY);
 
     if (m_interrupts)
-        irq(5);
+        PIC::raiseIRQ(5);
 }
 
 void BusMouse::buttonPressEvent(WORD x, WORD y, Button button)
@@ -96,7 +98,7 @@ void BusMouse::buttonPressEvent(WORD x, WORD y, Button button)
     m_deltaY = 0;
 
     if (m_interrupts)
-        irq(5);
+        PIC::raiseIRQ(5);
 }
 
 void BusMouse::buttonReleaseEvent(WORD x, WORD y, Button button)
@@ -118,7 +120,7 @@ void BusMouse::buttonReleaseEvent(WORD x, WORD y, Button button)
     m_deltaY = 0;
 
     if (m_interrupts)
-        irq(5);
+        PIC::raiseIRQ(5);
 }
 
 BYTE BusMouse::in8(WORD port)

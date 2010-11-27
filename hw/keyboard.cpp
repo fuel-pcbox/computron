@@ -6,6 +6,7 @@
 #include "vomit.h"
 #include "vcpu.h"
 #include "keyboard.h"
+#include "pic.h"
 #include "debug.h"
 
 #define ATKBD_PARITY_ERROR  0x80
@@ -131,5 +132,5 @@ void Keyboard::out8(WORD port, BYTE data)
 void Keyboard::raiseIRQ()
 {
     if (theKeyboard.m_ram[0] & CCB_KEYBOARD_INTERRUPT_ENABLE)
-        irq(1);
+        PIC::raiseIRQ(1);
 }

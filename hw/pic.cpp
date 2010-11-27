@@ -163,9 +163,3 @@ void PIC::serviceIRQ(VCpu* cpu)
 
     cpu->setState(VCpu::Alive);
 }
-
-void irq(BYTE num)
-{
-    //vlog(VM_PICMSG, "IRQ %u", num);
-    PIC::raiseIRQ(num);
-}
