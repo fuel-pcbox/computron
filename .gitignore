@@ -1,0 +1,9 @@
+*.o
+moc_*.cpp
+qrc_*.cpp
+images
+bios/bios.bin
+vomit
+Makefile
+*.pro.user
+log.txt
