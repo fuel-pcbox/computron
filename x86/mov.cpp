@@ -29,12 +29,6 @@ void _MOV_RM16_seg(VCpu* cpu)
     VM_ASSERT(vomit_modRMRegisterPart(rm) >= 0 && vomit_modRMRegisterPart(rm) <= 5);
 
     cpu->writeModRM16(rm, *cpu->tseg[vomit_modRMRegisterPart(rm)]);
-
-#ifdef VOMIT_DEBUG
-    if (vomit_modRMRegisterPart(rm) == VCpu::RegisterFS || vomit_modRMRegisterPart(rm) == VCpu::RegisterGS) {
-        vlog(VM_CPUMSG, "%04X:%08X: Read from 80386 segment register", cpu->getCS(), cpu->getEIP());
-    }
-#endif
 }
 
 void _MOV_RM32_seg(VCpu* cpu)
@@ -44,12 +38,6 @@ void _MOV_RM32_seg(VCpu* cpu)
     VM_ASSERT(vomit_modRMRegisterPart(rm) >= 0 && vomit_modRMRegisterPart(rm) <= 5);
 
     cpu->writeModRM32(rm, *cpu->tseg[vomit_modRMRegisterPart(rm)]);
-
-#ifdef VOMIT_DEBUG
-    if (vomit_modRMRegisterPart(rm) == VCpu::RegisterFS || vomit_modRMRegisterPart(rm) == VCpu::RegisterGS) {
-        vlog(VM_CPUMSG, "%04X:%08X: Read from 80386 segment register", cpu->getCS(), cpu->getEIP());
-    }
-#endif
 }
 
 void _MOV_seg_RM16(VCpu* cpu)
