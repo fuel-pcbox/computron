@@ -94,6 +94,19 @@ void _PUSHA(VCpu* cpu)
     cpu->push(cpu->regs.W.DI);
 }
 
+void _PUSHAD(VCpu* cpu)
+{
+    DWORD oldesp = cpu->regs.D.ESP;
+    cpu->push32(cpu->regs.D.EAX);
+    cpu->push32(cpu->regs.D.EBX);
+    cpu->push32(cpu->regs.D.ECX);
+    cpu->push32(cpu->regs.D.EDX);
+    cpu->push32(cpu->regs.D.EBP);
+    cpu->push32(oldesp);
+    cpu->push32(cpu->regs.D.ESI);
+    cpu->push32(cpu->regs.D.EDI);
+}
+
 void _POPA(VCpu* cpu)
 {
     cpu->regs.W.DI = cpu->pop();
@@ -104,4 +117,16 @@ void _POPA(VCpu* cpu)
     cpu->regs.W.CX = cpu->pop();
     cpu->regs.W.BX = cpu->pop();
     cpu->regs.W.AX = cpu->pop();
+}
+
+void _POPAD(VCpu* cpu)
+{
+    cpu->regs.D.EDI = cpu->pop32();
+    cpu->regs.D.ESI = cpu->pop32();
+    (void) cpu->pop32();
+    cpu->regs.D.EBP = cpu->pop32();
+    cpu->regs.D.EDX = cpu->pop32();
+    cpu->regs.D.ECX = cpu->pop32();
+    cpu->regs.D.EBX = cpu->pop32();
+    cpu->regs.D.EAX = cpu->pop32();
 }

@@ -161,6 +161,8 @@ void VCpu::decode(BYTE op)
     case 0x5D: CALL_HANDLER(_POP_BP, _POP_EBP); break;
     case 0x5E: CALL_HANDLER(_POP_SI, _POP_ESI); break;
     case 0x5F: CALL_HANDLER(_POP_DI, _POP_EDI); break;
+    case 0x60: CALL_HANDLER(_PUSHA, _PUSHAD); break;
+    case 0x61: CALL_HANDLER(_POPA, _POPAD); break;
     case 0x64: _FS(this); break;
     case 0x65: _GS(this); break;
     case 0x66: _OperationSizeOverride(this); break;

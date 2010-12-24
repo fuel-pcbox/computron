@@ -974,6 +974,8 @@ void _LGDT(VCpu*);
 void _SIDT(VCpu*);
 void _LIDT(VCpu*);
 
+void _PUSHAD(VCpu*);
+void _POPAD(VCpu*);
 void _PUSHFD(VCpu*);
 void _POPFD(VCpu*);
 void _PUSH_imm32(VCpu*);
