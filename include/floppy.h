@@ -16,12 +16,8 @@
 #define FD_TIMEOUT              0x80
 #define FD_FIXED_NOT_READY      0xAA
 
-WORD chs2lba(BYTE, WORD, BYTE, WORD);
-BYTE floppy_read(BYTE, WORD, WORD, WORD, WORD, WORD, WORD);
-
-void bios_readsectors();
-void bios_writesectors();
-void bios_verifysectors();
+enum DiskCallFunction { ReadSectors, WriteSectors, VerifySectors };
+void bios_disk_call(DiskCallFunction);
 
 extern BYTE drv_status[];
 extern char drv_imgfile[][MAX_FN_LENGTH];

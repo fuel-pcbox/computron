@@ -26,13 +26,13 @@ void vm_call8(VCpu* cpu, WORD port, BYTE data) {
         vm_handleE6(cpu);
         break;
     case 0xE2:
-        bios_readsectors();
+        bios_disk_call(ReadSectors);
         break;
     case 0xE3:
-        bios_writesectors();
+        bios_disk_call(WriteSectors);
         break;
     case 0xE4:
-        bios_verifysectors();
+        bios_disk_call(VerifySectors);
         break;
     case 0xE7:
         vga_scrollup(cpu->regs.B.CL, cpu->regs.B.CH, cpu->regs.B.DL, cpu->regs.B.DH, cpu->regs.B.AL, cpu->regs.B.BH);
