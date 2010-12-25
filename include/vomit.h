@@ -35,9 +35,6 @@ void load_cursor(BYTE* row, BYTE* column);
 
 void vomit_init();
 
-extern bool g_try_run;
-extern bool g_debug_step;
-
 extern void vomit_set_vlog_handler( void (*f)(int, const char *, va_list) );
 
 typedef struct {
