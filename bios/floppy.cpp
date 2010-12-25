@@ -36,7 +36,7 @@ static void floppy_read(FILE* fp, BYTE drive, WORD cylinder, WORD head, WORD sec
 {
     WORD lba = chs2lba(drive, cylinder, head, sector);
 
-    if (disklog)
+    if (options.disklog)
         vlog(VM_DISKLOG, "Drive %d reading %d sectors at %d/%d/%d (LBA %d) to %04X:%04X [offset=0x%x]", drive, count, cylinder, head, sector, lba, segment, offset, lba*drv_sectsize[drive]);
 
     ssize_t bytesRead = fread(g_cpu->memory+(segment*16)+(offset), drv_sectsize[drive], count, fp);
@@ -50,7 +50,7 @@ static void floppy_write(FILE* fp, BYTE drive, WORD cylinder, WORD head, WORD se
 {
     WORD lba = chs2lba(drive, cylinder, head, sector);
 
-    if (disklog)
+    if (options.disklog)
         vlog(VM_DISKLOG, "Drive %d writing %d sectors at %d/%d/%d (LBA %d) from %04X:%04X", drive, count, cylinder, head, sector, lba, segment, offset);
 
     fwrite(g_cpu->memory+(segment<<4)+offset, drv_sectsize[drive], count, fp);
@@ -60,7 +60,7 @@ static void floppy_verify(FILE* fp, BYTE drive, WORD cylinder, WORD head, WORD s
 {
     WORD lba = chs2lba(drive, cylinder, head, sector);
 
-    if (disklog)
+    if (options.disklog)
         vlog(VM_DISKLOG, "Drive %d verifying %d sectors at %d/%d/%d (LBA %d)", drive, count, cylinder, head, sector, lba);
 
     BYTE dummy[count * drv_sectsize[drive]];
@@ -88,7 +88,7 @@ void bios_disk_call(DiskCallFunction function)
     BYTE error;
 
     if (!drv_status[drive]) {
-        if (disklog)
+        if (options.disklog)
             vlog(VM_DISKLOG, "Drive %02X not ready", drive);
         if (drive < 2)
             error = FD_CHANGED_OR_REMOVED;
@@ -99,14 +99,14 @@ void bios_disk_call(DiskCallFunction function)
 
     lba = chs2lba(drive, cylinder, head, sector);
     if (lba > drv_sectors[drive]) {
-        if (disklog)
+        if (options.disklog)
             vlog(VM_DISKLOG, "Drive %d bogus sector request (LBA %d)", drive, lba);
         error = FD_TIMEOUT;
         goto epilogue;
     }
 
     if ((sector > drv_spt[drive]) || (head >= drv_heads[drive])) {
-        if (disklog)
+        if (options.disklog)
             vlog(VM_DISKLOG, "%04X:%04X Drive %d request out of geometrical bounds (%d/%d/%d)", g_cpu->getCS(), g_cpu->getIP(), drive, cylinder, head, sector);
         error = FD_TIMEOUT;
         goto epilogue;

@@ -35,16 +35,18 @@ void load_cursor(BYTE* row, BYTE* column);
 
 void vomit_init();
 
-extern bool disklog, trapint, iopeek, mempeek, callpeek;
-
 extern bool g_try_run;
 extern bool g_debug_step;
 
 extern void vomit_set_vlog_handler( void (*f)(int, const char *, va_list) );
 
 typedef struct {
-	bool bda_peek;
-	bool trace;
+    bool bda_peek;
+    bool trace;
+    bool disklog;
+    bool trapint;
+    bool iopeek;
+    bool mempeek;
 } vomit_options_t;
 
 extern vomit_options_t options;

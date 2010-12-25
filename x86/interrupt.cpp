@@ -40,7 +40,7 @@ void _IRET(VCpu* cpu)
 void VCpu::jumpToInterruptHandler(int isr)
 {
 #ifdef VOMIT_DEBUG
-    if (trapint)
+    if (options.trapint)
         vlog(VM_PICMSG, "%04X:%04X Interrupt %02X,%02X trapped", getBaseCS(), getBaseIP(), isr, this->regs.B.AH);
 
     if (isr == 0x06) {

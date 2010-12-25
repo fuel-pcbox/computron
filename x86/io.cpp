@@ -130,7 +130,7 @@ void _IN_EAX_DX(VCpu* cpu)
 void VCpu::out(WORD port, BYTE value)
 {
 #ifdef VOMIT_DEBUG
-    if (iopeek)
+    if (options.iopeek)
         vlog(VM_IOMSG, "[%04X:%04X] VCpu::out: %02X --> %04X", getBaseCS(), getBaseIP(), value, port);
 #endif
 
@@ -151,7 +151,7 @@ void VCpu::out(WORD port, BYTE value)
 BYTE VCpu::in(WORD port)
 {
 #ifdef VOMIT_DEBUG
-    if (iopeek)
+    if (options.iopeek)
         vlog(VM_IOMSG, "[%04X:%04X] VCpu::in: %04X", getBaseCS(), getBaseIP(), port);
 #endif
 

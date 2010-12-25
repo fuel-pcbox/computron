@@ -6,8 +6,6 @@
 
 static MainWindow *mw = 0L;
 
-bool disklog, trapint, iopeek, mempeek;
-
 int
 main(int argc, char **argv)
 {
@@ -16,10 +14,10 @@ main(int argc, char **argv)
     QStringList args = app.arguments();
 
     memset(&options, 0, sizeof(options));
-    if(args.contains("--disklog")) disklog = true;
-    if(args.contains("--trapint")) trapint = true;
-    if(args.contains("--mempeek")) mempeek = true;
-    if(args.contains("--iopeek")) iopeek = true;
+    if(args.contains("--disklog")) options.disklog = true;
+    if(args.contains("--trapint")) options.trapint = true;
+    if(args.contains("--mempeek")) options.mempeek = true;
+    if(args.contains("--iopeek")) options.iopeek = true;
     if(args.contains("--bda-peek")) options.bda_peek = true;
     if(args.contains("--trace")) options.trace = true;
 
