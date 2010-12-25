@@ -71,6 +71,8 @@ void VCpu::decode(BYTE op)
             switch (vomit_modRMRegisterPart(subrmbyte)) {
             case 0: _SGDT(this); break;
             case 1: _SIDT(this); break;
+            case 2: _LGDT(this); break;
+            case 3: _LIDT(this); break;
             default: goto fffuuu;
             }
             break;
