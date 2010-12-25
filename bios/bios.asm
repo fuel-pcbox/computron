@@ -1147,8 +1147,7 @@ vga_ttyecho:
     pop     ax                      ; original AX, outchar in AL
     push    ax
 
-    mov     ah, bl                  ; attribute in BL
-    and     bl, 0x0f                ; AND off intensity + rgb
+    mov     ah, 0x07                ; Gray on black (BL is only used in graphics modes.)
 
     cmp     al, 0x0d
     je      .cr
