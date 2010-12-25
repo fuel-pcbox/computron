@@ -255,6 +255,7 @@ void VCpu::decode(BYTE op)
     case 0xC5: CALL_HANDLER(_LDS_reg16_mem16, _LDS_reg32_mem32); break;
     case 0xC6: _MOV_RM8_imm8(this); break;
     case 0xC7: CALL_HANDLER(_MOV_RM16_imm16, _MOV_RM32_imm32); break;
+    case 0xC8: _ENTER(this); break;
     case 0xC9: _LEAVE(this); break;
     case 0xCA: _RETF_imm16(this); break;
     case 0xCB: _RETF(this); break;
