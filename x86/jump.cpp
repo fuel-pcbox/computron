@@ -60,29 +60,40 @@ void _JMP_FAR_mem16(VCpu* cpu)
     cpu->jump16(ptr[1], ptr[0]);
 }
 
-#define DO_JCC_imm8(name, condition) \
+#define DO_JCC_imm(name, condition) \
 void _ ## name ## _imm8(VCpu* cpu) { \
     SIGNED_BYTE imm = cpu->fetchOpcodeByte(); \
     if ((condition)) \
         cpu->jumpRelative8(imm); \
+} \
+void _ ## name ## _NEAR_imm(VCpu* cpu) { \
+    if (cpu->a16()) { \
+        SIGNED_WORD imm = cpu->fetchOpcodeWord(); \
+        if ((condition)) \
+            cpu->jumpRelative16(imm); \
+    } else { \
+        SIGNED_DWORD imm = cpu->fetchOpcodeDWord(); \
+        if ((condition)) \
+            cpu->jumpRelative32(imm); \
+    } \
 }
 
-DO_JCC_imm8(JO,   cpu->getOF())
-DO_JCC_imm8(JNO,  !cpu->getOF())
-DO_JCC_imm8(JC,   cpu->getCF())
-DO_JCC_imm8(JNC,  !cpu->getCF())
-DO_JCC_imm8(JZ,   cpu->getZF())
-DO_JCC_imm8(JNZ,  !cpu->getZF())
-DO_JCC_imm8(JNA,  cpu->getCF() | cpu->getZF())
-DO_JCC_imm8(JA,   !(cpu->getCF() | cpu->getZF()))
-DO_JCC_imm8(JS,   cpu->getSF())
-DO_JCC_imm8(JNS,  !cpu->getSF())
-DO_JCC_imm8(JP,   cpu->getPF())
-DO_JCC_imm8(JNP,  !cpu->getPF())
-DO_JCC_imm8(JL,   cpu->getSF() ^ cpu->getOF())
-DO_JCC_imm8(JNL,  !(cpu->getSF() ^ cpu->getOF()))
-DO_JCC_imm8(JNG,  (cpu->getSF() ^ cpu->getOF()) | cpu->getZF())
-DO_JCC_imm8(JG,   !((cpu->getSF() ^ cpu->getOF()) | cpu->getZF()))
+DO_JCC_imm(JO,   cpu->getOF())
+DO_JCC_imm(JNO,  !cpu->getOF())
+DO_JCC_imm(JC,   cpu->getCF())
+DO_JCC_imm(JNC,  !cpu->getCF())
+DO_JCC_imm(JZ,   cpu->getZF())
+DO_JCC_imm(JNZ,  !cpu->getZF())
+DO_JCC_imm(JNA,  cpu->getCF() | cpu->getZF())
+DO_JCC_imm(JA,   !(cpu->getCF() | cpu->getZF()))
+DO_JCC_imm(JS,   cpu->getSF())
+DO_JCC_imm(JNS,  !cpu->getSF())
+DO_JCC_imm(JP,   cpu->getPF())
+DO_JCC_imm(JNP,  !cpu->getPF())
+DO_JCC_imm(JL,   cpu->getSF() ^ cpu->getOF())
+DO_JCC_imm(JNL,  !(cpu->getSF() ^ cpu->getOF()))
+DO_JCC_imm(JNG,  (cpu->getSF() ^ cpu->getOF()) | cpu->getZF())
+DO_JCC_imm(JG,   !((cpu->getSF() ^ cpu->getOF()) | cpu->getZF()))
 
 void _CALL_imm16(VCpu* cpu)
 {

@@ -663,6 +663,23 @@ void _JNL_imm8(VCpu*);
 void _JNG_imm8(VCpu*);
 void _JG_imm8(VCpu*);
 
+void _JO_NEAR_imm(VCpu*);
+void _JNO_NEAR_imm(VCpu*);
+void _JC_NEAR_imm(VCpu*);
+void _JNC_NEAR_imm(VCpu*);
+void _JZ_NEAR_imm(VCpu*);
+void _JNZ_NEAR_imm(VCpu*);
+void _JNA_NEAR_imm(VCpu*);
+void _JA_NEAR_imm(VCpu*);
+void _JS_NEAR_imm(VCpu*);
+void _JNS_NEAR_imm(VCpu*);
+void _JP_NEAR_imm(VCpu*);
+void _JNP_NEAR_imm(VCpu*);
+void _JL_NEAR_imm(VCpu*);
+void _JNL_NEAR_imm(VCpu*);
+void _JNG_NEAR_imm(VCpu*);
+void _JG_NEAR_imm(VCpu*);
+
 void _CALL_imm16(VCpu*);
 void _CALL_imm32(VCpu*);
 void _RET(VCpu*);

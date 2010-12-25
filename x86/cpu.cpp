@@ -76,6 +76,22 @@ void VCpu::decode(BYTE op)
             default: goto fffuuu;
             }
             break;
+        case 0x80: _JO_NEAR_imm(this); break;
+        case 0x81: _JNO_NEAR_imm(this); break;
+        case 0x82: _JC_NEAR_imm(this); break;
+        case 0x83: _JNC_NEAR_imm(this); break;
+        case 0x84: _JZ_NEAR_imm(this); break;
+        case 0x85: _JNZ_NEAR_imm(this); break;
+        case 0x86: _JNA_NEAR_imm(this); break;
+        case 0x87: _JA_NEAR_imm(this); break;
+        case 0x88: _JS_NEAR_imm(this); break;
+        case 0x89: _JNS_NEAR_imm(this); break;
+        case 0x8A: _JP_NEAR_imm(this); break;
+        case 0x8B: _JNP_NEAR_imm(this); break;
+        case 0x8C: _JL_NEAR_imm(this); break;
+        case 0x8D: _JNL_NEAR_imm(this); break;
+        case 0x8E: _JNG_NEAR_imm(this); break;
+        case 0x8F: _JG_NEAR_imm(this); break;
         case 0xA0: _PUSH_FS(this); break;
         case 0xA1: _POP_FS(this); break;
         case 0xA8: _PUSH_GS(this); break;
