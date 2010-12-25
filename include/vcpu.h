@@ -211,6 +211,7 @@ public:
 
     BYTE opcode;
     BYTE rmbyte;
+    BYTE subrmbyte;
 
     // Extended memory size in KiB (will be reported by CMOS)
     DWORD extendedMemorySize() const { return m_extendedMemorySize; }
@@ -967,6 +968,9 @@ void _PUSH_imm16(VCpu*);
 void _IMUL_reg16_RM16_imm8(VCpu*);
 
 // 80386+ INSTRUCTIONS
+
+void _LMSW(VCpu*);
+void _SMSW(VCpu*);
 
 void _SGDT(VCpu*);
 void _LGDT(VCpu*);

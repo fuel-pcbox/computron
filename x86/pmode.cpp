@@ -27,3 +27,9 @@ void _LIDT(VCpu* cpu)
     cpu->IDTR.base = cpu->readMemory32(cpu->currentSegment(), tableAddress + 2);
     cpu->IDTR.limit = cpu->readMemory16(cpu->currentSegment(), tableAddress);
 }
+
+void _LMSW(VCpu* cpu)
+{
+    BYTE msw = cpu->readModRM16(cpu->subrmbyte);
+    cpu->CR0 = (cpu->CR0 & 0xFFFFFFF0) | msw;
+}

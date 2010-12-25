@@ -45,7 +45,6 @@ void VCpu::decodeNext()
 
 void VCpu::decode(BYTE op)
 {
-    BYTE subrmbyte = 0;
     this->opcode = op;
     switch (this->opcode) {
     case 0x00: _ADD_RM8_reg8(this); break;
@@ -67,12 +66,13 @@ void VCpu::decode(BYTE op)
         this->rmbyte = fetchOpcodeByte();
         switch (this->rmbyte) {
         case 0x01:
-            subrmbyte = fetchOpcodeByte();
-            switch (vomit_modRMRegisterPart(subrmbyte)) {
+            this->subrmbyte = fetchOpcodeByte();
+            switch (vomit_modRMRegisterPart(this->subrmbyte)) {
             case 0: _SGDT(this); break;
             case 1: _SIDT(this); break;
             case 2: _LGDT(this); break;
             case 3: _LIDT(this); break;
+            case 6: _LMSW(this); break;
             default: goto fffuuu;
             }
             break;
@@ -318,7 +318,7 @@ fffuuu:
         vlog(VM_ALERT, "FFFFUUUU unsupported opcode %02X /%u or %02X %02X or %02X %02X /%u",
              this->opcode, vomit_modRMRegisterPart(this->rmbyte),
              this->opcode, this->rmbyte,
-             this->opcode, this->rmbyte, vomit_modRMRegisterPart(subrmbyte)
+             this->opcode, this->rmbyte, vomit_modRMRegisterPart(this->subrmbyte)
         );
         vm_exit(0);
     }
