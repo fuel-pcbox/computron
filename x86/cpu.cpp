@@ -75,6 +75,9 @@ void VCpu::decode(BYTE op)
             }
             break;
         case 0xA0: _PUSH_FS(this); break;
+        case 0xA1: _POP_FS(this); break;
+        case 0xA8: _PUSH_GS(this); break;
+        case 0xA9: _POP_GS(this); break;
         case 0xB4: CALL_HANDLER(_LFS_reg16_mem16, _LFS_reg32_mem32); break;
         case 0xB5: CALL_HANDLER(_LFS_reg16_mem16, _LFS_reg32_mem32); break;
         case 0xB6: CALL_HANDLER(_MOVZX_reg16_RM8, _MOVZX_reg32_RM8); break;
