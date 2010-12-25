@@ -806,7 +806,6 @@ void _PUSH_ES(VCpu*);
 void _PUSH_SS(VCpu*);
 void _PUSHF(VCpu*);
 
-void _POP_CS(VCpu*);
 void _POP_DS(VCpu*);
 void _POP_ES(VCpu*);
 void _POP_SS(VCpu*);

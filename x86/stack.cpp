@@ -257,16 +257,6 @@ void _PUSH_GS(VCpu* cpu)
     cpu->push(cpu->getGS());
 }
 
-void _POP_CS(VCpu* cpu)
-{
-    vlog(VM_ALERT, "%04X:%04X: 286+ instruction (or possibly POP CS...)", cpu->getBaseCS(), cpu->getBaseIP());
-
-    (void) cpu->fetchOpcodeByte();
-    (void) cpu->fetchOpcodeByte();
-    (void) cpu->fetchOpcodeByte();
-    (void) cpu->fetchOpcodeByte();
-}
-
 void _POP_DS(VCpu* cpu)
 {
     cpu->DS = cpu->pop();
