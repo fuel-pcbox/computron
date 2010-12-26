@@ -94,6 +94,18 @@ void _MOV_reg32_RM32(VCpu* cpu)
     *cpu->treg32[vomit_modRMRegisterPart(rm)] = cpu->readModRM32(rm);
 }
 
+void _MOV_reg32_CR(VCpu* cpu)
+{
+    BYTE rm = cpu->fetchOpcodeByte();
+    *cpu->treg32[rm & 7] = *cpu->creg[vomit_modRMRegisterPart(rm)];
+}
+
+void _MOV_CR_reg32(VCpu* cpu)
+{
+    BYTE rm = cpu->fetchOpcodeByte();
+    *cpu->creg[vomit_modRMRegisterPart(rm)] = *cpu->treg32[rm & 7];
+}
+
 void _MOV_AL_imm8(VCpu* cpu)
 {
     cpu->regs.B.AL = cpu->fetchOpcodeByte();

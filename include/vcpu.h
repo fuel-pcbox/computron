@@ -278,6 +278,7 @@ public:
     BYTE* memory;
 
     // ID-to-Register maps
+    DWORD* creg[8];
     DWORD* treg32[8];
     WORD* treg16[8];
     BYTE* treg8[8];
@@ -1142,6 +1143,8 @@ void _STOSD(VCpu*);
 
 void _MOV_RM32_reg32(VCpu*);
 void _MOV_reg32_RM32(VCpu*);
+void _MOV_reg32_CR(VCpu*);
+void _MOV_CR_reg32(VCpu*);
 void _MOV_moff32_EAX(VCpu*);
 void _MOV_EAX_imm32(VCpu*);
 void _MOV_EBX_imm32(VCpu*);

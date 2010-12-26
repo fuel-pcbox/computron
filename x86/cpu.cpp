@@ -76,6 +76,8 @@ void VCpu::decode(BYTE op)
             default: goto fffuuu;
             }
             break;
+        case 0x20: _MOV_reg32_CR(this); break;
+        case 0x22: _MOV_CR_reg32(this); break;
         case 0x80: _JO_NEAR_imm(this); break;
         case 0x81: _JNO_NEAR_imm(this); break;
         case 0x82: _JC_NEAR_imm(this); break;
@@ -400,6 +402,15 @@ VCpu::VCpu(QObject* parent)
     this->DR5 = 0;
     this->DR6 = 0;
     this->DR7 = 0;
+
+    this->creg[0] = &this->CR0;
+    this->creg[1] = &this->CR1;
+    this->creg[2] = &this->CR2;
+    this->creg[3] = &this->CR3;
+    this->creg[4] = &this->CR4;
+    this->creg[5] = &this->CR5;
+    this->creg[6] = &this->CR6;
+    this->creg[7] = &this->CR7;
 
     this->treg32[RegisterEAX] = &this->regs.D.EAX;
     this->treg32[RegisterEBX] = &this->regs.D.EBX;
