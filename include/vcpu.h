@@ -76,9 +76,13 @@ inline int vomit_modRMRegisterPart(int rmbyte)
 
 class VgaMemory;
 
-class VCpu
+class VCpu : public QObject
 {
+    Q_OBJECT
 public:
+
+    VCpu(QObject* parent = 0);
+    ~VCpu();
 
     enum {
         RegisterAL, RegisterCL, RegisterDL, RegisterBL,
@@ -88,6 +92,11 @@ public:
     enum {
         RegisterAX, RegisterCX, RegisterDX, RegisterBX,
         RegisterSP, RegisterBP, RegisterSI, RegisterDI
+    };
+
+    enum {
+        RegisterEAX, RegisterECX, RegisterEDX, RegisterEBX,
+        RegisterESP, RegisterEBP, RegisterESI, RegisterEDI
     };
 
     enum {
@@ -228,7 +237,6 @@ public:
     BYTE* treg8[8];
     WORD* tseg[8];
 
-    void init();
     void kill();
 
 #ifdef VOMIT_DEBUG

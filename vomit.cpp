@@ -55,7 +55,7 @@ void vm_kill()
 {
     vlog(VM_KILLMSG, "Killing VM");
     vga_kill();
-    g_cpu->kill();
+    delete g_cpu;
 }
 
 void vm_exit(int exit_code)

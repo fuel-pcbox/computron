@@ -346,11 +346,9 @@ void VCpu::GP(int code)
     vm_exit(1);
 }
 
-void VCpu::init()
+VCpu::VCpu(QObject* parent)
+    : QObject(parent)
 {
-    // FIXME: This is silly.
-    memset(this, 0, sizeof(VCpu));
-
     this->memory = new BYTE[1048576 + 65536];
     if (!this->memory) {
         vlog(VM_INITMSG, "Insufficient memory available.");
@@ -379,14 +377,38 @@ void VCpu::init()
     m_prefetchQueueIndex = 0;
 #endif
 
-    this->treg32[RegisterAX] = &this->regs.D.EAX;
-    this->treg32[RegisterBX] = &this->regs.D.EBX;
-    this->treg32[RegisterCX] = &this->regs.D.ECX;
-    this->treg32[RegisterDX] = &this->regs.D.EDX;
-    this->treg32[RegisterSP] = &this->regs.D.ESP;
-    this->treg32[RegisterBP] = &this->regs.D.EBP;
-    this->treg32[RegisterSI] = &this->regs.D.ESI;
-    this->treg32[RegisterDI] = &this->regs.D.EDI;
+    memset(&regs, 0, sizeof(regs));
+    this->CS = 0;
+    this->DS = 0;
+    this->ES = 0;
+    this->SS = 0;
+    this->FS = 0;
+    this->GS = 0;
+    this->CR0 = 0;
+    this->CR1 = 0;
+    this->CR2 = 0;
+    this->CR3 = 0;
+    this->CR4 = 0;
+    this->CR5 = 0;
+    this->CR6 = 0;
+    this->CR7 = 0;
+    this->DR0 = 0;
+    this->DR1 = 0;
+    this->DR2 = 0;
+    this->DR3 = 0;
+    this->DR4 = 0;
+    this->DR5 = 0;
+    this->DR6 = 0;
+    this->DR7 = 0;
+
+    this->treg32[RegisterEAX] = &this->regs.D.EAX;
+    this->treg32[RegisterEBX] = &this->regs.D.EBX;
+    this->treg32[RegisterECX] = &this->regs.D.ECX;
+    this->treg32[RegisterEDX] = &this->regs.D.EDX;
+    this->treg32[RegisterESP] = &this->regs.D.ESP;
+    this->treg32[RegisterEBP] = &this->regs.D.EBP;
+    this->treg32[RegisterESI] = &this->regs.D.ESI;
+    this->treg32[RegisterEDI] = &this->regs.D.EDI;
 
     this->treg16[RegisterAX] = &this->regs.W.AX;
     this->treg16[RegisterBX] = &this->regs.W.BX;
@@ -432,6 +454,22 @@ void VCpu::init()
 #ifdef VOMIT_DEBUG
     m_inDebugger = false;
 #endif
+}
+
+VCpu::~VCpu()
+{
+#ifdef VOMIT_PREFETCH_QUEUE
+    delete [] m_prefetchQueue;
+    m_prefetchQueue = 0;
+#endif
+
+#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
+    delete [] m_dirtMap;
+#endif
+
+    delete [] this->memory;
+    this->memory = 0;
+    m_codeMemory = 0;
 }
 
 #ifdef FOR_REFERENCE_ONLY
@@ -681,22 +719,6 @@ void VCpu::registerDefaultOpcodeHandlers()
     setOpcodeHandler(0xC9, 0xC9, _LEAVE            );
 }
 #endif
-
-void VCpu::kill()
-{
-#ifdef VOMIT_PREFETCH_QUEUE
-    delete [] m_prefetchQueue;
-    m_prefetchQueue = 0;
-#endif
-
-#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
-    delete [] m_dirtMap;
-#endif
-
-    delete [] this->memory;
-    this->memory = 0;
-    m_codeMemory = 0;
-}
 
 void VCpu::exec()
 {

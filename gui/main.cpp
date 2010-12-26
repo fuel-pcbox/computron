@@ -30,7 +30,6 @@ main(int argc, char **argv)
 #endif
 
     g_cpu = new VCpu;
-    g_cpu->init();
 
     extern void vomit_disasm_init_tables();
     vomit_disasm_init_tables();
