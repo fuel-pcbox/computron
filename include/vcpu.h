@@ -215,6 +215,22 @@ public:
 
     WORD CS, DS, ES, SS, FS, GS;
 
+    struct SegmentSelector {
+        unsigned DPL;
+        unsigned count;
+        bool present;
+        bool big;
+        bool granularity;
+        bool _32bit;
+        bool CE;
+        bool BRW;
+        bool acc;
+        DWORD base;
+        DWORD limit;
+    };
+
+    SegmentSelector m_selector[6];
+
     WORD currentSegment() const { return *m_currentSegment; }
     bool hasSegmentPrefix() const { return m_currentSegment == &m_segmentPrefix; }
 

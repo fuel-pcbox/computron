@@ -38,12 +38,43 @@ void _MOV_RM32_seg(VCpu* cpu)
     cpu->writeModRM32(rm, *cpu->tseg[segIndex]);
 }
 
+static void syncSegmentRegister(VCpu* cpu, int segIndex)
+{
+    VM_ASSERT(segIndex >= 0 && segIndex <= 5);
+    VCpu::SegmentSelector& selector = cpu->m_selector[segIndex];
+
+    WORD segment = *cpu->tseg[segIndex];
+
+    if (segment % 8)
+        vlog(VM_ALERT, "Segment selector index %u not divisible by 8.", segment);
+
+    if (segment >= cpu->GDTR.limit)
+        vlog(VM_ALERT, "Segment selector index %u >= GDTR.limit.", segment);
+
+    DWORD hi = cpu->readMemory32(cpu->GDTR.base + segment + 4);
+    DWORD lo = cpu->readMemory32(cpu->GDTR.base + segment);
+
+    selector.base = (hi & 0xFF000000) | ((hi & 0xFF) << 16) | ((lo >> 16) & 0xFFFF);
+    selector.limit = (hi & 0xF0000) | (lo & 0xFFFF);
+    selector.acc = hi >> 7;
+    selector.BRW = hi >> 8;
+    selector.CE = hi >> 9;
+    selector._32bit = hi >> 10;
+    selector.DPL = (hi >> 12) & 3;
+    selector.present = hi >> 14;
+    selector.big = hi >> 22;
+    selector.granularity = hi >> 23;
+}
+
 void _MOV_seg_RM16(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
     int segIndex = vomit_modRMRegisterPart(rm);
     VM_ASSERT(segIndex >= 0 && segIndex <= 5);
     *cpu->tseg[segIndex] = cpu->readModRM16(rm);
+
+    if (cpu->getPE())
+        syncSegmentRegister(cpu, segIndex);
 }
 
 void _MOV_seg_RM32(VCpu* cpu)
@@ -52,6 +83,9 @@ void _MOV_seg_RM32(VCpu* cpu)
     int segIndex = vomit_modRMRegisterPart(rm);
     VM_ASSERT(segIndex >= 0 && segIndex <= 5);
     *cpu->tseg[segIndex] = cpu->readModRM32(rm);
+
+    if (cpu->getPE())
+        syncSegmentRegister(cpu, segIndex);
 }
 
 void _MOV_RM8_reg8(VCpu* cpu)

@@ -418,6 +418,8 @@ VCpu::VCpu(QObject* parent)
     this->LDTR.segment = 0;
     this->LDTR.index = 0;
 
+    memset(m_selector, 0, sizeof(m_selector));
+
     this->creg[0] = &this->CR0;
     this->creg[1] = &this->CR1;
     this->creg[2] = &this->CR2;

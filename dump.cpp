@@ -72,6 +72,17 @@ void VCpu::dumpTrace() const
 }
 #endif
 
+void dumpSelector(const VCpu* cpu, const char* segmentRegisterName, int segIndex)
+{
+    const VCpu::SegmentSelector& selector = cpu->m_selector[segIndex];
+    vlog(VM_DUMPMSG, "%s=%04X {%08X:%05X}",
+        segmentRegisterName,
+        *cpu->tseg[segIndex],
+        selector.base,
+        selector.limit
+    );
+}
+
 void VCpu::dumpAll() const
 {
     BYTE* csip = codeMemory();
@@ -95,12 +106,23 @@ void VCpu::dumpAll() const
     vlog(VM_DUMPMSG, "ESP=%08X", getESP());
     vlog(VM_DUMPMSG, "ESI=%08X", getESI());
     vlog(VM_DUMPMSG, "EDI=%08X", getEDI());
-    vlog(VM_DUMPMSG, "CS=%04X", getCS());
-    vlog(VM_DUMPMSG, "DS=%04X", getDS());
-    vlog(VM_DUMPMSG, "ES=%04X", getES());
-    vlog(VM_DUMPMSG, "SS=%04X", getSS());
-    vlog(VM_DUMPMSG, "FS=%04X", getFS());
-    vlog(VM_DUMPMSG, "GS=%04X", getGS());
+
+
+    if (!getPE()) {
+        vlog(VM_DUMPMSG, "CS=%04X", getCS());
+        vlog(VM_DUMPMSG, "DS=%04X", getDS());
+        vlog(VM_DUMPMSG, "ES=%04X", getES());
+        vlog(VM_DUMPMSG, "SS=%04X", getSS());
+        vlog(VM_DUMPMSG, "FS=%04X", getFS());
+        vlog(VM_DUMPMSG, "GS=%04X", getGS());
+    } else {
+        dumpSelector(this, "CS", RegisterCS);
+        dumpSelector(this, "DS", RegisterDS);
+        dumpSelector(this, "ES", RegisterES);
+        dumpSelector(this, "SS", RegisterSS);
+        dumpSelector(this, "FS", RegisterFS);
+        dumpSelector(this, "GS", RegisterGS);
+    }
 
     vlog(VM_DUMPMSG, "CR0=%08X", getCR0());
 
