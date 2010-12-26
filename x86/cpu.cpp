@@ -403,6 +403,12 @@ VCpu::VCpu(QObject* parent)
     this->DR6 = 0;
     this->DR7 = 0;
 
+    this->IOPL = 0;
+    this->VM = 0;
+    this->VIP = 0;
+    this->VIF = 0;
+    this->CPL = 0;
+
     this->creg[0] = &this->CR0;
     this->creg[1] = &this->CR1;
     this->creg[2] = &this->CR2;
