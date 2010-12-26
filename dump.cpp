@@ -29,7 +29,7 @@ int VCpu::dumpDisassembled(WORD segment, DWORD offset) const
     int width = insn_width(opcode);
     disassemble(opcode, offset, disasm, sizeof(disasm));
 
-    p += sprintf(p, "%04X:%04X ", segment, offset);
+    p += sprintf(p, "%04X:%08X ", segment, offset);
 
     for (int i = 0; i < (width ? width : 7); ++i)
         p += sprintf(p, "%02X", opcode[i]);
@@ -88,9 +88,21 @@ void VCpu::dumpAll() const
     }
 #endif
 
-    vlog(VM_DUMPMSG, "AX=%04X BX=%04X CX=%04X DX=%04X     SP=> %04X", this->regs.W.AX, this->regs.W.BX, this->regs.W.CX, this->regs.W.DX, *(stacky++));
-    vlog(VM_DUMPMSG, "SP=%04X BP=%04X SI=%04X DI=%04X          %04X", this->regs.W.SP, this->regs.W.BP, this->regs.W.SI, this->regs.W.DI, *(stacky++));
-    vlog(VM_DUMPMSG, "CS=%04X DS=%04X ES=%04X SS=%04X          %04X", getCS(), getDS(), getES(), getSS(), *(stacky++));
+    vlog(VM_DUMPMSG, "EAX=%08X", getEAX());
+    vlog(VM_DUMPMSG, "EBX=%08X", getEBX());
+    vlog(VM_DUMPMSG, "ECX=%08X", getECX());
+    vlog(VM_DUMPMSG, "EDX=%08X", getEDX());
+    vlog(VM_DUMPMSG, "EBP=%08X", getEBP());
+    vlog(VM_DUMPMSG, "ESP=%08X", getESP());
+    vlog(VM_DUMPMSG, "ESI=%08X", getESI());
+    vlog(VM_DUMPMSG, "EDI=%08X", getEDI());
+    vlog(VM_DUMPMSG, "CS=%04X", getCS());
+    vlog(VM_DUMPMSG, "DS=%04X", getDS());
+    vlog(VM_DUMPMSG, "ES=%04X", getES());
+    vlog(VM_DUMPMSG, "SS=%04X", getSS());
+    vlog(VM_DUMPMSG, "FS=%04X", getFS());
+    vlog(VM_DUMPMSG, "GS=%04X", getGS());
+
     vlog(VM_DUMPMSG, "C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u          %04X", getCF(), getPF(), getAF(), getZF(), getSF(), getIF(), getDF(), getOF(), *(stacky++));
 
     vlog(VM_DUMPMSG, "  -  (%02X %02X%02X%02X%02X%02X)", csip[0], csip[1], csip[2], csip[3], csip[4], csip[5]);
@@ -98,8 +110,7 @@ void VCpu::dumpAll() const
     vlog(VM_DUMPMSG, "  -  [%02X %02X%02X%02X%02X%02X]", dpfq[0], dpfq[1], dpfq[2], dpfq[3], dpfq[4], dpfq[5]);
 #endif
 
-    vlog(VM_DUMPMSG, "\n");
-    dumpDisassembled(getBaseCS(), getBaseIP());
+    dumpDisassembled(getBaseCS(), getBaseEIP());
 }
 
 static inline BYTE n(BYTE b)

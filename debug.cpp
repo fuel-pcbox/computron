@@ -92,7 +92,7 @@ void VCpu::debugger()
     }
 
     for (;;) {
-        printf("vomit> ");
+        printf("[%u/%u] %04X:%08X> ", a16() ? 16 : 32, o16() ? 16 : 32, getCS(), getEIP());
         fflush(stdout);
         fgets(curcmd, sizeof(curcmd), stdin);
         if (feof(stdin)) {
