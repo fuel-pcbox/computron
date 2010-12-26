@@ -106,7 +106,7 @@ void _CLI(VCpu* cpu)
         return;
     }
 
-    if (cpu->getVM()) {
+    if (!cpu->getVM()) {
         if (cpu->getIOPL() >= cpu->getCPL()) {
             cpu->setIF(0);
         } else {
