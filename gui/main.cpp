@@ -21,6 +21,7 @@ main(int argc, char **argv)
     if(args.contains("--iopeek")) options.iopeek = true;
     if(args.contains("--bda-peek")) options.bda_peek = true;
     if(args.contains("--trace")) options.trace = true;
+    if(args.contains("--debug")) options.start_in_debug = true;
 
 #ifndef VOMIT_TRACE
     if(options.trace)
@@ -38,6 +39,9 @@ main(int argc, char **argv)
     qRegisterMetaType<SIGNED_DWORD>("SIGNED_DWORD");
 
     g_cpu = new VCpu;
+
+    if (options.start_in_debug)
+        g_cpu->attachDebugger();
 
     extern void vomit_disasm_init_tables();
     vomit_disasm_init_tables();

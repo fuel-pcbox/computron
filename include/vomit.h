@@ -44,6 +44,7 @@ typedef struct {
     bool trapint;
     bool iopeek;
     bool mempeek;
+    bool start_in_debug;
 } vomit_options_t;
 
 extern vomit_options_t options;
