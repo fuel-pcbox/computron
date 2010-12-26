@@ -416,8 +416,8 @@ wrapped_insn_table[0xFE][7] = (insn_t){ 0, OP_UNASSIGNED };
     insn_base_width[OP_dummy_mem16] = 4;
 }
 
-const char segname[4][3] = {
-    "ES", "CS", "SS", "DS"
+const char segname[6][3] = {
+    "ES", "CS", "SS", "DS", "FS", "GS"
 };
 
 const char reg16name[8][3] = {

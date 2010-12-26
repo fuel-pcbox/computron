@@ -17,7 +17,7 @@ typedef uint8_t BYTE;
 /* Fetch the name of a segment register based on id#.
  * We AND with 3 to keep the index within bounds.
  */
-#define SEG(d)			(segname[(d) & 3])
+#define SEG(d)			(segname[(d)])
 
 /* Construct a 16-bit word from two 8-bit bytes */
 #define MAKEWORD(l, m)	(((m) << 8) | (l))
@@ -32,7 +32,7 @@ extern const insn_t insn_table[];
 extern insn_t wrapped_insn_table[256][8];
 extern const char reg16name[8][3];
 extern const char reg8name[8][3];
-extern const char segname[4][3];
+extern const char segname[6][3];
 
 extern char * modrm_string(BYTE *, int);
 extern bool disassemble(BYTE *, long unsigned int, char *, int);
