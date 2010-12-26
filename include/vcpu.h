@@ -81,6 +81,52 @@ class VCpu : public QObject
     Q_OBJECT
 public:
 
+    Q_PROPERTY(DWORD EAX READ getEAX WRITE setEAX)
+    Q_PROPERTY(DWORD EBX READ getEBX WRITE setEBX)
+    Q_PROPERTY(DWORD ECX READ getECX WRITE setECX)
+    Q_PROPERTY(DWORD EDX READ getEDX WRITE setEDX)
+    Q_PROPERTY(DWORD EBP READ getEBP WRITE setEBP)
+    Q_PROPERTY(DWORD ESP READ getESP WRITE setESP)
+    Q_PROPERTY(DWORD ESI READ getESI WRITE setESI)
+    Q_PROPERTY(DWORD SDI READ getEDI WRITE setEDI)
+
+    Q_PROPERTY(WORD AX READ getAX WRITE setAX)
+    Q_PROPERTY(WORD BX READ getBX WRITE setBX)
+    Q_PROPERTY(WORD CX READ getCX WRITE setCX)
+    Q_PROPERTY(WORD DX READ getDX WRITE setDX)
+    Q_PROPERTY(WORD BP READ getBP WRITE setBP)
+    Q_PROPERTY(WORD SP READ getSP WRITE setSP)
+    Q_PROPERTY(WORD SI READ getSI WRITE setSI)
+    Q_PROPERTY(WORD DI READ getDI WRITE setDI)
+
+    Q_PROPERTY(BYTE AL READ getAL WRITE setAL)
+    Q_PROPERTY(BYTE BL READ getBL WRITE setBL)
+    Q_PROPERTY(BYTE CL READ getCL WRITE setCL)
+    Q_PROPERTY(BYTE DL READ getDL WRITE setDL)
+    Q_PROPERTY(BYTE AH READ getAH WRITE setAH)
+    Q_PROPERTY(BYTE BH READ getBH WRITE setBH)
+    Q_PROPERTY(BYTE CH READ getCH WRITE setCH)
+    Q_PROPERTY(BYTE DH READ getDH WRITE setDH)
+
+    Q_PROPERTY(DWORD CS READ getCS WRITE setCS)
+    Q_PROPERTY(DWORD DS READ getDS WRITE setDS)
+    Q_PROPERTY(DWORD ES READ getES WRITE setES)
+    Q_PROPERTY(DWORD SS READ getSS WRITE setSS)
+    Q_PROPERTY(DWORD FS READ getFS WRITE setFS)
+    Q_PROPERTY(DWORD GS READ getGS WRITE setGS)
+
+    Q_PROPERTY(bool IF READ getIF WRITE setIF)
+    Q_PROPERTY(bool OF READ getOF WRITE setOF)
+    Q_PROPERTY(bool ZF READ getZF WRITE setZF)
+    Q_PROPERTY(bool SF READ getSF WRITE setSF)
+    Q_PROPERTY(bool CF READ getCF WRITE setCF)
+    Q_PROPERTY(bool AF READ getAF WRITE setAF)
+    Q_PROPERTY(bool TF READ getTF WRITE setTF)
+    Q_PROPERTY(bool PF READ getPF WRITE setPF)
+
+    Q_PROPERTY(DWORD EIP READ getEIP WRITE setEIP)
+    Q_PROPERTY(WORD IP READ getIP WRITE setIP)
+
     VCpu(QObject* parent = 0);
     ~VCpu();
 
@@ -287,13 +333,23 @@ public:
 
     WORD getCS() const { return this->CS; }
     WORD getIP() const { return this->IP; }
-    WORD getEIP() const { return this->EIP; }
+    DWORD getEIP() const { return this->EIP; }
 
     WORD getDS() const { return this->DS; }
     WORD getES() const { return this->ES; }
     WORD getSS() const { return this->SS; }
     WORD getFS() const { return this->FS; }
     WORD getGS() const { return this->GS; }
+
+    void setCS(WORD cs) { this->CS = cs; }
+    void setDS(WORD ds) { this->DS = ds; }
+    void setES(WORD es) { this->ES = es; }
+    void setSS(WORD ss) { this->SS = ss; }
+    void setFS(WORD fs) { this->FS = fs; }
+    void setGS(WORD gs) { this->GS = gs; }
+
+    void setIP(WORD ip) { this->IP = ip; }
+    void setEIP(DWORD eip) { this->EIP = eip; }
 
     DWORD getEAX() const { return this->regs.D.EAX; }
     DWORD getEBX() const { return this->regs.D.EBX; }
@@ -314,9 +370,22 @@ public:
     WORD getBP() const { return this->regs.W.BP; }
 
     BYTE getAL() const { return this->regs.B.AL; }
+    BYTE getBL() const { return this->regs.B.BL; }
+    BYTE getCL() const { return this->regs.B.CL; }
+    BYTE getDL() const { return this->regs.B.DL; }
+    BYTE getAH() const { return this->regs.B.AH; }
+    BYTE getBH() const { return this->regs.B.BH; }
+    BYTE getCH() const { return this->regs.B.CH; }
+    BYTE getDH() const { return this->regs.B.DH; }
 
     void setAL(BYTE value) { this->regs.B.AL = value; }
+    void setBL(BYTE value) { this->regs.B.BL = value; }
+    void setCL(BYTE value) { this->regs.B.CL = value; }
+    void setDL(BYTE value) { this->regs.B.DL = value; }
     void setAH(BYTE value) { this->regs.B.AH = value; }
+    void setBH(BYTE value) { this->regs.B.BH = value; }
+    void setCH(BYTE value) { this->regs.B.CH = value; }
+    void setDH(BYTE value) { this->regs.B.DH = value; }
 
     void setAX(WORD value) { this->regs.W.AX = value; }
     void setBX(WORD value) { this->regs.W.BX = value; }
@@ -335,6 +404,24 @@ public:
     void setEBP(DWORD value) { this->regs.D.EBP = value; }
     void setESI(DWORD value) { this->regs.D.ESI = value; }
     void setEDI(DWORD value) { this->regs.D.EDI = value; }
+
+    DWORD getCR0() const { return this->CR0; }
+    DWORD getCR1() const { return this->CR1; }
+    DWORD getCR2() const { return this->CR2; }
+    DWORD getCR3() const { return this->CR3; }
+    DWORD getCR4() const { return this->CR4; }
+    DWORD getCR5() const { return this->CR5; }
+    DWORD getCR6() const { return this->CR6; }
+    DWORD getCR7() const { return this->CR7; }
+
+    DWORD getDR0() const { return this->DR0; }
+    DWORD getDR1() const { return this->DR1; }
+    DWORD getDR2() const { return this->DR2; }
+    DWORD getDR3() const { return this->DR3; }
+    DWORD getDR4() const { return this->DR4; }
+    DWORD getDR5() const { return this->DR5; }
+    DWORD getDR6() const { return this->DR6; }
+    DWORD getDR7() const { return this->DR7; }
 
     // Base CS:EIP is the start address of the currently executing instruction
     WORD getBaseCS() const { return m_baseCS; }

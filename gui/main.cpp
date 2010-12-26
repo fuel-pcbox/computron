@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include <QApplication>
 #include <QFile>
+#include <QMetaType>
 #include "screen.h"
 #include "vomit.h"
 
@@ -28,6 +29,13 @@ main(int argc, char **argv)
         exit(1);
     }
 #endif
+
+    qRegisterMetaType<BYTE>("BYTE");
+    qRegisterMetaType<WORD>("WORD");
+    qRegisterMetaType<DWORD>("DWORD");
+    qRegisterMetaType<SIGNED_BYTE>("SIGNED_BYTE");
+    qRegisterMetaType<SIGNED_WORD>("SIGNED_WORD");
+    qRegisterMetaType<SIGNED_DWORD>("SIGNED_DWORD");
 
     g_cpu = new VCpu;
 
