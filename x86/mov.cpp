@@ -25,37 +25,33 @@ void _MOV_RM32_imm32(VCpu* cpu)
 void _MOV_RM16_seg(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-
-    VM_ASSERT(vomit_modRMRegisterPart(rm) >= 0 && vomit_modRMRegisterPart(rm) <= 5);
-
-    cpu->writeModRM16(rm, *cpu->tseg[vomit_modRMRegisterPart(rm)]);
+    int segIndex = vomit_modRMRegisterPart(rm);
+    VM_ASSERT(segIndex >= 0 && segIndex <= 5);
+    cpu->writeModRM16(rm, *cpu->tseg[segIndex]);
 }
 
 void _MOV_RM32_seg(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-
-    VM_ASSERT(vomit_modRMRegisterPart(rm) >= 0 && vomit_modRMRegisterPart(rm) <= 5);
-
-    cpu->writeModRM32(rm, *cpu->tseg[vomit_modRMRegisterPart(rm)]);
+    int segIndex = vomit_modRMRegisterPart(rm);
+    VM_ASSERT(segIndex >= 0 && segIndex <= 5);
+    cpu->writeModRM32(rm, *cpu->tseg[segIndex]);
 }
 
 void _MOV_seg_RM16(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-
-    VM_ASSERT(vomit_modRMRegisterPart(rm) >= 0 && vomit_modRMRegisterPart(rm) <= 5);
-
-    *cpu->tseg[vomit_modRMRegisterPart(rm)] = cpu->readModRM16(rm);
+    int segIndex = vomit_modRMRegisterPart(rm);
+    VM_ASSERT(segIndex >= 0 && segIndex <= 5);
+    *cpu->tseg[segIndex] = cpu->readModRM16(rm);
 }
 
 void _MOV_seg_RM32(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-
-    VM_ASSERT(vomit_modRMRegisterPart(rm) >= 0 && vomit_modRMRegisterPart(rm) <= 5);
-
-    *cpu->tseg[vomit_modRMRegisterPart(rm)] = cpu->readModRM32(rm);
+    int segIndex = vomit_modRMRegisterPart(rm);
+    VM_ASSERT(segIndex >= 0 && segIndex <= 5);
+    *cpu->tseg[segIndex] = cpu->readModRM32(rm);
 }
 
 void _MOV_RM8_reg8(VCpu* cpu)
