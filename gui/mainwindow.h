@@ -14,7 +14,6 @@ public:
     MainWindow(VCpu*);
     ~MainWindow();
 
-    void setCpu(VCpu*);
     VCpu* cpu();
     Screen *screen();
 

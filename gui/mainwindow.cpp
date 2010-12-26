@@ -30,10 +30,13 @@ struct MainWindow::Private
 MainWindow::MainWindow(VCpu* cpu)
     : d(new Private)
 {
-    d->worker = 0;
     d->screen = new Screen(cpu);
 
-    setCpu(cpu);
+    d->cpu = cpu;
+    d->worker = new Worker(d->cpu, this);
+    QObject::connect(d->worker, SIGNAL(finished()), this, SLOT(close()));
+    d->worker->startMachine();
+    d->worker->start();
 
     setWindowTitle("Vomit");
     setUnifiedTitleAndToolBarOnMac(true);
@@ -159,18 +162,6 @@ void MainWindow::slotRebootMachine()
 {
     VM_ASSERT(d->worker);
     d->worker->rebootMachine();
-}
-
-void MainWindow::setCpu(VCpu* cpu)
-{
-    d->cpu = cpu;
-
-    delete d->worker;
-
-    d->worker = new Worker(d->cpu, this);
-    QObject::connect(d->worker, SIGNAL(finished()), this, SLOT(close()));
-    d->worker->startMachine();
-    d->worker->start();
 }
 
 Screen *MainWindow::screen()
