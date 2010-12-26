@@ -177,7 +177,7 @@ void VCpu::mathFlags16(DWORD result, WORD dest, WORD src)
 
 void VCpu::mathFlags32(QWORD result, DWORD dest, DWORD src)
 {
-    setCF(result & 0x100000000);
+    setCF(result & 0x100000000ULL);
     setSF(result & 0x80000000);
     setZF((result & 0xFFFFFFFF) == 0);
     setPF(parity_table[result & 0xFF]);
