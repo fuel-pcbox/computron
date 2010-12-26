@@ -409,6 +409,15 @@ VCpu::VCpu(QObject* parent)
     this->VIF = 0;
     this->CPL = 0;
 
+    this->GDTR.base = 0;
+    this->GDTR.limit = 0;
+    this->IDTR.base = 0;
+    this->IDTR.limit = 0;
+    this->LDTR.base = 0;
+    this->LDTR.limit = 0;
+    this->LDTR.segment = 0;
+    this->LDTR.index = 0;
+
     this->creg[0] = &this->CR0;
     this->creg[1] = &this->CR1;
     this->creg[2] = &this->CR2;
