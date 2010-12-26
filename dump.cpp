@@ -74,7 +74,6 @@ void VCpu::dumpTrace() const
 
 void VCpu::dumpAll() const
 {
-    WORD* stacky = reinterpret_cast<WORD*>(memoryPointer(getSS(), this->regs.W.SP));
     BYTE* csip = codeMemory();
 
 #ifdef VOMIT_PREFETCH_QUEUE
@@ -109,7 +108,7 @@ void VCpu::dumpAll() const
     vlog(VM_DUMPMSG, "LDTR={base=%08X, limit=%04X}", this->LDTR.base, this->LDTR.limit);
     vlog(VM_DUMPMSG, "IDTR={base=%08X, limit=%04X}", this->IDTR.base, this->IDTR.limit);
 
-    vlog(VM_DUMPMSG, "C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u          %04X", getCF(), getPF(), getAF(), getZF(), getSF(), getIF(), getDF(), getOF(), *(stacky++));
+    vlog(VM_DUMPMSG, "C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u", getCF(), getPF(), getAF(), getZF(), getSF(), getIF(), getDF(), getOF());
 
     vlog(VM_DUMPMSG, "  -  (%02X %02X%02X%02X%02X%02X)", csip[0], csip[1], csip[2], csip[3], csip[4], csip[5]);
 #ifdef VOMIT_PREFETCH_QUEUE
