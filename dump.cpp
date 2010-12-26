@@ -103,6 +103,8 @@ void VCpu::dumpAll() const
     vlog(VM_DUMPMSG, "FS=%04X", getFS());
     vlog(VM_DUMPMSG, "GS=%04X", getGS());
 
+    vlog(VM_DUMPMSG, "CR0=%08X", getCR0());
+
     vlog(VM_DUMPMSG, "C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u          %04X", getCF(), getPF(), getAF(), getZF(), getSF(), getIF(), getDF(), getOF(), *(stacky++));
 
     vlog(VM_DUMPMSG, "  -  (%02X %02X%02X%02X%02X%02X)", csip[0], csip[1], csip[2], csip[3], csip[4], csip[5]);
