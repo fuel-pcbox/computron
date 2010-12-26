@@ -658,6 +658,8 @@ private:
     friend void unspeakable_abomination();
     DWORD m_baseMemorySize;
     DWORD m_extendedMemorySize;
+
+    QList<DWORD> m_breakPoints;
 };
 
 extern VCpu* g_cpu;

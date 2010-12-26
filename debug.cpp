@@ -108,9 +108,22 @@ void VCpu::debugger()
                 return;
             }
 
-            if (!strcmp(curtok, "c"))
+            if (!strcmp(curtok, "b")) {
+                curtok = strtok(NULL, ": \n");
+                if (curtok!=0) {
+                    DWORD newBreakPoint = strtol(curtok, NULL, 16);
+                    m_breakPoints.append(newBreakPoint);
+                    printf("Added breakpoint at %08X\n", newBreakPoint);
+                } else {
+                    unsigned int i = 0;
+                    foreach (DWORD breakPoint, m_breakPoints)
+                        printf("[%u]: %08X\n", i++, breakPoint);
+                }
+            }
+
+            else if (!strcmp(curtok, "c"))
                 dump();
-            if (!strcmp(curtok, "reconf"))
+            else if (!strcmp(curtok, "reconf"))
                 config_reload();
             else if (!strcmp(curtok, "r"))
                 dumpAll();

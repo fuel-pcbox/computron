@@ -763,6 +763,15 @@ void VCpu::mainLoop()
             return;
 
 #ifdef VOMIT_DEBUG
+
+        DWORD flatPC = FLAT(getCS(), getEIP());
+        foreach (DWORD breakPoint, m_breakPoints) {
+            if (flatPC == breakPoint) {
+                attachDebugger();
+                break;
+            }
+        }
+
         if (inDebugger()) {
             saveBaseAddress();
             debugger();
