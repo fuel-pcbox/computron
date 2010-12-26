@@ -97,13 +97,79 @@ void _MOV_reg32_RM32(VCpu* cpu)
 void _MOV_reg32_CR(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    *cpu->treg32[rm & 7] = *cpu->creg[vomit_modRMRegisterPart(rm)];
+    int crIndex = vomit_modRMRegisterPart(rm);
+
+    if (cpu->getVM()) {
+        cpu->GP(0);
+        return;
+    }
+
+    if (cpu->getPE()) {
+        // FIXME: Other GP(0) conditions:
+        // If an attempt is made to write invalid bit combinations in CR0
+        // (such as setting the PG flag to 1 when the PE flag is set to 0, or
+        // setting the CD flag to 0 when the NW flag is set to 1).
+        // If an attempt is made to write a 1 to any reserved bit in CR4.
+        // If an attempt is made to write 1 to CR4.PCIDE.
+        // If any of the reserved bits are set in the page-directory pointers
+        // table (PDPT) and the loading of a control register causes the
+        // PDPT to be loaded into the processor.
+        if (cpu->getCPL() != 0) {
+            cpu->GP(0);
+            return;
+        }
+    } else {
+        // FIXME: GP(0) conditions:
+        // If an attempt is made to write a 1 to any reserved bit in CR4.
+        // If an attempt is made to write 1 to CR4.PCIDE.
+        // If an attempt is made to write invalid bit combinations in CR0
+        // (such as setting the PG flag to 1 when the PE flag is set to 0).
+        if (crIndex == 1 || crIndex == 5 || crIndex == 6 || crIndex == 7) {
+            cpu->exception(6);
+            return;
+        }
+    }
+
+    *cpu->treg32[rm & 7] = *cpu->creg[crIndex];
 }
 
 void _MOV_CR_reg32(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    *cpu->creg[vomit_modRMRegisterPart(rm)] = *cpu->treg32[rm & 7];
+    int crIndex = vomit_modRMRegisterPart(rm);
+
+    if (cpu->getVM()) {
+        cpu->GP(0);
+        return;
+    }
+
+    if (cpu->getPE()) {
+        // FIXME: Other GP(0) conditions:
+        // If an attempt is made to write invalid bit combinations in CR0
+        // (such as setting the PG flag to 1 when the PE flag is set to 0, or
+        // setting the CD flag to 0 when the NW flag is set to 1).
+        // If an attempt is made to write a 1 to any reserved bit in CR4.
+        // If an attempt is made to write 1 to CR4.PCIDE.
+        // If any of the reserved bits are set in the page-directory pointers
+        // table (PDPT) and the loading of a control register causes the
+        // PDPT to be loaded into the processor.
+        if (cpu->getCPL() != 0) {
+            cpu->GP(0);
+            return;
+        }
+    } else {
+        // FIXME: GP(0) conditions:
+        // If an attempt is made to write a 1 to any reserved bit in CR4.
+        // If an attempt is made to write 1 to CR4.PCIDE.
+        // If an attempt is made to write invalid bit combinations in CR0
+        // (such as setting the PG flag to 1 when the PE flag is set to 0).
+        if (crIndex == 1 || crIndex == 5 || crIndex == 6 || crIndex == 7) {
+            cpu->exception(6);
+            return;
+        }
+    }
+
+    *cpu->creg[crIndex] = *cpu->treg32[rm & 7];
 }
 
 void _MOV_AL_imm8(VCpu* cpu)
