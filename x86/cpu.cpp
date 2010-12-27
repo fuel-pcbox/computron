@@ -37,6 +37,25 @@ void _OperationSizeOverride(VCpu*cpu)
     cpu->m_operationSize32 = !cpu->m_operationSize32;
 }
 
+void _AddressSizeOverride(VCpu* cpu)
+{
+    cpu->m_addressSize32 = !cpu->m_addressSize32;
+
+    vlog(VM_LOGMSG, "%04X:%08X Address size override detected! Opcode: db 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X ", cpu->getBaseCS(), cpu->getBaseEIP(),
+         cpu->readMemory8(cpu->getCS(), cpu->getEIP()),
+         cpu->readMemory8(cpu->getCS(), cpu->getEIP() + 1),
+         cpu->readMemory8(cpu->getCS(), cpu->getEIP() + 2),
+         cpu->readMemory8(cpu->getCS(), cpu->getEIP() + 3),
+         cpu->readMemory8(cpu->getCS(), cpu->getEIP() + 4),
+         cpu->readMemory8(cpu->getCS(), cpu->getEIP() + 5)
+    );
+    cpu->dumpAll();
+
+    cpu->decodeNext();
+
+    cpu->m_addressSize32 = !cpu->m_addressSize32;
+}
+
 void VCpu::decodeNext()
 {
     this->opcode = fetchOpcodeByte();
@@ -189,6 +208,7 @@ void VCpu::decode(BYTE op)
     case 0x64: _FS(this); break;
     case 0x65: _GS(this); break;
     case 0x66: _OperationSizeOverride(this); break;
+    case 0x67: _AddressSizeOverride(this); break;
     case 0x68: CALL_HANDLER(_PUSH_imm16, _PUSH_imm32); break;
     case 0x6A: _PUSH_imm8(this); break;
     case 0x6E: _OUTSB(this); break;
