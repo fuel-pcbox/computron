@@ -494,6 +494,8 @@ VCpu::VCpu(QObject* parent)
 
     setFlags(0x0200);
 
+    setIOPL(3);
+
     m_instructionsPerTick = 0x50000;
     m_pitCountdown = m_instructionsPerTick;
     m_state = Alive;
