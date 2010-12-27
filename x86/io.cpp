@@ -131,7 +131,7 @@ void VCpu::out(WORD port, BYTE value)
 {
 #ifdef VOMIT_DEBUG
     if (options.iopeek)
-        vlog(VM_IOMSG, "[%04X:%04X] VCpu::out: %02X --> %04X", getBaseCS(), getBaseIP(), value, port);
+        vlog(VM_IOMSG, "[%04X:%08X] VCpu::out: %02X --> %04X", getBaseCS(), getBaseEIP(), value, port);
 #endif
 
     if (IODevice::writeDevices().contains(port)) {
@@ -152,7 +152,7 @@ BYTE VCpu::in(WORD port)
 {
 #ifdef VOMIT_DEBUG
     if (options.iopeek)
-        vlog(VM_IOMSG, "[%04X:%04X] VCpu::in: %04X", getBaseCS(), getBaseIP(), port);
+        vlog(VM_IOMSG, "[%04X:%08X] VCpu::in: %04X", getBaseCS(), getBaseEIP(), port);
 #endif
 
     if (IODevice::readDevices().contains(port))

@@ -23,6 +23,7 @@ void _OperationSizeOverride(VCpu*cpu)
     cpu->m_operationSize32 = !cpu->m_operationSize32;
 
     vlog(VM_LOGMSG, "%04X:%08X Operation size override detected! Opcode: db 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X ", cpu->getBaseCS(), cpu->getBaseEIP(),
+         cpu->readMemory8(cpu->getCS(), cpu->getEIP() - 1),
          cpu->readMemory8(cpu->getCS(), cpu->getEIP()),
          cpu->readMemory8(cpu->getCS(), cpu->getEIP() + 1),
          cpu->readMemory8(cpu->getCS(), cpu->getEIP() + 2),
@@ -42,6 +43,7 @@ void _AddressSizeOverride(VCpu* cpu)
     cpu->m_addressSize32 = !cpu->m_addressSize32;
 
     vlog(VM_LOGMSG, "%04X:%08X Address size override detected! Opcode: db 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X ", cpu->getBaseCS(), cpu->getBaseEIP(),
+         cpu->readMemory8(cpu->getCS(), cpu->getEIP() - 1),
          cpu->readMemory8(cpu->getCS(), cpu->getEIP()),
          cpu->readMemory8(cpu->getCS(), cpu->getEIP() + 1),
          cpu->readMemory8(cpu->getCS(), cpu->getEIP() + 2),
@@ -933,7 +935,7 @@ void VCpu::setInterruptHandler(BYTE isr, WORD segment, WORD offset)
 void _UNSUPP(VCpu* cpu)
 {
     // We've come across an unsupported instruction, log it, then vector to the "illegal instruction" ISR.
-    vlog(VM_ALERT, "%04X:%04X: Unsupported opcode %02X", cpu->getBaseCS(), cpu->getBaseIP(), cpu->opcode);
+    vlog(VM_ALERT, "%04X:%08X: Unsupported opcode %02X", cpu->getBaseCS(), cpu->getBaseEIP(), cpu->opcode);
     QString ndis = "db ";
     DWORD baseEIP = cpu->getBaseEIP();
     QStringList dbs;
@@ -957,11 +959,11 @@ void _HLT(VCpu* cpu)
     cpu->setState(VCpu::Halted);
 
     if (!cpu->getIF()) {
-        vlog(VM_ALERT, "%04X:%04X: Halted with IF=0", cpu->getBaseCS(), cpu->getBaseIP());
+        vlog(VM_ALERT, "%04X:%08X: Halted with IF=0", cpu->getBaseCS(), cpu->getBaseEIP());
         vm_exit(0);
     }
 
-    vlog(VM_CPUMSG, "%04X:%04X Halted", cpu->getBaseCS(), cpu->getBaseIP());
+    vlog(VM_CPUMSG, "%04X:%08X Halted", cpu->getBaseCS(), cpu->getBaseEIP());
 
     cpu->haltedLoop();
 }
@@ -1279,7 +1281,7 @@ DWORD VCpu::readMemory32(DWORD address) const
 #endif
 #ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
     if (!m_dirtMap[address] || !m_dirtMap[address + 1] || !m_dirtMap[address + 2] || !m_dirtMap[address + 3])
-        vlog(VM_MEMORYMSG, "%04X:%04X: Uninitialized read from %08X", getBaseCS(), getBaseIP(), address);
+        vlog(VM_MEMORYMSG, "%04X:%08X: Uninitialized read from %08X", getBaseCS(), getBaseEIP(), address);
 #endif
     return vomit_read32FromPointer(reinterpret_cast<DWORD*>(this->memory + address));
 }
