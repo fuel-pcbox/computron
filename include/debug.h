@@ -3,7 +3,8 @@
 
 #ifdef VOMIT_DEBUG
 #include <QtCore/qdebug.h>
-#define VM_ASSERT Q_ASSERT
+#include <assert.h>
+#define VM_ASSERT assert
 #else
 #define VM_ASSERT(x)
 #endif
