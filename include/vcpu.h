@@ -616,6 +616,7 @@ public:
     void nextEDI(int size) { this->regs.D.EDI += (getDF() ? -size : size); }
 
 private:
+    void* resolveModRM_internal(BYTE rmbyte, int bits);
     void* resolveModRM8_internal(BYTE rmbyte);
     void* resolveModRM16_internal(BYTE rmbyte);
     void* resolveModRM32_internal(BYTE rmbyte);
