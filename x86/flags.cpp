@@ -222,6 +222,8 @@ void VCpu::setFlags(WORD flags)
     setIF(flags & 0x0200);
     setDF(flags & 0x0400);
     setOF(flags & 0x0800);
+    setIOPL((flags & 0x3000) >> 12);
+    setNT(flags & 0x4000);
 }
 
 WORD VCpu::getFlags() const
@@ -235,15 +237,15 @@ WORD VCpu::getFlags() const
         | (getTF() << 8)
         | (getIF() << 9)
         | (getDF() << 10)
-        | (getOF() << 11);
+        | (getOF() << 11)
+        | (getIOPL() << 13)
+        | (getNT() << 14);
 }
 
 void VCpu::setEFlags(DWORD eflags)
 {
     setFlags(eflags & 0xFFFF);
 
-    this->IOPL = (eflags & 0x3000) >> 12;
-    this->NT = (eflags & 0x4000) != 0;
     this->RF = (eflags & 0x10000) != 0;
     this->VM = (eflags & 0x20000) != 0;
     //this->AC = (eflags & 0x40000) != 0;
@@ -255,8 +257,6 @@ void VCpu::setEFlags(DWORD eflags)
 DWORD VCpu::getEFlags() const
 {
     DWORD eflags = getFlags()
-         | (this->IOPL << 13)
-         | (this->NT << 14)
          | (this->RF << 16)
          | (this->VM << 17)
 //       | (this->AC << 18)

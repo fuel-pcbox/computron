@@ -329,6 +329,8 @@ public:
     void setPF(bool value) { this->PF = value; }
     void setZF(bool value) { this->ZF = value; }
     void setVIF(bool value) { this->VIF = value; }
+    void setNT(bool value) { this->NT = value; }
+    void setIOPL(unsigned int value) { this->IOPL = value; }
 
     bool getIF() const { return this->IF; }
     bool getCF() const { return this->CF; }
@@ -341,6 +343,7 @@ public:
     bool getZF() const { return this->ZF; }
     unsigned int getIOPL() const { return this->IOPL; }
     unsigned int getCPL() const { return this->CPL; }
+    bool getNT() const { return this->NT; }
     bool getVIP() const { return this->VIP; }
     bool getVIF() const { return this->VIF; }
     bool getVM() const { return this->VM; }
