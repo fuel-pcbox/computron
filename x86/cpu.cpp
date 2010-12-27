@@ -797,7 +797,7 @@ void VCpu::mainLoop()
 
 #ifdef VOMIT_DEBUG
 
-        DWORD flatPC = FLAT(getCS(), getEIP());
+        DWORD flatPC = vomit_toFlatAddress(getCS(), getEIP());
         foreach (DWORD breakPoint, m_breakPoints) {
             if (flatPC == breakPoint) {
                 attachDebugger();

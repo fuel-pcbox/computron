@@ -70,8 +70,6 @@ inline int vomit_modRMRegisterPart(int rmbyte)
 #define LSB(w) ((w)&0xFF)
 #define MSB(w) (((w)&0xFF00)>>8)
 
-#define FLAT(s,o) (((s)<<4)+(o))
-
 // VCPU MONSTROSITY
 
 class VgaMemory;
@@ -1322,12 +1320,12 @@ void VCpu::writeMemory16(DWORD address, WORD value)
 
 void VCpu::writeMemory16(WORD segment, WORD offset, WORD value)
 {
-    writeMemory16(FLAT(segment, offset), value);
+    writeMemory16(vomit_toFlatAddress(segment, offset), value);
 }
 
 void VCpu::writeMemory32(WORD segment, WORD offset, DWORD value)
 {
-    writeMemory32(FLAT(segment, offset), value);
+    writeMemory32(vomit_toFlatAddress(segment, offset), value);
 }
 
 BYTE* VCpu::codeMemory() const
