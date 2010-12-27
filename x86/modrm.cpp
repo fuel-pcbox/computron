@@ -30,7 +30,13 @@ void* VCpu::resolveModRM32(BYTE rmbyte)
 
 void VCpu::writeModRM32(BYTE rmbyte, DWORD value)
 {
-    DWORD* registerPointer = reinterpret_cast<DWORD*>(resolveModRM32_internal(rmbyte));
+    DWORD* registerPointer;
+
+    if (a16())
+        registerPointer = reinterpret_cast<DWORD*>(resolveModRM16_internal(rmbyte));
+    else
+        registerPointer = reinterpret_cast<DWORD*>(resolveModRM32_internal(rmbyte));
+
     if (registerPointer)
         *registerPointer = value;
     else
@@ -39,7 +45,13 @@ void VCpu::writeModRM32(BYTE rmbyte, DWORD value)
 
 void VCpu::writeModRM16(BYTE rmbyte, WORD value)
 {
-    WORD* registerPointer = reinterpret_cast<WORD*>(resolveModRM16_internal(rmbyte));
+    DWORD* registerPointer;
+
+    if (a16())
+        registerPointer = reinterpret_cast<DWORD*>(resolveModRM16_internal(rmbyte));
+    else
+        registerPointer = reinterpret_cast<DWORD*>(resolveModRM32_internal(rmbyte));
+
     if (registerPointer)
         *registerPointer = value;
     else
@@ -57,7 +69,13 @@ void VCpu::writeModRM8(BYTE rmbyte, BYTE value)
 
 WORD VCpu::readModRM16(BYTE rmbyte)
 {
-    WORD* registerPointer = reinterpret_cast<WORD*>(resolveModRM16_internal(rmbyte));
+    DWORD* registerPointer;
+
+    if (a16())
+        registerPointer = reinterpret_cast<DWORD*>(resolveModRM16_internal(rmbyte));
+    else
+        registerPointer = reinterpret_cast<DWORD*>(resolveModRM32_internal(rmbyte));
+
     if (registerPointer)
         return *registerPointer;
     return readMemory16(m_lastModRMSegment, m_lastModRMOffset);
@@ -97,7 +115,12 @@ void VCpu::updateModRM8(BYTE value)
 
 DWORD VCpu::readModRM32(BYTE rmbyte)
 {
-    DWORD* registerPointer = reinterpret_cast<DWORD*>(resolveModRM32_internal(rmbyte));
+    DWORD* registerPointer;
+
+    if (a16())
+        registerPointer = reinterpret_cast<DWORD*>(resolveModRM16_internal(rmbyte));
+    else
+        registerPointer = reinterpret_cast<DWORD*>(resolveModRM32_internal(rmbyte));
 
     if (registerPointer)
         return *registerPointer;
