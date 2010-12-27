@@ -284,7 +284,10 @@ void _POP_GS(VCpu* cpu)
 
 void _PUSHFD(VCpu* cpu)
 {
-    cpu->push32(cpu->getEFlags());
+    if (!cpu->getPE() || (cpu->getPE() && ((!cpu->getVM() || (cpu->getVM() && cpu->getIOPL() == 3)))))
+        cpu->push32(cpu->getEFlags() & 0x00FCFFFF);
+    else
+        cpu->GP(0);
 }
 
 void _PUSH_imm32(VCpu* cpu)
@@ -294,15 +297,48 @@ void _PUSH_imm32(VCpu* cpu)
 
 void _PUSHF(VCpu* cpu)
 {
-    cpu->push(cpu->getFlags());
+    if (!cpu->getPE() || (cpu->getPE() && ((!cpu->getVM() || (cpu->getVM() && cpu->getIOPL() == 3)))))
+        cpu->push(cpu->getFlags());
+    else
+        cpu->GP(0);
 }
 
 void _POPF(VCpu* cpu)
 {
-    cpu->setFlags(cpu->pop());
+    if (!cpu->getVM()) {
+        if (cpu->getCPL() == 0)
+            cpu->setFlags(cpu->pop());
+        else {
+            bool oldIOPL = cpu->getIOPL();
+            cpu->setFlags(cpu->pop());
+            cpu->setIOPL(oldIOPL);
+        }
+    } else {
+        if (cpu->getIOPL() == 3) {
+            bool oldIOPL = cpu->getIOPL();
+            cpu->setFlags(cpu->pop());
+            cpu->setIOPL(oldIOPL);
+        } else
+            cpu->GP(0);
+    }
 }
 
 void _POPFD(VCpu* cpu)
 {
-    cpu->setEFlags(cpu->pop32());
+    if (!cpu->getVM()) {
+        if (cpu->getCPL() == 0)
+            cpu->setEFlags(cpu->pop32());
+        else {
+            bool oldIOPL = cpu->getIOPL();
+            cpu->setEFlags(cpu->pop32());
+            cpu->setIOPL(oldIOPL);
+        }
+    } else {
+        if (cpu->getIOPL() == 3) {
+            bool oldIOPL = cpu->getIOPL();
+            cpu->setEFlags(cpu->pop32());
+            cpu->setIOPL(oldIOPL);
+        } else
+            cpu->GP(0);
+    }
 }
