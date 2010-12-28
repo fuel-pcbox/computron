@@ -818,7 +818,7 @@ void VCpu::mainLoop()
 
 #ifdef VOMIT_TRACE
         if (options.trace) {
-            dumpDisassembled(getCS(), getEIP());
+            //dumpDisassembled(getCS(), getEIP());
             dumpTrace();
         }
 #endif
