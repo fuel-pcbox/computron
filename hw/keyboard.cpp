@@ -40,6 +40,7 @@ Keyboard::Keyboard()
     m_systemControlPortData = 0;
     m_command = 0x00;
     m_hasCommand = false;
+    m_lastWasCommand = false;
 
     m_ram[0] |= CCB_SYSTEM_FLAG;
 
@@ -73,12 +74,20 @@ BYTE Keyboard::in8(WORD port)
 
     if (port == 0x64) {
         // Keyboard not locked, POST completed successfully.
-        //vlog(VM_KEYMSG, "Keyboard status queried");
-        return ATKBD_UNLOCKED | (m_ram[0] & ATKBD_SYSTEM_FLAG);
+        BYTE status = ATKBD_UNLOCKED | (m_ram[0] & ATKBD_SYSTEM_FLAG);
+        status |= m_lastWasCommand ? ATKBD_CMD_DATA : 0;
+        // vlog(VM_KEYMSG, "Keyboard status queried (%02X)", status);
+        return status;
     }
 
-    if (port == 0x61)
+    if (port == 0x61) {
+        // HACK: This should be implemented properly in the 8254 emulation.
+        if (m_systemControlPortData & 0x10)
+            m_systemControlPortData &= ~0x10;
+        else
+            m_systemControlPortData |= 0x10;
         return m_systemControlPortData;
+    }
 
     return 0xFF;
 }
@@ -94,16 +103,24 @@ void Keyboard::out8(WORD port, BYTE data)
     if (port == 0x64) {
         vlog(VM_KEYMSG, "Keyboard command <- %02X", data);
         m_command = data;
+        m_hasCommand = true;
+        m_lastWasCommand = true;
         return;
     }
 
     if (port == 0x60) {
+        m_lastWasCommand = false;
         if (!m_hasCommand) {
             vlog(VM_KEYMSG, "Got data (%02X) without command", data);
             return;
         }
 
         m_hasCommand = false;
+
+        if (m_command == 0xD1) {
+            vlog(VM_KEYMSG, "Write output port: A20=%s", (data & 0x02) ? "on" : "off");
+            return;
+        }
 
         if (m_command >= 0x60 && m_command <= 0x7F) {
             BYTE ramIndex = m_command & 0x3F;

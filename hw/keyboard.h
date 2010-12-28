@@ -19,6 +19,7 @@ private:
     BYTE m_ram[32];
     BYTE m_command;
     bool m_hasCommand;
+    bool m_lastWasCommand;
 };
 
 #endif
