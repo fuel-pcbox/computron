@@ -50,7 +50,7 @@
 
 #define DEFAULT_RM32_imm32(helper, name) \
 	void name(VCpu* cpu) { \
-		WORD value = cpu->readModRM32(cpu->rmbyte); \
+		DWORD value = cpu->readModRM32(cpu->rmbyte); \
                 cpu->updateModRM32(helper ## 32(cpu, value, cpu->fetchOpcodeDWord())); \
 	}
 
