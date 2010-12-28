@@ -57,15 +57,17 @@ int VCpu::dumpDisassembled(WORD segment, DWORD offset) const
 void VCpu::dumpTrace() const
 {
     fprintf(stderr,
+        "%04X:%08X "
         "EAX=%08X EBX=%08X ECX=%08X EDX=%08X ESP=%08X EBP=%08X ESI=%08X EDI=%08X "
         "CR0=%08X CR1=%08X CR2=%08X CR3=%08X CR4=%08X CR5=%08X CR6=%08X CR7=%08X "
         "DR0=%08X DR1=%08X DR2=%08X DR3=%08X DR4=%08X DR5=%08X DR6=%08X DR7=%08X "
         "CS=%04X DS=%04X ES=%04X SS=%04X FS=%04X GS=%04X "
         "C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u\n",
+        getCS(), getEIP(),
         getEAX(), getEBX(), getECX(), getEDX(), getESP(), getEBP(), getESI(), getEDI(),
         getCR0(), getCR1(), getCR2(), getCR3(), getCR4(), getCR5(), getCR6(), getCR7(),
         getDR0(), getDR1(), getDR2(), getDR3(), getDR4(), getDR5(), getDR6(), getDR7(),
-        getCS(), getDS(), getES(), getSS(), getFS(), getGS(),
+        getDS(), getES(), getSS(), getFS(), getGS(),
         getCF(), getPF(), getAF(), getZF(),
         getSF(), getIF(), getDF(), getOF()
     );
