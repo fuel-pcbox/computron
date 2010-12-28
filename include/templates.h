@@ -165,7 +165,7 @@
 #define DEFAULT_RM32_reg32(helper, name) \
         void name(VCpu* cpu) { \
                 BYTE rm = cpu->fetchOpcodeByte(); \
-                WORD value = cpu->readModRM32(rm); \
+                DWORD value = cpu->readModRM32(rm); \
                 cpu->updateModRM32(helper ## 32(cpu, value, *cpu->treg32[vomit_modRMRegisterPart(rm)])); \
         }
 
