@@ -355,12 +355,13 @@ void VCpu::decode(BYTE op)
     default:
         this->rmbyte = fetchOpcodeByte();
 fffuuu:
-        vlog(VM_ALERT, "FFFFUUUU unsupported opcode %02X /%u or %02X %02X or %02X %02X /%u",
-             this->opcode, vomit_modRMRegisterPart(this->rmbyte),
-             this->opcode, this->rmbyte,
-             this->opcode, this->rmbyte, vomit_modRMRegisterPart(this->subrmbyte)
+        vlog(VM_ALERT, "%04X:%08X FFFFUUUU unsupported opcode %02X /%u or %02X %02X or %02X %02X /%u",
+            getCS(), getEIP(),
+            this->opcode, vomit_modRMRegisterPart(this->rmbyte),
+            this->opcode, this->rmbyte,
+            this->opcode, this->rmbyte, vomit_modRMRegisterPart(this->subrmbyte)
         );
-        vm_exit(0);
+        exception(6);
     }
 }
 
