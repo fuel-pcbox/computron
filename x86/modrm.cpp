@@ -72,10 +72,10 @@ void* VCpu::resolveModRM_internal(BYTE rmbyte, int bits)
     if (a32())
         return reinterpret_cast<DWORD*>(resolveModRM32_internal(rmbyte));
 
-    if (bits == 16)
-        return reinterpret_cast<DWORD*>(resolveModRM16_internal(rmbyte));
+    if (bits == 8)
+        return reinterpret_cast<DWORD*>(resolveModRM8_internal(rmbyte));
 
-    return reinterpret_cast<DWORD*>(resolveModRM8_internal(rmbyte));
+    return reinterpret_cast<DWORD*>(resolveModRM16_internal(rmbyte));
 }
 
 BYTE VCpu::readModRM8(BYTE rmbyte)
