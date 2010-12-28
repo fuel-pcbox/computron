@@ -540,6 +540,8 @@ static void addKey(int key, WORD normal, WORD shift, WORD ctrl, WORD alt, bool i
 #define K_Apostrophe 0x30
 #define K_Backslash 0x33
 
+#define K_Equals 0x15
+
 void Screen::loadKeymap(const QString &filename)
 {
     // Load keymap file
@@ -639,6 +641,8 @@ void Screen::loadKeymap(const QString &filename)
 
     addKey(K_PageUp, 0x4900, 0x4B34, 0x7300, 0x9B00);
     addKey(K_PageDown, 0x5100, 0x5133, 0x7600, 0xA100);
+
+    addKey(K_Equals, 0x0D3D, 0x0D2B, 0, 0x8300);
 }
 
 void Screen::init()
