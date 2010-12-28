@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <QStringList>
 
 static FILE* s_logfile = 0L;
 
@@ -79,8 +80,8 @@ void uasm(WORD segment, WORD offset, int n)
 void VCpu::debugger()
 {
     char curcmd[256];
-    char* curtok;
-    WORD mseg, moff;
+    WORD mseg;
+    DWORD moff;
 
     memset(curcmd, 0, sizeof(curcmd));
 
@@ -99,54 +100,66 @@ void VCpu::debugger()
             vlog(VM_KILLMSG, "EOF on stdin, exiting.");
             vm_exit(0);
         }
-        curtok = strtok(curcmd, " \n");
-        if (curtok) {
-            if (!strcmp(curtok, "g"))
-                break;
-            if (!strcmp(curtok, "s")) {
-                m_debugOneStep = true;
-                return;
+
+        static QRegExp separators("[ \n]");
+        QStringList tokens = QString::fromLatin1(curcmd).split(separators, QString::SkipEmptyParts);
+
+        if (tokens.isEmpty())
+            continue;
+
+            qDebug() << tokens;
+
+        if (tokens[0] == "g") {
+            detachDebugger();
+            return;
+        }
+
+        if (tokens[0] == "s") {
+            m_debugOneStep = true;
+            return;
+        }
+
+        if (tokens[0] == "c")
+            dump();
+
+        else if (tokens[0] == "b") {
+            if (tokens.size() == 2) {
+                DWORD newBreakPoint = tokens[1].toUInt(0, 16);
+                m_breakPoints.append(newBreakPoint);
+                printf("Added breakpoint at %08X\n", newBreakPoint);
+            } else if (tokens.size() == 1) {
+                unsigned int i = 0;
+                foreach (DWORD breakPoint, m_breakPoints)
+                    printf("[%u]: %08X\n", i++, breakPoint);
+            }
+        }
+
+        else if (tokens[0] == "reconf")
+            config_reload();
+
+        else if (tokens[0] == "r")
+            dumpAll();
+
+        else if (tokens[0] == "i")
+            dumpIVT();
+
+        else if (tokens[0] == "d") {
+            mseg = getCS();
+            moff = getEIP() & 0xFFF0;
+
+            if (tokens.size() == 2)
+                moff = tokens[1].toUInt(0, 16);
+            else if (tokens.size() == 3) {
+                mseg = tokens[1].toUInt(0, 16);
+                moff = tokens[2].toUInt(0, 16);
             }
 
-            if (!strcmp(curtok, "b")) {
-                curtok = strtok(NULL, ": \n");
-                if (curtok!=0) {
-                    DWORD newBreakPoint = strtol(curtok, NULL, 16);
-                    m_breakPoints.append(newBreakPoint);
-                    printf("Added breakpoint at %08X\n", newBreakPoint);
-                } else {
-                    unsigned int i = 0;
-                    foreach (DWORD breakPoint, m_breakPoints)
-                        printf("[%u]: %08X\n", i++, breakPoint);
-                }
-            }
+            g_cpu->dumpMemory(mseg, moff, 16);
+        }
 
-            else if (!strcmp(curtok, "c"))
-                dump();
-            else if (!strcmp(curtok, "reconf"))
-                config_reload();
-            else if (!strcmp(curtok, "r"))
-                dumpAll();
-            else if (!strcmp(curtok, "i"))
-                dumpIVT();
-            else if (curtok[0] == 'd') {
-                curtok = strtok(NULL, ": \n");
-                if (curtok!=0) {
-                    mseg = strtol(curtok,NULL,16);
-                    curtok = mseg ? strtok(NULL, " \n") : NULL;
-                    if (curtok!=0) {
-                        moff = strtol(curtok,NULL,16);
-                        g_cpu->dumpMemory(mseg, moff, 16);
-                    } else {
-                        g_cpu->dumpMemory(getCS(), mseg, 16);
-                    }
-                } else {
-                    g_cpu->dumpMemory(getCS(), (getIP() & 0xFFF0), 16);
-                    curtok = &curcmd[0];
-                }
-            }
-            else if (curtok[0] == 'u') {
-                curtok = strtok(NULL, ": \n");
+#if 0
+        else if (tokens[0] == "u") {
+            curtok = strtok(NULL, ": \n");
                 if (curtok!=0) {
                     mseg = strtol(curtok,NULL,16);
                     curtok = mseg ? strtok(NULL, " \n") : NULL;
@@ -161,10 +174,13 @@ void VCpu::debugger()
                     curtok = &curcmd[0];
                 }
             }
-            else if (!strcmp(curtok, "q"))
+#endif
+
+            else if (tokens[0] == "q")
                 vm_exit(0);
-            else if (!strcmp(curtok, "?")) {
-                printf(   "\tavailable commands:\n\n" \
+
+            else if (tokens[0] == "?") {
+                printf( "\tavailable commands:\n\n" \
                         "\tc\t\tcpu information\n" \
                         "\tr\t\tdump registers and stack\n" \
                         "\td [SEG OFF]\tdump memory\n" \
@@ -175,7 +191,5 @@ void VCpu::debugger()
                         "\n");
             }
         }
-    }
-    detachDebugger();
 }
 #endif
