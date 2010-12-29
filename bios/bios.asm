@@ -1545,21 +1545,12 @@ _bios_interrupt14:
 ; 24    A20 gate control        (not supported)
 
 _bios_interrupt15:
-    cmp     ah, 0xc2
-    je      .unsupported
     je      .ps2mouse
-    cmp     ah, 0x24
-    je      .unsupported
     cmp     ah, 0xc0
     je      .getSystemConfigurationParameters
-    cmp     ah, 0xc1
-    je      .unsupported
-    cmp     ah, 0x41
-    je      .fn0x41
     cmp     ah, 0x88
     je      .fn0x88
-    stub    0x15
-    jmp     .end
+    jmp     .unsupported
 .getSystemConfigurationParameters:
     push    .end
     jmp     bios_get_system_configuration_parameters
@@ -1572,11 +1563,9 @@ _bios_interrupt15:
     xor     ax, ax
     jmp     .end
 .unsupported:
+    stub    0x15
     stc                             ; This ain't no fucking PS/2 system, dickweed.
     mov     ah, 0x86                ; 80 for PC, 86 for XT/AT
-    jmp     .end
-.fn0x41:
-    stc                             ; Unsupported
 .end:
     push    bp
     mov     bp, sp
