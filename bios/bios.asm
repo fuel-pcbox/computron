@@ -1542,14 +1542,14 @@ _bios_interrupt14:
 
 ; INT 15 - System BIOS Services
 ;
-; 24    A20 gate control        (not supported)
-
 _bios_interrupt15:
     je      .ps2mouse
     cmp     ah, 0xc0
     je      .getSystemConfigurationParameters
     cmp     ah, 0x88
     je      .fn0x88
+    cmp     ah, 0x24
+    je      .a20control
     jmp     .unsupported
 .getSystemConfigurationParameters:
     push    .end
@@ -1562,6 +1562,8 @@ _bios_interrupt15:
     stc                             ; This call is only valid on 286/386 machines
     xor     ax, ax
     jmp     .end
+.a20control:
+    jmp     bios_a20_control
 .unsupported:
     stub    0x15
     stc                             ; This ain't no fucking PS/2 system, dickweed.
@@ -1576,6 +1578,24 @@ _bios_interrupt15:
 .carry:
     or      byte [bp+6], 0x01       ; Carry
     pop     bp
+    iret
+
+bios_a20_control:
+    cmp     al, 0x03
+    je      .querySupport
+
+    stub    0x15
+    mov     ah, 0x86
+    stc
+    iret
+
+.querySupport:
+    mov     bx, 0x0001              ; A20 gate controlled via 8042.
+    jmp     .end
+
+.end:
+    mov     ah, 0x00
+    clc
     iret
 
 _bios_interrupt16:
