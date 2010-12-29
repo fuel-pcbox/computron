@@ -119,6 +119,7 @@ void Keyboard::out8(WORD port, BYTE data)
 
         if (m_command == 0xD1) {
             vlog(VM_KEYMSG, "Write output port: A20=%s", (data & 0x02) ? "on" : "off");
+            g_cpu->setA20Enabled(data & 0x02);
             return;
         }
 
