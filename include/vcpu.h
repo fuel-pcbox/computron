@@ -1253,6 +1253,15 @@ void VCpu::writeUnmappedMemory16(DWORD address, WORD value)
 
 BYTE VCpu::readMemory8(DWORD address) const
 {
+    if (!isA20Enabled()) {
+#ifdef VOMIT_DEBUG
+        if (address > 0xFFFFF) {
+            vlog(VM_MEMORYMSG, "%04X:%08X Read byte from %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & 0xFFFFF);
+        }
+#endif
+        address &= 0xFFFFF;
+    }
+
     if (IS_VGA_MEMORY(address))
         return this->vgaMemory->read8(address);
 #ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
@@ -1269,6 +1278,15 @@ BYTE VCpu::readMemory8(WORD segment, WORD offset) const
 
 WORD VCpu::readMemory16(DWORD address) const
 {
+    if (!isA20Enabled()) {
+#ifdef VOMIT_DEBUG
+        if (address > 0xFFFFF) {
+            vlog(VM_MEMORYMSG, "%04X:%08X Read word from %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & 0xFFFFF);
+        }
+#endif
+        address &= 0xFFFFF;
+    }
+
     if (IS_VGA_MEMORY(address))
         return this->vgaMemory->read16(address);
 #ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
@@ -1290,6 +1308,15 @@ DWORD VCpu::readMemory32(WORD segment, WORD offset) const
 
 void VCpu::writeMemory8(DWORD address, BYTE value)
 {
+    if (!isA20Enabled()) {
+#ifdef VOMIT_DEBUG
+        if (address > 0xFFFFF) {
+            vlog(VM_MEMORYMSG, "%04X:%08X Write byte to %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & 0xFFFFF);
+        }
+#endif
+        address &= 0xFFFFF;
+    }
+
     if (IS_VGA_MEMORY(address)) {
         this->vgaMemory->write8(address, value);
         return;
@@ -1309,6 +1336,15 @@ void VCpu::writeMemory8(WORD segment, WORD offset, BYTE value)
 
 void VCpu::writeMemory16(DWORD address, WORD value)
 {
+    if (!isA20Enabled()) {
+#ifdef VOMIT_DEBUG
+        if (address > 0xFFFFF) {
+            vlog(VM_MEMORYMSG, "%04X:%08X Write word to %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & 0xFFFFF);
+        }
+#endif
+        address &= 0xFFFFF;
+    }
+
     if (IS_VGA_MEMORY(address)) {
         this->vgaMemory->write16(address, value);
         return;
