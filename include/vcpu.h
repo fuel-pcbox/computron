@@ -300,6 +300,9 @@ public:
 
     void kill();
 
+    void setA20Enabled(bool value) { m_a20Enabled = value; }
+    bool isA20Enabled() const { return m_a20Enabled; }
+
 #ifdef VOMIT_DEBUG
     void attachDebugger();
     void detachDebugger();
@@ -678,6 +681,8 @@ private:
     DWORD m_extendedMemorySize;
 
     QList<DWORD> m_breakPoints;
+
+    bool m_a20Enabled;
 };
 
 extern VCpu* g_cpu;

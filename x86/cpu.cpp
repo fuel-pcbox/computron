@@ -402,6 +402,8 @@ VCpu::VCpu(QObject* parent)
     m_prefetchQueueIndex = 0;
 #endif
 
+    m_a20Enabled = false;
+
     memset(&regs, 0, sizeof(regs));
     this->CS = 0;
     this->DS = 0;
