@@ -199,6 +199,12 @@ void _MOV_CR_reg32(VCpu* cpu)
         }
     }
 
+#ifdef VOMIT_DEBUG
+    if (crIndex == 0) {
+        vlog(VM_CPUMSG, "Protected mode Enable = %u", *cpu->treg32[rm & 7]);
+    }
+#endif
+
     *cpu->creg[crIndex] = *cpu->treg32[rm & 7];
 }
 
