@@ -22,6 +22,7 @@ void _OperationSizeOverride(VCpu*cpu)
 {
     cpu->m_operationSize32 = !cpu->m_operationSize32;
 
+#ifdef VOMIT_DEBUG_OVERRIDE_OPCODES
     vlog(VM_LOGMSG, "%04X:%08X Operation size override detected! Opcode: db 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X ", cpu->getBaseCS(), cpu->getBaseEIP(),
          cpu->readMemory8(cpu->getCS(), cpu->getEIP() - 1),
          cpu->readMemory8(cpu->getCS(), cpu->getEIP()),
@@ -32,6 +33,7 @@ void _OperationSizeOverride(VCpu*cpu)
          cpu->readMemory8(cpu->getCS(), cpu->getEIP() + 5)
     );
     cpu->dumpAll();
+#endif
 
     cpu->decodeNext();
 
@@ -42,6 +44,7 @@ void _AddressSizeOverride(VCpu* cpu)
 {
     cpu->m_addressSize32 = !cpu->m_addressSize32;
 
+#ifdef VOMIT_DEBUG_OVERRIDE_OPCODES
     vlog(VM_LOGMSG, "%04X:%08X Address size override detected! Opcode: db 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X ", cpu->getBaseCS(), cpu->getBaseEIP(),
          cpu->readMemory8(cpu->getCS(), cpu->getEIP() - 1),
          cpu->readMemory8(cpu->getCS(), cpu->getEIP()),
@@ -52,6 +55,7 @@ void _AddressSizeOverride(VCpu* cpu)
          cpu->readMemory8(cpu->getCS(), cpu->getEIP() + 5)
     );
     cpu->dumpAll();
+#endif
 
     cpu->decodeNext();
 
