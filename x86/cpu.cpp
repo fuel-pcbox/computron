@@ -396,7 +396,7 @@ VCpu::VCpu(QObject* parent)
 
     memset(this->memory, 0, 1048576 + 65536);
 
-    this->vgaMemory = new VgaMemory(this);
+    m_vgaMemory = new VgaMemory(this);
 
 #ifdef VOMIT_PREFETCH_QUEUE
     if (m_prefetchQueue)
@@ -1279,7 +1279,7 @@ void VCpu::writeMemory32(DWORD address, DWORD data)
 #warning FIXME: writeMemory32 to VGA memory
 #if 0
     if (isVGAMemory(address)) {
-        this->vgaMemory->write8(address, value);
+        this->vgaMemory()->write8(address, value);
         return;
     }
 #endif
@@ -1294,7 +1294,7 @@ DWORD VCpu::readMemory32(DWORD address) const
 #warning FIXME: readMemory32 from VGA memory
 #if 0
     if (isVGAMemory(address))
-        return this->vgaMemory->read16(address) | (this->vgaMemory->read16(address + 2) << 16);
+        return this->vgaMemory()->read16(address) | (this->vgaMemory()->read16(address + 2) << 16);
 #endif
 #ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
     assert (address < (0xFFFFF - 4));
@@ -1316,7 +1316,7 @@ BYTE VCpu::readMemory8(DWORD address) const
     }
 
     if (isVGAMemory(address))
-        return this->vgaMemory->read8(address);
+        return this->vgaMemory()->read8(address);
 #ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
     if (!m_dirtMap[address])
         vlog(VM_MEMORYMSG, "%04X:%04X: Uninitialized read from %08X", getBaseCS(), getBaseIP(), address);
@@ -1342,7 +1342,7 @@ WORD VCpu::readMemory16(DWORD address) const
     }
 
     if (isVGAMemory(address))
-        return this->vgaMemory->read16(address);
+        return this->vgaMemory()->read16(address);
 #ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
     if (!m_dirtMap[address] || !m_dirtMap[address + 1])
         vlog(VM_MEMORYMSG, "%04X:%04X: Uninitialized read from %08X", getBaseCS(), getBaseIP(), address);
@@ -1372,7 +1372,7 @@ void VCpu::writeMemory8(DWORD address, BYTE value)
     }
 
     if (isVGAMemory(address)) {
-        this->vgaMemory->write8(address, value);
+        this->vgaMemory()->write8(address, value);
         return;
     }
 
@@ -1404,7 +1404,7 @@ void VCpu::writeMemory16(DWORD address, WORD value)
     }
 
     if (isVGAMemory(address)) {
-        this->vgaMemory->write16(address, value);
+        this->vgaMemory()->write16(address, value);
         return;
     }
 

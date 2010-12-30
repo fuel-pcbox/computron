@@ -328,7 +328,7 @@ void vga_dac_write_data(VCpu* cpu, WORD, BYTE data)
     }
 
     mark_palette_dirty();
-    cpu->vgaMemory->syncPalette();
+    cpu->vgaMemory()->syncPalette();
 }
 
 BYTE vga_fcr_read(VCpu*, WORD)

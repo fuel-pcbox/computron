@@ -399,7 +399,7 @@ store_cursor( word cursor )
     g_cpu->memory[0x450] = cursor / columns();
     g_cpu->memory[0x451] = cursor % columns();
 
-    g_cpu->vgaMemory->setDirty();
+    g_cpu->vgaMemory()->setDirty();
 }
 
 void
@@ -480,7 +480,7 @@ void set_dac_color_register()
     }
 
     mark_palette_dirty();
-    g_cpu->vgaMemory->syncPalette();
+    g_cpu->vgaMemory()->syncPalette();
 }
 
 
@@ -497,10 +497,10 @@ void write_graphics_pixel_at_coordinate()
     }
 
     //vlog(VM_ALERT, "y = %03u, x = %03u, color = %02X", g_cpu->regs.W.DX, g_cpu->regs.W.CX, g_cpu->regs.B.AL);
-    BYTE *vm_p0 = g_cpu->vgaMemory->plane(0);
-    BYTE *vm_p1 = g_cpu->vgaMemory->plane(1);
-    BYTE *vm_p2 = g_cpu->vgaMemory->plane(2);
-    BYTE *vm_p3 = g_cpu->vgaMemory->plane(3);
+    BYTE *vm_p0 = g_cpu->vgaMemory()->plane(0);
+    BYTE *vm_p1 = g_cpu->vgaMemory()->plane(1);
+    BYTE *vm_p2 = g_cpu->vgaMemory()->plane(2);
+    BYTE *vm_p3 = g_cpu->vgaMemory()->plane(3);
 
     word offset = (g_cpu->regs.W.DX * 80) + (g_cpu->regs.W.CX / 8);
     byte bit = g_cpu->regs.W.CX % 8;
@@ -522,7 +522,7 @@ void write_graphics_pixel_at_coordinate()
     if( g_cpu->regs.B.AL & 0x08 )
         vm_p3[offset] |= (0x80 >> bit);
 
-    g_cpu->vgaMemory->setDirty();
+    g_cpu->vgaMemory()->setDirty();
 }
 
 #endif // VOMIT_C_VGA_BIOS

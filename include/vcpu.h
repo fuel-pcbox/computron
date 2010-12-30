@@ -567,7 +567,7 @@ public:
 
     DWORD evaluateSIB(BYTE sib);
 
-    VgaMemory* vgaMemory;
+    VgaMemory* vgaMemory() const { return m_vgaMemory; }
 
     enum Mode { RealMode, ProtectedMode };
     Mode mode() const { return m_mode; }
@@ -682,6 +682,8 @@ private:
     QList<DWORD> m_breakPoints;
 
     bool m_a20Enabled;
+
+    VgaMemory* m_vgaMemory;
 };
 
 extern VCpu* g_cpu;
