@@ -17,9 +17,7 @@ main(int argc, char **argv)
     memset(&options, 0, sizeof(options));
     if(args.contains("--disklog")) options.disklog = true;
     if(args.contains("--trapint")) options.trapint = true;
-    if(args.contains("--mempeek")) options.mempeek = true;
     if(args.contains("--iopeek")) options.iopeek = true;
-    if(args.contains("--bda-peek")) options.bda_peek = true;
     if(args.contains("--trace")) options.trace = true;
     if(args.contains("--debug")) options.start_in_debug = true;
 

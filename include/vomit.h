@@ -38,12 +38,10 @@ void vomit_init();
 extern void vomit_set_vlog_handler( void (*f)(int, const char *, va_list) );
 
 typedef struct {
-    bool bda_peek;
     bool trace;
     bool disklog;
     bool trapint;
     bool iopeek;
-    bool mempeek;
     bool start_in_debug;
 } vomit_options_t;
 
