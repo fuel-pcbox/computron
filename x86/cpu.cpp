@@ -150,6 +150,7 @@ void VCpu::decode(BYTE op)
     case 0x24: _AND_AL_imm8(this); break;
     case 0x25: CALL_HANDLER(_AND_AX_imm16, _AND_EAX_imm32); break;
     case 0x26: _ES(this); break;
+    case 0x27: _DAA(this); break;
     case 0x28: _SUB_RM8_reg8(this); break;
     case 0x29: CALL_HANDLER(_SUB_RM16_reg16, _SUB_RM32_reg32); break;
     case 0x2A: _SUB_reg8_RM8(this); break;
