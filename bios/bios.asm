@@ -1547,7 +1547,7 @@ _bios_interrupt15:
     cmp     ah, 0xc0
     je      .getSystemConfigurationParameters
     cmp     ah, 0x88
-    je      .fn0x88
+    je      .queryExtendedMemorySize
     cmp     ah, 0x24
     je      .a20control
     jmp     .unsupported
@@ -1558,10 +1558,21 @@ _bios_interrupt15:
 .ps2mouse:
     out     0xE1, al
     jmp     .end
-.fn0x88:
-    stc                             ; This call is only valid on 286/386 machines
-    xor     ax, ax
+
+.queryExtendedMemorySize:
+
+    mov     al, 0x31            ; CMOS[31] = Extended memory size MSB
+    out     CMOS_REGISTER, al
+    in      al, CMOS_DATA
+    xchg    al, ah
+
+    mov     al, 0x30            ; CMOS[30] = Base memory size LSB
+    out     CMOS_REGISTER, al
+    in      al, CMOS_DATA
+
+    clc
     jmp     .end
+
 .a20control:
     jmp     bios_a20_control
 .unsupported:
