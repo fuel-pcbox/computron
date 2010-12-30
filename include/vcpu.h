@@ -5,7 +5,6 @@
 #include "debug.h"
 
 // MACROS AND CONVENIENCE METHODS
-#define IS_VGA_MEMORY(address) ((address) >= 0xA0000 && (address) < 0xB0000)
 
 inline DWORD vomit_toFlatAddress(WORD segment, WORD offset)
 {
@@ -527,18 +526,18 @@ public:
     inline void writeUnmappedMemory8(DWORD address, BYTE data);
     inline void writeUnmappedMemory16(DWORD address, WORD data);
 
-    inline BYTE readMemory8(DWORD address) const;
-    inline BYTE readMemory8(WORD segment, WORD offset) const;
-    inline WORD readMemory16(DWORD address) const;
-    inline WORD readMemory16(WORD segment, WORD offset) const;
+    BYTE readMemory8(DWORD address) const;
+    BYTE readMemory8(WORD segment, WORD offset) const;
+    WORD readMemory16(DWORD address) const;
+    WORD readMemory16(WORD segment, WORD offset) const;
     DWORD readMemory32(DWORD address) const;
-    inline DWORD readMemory32(WORD segment, WORD offset) const;
-    inline void writeMemory8(DWORD address, BYTE data);
-    inline void writeMemory8(WORD segment, WORD offset, BYTE data);
-    inline void writeMemory16(DWORD address, WORD data);
-    inline void writeMemory16(WORD segment, WORD offset, WORD data);
+    DWORD readMemory32(WORD segment, WORD offset) const;
+    void writeMemory8(DWORD address, BYTE data);
+    void writeMemory8(WORD segment, WORD offset, BYTE data);
+    void writeMemory16(DWORD address, WORD data);
+    void writeMemory16(WORD segment, WORD offset, WORD data);
     void writeMemory32(DWORD address, DWORD data);
-    inline void writeMemory32(WORD segment, WORD offset, DWORD data);
+    void writeMemory32(WORD segment, WORD offset, DWORD data);
 
     BYTE readModRM8(BYTE rmbyte);
     WORD readModRM16(BYTE rmbyte);
@@ -1251,124 +1250,6 @@ void VCpu::writeUnmappedMemory16(DWORD address, WORD value)
     vomit_write16ToPointer(reinterpret_cast<WORD*>(this->memory + address), value);
 }
 
-BYTE VCpu::readMemory8(DWORD address) const
-{
-    if (!isA20Enabled()) {
-#ifdef VOMIT_DEBUG
-        if (address > 0xFFFFF) {
-            vlog(VM_MEMORYMSG, "%04X:%08X Read byte from %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & 0xFFFFF);
-        }
-#endif
-        address &= 0xFFFFF;
-    }
-
-    if (IS_VGA_MEMORY(address))
-        return this->vgaMemory->read8(address);
-#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
-    if (!m_dirtMap[address])
-        vlog(VM_MEMORYMSG, "%04X:%04X: Uninitialized read from %08X", getBaseCS(), getBaseIP(), address);
-#endif
-    return this->memory[address];
-}
-
-BYTE VCpu::readMemory8(WORD segment, WORD offset) const
-{
-    return readMemory8(vomit_toFlatAddress(segment, offset));
-}
-
-WORD VCpu::readMemory16(DWORD address) const
-{
-    if (!isA20Enabled()) {
-#ifdef VOMIT_DEBUG
-        if (address > 0xFFFFF) {
-            vlog(VM_MEMORYMSG, "%04X:%08X Read word from %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & 0xFFFFF);
-        }
-#endif
-        address &= 0xFFFFF;
-    }
-
-    if (IS_VGA_MEMORY(address))
-        return this->vgaMemory->read16(address);
-#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
-    if (!m_dirtMap[address] || !m_dirtMap[address + 1])
-        vlog(VM_MEMORYMSG, "%04X:%04X: Uninitialized read from %08X", getBaseCS(), getBaseIP(), address);
-#endif
-    return vomit_read16FromPointer(reinterpret_cast<WORD*>(this->memory + address));
-}
-
-WORD VCpu::readMemory16(WORD segment, WORD offset) const
-{
-    return readMemory16(vomit_toFlatAddress(segment, offset));
-}
-
-DWORD VCpu::readMemory32(WORD segment, WORD offset) const
-{
-    return readMemory32(vomit_toFlatAddress(segment, offset));
-}
-
-void VCpu::writeMemory8(DWORD address, BYTE value)
-{
-    if (!isA20Enabled()) {
-#ifdef VOMIT_DEBUG
-        if (address > 0xFFFFF) {
-            vlog(VM_MEMORYMSG, "%04X:%08X Write byte to %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & 0xFFFFF);
-        }
-#endif
-        address &= 0xFFFFF;
-    }
-
-    if (IS_VGA_MEMORY(address)) {
-        this->vgaMemory->write8(address, value);
-        return;
-    }
-
-#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
-    m_dirtMap[address] = true;
-#endif
-
-    this->memory[address] = value;
-}
-
-void VCpu::writeMemory8(WORD segment, WORD offset, BYTE value)
-{
-    writeMemory8(vomit_toFlatAddress(segment, offset), value);
-}
-
-void VCpu::writeMemory16(DWORD address, WORD value)
-{
-    if (!isA20Enabled()) {
-#ifdef VOMIT_DEBUG
-        if (address > 0xFFFFF) {
-            vlog(VM_MEMORYMSG, "%04X:%08X Write word to %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & 0xFFFFF);
-        }
-#endif
-        address &= 0xFFFFF;
-    }
-
-    if (IS_VGA_MEMORY(address)) {
-        this->vgaMemory->write16(address, value);
-        return;
-    }
-
-#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
-    m_dirtMap[address] = true;
-    m_dirtMap[address + 1] = true;
-#endif
-
-    WORD* ptr = reinterpret_cast<WORD*>(this->memory + address);
-    vomit_write16ToPointer(ptr, value);
-}
-
-void VCpu::writeMemory16(WORD segment, WORD offset, WORD value)
-{
-    writeMemory16(vomit_toFlatAddress(segment, offset), value);
-}
-
-void VCpu::writeMemory32(WORD segment, WORD offset, DWORD value)
-{
-    writeMemory32(vomit_toFlatAddress(segment, offset), value);
-}
-
 BYTE* VCpu::codeMemory() const
 {
     return m_codeMemory;
@@ -1376,7 +1257,17 @@ BYTE* VCpu::codeMemory() const
 
 BYTE* VCpu::memoryPointer(WORD segment, WORD offset) const
 {
-    return this->memory + vomit_toFlatAddress(segment, offset);
+    DWORD address = vomit_toFlatAddress(segment, offset);
+
+    if (!isA20Enabled()) {
+#ifdef VOMIT_DEBUG
+        if (address > 0xFFFFF) {
+            vlog(VM_MEMORYMSG, "%04X:%08X Get pointer to %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & 0xFFFFF);
+        }
+#endif
+        address &= 0xFFFFF;
+    }
+    return &this->memory[address];
 }
 
 #ifndef VOMIT_PREFETCH_QUEUE
