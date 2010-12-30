@@ -267,7 +267,7 @@ void* VCpu::resolveModRM32_internal(BYTE rmbyte)
     VM_ASSERT(a32());
 
     WORD segment = currentSegment();
-    WORD offset = 0x00000000;
+    DWORD offset = 0x00000000;
 
     switch (rmbyte & 0xC0) {
     case 0x00:
