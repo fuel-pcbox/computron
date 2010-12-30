@@ -77,7 +77,7 @@ void _STI(VCpu* cpu)
         return;
     }
 
-    if (cpu->getVM()) {
+    if (!cpu->getVM()) {
         if (cpu->getIOPL() >= cpu->getCPL()) {
             cpu->setIF(1);
         } else {
