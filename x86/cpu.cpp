@@ -332,6 +332,7 @@ void VCpu::decode(BYTE op)
     case 0xE2: _LOOP_imm8(this); break;
     case 0xE3: CALL_HANDLER(_JCXZ_imm8, _JECXZ_imm8); break;
     case 0xE4: _IN_AL_imm8(this); break;
+    case 0xE5: CALL_HANDLER(_IN_AX_imm8, _IN_EAX_imm8); break;
     case 0xE6: _OUT_imm8_AL(this); break;
     case 0xE7: CALL_HANDLER(_OUT_imm8_AX, _OUT_imm8_EAX); break;
     case 0xE8: CALL_HANDLER(_CALL_imm16, _CALL_imm32); break;
