@@ -119,7 +119,7 @@ void _CDQ(VCpu *cpu)
 
 void _SALC(VCpu* cpu)
 {
-    cpu->regs.B.AL = cpu->getCF() ? 0xFF : 0x00;
+    cpu->setAL(cpu->getCF() ? 0xFF : 0);
 }
 
 BYTE cpu_or8(VCpu* cpu, BYTE dest, BYTE src)
@@ -205,7 +205,7 @@ DWORD cpu_and32(VCpu* cpu, DWORD dest, DWORD src)
 
 DWORD cpu_shl(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 {
-    DWORD result = (DWORD)data;
+    DWORD result = data;
 
     steps &= 0x1F;
 
@@ -230,7 +230,7 @@ DWORD cpu_shl(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 
 DWORD cpu_shr(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 {
-    DWORD result = (DWORD)data;
+    DWORD result = data;
 
     steps &= 0x1F;
 
@@ -255,7 +255,7 @@ DWORD cpu_shr(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 
 DWORD cpu_sar(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 {
-    DWORD result = (DWORD)data;
+    DWORD result = data;
     WORD n;
 
     steps &= 0x1F;
@@ -283,7 +283,7 @@ DWORD cpu_sar(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 
 DWORD cpu_rol(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 {
-    DWORD result = (DWORD)data;
+    DWORD result = data;
 
     steps &= 0x1F;
 
@@ -331,7 +331,7 @@ DWORD cpu_ror(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 
 DWORD cpu_rcl(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 {
-    DWORD result = (DWORD)data;
+    DWORD result = data;
     WORD n;
 
     steps &= 0x1F;
