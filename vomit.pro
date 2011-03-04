@@ -19,6 +19,7 @@ RESOURCES = vomit.qrc
 HEADERS += gui/mainwindow.h \
            gui/screen.h \
            gui/worker.h \
+           hw/fdc.h \
            hw/iodevice.h \
            hw/vomctl.h \
            hw/vga_memory.h \
