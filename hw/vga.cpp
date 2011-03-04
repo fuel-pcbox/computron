@@ -55,21 +55,15 @@ static const RGBColor default_vga_color_registers[256] =
     {0x15,0x15,0x15}, {0x15,0x15,0x3f}, {0x15,0x3f,0x15}, {0x15,0x3f,0x3f}, {0x3f,0x15,0x15}, {0x3f,0x15,0x3f}, {0x3f,0x3f,0x15}, {0x3f,0x3f,0x3f},
 };
 
-VGA* VGA::s_the = 0;
-
 VGA* VGA::the()
 {
-    VM_ASSERT(s_the);
-    return s_the;
+    return &theVGA;
 }
 
 VGA::VGA()
     : IODevice("VGA")
     , d(new Private)
 {
-    VM_ASSERT(!s_the);
-    s_the = this;
-
     listen(0x3B4, IODevice::ReadWrite);
     listen(0x3B5, IODevice::ReadWrite);
     listen(0x3BA, IODevice::ReadWrite);

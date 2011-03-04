@@ -30,8 +30,6 @@ public:
 private:
     struct Private;
     Private* d;
-
-    static VGA* s_the;
 };
 
 #endif
