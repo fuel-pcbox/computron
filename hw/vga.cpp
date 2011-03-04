@@ -11,10 +11,10 @@
 static VGA theVGA;
 
 typedef struct {
-    BYTE r;
-    BYTE g;
-    BYTE b;
-    operator QColor() { return QColor::fromRgb(r << 2, g << 2, b << 2); }
+    BYTE red;
+    BYTE green;
+    BYTE blue;
+    operator QColor() { return QColor::fromRgb(red << 2, green << 2, blue << 2); }
 } RGBColor;
 
 struct VGA::Private
@@ -177,24 +177,24 @@ void VGA::out8(WORD port, BYTE data)
 
     case 0x3C9: {
         // vlog(VM_VIDEOMSG, "Setting component %u of color %02X to %02X", dac_data_subindex, dac_data_index, data);
-        RGBColor& c = d->colorRegister[d->dac_data_write_index];
+        RGBColor& color = d->colorRegister[d->dac_data_write_index];
         switch (d->dac_data_write_subindex) {
         case 0:
-            c.r = data;
+            color.red = data;
+            d->dac_data_write_subindex = 1;
             break;
         case 1:
-            c.g = data;
+            color.green = data;
+            d->dac_data_write_subindex = 2;
             break;
         case 2:
-            c.b = data;
+            color.blue = data;
+            d->dac_data_write_subindex = 0;
+            d->dac_data_write_index += 1;
             break;
         }
 
-        if (++d->dac_data_write_subindex >= 3) {
-            d->dac_data_write_subindex = 0;
-            ++d->dac_data_write_index;
-        }
-
+        // FIXME: Make asynchronous .
         setPaletteDirty(true);
         g_cpu->vgaMemory()->syncPalette();
         break;
@@ -269,25 +269,24 @@ BYTE VGA::in8(WORD port)
 
     case 0x3C9: {
         BYTE data = 0;
+        RGBColor& color = d->colorRegister[d->dac_data_read_index];
         switch (d->dac_data_read_subindex) {
         case 0:
-            data = d->colorRegister[d->dac_data_read_index].r;
+            data = color.red;
+            d->dac_data_read_subindex = 1;
             break;
         case 1:
-            data = d->colorRegister[d->dac_data_read_index].g;
+            data = color.green;
+            d->dac_data_read_subindex = 2;
             break;
         case 2:
-            data = d->colorRegister[d->dac_data_read_index].b;
+            data = color.blue;
+            d->dac_data_read_subindex = 0;
+            d->dac_data_read_index += 1;
             break;
         }
 
         // vlog(VM_VIDEOMSG, "Reading component %u of color %02X (%02X)", dac_data_read_subindex, dac_data_read_index, data);
-
-        if (++d->dac_data_read_subindex >= 3) {
-            d->dac_data_read_subindex = 0;
-            ++d->dac_data_read_index;
-        }
-
         return data;
     }
 
