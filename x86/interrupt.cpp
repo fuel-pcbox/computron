@@ -5,10 +5,6 @@
 #include "vcpu.h"
 #include "debug.h"
 
-#ifdef VOMIT_DOS_ON_LINUX_IDLE_HACK
-#include <sched.h>
-#endif
-
 void _INT_imm8(VCpu* cpu)
 {
     BYTE isr = cpu->fetchOpcodeByte();
@@ -45,13 +41,6 @@ void VCpu::jumpToInterruptHandler(int isr)
 
     if (isr == 0x06) {
         vlog(VM_CPUMSG, "Invalid opcode trap at %04X:%08X (%02X)", getBaseCS(), getBaseEIP(), *(codeMemory() + this->getBaseIP()));
-    }
-#endif
-
-#ifdef VOMIT_DOS_ON_LINUX_IDLE_HACK
-    if (isr == 0x28) {
-        /* DOS idle interrupt, catch a quick rest! */
-        sched_yield();
     }
 #endif
 
