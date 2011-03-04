@@ -23,8 +23,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <insn-types.h>
-#include <disasm.h>
+#include "insn-types.h"
+#include "disasm.h"
 
 const insn_t insn_table[256] = {
 

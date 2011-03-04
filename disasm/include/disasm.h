@@ -23,17 +23,10 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __DISASM_H__
-#define __DISASM_H__
+#ifndef DISASM_H
+#define DISASM_H
 
-#include <stdint.h>
-
-/* Create some handy type definitions */
-typedef uint16_t WORD;
-typedef uint8_t BYTE;
-
-/* Extract the register id# from a ModR/M byte */
-#define MODRM_REG(rm)	(((rm) >> 3) & 7)
+#include "types.h"
 
 /* Fetch the name of a register based on a register id# */
 #define R8(d)			(reg8name[(d) & 7])
@@ -43,9 +36,6 @@ typedef uint8_t BYTE;
  * We AND with 3 to keep the index within bounds.
  */
 #define SEG(d)			(segname[(d)])
-
-/* Construct a 16-bit word from two 8-bit bytes */
-#define MAKEWORD(l, m)	(((m) << 8) | (l))
 
 typedef struct {
 	const char *name;

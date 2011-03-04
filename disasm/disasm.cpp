@@ -26,6 +26,7 @@
 #include "insn-types.h"
 #include "disasm.h"
 #include "debug.h"
+#include "vomit.h"
 
 /* int insn_width (BYTE *data)
  *
@@ -46,7 +47,7 @@ int insn_width(BYTE* p)
 
     if (i->type == WRAP) {
         wrapped = 1;
-        i = &wrapped_insn_table[p[0]][MODRM_REG(p[1])];
+        i = &wrapped_insn_table[p[0]][vomit_modRMRegisterPart(p[1])];
     }
 
     if (i->type == OP_OP) {
@@ -87,7 +88,7 @@ bool disassemble(BYTE* p, long unsigned int offset, char *buf, int len)
     i = &insn_table[p[0]];
 
     if (i->type == WRAP) {
-        i = &wrapped_insn_table[p[0]][MODRM_REG(p[1])];
+        i = &wrapped_insn_table[p[0]][vomit_modRMRegisterPart(p[1])];
         base_width++;
     }
     if (i->type == OP_OP) {
@@ -206,24 +207,24 @@ bool disassemble(BYTE* p, long unsigned int offset, char *buf, int len)
         snprintf(ptr, len, "%s, %04X", R16(*p), MAKEWORD(p[1], p[2]));
         break;
     case OP_RM8_reg8:
-        snprintf(ptr, len, "%s, %s", modrm_string(p+1, 8), R8(MODRM_REG(*(p+1))));
+        snprintf(ptr, len, "%s, %s", modrm_string(p+1, 8), R8(vomit_modRMRegisterPart(*(p+1))));
         break;
     case OP_seg_RM16:
         ++p;
-        snprintf(ptr, len, "%s, %s", SEG(MODRM_REG(*p)), modrm_string(p, 16));
+        snprintf(ptr, len, "%s, %s", SEG(vomit_modRMRegisterPart(*p)), modrm_string(p, 16));
         break;
     case OP_reg8_RM8:
-        snprintf(ptr, len, "%s, %s", R8(MODRM_REG(*(p+1))), modrm_string(p+1, 8));
+        snprintf(ptr, len, "%s, %s", R8(vomit_modRMRegisterPart(*(p+1))), modrm_string(p+1, 8));
         break;
     case OP_reg16_RM16:
-        snprintf(ptr, len, "%s, %s", R16(MODRM_REG(*(p+1))), modrm_string(p+1, 16));
+        snprintf(ptr, len, "%s, %s", R16(vomit_modRMRegisterPart(*(p+1))), modrm_string(p+1, 16));
         break;
     case OP_RM16_reg16:
-        snprintf(ptr, len, "%s, %s", modrm_string(p+1, 16), R16(MODRM_REG(*(p+1))));
+        snprintf(ptr, len, "%s, %s", modrm_string(p+1, 16), R16(vomit_modRMRegisterPart(*(p+1))));
         break;
     case OP_RM16_seg:
         ++p;
-        snprintf(ptr, len, "%s, %s", modrm_string(p, 16), SEG(MODRM_REG(*p)));
+        snprintf(ptr, len, "%s, %s", modrm_string(p, 16), SEG(vomit_modRMRegisterPart(*p)));
         break;
     case OP_reg8_CL:
         snprintf(ptr, len, "%s, CL", R8(*p));
