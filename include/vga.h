@@ -1,25 +1,37 @@
-#ifndef __vga_h__
-#define __vga_h__
+#ifndef VGA_H
+#define VGA_H
 
-void vga_init();
-void vga_kill();
+#include "iodevice.h"
+#include <QtGui/QColor>
 
-void mark_palette_dirty();
-void clear_palette_dirty();
-bool is_palette_dirty();
+class VGA : public IODevice
+{
+public:
+    VGA();
+    virtual ~VGA();
 
-BYTE vga_read_register(BYTE index);
-BYTE vga_read_register2(BYTE index);
-BYTE vga_read_sequencer(BYTE index);
-void vga_write_register(BYTE index, BYTE value);
+    virtual BYTE in8(WORD port);
+    virtual void out8(WORD port, BYTE data);
 
-typedef struct {
-    BYTE r;
-    BYTE g;
-    BYTE b;
-} rgb_t;
+    void setPaletteDirty(bool);
+    bool isPaletteDirty();
 
-extern rgb_t vga_color_register[];
-extern BYTE vga_palette_register[];
+    BYTE readRegister(BYTE index);
+    BYTE readRegister2(BYTE index);
+    BYTE readSequencer(BYTE index);
 
-#endif /* __vga_h__ */
+    void writeRegister(BYTE index, BYTE value);
+
+    QColor color(int index) const;
+    QColor paletteColor(int paletteIndex) const;
+
+    static VGA* the();
+
+private:
+    struct Private;
+    Private* d;
+
+    static VGA* s_the;
+};
+
+#endif

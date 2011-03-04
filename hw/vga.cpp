@@ -6,64 +6,44 @@
 #include <string.h>
 #include <QtCore/QMutex>
 #include <QtCore/QMutexLocker>
+#include <QtGui/QColor>
 
-static BYTE current_register = 0;
-static BYTE current_register2 = 0;
-static BYTE current_sequencer = 0;
+static VGA theVGA;
 
-// there are only 0x12, but let's avoid segfaults
-static BYTE io_register[0x20];
+typedef struct {
+    BYTE r;
+    BYTE g;
+    BYTE b;
+    operator QColor() { return QColor::fromRgb(r << 2, g << 2, b << 2); }
+} RGBColor;
 
-// there are only ???, but let's avoid segfaults
-static BYTE io_register2[0x20];
-
-// there are only 4, but let's avoid segfaults
-static BYTE io_sequencer[0x20];
-
-// there are only ??, but let's avoid segfaults
-static BYTE index_palette = 0;
-
-static BYTE columns;
-static BYTE rows;
-
-static BYTE dac_data_read_index = 0;
-static BYTE dac_data_read_subindex = 0;
-static BYTE dac_data_write_index = 0;
-static BYTE dac_data_write_subindex = 0;
-
-static QMutex s_paletteMutex;
-
-static void vga_selreg(VCpu*, WORD, BYTE);
-static void vga_setreg(VCpu*, WORD, BYTE);
-static void vga_selreg2(VCpu*, WORD, BYTE);
-static void vga_setreg2(VCpu*, WORD, BYTE);
-static BYTE vga_getreg2(VCpu*, WORD);
-static void vga_selseq(VCpu*, WORD, BYTE);
-static void vga_setseq(VCpu*, WORD, BYTE);
-static BYTE vga_getseq(VCpu*, WORD);
-static BYTE vga_getreg(VCpu*, WORD);
-static BYTE vga_status(VCpu*, WORD);
-static BYTE vga_get_current_register(VCpu*, WORD);
-static void vga_write_3c0(VCpu*, WORD port, BYTE data);
-static BYTE vga_read_3c1(VCpu*, WORD port);
-static BYTE vga_read_miscellaneous_output_register(VCpu*, WORD port);
-static void vga_dac_read_address(VCpu*, WORD, BYTE);
-static void vga_dac_write_address(VCpu*, WORD, BYTE);
-static BYTE vga_dac_read_data(VCpu*, WORD);
-static void vga_dac_write_data(VCpu*, WORD, BYTE);
-static BYTE vga_fcr_read(VCpu*, WORD);
-static void vga_fcr_write(VCpu*, WORD, BYTE);
-
-static bool next_3c0_is_index = true;
-
-static bool palette_dirty = true;
-
-BYTE vga_palette_register[17] =
+struct VGA::Private
 {
-    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0x03
+    BYTE currentRegister;
+    BYTE currentRegister2;
+    BYTE currentSequencer;
+    BYTE ioRegister[0x20];
+    BYTE ioRegister2[0x20];
+    BYTE ioSequencer[0x20];
+    BYTE paletteIndex;
+    BYTE columns;
+    BYTE rows;
+
+    BYTE dac_data_read_index;
+    BYTE dac_data_read_subindex;
+    BYTE dac_data_write_index;
+    BYTE dac_data_write_subindex;
+
+    bool next3C0IsIndex;
+    bool paletteDirty;
+
+    QMutex paletteMutex;
+
+    BYTE paletteRegister[17];
+    RGBColor colorRegister[256];
 };
 
-rgb_t vga_color_register[256] =
+static const RGBColor default_vga_color_registers[256] =
 {
     {0x00,0x00,0x00}, {0x00,0x00,0x2a}, {0x00,0x2a,0x00}, {0x00,0x2a,0x2a}, {0x2a,0x00,0x00}, {0x2a,0x00,0x2a}, {0x2a,0x15,0x00}, {0x2a,0x2a,0x2a},
     {0x00,0x00,0x00}, {0x00,0x00,0x2a}, {0x00,0x2a,0x00}, {0x00,0x2a,0x2a}, {0x2a,0x00,0x00}, {0x2a,0x00,0x2a}, {0x2a,0x15,0x00}, {0x2a,0x2a,0x2a},
@@ -75,267 +55,308 @@ rgb_t vga_color_register[256] =
     {0x15,0x15,0x15}, {0x15,0x15,0x3f}, {0x15,0x3f,0x15}, {0x15,0x3f,0x3f}, {0x3f,0x15,0x15}, {0x3f,0x15,0x3f}, {0x3f,0x3f,0x15}, {0x3f,0x3f,0x3f},
 };
 
-void vga_init()
+VGA* VGA::s_the = 0;
+
+VGA* VGA::the()
 {
-    vm_listen(0x3b4, vga_get_current_register, vga_selreg);
-    vm_listen(0x3b5, vga_getreg, vga_setreg);
-    vm_listen(0x3ba, vga_status, vga_fcr_write);
-
-    vm_listen(0x3c0, 0L, vga_write_3c0);
-    vm_listen(0x3c1, vga_read_3c1, 0L);
-
-    vm_listen(0x3c4, 0L, vga_selseq);
-    vm_listen(0x3c5, vga_getseq, vga_setseq);
-    vm_listen(0x3c7, 0L, vga_dac_read_address);
-    vm_listen(0x3c8, 0L, vga_dac_write_address);
-    vm_listen(0x3c9, vga_dac_read_data, vga_dac_write_data);
-    vm_listen(0x3ca, vga_fcr_read, 0L);
-    vm_listen(0x3ce, 0L, vga_selreg2);
-    vm_listen(0x3cf, vga_getreg2, vga_setreg2);
-
-    vm_listen(0x3d4, vga_get_current_register, vga_selreg);
-    vm_listen(0x3d5, vga_getreg, vga_setreg);
-    vm_listen(0x3da, vga_status, 0L);
-
-    vm_listen(0x3cc, vga_read_miscellaneous_output_register, 0L);
-
-    columns = 80;
-    rows = 25;
-
-    memset(io_register, 0, sizeof(io_register));
-    memset(io_register2, 0, sizeof(io_register2));
-
-    io_sequencer[2] = 0x0F;
-
-    dac_data_read_index = 0;
-    dac_data_read_subindex = 0;
-    dac_data_write_index = 0;
-    dac_data_write_subindex = 0;
+    VM_ASSERT(s_the);
+    return s_the;
 }
 
-void vga_write_3c0(VCpu*, WORD, BYTE data)
+VGA::VGA()
+    : IODevice("VGA")
+    , d(new Private)
 {
-    QMutexLocker locker(&s_paletteMutex);
+    VM_ASSERT(!s_the);
+    s_the = this;
 
-    if (next_3c0_is_index)
-        index_palette = data;
-    else
-        vga_palette_register[index_palette] = data;
+    listen(0x3B4, IODevice::ReadWrite);
+    listen(0x3B5, IODevice::ReadWrite);
+    listen(0x3BA, IODevice::ReadWrite);
+    listen(0x3C0, IODevice::Write);
+    listen(0x3C1, IODevice::Read);
+    listen(0x3C4, IODevice::Write);
+    listen(0x3C5, IODevice::ReadWrite);
+    listen(0x3C7, IODevice::Write);
+    listen(0x3C8, IODevice::Write);
+    listen(0x3C9, IODevice::ReadWrite);
+    listen(0x3CA, IODevice::Read);
+    listen(0x3CC, IODevice::Read);
+    listen(0x3CE, IODevice::Write);
+    listen(0x3CF, IODevice::ReadWrite);
+    listen(0x3D4, IODevice::ReadWrite);
+    listen(0x3D5, IODevice::ReadWrite);
+    listen(0x3DA, IODevice::Read);
 
-    next_3c0_is_index = !next_3c0_is_index;
+    d->columns = 80;
+    d->rows = 0;
+
+    d->currentRegister = 0;
+    d->currentRegister2 = 0;
+    d->currentSequencer = 0;
+
+    memset(d->ioRegister, 0, sizeof(d->ioRegister));
+    memset(d->ioRegister2, 0, sizeof(d->ioRegister2));
+    memset(d->ioSequencer, 0, sizeof(d->ioSequencer));
+
+    d->ioSequencer[2] = 0x0F;
+
+    d->dac_data_read_index = 0;
+    d->dac_data_read_subindex = 0;
+    d->dac_data_write_index = 0;
+    d->dac_data_write_subindex = 0;
+
+    for (int i = 0; i < 16; ++i)
+        d->paletteRegister[i] = i;
+    d->paletteRegister[16] = 0x03;
+
+    memcpy(d->colorRegister, default_vga_color_registers, sizeof(default_vga_color_registers));
+
+    d->next3C0IsIndex = true;
+    d->paletteDirty = true;
 }
 
-BYTE vga_read_3c1(VCpu*, WORD)
+VGA::~VGA()
 {
-    QMutexLocker locker(&s_paletteMutex);
-    //vlog(VM_VIDEOMSG, "Read PALETTE[%u] (=%02X)", index_palette, vga_palette_register[index_palette]);
-    return vga_palette_register[index_palette];
+    delete d;
+    d = 0;
 }
 
-BYTE vga_read_miscellaneous_output_register(VCpu*, WORD)
+void VGA::out8(WORD port, BYTE data)
 {
-    vlog(VM_VIDEOMSG, "Read MOR");
-
-    // 0x01: I/O at 0x3Dx (otherwise at 0x3Bx)
-    // 0x02: RAM access enabled?
-
-    return 0x03;
-}
-
-void vga_kill()
-{
-}
-
-BYTE vga_get_current_register(VCpu*, WORD)
-{
-    return current_register;
-}
-
-void vga_selreg(VCpu*, WORD, BYTE data)
-{
-    // mask off unused bits
-    current_register = data & 0x1F;
-}
-
-void vga_setreg(VCpu*, WORD, BYTE data)
-{
-    io_register[current_register] = data;
-}
-
-BYTE vga_getreg(VCpu*, WORD)
-{
-    return io_register[current_register];
-}
-
-void vga_selseq(VCpu*, WORD, BYTE data)
-{
-    // mask off unused bits
-    current_sequencer = data & 0x1F;
-}
-
-BYTE vga_getseq(VCpu*, WORD)
-{
-    //vlog(VM_VIDEOMSG, "reading seq %d, data is %02X", current_sequencer, io_sequencer[current_sequencer]);
-    return io_sequencer[current_sequencer];
-}
-
-void vga_setseq(VCpu*, WORD, BYTE value)
-{
-    //vlog(VM_VIDEOMSG, "writing to seq %d, data is %02X", current_sequencer, data);
-    io_sequencer[current_sequencer] = value;
-}
-
-BYTE vga_status(VCpu*, WORD)
-{
-    /*
-     * 6845 - Port 3DA Status Register
-     *
-     * |7|6|5|4|3|2|1|0|  3DA Status Register
-     *  | | | | | | | `---- 1 = display enable, RAM access is OK
-     *  | | | | | | `----- 1 = light pen trigger set
-     *  | | | | | `------ 0 = light pen on, 1 = light pen off
-     *  | | | | `------- 1 = vertical retrace, RAM access OK for next 1.25ms
-     *  `-------------- unused
-     *
-     */
-
-    /* 0000 0100 */
-    BYTE value = 0x04;
-
-    if (vomit_in_vretrace())
-        value |= 0x08;
-
-    next_3c0_is_index = true;
-
-    return value;
-}
-
-BYTE vga_read_register(BYTE index)
-{
-    VM_ASSERT(index <= 0x12);
-    return io_register[index];
-}
-
-BYTE vga_read_register2(BYTE index)
-{
-    // TODO: Check if 12 is the right number here...
-    VM_ASSERT(index <= 0x12);
-    return io_register2[index];
-}
-
-BYTE vga_read_sequencer(BYTE index)
-{
-    VM_ASSERT(index <= 0x4);
-    return io_sequencer[index];
-}
-
-void vga_write_register(BYTE index, BYTE value)
-{
-    VM_ASSERT(index <= 0x12);
-    io_register[index] = value;
-}
-
-void vga_selreg2(VCpu*, WORD, BYTE data)
-{
-    current_register2 = data;
-}
-
-void vga_setreg2(VCpu*, WORD, BYTE data)
-{
-    //vlog(VM_VIDEOMSG, "writing to reg2 %d, data is %02X", current_register2, data);
-    io_register2[current_register2] = data;
-}
-
-BYTE vga_getreg2(VCpu*, WORD)
-{
-    //vlog(VM_VIDEOMSG, "reading reg2 %d, data is %02X", current_register2, io_register2[current_register2]);
-    return io_register2[current_register2];
-}
-
-void mark_palette_dirty()
-{
-    QMutexLocker locker(&s_paletteMutex);
-    palette_dirty = true;
-}
-
-void clear_palette_dirty()
-{
-    QMutexLocker locker(&s_paletteMutex);
-    palette_dirty = false;
-}
-
-bool is_palette_dirty()
-{
-    QMutexLocker locker(&s_paletteMutex);
-    return palette_dirty;
-}
-
-void vga_dac_write_address(VCpu*, WORD, BYTE data)
-{
-    dac_data_write_index = data;
-    dac_data_write_subindex = 0;
-}
-
-void vga_dac_read_address(VCpu*, WORD, BYTE data)
-{
-    dac_data_read_index = data;
-    dac_data_read_subindex = 0;
-}
-
-BYTE vga_dac_read_data(VCpu*, WORD)
-{
-    BYTE data = 0;
-    switch (dac_data_read_subindex) {
-    case 0:
-        data = vga_color_register[dac_data_read_index].r;
+    switch (port) {
+    case 0x3B4:
+    case 0x3D4:
+        d->currentRegister = data & 0x1F;
+        if (d->currentRegister >= 0x12)
+            vlog(VM_VIDEOMSG, "Invalid IO register #%u selected", d->currentRegister);
         break;
-    case 1:
-        data = vga_color_register[dac_data_read_index].g;
+
+    case 0x3B5:
+    case 0x3D5:
+        if (d->currentRegister >= 0x12)
+            vlog(VM_VIDEOMSG, "Invalid IO register #%u written", d->currentRegister);
+        d->ioRegister[d->currentRegister] = data;
         break;
-    case 2:
-        data = vga_color_register[dac_data_read_index].b;
+
+    case 0x3BA:
+        vlog(VM_VIDEOMSG, "Writing FCR");
+        break;
+
+    case 0x3C0: {
+        QMutexLocker locker(&d->paletteMutex);
+        if (d->next3C0IsIndex)
+            d->paletteIndex = data;
+        else
+            d->paletteRegister[d->paletteIndex] = data;
+        d->next3C0IsIndex = !d->next3C0IsIndex;
         break;
     }
 
-    // vlog(VM_VIDEOMSG, "Reading component %u of color %02X (%02X)", dac_data_read_subindex, dac_data_read_index, data);
+    case 0x3C4:
+        d->currentSequencer = data & 0x1F;
+        if (d->currentSequencer >= 0x4)
+            vlog(VM_VIDEOMSG, "Invalid IO sequencer #%u selected", d->currentSequencer);
+        break;
 
-    if (++dac_data_read_subindex >= 3) {
-        dac_data_read_subindex = 0;
-        ++dac_data_read_index;
+    case 0x3C5:
+        if (d->currentSequencer >= 0x4)
+            vlog(VM_VIDEOMSG, "Invalid IO sequencer #%u written", d->currentSequencer);
+        d->ioSequencer[d->currentSequencer] = data;
+        break;
+
+    case 0x3C7:
+        d->dac_data_read_index = data;
+        d->dac_data_read_subindex = 0;
+        break;
+
+    case 0x3C8:
+        d->dac_data_write_index = data;
+        d->dac_data_write_subindex = 0;
+        break;
+
+    case 0x3C9: {
+        // vlog(VM_VIDEOMSG, "Setting component %u of color %02X to %02X", dac_data_subindex, dac_data_index, data);
+        RGBColor& c = d->colorRegister[d->dac_data_write_index];
+        switch (d->dac_data_write_subindex) {
+        case 0:
+            c.r = data;
+            break;
+        case 1:
+            c.g = data;
+            break;
+        case 2:
+            c.b = data;
+            break;
+        }
+
+        if (++d->dac_data_write_subindex >= 3) {
+            d->dac_data_write_subindex = 0;
+            ++d->dac_data_write_index;
+        }
+
+        setPaletteDirty(true);
+        g_cpu->vgaMemory()->syncPalette();
+        break;
     }
 
-    return data;
+    case 0x3CE:
+        // FIXME: Find the number of valid registers and do something for OOB access.
+        d->currentRegister2 = data;
+        break;
+
+    case 0x3CF:
+        // FIXME: Find the number of valid registers and do something for OOB access.
+        // vlog(VM_VIDEOMSG, "writing to reg2 %d, data is %02X", current_register2, data);
+        d->ioRegister2[d->currentRegister2] = data;
+        break;
+
+    default:
+        IODevice::out8(port, data);
+    }
 }
 
-void vga_dac_write_data(VCpu* cpu, WORD, BYTE data)
+BYTE VGA::in8(WORD port)
 {
-    // vlog(VM_VIDEOMSG, "Setting component %u of color %02X to %02X", dac_data_subindex, dac_data_index, data);
-    switch (dac_data_write_subindex) {
-    case 0:
-        vga_color_register[dac_data_write_index].r = data;
-        break;
-    case 1:
-        vga_color_register[dac_data_write_index].g = data;
-        break;
-    case 2:
-        vga_color_register[dac_data_write_index].b = data;
-        break;
+    switch (port) {
+    case 0x3B4:
+    case 0x3D4:
+        return d->currentRegister;
+
+    case 0x3B5:
+    case 0x3D5:
+        if (d->currentRegister >= 0x12) {
+            vlog(VM_VIDEOMSG, "Invalid IO register #%u read", d->currentRegister);
+            return IODevice::JunkValue;
+        }
+        return d->ioRegister[d->currentRegister];
+
+    case 0x3BA:
+    case 0x3DA: {
+        // 6845 - Port 3DA Status Register
+        //
+        //  |7|6|5|4|3|2|1|0|  3DA Status Register
+        //  | | | | | | | `---- 1 = display enable, RAM access is OK
+        //  | | | | | | `----- 1 = light pen trigger set
+        //  | | | | | `------ 0 = light pen on, 1 = light pen off
+        //  | | | | `------- 1 = vertical retrace, RAM access OK for next 1.25ms
+        //  `-------------- unused
+
+        // 0000 0100
+        BYTE value = 0x04;
+
+        // FIXME: Needs mutex protection (or more clever mechanism.)
+        if (vomit_in_vretrace())
+            value |= 0x08;
+
+        d->next3C0IsIndex = true;
+        return value;
     }
 
-    if (++dac_data_write_subindex >= 3) {
-        dac_data_write_subindex = 0;
-        ++dac_data_write_index;
+    case 0x3C1: {
+        QMutexLocker locker(&d->paletteMutex);
+        //vlog(VM_VIDEOMSG, "Read PALETTE[%u] (=%02X)", d->paletteIndex, d->paletteRegister[d->paletteIndex]);
+        return d->paletteRegister[d->paletteIndex];
     }
 
-    mark_palette_dirty();
-    cpu->vgaMemory()->syncPalette();
+    case 0x3C5:
+        if (d->currentSequencer >= 0x4) {
+            vlog(VM_VIDEOMSG, "Invalid IO sequencer #%u read", d->currentSequencer);
+            return IODevice::JunkValue;
+        }
+        //vlog(VM_VIDEOMSG, "Reading sequencer %d, data is %02X", d->currentSequencer, d->ioSequencer[d->currentSequencer]);
+        return d->ioSequencer[d->currentSequencer];
+
+    case 0x3C9: {
+        BYTE data = 0;
+        switch (d->dac_data_read_subindex) {
+        case 0:
+            data = d->colorRegister[d->dac_data_read_index].r;
+            break;
+        case 1:
+            data = d->colorRegister[d->dac_data_read_index].g;
+            break;
+        case 2:
+            data = d->colorRegister[d->dac_data_read_index].b;
+            break;
+        }
+
+        // vlog(VM_VIDEOMSG, "Reading component %u of color %02X (%02X)", dac_data_read_subindex, dac_data_read_index, data);
+
+        if (++d->dac_data_read_subindex >= 3) {
+            d->dac_data_read_subindex = 0;
+            ++d->dac_data_read_index;
+        }
+
+        return data;
+    }
+
+    case 0x3CA:
+        vlog(VM_VIDEOMSG, "Reading FCR");
+        return 0x00;
+
+    case 0x3CC:
+        vlog(VM_VIDEOMSG, "Read MOR (Miscellaneous Output Register)");
+        // 0x01: I/O at 0x3Dx (otherwise at 0x3Bx)
+        // 0x02: RAM access enabled?
+        return 0x03;
+
+    case 0x3CF:
+        // FIXME: Find the number of valid registers and do something for OOB access.
+        // vlog(VM_VIDEOMSG, "reading reg2 %d, data is %02X", current_register2, io_register2[current_register2]);
+        return d->ioRegister2[d->currentRegister2];
+
+    default:
+        return IODevice::in8(port);
+    }
 }
 
-BYTE vga_fcr_read(VCpu*, WORD)
+BYTE VGA::readRegister(BYTE index)
 {
-    return 0x00;
+    VM_ASSERT(index < 0x12);
+    return d->ioRegister[index];
 }
 
-void vga_fcr_write(VCpu*, WORD, BYTE)
+BYTE VGA::readRegister2(BYTE index)
 {
+    // FIXME: Check if 12 is the correct limit here.
+    VM_ASSERT(index < 0x12);
+    return d->ioRegister2[index];
 }
+
+BYTE VGA::readSequencer(BYTE index)
+{
+    VM_ASSERT(index < 0x4);
+    return d->ioSequencer[index];
+}
+
+void VGA::writeRegister(BYTE index, BYTE value)
+{
+    VM_ASSERT(index < 0x12);
+    d->ioRegister[index] = value;
+}
+
+void VGA::setPaletteDirty(bool dirty)
+{
+    QMutexLocker locker(&d->paletteMutex);
+    d->paletteDirty = dirty;
+}
+
+bool VGA::isPaletteDirty()
+{
+    QMutexLocker locker(&d->paletteMutex);
+    return d->paletteDirty;
+}
+
+QColor VGA::paletteColor(int paletteIndex) const
+{
+    RGBColor& c = d->colorRegister[d->paletteRegister[paletteIndex]];
+    return c;
+}
+
+QColor VGA::color(int index) const
+{
+    RGBColor& c = d->colorRegister[index];
+    return c;
+}
+

@@ -8,16 +8,16 @@
 #include <QtGui/QBrush>
 #include <QtCore/QDebug>
 
-#define WRITE_MODE (vga_read_register2(5) & 0x03)
-#define READ_MODE ((vga_read_register2(5) >> 3) & 1)
-#define ODD_EVEN ((vga_read_register2(5) >> 4) & 1)
-#define SHIFT_REG ((vga_read_register2(5) >> 5) & 0x03)
-#define ROTATE ((vga_read_register2(3)) & 0x07)
-#define DRAWOP ((vga_read_register2(3) >> 3) & 3)
-#define MAP_MASK_BIT(i) ((vga_read_sequencer(2) >> i)&1)
-#define SET_RESET_BIT(i) ((vga_read_register2(0) >> i)&1)
-#define SET_RESET_ENABLE_BIT(i) ((vga_read_register2(1) >> i)&1)
-#define BIT_MASK (vga_read_register2(8))
+#define WRITE_MODE (VGA::the()->readRegister2(5) & 0x03)
+#define READ_MODE ((VGA::the()->readRegister2(5) >> 3) & 1)
+#define ODD_EVEN ((VGA::the()->readRegister2(5) >> 4) & 1)
+#define SHIFT_REG ((VGA::the()->readRegister2(5) >> 5) & 0x03)
+#define ROTATE ((VGA::the()->readRegister2(3)) & 0x07)
+#define DRAWOP ((VGA::the()->readRegister2(3) >> 3) & 3)
+#define MAP_MASK_BIT(i) ((VGA::the()->readSequencer(2) >> i)&1)
+#define SET_RESET_BIT(i) ((VGA::the()->readRegister2(0) >> i)&1)
+#define SET_RESET_ENABLE_BIT(i) ((VGA::the()->readRegister2(1) >> i)&1)
+#define BIT_MASK (VGA::the()->readRegister2(8))
 
 struct VgaMemory::Private
 {
@@ -36,11 +36,7 @@ struct VgaMemory::Private
     void synchronizeColors()
     {
         for (int i = 0; i < 16; ++i) {
-            color[i].setRgb(
-                vga_color_register[vga_palette_register[i]].r << 2,
-                vga_color_register[vga_palette_register[i]].g << 2,
-                vga_color_register[vga_palette_register[i]].b << 2);
-
+            color[i] = VGA::the()->paletteColor(i);
             brush[i] = QBrush(color[i]);
             screen12.setColor(i, color[i].rgb());
         }
@@ -68,7 +64,7 @@ VgaMemory::VgaMemory(VCpu *cpu)
     d->latch[3] = 0;
 
     d->synchronizeColors();
-    mark_palette_dirty();
+    VGA::the()->setPaletteDirty(true);
 
     d->dirty = true;
 }
@@ -84,7 +80,7 @@ VgaMemory::~VgaMemory()
 void VgaMemory::write8(DWORD address, BYTE value)
 {
     /*
-     * fprintf(stderr,"mem_write: %02X:%04X = %02X <%d>, BM=%02X, ESR=%02X, SR=%02X\n", vga_read_sequencer(2) & 0x0F, a-0xA0000, value, DRAWOP, BIT_MASK, vga_read_register2(1), vga_read_register2(0));
+     * fprintf(stderr,"mem_write: %02X:%04X = %02X <%d>, BM=%02X, ESR=%02X, SR=%02X\n", VGA::the()->readSequencer(2) & 0x0F, a-0xA0000, value, DRAWOP, BIT_MASK, VGA::the()->readRegister2(1), VGA::the()->readRegister2(0));
      */
 
     if (address >= 0xAFFFF) {
@@ -126,8 +122,8 @@ void VgaMemory::write8(DWORD address, BYTE value)
     } else if (WRITE_MODE == 0) {
 
         BYTE bitmask = BIT_MASK;
-        BYTE set_reset = vga_read_register2(0);
-        BYTE enable_set_reset = vga_read_register2(1);
+        BYTE set_reset = VGA::the()->readRegister2(0);
+        BYTE enable_set_reset = VGA::the()->readRegister2(1);
         BYTE val = value;
 
         if (ROTATE) {
@@ -226,7 +222,7 @@ void VgaMemory::write8(DWORD address, BYTE value)
      * Check first if any planes should be written.
      */
 
-    BYTE plane_mask = vga_read_sequencer(2) & 0x0F;
+    BYTE plane_mask = VGA::the()->readSequencer(2) & 0x0F;
 
     if (plane_mask) {
         if (plane_mask & 0x01)
@@ -288,9 +284,9 @@ BYTE VgaMemory::read8(DWORD address) {
         d->latch[2] = d->plane[2][address];
         d->latch[3] = d->plane[3][address];
         /*
-        fprintf(stderr, "mem_read: %02X {%02X, %02X, %02X, %02X}\n", d->latch[vga_read_register2(4)], d->latch[0], d->latch[1], d->latch[2], d->latch[3]);
+        fprintf(stderr, "mem_read: %02X {%02X, %02X, %02X, %02X}\n", d->latch[VGA::the()->readRegister2(4)], d->latch[0], d->latch[1], d->latch[2], d->latch[3]);
         */
-        return d->latch[vga_read_register2(4)];
+        return d->latch[VGA::the()->readRegister2(4)];
     } else {
         vlog(VM_VIDEOMSG, "OOB read 0x%lx", address);
         return d->cpu->memory[address];

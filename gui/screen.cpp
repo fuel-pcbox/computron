@@ -119,27 +119,27 @@ void Screen::refresh()
     BYTE currentVideoMode = d->cpu->readUnmappedMemory8(0x449) & 0x7F;
 
     if (currentVideoMode == 0x12) {
-        if (is_palette_dirty()) {
+        if (VGA::the()->isPaletteDirty()) {
             synchronizeColors();
-            clear_palette_dirty();
+            VGA::the()->setPaletteDirty(false);
         }
         if (d->cpu->vgaMemory()->isDirty()) {
             update(d->cpu->vgaMemory()->dirtyRect());
             d->cpu->vgaMemory()->clearDirty();
         }
     } else if (currentVideoMode == 0x0D) {
-        if (is_palette_dirty()) {
+        if (VGA::the()->isPaletteDirty()) {
             synchronizeColors();
-            clear_palette_dirty();
+            VGA::the()->setPaletteDirty(false);
         }
         if (d->cpu->vgaMemory()->isDirty()) {
             renderMode0D(m_render0D);
             update();
         }
     } else if (currentVideoMode == 0x13) {
-        if (is_palette_dirty()) {
+        if (VGA::the()->isPaletteDirty()) {
             synchronizeColors();
-            clear_palette_dirty();
+            VGA::the()->setPaletteDirty(false);
         }
         if (d->cpu->vgaMemory()->isDirty()) {
             renderMode13(m_render13);
@@ -298,7 +298,7 @@ void Screen::paintEvent(QPaintEvent *e)
 
     int screenColumns = d->cpu->readUnmappedMemory8(0x44A);
 
-    WORD rawCursor = vga_read_register(0x0E) << 8 | vga_read_register(0x0F);
+    WORD rawCursor = VGA::the()->readRegister(0x0E) << 8 | VGA::the()->readRegister(0x0F);
     BYTE row = screenColumns ? (rawCursor / screenColumns) : 0;
     BYTE column = screenColumns ? (rawCursor % screenColumns) : 0;
 
@@ -312,8 +312,8 @@ void Screen::paintEvent(QPaintEvent *e)
         }
     }
 
-    BYTE cursorStart = vga_read_register(0x0A);
-    BYTE cursorEnd = vga_read_register(0x0B);
+    BYTE cursorStart = VGA::the()->readRegister(0x0A);
+    BYTE cursorEnd = VGA::the()->readRegister(0x0B);
 
     // HACK 2000!
     if (cursorEnd < 14)
@@ -363,11 +363,7 @@ void Screen::synchronizeColors()
 {
     for (int i = 0; i < 16; ++i)
     {
-        d->color[i].setRgb(
-            vga_color_register[vga_palette_register[i]].r << 2,
-            vga_color_register[vga_palette_register[i]].g << 2,
-            vga_color_register[vga_palette_register[i]].b << 2
-       );
+        d->color[i] = VGA::the()->paletteColor(i);
         d->brush[i] = QBrush(d->color[i]);
 
         m_screen12.setColor(i, d->color[i].rgb());
@@ -376,12 +372,7 @@ void Screen::synchronizeColors()
     }
 
     for (int i = 0; i < 256; ++i) {
-        QColor color;
-        color.setRgb(
-            vga_color_register[i].r << 2,
-            vga_color_register[i].g << 2,
-            vga_color_register[i].b << 2
-       );
+        QColor color = VGA::the()->color(i);
         m_render13.setColor(i, color.rgb());
     }
 }
