@@ -24,12 +24,12 @@ HEADERS += gui/mainwindow.h \
            hw/vga_memory.h \
            hw/cmos.h \
            hw/pic.h \
+           hw/vga.h \
            include/types.h \
            include/vcpu.h \
            include/debug.h \
            include/floppy.h \
            include/templates.h \
-           include/vga.h \
            include/vomit.h \
            disasm/include/disasm.h \
            disasm/include/insn-types.h
