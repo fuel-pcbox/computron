@@ -13,7 +13,10 @@ CONFIG += debug
 
 CONFIG -= app_bundle
 
-OBJECTS_DIR += obj
+OBJECTS_DIR = .obj
+RCC_DIR = .rcc
+MOC_DIR = .moc
+UI_DIR = .ui
 
 RESOURCES = vomit.qrc
 
