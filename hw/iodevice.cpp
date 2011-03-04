@@ -54,11 +54,11 @@ const char* IODevice::name() const
 
 void IODevice::out8(WORD port, BYTE data)
 {
-    vlog(VM_ALERT, "FIXME: IODevice::out8(%04X, %02X)", port, data);
+    vlog(VM_ALERT, "FIXME: IODevice[%s]::out8(%04X, %02X)", m_name, port, data);
 }
 
 BYTE IODevice::in8(WORD port)
 {
-    vlog(VM_ALERT, "FIXME: IODevice::in8(%04X)", port);
-    return 0;
+    vlog(VM_ALERT, "FIXME: IODevice[%s]::in8(%04X)", m_name, port);
+    return IODevice::JunkValue;
 }
