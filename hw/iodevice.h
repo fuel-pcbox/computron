@@ -26,8 +26,8 @@ public:
 
 protected:
     enum ListenMask {
-        Read = 1,
-        Write = 2,
+        ReadOnly = 1,
+        WriteOnly = 2,
         ReadWrite = 3
     };
     virtual void listen(WORD port, ListenMask mask);

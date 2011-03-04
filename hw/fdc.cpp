@@ -44,10 +44,10 @@ FDC::FDC()
     listen(0x3F4, fdc_main_status, 0L);
     listen(0x3F5, fdc_data_fifo_read, fdc_data_fifo_write);
 #endif
-    listen(0x3F0, IODevice::Read);
-    listen(0x3F1, IODevice::Read);
-    listen(0x3F2, IODevice::Write);
-    listen(0x3F4, IODevice::Read);
+    listen(0x3F0, IODevice::ReadOnly);
+    listen(0x3F1, IODevice::ReadOnly);
+    listen(0x3F2, IODevice::WriteOnly);
+    listen(0x3F4, IODevice::ReadOnly);
     listen(0x3F5, IODevice::ReadWrite);
 
     d->current_drive = 0;

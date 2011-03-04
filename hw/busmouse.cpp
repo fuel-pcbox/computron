@@ -24,7 +24,7 @@ BusMouse::BusMouse()
     , m_buttons(0x00)
 {
     listen(0x23c, IODevice::ReadWrite);
-    listen(0x23d, IODevice::Read);
+    listen(0x23d, IODevice::ReadOnly);
     listen(0x23e, IODevice::ReadWrite);
 }
 

@@ -33,10 +33,10 @@ IODevice::~IODevice()
 
 void IODevice::listen(uint16_t port, ListenMask mask)
 {
-    if (mask & Read)
+    if (mask & ReadOnly)
         readDevices()[port] = this;
 
-    if (mask & Write)
+    if (mask & WriteOnly)
         writeDevices()[port] = this;
 
     m_ports.append(port);

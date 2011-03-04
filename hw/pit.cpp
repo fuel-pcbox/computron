@@ -7,9 +7,9 @@ static PIT thePIT;
 PIT::PIT()
     : IODevice("PIT")
 {
-    listen(0x40, IODevice::Read);
-    listen(0x42, IODevice::Write);
-    listen(0x43, IODevice::Write);
+    listen(0x40, IODevice::ReadOnly);
+    listen(0x42, IODevice::WriteOnly);
+    listen(0x43, IODevice::WriteOnly);
 }
 
 PIT::~PIT()
