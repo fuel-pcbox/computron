@@ -14,6 +14,8 @@ CONFIG += debug
 
 CONFIG -= app_bundle
 
+OBJECTS_DIR += obj
+
 RESOURCES = vomit.qrc
 
 HEADERS += gui/mainwindow.h \
