@@ -51,7 +51,6 @@ void screen_direct_update(WORD);
 
 void dma_init();
 void fdc_init();
-void ide_init();
 
 #ifdef VOMIT_C_VGA_BIOS
 void video_bios_init();

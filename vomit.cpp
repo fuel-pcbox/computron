@@ -60,7 +60,6 @@ void vomit_init()
         vlog(VM_INITMSG, "%s at 0x%p", device->name(), device);
 
     dma_init();
-    ide_init();
 
     vm_loadconf();
 

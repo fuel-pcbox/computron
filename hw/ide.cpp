@@ -25,131 +25,141 @@
 
 #include "vomit.h"
 #include "debug.h"
+#include "ide.h"
 
-#define ERROR 0x01
-#define INDEX 0x02
-#define CORR  0x04
-#define DRQ   0x08
-#define DSC   0x10
-#define DWF   0x20
-#define DRDY  0x40
-#define BUSY  0x80
+// FIXME: Move IDE to separate logging channel.
 
-#define CONTROLLER (((port) & 0x1f0) == 0x170)
+static IDE theIDE;
 
-static WORD cylinder[2];
-static BYTE head[2];
-static BYTE sector[2];
-static BYTE nsectors[2];
-static BYTE error[2];
-
-static BYTE ide_status(VCpu*, WORD);
-static void ide_command(VCpu*, WORD, BYTE);
-static BYTE get_sector_count(VCpu*, WORD);
-static void set_sector_count(VCpu*, WORD, BYTE);
-static BYTE get_sector(VCpu*, WORD);
-static void set_sector(VCpu*, WORD, BYTE);
-static BYTE get_cylinder_lsb(VCpu*, WORD);
-static void set_cylinder_lsb(VCpu*, WORD, BYTE);
-static BYTE get_cylinder_msb(VCpu*, WORD);
-static void set_cylinder_msb(VCpu*, WORD, BYTE);
-static BYTE get_head(VCpu*, WORD);
-static void set_head(VCpu*, WORD, BYTE);
-static BYTE ide_error(VCpu*, WORD port);
-
-void ide_init()
+struct IDEController
 {
-    vm_listen(0x171, ide_error, 0L);
-    vm_listen(0x172, get_sector_count, set_sector_count);
-    vm_listen(0x173, get_sector, set_sector);
-    vm_listen(0x174, get_cylinder_lsb, set_cylinder_lsb);
-    vm_listen(0x175, get_cylinder_msb, set_cylinder_msb);
-    vm_listen(0x176, get_head, set_head);
-    vm_listen(0x177, ide_status, ide_command);
-    vm_listen(0x1f1, ide_error, 0L);
-    vm_listen(0x1f2, get_sector_count, set_sector_count);
-    vm_listen(0x1f3, get_sector, set_sector);
-    vm_listen(0x1f4, get_cylinder_lsb, set_cylinder_lsb);
-    vm_listen(0x1f5, get_cylinder_msb, set_cylinder_msb);
-    vm_listen(0x1f6, get_head, set_head);
-    vm_listen(0x1f7, ide_status, ide_command);
+    WORD cylinderIndex;
+    BYTE sectorIndex;
+    BYTE headIndex;
+    BYTE sectorCount;
+    BYTE error;
+
+    IDEController()
+        : cylinderIndex(0)
+        , sectorIndex(0)
+        , headIndex(0)
+        , sectorCount(0)
+        , error(0)
+    { }
+
+private:
+    IDEController(const IDEController&);
+};
+
+static const int gNumControllers = 2;
+
+struct IDE::Private
+{
+    IDEController controller[gNumControllers];
+};
+
+IDE::IDE()
+    : IODevice("IDE")
+    , d(new Private)
+{
+    listen(0x171, IODevice::ReadOnly);
+    listen(0x172, IODevice::ReadWrite);
+    listen(0x173, IODevice::ReadWrite);
+    listen(0x174, IODevice::ReadWrite);
+    listen(0x175, IODevice::ReadWrite);
+    listen(0x176, IODevice::ReadWrite);
+    listen(0x177, IODevice::ReadWrite);
+    listen(0x1F1, IODevice::ReadOnly);
+    listen(0x1F2, IODevice::ReadWrite);
+    listen(0x1F3, IODevice::ReadWrite);
+    listen(0x1F4, IODevice::ReadWrite);
+    listen(0x1F5, IODevice::ReadWrite);
+    listen(0x1F6, IODevice::ReadWrite);
+    listen(0x1F7, IODevice::ReadWrite);
 }
 
-static void ide_command(VCpu*, WORD port, BYTE data)
+IDE::~IDE()
 {
-    vlog(VM_DISKLOG, "ide%d received cmd %02X", CONTROLLER, data);
+    delete d;
+    d = 0;
 }
 
-static BYTE ide_status(VCpu*, WORD port)
+IDE* IDE::the()
 {
-    vlog(VM_DISKLOG, "ide%d status queried", CONTROLLER);
-    return INDEX | DRDY;
+    return &theIDE;
 }
 
-static BYTE ide_error(VCpu*, WORD port)
+void IDE::out8(WORD port, BYTE data)
 {
-    vlog(VM_DISKLOG, "ide%d error queried", CONTROLLER);
-    return error[CONTROLLER];
+    const int controllerIndex = (((port) & 0x1F0) == 0x170);
+    IDEController& controller = d->controller[controllerIndex];
+
+    switch (port & 0xF) {
+    case 0x2:
+        vlog(VM_DISKLOG, "Controller %d sector count set: %u", controllerIndex, data);
+        controller.sectorCount = data;
+        break;
+    case 0x3:
+        vlog(VM_DISKLOG, "Controller %d sector index set: %u", controllerIndex, data);
+        controller.sectorIndex = data;
+        break;
+    case 0x4:
+        vlog(VM_DISKLOG, "Controller %d cylinder LSB set: %u", controllerIndex, data);
+        controller.cylinderIndex = MAKEWORD(data, MSB(controller.cylinderIndex));
+        break;
+    case 0x5:
+        vlog(VM_DISKLOG, "Controller %d cylinder MSB set: %u", controllerIndex, data);
+        controller.cylinderIndex = MAKEWORD(LSB(controller.cylinderIndex), data);
+        break;
+    case 0x6:
+        vlog(VM_DISKLOG, "Controller %d head index set: %u", controllerIndex, data);
+        controller.headIndex = data;
+        break;
+    case 0x7:
+        // FIXME: ...
+        vlog(VM_DISKLOG, "Controller %d received command %02X", controllerIndex, data);
+        break;
+    default:
+        IODevice::out8(port, data);
+    }
 }
 
-static BYTE get_sector_count(VCpu*, WORD port)
+BYTE IDE::in8(WORD port)
 {
-    vlog(VM_DISKLOG, "ide%d sector count queried", CONTROLLER);
-    return nsectors[CONTROLLER];
+    const int controllerIndex = (((port) & 0x1F0) == 0x170);
+    const IDEController& controller = d->controller[controllerIndex];
+
+    switch (port & 0xF) {
+    case 0x1:
+        vlog(VM_DISKLOG, "Controller %d error queried: %02X", controllerIndex, controller.error);
+        return controller.error;
+    case 0x2:
+        vlog(VM_DISKLOG, "Controller %d sector count queried: %u", controllerIndex, controller.sectorCount);
+        return controller.sectorCount;
+    case 0x3:
+        vlog(VM_DISKLOG, "Controller %d sector index queried: %u", controllerIndex, controller.sectorIndex);
+        return controller.sectorIndex;
+    case 0x4:
+        vlog(VM_DISKLOG, "Controller %d cylinder LSB queried: %02X", controllerIndex, LSB(controller.cylinderIndex));
+        return LSB(controller.cylinderIndex);
+    case 0x5:
+        vlog(VM_DISKLOG, "Controller %d cylinder MSB queried: %02X", controllerIndex, MSB(controller.cylinderIndex));
+        return LSB(controller.cylinderIndex);
+    case 0x6:
+        vlog(VM_DISKLOG, "Controller %d head index queried: %u", controllerIndex, controller.headIndex);
+        return controller.headIndex;
+    case 0x7: {
+        BYTE ret = status();
+        vlog(VM_DISKLOG, "Controller %d status queried: %02X", controllerIndex, ret);
+        return ret;
+    }
+    default:
+        return IODevice::in8(port);
+    }
 }
 
-static void set_sector_count(VCpu*, WORD port, BYTE data)
+IDE::Status IDE::status() const
 {
-    vlog(VM_DISKLOG, "ide%d sector count set to %d", CONTROLLER, data);
-    nsectors[CONTROLLER] = data;
-}
-
-static BYTE get_sector(VCpu*, WORD port)
-{
-    vlog(VM_DISKLOG, "ide%d sector queried", CONTROLLER);
-    return sector[CONTROLLER];
-}
-
-static void set_sector(VCpu*, WORD port, BYTE data)
-{
-    vlog(VM_DISKLOG, "ide%d sector set to %d", CONTROLLER, data);
-    sector[CONTROLLER] = data;
-}
-
-static BYTE get_cylinder_lsb(VCpu*, WORD port)
-{
-    vlog(VM_DISKLOG, "ide%d cylinder LSB queried", CONTROLLER);
-    return cylinder[CONTROLLER] & 0xFF;
-}
-
-static void set_cylinder_lsb(VCpu*, WORD port, BYTE data)
-{
-    vlog(VM_DISKLOG, "ide%d cylinder LSB set to 0x%02X", CONTROLLER, data);
-    cylinder[CONTROLLER] &= 0xFF00;
-    cylinder[CONTROLLER] |= data;
-}
-
-static BYTE get_cylinder_msb(VCpu*, WORD port)
-{
-    vlog(VM_DISKLOG, "ide%d cylinder MSB queried", CONTROLLER);
-    return (cylinder[CONTROLLER] >> 8) & 0xFF;
-}
-
-static void set_cylinder_msb(VCpu*, WORD port, BYTE data)
-{
-    vlog(VM_DISKLOG, "ide%d cylinder MSB set to 0x%02X", CONTROLLER, data);
-    cylinder[CONTROLLER] &= 0x00FF;
-    cylinder[CONTROLLER] |= (data << 8);
-}
-
-static BYTE get_head(VCpu*, WORD port)
-{
-    vlog(VM_DISKLOG, "ide%d head queried", CONTROLLER);
-    return head[CONTROLLER];
-}
-
-static void set_head(VCpu*, WORD port, BYTE data)
-{
-    vlog(VM_DISKLOG, "ide%d head set to %d", CONTROLLER, data);
-    head[CONTROLLER] = data;
+    // FIXME: ...
+    return static_cast<Status>(INDEX | DRDY);
 }
