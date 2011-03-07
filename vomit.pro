@@ -71,7 +71,6 @@ SOURCES += config.cpp \
            gui/screen.cpp \
            gui/worker.cpp \
            hw/busmouse.cpp \
-           hw/dma.cpp \
            hw/fdc.cpp \
            hw/ide.cpp \
            hw/keyboard.cpp \

@@ -59,8 +59,6 @@ void vomit_init()
     foreach (IODevice *device, IODevice::devices())
         vlog(VM_INITMSG, "%s at 0x%p", device->name(), device);
 
-    dma_init();
-
     vm_loadconf();
 
 #ifdef VOMIT_DEBUG

@@ -49,8 +49,6 @@ BYTE kbd_pop_raw();
 void screen_direct_update(WORD);
 #endif
 
-void dma_init();
-
 #ifdef VOMIT_C_VGA_BIOS
 void video_bios_init();
 void load_cursor(BYTE* row, BYTE* column);
