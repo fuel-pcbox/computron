@@ -109,7 +109,7 @@ BYTE Keyboard::in8(WORD port)
         return m_systemControlPortData;
     }
 
-    return 0xFF;
+    return IODevice::in8(port);
 }
 
 void Keyboard::out8(WORD port, BYTE data)
@@ -165,6 +165,8 @@ void Keyboard::out8(WORD port, BYTE data)
         vlog(VM_KEYMSG, "Got data %02X for unknown command %02X", data, m_command);
         return;
     }
+
+    IODevice::out8(port, data);
 }
 
 void Keyboard::raiseIRQ()
