@@ -26,9 +26,6 @@
 #ifndef __vomit_h__
 #define __vomit_h__
 
-#include <qglobal.h>
-#include <stdarg.h>
-
 #include "types.h"
 
 #define MAX_FILESIZE	524288		/* 512kB is max "loadfile" size */
@@ -45,18 +42,12 @@ WORD kbd_hit();
 WORD kbd_getc();
 BYTE kbd_pop_raw();
 
-#ifdef VOMIT_DIRECT_SCREEN
-void screen_direct_update(WORD);
-#endif
-
 #ifdef VOMIT_C_VGA_BIOS
 void video_bios_init();
 void load_cursor(BYTE* row, BYTE* column);
 #endif
 
 void vomit_init();
-
-extern void vomit_set_vlog_handler( void (*f)(int, const char *, va_list) );
 
 typedef struct {
     bool trace;
