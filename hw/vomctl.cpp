@@ -58,7 +58,7 @@ VomCtl::~VomCtl()
     d = 0;
 }
 
-uint8_t VomCtl::in8(WORD port)
+BYTE VomCtl::in8(WORD port)
 {
     switch (port) {
     case 0xD6: // VOMCTL_REGISTER

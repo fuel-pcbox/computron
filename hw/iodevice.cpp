@@ -33,15 +33,15 @@ QList<IODevice*>& IODevice::devices()
     return s_devices;
 }
 
-QHash<uint16_t, IODevice*>& IODevice::readDevices()
+QHash<WORD, IODevice*>& IODevice::readDevices()
 {
-    static QHash<uint16_t, IODevice*> s_readDevices;
+    static QHash<WORD, IODevice*> s_readDevices;
     return s_readDevices;
 }
 
-QHash<uint16_t, IODevice*>& IODevice::writeDevices()
+QHash<WORD, IODevice*>& IODevice::writeDevices()
 {
-    static QHash<uint16_t, IODevice*> s_writeDevices;
+    static QHash<WORD, IODevice*> s_writeDevices;
     return s_writeDevices;
 }
 
@@ -56,7 +56,7 @@ IODevice::~IODevice()
     devices().removeAll(this);
 }
 
-void IODevice::listen(uint16_t port, ListenMask mask)
+void IODevice::listen(WORD port, ListenMask mask)
 {
     if (mask & ReadOnly)
         readDevices()[port] = this;
@@ -67,7 +67,7 @@ void IODevice::listen(uint16_t port, ListenMask mask)
     m_ports.append(port);
 }
 
-QList<uint16_t> IODevice::ports() const
+QList<WORD> IODevice::ports() const
 {
     return m_ports;
 }

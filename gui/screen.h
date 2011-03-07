@@ -56,8 +56,8 @@ public:
 
     struct Cursor
     {
-        uint8_t row;
-        uint8_t column;
+        BYTE row;
+        BYTE column;
 
         Cursor() : row(0), column(0) {}
         Cursor(uint8_t r, uint8_t c) : row(r), column(c) {}
