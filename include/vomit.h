@@ -71,7 +71,6 @@ extern vomit_options_t options;
 #include "vcpu.h"
 
 void vomit_ignore_io_port(WORD port);
-void vm_listen(WORD, BYTE (*)(VCpu*, WORD), void (*)(VCpu*, WORD, BYTE));
 void vm_call8(VCpu*, WORD port, BYTE value);
 
 bool vomit_in_vretrace();

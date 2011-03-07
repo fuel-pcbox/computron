@@ -52,9 +52,6 @@ void vomit_init()
     video_bios_init();
 #endif
 
-    for (int i = 0xE0; i <= 0xEF; ++i)
-        vm_listen(i, 0L, vm_call8);
-
     vlog(VM_INITMSG, "Registering I/O devices");
     foreach (IODevice *device, IODevice::devices())
         vlog(VM_INITMSG, "%s at 0x%p", device->name(), device);

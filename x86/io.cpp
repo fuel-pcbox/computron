@@ -26,13 +26,7 @@
 #include "vomit.h"
 #include "debug.h"
 #include "iodevice.h"
-#include <QtCore/QHash>
 
-typedef BYTE (*InputHandler) (VCpu*, WORD);
-typedef void (*OutputHandler) (VCpu*, WORD, BYTE);
-
-static QHash<WORD, InputHandler> s_inputHandlers;
-static QHash<WORD, OutputHandler> s_outputHandlers;
 static QSet<WORD> s_ignorePorts;
 
 void _OUT_imm8_AL(VCpu* cpu)
@@ -159,13 +153,8 @@ void VCpu::out(WORD port, BYTE value)
         return;
     }
 
-    if (!s_outputHandlers.contains(port)) {
-        if (!s_ignorePorts.contains(port))
-            vlog(VM_ALERT, "Unhandled I/O write to port %04X, data %02X", port, value);
-        return;
-    }
-
-    s_outputHandlers[port](this, port, value);
+    if (!s_ignorePorts.contains(port))
+        vlog(VM_ALERT, "Unhandled I/O write to port %04X, data %02X", port, value);
 }
 
 BYTE VCpu::in(WORD port)
@@ -178,29 +167,10 @@ BYTE VCpu::in(WORD port)
     if (IODevice::readDevices().contains(port))
         return IODevice::readDevices()[port]->in8(port);
 
-    if (!s_inputHandlers.contains(port)) {
-        if (!s_ignorePorts.contains(port))
-            vlog(VM_ALERT, "Unhandled I/O read from port %04X", port);
-        return 0xFF;
-    }
+    if (!s_ignorePorts.contains(port))
+        vlog(VM_ALERT, "Unhandled I/O read from port %04X", port);
 
-    return s_inputHandlers[port](this, port);
-}
-
-void vm_listen(WORD port, InputHandler inputHandler, OutputHandler outputHandler)
-{
-    if (inputHandler || outputHandler)
-        vlog(VM_IOMSG, "Adding listener(s) for port %04X", port);
-
-    if (inputHandler)
-        s_inputHandlers.insert(port, inputHandler);
-    else
-        s_inputHandlers.remove(port);
-
-    if (outputHandler)
-        s_outputHandlers.insert(port, outputHandler);
-    else
-        s_outputHandlers.remove(port);
+    return IODevice::JunkValue;
 }
 
 void vomit_ignore_io_port(WORD port)

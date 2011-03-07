@@ -25,6 +25,7 @@
 
 #include "vomctl.h"
 #include "vcpu.h"
+#include "vomit.h"
 #include "debug.h"
 
 static VomCtl the;
@@ -41,6 +42,14 @@ VomCtl::VomCtl()
     m_registerIndex = 0;
     listen(0xD6, IODevice::ReadWrite);
     listen(0xD7, IODevice::ReadWrite);
+
+    // FIXME: These should all be removed.
+    listen(0xE0, IODevice::WriteOnly);
+    listen(0xE2, IODevice::WriteOnly);
+    listen(0xE3, IODevice::WriteOnly);
+    listen(0xE4, IODevice::WriteOnly);
+    listen(0xE6, IODevice::WriteOnly);
+    listen(0xE7, IODevice::WriteOnly);
 }
 
 VomCtl::~VomCtl()
@@ -49,8 +58,7 @@ VomCtl::~VomCtl()
     d = 0;
 }
 
-uint8_t
-VomCtl::in8(WORD port)
+uint8_t VomCtl::in8(WORD port)
 {
     switch (port) {
     case 0xD6: // VOMCTL_REGISTER
@@ -85,6 +93,14 @@ void VomCtl::out8(WORD port, BYTE data)
         break;
     case 0xD7: // VOMCTL_CONSOLE_WRITE
         d->consoleWriteBuffer += QChar::fromLatin1(data);
+        break;
+    case 0xE0:
+    case 0xE2:
+    case 0xE3:
+    case 0xE4:
+    case 0xE6:
+    case 0xE7:
+        vm_call8(g_cpu, port, data);
         break;
     }
 }
