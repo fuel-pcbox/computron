@@ -175,6 +175,9 @@ void FDC::out8(WORD port, BYTE data)
 
         vlog(VM_FDCMSG, "  Motors:        %u %u", d->drive[0].motor, d->drive[1].motor);
 
+        if (!d->currentDrive().motor)
+            vlog(VM_FDCMSG, "Invalid state: Current drive (%u) has motor off.", d->driveIndex);
+
         if (d->enabled != old_fdc_enabled)
             raiseIRQ();
     }
