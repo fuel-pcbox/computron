@@ -28,7 +28,7 @@
 #include "vomit.h"
 #include "debug.h"
 
-static VomCtl the;
+static VomCtl theVomCtl;
 
 struct VomCtl::Private
 {
@@ -74,14 +74,14 @@ uint8_t VomCtl::in8(WORD port)
             return MSB(g_cpu->baseMemorySize() / 1024);
         }
         vlog(VM_VOMCTL, "Invalid register %02X read", m_registerIndex);
-        break;
+        return IODevice::JunkValue;
     case 0xD7: // VOMCTL_CONSOLE_WRITE
         vlog(VM_VOMCTL, "%s", d->consoleWriteBuffer.toLatin1().constData());
         d->consoleWriteBuffer.clear();
-        break;
+        return IODevice::JunkValue;
+    default:
+        return IODevice::in8(port);
     }
-
-    return 0;
 }
 
 void VomCtl::out8(WORD port, BYTE data)
@@ -102,5 +102,7 @@ void VomCtl::out8(WORD port, BYTE data)
     case 0xE7:
         vm_call8(g_cpu, port, data);
         break;
+    default:
+        IODevice::out8(port, data);
     }
 }
