@@ -33,21 +33,34 @@
 #define DATA_FROM_FDC_TO_CPU 0x40
 #define DATA_FROM_CPU_TO_FDC 0x00
 
+struct FDCDrive
+{
+    bool motor;
+    BYTE cylinder;
+    BYTE head;
+
+    FDCDrive()
+        : motor(false)
+        , cylinder(0)
+        , head(0)
+    { }
+};
+
 struct FDC::Private
 {
-    BYTE current_drive;
-    bool fdc_enabled;
-    bool dma_io_enabled;
-    bool motor[2];
-    BYTE fdc_data_direction;
-    BYTE fdc_current_status_register;
-    BYTE fdc_status_register[4];
-    BYTE fdc_command[8];
-    BYTE fdc_command_size;
-    BYTE fdc_command_index;
-    BYTE fdc_current_drive_cylinder[2];
-    BYTE fdc_current_drive_head[2];
-    QList<BYTE> fdc_command_result;
+    FDCDrive drive[2];
+    BYTE driveIndex;
+    bool enabled;
+    bool usingDMA;
+    BYTE dataDirection;
+    BYTE currentStatusRegister;
+    BYTE statusRegister[4];
+    BYTE command[8];
+    BYTE commandSize;
+    BYTE commandIndex;
+    QList<BYTE> commandResult;
+
+    FDCDrive& currentDrive() { return drive[driveIndex]; }
 };
 
 FDC theFDC;
@@ -56,39 +69,26 @@ FDC::FDC()
     : IODevice("FDC")
     , d(new Private)
 {
-#if 0
-    listen(0x3F0, fdc_status_a, 0L);
-    listen(0x3F1, fdc_status_b, 0L);
-    listen(0x3F2, 0L, fdc_digital_output);
-    listen(0x3F4, fdc_main_status, 0L);
-    listen(0x3F5, fdc_data_fifo_read, fdc_data_fifo_write);
-#endif
     listen(0x3F0, IODevice::ReadOnly);
     listen(0x3F1, IODevice::ReadOnly);
     listen(0x3F2, IODevice::WriteOnly);
     listen(0x3F4, IODevice::ReadOnly);
     listen(0x3F5, IODevice::ReadWrite);
 
-    d->current_drive = 0;
-    d->fdc_enabled = false;
-    d->dma_io_enabled = false;
-    d->fdc_data_direction = DATA_FROM_CPU_TO_FDC;
-    d->fdc_current_status_register = 0;
+    d->driveIndex = 0;
+    d->enabled = false;
+    d->usingDMA = false;
+    d->dataDirection = DATA_FROM_CPU_TO_FDC;
+    d->currentStatusRegister = 0;
 
-    d->fdc_command_index = 0;
-    d->fdc_command_size = 0;
-    d->fdc_command[0] = 0;
+    d->commandIndex = 0;
+    d->commandSize = 0;
+    d->command[0] = 0;
 
-    for (int i = 0; i < 2; ++i) {
-        d->motor[i] = false;
-        d->fdc_current_drive_cylinder[i] = 0;
-        d->fdc_current_drive_head[i] = 0;
-    }
-
-    d->fdc_status_register[0] = 0;
-    d->fdc_status_register[1] = 0;
-    d->fdc_status_register[2] = 0;
-    d->fdc_status_register[3] = 0;
+    d->statusRegister[0] = 0;
+    d->statusRegister[1] = 0;
+    d->statusRegister[2] = 0;
+    d->statusRegister[3] = 0;
 }
 
 FDC::~FDC()
@@ -127,23 +127,23 @@ BYTE FDC::in8(WORD port)
         // 0x01 - ACTA - drive X in positioning mode
 
         status |= 0x80; // MRQ = 1
-        status |= d->fdc_data_direction;
+        status |= d->dataDirection;
 
-        if (!d->dma_io_enabled)
+        if (!d->usingDMA)
             status |= 0x20;
 
-        vlog(VM_FDCMSG, "Read main status register: %02X (direction: %s)", status, (d->fdc_data_direction == DATA_FROM_CPU_TO_FDC) ? "to FDC" : "from FDC");
+        vlog(VM_FDCMSG, "Read main status register: %02X (direction: %s)", status, (d->dataDirection == DATA_FROM_CPU_TO_FDC) ? "to FDC" : "from FDC");
 
         return status;
     }
 
     case 0x3F5: {
-        if (d->fdc_command_result.isEmpty()) {
+        if (d->commandResult.isEmpty()) {
             vlog(VM_FDCMSG, "Read from empty command result register");
             return IODevice::JunkValue;
         }
 
-        BYTE value = d->fdc_command_result.takeFirst();
+        BYTE value = d->commandResult.takeFirst();
         vlog(VM_FDCMSG, "Read command result byte %02X", value);
 
         return value;
@@ -158,44 +158,44 @@ void FDC::out8(WORD port, BYTE data)
 {
     switch (port) {
     case 0x3F2: {
-        bool old_fdc_enabled = d->fdc_enabled;
+        bool old_fdc_enabled = d->enabled;
 
         vlog(VM_FDCMSG, "Writing to FDC digital output, data: %02X", data);
 
-        d->current_drive = data & 3;
-        d->fdc_enabled = (data & 0x04) != 0;
-        d->dma_io_enabled = (data & 0x08) != 0;
+        d->driveIndex = data & 3;
+        d->enabled = (data & 0x04) != 0;
+        d->usingDMA = (data & 0x08) != 0;
 
-        d->motor[0] = (data & 0x10) != 0;
-        d->motor[1] = (data & 0x20) != 0;
+        d->drive[0].motor = (data & 0x10) != 0;
+        d->drive[1].motor = (data & 0x20) != 0;
 
-        vlog(VM_FDCMSG, "  Current drive: %u", d->current_drive);
-        vlog(VM_FDCMSG, "  FDC enabled:   %s", d->fdc_enabled ? "yes" : "no");
-        vlog(VM_FDCMSG, "  DMA+I/O mode:  %s", d->dma_io_enabled ? "yes" : "no");
+        vlog(VM_FDCMSG, "  Current drive: %u", d->driveIndex);
+        vlog(VM_FDCMSG, "  FDC enabled:   %s", d->enabled ? "yes" : "no");
+        vlog(VM_FDCMSG, "  DMA+I/O mode:  %s", d->usingDMA ? "yes" : "no");
 
-        vlog(VM_FDCMSG, "  Motors:        %u %u", d->motor[0], d->motor[1]);
+        vlog(VM_FDCMSG, "  Motors:        %u %u", d->drive[0].motor, d->drive[1].motor);
 
-        if (d->fdc_enabled != old_fdc_enabled)
+        if (d->enabled != old_fdc_enabled)
             raiseIRQ();
     }
 
     case 0x3F5: {
         vlog(VM_FDCMSG, "Command: %02X", data);
 
-        if (d->fdc_command_index == 0) {
+        if (d->commandIndex == 0) {
             // Determine the command length
             switch (data) {
             case 0x08:
-                d->fdc_command_size = 0;
+                d->commandSize = 0;
                 break;
             }
         }
 
-        d->fdc_command[d->fdc_command_index++] = data;
+        d->command[d->commandIndex++] = data;
 
-        if (d->fdc_command_index >= d->fdc_command_size) {
+        if (d->commandIndex >= d->commandSize) {
             executeCommand();
-            d->fdc_command_index = 0;
+            d->commandIndex = 0;
         }
         break;
     }
@@ -207,25 +207,25 @@ void FDC::out8(WORD port, BYTE data)
 
 void FDC::executeCommand()
 {
-    vlog(VM_FDCMSG, "Executing command %02X", d->fdc_command[0]);
+    vlog(VM_FDCMSG, "Executing command %02X", d->command[0]);
 
-    switch (d->fdc_command[0]) {
+    switch (d->command[0]) {
     case 0x08: // Sense Interrupt Status
         vlog(VM_FDCMSG, "Sense interrupt");
-        d->fdc_data_direction = DATA_FROM_FDC_TO_CPU;
-        d->fdc_command_result.clear();
-        d->fdc_command_result.append(d->fdc_status_register[0]);
-        d->fdc_command_result.append(d->fdc_current_drive_cylinder[0]);
+        d->dataDirection = DATA_FROM_FDC_TO_CPU;
+        d->commandResult.clear();
+        d->commandResult.append(d->statusRegister[0]);
+        d->commandResult.append(d->currentDrive().cylinder);
         break;
     default:
-        vlog(VM_FDCMSG, "Unknown command! %02X", d->fdc_command[0]);
+        vlog(VM_FDCMSG, "Unknown command! %02X", d->command[0]);
     }
 }
 
 void FDC::raiseIRQ()
 {
-    theFDC.d->fdc_status_register[0] = theFDC.d->current_drive;
-    theFDC.d->fdc_status_register[0] |= (theFDC.d->fdc_current_drive_head[theFDC.d->current_drive] * 0x02);
-    theFDC.d->fdc_status_register[0] |= 0x20;
+    d->statusRegister[0] = d->driveIndex;
+    d->statusRegister[0] |= d->currentDrive().head * 0x02;
+    d->statusRegister[0] |= 0x20;
     PIC::raiseIRQ(6);
 }
