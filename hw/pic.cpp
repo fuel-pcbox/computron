@@ -31,6 +31,7 @@
 static PIC theMaster(0x20, 0x08);
 static PIC theSlave(0xA0, 0x70);
 
+static volatile bool s_haveRequests = false;
 WORD PIC::s_pendingRequests = 0x0000;
 QMutex PIC::s_mutex;
 
@@ -38,12 +39,12 @@ void PIC::updatePendingRequests()
 {
     QMutexLocker locker(&s_mutex);
     s_pendingRequests = (theMaster.getIRR() & ~theMaster.getIMR() ) | ((theSlave.getIRR() & ~theSlave.getIMR()) << 8);
+    s_haveRequests = s_pendingRequests != 0;
 }
 
 bool PIC::hasPendingIRQ()
 {
-    QMutexLocker locker(&s_mutex);
-    return s_pendingRequests != 0x0000;
+    return s_haveRequests;
 }
 
 PIC::PIC(WORD baseAddress, BYTE isrBase)
