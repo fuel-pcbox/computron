@@ -1172,7 +1172,13 @@ protected:
     void handleRepeatOpcode(BYTE opcode, bool shouldEqual);
 
 private:
-    void* resolveModRM_internal(BYTE rmbyte, int bits);
+    enum ValueSize {
+        ByteSize,
+        WordSize,
+        DWordSize
+    };
+
+    void* resolveModRM_internal(BYTE rmbyte, ValueSize size);
     void* resolveModRM8_internal(BYTE rmbyte);
     void* resolveModRM16_internal(BYTE rmbyte);
     void* resolveModRM32_internal(BYTE rmbyte);
