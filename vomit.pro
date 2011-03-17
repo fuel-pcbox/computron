@@ -66,7 +66,6 @@ SOURCES += config.cpp \
            x86/string.cpp \
            x86/wrap.cpp \
            bios/floppy.cpp \
-           bios/video.cpp \
            disasm/disasm.cpp \
            disasm/disasm_modrm.cpp \
            disasm/tables.cpp \

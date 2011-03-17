@@ -45,11 +45,6 @@ static void sigint_handler(int)
 
 void vomit_init()
 {
-#ifdef VOMIT_C_VGA_BIOS
-    vlog(VM_INITMSG, "Initializing video BIOS");
-    video_bios_init();
-#endif
-
     vlog(VM_INITMSG, "Registering I/O devices");
     foreach (IODevice *device, IODevice::devices())
         vlog(VM_INITMSG, "%s at 0x%p", device->name(), device);

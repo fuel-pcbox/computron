@@ -66,14 +66,6 @@ void VCpu::jumpToInterruptHandler(int isr)
     }
 #endif
 
-#ifdef VOMIT_C_VGA_BIOS
-    if (isr == 0x10) {
-        /* Call C video BIOS (faster and more complete ATM) */
-        bios_interrupt10();
-        return;
-    }
-#endif
-
     push(getFlags());
     setIF(0);
     setTF(0);

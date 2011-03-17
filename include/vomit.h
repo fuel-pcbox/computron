@@ -42,11 +42,6 @@ WORD kbd_hit();
 WORD kbd_getc();
 BYTE kbd_pop_raw();
 
-#ifdef VOMIT_C_VGA_BIOS
-void video_bios_init();
-void load_cursor(BYTE* row, BYTE* column);
-#endif
-
 void vomit_init();
 
 typedef struct {
