@@ -154,8 +154,6 @@ void PIC::raiseIRQ(BYTE num)
 void PIC::serviceIRQ(VCpu* cpu)
 {
     QMutexLocker lockerGlobal(&s_mutex);
-    QMutexLocker lockerMaster(&theMaster.m_mutex);
-    QMutexLocker lockerSlave(&theSlave.m_mutex);
 
     if (!s_pendingRequests)
         return;

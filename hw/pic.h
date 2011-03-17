@@ -51,8 +51,6 @@ public:
     static void raiseIRQ(BYTE num);
 
 private:
-    QMutex m_mutex;
-
     WORD m_baseAddress;
     BYTE m_isrBase;
 
