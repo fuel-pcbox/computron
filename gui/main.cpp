@@ -29,6 +29,7 @@
 #include <QMetaType>
 #include "screen.h"
 #include "vomit.h"
+#include "debugger.h"
 
 static MainWindow *mw = 0L;
 
@@ -64,7 +65,7 @@ main(int argc, char **argv)
     g_cpu = new VCpu;
 
     if (options.start_in_debug)
-        g_cpu->attachDebugger();
+        g_cpu->debugger()->enter();
 
     extern void vomit_disasm_init_tables();
     vomit_disasm_init_tables();

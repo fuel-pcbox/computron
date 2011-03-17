@@ -25,6 +25,7 @@
 
 #include "vomit.h"
 #include "debug.h"
+#include "debugger.h"
 #include "vga_memory.h"
 #include "pic.h"
 #include <QtCore/QStringList>
@@ -421,6 +422,8 @@ VCpu::VCpu(QObject* parent)
 
     m_vgaMemory = new VgaMemory(this);
 
+    m_debugger = new Debugger(this);
+
 #ifdef VOMIT_PREFETCH_QUEUE
     if (m_prefetchQueue)
         delete [] m_prefetchQueue;
@@ -533,10 +536,6 @@ VCpu::VCpu(QObject* parent)
 
     m_addressSize32 = false;
     m_operationSize32 = false;
-
-#ifdef VOMIT_DEBUG
-    m_inDebugger = false;
-#endif
 }
 
 VCpu::~VCpu()
@@ -553,6 +552,10 @@ VCpu::~VCpu()
     delete [] this->memory;
     this->memory = 0;
     m_codeMemory = 0;
+
+    delete [] m_debugger;
+
+    // FIXME: Don't leak m_vgaMemory.
 }
 
 #ifdef FOR_REFERENCE_ONLY
@@ -833,15 +836,15 @@ void VCpu::mainLoop()
         DWORD flatPC = vomit_toFlatAddress(getCS(), getEIP());
         foreach (DWORD breakPoint, m_breakPoints) {
             if (flatPC == breakPoint) {
-                attachDebugger();
+                debugger()->enter();
                 break;
             }
         }
 
-        if (inDebugger()) {
+        if (debugger()->isActive()) {
             saveBaseAddress();
-            debugger();
-            if (!inDebugger())
+            debugger()->doConsole();
+            if (!debugger()->isActive())
                 continue;
         }
 #endif
@@ -1450,20 +1453,3 @@ void VCpu::writeMemory16(WORD segment, WORD offset, WORD value)
 {
     writeMemory16(vomit_toFlatAddress(segment, offset), value);
 }
-
-#ifdef VOMIT_DEBUG
-bool VCpu::inDebugger() const
-{
-    return m_inDebugger;
-}
-
-void VCpu::attachDebugger()
-{
-    m_inDebugger = true;
-}
-
-void VCpu::detachDebugger()
-{
-    m_inDebugger = false;
-}
-#endif

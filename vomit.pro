@@ -13,6 +13,8 @@ CONFIG += debug
 
 CONFIG -= app_bundle
 
+LIBS += -lreadline
+
 OBJECTS_DIR = .obj
 RCC_DIR = .rcc
 MOC_DIR = .moc
@@ -31,6 +33,7 @@ HEADERS += gui/mainwindow.h \
            hw/cmos.h \
            hw/pic.h \
            hw/vga.h \
+           include/debugger.h \
            include/types.h \
            include/vcpu.h \
            include/debug.h \
@@ -41,6 +44,7 @@ HEADERS += gui/mainwindow.h \
            disasm/include/insn-types.h
 SOURCES += config.cpp \
            debug.cpp \
+           debugger.cpp \
            dump.cpp \
            fpu.cpp \
            vmcalls.cpp \

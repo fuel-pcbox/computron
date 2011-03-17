@@ -24,10 +24,8 @@
  */
 
 #include "vomit.h"
-#include "disasm.h"
+#include "debugger.h"
 #include <stdarg.h>
-#include <stdlib.h>
-#include <string.h>
 #include <stdio.h>
 #include <QStringList>
 
@@ -73,7 +71,7 @@ void vlog(int category, const char* format, ...)
     vfprintf(s_logfile, format, ap);
     va_end(ap);
 
-    if (g_cpu->inDebugger() || show_on_stdout) {
+    if (g_cpu->debugger()->isActive() || show_on_stdout) {
         if (prefix)
             printf("(%8s) ", prefix);
         va_start(ap, format);
@@ -86,131 +84,3 @@ void vlog(int category, const char* format, ...)
 
     fflush(s_logfile);
 }
-
-void uasm(WORD segment, WORD offset, int n)
-{
-    for (int i = 0; i < n; ++i) {
-        int w = g_cpu->dumpDisassembled(segment, offset);
-        if (!w)
-            break;
-        offset += w;
-    }
-}
-
-#ifdef VOMIT_DEBUG
-void VCpu::debugger()
-{
-    char curcmd[256];
-    WORD mseg;
-    DWORD moff;
-
-    memset(curcmd, 0, sizeof(curcmd));
-
-    m_inDebugger = true;
-
-    if (m_debugOneStep) {
-        dumpAll();
-        m_debugOneStep = false;
-    }
-
-    for (;;) {
-        printf("[%u/%u] %04X:%08X> ", a16() ? 16 : 32, o16() ? 16 : 32, getCS(), getEIP());
-        fflush(stdout);
-        fgets(curcmd, sizeof(curcmd), stdin);
-        if (feof(stdin)) {
-            vlog(VM_KILLMSG, "EOF on stdin, exiting.");
-            vm_exit(0);
-        }
-
-        static QRegExp separators("[ \n]");
-        QStringList tokens = QString::fromLatin1(curcmd).split(separators, QString::SkipEmptyParts);
-
-        if (tokens.isEmpty())
-            continue;
-
-            qDebug() << tokens;
-
-        if (tokens[0] == "g") {
-            detachDebugger();
-            return;
-        }
-
-        if (tokens[0] == "s") {
-            m_debugOneStep = true;
-            return;
-        }
-
-        if (tokens[0] == "c")
-            dump();
-
-        else if (tokens[0] == "b") {
-            if (tokens.size() == 2) {
-                DWORD newBreakPoint = tokens[1].toUInt(0, 16);
-                m_breakPoints.append(newBreakPoint);
-                printf("Added breakpoint at %08X\n", newBreakPoint);
-            } else if (tokens.size() == 1) {
-                unsigned int i = 0;
-                foreach (DWORD breakPoint, m_breakPoints)
-                    printf("[%u]: %08X\n", i++, breakPoint);
-            }
-        }
-
-        else if (tokens[0] == "reconf")
-            config_reload();
-
-        else if (tokens[0] == "r")
-            dumpAll();
-
-        else if (tokens[0] == "i")
-            dumpIVT();
-
-        else if (tokens[0] == "d") {
-            mseg = getCS();
-            moff = getEIP() & 0xFFF0;
-
-            if (tokens.size() == 2)
-                moff = tokens[1].toUInt(0, 16);
-            else if (tokens.size() == 3) {
-                mseg = tokens[1].toUInt(0, 16);
-                moff = tokens[2].toUInt(0, 16);
-            }
-
-            g_cpu->dumpMemory(mseg, moff, 16);
-        }
-
-#if 0
-        else if (tokens[0] == "u") {
-            curtok = strtok(NULL, ": \n");
-                if (curtok!=0) {
-                    mseg = strtol(curtok,NULL,16);
-                    curtok = mseg ? strtok(NULL, " \n") : NULL;
-                    if (curtok!=0) {
-                        moff = strtol(curtok,NULL,16);
-                        uasm(mseg, moff, 16);
-                    } else {
-                        uasm(getCS(), mseg, 16);
-                    }
-                } else {
-                    uasm(getCS(), getIP(), 16);
-                    curtok = &curcmd[0];
-                }
-            }
-#endif
-
-            else if (tokens[0] == "q")
-                vm_exit(0);
-
-            else if (tokens[0] == "?") {
-                printf( "\tavailable commands:\n\n" \
-                        "\tc\t\tcpu information\n" \
-                        "\tr\t\tdump registers and stack\n" \
-                        "\td [SEG OFF]\tdump memory\n" \
-                        "\ti\t\tdump interrupt vector table\n" \
-                        "\tg\t\tcontinue execution\n" \
-                        "\ts\t\tstep execution\n" \
-                        "\tq\t\tabort execution\n" \
-                        "\n");
-            }
-        }
-}
-#endif

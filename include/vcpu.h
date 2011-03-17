@@ -96,6 +96,7 @@ inline int vomit_modRMRegisterPart(int rmbyte)
 
 // VCPU MONSTROSITY
 
+class Debugger;
 class VgaMemory;
 
 class VCpu : public QObject
@@ -327,16 +328,6 @@ public:
     void setA20Enabled(bool value) { m_a20Enabled = value; }
     bool isA20Enabled() const { return m_a20Enabled; }
 
-#ifdef VOMIT_DEBUG
-    void attachDebugger();
-    void detachDebugger();
-    bool inDebugger() const;
-
-    void debugger();
-#else
-    bool inDebugger() const { return false; }
-#endif
-
     void jumpToInterruptHandler(int isr);
     void setInterruptHandler(BYTE isr, WORD segment, WORD offset);
 
@@ -512,6 +503,8 @@ public:
 
     void push(WORD value);
     WORD pop();
+
+    Debugger* debugger() { return m_debugger; }
 
     /*!
         Writes an 8-bit value to an output port.
@@ -709,6 +702,8 @@ private:
     bool m_a20Enabled;
 
     VgaMemory* m_vgaMemory;
+
+    Debugger* m_debugger;
 };
 
 extern VCpu* g_cpu;

@@ -23,50 +23,41 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include "vomit.h"
-#include "vcpu.h"
-#include "debug.h"
-#include "debugger.h"
-#include "iodevice.h"
-#include "vga.h"
-#include <signal.h>
+#ifndef DEBUGGER_H
+#define DEBUGGER_H
 
-vomit_options_t options;
+class VCpu;
+class QString;
+class QStringList;
 
-static void sigint_handler(int)
+class Debugger
 {
-    VM_ASSERT(g_cpu);
-    VM_ASSERT(g_cpu->debugger());
-    g_cpu->debugger()->enter();
-}
+public:
+    Debugger(VCpu*);
+    ~Debugger();
 
-void vomit_init()
-{
-#ifdef VOMIT_C_VGA_BIOS
-    vlog(VM_INITMSG, "Initializing video BIOS");
-    video_bios_init();
+    VCpu* cpu() { return m_cpu; }
+
+    void enter();
+    void exit();
+
+    bool isActive() const { return m_active; }
+
+    void doConsole();
+
+private:
+    VCpu* m_cpu;
+    bool m_active;
+
+    void handleCommand(const QString&);
+
+    void handleQuit();
+    void handleDumpRegisters();
+    void handleDumpIVT();
+    void handleReconfigure();
+    void handleStep();
+    void handleContinue();
+    void handleDumpMemory(const QStringList&);
+};
+
 #endif
-
-    vlog(VM_INITMSG, "Registering I/O devices");
-    foreach (IODevice *device, IODevice::devices())
-        vlog(VM_INITMSG, "%s at 0x%p", device->name(), device);
-
-    vm_loadconf();
-
-    signal(SIGINT, sigint_handler);
-}
-
-void vm_kill()
-{
-    vlog(VM_KILLMSG, "Killing VM");
-    delete g_cpu;
-}
-
-void vm_exit(int exit_code)
-{
-    vm_kill();
-    exit(exit_code);
-}
