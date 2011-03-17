@@ -97,12 +97,44 @@ void VCpu::dumpTrace() const
 void dumpSelector(const VCpu* cpu, const char* segmentRegisterName, int segIndex)
 {
     const VCpu::SegmentSelector& selector = cpu->m_selector[segIndex];
-    vlog(VM_DUMPMSG, "%s=%04X {%08X:%05X}",
+    vlog(VM_DUMPMSG, "%s: %04X {%08X:%05X}",
         segmentRegisterName,
         *cpu->tseg[segIndex],
         selector.base,
         selector.limit
     );
+}
+
+static const char* registerName(VCpu::RegisterIndex16 registerIndex)
+{
+    switch (registerIndex) {
+    case VCpu::RegisterAX:
+        return "AX";
+    case VCpu::RegisterBX:
+        return "BX";
+    case VCpu::RegisterCX:
+        return "CX";
+    case VCpu::RegisterDX:
+        return "DX";
+    case VCpu::RegisterBP:
+        return "BP";
+    case VCpu::RegisterSP:
+        return "SP";
+    case VCpu::RegisterSI:
+        return "SI";
+    case VCpu::RegisterDI:
+        return "DI";
+    }
+    VM_ASSERT(0);
+    return 0;
+}
+
+static void dumpRegister(const VCpu* cpu, VCpu::RegisterIndex16 registerIndex)
+{
+    if (cpu->getPE())
+        vlog(VM_DUMPMSG, "E%s: %08X", registerName(registerIndex), cpu->getRegister32(static_cast<VCpu::RegisterIndex32>(registerIndex)));
+    else
+        vlog(VM_DUMPMSG, "%s: %04X", registerName(registerIndex), cpu->getRegister16(registerIndex));
 }
 
 void VCpu::dumpAll() const
@@ -120,23 +152,22 @@ void VCpu::dumpAll() const
     }
 #endif
 
-    vlog(VM_DUMPMSG, "EAX=%08X", getEAX());
-    vlog(VM_DUMPMSG, "EBX=%08X", getEBX());
-    vlog(VM_DUMPMSG, "ECX=%08X", getECX());
-    vlog(VM_DUMPMSG, "EDX=%08X", getEDX());
-    vlog(VM_DUMPMSG, "EBP=%08X", getEBP());
-    vlog(VM_DUMPMSG, "ESP=%08X", getESP());
-    vlog(VM_DUMPMSG, "ESI=%08X", getESI());
-    vlog(VM_DUMPMSG, "EDI=%08X", getEDI());
-
+    dumpRegister(this, RegisterAX);
+    dumpRegister(this, RegisterBX);
+    dumpRegister(this, RegisterCX);
+    dumpRegister(this, RegisterDX);
+    dumpRegister(this, RegisterBP);
+    dumpRegister(this, RegisterSP);
+    dumpRegister(this, RegisterSI);
+    dumpRegister(this, RegisterDI);
 
     if (!getPE()) {
-        vlog(VM_DUMPMSG, "CS=%04X", getCS());
-        vlog(VM_DUMPMSG, "DS=%04X", getDS());
-        vlog(VM_DUMPMSG, "ES=%04X", getES());
-        vlog(VM_DUMPMSG, "SS=%04X", getSS());
-        vlog(VM_DUMPMSG, "FS=%04X", getFS());
-        vlog(VM_DUMPMSG, "GS=%04X", getGS());
+        vlog(VM_DUMPMSG, "CS: %04X", getCS());
+        vlog(VM_DUMPMSG, "DS: %04X", getDS());
+        vlog(VM_DUMPMSG, "ES: %04X", getES());
+        vlog(VM_DUMPMSG, "SS: %04X", getSS());
+        vlog(VM_DUMPMSG, "FS: %04X", getFS());
+        vlog(VM_DUMPMSG, "GS: %04X", getGS());
     } else {
         dumpSelector(this, "CS", RegisterCS);
         dumpSelector(this, "DS", RegisterDS);
@@ -146,11 +177,11 @@ void VCpu::dumpAll() const
         dumpSelector(this, "GS", RegisterGS);
     }
 
-    vlog(VM_DUMPMSG, "CR0=%08X", getCR0());
+    vlog(VM_DUMPMSG, "CR0: %08X", getCR0());
 
-    vlog(VM_DUMPMSG, "GDTR={base=%08X, limit=%04X}", this->GDTR.base, this->GDTR.limit);
-    vlog(VM_DUMPMSG, "LDTR={base=%08X, limit=%04X}", this->LDTR.base, this->LDTR.limit);
-    vlog(VM_DUMPMSG, "IDTR={base=%08X, limit=%04X}", this->IDTR.base, this->IDTR.limit);
+    vlog(VM_DUMPMSG, "GDTR: {base=%08X, limit=%04X}", this->GDTR.base, this->GDTR.limit);
+    vlog(VM_DUMPMSG, "LDTR: {base=%08X, limit=%04X}", this->LDTR.base, this->LDTR.limit);
+    vlog(VM_DUMPMSG, "IDTR: {base=%08X, limit=%04X}", this->IDTR.base, this->IDTR.limit);
 
     vlog(VM_DUMPMSG, "C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u", getCF(), getPF(), getAF(), getZF(), getSF(), getIF(), getDF(), getOF());
 
