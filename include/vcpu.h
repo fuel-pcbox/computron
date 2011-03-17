@@ -341,7 +341,6 @@ public:
     BYTE* memory;
 
     // ID-to-Register maps
-    DWORD* creg[8];
     DWORD* treg32[8];
     WORD* treg16[8];
     BYTE* treg8[8];
@@ -420,6 +419,9 @@ public:
 
     WORD getSegment(SegmentIndex segmentIndex) const { ASSERT_VALID_SEGMENT_INDEX(segmentIndex); return *m_segmentMap[segmentIndex]; }
     void setSegment(SegmentIndex segmentIndex, WORD value) const { ASSERT_VALID_SEGMENT_INDEX(segmentIndex); *m_segmentMap[segmentIndex] = value; }
+
+    DWORD getControlRegister(int registerIndex) const { return *m_controlRegisterMap[registerIndex]; }
+    void setControlRegister(int registerIndex, DWORD value) { *m_controlRegisterMap[registerIndex] = value; }
 
     DWORD getEAX() const { return this->regs.D.EAX; }
     DWORD getEBX() const { return this->regs.D.EBX; }
@@ -740,6 +742,7 @@ private:
     Debugger* m_debugger;
 
     WORD* m_segmentMap[8];
+    DWORD* m_controlRegisterMap[8];
 };
 
 extern VCpu* g_cpu;

@@ -476,14 +476,14 @@ VCpu::VCpu(QObject* parent)
 
     memset(m_selector, 0, sizeof(m_selector));
 
-    this->creg[0] = &this->CR0;
-    this->creg[1] = &this->CR1;
-    this->creg[2] = &this->CR2;
-    this->creg[3] = &this->CR3;
-    this->creg[4] = &this->CR4;
-    this->creg[5] = &this->CR5;
-    this->creg[6] = &this->CR6;
-    this->creg[7] = &this->CR7;
+    m_controlRegisterMap[0] = &this->CR0;
+    m_controlRegisterMap[1] = &this->CR1;
+    m_controlRegisterMap[2] = &this->CR2;
+    m_controlRegisterMap[3] = &this->CR3;
+    m_controlRegisterMap[4] = &this->CR4;
+    m_controlRegisterMap[5] = &this->CR5;
+    m_controlRegisterMap[6] = &this->CR6;
+    m_controlRegisterMap[7] = &this->CR7;
 
     this->treg32[RegisterEAX] = &this->regs.D.EAX;
     this->treg32[RegisterEBX] = &this->regs.D.EBX;

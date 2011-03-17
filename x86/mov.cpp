@@ -182,7 +182,7 @@ void _MOV_reg32_CR(VCpu* cpu)
         }
     }
 
-    cpu->setRegister32(static_cast<VCpu::RegisterIndex32>(rm & 7), *cpu->creg[crIndex]);
+    cpu->setRegister32(static_cast<VCpu::RegisterIndex32>(rm & 7), cpu->getControlRegister(crIndex));
 }
 
 void _MOV_CR_reg32(VCpu* cpu)
@@ -221,7 +221,7 @@ void _MOV_CR_reg32(VCpu* cpu)
         }
     }
 
-    *cpu->creg[crIndex] = cpu->getRegister32(static_cast<VCpu::RegisterIndex32>(rm & 7));
+    cpu->setControlRegister(crIndex, cpu->getRegister32(static_cast<VCpu::RegisterIndex32>(rm & 7)));
 
     if (crIndex == 0)
         vlog(VM_CPUMSG, "Protected mode Enable = %u", cpu->getPE());
