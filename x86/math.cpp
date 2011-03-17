@@ -260,166 +260,166 @@ READONLY_AL_imm8(cpu_sub, _CMP_AL_imm8)
 READONLY_AX_imm16(cpu_sub, _CMP_AX_imm16)
 READONLY_EAX_imm32(cpu_sub, _CMP_EAX_imm32)
 
-void _MUL_RM8(VCpu* cpu)
+void VCpu::_MUL_RM8()
 {
-    BYTE value = cpu->readModRM8(cpu->rmbyte);
-    cpu->regs.W.AX = cpu_mul8(cpu, cpu->regs.B.AL, value);
+    BYTE value = readModRM8(rmbyte);
+    regs.W.AX = cpu_mul8(this, regs.B.AL, value);
 
-    if (cpu->regs.B.AH == 0x00) {
-        cpu->setCF(0);
-        cpu->setOF(0);
+    if (regs.B.AH == 0x00) {
+        setCF(0);
+        setOF(0);
     } else {
-        cpu->setCF(1);
-        cpu->setOF(1);
+        setCF(1);
+        setOF(1);
     }
 }
 
-void _MUL_RM16(VCpu* cpu)
+void VCpu::_MUL_RM16()
 {
-    WORD value = cpu->readModRM16(cpu->rmbyte);
-    DWORD result = cpu_mul16(cpu, cpu->regs.W.AX, value);
-    cpu->regs.W.AX = result & 0xFFFF;
-    cpu->regs.W.DX = (result >> 16) & 0xFFFF;
+    WORD value = readModRM16(rmbyte);
+    DWORD result = cpu_mul16(this, regs.W.AX, value);
+    regs.W.AX = result & 0xFFFF;
+    regs.W.DX = (result >> 16) & 0xFFFF;
 
-    if (cpu->regs.W.DX == 0x0000) {
-        cpu->setCF(0);
-        cpu->setOF(0);
+    if (regs.W.DX == 0x0000) {
+        setCF(0);
+        setOF(0);
     } else {
-        cpu->setCF(1);
-        cpu->setOF(1);
+        setCF(1);
+        setOF(1);
     }
 }
 
-void _MUL_RM32(VCpu* cpu)
+void VCpu::_MUL_RM32()
 {
-    WORD value = cpu->readModRM32(cpu->rmbyte);
-    QWORD result = cpu_mul32(cpu, cpu->regs.W.AX, value);
-    cpu->setEAX(result & 0xFFFFFFFF);
-    cpu->setEDX((result >> 32) & 0xFFFFFFFF);
+    WORD value = readModRM32(rmbyte);
+    QWORD result = cpu_mul32(this, regs.W.AX, value);
+    setEAX(result & 0xFFFFFFFF);
+    setEDX((result >> 32) & 0xFFFFFFFF);
 
-    if (cpu->getEDX() == 0x00000000) {
-        cpu->setCF(0);
-        cpu->setOF(0);
+    if (getEDX() == 0x00000000) {
+        setCF(0);
+        setOF(0);
     } else {
-        cpu->setCF(1);
-        cpu->setOF(1);
+        setCF(1);
+        setOF(1);
     }
 }
 
-void _IMUL_RM8(VCpu* cpu)
+void VCpu::_IMUL_RM8()
 {
-    SIGNED_BYTE value = (SIGNED_BYTE)cpu->readModRM8(cpu->rmbyte);
-    cpu->regs.W.AX = (SIGNED_WORD)cpu_imul8(cpu, cpu->regs.B.AL, value);
+    SIGNED_BYTE value = (SIGNED_BYTE)readModRM8(rmbyte);
+    regs.W.AX = (SIGNED_WORD)cpu_imul8(this, regs.B.AL, value);
 
-    if (cpu->regs.B.AH == 0x00 || cpu->regs.B.AH == 0xFF) {
-        cpu->setCF(0);
-        cpu->setOF(0);
+    if (regs.B.AH == 0x00 || regs.B.AH == 0xFF) {
+        setCF(0);
+        setOF(0);
     } else {
-        cpu->setCF(1);
-        cpu->setOF(1);
+        setCF(1);
+        setOF(1);
     }
 }
 
-void _IMUL_reg16_RM16_imm8(VCpu* cpu)
+void VCpu::_IMUL_reg16_RM16_imm8()
 {
-    BYTE rm = cpu->fetchOpcodeByte();
-    BYTE imm = cpu->fetchOpcodeByte();
-    SIGNED_WORD value = (SIGNED_WORD)cpu->readModRM16(rm);
-    SIGNED_WORD result = cpu_imul16(cpu, value, imm);
+    BYTE rm = fetchOpcodeByte();
+    BYTE imm = fetchOpcodeByte();
+    SIGNED_WORD value = (SIGNED_WORD)readModRM16(rm);
+    SIGNED_WORD result = cpu_imul16(this, value, imm);
 
-    cpu->setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), result);
+    setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), result);
 
     if ((result & 0xFF00) == 0x00 || (result & 0xFF00) == 0xFF) {
-        cpu->setCF(0);
-        cpu->setOF(0);
+        setCF(0);
+        setOF(0);
     } else {
-        cpu->setCF(1);
-        cpu->setOF(1);
+        setCF(1);
+        setOF(1);
     }
 }
 
-void _IMUL_RM16(VCpu* cpu)
+void VCpu::_IMUL_RM16()
 {
-    SIGNED_WORD value = cpu->readModRM16(cpu->rmbyte);
-    SIGNED_DWORD result = cpu_imul16(cpu, cpu->regs.W.AX, value);
-    cpu->regs.W.AX = result;
-    cpu->regs.W.DX = result >> 16;
+    SIGNED_WORD value = readModRM16(rmbyte);
+    SIGNED_DWORD result = cpu_imul16(this, regs.W.AX, value);
+    regs.W.AX = result;
+    regs.W.DX = result >> 16;
 
-    if (cpu->regs.W.DX == 0x0000 || cpu->regs.W.DX == 0xFFFF) {
-        cpu->setCF(0);
-        cpu->setOF(0);
+    if (regs.W.DX == 0x0000 || regs.W.DX == 0xFFFF) {
+        setCF(0);
+        setOF(0);
     } else {
-        cpu->setCF(1);
-        cpu->setOF(1);
+        setCF(1);
+        setOF(1);
     }
 }
 
-void _DIV_RM8(VCpu* cpu)
+void VCpu::_DIV_RM8()
 {
-    BYTE value = cpu->readModRM8(cpu->rmbyte);
-    WORD tAX = cpu->regs.W.AX;
+    BYTE value = readModRM8(rmbyte);
+    WORD tAX = regs.W.AX;
 
     if (value == 0) {
-        cpu->exception(0);
+        exception(0);
         return;
     }
 
-    cpu->regs.B.AL = (BYTE)(tAX / value); // Quote
-    cpu->regs.B.AH = (BYTE)(tAX % value); // Remainder
+    regs.B.AL = (BYTE)(tAX / value); // Quote
+    regs.B.AH = (BYTE)(tAX % value); // Remainder
 }
 
-void _DIV_RM16(VCpu* cpu)
+void VCpu::_DIV_RM16()
 {
-    WORD value = cpu->readModRM16(cpu->rmbyte);
-    DWORD tDXAX = cpu->regs.W.AX + (cpu->regs.W.DX << 16);
+    WORD value = readModRM16(rmbyte);
+    DWORD tDXAX = regs.W.AX + (regs.W.DX << 16);
 
     if (value == 0) {
-        cpu->exception(0);
+        exception(0);
         return;
     }
 
-    cpu->regs.W.AX = (WORD)(tDXAX / value); // Quote
-    cpu->regs.W.DX = (WORD)(tDXAX % value); // Remainder
+    regs.W.AX = (WORD)(tDXAX / value); // Quote
+    regs.W.DX = (WORD)(tDXAX % value); // Remainder
 }
 
-void _DIV_RM32(VCpu* cpu)
+void VCpu::_DIV_RM32()
 {
-    DWORD value = cpu->readModRM32(cpu->rmbyte);
-    QWORD tEDXEAX = cpu->getEAX() | (cpu->getEDX() << 16);
+    DWORD value = readModRM32(rmbyte);
+    QWORD tEDXEAX = getEAX() | (getEDX() << 16);
 
     if (value == 0) {
-        cpu->exception(0);
+        exception(0);
         return;
     }
 
-    cpu->setEAX(tEDXEAX / value); // Quote
-    cpu->setEDX(tEDXEAX % value); // Remainder
+    setEAX(tEDXEAX / value); // Quote
+    setEDX(tEDXEAX % value); // Remainder
 }
 
-void _IDIV_RM8(VCpu* cpu)
+void VCpu::_IDIV_RM8()
 {
-    SIGNED_BYTE value = (SIGNED_BYTE)cpu->readModRM8(cpu->rmbyte);
-    SIGNED_WORD tAX = (SIGNED_WORD)cpu->regs.W.AX;
+    SIGNED_BYTE value = (SIGNED_BYTE)readModRM8(rmbyte);
+    SIGNED_WORD tAX = (SIGNED_WORD)regs.W.AX;
 
     if (value == 0) {
-        cpu->exception(0);
+        exception(0);
         return;
     }
 
-    cpu->regs.B.AL = (SIGNED_BYTE)(tAX / value); // Quote
-    cpu->regs.B.AH = (SIGNED_BYTE)(tAX % value); // Remainder
+    regs.B.AL = (SIGNED_BYTE)(tAX / value); // Quote
+    regs.B.AH = (SIGNED_BYTE)(tAX % value); // Remainder
 }
 
-void _IDIV_RM16(VCpu* cpu)
+void VCpu::_IDIV_RM16()
 {
-    SIGNED_WORD value = cpu->readModRM16(cpu->rmbyte);
-    SIGNED_DWORD tDXAX = (cpu->regs.W.AX + (cpu->regs.W.DX << 16));
+    SIGNED_WORD value = readModRM16(rmbyte);
+    SIGNED_DWORD tDXAX = (regs.W.AX + (regs.W.DX << 16));
 
     if (value == 0) {
-        cpu->exception(0);
+        exception(0);
         return;
     }
 
-    cpu->regs.W.AX = (SIGNED_WORD)(tDXAX / value); // Quote
-    cpu->regs.W.DX = (SIGNED_WORD)(tDXAX % value); // Remainder
+    regs.W.AX = (SIGNED_WORD)(tDXAX / value); // Quote
+    regs.W.DX = (SIGNED_WORD)(tDXAX % value); // Remainder
 }

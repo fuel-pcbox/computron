@@ -26,38 +26,38 @@
 #include "vcpu.h"
 #include "debug.h"
 
-void _MOV_RM8_imm8(VCpu* cpu)
+void VCpu::_MOV_RM8_imm8()
 {
-    (void) cpu->resolveModRM8(cpu->fetchOpcodeByte());
-    cpu->updateModRM8(cpu->fetchOpcodeByte());
+    (void) resolveModRM8(fetchOpcodeByte());
+    updateModRM8(fetchOpcodeByte());
 }
 
-void _MOV_RM16_imm16(VCpu* cpu)
+void VCpu::_MOV_RM16_imm16()
 {
-    (void) cpu->resolveModRM16(cpu->fetchOpcodeByte());
-    cpu->updateModRM16(cpu->fetchOpcodeWord());
+    (void) resolveModRM16(fetchOpcodeByte());
+    updateModRM16(fetchOpcodeWord());
 }
 
-void _MOV_RM32_imm32(VCpu* cpu)
+void VCpu::_MOV_RM32_imm32()
 {
-    (void) cpu->resolveModRM32(cpu->fetchOpcodeByte());
-    cpu->updateModRM32(cpu->fetchOpcodeDWord());
+    (void) resolveModRM32(fetchOpcodeByte());
+    updateModRM32(fetchOpcodeDWord());
 }
 
-void _MOV_RM16_seg(VCpu* cpu)
+void VCpu::_MOV_RM16_seg()
 {
-    BYTE rm = cpu->fetchOpcodeByte();
+    BYTE rm = fetchOpcodeByte();
     int segmentIndex = vomit_modRMRegisterPart(rm);
     ASSERT_VALID_SEGMENT_INDEX(segmentIndex);
-    cpu->writeModRM16(rm, cpu->getSegment(static_cast<VCpu::SegmentIndex>(segmentIndex)));
+    writeModRM16(rm, getSegment(static_cast<VCpu::SegmentIndex>(segmentIndex)));
 }
 
-void _MOV_RM32_seg(VCpu* cpu)
+void VCpu::_MOV_RM32_seg()
 {
-    BYTE rm = cpu->fetchOpcodeByte();
+    BYTE rm = fetchOpcodeByte();
     int segmentIndex = vomit_modRMRegisterPart(rm);
     ASSERT_VALID_SEGMENT_INDEX(segmentIndex);
-    cpu->writeModRM32(rm, cpu->getSegment(static_cast<VCpu::SegmentIndex>(segmentIndex)));
+    writeModRM32(rm, getSegment(static_cast<VCpu::SegmentIndex>(segmentIndex)));
 }
 
 static void syncSegmentRegister(VCpu* cpu, VCpu::SegmentIndex segmentIndex)
@@ -88,75 +88,75 @@ static void syncSegmentRegister(VCpu* cpu, VCpu::SegmentIndex segmentIndex)
     selector.granularity = hi >> 23;
 }
 
-void _MOV_seg_RM16(VCpu* cpu)
+void VCpu::_MOV_seg_RM16()
 {
-    BYTE rm = cpu->fetchOpcodeByte();
+    BYTE rm = fetchOpcodeByte();
     VCpu::SegmentIndex segmentIndex = static_cast<VCpu::SegmentIndex>(vomit_modRMRegisterPart(rm));
     ASSERT_VALID_SEGMENT_INDEX(segmentIndex);
-    cpu->setSegment(segmentIndex, cpu->readModRM16(rm));
+    setSegment(segmentIndex, readModRM16(rm));
 
-    if (cpu->getPE())
-        syncSegmentRegister(cpu, segmentIndex);
+    if (getPE())
+        syncSegmentRegister(this, segmentIndex);
 }
 
-void _MOV_seg_RM32(VCpu* cpu)
+void VCpu::_MOV_seg_RM32()
 {
-    BYTE rm = cpu->fetchOpcodeByte();
+    BYTE rm = fetchOpcodeByte();
     VCpu::SegmentIndex segmentIndex = static_cast<VCpu::SegmentIndex>(vomit_modRMRegisterPart(rm));
     ASSERT_VALID_SEGMENT_INDEX(segmentIndex);
-    cpu->setSegment(segmentIndex, cpu->readModRM32(rm));
+    setSegment(segmentIndex, readModRM32(rm));
 
-    if (cpu->getPE())
-        syncSegmentRegister(cpu, static_cast<VCpu::SegmentIndex>(segmentIndex));
+    if (getPE())
+        syncSegmentRegister(this, segmentIndex);
 }
 
-void _MOV_RM8_reg8(VCpu* cpu)
+void VCpu::_MOV_RM8_reg8()
 {
-    BYTE rm = cpu->fetchOpcodeByte();
-    cpu->writeModRM8(rm, cpu->getRegister8(static_cast<VCpu::RegisterIndex8>(vomit_modRMRegisterPart(rm))));
+    BYTE rm = fetchOpcodeByte();
+    writeModRM8(rm, getRegister8(static_cast<VCpu::RegisterIndex8>(vomit_modRMRegisterPart(rm))));
 }
 
-void _MOV_reg8_RM8(VCpu* cpu)
+void VCpu::_MOV_reg8_RM8()
 {
-    BYTE rm = cpu->fetchOpcodeByte();
-    cpu->setRegister8(static_cast<VCpu::RegisterIndex8>(vomit_modRMRegisterPart(rm)), cpu->readModRM8(rm));
+    BYTE rm = fetchOpcodeByte();
+    setRegister8(static_cast<VCpu::RegisterIndex8>(vomit_modRMRegisterPart(rm)), readModRM8(rm));
 }
 
-void _MOV_RM16_reg16(VCpu* cpu)
+void VCpu::_MOV_RM16_reg16()
 {
-    BYTE rm = cpu->fetchOpcodeByte();
-    cpu->writeModRM16(rm, cpu->getRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm))));
+    BYTE rm = fetchOpcodeByte();
+    writeModRM16(rm, getRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm))));
 }
 
-void _MOV_RM32_reg32(VCpu* cpu)
+void VCpu::_MOV_RM32_reg32()
 {
-    BYTE rm = cpu->fetchOpcodeByte();
-    cpu->writeModRM32(rm, cpu->getRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm))));
+    BYTE rm = fetchOpcodeByte();
+    writeModRM32(rm, getRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm))));
 }
 
-void _MOV_reg16_RM16(VCpu* cpu)
+void VCpu::_MOV_reg16_RM16()
 {
-    BYTE rm = cpu->fetchOpcodeByte();
-    cpu->setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), cpu->readModRM16(rm));
+    BYTE rm = fetchOpcodeByte();
+    setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), readModRM16(rm));
 }
 
-void _MOV_reg32_RM32(VCpu* cpu)
+void VCpu::_MOV_reg32_RM32()
 {
-    BYTE rm = cpu->fetchOpcodeByte();
-    cpu->setRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)), cpu->readModRM32(rm));
+    BYTE rm = fetchOpcodeByte();
+    setRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)), readModRM32(rm));
 }
 
-void _MOV_reg32_CR(VCpu* cpu)
+void VCpu::_MOV_reg32_CR()
 {
-    BYTE rm = cpu->fetchOpcodeByte();
+    BYTE rm = fetchOpcodeByte();
     int crIndex = vomit_modRMRegisterPart(rm);
 
-    if (cpu->getVM()) {
-        cpu->GP(0);
+    if (getVM()) {
+        GP(0);
         return;
     }
 
-    if (cpu->getPE()) {
+    if (getPE()) {
         // FIXME: Other GP(0) conditions:
         // If an attempt is made to write invalid bit combinations in CR0
         // (such as setting the PG flag to 1 when the PE flag is set to 0, or
@@ -166,8 +166,8 @@ void _MOV_reg32_CR(VCpu* cpu)
         // If any of the reserved bits are set in the page-directory pointers
         // table (PDPT) and the loading of a control register causes the
         // PDPT to be loaded into the processor.
-        if (cpu->getCPL() != 0) {
-            cpu->GP(0);
+        if (getCPL() != 0) {
+            GP(0);
             return;
         }
     } else {
@@ -177,25 +177,25 @@ void _MOV_reg32_CR(VCpu* cpu)
         // If an attempt is made to write invalid bit combinations in CR0
         // (such as setting the PG flag to 1 when the PE flag is set to 0).
         if (crIndex == 1 || crIndex == 5 || crIndex == 6 || crIndex == 7) {
-            cpu->exception(6);
+            exception(6);
             return;
         }
     }
 
-    cpu->setRegister32(static_cast<VCpu::RegisterIndex32>(rm & 7), cpu->getControlRegister(crIndex));
+    setRegister32(static_cast<VCpu::RegisterIndex32>(rm & 7), getControlRegister(crIndex));
 }
 
-void _MOV_CR_reg32(VCpu* cpu)
+void VCpu::_MOV_CR_reg32()
 {
-    BYTE rm = cpu->fetchOpcodeByte();
+    BYTE rm = fetchOpcodeByte();
     int crIndex = vomit_modRMRegisterPart(rm);
 
-    if (cpu->getVM()) {
-        cpu->GP(0);
+    if (getVM()) {
+        GP(0);
         return;
     }
 
-    if (cpu->getPE()) {
+    if (getPE()) {
         // FIXME: Other GP(0) conditions:
         // If an attempt is made to write invalid bit combinations in CR0
         // (such as setting the PG flag to 1 when the PE flag is set to 0, or
@@ -205,8 +205,8 @@ void _MOV_CR_reg32(VCpu* cpu)
         // If any of the reserved bits are set in the page-directory pointers
         // table (PDPT) and the loading of a control register causes the
         // PDPT to be loaded into the processor.
-        if (cpu->getCPL() != 0) {
-            cpu->GP(0);
+        if (getCPL() != 0) {
+            GP(0);
             return;
         }
     } else {
@@ -216,199 +216,199 @@ void _MOV_CR_reg32(VCpu* cpu)
         // If an attempt is made to write invalid bit combinations in CR0
         // (such as setting the PG flag to 1 when the PE flag is set to 0).
         if (crIndex == 1 || crIndex == 5 || crIndex == 6 || crIndex == 7) {
-            cpu->exception(6);
+            exception(6);
             return;
         }
     }
 
-    cpu->setControlRegister(crIndex, cpu->getRegister32(static_cast<VCpu::RegisterIndex32>(rm & 7)));
+    setControlRegister(crIndex, getRegister32(static_cast<VCpu::RegisterIndex32>(rm & 7)));
 
     if (crIndex == 0)
-        vlog(VM_CPUMSG, "Protected mode Enable = %u", cpu->getPE());
+        vlog(VM_CPUMSG, "Protected mode Enable = %u", getPE());
 }
 
-void _MOV_AL_imm8(VCpu* cpu)
+void VCpu::_MOV_AL_imm8()
 {
-    cpu->regs.B.AL = cpu->fetchOpcodeByte();
+    regs.B.AL = fetchOpcodeByte();
 }
 
-void _MOV_BL_imm8(VCpu* cpu)
+void VCpu::_MOV_BL_imm8()
 {
-    cpu->regs.B.BL = cpu->fetchOpcodeByte();
+    regs.B.BL = fetchOpcodeByte();
 }
 
-void _MOV_CL_imm8(VCpu* cpu)
+void VCpu::_MOV_CL_imm8()
 {
-    cpu->regs.B.CL = cpu->fetchOpcodeByte();
+    regs.B.CL = fetchOpcodeByte();
 }
 
-void _MOV_DL_imm8(VCpu* cpu)
+void VCpu::_MOV_DL_imm8()
 {
-    cpu->regs.B.DL = cpu->fetchOpcodeByte();
+    regs.B.DL = fetchOpcodeByte();
 }
 
-void _MOV_AH_imm8(VCpu* cpu)
+void VCpu::_MOV_AH_imm8()
 {
-    cpu->regs.B.AH = cpu->fetchOpcodeByte();
+    regs.B.AH = fetchOpcodeByte();
 }
 
-void _MOV_BH_imm8(VCpu* cpu)
+void VCpu::_MOV_BH_imm8()
 {
-    cpu->regs.B.BH = cpu->fetchOpcodeByte();
+    regs.B.BH = fetchOpcodeByte();
 }
 
-void _MOV_CH_imm8(VCpu* cpu)
+void VCpu::_MOV_CH_imm8()
 {
-    cpu->regs.B.CH = cpu->fetchOpcodeByte();
+    regs.B.CH = fetchOpcodeByte();
 }
 
-void _MOV_DH_imm8(VCpu* cpu)
+void VCpu::_MOV_DH_imm8()
 {
-    cpu->regs.B.DH = cpu->fetchOpcodeByte();
+    regs.B.DH = fetchOpcodeByte();
 }
 
-void _MOV_EAX_imm32(VCpu* cpu)
+void VCpu::_MOV_EAX_imm32()
 {
-    cpu->regs.D.EAX = cpu->fetchOpcodeDWord();
+    regs.D.EAX = fetchOpcodeDWord();
 }
 
-void _MOV_EBX_imm32(VCpu* cpu)
+void VCpu::_MOV_EBX_imm32()
 {
-    cpu->regs.D.EBX = cpu->fetchOpcodeDWord();
+    regs.D.EBX = fetchOpcodeDWord();
 }
 
-void _MOV_ECX_imm32(VCpu* cpu)
+void VCpu::_MOV_ECX_imm32()
 {
-    cpu->regs.D.ECX = cpu->fetchOpcodeDWord();
+    regs.D.ECX = fetchOpcodeDWord();
 }
 
-void _MOV_EDX_imm32(VCpu* cpu)
+void VCpu::_MOV_EDX_imm32()
 {
-    cpu->regs.D.EDX = cpu->fetchOpcodeDWord();
+    regs.D.EDX = fetchOpcodeDWord();
 }
 
-void _MOV_EBP_imm32(VCpu* cpu)
+void VCpu::_MOV_EBP_imm32()
 {
-    cpu->regs.D.EBP = cpu->fetchOpcodeDWord();
+    regs.D.EBP = fetchOpcodeDWord();
 }
 
-void _MOV_ESP_imm32(VCpu* cpu)
+void VCpu::_MOV_ESP_imm32()
 {
-    cpu->regs.D.ESP = cpu->fetchOpcodeDWord();
+    regs.D.ESP = fetchOpcodeDWord();
 }
 
-void _MOV_ESI_imm32(VCpu* cpu)
+void VCpu::_MOV_ESI_imm32()
 {
-    cpu->regs.D.ESI = cpu->fetchOpcodeDWord();
+    regs.D.ESI = fetchOpcodeDWord();
 }
 
-void _MOV_EDI_imm32(VCpu* cpu)
+void VCpu::_MOV_EDI_imm32()
 {
-    cpu->regs.D.EDI = cpu->fetchOpcodeDWord();
+    regs.D.EDI = fetchOpcodeDWord();
 }
 
-void _MOV_AX_imm16(VCpu* cpu)
+void VCpu::_MOV_AX_imm16()
 {
-    cpu->regs.W.AX = cpu->fetchOpcodeWord();
+    regs.W.AX = fetchOpcodeWord();
 }
 
-void _MOV_BX_imm16(VCpu* cpu)
+void VCpu::_MOV_BX_imm16()
 {
-    cpu->regs.W.BX = cpu->fetchOpcodeWord();
+    regs.W.BX = fetchOpcodeWord();
 }
 
-void _MOV_CX_imm16(VCpu* cpu)
+void VCpu::_MOV_CX_imm16()
 {
-    cpu->regs.W.CX = cpu->fetchOpcodeWord();
+    regs.W.CX = fetchOpcodeWord();
 }
 
-void _MOV_DX_imm16(VCpu* cpu)
+void VCpu::_MOV_DX_imm16()
 {
-    cpu->regs.W.DX = cpu->fetchOpcodeWord();
+    regs.W.DX = fetchOpcodeWord();
 }
 
-void _MOV_BP_imm16(VCpu* cpu)
+void VCpu::_MOV_BP_imm16()
 {
-    cpu->regs.W.BP = cpu->fetchOpcodeWord();
+    regs.W.BP = fetchOpcodeWord();
 }
 
-void _MOV_SP_imm16(VCpu* cpu)
+void VCpu::_MOV_SP_imm16()
 {
-    cpu->regs.W.SP = cpu->fetchOpcodeWord();
+    regs.W.SP = fetchOpcodeWord();
 }
 
-void _MOV_SI_imm16(VCpu* cpu)
+void VCpu::_MOV_SI_imm16()
 {
-    cpu->regs.W.SI = cpu->fetchOpcodeWord();
+    regs.W.SI = fetchOpcodeWord();
 }
 
-void _MOV_DI_imm16(VCpu* cpu)
+void VCpu::_MOV_DI_imm16()
 {
-    cpu->regs.W.DI = cpu->fetchOpcodeWord();
+    regs.W.DI = fetchOpcodeWord();
 }
 
-void _MOV_AL_moff8(VCpu* cpu)
+void VCpu::_MOV_AL_moff8()
 {
-    if (cpu->a16())
-        cpu->regs.B.AL = cpu->readMemory8(cpu->currentSegment(), cpu->fetchOpcodeWord());
+    if (a16())
+        regs.B.AL = readMemory8(currentSegment(), fetchOpcodeWord());
     else
-        cpu->regs.B.AL = cpu->readMemory8(cpu->currentSegment(), cpu->fetchOpcodeDWord());
+        regs.B.AL = readMemory8(currentSegment(), fetchOpcodeDWord());
 }
 
-void _MOV_AX_moff16(VCpu* cpu)
+void VCpu::_MOV_AX_moff16()
 {
-    if (cpu->a16())
-        cpu->regs.W.AX = cpu->readMemory16(cpu->currentSegment(), cpu->fetchOpcodeWord());
+    if (a16())
+        regs.W.AX = readMemory16(currentSegment(), fetchOpcodeWord());
     else
-        cpu->regs.W.AX = cpu->readMemory16(cpu->currentSegment(), cpu->fetchOpcodeDWord());
+        regs.W.AX = readMemory16(currentSegment(), fetchOpcodeDWord());
 }
 
-void _MOV_EAX_moff32(VCpu* cpu)
+void VCpu::_MOV_EAX_moff32()
 {
-    if (cpu->a16())
-        cpu->regs.D.EAX = cpu->readMemory32(cpu->currentSegment(), cpu->fetchOpcodeWord());
+    if (a16())
+        regs.D.EAX = readMemory32(currentSegment(), fetchOpcodeWord());
     else
-        cpu->regs.D.EAX = cpu->readMemory32(cpu->currentSegment(), cpu->fetchOpcodeDWord());
+        regs.D.EAX = readMemory32(currentSegment(), fetchOpcodeDWord());
 }
 
-void _MOV_moff8_AL(VCpu* cpu)
+void VCpu::_MOV_moff8_AL()
 {
-    if (cpu->a16())
-        cpu->writeMemory8(cpu->currentSegment(), cpu->fetchOpcodeWord(), cpu->getAL());
+    if (a16())
+        writeMemory8(currentSegment(), fetchOpcodeWord(), getAL());
     else
-        cpu->writeMemory8(cpu->currentSegment(), cpu->fetchOpcodeDWord(), cpu->getAL());
+        writeMemory8(currentSegment(), fetchOpcodeDWord(), getAL());
 }
 
-void _MOV_moff16_AX(VCpu* cpu)
+void VCpu::_MOV_moff16_AX()
 {
-    if (cpu->a16())
-        cpu->writeMemory16(cpu->currentSegment(), cpu->fetchOpcodeWord(), cpu->getAX());
+    if (a16())
+        writeMemory16(currentSegment(), fetchOpcodeWord(), getAX());
     else
-        cpu->writeMemory16(cpu->currentSegment(), cpu->fetchOpcodeDWord(), cpu->getAX());
+        writeMemory16(currentSegment(), fetchOpcodeDWord(), getAX());
 }
 
-void _MOV_moff32_EAX(VCpu* cpu)
+void VCpu::_MOV_moff32_EAX()
 {
-    if (cpu->a16())
-        cpu->writeMemory32(cpu->currentSegment(), cpu->fetchOpcodeWord(), cpu->getEAX());
+    if (a16())
+        writeMemory32(currentSegment(), fetchOpcodeWord(), getEAX());
     else
-        cpu->writeMemory32(cpu->currentSegment(), cpu->fetchOpcodeDWord(), cpu->getEAX());
+        writeMemory32(currentSegment(), fetchOpcodeDWord(), getEAX());
 }
 
-void _MOVZX_reg16_RM8(VCpu* cpu)
+void VCpu::_MOVZX_reg16_RM8()
 {
-    BYTE rm = cpu->fetchOpcodeByte();
-    cpu->setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), cpu->readModRM8(rm));
+    BYTE rm = fetchOpcodeByte();
+    setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), readModRM8(rm));
 }
 
-void _MOVZX_reg32_RM8(VCpu* cpu)
+void VCpu::_MOVZX_reg32_RM8()
 {
-    BYTE rm = cpu->fetchOpcodeByte();
-    cpu->setRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)), cpu->readModRM8(rm));
+    BYTE rm = fetchOpcodeByte();
+    setRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)), readModRM8(rm));
 }
 
-void _MOVZX_reg32_RM16(VCpu* cpu)
+void VCpu::_MOVZX_reg32_RM16()
 {
-    BYTE rm = cpu->fetchOpcodeByte();
-    cpu->setRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)), cpu->readModRM16(rm));
+    BYTE rm = fetchOpcodeByte();
+    setRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)), readModRM16(rm));
 }

@@ -82,101 +82,101 @@ void VCpu::updateFlags(WORD data, BYTE bits)
     setZF(data == 0);
 }
 
-void _STC(VCpu* cpu)
+void VCpu::_STC()
 {
-    cpu->setCF(1);
+    setCF(1);
 }
 
-void _STD(VCpu* cpu)
+void VCpu::_STD()
 {
-    cpu->setDF(1);
+    setDF(1);
 }
 
-void _STI(VCpu* cpu)
+void VCpu::_STI()
 {
-    if (!cpu->getPE()) {
-        cpu->setIF(1);
+    if (!getPE()) {
+        setIF(1);
         return;
     }
 
-    if (!cpu->getVM()) {
-        if (cpu->getIOPL() >= cpu->getCPL()) {
-            cpu->setIF(1);
+    if (!getVM()) {
+        if (getIOPL() >= getCPL()) {
+            setIF(1);
         } else {
-            if ((cpu->getIOPL() < cpu->getCPL()) && cpu->getCPL() == 3 && !cpu->getVIP())
-                cpu->setVIF(1);
+            if ((getIOPL() < getCPL()) && getCPL() == 3 && !getVIP())
+                setVIF(1);
             else
-                cpu->GP(0);
+                GP(0);
         }
     } else {
-        if (cpu->getIOPL() == 3) {
-            cpu->setIF(0);
+        if (getIOPL() == 3) {
+            setIF(0);
         } else {
-            if (cpu->getIOPL() < 3 && !cpu->getVIP() && cpu->getVME()) {
-                cpu->setVIF(1);
+            if (getIOPL() < 3 && !getVIP() && getVME()) {
+                setVIF(1);
             } else {
-                cpu->GP(0);
+                GP(0);
             }
         }
     }
 }
 
-void _CLI(VCpu* cpu)
+void VCpu::_CLI()
 {
-    if (!cpu->getPE()) {
-        cpu->setIF(0);
+    if (!getPE()) {
+        setIF(0);
         return;
     }
 
-    if (!cpu->getVM()) {
-        if (cpu->getIOPL() >= cpu->getCPL()) {
-            cpu->setIF(0);
+    if (!getVM()) {
+        if (getIOPL() >= getCPL()) {
+            setIF(0);
         } else {
-            if ((cpu->getIOPL() < cpu->getCPL()) && cpu->getCPL() == 3 && cpu->getPVI())
-                cpu->setVIF(0);
+            if ((getIOPL() < getCPL()) && getCPL() == 3 && getPVI())
+                setVIF(0);
             else
-                cpu->GP(0);
+                GP(0);
         }
     } else {
-        if (cpu->getIOPL() == 3) {
-            cpu->setIF(0);
+        if (getIOPL() == 3) {
+            setIF(0);
         } else {
-            if (cpu->getIOPL() < 3 && cpu->getVME()) {
-                cpu->setVIF(0);
+            if (getIOPL() < 3 && getVME()) {
+                setVIF(0);
             } else {
-                cpu->GP(0);
+                GP(0);
             }
         }
     }
 }
 
-void _CLC(VCpu* cpu)
+void VCpu::_CLC()
 {
-    cpu->setCF(0);
+    setCF(0);
 }
 
-void _CLD(VCpu* cpu)
+void VCpu::_CLD()
 {
-    cpu->setDF(0);
+    setDF(0);
 }
 
-void _CMC(VCpu* cpu)
+void VCpu::_CMC()
 {
-    cpu->setCF(!cpu->getCF());
+    setCF(!getCF());
 }
 
-void _LAHF(VCpu* cpu)
+void VCpu::_LAHF()
 {
-    cpu->regs.B.AH = cpu->getCF() | (cpu->getPF() * 4) | (cpu->getAF() * 16) | (cpu->getZF() * 64) | (cpu->getSF() * 128) | 2;
+    regs.B.AH = getCF() | (getPF() * 4) | (getAF() * 16) | (getZF() * 64) | (getSF() * 128) | 2;
 }
 
-void _SAHF(VCpu* cpu)
+void VCpu::_SAHF()
 {
-    cpu->setCF(cpu->regs.B.AH & 0x01);
-    cpu->setPF(cpu->regs.B.AH & 0x04);
-    cpu->setAF(cpu->regs.B.AH & 0x10);
-    cpu->setZF(cpu->regs.B.AH & 0x40);
-    cpu->setSF(cpu->regs.B.AH & 0x80);
+    setCF(regs.B.AH & 0x01);
+    setPF(regs.B.AH & 0x04);
+    setAF(regs.B.AH & 0x10);
+    setZF(regs.B.AH & 0x40);
+    setSF(regs.B.AH & 0x80);
 }
 
 void VCpu::mathFlags8(WORD result, BYTE dest, BYTE src)

@@ -26,48 +26,48 @@
 #include "vcpu.h"
 #include "debug.h"
 
-void _LOOP_imm8(VCpu* cpu)
+void VCpu::_LOOP_imm8()
 {
-    SIGNED_BYTE displacement = cpu->fetchOpcodeByte();
-    --cpu->regs.W.CX;
-    if (cpu->regs.W.CX)
-        cpu->jumpRelative8(displacement);
+    SIGNED_BYTE displacement = fetchOpcodeByte();
+    --regs.W.CX;
+    if (regs.W.CX)
+        jumpRelative8(displacement);
 }
 
-void _LOOPE_imm8(VCpu* cpu)
+void VCpu::_LOOPE_imm8()
 {
-    SIGNED_BYTE displacement = cpu->fetchOpcodeByte();
-    --cpu->regs.W.CX;
-    if (cpu->regs.W.CX && cpu->getZF())
-        cpu->jumpRelative8(displacement);
+    SIGNED_BYTE displacement = fetchOpcodeByte();
+    --regs.W.CX;
+    if (regs.W.CX && getZF())
+        jumpRelative8(displacement);
 }
 
-void _LOOPNE_imm8(VCpu* cpu)
+void VCpu::_LOOPNE_imm8()
 {
-    SIGNED_BYTE displacement = cpu->fetchOpcodeByte();
-    --cpu->regs.W.CX;
-    if (cpu->regs.W.CX && !cpu->getZF())
-        cpu->jumpRelative8(displacement);
+    SIGNED_BYTE displacement = fetchOpcodeByte();
+    --regs.W.CX;
+    if (regs.W.CX && !getZF())
+        jumpRelative8(displacement);
 }
 
-#define CALL_HANDLER(handler16, handler32) if (cpu->o16()) { handler16(cpu); } else { handler32(cpu); }
-#define DO_REP_NEW(handler16, handler32) for (; cpu->regs.W.CX; --cpu->regs.W.CX) { CALL_HANDLER(handler16, handler32); }
-#define DO_REP(func) for (; cpu->regs.W.CX; --cpu->regs.W.CX) { func(cpu); }
-#define DO_REPZ(func) for (cpu->setZF(should_equal); cpu->regs.W.CX && (cpu->getZF() == should_equal); --cpu->regs.W.CX) { func(cpu); }
+#define CALL_HANDLER(handler16, handler32) if (o16()) { handler16(); } else { handler32(); }
+#define DO_REP_NEW(handler16, handler32) for (; regs.W.CX; --regs.W.CX) { CALL_HANDLER(handler16, handler32); }
+#define DO_REP(func) for (; regs.W.CX; --regs.W.CX) { func(); }
+#define DO_REPZ(func) for (setZF(shouldEqual); regs.W.CX && (getZF() == shouldEqual); --regs.W.CX) { func(); }
 
-static void __rep(VCpu* cpu, BYTE opcode, bool should_equal)
+void VCpu::handleRepeatOpcode(BYTE opcode, bool shouldEqual)
 {
     switch(opcode) {
-    case 0x26: cpu->setSegmentPrefix(cpu->getES()); break;
-    case 0x2E: cpu->setSegmentPrefix(cpu->getCS()); break;
-    case 0x36: cpu->setSegmentPrefix(cpu->getSS()); break;
-    case 0x3E: cpu->setSegmentPrefix(cpu->getDS()); break;
+    case 0x26: setSegmentPrefix(getES()); break;
+    case 0x2E: setSegmentPrefix(getCS()); break;
+    case 0x36: setSegmentPrefix(getSS()); break;
+    case 0x3E: setSegmentPrefix(getDS()); break;
 
     case 0x66: {
-        cpu->m_operationSize32 = !cpu->m_operationSize32;
-        BYTE op = cpu->fetchOpcodeByte();
-	    __rep(cpu, op, should_equal);
-        cpu->m_operationSize32 = !cpu->m_operationSize32;
+        m_operationSize32 = !m_operationSize32;
+        BYTE op = fetchOpcodeByte();
+        handleRepeatOpcode(op, shouldEqual);
+        m_operationSize32 = !m_operationSize32;
         return;
     }
 
@@ -88,23 +88,23 @@ static void __rep(VCpu* cpu, BYTE opcode, bool should_equal)
 
     default:
         vlog(VM_ALERT, "SUSPICIOUS: Opcode %02X used with REP* prefix", opcode);
-        cpu->decode(opcode);
+        decode(opcode);
         return;
     }
 
     // Recurse if this opcode was a segment prefix.
     // FIXME: Infinite recursion IS possible here.
-    __rep(cpu, cpu->fetchOpcodeByte(), should_equal);
+    handleRepeatOpcode(fetchOpcodeByte(), shouldEqual);
 }
 
-void _REP(VCpu* cpu)
+void VCpu::_REP()
 {
-    __rep(cpu, cpu->fetchOpcodeByte(), true);
-    cpu->resetSegmentPrefix();
+    handleRepeatOpcode(fetchOpcodeByte(), true);
+    resetSegmentPrefix();
 }
 
-void _REPNE(VCpu* cpu)
+void VCpu::_REPNE()
 {
-    __rep(cpu, cpu->fetchOpcodeByte(), false);
-    cpu->resetSegmentPrefix();
+    handleRepeatOpcode(fetchOpcodeByte(), false);
+    resetSegmentPrefix();
 }

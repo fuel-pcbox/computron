@@ -26,28 +26,28 @@
 #include "vomit.h"
 #include "debug.h"
 
-void _ESCAPE(VCpu* cpu)
+void VCpu::_ESCAPE()
 {
     vlog(VM_CPUMSG, "%04X:%08X FPU escape via %02X /%u",
-        cpu->getBaseCS(), cpu->getBaseEIP(),
-        cpu->opcode, vomit_modRMRegisterPart(cpu->readMemory8(cpu->getBaseCS(), cpu->getBaseIP() + 1)));
+        getBaseCS(), getBaseEIP(),
+        opcode, vomit_modRMRegisterPart(readMemory8(getBaseCS(), getBaseIP() + 1)));
 
     //vm_exit(0);
 
-    BYTE rm = cpu->fetchOpcodeByte();
-    (void) cpu->readModRM16(rm);
+    BYTE rm = fetchOpcodeByte();
+    (void) readModRM16(rm);
 
     return;
 
 #if 0
-    printf("Swallowed %d bytes: ", cpu->IP - cpu->base_IP);
-    for (int i = 0; i < cpu.IP - cpu->base_IP; ++i)
-        printf("%02X ", vomit_cpu_memory_read8(cpu, cpu->getBaseCS(), cpu->base_IP + i));
+    printf("Swallowed %d bytes: ", IP - base_IP);
+    for (int i = 0; i < cpu.IP - base_IP; ++i)
+        printf("%02X ", vomit_cpu_memory_read8(cpu, getBaseCS(), base_IP + i));
     printf("\n");
 #endif
 
 #if 0
     /* 80286+: Coprocessor not available exception. */
-    cpu->exception(7);
+    exception(7);
 #endif
 }

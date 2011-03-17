@@ -26,126 +26,126 @@
 #include "vomit.h"
 #include "debug.h"
 
-void _wrap_0x0F(VCpu* cpu)
+void VCpu::_wrap_0x0F()
 {
-    BYTE op = cpu->fetchOpcodeByte();
+    BYTE op = fetchOpcodeByte();
     switch (op) {
     case 0x01:
     {
-        cpu->rmbyte = cpu->fetchOpcodeByte();
-        switch (vomit_modRMRegisterPart(cpu->rmbyte)) {
-        case 0: _SGDT(cpu); return;
+        this->rmbyte = fetchOpcodeByte();
+        switch (vomit_modRMRegisterPart(this->rmbyte)) {
+        case 0: _SGDT(); return;
         }
-        (void) cpu->readModRM16(cpu->rmbyte);
-        vlog(VM_ALERT, "Sliding by 0F 01 /%d\n", vomit_modRMRegisterPart(cpu->rmbyte));
+        (void) readModRM16(this->rmbyte);
+        vlog(VM_ALERT, "Sliding by 0F 01 /%d\n", vomit_modRMRegisterPart(this->rmbyte));
         break;
     }
     case 0xFF: // UD0
     case 0xB9: // UD1
     case 0x0B: // UD2
         vlog(VM_ALERT, "Undefined opcode 0F %02X", op);
-        cpu->exception(6);
+        exception(6);
         break;
     default:
         vlog(VM_CPUMSG, "_wrap_0x0F passing opcode to VCpu::decodeNext(): 0F %02X", op);
-        cpu->EIP -= 2;
-        cpu->decodeNext();
+        setEIP(getEIP() - 2);
+        decodeNext();
         break;
     }
 }
 
-void _BOUND(VCpu* cpu)
+void VCpu::_BOUND()
 {
-    BYTE rm = cpu->fetchOpcodeByte();
-    WORD* ptr = static_cast<WORD*>(cpu->resolveModRM8(rm));
-    WORD index = cpu->getRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)));
+    BYTE rm = fetchOpcodeByte();
+    WORD* ptr = static_cast<WORD*>(resolveModRM8(rm));
+    WORD index = getRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)));
 
     if (index < ptr[0] || index > ptr[1]) {
         /* Raise BR exception */
-        cpu->exception(5);
+        exception(5);
     }
 }
 
-void _PUSH_imm8(VCpu* cpu)
+void VCpu::_PUSH_imm8()
 {
-    cpu->push(vomit_signExtend(cpu->fetchOpcodeByte()));
+    push(vomit_signExtend(fetchOpcodeByte()));
 }
 
-void _PUSH_imm16(VCpu* cpu)
+void VCpu::_PUSH_imm16()
 {
-    cpu->push(cpu->fetchOpcodeWord());
+    push(fetchOpcodeWord());
 }
 
-void _ENTER(VCpu* cpu)
+void VCpu::_ENTER()
 {
-    WORD Size = cpu->fetchOpcodeWord();
-    BYTE NestingLevel = cpu->fetchOpcodeByte() % 32;
+    WORD Size = fetchOpcodeWord();
+    BYTE NestingLevel = fetchOpcodeByte() % 32;
     WORD FrameTemp;
-    cpu->push(cpu->regs.W.BP);
-    FrameTemp = cpu->regs.W.SP;
+    push(regs.W.BP);
+    FrameTemp = regs.W.SP;
     if (NestingLevel != 0) {
         for (WORD i = 1; i <= (NestingLevel - 1); ++i) {
-            cpu->regs.W.BP -= 2;
-            cpu->push(cpu->readMemory16(cpu->SS, cpu->regs.W.BP));
+            regs.W.BP -= 2;
+            push(readMemory16(SS, regs.W.BP));
         }
     }
-    cpu->push(FrameTemp);
-    cpu->regs.W.BP = FrameTemp;
-    cpu->regs.W.SP = cpu->regs.W.BP - Size;
+    push(FrameTemp);
+    regs.W.BP = FrameTemp;
+    regs.W.SP = regs.W.BP - Size;
 }
 
-void _LEAVE(VCpu* cpu)
+void VCpu::_LEAVE()
 {
-    cpu->regs.W.SP = cpu->regs.W.BP;
-    cpu->regs.W.BP = cpu->pop();
+    regs.W.SP = regs.W.BP;
+    regs.W.BP = pop();
 }
 
-void _PUSHA(VCpu* cpu)
+void VCpu::_PUSHA()
 {
-    WORD oldsp = cpu->regs.W.SP;
-    cpu->push(cpu->regs.W.AX);
-    cpu->push(cpu->regs.W.BX);
-    cpu->push(cpu->regs.W.CX);
-    cpu->push(cpu->regs.W.DX);
-    cpu->push(cpu->regs.W.BP);
-    cpu->push(oldsp);
-    cpu->push(cpu->regs.W.SI);
-    cpu->push(cpu->regs.W.DI);
+    WORD oldsp = regs.W.SP;
+    push(regs.W.AX);
+    push(regs.W.BX);
+    push(regs.W.CX);
+    push(regs.W.DX);
+    push(regs.W.BP);
+    push(oldsp);
+    push(regs.W.SI);
+    push(regs.W.DI);
 }
 
-void _PUSHAD(VCpu* cpu)
+void VCpu::_PUSHAD()
 {
-    DWORD oldesp = cpu->regs.D.ESP;
-    cpu->push32(cpu->regs.D.EAX);
-    cpu->push32(cpu->regs.D.EBX);
-    cpu->push32(cpu->regs.D.ECX);
-    cpu->push32(cpu->regs.D.EDX);
-    cpu->push32(cpu->regs.D.EBP);
-    cpu->push32(oldesp);
-    cpu->push32(cpu->regs.D.ESI);
-    cpu->push32(cpu->regs.D.EDI);
+    DWORD oldesp = regs.D.ESP;
+    push32(regs.D.EAX);
+    push32(regs.D.EBX);
+    push32(regs.D.ECX);
+    push32(regs.D.EDX);
+    push32(regs.D.EBP);
+    push32(oldesp);
+    push32(regs.D.ESI);
+    push32(regs.D.EDI);
 }
 
-void _POPA(VCpu* cpu)
+void VCpu::_POPA()
 {
-    cpu->regs.W.DI = cpu->pop();
-    cpu->regs.W.SI = cpu->pop();
-    (void) cpu->pop();
-    cpu->regs.W.BP = cpu->pop();
-    cpu->regs.W.DX = cpu->pop();
-    cpu->regs.W.CX = cpu->pop();
-    cpu->regs.W.BX = cpu->pop();
-    cpu->regs.W.AX = cpu->pop();
+    regs.W.DI = pop();
+    regs.W.SI = pop();
+    (void) pop();
+    regs.W.BP = pop();
+    regs.W.DX = pop();
+    regs.W.CX = pop();
+    regs.W.BX = pop();
+    regs.W.AX = pop();
 }
 
-void _POPAD(VCpu* cpu)
+void VCpu::_POPAD()
 {
-    cpu->regs.D.EDI = cpu->pop32();
-    cpu->regs.D.ESI = cpu->pop32();
-    (void) cpu->pop32();
-    cpu->regs.D.EBP = cpu->pop32();
-    cpu->regs.D.EDX = cpu->pop32();
-    cpu->regs.D.ECX = cpu->pop32();
-    cpu->regs.D.EBX = cpu->pop32();
-    cpu->regs.D.EAX = cpu->pop32();
+    regs.D.EDI = pop32();
+    regs.D.ESI = pop32();
+    (void) pop32();
+    regs.D.EBP = pop32();
+    regs.D.EDX = pop32();
+    regs.D.ECX = pop32();
+    regs.D.EBX = pop32();
+    regs.D.EAX = pop32();
 }

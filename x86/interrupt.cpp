@@ -27,32 +27,32 @@
 #include "vcpu.h"
 #include "debug.h"
 
-void _INT_imm8(VCpu* cpu)
+void VCpu::_INT_imm8()
 {
-    BYTE isr = cpu->fetchOpcodeByte();
-    cpu->jumpToInterruptHandler(isr);
+    BYTE isr = fetchOpcodeByte();
+    jumpToInterruptHandler(isr);
 }
 
-void _INT3(VCpu* cpu)
+void VCpu::_INT3()
 {
-    cpu->jumpToInterruptHandler(3);
+    jumpToInterruptHandler(3);
 }
 
-void _INTO(VCpu* cpu)
+void VCpu::_INTO()
 {
     /* XXX: I've never seen this used, so it's probably good to log it. */
     vlog(VM_ALERT, "INTO used, can you believe it?");
 
-    if (cpu->getOF())
-        cpu->jumpToInterruptHandler(4);
+    if (getOF())
+        jumpToInterruptHandler(4);
 }
 
-void _IRET(VCpu* cpu)
+void VCpu::_IRET()
 {
-    WORD nip = cpu->pop();
-    WORD ncs = cpu->pop();
-    cpu->jump16(ncs, nip);
-    cpu->setFlags(cpu->pop());
+    WORD nip = pop();
+    WORD ncs = pop();
+    jump16(ncs, nip);
+    setFlags(pop());
 }
 
 void VCpu::jumpToInterruptHandler(int isr)

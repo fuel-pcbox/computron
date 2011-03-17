@@ -29,116 +29,116 @@
 
 static QSet<WORD> s_ignorePorts;
 
-void _OUT_imm8_AL(VCpu* cpu)
+void VCpu::_OUT_imm8_AL()
 {
-    cpu->out(cpu->fetchOpcodeByte(), cpu->regs.B.AL);
+    out(fetchOpcodeByte(), regs.B.AL);
 }
 
-void _OUT_imm8_AX(VCpu* cpu)
+void VCpu::_OUT_imm8_AX()
 {
-    WORD port = cpu->fetchOpcodeByte();
-    cpu->out(port, cpu->regs.B.AL);
-    cpu->out(port + 1, cpu->regs.B.AH);
+    WORD port = fetchOpcodeByte();
+    out(port, regs.B.AL);
+    out(port + 1, regs.B.AH);
 }
 
-void _OUT_imm8_EAX(VCpu* cpu)
+void VCpu::_OUT_imm8_EAX()
 {
-    WORD port = cpu->fetchOpcodeByte();
-    cpu->out(port, cpu->regs.B.AL);
-    cpu->out(port + 1, cpu->regs.B.AH);
-    cpu->out(port + 2, LSB(cpu->regs.W.__EAX_high_word));
-    cpu->out(port + 3, MSB(cpu->regs.W.__EAX_high_word));
+    WORD port = fetchOpcodeByte();
+    out(port, regs.B.AL);
+    out(port + 1, regs.B.AH);
+    out(port + 2, LSB(regs.W.__EAX_high_word));
+    out(port + 3, MSB(regs.W.__EAX_high_word));
 }
 
-void _OUT_DX_AL(VCpu* cpu)
+void VCpu::_OUT_DX_AL()
 {
-    cpu->out(cpu->getDX(), cpu->regs.B.AL);
+    out(getDX(), regs.B.AL);
 }
 
-void _OUT_DX_AX(VCpu* cpu)
+void VCpu::_OUT_DX_AX()
 {
-    cpu->out(cpu->getDX(), cpu->regs.B.AL);
-    cpu->out(cpu->getDX() + 1, cpu->regs.B.AH);
+    out(getDX(), regs.B.AL);
+    out(getDX() + 1, regs.B.AH);
 }
 
-void _OUT_DX_EAX(VCpu* cpu)
+void VCpu::_OUT_DX_EAX()
 {
-    cpu->out(cpu->getDX(), cpu->regs.B.AL);
-    cpu->out(cpu->getDX() + 1, cpu->regs.B.AH);
-    cpu->out(cpu->getDX() + 2, LSB(cpu->regs.W.__EAX_high_word));
-    cpu->out(cpu->getDX() + 3, MSB(cpu->regs.W.__EAX_high_word));
+    out(getDX(), regs.B.AL);
+    out(getDX() + 1, regs.B.AH);
+    out(getDX() + 2, LSB(regs.W.__EAX_high_word));
+    out(getDX() + 3, MSB(regs.W.__EAX_high_word));
 }
 
-void _OUTSB(VCpu* cpu)
+void VCpu::_OUTSB()
 {
     BYTE data;
 
-    if (cpu->a16()) {
-        data = cpu->readMemory8(cpu->currentSegment(), cpu->getSI());
-        cpu->nextSI(1);
+    if (a16()) {
+        data = readMemory8(currentSegment(), getSI());
+        nextSI(1);
     } else {
-        data = cpu->readMemory8(cpu->currentSegment(), cpu->getESI());
-        cpu->nextESI(1);
+        data = readMemory8(currentSegment(), getESI());
+        nextESI(1);
     }
 
-    cpu->out(cpu->getDX(), data);
+    out(getDX(), data);
 }
 
-void _OUTSW(VCpu* cpu)
+void VCpu::_OUTSW()
 {
     BYTE lsb;
     BYTE msb;
 
-    if (cpu->a16()) {
-        lsb = cpu->readMemory8(cpu->currentSegment(), cpu->regs.W.SI);
-        msb = cpu->readMemory8(cpu->currentSegment(), cpu->regs.W.SI + 1);
-        cpu->nextSI(2);
+    if (a16()) {
+        lsb = readMemory8(currentSegment(), regs.W.SI);
+        msb = readMemory8(currentSegment(), regs.W.SI + 1);
+        nextSI(2);
     } else {
-        lsb = cpu->readMemory8(cpu->currentSegment(), cpu->getSI());
-        msb = cpu->readMemory8(cpu->currentSegment(), cpu->getESI() + 1);
-        cpu->nextESI(2);
+        lsb = readMemory8(currentSegment(), getSI());
+        msb = readMemory8(currentSegment(), getESI() + 1);
+        nextESI(2);
     }
 
-    cpu->out(cpu->getDX(), lsb);
-    cpu->out(cpu->getDX() + 1, msb);
+    out(getDX(), lsb);
+    out(getDX() + 1, msb);
 }
 
-void _IN_AL_imm8(VCpu* cpu)
+void VCpu::_IN_AL_imm8()
 {
-    cpu->regs.B.AL = cpu->in(cpu->fetchOpcodeByte());
+    regs.B.AL = in(fetchOpcodeByte());
 }
 
-void _IN_AX_imm8(VCpu* cpu)
+void VCpu::_IN_AX_imm8()
 {
-    WORD port = cpu->fetchOpcodeByte();
-    cpu->regs.B.AL = cpu->in(port);
-    cpu->regs.B.AH = cpu->in(port + 1);
+    WORD port = fetchOpcodeByte();
+    regs.B.AL = in(port);
+    regs.B.AH = in(port + 1);
 }
 
-void _IN_EAX_imm8(VCpu* cpu)
+void VCpu::_IN_EAX_imm8()
 {
-    WORD port = cpu->fetchOpcodeByte();
-    cpu->regs.B.AL = cpu->in(port);
-    cpu->regs.B.AH = cpu->in(port + 1);
-    cpu->regs.W.__EAX_high_word = MAKEWORD(cpu->in(port + 2), cpu->in(port + 3));
+    WORD port = fetchOpcodeByte();
+    regs.B.AL = in(port);
+    regs.B.AH = in(port + 1);
+    regs.W.__EAX_high_word = MAKEWORD(in(port + 2), in(port + 3));
 }
 
-void _IN_AL_DX(VCpu* cpu)
+void VCpu::_IN_AL_DX()
 {
-    cpu->regs.B.AL = cpu->in(cpu->getDX());
+    regs.B.AL = in(getDX());
 }
 
-void _IN_AX_DX(VCpu* cpu)
+void VCpu::_IN_AX_DX()
 {
-    cpu->regs.B.AL = cpu->in(cpu->getDX());
-    cpu->regs.B.AH = cpu->in(cpu->getDX() + 1);
+    regs.B.AL = in(getDX());
+    regs.B.AH = in(getDX() + 1);
 }
 
-void _IN_EAX_DX(VCpu* cpu)
+void VCpu::_IN_EAX_DX()
 {
-    cpu->regs.B.AL = cpu->in(cpu->getDX());
-    cpu->regs.B.AH = cpu->in(cpu->getDX() + 1);
-    cpu->regs.W.__EAX_high_word = MAKEWORD(cpu->in(cpu->getDX() + 2), cpu->in(cpu->getDX() + 3));
+    regs.B.AL = in(getDX());
+    regs.B.AH = in(getDX() + 1);
+    regs.W.__EAX_high_word = MAKEWORD(in(getDX() + 2), in(getDX() + 3));
 }
 
 void VCpu::out(WORD port, BYTE value)

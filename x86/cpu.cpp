@@ -33,56 +33,60 @@
 VCpu* g_cpu = 0;
 bool g_vomit_exit_main_loop = 0;
 
-#define CALL_HANDLER(handler16, handler32) if (o16()) { handler16(this); } else { handler32(this); }
+#define CALL_HANDLER(handler16, handler32) if (o16()) { handler16(); } else { handler32(); }
 
-void _UD0(VCpu* cpu)
+void VCpu::_UD0()
 {
     vlog(VM_ALERT, "Undefined opcode 0F FF (UD0)");
-    cpu->exception(6);
+    exception(6);
 }
 
-void _OperationSizeOverride(VCpu*cpu)
+void VCpu::_OperationSizeOverride()
 {
-    cpu->m_operationSize32 = !cpu->m_operationSize32;
+    m_operationSize32 = !m_operationSize32;
 
 #ifdef VOMIT_DEBUG_OVERRIDE_OPCODES
-    vlog(VM_LOGMSG, "%04X:%08X Operation size override detected! Opcode: db 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X ", cpu->getBaseCS(), cpu->getBaseEIP(),
-         cpu->readMemory8(cpu->getCS(), cpu->getEIP() - 1),
-         cpu->readMemory8(cpu->getCS(), cpu->getEIP()),
-         cpu->readMemory8(cpu->getCS(), cpu->getEIP() + 1),
-         cpu->readMemory8(cpu->getCS(), cpu->getEIP() + 2),
-         cpu->readMemory8(cpu->getCS(), cpu->getEIP() + 3),
-         cpu->readMemory8(cpu->getCS(), cpu->getEIP() + 4),
-         cpu->readMemory8(cpu->getCS(), cpu->getEIP() + 5)
+    vlog(VM_LOGMSG, "%04X:%08X Operation size override detected! Opcode: db 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X ",
+         getBaseCS(),
+         getBaseEIP(),
+         readMemory8(getCS(), getEIP() - 1),
+         readMemory8(getCS(), getEIP()),
+         readMemory8(getCS(), getEIP() + 1),
+         readMemory8(getCS(), getEIP() + 2),
+         readMemory8(getCS(), getEIP() + 3),
+         readMemory8(getCS(), getEIP() + 4),
+         readMemory8(getCS(), getEIP() + 5)
     );
-    cpu->dumpAll();
+    dumpAll();
 #endif
 
-    cpu->decodeNext();
+    decodeNext();
 
-    cpu->m_operationSize32 = !cpu->m_operationSize32;
+    m_operationSize32 = !m_operationSize32;
 }
 
-void _AddressSizeOverride(VCpu* cpu)
+void VCpu::_AddressSizeOverride()
 {
-    cpu->m_addressSize32 = !cpu->m_addressSize32;
+    m_addressSize32 = !m_addressSize32;
 
 #ifdef VOMIT_DEBUG_OVERRIDE_OPCODES
-    vlog(VM_LOGMSG, "%04X:%08X Address size override detected! Opcode: db 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X ", cpu->getBaseCS(), cpu->getBaseEIP(),
-         cpu->readMemory8(cpu->getCS(), cpu->getEIP() - 1),
-         cpu->readMemory8(cpu->getCS(), cpu->getEIP()),
-         cpu->readMemory8(cpu->getCS(), cpu->getEIP() + 1),
-         cpu->readMemory8(cpu->getCS(), cpu->getEIP() + 2),
-         cpu->readMemory8(cpu->getCS(), cpu->getEIP() + 3),
-         cpu->readMemory8(cpu->getCS(), cpu->getEIP() + 4),
-         cpu->readMemory8(cpu->getCS(), cpu->getEIP() + 5)
+    vlog(VM_LOGMSG, "%04X:%08X Address size override detected! Opcode: db 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X ",
+         getBaseCS(),
+         getBaseEIP(),
+         readMemory8(getCS(), getEIP() - 1),
+         readMemory8(getCS(), getEIP()),
+         readMemory8(getCS(), getEIP() + 1),
+         readMemory8(getCS(), getEIP() + 2),
+         readMemory8(getCS(), getEIP() + 3),
+         readMemory8(getCS(), getEIP() + 4),
+         readMemory8(getCS(), getEIP() + 5)
     );
-    cpu->dumpAll();
+    dumpAll();
 #endif
 
-    cpu->decodeNext();
+    decodeNext();
 
-    cpu->m_addressSize32 = !cpu->m_addressSize32;
+    m_addressSize32 = !m_addressSize32;
 }
 
 void VCpu::decodeNext()
@@ -95,112 +99,112 @@ void VCpu::decode(BYTE op)
 {
     this->opcode = op;
     switch (this->opcode) {
-    case 0x00: _ADD_RM8_reg8(this); break;
+    case 0x00: _ADD_RM8_reg8(); break;
     case 0x01: CALL_HANDLER(_ADD_RM16_reg16, _ADD_RM32_reg32); break;
-    case 0x02: _ADD_reg8_RM8(this); break;
+    case 0x02: _ADD_reg8_RM8(); break;
     case 0x03: CALL_HANDLER(_ADD_reg16_RM16, _ADD_reg32_RM32); break;
-    case 0x04: _ADD_AL_imm8(this); break;
+    case 0x04: _ADD_AL_imm8(); break;
     case 0x05: CALL_HANDLER(_ADD_AX_imm16, _ADD_EAX_imm32); break;
-    case 0x06: _PUSH_ES(this); break;
-    case 0x07: _POP_ES(this); break;
-    case 0x08: _OR_RM8_reg8(this); break;
+    case 0x06: _PUSH_ES(); break;
+    case 0x07: _POP_ES(); break;
+    case 0x08: _OR_RM8_reg8(); break;
     case 0x09: CALL_HANDLER(_OR_RM16_reg16, _OR_RM32_reg32); break;
-    case 0x0A: _OR_reg8_RM8(this); break;
+    case 0x0A: _OR_reg8_RM8(); break;
     case 0x0B: CALL_HANDLER(_OR_reg16_RM16, _OR_reg32_RM32); break;
-    case 0x0C: _OR_AL_imm8(this); break;
+    case 0x0C: _OR_AL_imm8(); break;
     case 0x0D: CALL_HANDLER(_OR_AX_imm16, _OR_EAX_imm32); break;
-    case 0x0E: _PUSH_CS(this); break;
+    case 0x0E: _PUSH_CS(); break;
     case 0x0F:
         this->rmbyte = fetchOpcodeByte();
         switch (this->rmbyte) {
         case 0x01:
             this->subrmbyte = fetchOpcodeByte();
             switch (vomit_modRMRegisterPart(this->subrmbyte)) {
-            case 0: _SGDT(this); break;
-            case 1: _SIDT(this); break;
-            case 2: _LGDT(this); break;
-            case 3: _LIDT(this); break;
-            case 6: _LMSW(this); break;
+            case 0: _SGDT(); break;
+            case 1: _SIDT(); break;
+            case 2: _LGDT(); break;
+            case 3: _LIDT(); break;
+            case 6: _LMSW(); break;
             default: goto fffuuu;
             }
             break;
-        case 0x20: _MOV_reg32_CR(this); break;
-        case 0x22: _MOV_CR_reg32(this); break;
-        case 0x80: _JO_NEAR_imm(this); break;
-        case 0x81: _JNO_NEAR_imm(this); break;
-        case 0x82: _JC_NEAR_imm(this); break;
-        case 0x83: _JNC_NEAR_imm(this); break;
-        case 0x84: _JZ_NEAR_imm(this); break;
-        case 0x85: _JNZ_NEAR_imm(this); break;
-        case 0x86: _JNA_NEAR_imm(this); break;
-        case 0x87: _JA_NEAR_imm(this); break;
-        case 0x88: _JS_NEAR_imm(this); break;
-        case 0x89: _JNS_NEAR_imm(this); break;
-        case 0x8A: _JP_NEAR_imm(this); break;
-        case 0x8B: _JNP_NEAR_imm(this); break;
-        case 0x8C: _JL_NEAR_imm(this); break;
-        case 0x8D: _JNL_NEAR_imm(this); break;
-        case 0x8E: _JNG_NEAR_imm(this); break;
-        case 0x8F: _JG_NEAR_imm(this); break;
-        case 0xA0: _PUSH_FS(this); break;
-        case 0xA1: _POP_FS(this); break;
-        case 0xA8: _PUSH_GS(this); break;
-        case 0xA9: _POP_GS(this); break;
+        case 0x20: _MOV_reg32_CR(); break;
+        case 0x22: _MOV_CR_reg32(); break;
+        case 0x80: _JO_NEAR_imm(); break;
+        case 0x81: _JNO_NEAR_imm(); break;
+        case 0x82: _JC_NEAR_imm(); break;
+        case 0x83: _JNC_NEAR_imm(); break;
+        case 0x84: _JZ_NEAR_imm(); break;
+        case 0x85: _JNZ_NEAR_imm(); break;
+        case 0x86: _JNA_NEAR_imm(); break;
+        case 0x87: _JA_NEAR_imm(); break;
+        case 0x88: _JS_NEAR_imm(); break;
+        case 0x89: _JNS_NEAR_imm(); break;
+        case 0x8A: _JP_NEAR_imm(); break;
+        case 0x8B: _JNP_NEAR_imm(); break;
+        case 0x8C: _JL_NEAR_imm(); break;
+        case 0x8D: _JNL_NEAR_imm(); break;
+        case 0x8E: _JNG_NEAR_imm(); break;
+        case 0x8F: _JG_NEAR_imm(); break;
+        case 0xA0: _PUSH_FS(); break;
+        case 0xA1: _POP_FS(); break;
+        case 0xA8: _PUSH_GS(); break;
+        case 0xA9: _POP_GS(); break;
         case 0xB4: CALL_HANDLER(_LFS_reg16_mem16, _LFS_reg32_mem32); break;
         case 0xB5: CALL_HANDLER(_LFS_reg16_mem16, _LFS_reg32_mem32); break;
         case 0xB6: CALL_HANDLER(_MOVZX_reg16_RM8, _MOVZX_reg32_RM8); break;
         case 0xB7: CALL_HANDLER(_UNSUPP, _MOVZX_reg32_RM16); break;
-        case 0xFF: _UD0(this); break;
+        case 0xFF: _UD0(); break;
         default: goto fffuuu;
         }
         break;
-    case 0x10: _ADC_RM8_reg8(this); break;
+    case 0x10: _ADC_RM8_reg8(); break;
     case 0x11: CALL_HANDLER(_ADC_RM16_reg16, _ADC_RM32_reg32); break;
-    case 0x12: _ADC_reg8_RM8(this); break;
+    case 0x12: _ADC_reg8_RM8(); break;
     case 0x13: CALL_HANDLER(_ADC_reg16_RM16, _ADC_reg32_RM32); break;
-    case 0x14: _ADC_AL_imm8(this); break;
+    case 0x14: _ADC_AL_imm8(); break;
     case 0x15: CALL_HANDLER(_ADC_AX_imm16, _ADC_EAX_imm32); break;
-    case 0x16: _PUSH_SS(this); break;
-    case 0x17: _POP_SS(this); break;
-    case 0x18: _SBB_RM8_reg8(this); break;
+    case 0x16: _PUSH_SS(); break;
+    case 0x17: _POP_SS(); break;
+    case 0x18: _SBB_RM8_reg8(); break;
     case 0x19: CALL_HANDLER(_SBB_RM16_reg16, _SBB_RM32_reg32); break;
-    case 0x1A: _SBB_reg8_RM8(this); break;
+    case 0x1A: _SBB_reg8_RM8(); break;
     case 0x1B: CALL_HANDLER(_SBB_reg16_RM16, _SBB_reg32_RM32); break;
-    case 0x1C: _SBB_AL_imm8(this); break;
+    case 0x1C: _SBB_AL_imm8(); break;
     case 0x1D: CALL_HANDLER(_SBB_AX_imm16, _SBB_EAX_imm32); break;
-    case 0x1E: _PUSH_DS(this); break;
-    case 0x1F: _POP_DS(this); break;
-    case 0x20: _AND_RM8_reg8(this); break;
+    case 0x1E: _PUSH_DS(); break;
+    case 0x1F: _POP_DS(); break;
+    case 0x20: _AND_RM8_reg8(); break;
     case 0x21: CALL_HANDLER(_AND_RM16_reg16, _AND_RM32_reg32); break;
-    case 0x22: _AND_reg8_RM8(this); break;
+    case 0x22: _AND_reg8_RM8(); break;
     case 0x23: CALL_HANDLER(_AND_reg16_RM16, _AND_reg32_RM32); break;
-    case 0x24: _AND_AL_imm8(this); break;
+    case 0x24: _AND_AL_imm8(); break;
     case 0x25: CALL_HANDLER(_AND_AX_imm16, _AND_EAX_imm32); break;
-    case 0x26: _ES(this); break;
-    case 0x27: _DAA(this); break;
-    case 0x28: _SUB_RM8_reg8(this); break;
+    case 0x26: _ES(); break;
+    case 0x27: _DAA(); break;
+    case 0x28: _SUB_RM8_reg8(); break;
     case 0x29: CALL_HANDLER(_SUB_RM16_reg16, _SUB_RM32_reg32); break;
-    case 0x2A: _SUB_reg8_RM8(this); break;
+    case 0x2A: _SUB_reg8_RM8(); break;
     case 0x2B: CALL_HANDLER(_SUB_reg16_RM16, _SUB_reg32_RM32); break;
-    case 0x2C: _SUB_AL_imm8(this); break;
+    case 0x2C: _SUB_AL_imm8(); break;
     case 0x2D: CALL_HANDLER(_SUB_AX_imm16, _SUB_EAX_imm32); break;
-    case 0x2E: _CS(this); break;
-    case 0x2F: _DAS(this); break;
-    case 0x30: _XOR_RM8_reg8(this); break;
+    case 0x2E: _CS(); break;
+    case 0x2F: _DAS(); break;
+    case 0x30: _XOR_RM8_reg8(); break;
     case 0x31: CALL_HANDLER(_XOR_RM16_reg16, _XOR_RM32_reg32); break;
-    case 0x32: _XOR_reg8_RM8(this); break;
+    case 0x32: _XOR_reg8_RM8(); break;
     case 0x33: CALL_HANDLER(_XOR_reg16_RM16, _XOR_reg32_RM32); break;
-    case 0x34: _XOR_AL_imm8(this); break;
+    case 0x34: _XOR_AL_imm8(); break;
     case 0x35: CALL_HANDLER(_XOR_AX_imm16, _XOR_EAX_imm32); break;
-    case 0x36: _SS(this); break;
-    case 0x37: _AAA(this); break;
-    case 0x38: _CMP_RM8_reg8(this); break;
+    case 0x36: _SS(); break;
+    case 0x37: _AAA(); break;
+    case 0x38: _CMP_RM8_reg8(); break;
     case 0x39: CALL_HANDLER(_CMP_RM16_reg16, _CMP_RM32_reg32); break;
-    case 0x3A: _CMP_reg8_RM8(this); break;
+    case 0x3A: _CMP_reg8_RM8(); break;
     case 0x3B: CALL_HANDLER(_CMP_reg16_RM16, _CMP_reg32_RM32); break;
-    case 0x3C: _CMP_AL_imm8(this); break;
+    case 0x3C: _CMP_AL_imm8(); break;
     case 0x3D: CALL_HANDLER(_CMP_AX_imm16, _CMP_EAX_imm32); break;
-    case 0x3E: _DS(this); break;
+    case 0x3E: _DS(); break;
     case 0x40:
     case 0x41:
     case 0x42:
@@ -235,39 +239,39 @@ void VCpu::decode(BYTE op)
     case 0x5F: CALL_HANDLER(_POP_DI, _POP_EDI); break;
     case 0x60: CALL_HANDLER(_PUSHA, _PUSHAD); break;
     case 0x61: CALL_HANDLER(_POPA, _POPAD); break;
-    case 0x64: _FS(this); break;
-    case 0x65: _GS(this); break;
-    case 0x66: _OperationSizeOverride(this); break;
-    case 0x67: _AddressSizeOverride(this); break;
+    case 0x64: _FS(); break;
+    case 0x65: _GS(); break;
+    case 0x66: _OperationSizeOverride(); break;
+    case 0x67: _AddressSizeOverride(); break;
     case 0x68: CALL_HANDLER(_PUSH_imm16, _PUSH_imm32); break;
-    case 0x6A: _PUSH_imm8(this); break;
-    case 0x6E: _OUTSB(this); break;
-    case 0x70: _JO_imm8(this); break;
-    case 0x71: _JNO_imm8(this); break;
-    case 0x72: _JC_imm8(this); break;
-    case 0x73: _JNC_imm8(this); break;
-    case 0x74: _JZ_imm8(this); break;
-    case 0x75: _JNZ_imm8(this); break;
-    case 0x76: _JNA_imm8(this); break;
-    case 0x77: _JA_imm8(this); break;
-    case 0x78: _JS_imm8(this); break;
-    case 0x79: _JNS_imm8(this); break;
-    case 0x7A: _JP_imm8(this); break;
-    case 0x7B: _JNP_imm8(this); break;
-    case 0x7C: _JL_imm8(this); break;
-    case 0x7D: _JNL_imm8(this); break;
-    case 0x7E: _JNG_imm8(this); break;
-    case 0x7F: _JG_imm8(this); break;
-    case 0x80: _wrap_0x80(this); break;
+    case 0x6A: _PUSH_imm8(); break;
+    case 0x6E: _OUTSB(); break;
+    case 0x70: _JO_imm8(); break;
+    case 0x71: _JNO_imm8(); break;
+    case 0x72: _JC_imm8(); break;
+    case 0x73: _JNC_imm8(); break;
+    case 0x74: _JZ_imm8(); break;
+    case 0x75: _JNZ_imm8(); break;
+    case 0x76: _JNA_imm8(); break;
+    case 0x77: _JA_imm8(); break;
+    case 0x78: _JS_imm8(); break;
+    case 0x79: _JNS_imm8(); break;
+    case 0x7A: _JP_imm8(); break;
+    case 0x7B: _JNP_imm8(); break;
+    case 0x7C: _JL_imm8(); break;
+    case 0x7D: _JNL_imm8(); break;
+    case 0x7E: _JNG_imm8(); break;
+    case 0x7F: _JG_imm8(); break;
+    case 0x80: _wrap_0x80(); break;
     case 0x81: CALL_HANDLER(_wrap_0x81_16, _wrap_0x81_32); break;
     case 0x83: CALL_HANDLER(_wrap_0x83_16, _wrap_0x83_32); break;
-    case 0x84: _TEST_RM8_reg8(this); break;
+    case 0x84: _TEST_RM8_reg8(); break;
     case 0x85: CALL_HANDLER(_TEST_RM16_reg16, _TEST_RM32_reg32); break;
-    case 0x86: _XCHG_reg8_RM8(this); break;
+    case 0x86: _XCHG_reg8_RM8(); break;
     case 0x87: CALL_HANDLER(_XCHG_reg16_RM16, _XCHG_reg32_RM32); break;
-    case 0x88: _MOV_RM8_reg8(this); break;
+    case 0x88: _MOV_RM8_reg8(); break;
     case 0x89: CALL_HANDLER(_MOV_RM16_reg16, _MOV_RM32_reg32); break;
-    case 0x8A: _MOV_reg8_RM8(this); break;
+    case 0x8A: _MOV_reg8_RM8(); break;
     case 0x8B: CALL_HANDLER(_MOV_reg16_RM16, _MOV_reg32_RM32); break;
     case 0x8C: CALL_HANDLER(_MOV_RM16_seg, _MOV_RM32_seg); break;
     case 0x8D: CALL_HANDLER(_LEA_reg16_mem16, _LEA_reg32_mem32); break;
@@ -286,32 +290,32 @@ void VCpu::decode(BYTE op)
     case 0x9A: CALL_HANDLER(_CALL_imm16_imm16, _CALL_imm16_imm32); break;
     case 0x9C: CALL_HANDLER(_PUSHF, _PUSHFD); break;
     case 0x9D: CALL_HANDLER(_POPF, _POPFD); break;
-    case 0x9E: _SAHF(this); break;
-    case 0x9F: _LAHF(this); break;
-    case 0xA0: _MOV_AL_moff8(this); break;
+    case 0x9E: _SAHF(); break;
+    case 0x9F: _LAHF(); break;
+    case 0xA0: _MOV_AL_moff8(); break;
     case 0xA1: CALL_HANDLER(_MOV_AX_moff16, _MOV_EAX_moff32); break;
-    case 0xA2: _MOV_moff8_AL(this); break;
+    case 0xA2: _MOV_moff8_AL(); break;
     case 0xA3: CALL_HANDLER(_MOV_moff16_AX, _MOV_moff32_EAX); break;
-    case 0xA4: _MOVSB(this); break;
+    case 0xA4: _MOVSB(); break;
     case 0xA5: CALL_HANDLER(_MOVSW, _MOVSD); break;
-    case 0xA6: _CMPSB(this); break;
+    case 0xA6: _CMPSB(); break;
     case 0xA7: CALL_HANDLER(_CMPSW, _CMPSD); break;
-    case 0xA8: _TEST_AL_imm8(this); break;
+    case 0xA8: _TEST_AL_imm8(); break;
     case 0xA9: CALL_HANDLER(_TEST_AX_imm16, _TEST_EAX_imm32); break;
-    case 0xAA: _STOSB(this); break;
+    case 0xAA: _STOSB(); break;
     case 0xAB: CALL_HANDLER(_STOSW, _STOSD); break;
-    case 0xAC: _LODSB(this); break;
+    case 0xAC: _LODSB(); break;
     case 0xAD: CALL_HANDLER(_LODSW, _LODSD); break;
-    case 0xAE: _SCASB(this); break;
+    case 0xAE: _SCASB(); break;
     case 0xAF: CALL_HANDLER(_SCASW, _SCASD); break;
-    case 0xB0: _MOV_AL_imm8(this); break;
-    case 0xB1: _MOV_CL_imm8(this); break;
-    case 0xB2: _MOV_DL_imm8(this); break;
-    case 0xB3: _MOV_BL_imm8(this); break;
-    case 0xB4: _MOV_AH_imm8(this); break;
-    case 0xB5: _MOV_CH_imm8(this); break;
-    case 0xB6: _MOV_DH_imm8(this); break;
-    case 0xB7: _MOV_BH_imm8(this); break;
+    case 0xB0: _MOV_AL_imm8(); break;
+    case 0xB1: _MOV_CL_imm8(); break;
+    case 0xB2: _MOV_DL_imm8(); break;
+    case 0xB3: _MOV_BL_imm8(); break;
+    case 0xB4: _MOV_AH_imm8(); break;
+    case 0xB5: _MOV_CH_imm8(); break;
+    case 0xB6: _MOV_DH_imm8(); break;
+    case 0xB7: _MOV_BH_imm8(); break;
     case 0xB8: CALL_HANDLER(_MOV_AX_imm16, _MOV_EAX_imm32); break;
     case 0xB9: CALL_HANDLER(_MOV_CX_imm16, _MOV_ECX_imm32); break;
     case 0xBA: CALL_HANDLER(_MOV_DX_imm16, _MOV_EDX_imm32); break;
@@ -320,26 +324,26 @@ void VCpu::decode(BYTE op)
     case 0xBD: CALL_HANDLER(_MOV_BP_imm16, _MOV_EBP_imm32); break;
     case 0xBE: CALL_HANDLER(_MOV_SI_imm16, _MOV_ESI_imm32); break;
     case 0xBF: CALL_HANDLER(_MOV_DI_imm16, _MOV_EDI_imm32); break;
-    case 0xC0: _wrap_0xC0(this); break;
+    case 0xC0: _wrap_0xC0(); break;
     case 0xC1: CALL_HANDLER(_wrap_0xC1_16, _wrap_0xC1_32); break;
-    case 0xC2: _RET_imm16(this); break;
-    case 0xC3: _RET(this); break;
+    case 0xC2: _RET_imm16(); break;
+    case 0xC3: _RET(); break;
     case 0xC4: CALL_HANDLER(_LES_reg16_mem16, _LES_reg32_mem32); break;
     case 0xC5: CALL_HANDLER(_LDS_reg16_mem16, _LDS_reg32_mem32); break;
-    case 0xC6: _MOV_RM8_imm8(this); break;
+    case 0xC6: _MOV_RM8_imm8(); break;
     case 0xC7: CALL_HANDLER(_MOV_RM16_imm16, _MOV_RM32_imm32); break;
-    case 0xC8: _ENTER(this); break;
-    case 0xC9: _LEAVE(this); break;
-    case 0xCA: _RETF_imm16(this); break;
-    case 0xCB: _RETF(this); break;
-    case 0xCD: _INT_imm8(this); break;
-    case 0xCF: _IRET(this); break;
-    case 0xD0: _wrap_0xD0(this); break;
+    case 0xC8: _ENTER(); break;
+    case 0xC9: _LEAVE(); break;
+    case 0xCA: _RETF_imm16(); break;
+    case 0xCB: _RETF(); break;
+    case 0xCD: _INT_imm8(); break;
+    case 0xCF: _IRET(); break;
+    case 0xD0: _wrap_0xD0(); break;
     case 0xD1: CALL_HANDLER(_wrap_0xD1_16, _wrap_0xD1_32); break;
-    case 0xD2: _wrap_0xD2(this); break;
+    case 0xD2: _wrap_0xD2(); break;
     case 0xD3: CALL_HANDLER(_wrap_0xD3_16, _wrap_0xD3_32); break;
-    case 0xD5: _AAD(this); break;
-    case 0xD7: _XLAT(this); break;
+    case 0xD5: _AAD(); break;
+    case 0xD7: _XLAT(); break;
     // BEGIN FPU STUBS
     case 0xD8:
     case 0xD9:
@@ -348,38 +352,38 @@ void VCpu::decode(BYTE op)
     case 0xDC:
     case 0xDD:
     case 0xDE:
-    case 0xDF: _ESCAPE(this); break;
+    case 0xDF: _ESCAPE(); break;
     // END FPU STUBS
-    case 0xE0: _LOOPNE_imm8(this); break;
-    case 0xE1: _LOOPE_imm8(this); break;
-    case 0xE2: _LOOP_imm8(this); break;
+    case 0xE0: _LOOPNE_imm8(); break;
+    case 0xE1: _LOOPE_imm8(); break;
+    case 0xE2: _LOOP_imm8(); break;
     case 0xE3: CALL_HANDLER(_JCXZ_imm8, _JECXZ_imm8); break;
-    case 0xE4: _IN_AL_imm8(this); break;
+    case 0xE4: _IN_AL_imm8(); break;
     case 0xE5: CALL_HANDLER(_IN_AX_imm8, _IN_EAX_imm8); break;
-    case 0xE6: _OUT_imm8_AL(this); break;
+    case 0xE6: _OUT_imm8_AL(); break;
     case 0xE7: CALL_HANDLER(_OUT_imm8_AX, _OUT_imm8_EAX); break;
     case 0xE8: CALL_HANDLER(_CALL_imm16, _CALL_imm32); break;
     case 0xE9: CALL_HANDLER(_JMP_imm16, _JMP_imm32); break;
     case 0xEA: CALL_HANDLER(_JMP_imm16_imm16, _JMP_imm16_imm32); break;
-    case 0xEB: _JMP_short_imm8(this); break;
-    case 0xEC: _IN_AL_DX(this); break;
+    case 0xEB: _JMP_short_imm8(); break;
+    case 0xEC: _IN_AL_DX(); break;
     case 0xED: CALL_HANDLER(_IN_AX_DX, _IN_EAX_DX); break;
-    case 0xEE: _OUT_DX_AL(this); break;
+    case 0xEE: _OUT_DX_AL(); break;
     case 0xEF: CALL_HANDLER(_OUT_DX_AX, _OUT_DX_EAX); break;
     case 0xF0: /* LOCK */ break;
-    case 0xF2: _REPNE(this); break;
-    case 0xF3: _REP(this); break;
-    case 0xF4: _HLT(this); break;
-    case 0xF5: _CMC(this); break;
-    case 0xF6: _wrap_0xF6(this); break;
+    case 0xF2: _REPNE(); break;
+    case 0xF3: _REP(); break;
+    case 0xF4: _HLT(); break;
+    case 0xF5: _CMC(); break;
+    case 0xF6: _wrap_0xF6(); break;
     case 0xF7: CALL_HANDLER(_wrap_0xF7_16, _wrap_0xF7_32); break;
-    case 0xF8: _CLC(this); break;
-    case 0xF9: _STC(this); break;
-    case 0xFA: _CLI(this); break;
-    case 0xFB: _STI(this); break;
-    case 0xFC: _CLD(this); break;
-    case 0xFD: _STD(this); break;
-    case 0xFE: _wrap_0xFE(this); break;
+    case 0xF8: _CLC(); break;
+    case 0xF9: _STC(); break;
+    case 0xFA: _CLI(); break;
+    case 0xFB: _STI(); break;
+    case 0xFC: _CLD(); break;
+    case 0xFD: _STD(); break;
+    case 0xFE: _wrap_0xFE(); break;
     case 0xFF: CALL_HANDLER(_wrap_0xFF_16, _wrap_0xFF_32); break;
     default:
         this->rmbyte = fetchOpcodeByte();
@@ -719,331 +723,332 @@ void VCpu::setInterruptHandler(BYTE isr, WORD segment, WORD offset)
     writeMemory16(0x0000, (isr * 4) + 2, segment);
 }
 
-void _UNSUPP(VCpu* cpu)
+void VCpu::_UNSUPP()
 {
     // We've come across an unsupported instruction, log it, then vector to the "illegal instruction" ISR.
-    vlog(VM_ALERT, "%04X:%08X: Unsupported opcode %02X", cpu->getBaseCS(), cpu->getBaseEIP(), cpu->opcode);
+    vlog(VM_ALERT, "%04X:%08X: Unsupported opcode %02X", getBaseCS(), getBaseEIP(), opcode);
     QString ndis = "db ";
-    DWORD baseEIP = cpu->getBaseEIP();
+    DWORD baseEIP = getBaseEIP();
     QStringList dbs;
     for (int i = 0; i < 16; ++i) {
         QString s;
-        s.sprintf("0x%02X", cpu->codeMemory()[baseEIP + i]);
+        s.sprintf("0x%02X", codeMemory()[baseEIP + i]);
         dbs.append(s);
     }
     ndis.append(dbs.join(", "));
     vlog(VM_ALERT, qPrintable(ndis));
-    cpu->dumpAll();
-    cpu->exception(6);
+    dumpAll();
+    exception(6);
 }
 
-void _NOP(VCpu*)
+void VCpu::_NOP()
 {
 }
 
-void _HLT(VCpu* cpu)
+void VCpu::_HLT()
 {
-    cpu->setState(VCpu::Halted);
+    setState(VCpu::Halted);
 
-    if (!cpu->getIF()) {
-        vlog(VM_ALERT, "%04X:%08X: Halted with IF=0", cpu->getBaseCS(), cpu->getBaseEIP());
+    if (!getIF()) {
+        vlog(VM_ALERT, "%04X:%08X: Halted with IF=0", getBaseCS(), getBaseEIP());
         vm_exit(0);
     }
 
-    vlog(VM_CPUMSG, "%04X:%08X Halted", cpu->getBaseCS(), cpu->getBaseEIP());
+    vlog(VM_CPUMSG, "%04X:%08X Halted", getBaseCS(), getBaseEIP());
 
-    cpu->haltedLoop();
+    haltedLoop();
 }
 
-void _XLAT(VCpu* cpu)
+void VCpu::_XLAT()
 {
-    cpu->regs.B.AL = cpu->readMemory8(cpu->currentSegment(), cpu->regs.W.BX + cpu->regs.B.AL);
+    setAL(readMemory8(currentSegment(), getBX() + getAL()));
 }
 
-void _CS(VCpu* cpu)
+void VCpu::_CS()
 {
-    cpu->setSegmentPrefix(cpu->getCS());
-    cpu->decode(cpu->fetchOpcodeByte());
-    cpu->resetSegmentPrefix();
+    setSegmentPrefix(getCS());
+    decode(fetchOpcodeByte());
+    resetSegmentPrefix();
 }
 
-void _DS(VCpu* cpu)
+void VCpu::_DS()
 {
-    cpu->setSegmentPrefix(cpu->getDS());
-    cpu->decode(cpu->fetchOpcodeByte());
-    cpu->resetSegmentPrefix();
+    setSegmentPrefix(getDS());
+    decode(fetchOpcodeByte());
+    resetSegmentPrefix();
 }
 
-void _ES(VCpu* cpu)
+void VCpu::_ES()
 {
-    cpu->setSegmentPrefix(cpu->getES());
-    cpu->decode(cpu->fetchOpcodeByte());
-    cpu->resetSegmentPrefix();
+    setSegmentPrefix(getES());
+    decode(fetchOpcodeByte());
+    resetSegmentPrefix();
 }
 
-void _SS(VCpu* cpu)
+void VCpu::_SS()
 {
-    cpu->setSegmentPrefix(cpu->getSS());
-    cpu->decode(cpu->fetchOpcodeByte());
-    cpu->resetSegmentPrefix();
+    setSegmentPrefix(getSS());
+    decode(fetchOpcodeByte());
+    resetSegmentPrefix();
 }
 
-void _FS(VCpu* cpu)
+void VCpu::_FS()
 {
-    cpu->setSegmentPrefix(cpu->getFS());
-    cpu->decode(cpu->fetchOpcodeByte());
-    cpu->resetSegmentPrefix();
+    setSegmentPrefix(getFS());
+    decode(fetchOpcodeByte());
+    resetSegmentPrefix();
 }
 
-void _GS(VCpu* cpu)
+void VCpu::_GS()
 {
-    cpu->setSegmentPrefix(cpu->getGS());
-    cpu->decode(cpu->fetchOpcodeByte());
-    cpu->resetSegmentPrefix();
+    setSegmentPrefix(getGS());
+    decode(fetchOpcodeByte());
+    resetSegmentPrefix();
 }
 
-void _XCHG_AX_reg16(VCpu* cpu)
+void VCpu::_XCHG_AX_reg16()
 {
-    qSwap(*cpu->treg16[cpu->opcode & 7], cpu->regs.W.AX);
+    qSwap(*treg16[opcode & 7], regs.W.AX);
 }
 
-void _XCHG_EAX_reg32(VCpu* cpu)
+void VCpu::_XCHG_EAX_reg32()
 {
-    qSwap(*cpu->treg32[cpu->opcode & 7], cpu->regs.D.EAX);
+    qSwap(*treg32[opcode & 7], regs.D.EAX);
 }
 
-void _XCHG_reg8_RM8(VCpu* cpu)
+void VCpu::_XCHG_reg8_RM8()
 {
-    BYTE rm = cpu->fetchOpcodeByte();
-    BYTE &reg(*cpu->treg8[vomit_modRMRegisterPart(rm)]);
+    BYTE rm = fetchOpcodeByte();
+    BYTE &reg(*treg8[vomit_modRMRegisterPart(rm)]);
 
-    BYTE value = cpu->readModRM8(rm);
+    BYTE value = readModRM8(rm);
     BYTE tmp = reg;
     reg = value;
-    cpu->updateModRM8(tmp);
+    updateModRM8(tmp);
 }
 
-void _XCHG_reg16_RM16(VCpu* cpu)
+void VCpu::_XCHG_reg16_RM16()
 {
-    BYTE rm = cpu->fetchOpcodeByte();
-    WORD value = cpu->readModRM16(rm);
-    WORD tmp = cpu->getRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)));
-    cpu->setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), value);
-    cpu->updateModRM16(tmp);
+    BYTE rm = fetchOpcodeByte();
+    WORD value = readModRM16(rm);
+    WORD tmp = getRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)));
+    setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), value);
+    updateModRM16(tmp);
 }
 
-void _XCHG_reg32_RM32(VCpu* cpu)
+void VCpu::_XCHG_reg32_RM32()
 {
-    BYTE rm = cpu->fetchOpcodeByte();
-    DWORD value = cpu->readModRM32(rm);
-    DWORD tmp = cpu->getRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)));
-    cpu->setRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)), value);
-    cpu->updateModRM32(tmp);
+    BYTE rm = fetchOpcodeByte();
+    DWORD value = readModRM32(rm);
+    DWORD tmp = getRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)));
+    setRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)), value);
+    updateModRM32(tmp);
 }
 
-void _DEC_reg16(VCpu* cpu)
+void VCpu::_DEC_reg16()
 {
-    WORD &reg(*cpu->treg16[cpu->opcode & 7]);
+    WORD &reg(*treg16[opcode & 7]);
     DWORD i = reg;
 
     /* Overflow if we'll wrap. */
-    cpu->setOF(reg == 0x8000);
+    setOF(reg == 0x8000);
 
     --i;
-    cpu->adjustFlag32(i, reg, 1);
-    cpu->updateFlags16(i);
+    adjustFlag32(i, reg, 1);
+    updateFlags16(i);
     --reg;
 }
 
-void _DEC_reg32(VCpu* cpu)
+void VCpu::_DEC_reg32()
 {
-    DWORD &reg(*cpu->treg32[cpu->opcode & 7]);
+    DWORD &reg(*treg32[opcode & 7]);
     QWORD i = reg;
 
     /* Overflow if we'll wrap. */
-    cpu->setOF(reg == 0x80000000);
+    setOF(reg == 0x80000000);
 
     --i;
-    cpu->adjustFlag32(i, reg, 1);
-    cpu->updateFlags32(i);
+    adjustFlag32(i, reg, 1);
+    updateFlags32(i);
     --reg;
 }
 
-void _INC_reg16(VCpu* cpu)
+void VCpu::_INC_reg16()
 {
-    WORD &reg(*cpu->treg16[cpu->opcode & 7]);
+    WORD &reg(*treg16[opcode & 7]);
     DWORD i = reg;
 
     /* Overflow if we'll wrap. */
-    cpu->setOF(i == 0x7FFF);
+    setOF(i == 0x7FFF);
 
     ++i;
-    cpu->adjustFlag32(i, reg, 1);
-    cpu->updateFlags16(i);
+    adjustFlag32(i, reg, 1);
+    updateFlags16(i);
     ++reg;
 }
 
-void _INC_reg32(VCpu* cpu)
+void VCpu::_INC_reg32()
 {
-    DWORD &reg(*cpu->treg32[cpu->opcode & 7]);
+    DWORD &reg(*treg32[opcode & 7]);
     QWORD i = reg;
 
     /* Overflow if we'll wrap. */
-    cpu->setOF(i == 0x7FFFFFFF);
+    setOF(i == 0x7FFFFFFF);
 
     ++i;
-    cpu->adjustFlag32(i, reg, 1);
-    cpu->updateFlags32(i);
+    adjustFlag32(i, reg, 1);
+    updateFlags32(i);
     ++reg;
 }
 
-void _INC_RM16(VCpu* cpu)
+void VCpu::_INC_RM16()
 {
-    WORD value = cpu->readModRM16(cpu->rmbyte);
+    WORD value = readModRM16(rmbyte);
     DWORD i = value;
 
     /* Overflow if we'll wrap. */
-    cpu->setOF(value == 0x7FFF);
+    setOF(value == 0x7FFF);
 
     ++i;
-    cpu->adjustFlag32(i, value, 1);
-    cpu->updateFlags16(i);
-    cpu->updateModRM16(value + 1);
-    cpu->updateModRM16(value + 1);
+    adjustFlag32(i, value, 1);
+    updateFlags16(i);
+    updateModRM16(value + 1);
+    updateModRM16(value + 1);
 }
 
-void _DEC_RM16(VCpu* cpu)
+void VCpu::_DEC_RM16()
 {
-    WORD value = cpu->readModRM16(cpu->rmbyte);
+    WORD value = readModRM16(rmbyte);
     DWORD i = value;
 
     /* Overflow if we'll wrap. */
-    cpu->setOF(value == 0x8000);
+    setOF(value == 0x8000);
 
     --i;
-    cpu->adjustFlag32(i, value, 1); // XXX: i can be (dword)(-1)...
-    cpu->updateFlags16(i);
-    cpu->updateModRM16(value - 1);
+    adjustFlag32(i, value, 1); // XXX: i can be (dword)(-1)...
+    updateFlags16(i);
+    updateModRM16(value - 1);
 }
 
-void _LDS_reg16_mem16(VCpu* cpu)
+void VCpu::_LDS_reg16_mem16()
 {
-    BYTE rm = cpu->fetchOpcodeByte();
-    WORD* ptr = static_cast<WORD*>(cpu->resolveModRM8(rm));
-    cpu->setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), vomit_read16FromPointer(ptr));
-    cpu->DS = vomit_read16FromPointer(ptr + 1);}
+    BYTE rm = fetchOpcodeByte();
+    WORD* ptr = static_cast<WORD*>(resolveModRM8(rm));
+    setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), vomit_read16FromPointer(ptr));
+    setDS(vomit_read16FromPointer(ptr + 1));
+}
 
-void _LDS_reg32_mem32(VCpu* cpu)
+void VCpu::_LDS_reg32_mem32()
 {
 #warning FIXME: need readModRM48
     vlog(VM_ALERT, "LDS reg32 mem32");
     vm_exit(0);
 }
 
-void _LES_reg16_mem16(VCpu* cpu)
+void VCpu::_LES_reg16_mem16()
 {
-    BYTE rm = cpu->fetchOpcodeByte();
-    WORD* ptr = static_cast<WORD*>(cpu->resolveModRM8(rm));
-    cpu->setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), vomit_read16FromPointer(ptr));
-    cpu->ES = vomit_read16FromPointer(ptr + 1);
+    BYTE rm = fetchOpcodeByte();
+    WORD* ptr = static_cast<WORD*>(resolveModRM8(rm));
+    setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), vomit_read16FromPointer(ptr));
+    setES(vomit_read16FromPointer(ptr + 1));
 }
 
-void _LES_reg32_mem32(VCpu* cpu)
+void VCpu::_LES_reg32_mem32()
 {
 #warning FIXME: need readModRM48
     vlog(VM_ALERT, "LES reg32 mem32");
     vm_exit(0);
 }
 
-void _LFS_reg16_mem16(VCpu* cpu)
+void VCpu::_LFS_reg16_mem16()
 {
-    BYTE rm = cpu->fetchOpcodeByte();
-    WORD* ptr = static_cast<WORD*>(cpu->resolveModRM8(rm));
-    cpu->setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), vomit_read16FromPointer(ptr));
-    cpu->FS = vomit_read16FromPointer(ptr + 1);
+    BYTE rm = fetchOpcodeByte();
+    WORD* ptr = static_cast<WORD*>(resolveModRM8(rm));
+    setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), vomit_read16FromPointer(ptr));
+    setFS(vomit_read16FromPointer(ptr + 1));
 }
 
-void _LFS_reg32_mem32(VCpu* cpu)
+void VCpu::_LFS_reg32_mem32()
 {
 #warning FIXME: need readModRM48
     vlog(VM_ALERT, "LFS reg32 mem32");
     vm_exit(0);
 }
 
-void _LGS_reg16_mem16(VCpu* cpu)
+void VCpu::_LGS_reg16_mem16()
 {
-    BYTE rm = cpu->fetchOpcodeByte();
-    WORD* ptr = static_cast<WORD*>(cpu->resolveModRM8(rm));
-    cpu->setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), vomit_read16FromPointer(ptr));
-    cpu->GS = vomit_read16FromPointer(ptr + 1);
+    BYTE rm = fetchOpcodeByte();
+    WORD* ptr = static_cast<WORD*>(resolveModRM8(rm));
+    setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), vomit_read16FromPointer(ptr));
+    setGS(vomit_read16FromPointer(ptr + 1));
 }
 
-void _LGS_reg32_mem32(VCpu* cpu)
+void VCpu::_LGS_reg32_mem32()
 {
 #warning FIXME: need readModRM48
     vlog(VM_ALERT, "LGS reg32 mem32");
     vm_exit(0);
 }
 
-void _LEA_reg32_mem32(VCpu* cpu)
+void VCpu::_LEA_reg32_mem32()
 {
 #warning FIXME: need evaluateSIB()
     vlog(VM_ALERT, "LEA reg32 mem32");
     vm_exit(0);
 }
 
-void _LEA_reg16_mem16(VCpu* cpu)
+void VCpu::_LEA_reg16_mem16()
 {
     WORD retv = 0x0000;
-    BYTE b = cpu->fetchOpcodeByte();
+    BYTE b = fetchOpcodeByte();
     switch (b & 0xC0) {
         case 0:
             switch(b & 0x07)
             {
-                case 0: retv = cpu->regs.W.BX+cpu->regs.W.SI; break;
-                case 1: retv = cpu->regs.W.BX+cpu->regs.W.DI; break;
-                case 2: retv = cpu->regs.W.BP+cpu->regs.W.SI; break;
-                case 3: retv = cpu->regs.W.BP+cpu->regs.W.DI; break;
-                case 4: retv = cpu->regs.W.SI; break;
-                case 5: retv = cpu->regs.W.DI; break;
-                case 6: retv = cpu->fetchOpcodeWord(); break;
-                default: retv = cpu->regs.W.BX; break;
+                case 0: retv = regs.W.BX+regs.W.SI; break;
+                case 1: retv = regs.W.BX+regs.W.DI; break;
+                case 2: retv = regs.W.BP+regs.W.SI; break;
+                case 3: retv = regs.W.BP+regs.W.DI; break;
+                case 4: retv = regs.W.SI; break;
+                case 5: retv = regs.W.DI; break;
+                case 6: retv = fetchOpcodeWord(); break;
+                default: retv = regs.W.BX; break;
             }
             break;
         case 64:
             switch(b & 0x07)
             {
-                case 0: retv = cpu->regs.W.BX+cpu->regs.W.SI + vomit_signExtend(cpu->fetchOpcodeByte()); break;
-                case 1: retv = cpu->regs.W.BX+cpu->regs.W.DI + vomit_signExtend(cpu->fetchOpcodeByte()); break;
-                case 2: retv = cpu->regs.W.BP+cpu->regs.W.SI + vomit_signExtend(cpu->fetchOpcodeByte()); break;
-                case 3: retv = cpu->regs.W.BP+cpu->regs.W.DI + vomit_signExtend(cpu->fetchOpcodeByte()); break;
-                case 4: retv = cpu->regs.W.SI + vomit_signExtend(cpu->fetchOpcodeByte()); break;
-                case 5: retv = cpu->regs.W.DI + vomit_signExtend(cpu->fetchOpcodeByte()); break;
-                case 6: retv = cpu->regs.W.BP + vomit_signExtend(cpu->fetchOpcodeByte()); break;
-                default: retv = cpu->regs.W.BX + vomit_signExtend(cpu->fetchOpcodeByte()); break;
+                case 0: retv = regs.W.BX+regs.W.SI + vomit_signExtend(fetchOpcodeByte()); break;
+                case 1: retv = regs.W.BX+regs.W.DI + vomit_signExtend(fetchOpcodeByte()); break;
+                case 2: retv = regs.W.BP+regs.W.SI + vomit_signExtend(fetchOpcodeByte()); break;
+                case 3: retv = regs.W.BP+regs.W.DI + vomit_signExtend(fetchOpcodeByte()); break;
+                case 4: retv = regs.W.SI + vomit_signExtend(fetchOpcodeByte()); break;
+                case 5: retv = regs.W.DI + vomit_signExtend(fetchOpcodeByte()); break;
+                case 6: retv = regs.W.BP + vomit_signExtend(fetchOpcodeByte()); break;
+                default: retv = regs.W.BX + vomit_signExtend(fetchOpcodeByte()); break;
             }
             break;
         case 128:
             switch(b & 0x07)
             {
-                case 0: retv = cpu->regs.W.BX+cpu->regs.W.SI+cpu->fetchOpcodeWord(); break;
-                case 1: retv = cpu->regs.W.BX+cpu->regs.W.DI+cpu->fetchOpcodeWord(); break;
-                case 2: retv = cpu->regs.W.BP+cpu->regs.W.SI+cpu->fetchOpcodeWord(); break;
-                case 3: retv = cpu->regs.W.BP+cpu->regs.W.DI+cpu->fetchOpcodeWord(); break;
-                case 4: retv = cpu->regs.W.SI + cpu->fetchOpcodeWord(); break;
-                case 5: retv = cpu->regs.W.DI + cpu->fetchOpcodeWord(); break;
-                case 6: retv = cpu->regs.W.BP + cpu->fetchOpcodeWord(); break;
-                default: retv = cpu->regs.W.BX + cpu->fetchOpcodeWord(); break;
+                case 0: retv = regs.W.BX+regs.W.SI+fetchOpcodeWord(); break;
+                case 1: retv = regs.W.BX+regs.W.DI+fetchOpcodeWord(); break;
+                case 2: retv = regs.W.BP+regs.W.SI+fetchOpcodeWord(); break;
+                case 3: retv = regs.W.BP+regs.W.DI+fetchOpcodeWord(); break;
+                case 4: retv = regs.W.SI + fetchOpcodeWord(); break;
+                case 5: retv = regs.W.DI + fetchOpcodeWord(); break;
+                case 6: retv = regs.W.BP + fetchOpcodeWord(); break;
+                default: retv = regs.W.BX + fetchOpcodeWord(); break;
             }
             break;
         case 192:
             vlog(VM_ALERT, "LEA with register source!");
             /* LEA with register source, an invalid instruction.
              * Call INT6 (invalid opcode exception) */
-            cpu->exception(6);
+            exception(6);
             break;
     }
-    cpu->setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(b)), retv);
+    setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(b)), retv);
 }
 
 inline bool isVGAMemory(DWORD address)

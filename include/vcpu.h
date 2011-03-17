@@ -669,6 +669,508 @@ public:
     void nextESI(int size) { this->regs.D.ESI += (getDF() ? -size : size); }
     void nextEDI(int size) { this->regs.D.EDI += (getDF() ? -size : size); }
 
+protected:
+    void _UNSUPP();
+    void _ESCAPE();
+
+    void _NOP();
+    void _HLT();
+    void _INT_imm8();
+    void _INT3();
+    void _INTO();
+    void _IRET();
+
+    void _AAA();
+    void _AAM();
+    void _AAD();
+    void _AAS();
+
+    void _DAA();
+    void _DAS();
+
+    void _STC();
+    void _STD();
+    void _STI();
+    void _CLC();
+    void _CLD();
+    void _CLI();
+    void _CMC();
+
+    void _CBW();
+    void _CWD();
+    void _CWDE();
+    void _CDQ();
+
+    void _XLAT();
+
+    void _CS();
+    void _DS();
+    void _ES();
+    void _SS();
+
+    void _SALC();
+
+    void _JMP_imm32();
+    void _JMP_imm16();
+    void _JMP_imm16_imm16();
+    void _JMP_short_imm8();
+    void _Jcc_imm8();
+    void _JCXZ_imm8();
+    void _JECXZ_imm8();
+
+    void _JO_imm8();
+    void _JNO_imm8();
+    void _JC_imm8();
+    void _JNC_imm8();
+    void _JZ_imm8();
+    void _JNZ_imm8();
+    void _JNA_imm8();
+    void _JA_imm8();
+    void _JS_imm8();
+    void _JNS_imm8();
+    void _JP_imm8();
+    void _JNP_imm8();
+    void _JL_imm8();
+    void _JNL_imm8();
+    void _JNG_imm8();
+    void _JG_imm8();
+
+    void _JO_NEAR_imm();
+    void _JNO_NEAR_imm();
+    void _JC_NEAR_imm();
+    void _JNC_NEAR_imm();
+    void _JZ_NEAR_imm();
+    void _JNZ_NEAR_imm();
+    void _JNA_NEAR_imm();
+    void _JA_NEAR_imm();
+    void _JS_NEAR_imm();
+    void _JNS_NEAR_imm();
+    void _JP_NEAR_imm();
+    void _JNP_NEAR_imm();
+    void _JL_NEAR_imm();
+    void _JNL_NEAR_imm();
+    void _JNG_NEAR_imm();
+    void _JG_NEAR_imm();
+
+    void _CALL_imm16();
+    void _CALL_imm32();
+    void _RET();
+    void _RET_imm16();
+    void _RETF();
+    void _RETF_imm16();
+
+    void _LOOP_imm8();
+    void _LOOPE_imm8();
+    void _LOOPNE_imm8();
+
+    void _REP();
+    void _REPNE();
+
+    void _XCHG_AX_reg16();
+    void _XCHG_EAX_reg32();
+    void _XCHG_reg8_RM8();
+    void _XCHG_reg16_RM16();
+    void _XCHG_reg32_RM32();
+
+    void _CMPSB();
+    void _CMPSW();
+    void _CMPSD();
+    void _LODSB();
+    void _LODSW();
+    void _LODSD();
+    void _SCASB();
+    void _SCASW();
+    void _SCASD();
+    void _STOSB();
+    void _STOSW();
+    void _STOSD();
+    void _MOVSB();
+    void _MOVSW();
+    void _MOVSD();
+
+    void _LEA_reg16_mem16();
+    void _LEA_reg32_mem32();
+
+    void _LDS_reg16_mem16();
+    void _LDS_reg32_mem32();
+    void _LES_reg16_mem16();
+    void _LES_reg32_mem32();
+
+    void _MOV_AL_imm8();
+    void _MOV_BL_imm8();
+    void _MOV_CL_imm8();
+    void _MOV_DL_imm8();
+    void _MOV_AH_imm8();
+    void _MOV_BH_imm8();
+    void _MOV_CH_imm8();
+    void _MOV_DH_imm8();
+
+    void _MOV_AX_imm16();
+    void _MOV_BX_imm16();
+    void _MOV_CX_imm16();
+    void _MOV_DX_imm16();
+    void _MOV_BP_imm16();
+    void _MOV_SP_imm16();
+    void _MOV_SI_imm16();
+    void _MOV_DI_imm16();
+
+    void _MOV_seg_RM16();
+    void _MOV_RM16_seg();
+    void _MOV_RM32_seg();
+    void _MOV_AL_moff8();
+    void _MOV_AX_moff16();
+    void _MOV_EAX_moff32();
+    void _MOV_moff8_AL();
+    void _MOV_moff16_AX();
+    void _MOV_reg8_RM8();
+    void _MOV_reg16_RM16();
+    void _MOV_RM8_reg8();
+    void _MOV_RM16_reg16();
+    void _MOV_RM8_imm8();
+    void _MOV_RM16_imm16();
+    void _MOV_RM32_imm32();
+
+    void _XOR_RM8_reg8();
+    void _XOR_RM16_reg16();
+    void _XOR_reg8_RM8();
+    void _XOR_reg16_RM16();
+    void _XOR_reg32_RM32();
+    void _XOR_RM8_imm8();
+    void _XOR_RM16_imm16();
+    void _XOR_RM16_imm8();
+    void _XOR_AL_imm8();
+    void _XOR_AX_imm16();
+    void _XOR_EAX_imm32();
+
+    void _OR_RM8_reg8();
+    void _OR_RM16_reg16();
+    void _OR_RM32_reg32();
+    void _OR_reg8_RM8();
+    void _OR_reg16_RM16();
+    void _OR_reg32_RM32();
+    void _OR_RM8_imm8();
+    void _OR_RM16_imm16();
+    void _OR_RM16_imm8();
+    void _OR_EAX_imm32();
+    void _OR_AX_imm16();
+    void _OR_AL_imm8();
+
+    void _AND_RM8_reg8();
+    void _AND_RM16_reg16();
+    void _AND_reg8_RM8();
+    void _AND_reg16_RM16();
+    void _AND_RM8_imm8();
+    void _AND_RM16_imm16();
+    void _AND_RM16_imm8();
+    void _AND_AL_imm8();
+    void _AND_AX_imm16();
+    void _AND_EAX_imm32();
+
+    void _TEST_RM8_reg8();
+    void _TEST_RM16_reg16();
+    void _TEST_RM32_reg32();
+    void _TEST_AL_imm8();
+    void _TEST_AX_imm16();
+    void _TEST_EAX_imm32();
+
+    void _PUSH_SP_8086_80186();
+    void _PUSH_AX();
+    void _PUSH_BX();
+    void _PUSH_CX();
+    void _PUSH_DX();
+    void _PUSH_BP();
+    void _PUSH_SP();
+    void _PUSH_SI();
+    void _PUSH_DI();
+    void _POP_AX();
+    void _POP_BX();
+    void _POP_CX();
+    void _POP_DX();
+    void _POP_BP();
+    void _POP_SP();
+    void _POP_SI();
+    void _POP_DI();
+    void _PUSH_CS();
+    void _PUSH_DS();
+    void _PUSH_ES();
+    void _PUSH_SS();
+    void _PUSHF();
+
+    void _POP_DS();
+    void _POP_ES();
+    void _POP_SS();
+    void _POPF();
+
+    void _LAHF();
+    void _SAHF();
+
+    void _OUT_imm8_AL();
+    void _OUT_imm8_AX();
+    void _OUT_imm8_EAX();
+    void _OUT_DX_AL();
+    void _OUT_DX_AX();
+    void _OUT_DX_EAX();
+    void _OUTSB();
+    void _OUTSW();
+    void _OUTSD();
+
+    void _IN_AL_imm8();
+    void _IN_AX_imm8();
+    void _IN_EAX_imm8();
+    void _IN_AL_DX();
+    void _IN_AX_DX();
+    void _IN_EAX_DX();
+
+    void _ADD_RM8_reg8();
+    void _ADD_RM16_reg16();
+    void _ADD_reg8_RM8();
+    void _ADD_reg16_RM16();
+    void _ADD_AL_imm8();
+    void _ADD_AX_imm16();
+    void _ADD_EAX_imm32();
+    void _ADD_RM8_imm8();
+    void _ADD_RM16_imm16();
+    void _ADD_RM16_imm8();
+
+    void _SUB_RM8_reg8();
+    void _SUB_RM16_reg16();
+    void _SUB_reg8_RM8();
+    void _SUB_reg16_RM16();
+    void _SUB_AL_imm8();
+    void _SUB_AX_imm16();
+    void _SUB_EAX_imm32();
+    void _SUB_RM8_imm8();
+    void _SUB_RM16_imm16();
+    void _SUB_RM16_imm8();
+
+    void _ADC_RM8_reg8();
+    void _ADC_RM16_reg16();
+    void _ADC_reg8_RM8();
+    void _ADC_reg16_RM16();
+    void _ADC_AL_imm8();
+    void _ADC_AX_imm16();
+    void _ADC_EAX_imm32();
+    void _ADC_RM8_imm8();
+    void _ADC_RM16_imm16();
+    void _ADC_RM16_imm8();
+
+    void _SBB_RM8_reg8();
+    void _SBB_RM16_reg16();
+    void _SBB_RM32_reg32();
+    void _SBB_reg8_RM8();
+    void _SBB_reg16_RM16();
+    void _SBB_AL_imm8();
+    void _SBB_AX_imm16();
+    void _SBB_EAX_imm32();
+    void _SBB_RM8_imm8();
+    void _SBB_RM16_imm16();
+    void _SBB_RM16_imm8();
+
+    void _CMP_RM8_reg8();
+    void _CMP_RM16_reg16();
+    void _CMP_RM32_reg32();
+    void _CMP_reg8_RM8();
+    void _CMP_reg16_RM16();
+    void _CMP_reg32_RM32();
+    void _CMP_AL_imm8();
+    void _CMP_AX_imm16();
+    void _CMP_EAX_imm32();
+    void _CMP_RM8_imm8();
+    void _CMP_RM16_imm16();
+    void _CMP_RM16_imm8();
+
+    void _MUL_RM8();
+    void _MUL_RM16();
+    void _MUL_RM32();
+    void _DIV_RM8();
+    void _DIV_RM16();
+    void _DIV_RM32();
+    void _IMUL_RM8();
+    void _IMUL_RM16();
+    void _IMUL_RM32();
+    void _IDIV_RM8();
+    void _IDIV_RM16();
+    void _IDIV_RM32();
+
+    void _TEST_RM8_imm8();
+    void _TEST_RM16_imm16();
+    void _NOT_RM8();
+    void _NOT_RM16();
+    void _NEG_RM8();
+    void _NEG_RM16();
+
+    void _INC_RM16();
+    void _INC_reg16();
+    void _INC_reg32();
+    void _DEC_RM16();
+    void _DEC_reg16();
+    void _DEC_reg32();
+
+    void _CALL_RM16();
+    void _CALL_FAR_mem16();
+    void _CALL_imm16_imm16();
+    void _CALL_imm16_imm32();
+
+    void _JMP_RM16();
+    void _JMP_FAR_mem16();
+
+    void _PUSH_RM16();
+    void _POP_RM16();
+    void _POP_RM32();
+
+    void _wrap_0x80();
+    void _wrap_0x81_16();
+    void _wrap_0x81_32();
+    void _wrap_0x83_16();
+    void _wrap_0x83_32();
+    void _wrap_0x8F_16();
+    void _wrap_0x8F_32();
+    void _wrap_0xC0();
+    void _wrap_0xC1_16();
+    void _wrap_0xC1_32();
+    void _wrap_0xD0();
+    void _wrap_0xD1_16();
+    void _wrap_0xD1_32();
+    void _wrap_0xD2();
+    void _wrap_0xD3_16();
+    void _wrap_0xD3_32();
+    void _wrap_0xF6();
+    void _wrap_0xF7_16();
+    void _wrap_0xF7_32();
+    void _wrap_0xFE();
+    void _wrap_0xFF_16();
+    void _wrap_0xFF_32();
+
+    // 80186+ INSTRUCTIONS
+
+    void _wrap_0x0F();
+
+    void _BOUND();
+    void _ENTER();
+    void _LEAVE();
+
+    void _PUSHA();
+    void _POPA();
+    void _PUSH_imm8();
+    void _PUSH_imm16();
+
+    void _IMUL_reg16_RM16_imm8();
+
+    // 80386+ INSTRUCTIONS
+
+    void _LMSW();
+    void _SMSW();
+
+    void _SGDT();
+    void _LGDT();
+    void _SIDT();
+    void _LIDT();
+
+    void _PUSHAD();
+    void _POPAD();
+    void _PUSHFD();
+    void _POPFD();
+    void _PUSH_imm32();
+
+    void _PUSH_EAX();
+    void _PUSH_EBX();
+    void _PUSH_ECX();
+    void _PUSH_EDX();
+    void _PUSH_EBP();
+    void _PUSH_ESP();
+    void _PUSH_ESI();
+    void _PUSH_EDI();
+
+    void _POP_EAX();
+    void _POP_EBX();
+    void _POP_ECX();
+    void _POP_EDX();
+    void _POP_EBP();
+    void _POP_ESP();
+    void _POP_ESI();
+    void _POP_EDI();
+
+    void _TEST_RM32_imm32();
+    void _XOR_RM32_reg32();
+    void _ADD_RM32_reg32();
+    void _ADC_RM32_reg32();
+    void _SUB_RM32_reg32();
+
+    void _MOVZX_reg16_RM8();
+    void _MOVZX_reg32_RM8();
+    void _MOVZX_reg32_RM16();
+
+    void _LFS_reg16_mem16();
+    void _LFS_reg32_mem32();
+    void _LGS_reg16_mem16();
+    void _LGS_reg32_mem32();
+
+    void _PUSH_FS();
+    void _PUSH_GS();
+    void _POP_FS();
+    void _POP_GS();
+
+    void _FS();
+    void _GS();
+
+    void _MOV_RM32_reg32();
+    void _MOV_reg32_RM32();
+    void _MOV_reg32_CR();
+    void _MOV_CR_reg32();
+    void _MOV_moff32_EAX();
+    void _MOV_EAX_imm32();
+    void _MOV_EBX_imm32();
+    void _MOV_ECX_imm32();
+    void _MOV_EDX_imm32();
+    void _MOV_EBP_imm32();
+    void _MOV_ESP_imm32();
+    void _MOV_ESI_imm32();
+    void _MOV_EDI_imm32();
+
+    void _MOV_seg_RM32();
+
+    void _JMP_imm16_imm32();
+
+    void _ADD_RM32_imm32();
+    void _OR_RM32_imm32();
+    void _ADC_RM32_imm32();
+    void _SBB_RM32_imm32();
+    void _AND_RM32_imm32();
+    void _SUB_RM32_imm32();
+    void _XOR_RM32_imm32();
+    void _CMP_RM32_imm32();
+
+    void _ADD_RM32_imm8();
+    void _OR_RM32_imm8();
+    void _ADC_RM32_imm8();
+    void _SBB_RM32_imm8();
+    void _AND_RM32_imm8();
+    void _SUB_RM32_imm8();
+    void _XOR_RM32_imm8();
+    void _CMP_RM32_imm8();
+
+    void _ADD_reg32_RM32();
+    void _ADC_reg32_RM32();
+    void _SBB_reg32_RM32();
+    void _AND_reg32_RM32();
+    void _SUB_reg32_RM32();
+
+    void _AND_RM32_reg32();
+
+    void _UD0();
+    void _AddressSizeOverride();
+    void _OperationSizeOverride();
+
+    // FIXME: Dispatch these.
+    void _TEST_reg8_RM8();
+    void _TEST_reg16_RM16();
+    void _TEST_reg32_RM32();
+    void _TEST_reg16_imm16();
+    void _TEST_RM16_imm8();
+
+    // REP* helper.
+    void handleRepeatOpcode(BYTE opcode, bool shouldEqual);
+
 private:
     void* resolveModRM_internal(BYTE rmbyte, int bits);
     void* resolveModRM8_internal(BYTE rmbyte);
@@ -777,507 +1279,6 @@ DWORD cpu_rcl(VCpu*, WORD, BYTE, BYTE);
 DWORD cpu_rcr(VCpu*, WORD, BYTE, BYTE);
 DWORD cpu_rol(VCpu*, WORD, BYTE, BYTE);
 DWORD cpu_ror(VCpu*, WORD, BYTE, BYTE);
-
-void _UNSUPP(VCpu*);
-void _ESCAPE(VCpu*);
-
-void _NOP(VCpu*);
-void _HLT(VCpu*);
-void _INT_imm8(VCpu*);
-void _INT3(VCpu*);
-void _INTO(VCpu*);
-void _IRET(VCpu*);
-
-void _AAA(VCpu*);
-void _AAM(VCpu*);
-void _AAD(VCpu*);
-void _AAS(VCpu*);
-
-void _DAA(VCpu*);
-void _DAS(VCpu*);
-
-void _STC(VCpu*);
-void _STD(VCpu*);
-void _STI(VCpu*);
-void _CLC(VCpu*);
-void _CLD(VCpu*);
-void _CLI(VCpu*);
-void _CMC(VCpu*);
-
-void _CBW(VCpu*);
-void _CWD(VCpu*);
-void _CWDE(VCpu*);
-void _CDQ(VCpu*);
-
-void _XLAT(VCpu*);
-
-void _CS(VCpu*);
-void _DS(VCpu*);
-void _ES(VCpu*);
-void _SS(VCpu*);
-
-void _SALC(VCpu*);
-
-void _JMP_imm32(VCpu*);
-void _JMP_imm16(VCpu*);
-void _JMP_imm16_imm16(VCpu*);
-void _JMP_short_imm8(VCpu*);
-void _Jcc_imm8(VCpu*);
-void _JCXZ_imm8(VCpu*);
-void _JECXZ_imm8(VCpu*);
-
-void _JO_imm8(VCpu*);
-void _JNO_imm8(VCpu*);
-void _JC_imm8(VCpu*);
-void _JNC_imm8(VCpu*);
-void _JZ_imm8(VCpu*);
-void _JNZ_imm8(VCpu*);
-void _JNA_imm8(VCpu*);
-void _JA_imm8(VCpu*);
-void _JS_imm8(VCpu*);
-void _JNS_imm8(VCpu*);
-void _JP_imm8(VCpu*);
-void _JNP_imm8(VCpu*);
-void _JL_imm8(VCpu*);
-void _JNL_imm8(VCpu*);
-void _JNG_imm8(VCpu*);
-void _JG_imm8(VCpu*);
-
-void _JO_NEAR_imm(VCpu*);
-void _JNO_NEAR_imm(VCpu*);
-void _JC_NEAR_imm(VCpu*);
-void _JNC_NEAR_imm(VCpu*);
-void _JZ_NEAR_imm(VCpu*);
-void _JNZ_NEAR_imm(VCpu*);
-void _JNA_NEAR_imm(VCpu*);
-void _JA_NEAR_imm(VCpu*);
-void _JS_NEAR_imm(VCpu*);
-void _JNS_NEAR_imm(VCpu*);
-void _JP_NEAR_imm(VCpu*);
-void _JNP_NEAR_imm(VCpu*);
-void _JL_NEAR_imm(VCpu*);
-void _JNL_NEAR_imm(VCpu*);
-void _JNG_NEAR_imm(VCpu*);
-void _JG_NEAR_imm(VCpu*);
-
-void _CALL_imm16(VCpu*);
-void _CALL_imm32(VCpu*);
-void _RET(VCpu*);
-void _RET_imm16(VCpu*);
-void _RETF(VCpu*);
-void _RETF_imm16(VCpu*);
-
-void _LOOP_imm8(VCpu*);
-void _LOOPE_imm8(VCpu*);
-void _LOOPNE_imm8(VCpu*);
-
-void _REP(VCpu*);
-void _REPNE(VCpu*);
-
-void _XCHG_AX_reg16(VCpu*);
-void _XCHG_EAX_reg32(VCpu*);
-void _XCHG_reg8_RM8(VCpu*);
-void _XCHG_reg16_RM16(VCpu*);
-void _XCHG_reg32_RM32(VCpu*);
-
-void _CMPSB(VCpu*);
-void _CMPSW(VCpu*);
-void _CMPSD(VCpu*);
-void _LODSB(VCpu*);
-void _LODSW(VCpu*);
-void _LODSD(VCpu*);
-void _SCASB(VCpu*);
-void _SCASW(VCpu*);
-void _SCASD(VCpu*);
-void _STOSB(VCpu*);
-void _STOSW(VCpu*);
-void _STOSD(VCpu*);
-void _MOVSB(VCpu*);
-void _MOVSW(VCpu*);
-void _MOVSD(VCpu*);
-
-void _LEA_reg16_mem16(VCpu*);
-void _LEA_reg32_mem32(VCpu*);
-
-void _LDS_reg16_mem16(VCpu*);
-void _LDS_reg32_mem32(VCpu*);
-void _LES_reg16_mem16(VCpu*);
-void _LES_reg32_mem32(VCpu*);
-
-void _MOV_AL_imm8(VCpu*);
-void _MOV_BL_imm8(VCpu*);
-void _MOV_CL_imm8(VCpu*);
-void _MOV_DL_imm8(VCpu*);
-void _MOV_AH_imm8(VCpu*);
-void _MOV_BH_imm8(VCpu*);
-void _MOV_CH_imm8(VCpu*);
-void _MOV_DH_imm8(VCpu*);
-
-void _MOV_AX_imm16(VCpu*);
-void _MOV_BX_imm16(VCpu*);
-void _MOV_CX_imm16(VCpu*);
-void _MOV_DX_imm16(VCpu*);
-void _MOV_BP_imm16(VCpu*);
-void _MOV_SP_imm16(VCpu*);
-void _MOV_SI_imm16(VCpu*);
-void _MOV_DI_imm16(VCpu*);
-
-void _MOV_seg_RM16(VCpu*);
-void _MOV_RM16_seg(VCpu*);
-void _MOV_RM32_seg(VCpu*);
-void _MOV_AL_moff8(VCpu*);
-void _MOV_AX_moff16(VCpu*);
-void _MOV_EAX_moff32(VCpu*);
-void _MOV_moff8_AL(VCpu*);
-void _MOV_moff16_AX(VCpu*);
-void _MOV_reg8_RM8(VCpu*);
-void _MOV_reg16_RM16(VCpu*);
-void _MOV_RM8_reg8(VCpu*);
-void _MOV_RM16_reg16(VCpu*);
-void _MOV_RM8_imm8(VCpu*);
-void _MOV_RM16_imm16(VCpu*);
-void _MOV_RM32_imm32(VCpu*);
-
-void _XOR_RM8_reg8(VCpu*);
-void _XOR_RM16_reg16(VCpu*);
-void _XOR_reg8_RM8(VCpu*);
-void _XOR_reg16_RM16(VCpu*);
-void _XOR_reg32_RM32(VCpu*);
-void _XOR_RM8_imm8(VCpu*);
-void _XOR_RM16_imm16(VCpu*);
-void _XOR_RM16_imm8(VCpu*);
-void _XOR_AL_imm8(VCpu*);
-void _XOR_AX_imm16(VCpu*);
-void _XOR_EAX_imm32(VCpu*);
-
-void _OR_RM8_reg8(VCpu*);
-void _OR_RM16_reg16(VCpu*);
-void _OR_RM32_reg32(VCpu*);
-void _OR_reg8_RM8(VCpu*);
-void _OR_reg16_RM16(VCpu*);
-void _OR_reg32_RM32(VCpu*);
-void _OR_RM8_imm8(VCpu*);
-void _OR_RM16_imm16(VCpu*);
-void _OR_RM16_imm8(VCpu*);
-void _OR_EAX_imm32(VCpu*);
-void _OR_AX_imm16(VCpu*);
-void _OR_AL_imm8(VCpu*);
-
-void _AND_RM8_reg8(VCpu*);
-void _AND_RM16_reg16(VCpu*);
-void _AND_reg8_RM8(VCpu*);
-void _AND_reg16_RM16(VCpu*);
-void _AND_RM8_imm8(VCpu*);
-void _AND_RM16_imm16(VCpu*);
-void _AND_RM16_imm8(VCpu*);
-void _AND_AL_imm8(VCpu*);
-void _AND_AX_imm16(VCpu*);
-void _AND_EAX_imm32(VCpu*);
-
-void _TEST_RM8_reg8(VCpu*);
-void _TEST_RM16_reg16(VCpu*);
-void _TEST_RM32_reg32(VCpu*);
-void _TEST_AL_imm8(VCpu*);
-void _TEST_AX_imm16(VCpu*);
-void _TEST_EAX_imm32(VCpu*);
-
-void _PUSH_SP_8086_80186(VCpu*);
-void _PUSH_AX(VCpu*);
-void _PUSH_BX(VCpu*);
-void _PUSH_CX(VCpu*);
-void _PUSH_DX(VCpu*);
-void _PUSH_BP(VCpu*);
-void _PUSH_SP(VCpu*);
-void _PUSH_SI(VCpu*);
-void _PUSH_DI(VCpu*);
-void _POP_AX(VCpu*);
-void _POP_BX(VCpu*);
-void _POP_CX(VCpu*);
-void _POP_DX(VCpu*);
-void _POP_BP(VCpu*);
-void _POP_SP(VCpu*);
-void _POP_SI(VCpu*);
-void _POP_DI(VCpu*);
-void _PUSH_CS(VCpu*);
-void _PUSH_DS(VCpu*);
-void _PUSH_ES(VCpu*);
-void _PUSH_SS(VCpu*);
-void _PUSHF(VCpu*);
-
-void _POP_DS(VCpu*);
-void _POP_ES(VCpu*);
-void _POP_SS(VCpu*);
-void _POPF(VCpu*);
-
-void _LAHF(VCpu*);
-void _SAHF(VCpu*);
-
-void _OUT_imm8_AL(VCpu*);
-void _OUT_imm8_AX(VCpu*);
-void _OUT_imm8_EAX(VCpu*);
-void _OUT_DX_AL(VCpu*);
-void _OUT_DX_AX(VCpu*);
-void _OUT_DX_EAX(VCpu*);
-void _OUTSB(VCpu*);
-void _OUTSW(VCpu*);
-void _OUTSD(VCpu*);
-
-void _IN_AL_imm8(VCpu*);
-void _IN_AX_imm8(VCpu*);
-void _IN_EAX_imm8(VCpu*);
-void _IN_AL_DX(VCpu*);
-void _IN_AX_DX(VCpu*);
-void _IN_EAX_DX(VCpu*);
-
-void _ADD_RM8_reg8(VCpu*);
-void _ADD_RM16_reg16(VCpu*);
-void _ADD_reg8_RM8(VCpu*);
-void _ADD_reg16_RM16(VCpu*);
-void _ADD_AL_imm8(VCpu*);
-void _ADD_AX_imm16(VCpu*);
-void _ADD_EAX_imm32(VCpu*);
-void _ADD_RM8_imm8(VCpu*);
-void _ADD_RM16_imm16(VCpu*);
-void _ADD_RM16_imm8(VCpu*);
-
-void _SUB_RM8_reg8(VCpu*);
-void _SUB_RM16_reg16(VCpu*);
-void _SUB_reg8_RM8(VCpu*);
-void _SUB_reg16_RM16(VCpu*);
-void _SUB_AL_imm8(VCpu*);
-void _SUB_AX_imm16(VCpu*);
-void _SUB_EAX_imm32(VCpu*);
-void _SUB_RM8_imm8(VCpu*);
-void _SUB_RM16_imm16(VCpu*);
-void _SUB_RM16_imm8(VCpu*);
-
-void _ADC_RM8_reg8(VCpu*);
-void _ADC_RM16_reg16(VCpu*);
-void _ADC_reg8_RM8(VCpu*);
-void _ADC_reg16_RM16(VCpu*);
-void _ADC_AL_imm8(VCpu*);
-void _ADC_AX_imm16(VCpu*);
-void _ADC_EAX_imm32(VCpu*);
-void _ADC_RM8_imm8(VCpu*);
-void _ADC_RM16_imm16(VCpu*);
-void _ADC_RM16_imm8(VCpu*);
-
-void _SBB_RM8_reg8(VCpu*);
-void _SBB_RM16_reg16(VCpu*);
-void _SBB_RM32_reg32(VCpu*);
-void _SBB_reg8_RM8(VCpu*);
-void _SBB_reg16_RM16(VCpu*);
-void _SBB_AL_imm8(VCpu*);
-void _SBB_AX_imm16(VCpu*);
-void _SBB_EAX_imm32(VCpu*);
-void _SBB_RM8_imm8(VCpu*);
-void _SBB_RM16_imm16(VCpu*);
-void _SBB_RM16_imm8(VCpu*);
-
-void _CMP_RM8_reg8(VCpu*);
-void _CMP_RM16_reg16(VCpu*);
-void _CMP_RM32_reg32(VCpu*);
-void _CMP_reg8_RM8(VCpu*);
-void _CMP_reg16_RM16(VCpu*);
-void _CMP_reg32_RM32(VCpu*);
-void _CMP_AL_imm8(VCpu*);
-void _CMP_AX_imm16(VCpu*);
-void _CMP_EAX_imm32(VCpu*);
-void _CMP_RM8_imm8(VCpu*);
-void _CMP_RM16_imm16(VCpu*);
-void _CMP_RM16_imm8(VCpu*);
-
-void _MUL_RM8(VCpu*);
-void _MUL_RM16(VCpu*);
-void _MUL_RM32(VCpu*);
-void _DIV_RM8(VCpu*);
-void _DIV_RM16(VCpu*);
-void _DIV_RM32(VCpu*);
-void _IMUL_RM8(VCpu*);
-void _IMUL_RM16(VCpu*);
-void _IMUL_RM32(VCpu*);
-void _IDIV_RM8(VCpu*);
-void _IDIV_RM16(VCpu*);
-void _IDIV_RM32(VCpu*);
-
-void _TEST_RM8_imm8(VCpu*);
-void _TEST_RM16_imm16(VCpu*);
-void _NOT_RM8(VCpu*);
-void _NOT_RM16(VCpu*);
-void _NEG_RM8(VCpu*);
-void _NEG_RM16(VCpu*);
-
-void _INC_RM16(VCpu*);
-void _INC_reg16(VCpu*);
-void _INC_reg32(VCpu*);
-void _DEC_RM16(VCpu*);
-void _DEC_reg16(VCpu*);
-void _DEC_reg32(VCpu*);
-
-void _CALL_RM16(VCpu*);
-void _CALL_FAR_mem16(VCpu*);
-void _CALL_imm16_imm16(VCpu*);
-void _CALL_imm16_imm32(VCpu*);
-
-void _JMP_RM16(VCpu*);
-void _JMP_FAR_mem16(VCpu*);
-
-void _PUSH_RM16(VCpu*);
-void _POP_RM16(VCpu*);
-void _POP_RM32(VCpu*);
-
-void _wrap_0x80(VCpu*);
-void _wrap_0x81_16(VCpu*);
-void _wrap_0x81_32(VCpu*);
-void _wrap_0x83_16(VCpu*);
-void _wrap_0x83_32(VCpu*);
-void _wrap_0x8F_16(VCpu*);
-void _wrap_0x8F_32(VCpu*);
-void _wrap_0xC0(VCpu*);
-void _wrap_0xC1_16(VCpu*);
-void _wrap_0xC1_32(VCpu*);
-void _wrap_0xD0(VCpu*);
-void _wrap_0xD1_16(VCpu*);
-void _wrap_0xD1_32(VCpu*);
-void _wrap_0xD2(VCpu*);
-void _wrap_0xD3_16(VCpu*);
-void _wrap_0xD3_32(VCpu*);
-void _wrap_0xF6(VCpu*);
-void _wrap_0xF7_16(VCpu*);
-void _wrap_0xF7_32(VCpu*);
-void _wrap_0xFE(VCpu*);
-void _wrap_0xFF_16(VCpu*);
-void _wrap_0xFF_32(VCpu*);
-
-// 80186+ INSTRUCTIONS
-
-void _wrap_0x0F(VCpu*);
-
-void _BOUND(VCpu*);
-void _ENTER(VCpu*);
-void _LEAVE(VCpu*);
-
-void _PUSHA(VCpu*);
-void _POPA(VCpu*);
-void _PUSH_imm8(VCpu*);
-void _PUSH_imm16(VCpu*);
-
-void _IMUL_reg16_RM16_imm8(VCpu*);
-
-// 80386+ INSTRUCTIONS
-
-void _LMSW(VCpu*);
-void _SMSW(VCpu*);
-
-void _SGDT(VCpu*);
-void _LGDT(VCpu*);
-void _SIDT(VCpu*);
-void _LIDT(VCpu*);
-
-void _PUSHAD(VCpu*);
-void _POPAD(VCpu*);
-void _PUSHFD(VCpu*);
-void _POPFD(VCpu*);
-void _PUSH_imm32(VCpu*);
-
-void _PUSH_EAX(VCpu*);
-void _PUSH_EBX(VCpu*);
-void _PUSH_ECX(VCpu*);
-void _PUSH_EDX(VCpu*);
-void _PUSH_EBP(VCpu*);
-void _PUSH_ESP(VCpu*);
-void _PUSH_ESI(VCpu*);
-void _PUSH_EDI(VCpu*);
-
-void _POP_EAX(VCpu*);
-void _POP_EBX(VCpu*);
-void _POP_ECX(VCpu*);
-void _POP_EDX(VCpu*);
-void _POP_EBP(VCpu*);
-void _POP_ESP(VCpu*);
-void _POP_ESI(VCpu*);
-void _POP_EDI(VCpu*);
-
-void _TEST_RM32_imm32(VCpu*);
-void _XOR_RM32_reg32(VCpu*);
-void _ADD_RM32_reg32(VCpu*);
-void _ADC_RM32_reg32(VCpu*);
-void _SUB_RM32_reg32(VCpu*);
-
-void _MOVZX_reg16_RM8(VCpu*);
-void _MOVZX_reg32_RM8(VCpu*);
-void _MOVZX_reg32_RM16(VCpu*);
-
-void _MOVSD(VCpu*);
-
-void _LFS_reg16_mem16(VCpu*);
-void _LFS_reg32_mem32(VCpu*);
-void _LGS_reg16_mem16(VCpu*);
-void _LGS_reg32_mem32(VCpu*);
-
-void _PUSH_FS(VCpu*);
-void _PUSH_GS(VCpu*);
-void _POP_FS(VCpu*);
-void _POP_GS(VCpu*);
-
-void _FS(VCpu*);
-void _GS(VCpu*);
-
-void _STOSD(VCpu*);
-
-void _MOV_RM32_reg32(VCpu*);
-void _MOV_reg32_RM32(VCpu*);
-void _MOV_reg32_CR(VCpu*);
-void _MOV_CR_reg32(VCpu*);
-void _MOV_moff32_EAX(VCpu*);
-void _MOV_EAX_imm32(VCpu*);
-void _MOV_EBX_imm32(VCpu*);
-void _MOV_ECX_imm32(VCpu*);
-void _MOV_EDX_imm32(VCpu*);
-void _MOV_EBP_imm32(VCpu*);
-void _MOV_ESP_imm32(VCpu*);
-void _MOV_ESI_imm32(VCpu*);
-void _MOV_EDI_imm32(VCpu*);
-
-void _MOV_seg_RM32(VCpu*);
-
-void _JMP_imm16_imm32(VCpu*);
-
-void _ADD_RM32_imm32(VCpu*);
-void _OR_RM32_imm32(VCpu*);
-void _ADC_RM32_imm32(VCpu*);
-void _SBB_RM32_imm32(VCpu*);
-void _AND_RM32_imm32(VCpu*);
-void _SUB_RM32_imm32(VCpu*);
-void _XOR_RM32_imm32(VCpu*);
-void _CMP_RM32_imm32(VCpu*);
-
-void _ADD_RM32_imm8(VCpu*);
-void _OR_RM32_imm8(VCpu*);
-void _ADC_RM32_imm8(VCpu*);
-void _SBB_RM32_imm8(VCpu*);
-void _AND_RM32_imm8(VCpu*);
-void _SUB_RM32_imm8(VCpu*);
-void _XOR_RM32_imm8(VCpu*);
-void _CMP_RM32_imm8(VCpu*);
-
-void _ADD_reg32_RM32(VCpu*);
-void _OR_reg32_RM32(VCpu*);
-void _ADC_reg32_RM32(VCpu*);
-void _SBB_reg32_RM32(VCpu*);
-void _AND_reg32_RM32(VCpu*);
-void _SUB_reg32_RM32(VCpu*);
-void _XOR_reg32_RM32(VCpu*);
-void _CMP_reg32_RM32(VCpu*);
-
-void _ADD_RM32_reg32(VCpu*);
-void _OR_RM32_reg32(VCpu*);
-void _ADC_RM32_reg32(VCpu*);
-void _SBB_RM32_reg32(VCpu*);
-void _AND_RM32_reg32(VCpu*);
-void _SUB_RM32_reg32(VCpu*);
-void _XOR_RM32_reg32(VCpu*);
-void _CMP_RM32_reg32(VCpu*);
 
 // INLINE IMPLEMENTATIONS
 

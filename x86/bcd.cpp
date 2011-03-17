@@ -25,103 +25,103 @@
 
 #include "vcpu.h"
 
-void _AAA(VCpu* cpu)
+void VCpu::_AAA()
 {
-    if (((cpu->regs.B.AL & 0x0F)>9) || cpu->getAF()) {
-        cpu->regs.B.AL += 6;
-        cpu->regs.B.AH += 1;
-        cpu->setAF(1);
-        cpu->setCF(1);
+    if (((regs.B.AL & 0x0F)>9) || getAF()) {
+        regs.B.AL += 6;
+        regs.B.AH += 1;
+        setAF(1);
+        setCF(1);
     } else {
-        cpu->setAF(0);
-        cpu->setCF(0);
+        setAF(0);
+        setCF(0);
     }
-    cpu->regs.B.AL &= 0x0F;
+    regs.B.AL &= 0x0F;
 }
 
-void _AAM(VCpu* cpu)
+void VCpu::_AAM()
 {
-    BYTE imm = cpu->fetchOpcodeByte();
+    BYTE imm = fetchOpcodeByte();
 
     if (imm == 0) {
-        cpu->exception(0);
+        exception(0);
         return;
     }
 
-    BYTE tempAL = cpu->regs.B.AL;
-    cpu->regs.B.AH = tempAL / imm;
-    cpu->regs.B.AL = tempAL % imm;
-    cpu->updateFlags8(cpu->regs.B.AL);
+    BYTE tempAL = regs.B.AL;
+    regs.B.AH = tempAL / imm;
+    regs.B.AL = tempAL % imm;
+    updateFlags8(regs.B.AL);
 }
 
-void _AAD(VCpu* cpu)
+void VCpu::_AAD()
 {
-    BYTE tempAL = cpu->regs.B.AL;
-    BYTE tempAH = cpu->regs.B.AH;
-    BYTE imm = cpu->fetchOpcodeByte();
+    BYTE tempAL = regs.B.AL;
+    BYTE tempAH = regs.B.AH;
+    BYTE imm = fetchOpcodeByte();
 
-    cpu->regs.B.AL = (tempAL + (tempAH * imm)) & 0xFF;
-    cpu->regs.B.AH = 0x00;
-    cpu->updateFlags8(cpu->regs.B.AL);
+    regs.B.AL = (tempAL + (tempAH * imm)) & 0xFF;
+    regs.B.AH = 0x00;
+    updateFlags8(regs.B.AL);
 }
 
-void _AAS(VCpu* cpu)
+void VCpu::_AAS()
 {
-    if (((cpu->regs.B.AL & 0x0F) > 9) || cpu->getAF()) {
-        cpu->regs.B.AL -= 6;
-        cpu->regs.B.AH -= 1;
-        cpu->setAF(1);
-        cpu->setCF(1);
+    if (((regs.B.AL & 0x0F) > 9) || getAF()) {
+        regs.B.AL -= 6;
+        regs.B.AH -= 1;
+        setAF(1);
+        setCF(1);
     } else {
-        cpu->setAF(0);
-        cpu->setCF(0);
+        setAF(0);
+        setCF(0);
     }
 }
 
-void _DAS(VCpu* cpu)
+void VCpu::_DAS()
 {
-    bool oldCF = cpu->getCF();
-    BYTE oldAL = cpu->regs.B.AL;
+    bool oldCF = getCF();
+    BYTE oldAL = regs.B.AL;
 
-    cpu->setCF(0);
+    setCF(0);
 
-    if (((cpu->regs.B.AL & 0x0F) > 0x09) || cpu->getAF()) {
-        cpu->setCF(((cpu->regs.B.AL - 6) >> 8) & 1);
-        cpu->regs.B.AL -= 0x06;
-        cpu->setCF(oldCF | cpu->getCF());
-        cpu->setAF(1);
+    if (((regs.B.AL & 0x0F) > 0x09) || getAF()) {
+        setCF(((regs.B.AL - 6) >> 8) & 1);
+        regs.B.AL -= 0x06;
+        setCF(oldCF | getCF());
+        setAF(1);
     } else {
-        cpu->setAF(0);
-    }
-
-    if (oldAL > 0x99 || oldCF == 1) {
-        cpu->regs.B.AL -= 0x60;
-        cpu->setCF(1);
-    } else {
-        cpu->setCF(0);
-    }
-}
-
-void _DAA(VCpu* cpu)
-{
-    bool oldCF = cpu->getCF();
-    BYTE oldAL = cpu->regs.B.AL;
-
-    cpu->setCF(0);
-
-    if (((cpu->regs.B.AL & 0x0F) > 0x09) || cpu->getAF()) {
-        cpu->setCF(((cpu->regs.B.AL + 6) >> 8) & 1);
-        cpu->regs.B.AL += 6;
-        cpu->setCF(oldCF | cpu->getCF());
-        cpu->setAF(1);
-    } else {
-        cpu->setAF(0);
+        setAF(0);
     }
 
     if (oldAL > 0x99 || oldCF == 1) {
-        cpu->regs.B.AL += 0x60;
-        cpu->setCF(1);
+        regs.B.AL -= 0x60;
+        setCF(1);
     } else {
-        cpu->setCF(0);
+        setCF(0);
+    }
+}
+
+void VCpu::_DAA()
+{
+    bool oldCF = getCF();
+    BYTE oldAL = regs.B.AL;
+
+    setCF(0);
+
+    if (((regs.B.AL & 0x0F) > 0x09) || getAF()) {
+        setCF(((regs.B.AL + 6) >> 8) & 1);
+        regs.B.AL += 6;
+        setCF(oldCF | getCF());
+        setAF(1);
+    } else {
+        setAF(0);
+    }
+
+    if (oldAL > 0x99 || oldCF == 1) {
+        regs.B.AL += 0x60;
+        setCF(1);
+    } else {
+        setCF(0);
     }
 }

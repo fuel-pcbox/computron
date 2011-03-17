@@ -25,218 +25,218 @@
 
 #include "vcpu.h"
 
-void _LODSB(VCpu* cpu)
+void VCpu::_LODSB()
 {
-    if (cpu->a16()) {
-        cpu->regs.B.AL = cpu->readMemory8(cpu->currentSegment(), cpu->getSI());
-        cpu->nextSI(1);
+    if (a16()) {
+        regs.B.AL = readMemory8(currentSegment(), getSI());
+        nextSI(1);
     } else {
-        cpu->regs.B.AL = cpu->readMemory8(cpu->currentSegment(), cpu->getESI());
-        cpu->nextESI(1);
+        regs.B.AL = readMemory8(currentSegment(), getESI());
+        nextESI(1);
     }
 }
 
-void _LODSW(VCpu* cpu)
+void VCpu::_LODSW()
 {
-    if (cpu->a16()) {
-        cpu->regs.W.AX = cpu->readMemory16(cpu->currentSegment(), cpu->getSI());
-        cpu->nextSI(2);
+    if (a16()) {
+        regs.W.AX = readMemory16(currentSegment(), getSI());
+        nextSI(2);
     } else {
-        cpu->regs.W.AX = cpu->readMemory16(cpu->currentSegment(), cpu->getESI());
-        cpu->nextESI(2);
+        regs.W.AX = readMemory16(currentSegment(), getESI());
+        nextESI(2);
     }
 }
 
-void _LODSD(VCpu* cpu)
+void VCpu::_LODSD()
 {
-    if (cpu->a16()) {
-        cpu->regs.D.EAX = cpu->readMemory32(cpu->currentSegment(), cpu->getSI());
-        cpu->nextSI(4);
+    if (a16()) {
+        regs.D.EAX = readMemory32(currentSegment(), getSI());
+        nextSI(4);
     } else {
-        cpu->regs.D.EAX = cpu->readMemory32(cpu->currentSegment(), cpu->getESI());
-        cpu->nextESI(4);
+        regs.D.EAX = readMemory32(currentSegment(), getESI());
+        nextESI(4);
     }
 }
 
-void _STOSB(VCpu* cpu)
+void VCpu::_STOSB()
 {
-    if (cpu->a16()) {
-        cpu->writeMemory8(cpu->getES(), cpu->getDI(), cpu->getAL());
-        cpu->nextDI(1);
+    if (a16()) {
+        writeMemory8(getES(), getDI(), getAL());
+        nextDI(1);
     } else {
-        cpu->writeMemory8(cpu->getES(), cpu->getEDI(), cpu->getAL());
-        cpu->nextEDI(1);
+        writeMemory8(getES(), getEDI(), getAL());
+        nextEDI(1);
     }
 }
 
-void _STOSW(VCpu* cpu)
+void VCpu::_STOSW()
 {
-    if (cpu->a16()) {
-        cpu->writeMemory16(cpu->getES(), cpu->getDI(), cpu->getAX());
-        cpu->nextDI(2);
+    if (a16()) {
+        writeMemory16(getES(), getDI(), getAX());
+        nextDI(2);
     } else {
-        cpu->writeMemory16(cpu->getES(), cpu->getEDI(), cpu->getAX());
-        cpu->nextEDI(2);
+        writeMemory16(getES(), getEDI(), getAX());
+        nextEDI(2);
     }
 }
 
-void _STOSD(VCpu* cpu)
+void VCpu::_STOSD()
 {
-    if (cpu->a16()) {
-        cpu->writeMemory32(cpu->getES(), cpu->getDI(), cpu->getEAX());
-        cpu->nextDI(4);
+    if (a16()) {
+        writeMemory32(getES(), getDI(), getEAX());
+        nextDI(4);
     } else {
-        cpu->writeMemory32(cpu->getES(), cpu->getEDI(), cpu->getEAX());
-        cpu->nextEDI(4);
+        writeMemory32(getES(), getEDI(), getEAX());
+        nextEDI(4);
     }
 }
 
-void _CMPSB(VCpu* cpu)
+void VCpu::_CMPSB()
 {
     BYTE src;
     BYTE dest;
 
-    if (cpu->a16()) {
-        src = cpu->readMemory8(cpu->currentSegment(), cpu->getSI());
-        dest = cpu->readMemory8(cpu->getES(), cpu->getDI());
-        cpu->nextSI(1);
-        cpu->nextDI(1);
+    if (a16()) {
+        src = readMemory8(currentSegment(), getSI());
+        dest = readMemory8(getES(), getDI());
+        nextSI(1);
+        nextDI(1);
     } else {
-        src = cpu->readMemory8(cpu->currentSegment(), cpu->getESI());
-        dest = cpu->readMemory8(cpu->getES(), cpu->getEDI());
-        cpu->nextESI(1);
-        cpu->nextEDI(1);
+        src = readMemory8(currentSegment(), getESI());
+        dest = readMemory8(getES(), getEDI());
+        nextESI(1);
+        nextEDI(1);
     }
 
-    cpu->cmpFlags8(src - dest, src, dest);
+    cmpFlags8(src - dest, src, dest);
 }
 
-void _CMPSW(VCpu* cpu)
+void VCpu::_CMPSW()
 {
     WORD src;
     WORD dest;
 
-    if (cpu->a16()) {
-        src = cpu->readMemory16(cpu->currentSegment(), cpu->getSI());
-        dest = cpu->readMemory16(cpu->getES(), cpu->getDI());
-        cpu->nextSI(2);
-        cpu->nextDI(2);
+    if (a16()) {
+        src = readMemory16(currentSegment(), getSI());
+        dest = readMemory16(getES(), getDI());
+        nextSI(2);
+        nextDI(2);
     } else {
-        src = cpu->readMemory16(cpu->currentSegment(), cpu->getESI());
-        dest = cpu->readMemory16(cpu->getES(), cpu->getEDI());
-        cpu->nextESI(2);
-        cpu->nextEDI(2);
+        src = readMemory16(currentSegment(), getESI());
+        dest = readMemory16(getES(), getEDI());
+        nextESI(2);
+        nextEDI(2);
     }
 
-    cpu->cmpFlags16(src - dest, src, dest);
+    cmpFlags16(src - dest, src, dest);
 }
 
-void _CMPSD(VCpu* cpu)
+void VCpu::_CMPSD()
 {
     DWORD src;
     DWORD dest;
 
-    if (cpu->a16()) {
-        src = cpu->readMemory32(cpu->currentSegment(), cpu->getSI());
-        dest = cpu->readMemory32(cpu->getES(), cpu->getDI());
-        cpu->nextSI(4);
-        cpu->nextDI(4);
+    if (a16()) {
+        src = readMemory32(currentSegment(), getSI());
+        dest = readMemory32(getES(), getDI());
+        nextSI(4);
+        nextDI(4);
     } else {
-        src = cpu->readMemory32(cpu->currentSegment(), cpu->getESI());
-        dest = cpu->readMemory32(cpu->getES(), cpu->getEDI());
-        cpu->nextESI(4);
-        cpu->nextEDI(4);
+        src = readMemory32(currentSegment(), getESI());
+        dest = readMemory32(getES(), getEDI());
+        nextESI(4);
+        nextEDI(4);
     }
 
-    cpu->cmpFlags32(src - dest, src, dest);
+    cmpFlags32(src - dest, src, dest);
 }
 
-void _SCASB(VCpu* cpu)
+void VCpu::_SCASB()
 {
     BYTE dest;
 
-    if (cpu->a16()) {
-        dest = cpu->readMemory8(cpu->getES(), cpu->getDI());
-        cpu->nextDI(1);
+    if (a16()) {
+        dest = readMemory8(getES(), getDI());
+        nextDI(1);
     } else {
-        dest = cpu->readMemory8(cpu->getES(), cpu->getEDI());
-        cpu->nextEDI(1);
+        dest = readMemory8(getES(), getEDI());
+        nextEDI(1);
     }
 
-    cpu->cmpFlags8(cpu->getAL() - dest, dest, cpu->getAL());
+    cmpFlags8(getAL() - dest, dest, getAL());
 }
 
-void _SCASW(VCpu* cpu)
+void VCpu::_SCASW()
 {
     WORD dest;
 
-    if (cpu->a16()) {
-        dest = cpu->readMemory16(cpu->getES(), cpu->getDI());
-        cpu->nextDI(2);
+    if (a16()) {
+        dest = readMemory16(getES(), getDI());
+        nextDI(2);
     } else {
-        dest = cpu->readMemory16(cpu->getES(), cpu->getEDI());
-        cpu->nextEDI(2);
+        dest = readMemory16(getES(), getEDI());
+        nextEDI(2);
     }
 
-    cpu->cmpFlags16(cpu->getAX() - dest, dest, cpu->getAX());
+    cmpFlags16(getAX() - dest, dest, getAX());
 }
 
-void _SCASD(VCpu* cpu)
+void VCpu::_SCASD()
 {
     DWORD dest;
 
-    if (cpu->a16()) {
-        dest = cpu->readMemory32(cpu->getES(), cpu->getDI());
-        cpu->nextDI(4);
+    if (a16()) {
+        dest = readMemory32(getES(), getDI());
+        nextDI(4);
     } else {
-        dest = cpu->readMemory32(cpu->getES(), cpu->getEDI());
-        cpu->nextEDI(4);
+        dest = readMemory32(getES(), getEDI());
+        nextEDI(4);
     }
 
-    cpu->cmpFlags16(cpu->getEAX() - dest, dest, cpu->getEAX());
+    cmpFlags16(getEAX() - dest, dest, getEAX());
 }
 
-void _MOVSB(VCpu* cpu)
+void VCpu::_MOVSB()
 {
-    if (cpu->a16()) {
-        BYTE tmpb = cpu->readMemory8(cpu->currentSegment(), cpu->getSI());
-        cpu->writeMemory8(cpu->ES, cpu->getDI(), tmpb);
-        cpu->nextSI(1);
-        cpu->nextDI(1);
+    if (a16()) {
+        BYTE tmpb = readMemory8(currentSegment(), getSI());
+        writeMemory8(ES, getDI(), tmpb);
+        nextSI(1);
+        nextDI(1);
     } else {
-        BYTE tmpb = cpu->readMemory8(cpu->currentSegment(), cpu->getESI());
-        cpu->writeMemory8(cpu->ES, cpu->getEDI(), tmpb);
-        cpu->nextESI(1);
-        cpu->nextEDI(1);
-    }
-}
-
-void _MOVSW(VCpu* cpu)
-{
-    if (cpu->a16()) {
-        WORD tmpw = cpu->readMemory16(cpu->currentSegment(), cpu->getSI());
-        cpu->writeMemory16(cpu->ES, cpu->getDI(), tmpw);
-        cpu->nextSI(2);
-        cpu->nextDI(2);
-    } else {
-        WORD tmpw = cpu->readMemory16(cpu->currentSegment(), cpu->getESI());
-        cpu->writeMemory16(cpu->ES, cpu->getEDI(), tmpw);
-        cpu->nextESI(2);
-        cpu->nextEDI(2);
+        BYTE tmpb = readMemory8(currentSegment(), getESI());
+        writeMemory8(ES, getEDI(), tmpb);
+        nextESI(1);
+        nextEDI(1);
     }
 }
 
-void _MOVSD(VCpu* cpu)
+void VCpu::_MOVSW()
 {
-    if (cpu->a16()) {
-        DWORD tmpw = cpu->readMemory32(cpu->currentSegment(), cpu->regs.W.SI);
-        cpu->writeMemory32(cpu->ES, cpu->regs.W.DI, tmpw);
-        cpu->nextSI(4);
-        cpu->nextDI(4);
+    if (a16()) {
+        WORD tmpw = readMemory16(currentSegment(), getSI());
+        writeMemory16(ES, getDI(), tmpw);
+        nextSI(2);
+        nextDI(2);
     } else {
-        DWORD tmpw = cpu->readMemory32(cpu->currentSegment(), cpu->regs.D.ESI);
-        cpu->writeMemory32(cpu->ES, cpu->regs.D.EDI, tmpw);
-        cpu->nextESI(4);
-        cpu->nextEDI(4);
+        WORD tmpw = readMemory16(currentSegment(), getESI());
+        writeMemory16(ES, getEDI(), tmpw);
+        nextESI(2);
+        nextEDI(2);
+    }
+}
+
+void VCpu::_MOVSD()
+{
+    if (a16()) {
+        DWORD tmpw = readMemory32(currentSegment(), regs.W.SI);
+        writeMemory32(ES, regs.W.DI, tmpw);
+        nextSI(4);
+        nextDI(4);
+    } else {
+        DWORD tmpw = readMemory32(currentSegment(), regs.D.ESI);
+        writeMemory32(ES, regs.D.EDI, tmpw);
+        nextESI(4);
+        nextEDI(4);
     }
 }

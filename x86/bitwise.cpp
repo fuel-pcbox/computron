@@ -85,41 +85,41 @@ READONLY_AL_imm8(cpu_and, _TEST_AL_imm8)
 READONLY_AX_imm16(cpu_and, _TEST_AX_imm16)
 READONLY_EAX_imm32(cpu_and, _TEST_EAX_imm32)
 
-void _CBW(VCpu* cpu)
+void VCpu::_CBW()
 {
-    if (cpu->getAL() & 0x80)
-        cpu->setAH(0xFF);
+    if (getAL() & 0x80)
+        setAH(0xFF);
     else
-        cpu->setAH(0x00);
+        setAH(0x00);
 }
 
-void _CWD(VCpu* cpu)
+void VCpu::_CWD()
 {
-    if (cpu->getAX() & 0x8000)
-        cpu->setDX(0xFFFF);
+    if (getAX() & 0x8000)
+        setDX(0xFFFF);
     else
-        cpu->setDX(0x0000);
+        setDX(0x0000);
 }
 
-void _CWDE(VCpu *cpu)
+void VCpu::_CWDE()
 {
-    if (cpu->getAX() & 0x8000)
-        cpu->regs.W.__EAX_high_word = 0xFFFF;
+    if (getAX() & 0x8000)
+        regs.W.__EAX_high_word = 0xFFFF;
     else
-        cpu->regs.W.__EAX_high_word = 0x0000;
+        regs.W.__EAX_high_word = 0x0000;
 }
 
-void _CDQ(VCpu *cpu)
+void VCpu::_CDQ()
 {
-    if (cpu->getEAX() & 0x80000000)
-        cpu->setEDX(0xFFFFFFFF);
+    if (getEAX() & 0x80000000)
+        setEDX(0xFFFFFFFF);
     else
-        cpu->setEDX(0x00000000);
+        setEDX(0x00000000);
 }
 
-void _SALC(VCpu* cpu)
+void VCpu::_SALC()
 {
-    cpu->setAL(cpu->getCF() ? 0xFF : 0);
+    setAL(getCF() ? 0xFF : 0);
 }
 
 BYTE cpu_or8(VCpu* cpu, BYTE dest, BYTE src)
@@ -383,44 +383,44 @@ DWORD cpu_rcr(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
     return result;
 }
 
-void _NOT_RM8(VCpu* cpu)
+void VCpu::_NOT_RM8()
 {
-    BYTE value = cpu->readModRM8(cpu->rmbyte);
-    cpu->updateModRM8(~value);
+    BYTE value = readModRM8(rmbyte);
+    updateModRM8(~value);
 }
 
-void _NOT_RM16(VCpu* cpu)
+void VCpu::_NOT_RM16()
 {
-    WORD value = cpu->readModRM16(cpu->rmbyte);
-    cpu->updateModRM16(~value);
+    WORD value = readModRM16(rmbyte);
+    updateModRM16(~value);
 }
 
-void _NEG_RM8(VCpu* cpu)
+void VCpu::_NEG_RM8()
 {
-    BYTE value = cpu->readModRM8(cpu->rmbyte);
+    BYTE value = readModRM8(rmbyte);
     BYTE old = value;
     value = -value;
-    cpu->updateModRM8(value);
-    cpu->setCF(old != 0);
-    cpu->updateFlags8(value);
-    cpu->setOF(((
+    updateModRM8(value);
+    setCF(old != 0);
+    updateFlags8(value);
+    setOF(((
         ((0)^(old)) &
         ((0)^(value))
         )>>(7))&1);
-    cpu->adjustFlag32(value, 0, old);
+    adjustFlag32(value, 0, old);
 }
 
-void _NEG_RM16(VCpu* cpu)
+void VCpu::_NEG_RM16()
 {
-    WORD value = cpu->readModRM16(cpu->rmbyte);
+    WORD value = readModRM16(rmbyte);
     WORD old = value;
     value = -value;
-    cpu->updateModRM16(value);
-    cpu->setCF(old != 0);
-    cpu->updateFlags16(value);
-    cpu->setOF(((
+    updateModRM16(value);
+    setCF(old != 0);
+    updateFlags16(value);
+    setOF(((
         ((0)^(old)) &
         ((0)^(value))
         )>>(15))&1);
-    cpu->adjustFlag32(value, 0, old);
+    adjustFlag32(value, 0, old);
 }

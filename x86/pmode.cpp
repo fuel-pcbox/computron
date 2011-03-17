@@ -25,36 +25,36 @@
 
 #include "vcpu.h"
 
-void _SGDT(VCpu* cpu)
+void VCpu::_SGDT()
 {
-    WORD tableAddress = cpu->fetchOpcodeWord();
-    cpu->writeMemory32(cpu->currentSegment(), tableAddress + 2, cpu->GDTR.base);
-    cpu->writeMemory16(cpu->currentSegment(), tableAddress, cpu->GDTR.limit);
+    WORD tableAddress = fetchOpcodeWord();
+    writeMemory32(currentSegment(), tableAddress + 2, GDTR.base);
+    writeMemory16(currentSegment(), tableAddress, GDTR.limit);
 }
 
-void _SIDT(VCpu* cpu)
+void VCpu::_SIDT()
 {
-    WORD tableAddress = cpu->fetchOpcodeWord();
-    cpu->writeMemory32(cpu->currentSegment(), tableAddress + 2, cpu->IDTR.base);
-    cpu->writeMemory16(cpu->currentSegment(), tableAddress, cpu->IDTR.limit);
+    WORD tableAddress = fetchOpcodeWord();
+    writeMemory32(currentSegment(), tableAddress + 2, IDTR.base);
+    writeMemory16(currentSegment(), tableAddress, IDTR.limit);
 }
 
-void _LGDT(VCpu* cpu)
+void VCpu::_LGDT()
 {
-    WORD tableAddress = cpu->fetchOpcodeWord();
-    cpu->GDTR.base = cpu->readMemory32(cpu->currentSegment(), tableAddress + 2);
-    cpu->GDTR.limit = cpu->readMemory16(cpu->currentSegment(), tableAddress);
+    WORD tableAddress = fetchOpcodeWord();
+    GDTR.base = readMemory32(currentSegment(), tableAddress + 2);
+    GDTR.limit = readMemory16(currentSegment(), tableAddress);
 }
 
-void _LIDT(VCpu* cpu)
+void VCpu::_LIDT()
 {
-    WORD tableAddress = cpu->fetchOpcodeWord();
-    cpu->IDTR.base = cpu->readMemory32(cpu->currentSegment(), tableAddress + 2);
-    cpu->IDTR.limit = cpu->readMemory16(cpu->currentSegment(), tableAddress);
+    WORD tableAddress = fetchOpcodeWord();
+    IDTR.base = readMemory32(currentSegment(), tableAddress + 2);
+    IDTR.limit = readMemory16(currentSegment(), tableAddress);
 }
 
-void _LMSW(VCpu* cpu)
+void VCpu::_LMSW()
 {
-    BYTE msw = cpu->readModRM16(cpu->subrmbyte);
-    cpu->CR0 = (cpu->CR0 & 0xFFFFFFF0) | msw;
+    BYTE msw = readModRM16(subrmbyte);
+    CR0 = (CR0 & 0xFFFFFFF0) | msw;
 }

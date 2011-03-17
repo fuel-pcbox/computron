@@ -74,293 +74,293 @@ WORD VCpu::pop()
     return w;
 }
 
-void _PUSH_EAX(VCpu *cpu)
+void VCpu::_PUSH_EAX()
 {
-    cpu->push32(cpu->getEAX());
+    push32(getEAX());
 }
 
-void _PUSH_EBX(VCpu *cpu)
+void VCpu::_PUSH_EBX()
 {
-    cpu->push32(cpu->getEBX());
+    push32(getEBX());
 }
 
-void _PUSH_ECX(VCpu *cpu)
+void VCpu::_PUSH_ECX()
 {
-    cpu->push32(cpu->getECX());
+    push32(getECX());
 }
 
-void _PUSH_EDX(VCpu *cpu)
+void VCpu::_PUSH_EDX()
 {
-    cpu->push32(cpu->getEDX());
+    push32(getEDX());
 }
 
-void _PUSH_ESP(VCpu *cpu)
+void VCpu::_PUSH_ESP()
 {
-    cpu->push32(cpu->getESP());
+    push32(getESP());
 }
 
-void _PUSH_EBP(VCpu *cpu)
+void VCpu::_PUSH_EBP()
 {
-    cpu->push32(cpu->getEBP());
+    push32(getEBP());
 }
 
-void _PUSH_ESI(VCpu *cpu)
+void VCpu::_PUSH_ESI()
 {
-    cpu->push32(cpu->getESI());
+    push32(getESI());
 }
 
-void _PUSH_EDI(VCpu *cpu)
+void VCpu::_PUSH_EDI()
 {
-    cpu->push32(cpu->getEDI());
+    push32(getEDI());
 }
 
-void _PUSH_AX(VCpu* cpu)
+void VCpu::_PUSH_AX()
 {
-    cpu->push(cpu->getAX());
+    push(getAX());
 }
 
-void _PUSH_BX(VCpu* cpu)
+void VCpu::_PUSH_BX()
 {
-    cpu->push(cpu->getBX());
+    push(getBX());
 }
 
-void _PUSH_CX(VCpu* cpu)
+void VCpu::_PUSH_CX()
 {
-    cpu->push(cpu->getCX());
+    push(getCX());
 }
 
-void _PUSH_DX(VCpu* cpu)
+void VCpu::_PUSH_DX()
 {
-    cpu->push(cpu->getDX());
+    push(getDX());
 }
 
-void _PUSH_BP(VCpu* cpu)
+void VCpu::_PUSH_BP()
 {
-    cpu->push(cpu->getBP());
+    push(getBP());
 }
 
-void _PUSH_SP(VCpu* cpu)
+void VCpu::_PUSH_SP()
 {
-    cpu->push(cpu->getSP());
+    push(getSP());
 }
 
-void _PUSH_SI(VCpu* cpu)
+void VCpu::_PUSH_SI()
 {
-    cpu->push(cpu->getSI());
+    push(getSI());
 }
 
-void _PUSH_DI(VCpu* cpu)
+void VCpu::_PUSH_DI()
 {
-    cpu->push(cpu->getDI());
+    push(getDI());
 }
 
-void _POP_AX(VCpu* cpu)
+void VCpu::_POP_AX()
 {
-    cpu->regs.W.AX = cpu->pop();
+    regs.W.AX = pop();
 }
 
-void _POP_BX(VCpu* cpu)
+void VCpu::_POP_BX()
 {
-    cpu->regs.W.BX = cpu->pop();
+    regs.W.BX = pop();
 }
 
-void _POP_EAX(VCpu* cpu)
+void VCpu::_POP_EAX()
 {
-    cpu->regs.D.EAX = cpu->pop32();
+    regs.D.EAX = pop32();
 }
 
-void _POP_EBX(VCpu* cpu)
+void VCpu::_POP_EBX()
 {
-    cpu->regs.D.EBX = cpu->pop32();
+    regs.D.EBX = pop32();
 }
 
-void _POP_ECX(VCpu* cpu)
+void VCpu::_POP_ECX()
 {
-    cpu->regs.D.ECX = cpu->pop32();
+    regs.D.ECX = pop32();
 }
 
-void _POP_EDX(VCpu* cpu)
+void VCpu::_POP_EDX()
 {
-    cpu->regs.D.EDX = cpu->pop32();
+    regs.D.EDX = pop32();
 }
 
-void _POP_ESP(VCpu* cpu)
+void VCpu::_POP_ESP()
 {
-    cpu->regs.D.ESP = cpu->pop32();
+    regs.D.ESP = pop32();
 }
 
-void _POP_EBP(VCpu* cpu)
+void VCpu::_POP_EBP()
 {
-    cpu->regs.D.EBP = cpu->pop32();
+    regs.D.EBP = pop32();
 }
 
-void _POP_ESI(VCpu* cpu)
+void VCpu::_POP_ESI()
 {
-    cpu->regs.D.ESI = cpu->pop32();
+    regs.D.ESI = pop32();
 }
 
-void _POP_EDI(VCpu* cpu)
+void VCpu::_POP_EDI()
 {
-    cpu->regs.D.EDI = cpu->pop32();
+    regs.D.EDI = pop32();
 }
 
-void _POP_CX(VCpu* cpu)
+void VCpu::_POP_CX()
 {
-    cpu->regs.W.CX = cpu->pop();
+    regs.W.CX = pop();
 }
 
-void _POP_DX(VCpu* cpu)
+void VCpu::_POP_DX()
 {
-    cpu->regs.W.DX = cpu->pop();
+    regs.W.DX = pop();
 }
 
-void _POP_BP(VCpu* cpu)
+void VCpu::_POP_BP()
 {
-    cpu->regs.W.BP = cpu->pop();
+    regs.W.BP = pop();
 }
 
-void _POP_SP(VCpu* cpu)
+void VCpu::_POP_SP()
 {
-    cpu->regs.W.SP = cpu->pop();
+    regs.W.SP = pop();
 }
 
-void _POP_SI(VCpu* cpu)
+void VCpu::_POP_SI()
 {
-    cpu->regs.W.SI = cpu->pop();
+    regs.W.SI = pop();
 }
 
-void _POP_DI(VCpu* cpu)
+void VCpu::_POP_DI()
 {
-    cpu->regs.W.DI = cpu->pop();
+    regs.W.DI = pop();
 }
 
-void _PUSH_RM16(VCpu* cpu)
+void VCpu::_PUSH_RM16()
 {
-    cpu->push(cpu->readModRM16(cpu->rmbyte));
+    push(readModRM16(rmbyte));
 }
 
-void _POP_RM16(VCpu* cpu)
+void VCpu::_POP_RM16()
 {
-    cpu->writeModRM16(cpu->rmbyte, cpu->pop());
+    writeModRM16(rmbyte, pop());
 }
 
-void _POP_RM32(VCpu* cpu)
+void VCpu::_POP_RM32()
 {
-    cpu->writeModRM32(cpu->rmbyte, cpu->pop32());
+    writeModRM32(rmbyte, pop32());
 }
 
-void _PUSH_CS(VCpu* cpu)
+void VCpu::_PUSH_CS()
 {
-    cpu->push(cpu->getCS());
+    push(getCS());
 }
 
-void _PUSH_DS(VCpu* cpu)
+void VCpu::_PUSH_DS()
 {
-    cpu->push(cpu->getDS());
+    push(getDS());
 }
 
-void _PUSH_ES(VCpu* cpu)
+void VCpu::_PUSH_ES()
 {
-    cpu->push(cpu->getES());
+    push(getES());
 }
 
-void _PUSH_SS(VCpu* cpu)
+void VCpu::_PUSH_SS()
 {
-    cpu->push(cpu->getSS());
+    push(getSS());
 }
 
-void _PUSH_FS(VCpu* cpu)
+void VCpu::_PUSH_FS()
 {
-    cpu->push(cpu->getFS());
+    push(getFS());
 }
 
-void _PUSH_GS(VCpu* cpu)
+void VCpu::_PUSH_GS()
 {
-    cpu->push(cpu->getGS());
+    push(getGS());
 }
 
-void _POP_DS(VCpu* cpu)
+void VCpu::_POP_DS()
 {
-    cpu->DS = cpu->pop();
+    DS = pop();
 }
 
-void _POP_ES(VCpu* cpu)
+void VCpu::_POP_ES()
 {
-    cpu->ES = cpu->pop();
+    ES = pop();
 }
 
-void _POP_SS(VCpu* cpu)
+void VCpu::_POP_SS()
 {
-    cpu->SS = cpu->pop();
+    SS = pop();
 }
 
-void _POP_FS(VCpu* cpu)
+void VCpu::_POP_FS()
 {
-    cpu->FS = cpu->pop();
+    FS = pop();
 }
 
-void _POP_GS(VCpu* cpu)
+void VCpu::_POP_GS()
 {
-    cpu->GS = cpu->pop();
+    GS = pop();
 }
 
-void _PUSHFD(VCpu* cpu)
+void VCpu::_PUSHFD()
 {
-    if (!cpu->getPE() || (cpu->getPE() && ((!cpu->getVM() || (cpu->getVM() && cpu->getIOPL() == 3)))))
-        cpu->push32(cpu->getEFlags() & 0x00FCFFFF);
+    if (!getPE() || (getPE() && ((!getVM() || (getVM() && getIOPL() == 3)))))
+        push32(getEFlags() & 0x00FCFFFF);
     else
-        cpu->GP(0);
+        GP(0);
 }
 
-void _PUSH_imm32(VCpu* cpu)
+void VCpu::_PUSH_imm32()
 {
-    cpu->push32(cpu->fetchOpcodeDWord());
+    push32(fetchOpcodeDWord());
 }
 
-void _PUSHF(VCpu* cpu)
+void VCpu::_PUSHF()
 {
-    if (!cpu->getPE() || (cpu->getPE() && ((!cpu->getVM() || (cpu->getVM() && cpu->getIOPL() == 3)))))
-        cpu->push(cpu->getFlags());
+    if (!getPE() || (getPE() && ((!getVM() || (getVM() && getIOPL() == 3)))))
+        push(getFlags());
     else
-        cpu->GP(0);
+        GP(0);
 }
 
-void _POPF(VCpu* cpu)
+void VCpu::_POPF()
 {
-    if (!cpu->getVM()) {
-        if (cpu->getCPL() == 0)
-            cpu->setFlags(cpu->pop());
+    if (!getVM()) {
+        if (getCPL() == 0)
+            setFlags(pop());
         else {
-            bool oldIOPL = cpu->getIOPL();
-            cpu->setFlags(cpu->pop());
-            cpu->setIOPL(oldIOPL);
+            bool oldIOPL = getIOPL();
+            setFlags(pop());
+            setIOPL(oldIOPL);
         }
     } else {
-        if (cpu->getIOPL() == 3) {
-            bool oldIOPL = cpu->getIOPL();
-            cpu->setFlags(cpu->pop());
-            cpu->setIOPL(oldIOPL);
+        if (getIOPL() == 3) {
+            bool oldIOPL = getIOPL();
+            setFlags(pop());
+            setIOPL(oldIOPL);
         } else
-            cpu->GP(0);
+            GP(0);
     }
 }
 
-void _POPFD(VCpu* cpu)
+void VCpu::_POPFD()
 {
-    if (!cpu->getVM()) {
-        if (cpu->getCPL() == 0)
-            cpu->setEFlags(cpu->pop32());
+    if (!getVM()) {
+        if (getCPL() == 0)
+            setEFlags(pop32());
         else {
-            bool oldIOPL = cpu->getIOPL();
-            cpu->setEFlags(cpu->pop32());
-            cpu->setIOPL(oldIOPL);
+            bool oldIOPL = getIOPL();
+            setEFlags(pop32());
+            setIOPL(oldIOPL);
         }
     } else {
-        if (cpu->getIOPL() == 3) {
-            bool oldIOPL = cpu->getIOPL();
-            cpu->setEFlags(cpu->pop32());
-            cpu->setIOPL(oldIOPL);
+        if (getIOPL() == 3) {
+            bool oldIOPL = getIOPL();
+            setEFlags(pop32());
+            setIOPL(oldIOPL);
         } else
-            cpu->GP(0);
+            GP(0);
     }
 }
