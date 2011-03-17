@@ -337,9 +337,6 @@ public:
     // Conventional memory size in KiB (will be reported by CMOS)
     DWORD baseMemorySize() const { return m_baseMemorySize; }
 
-    // RAM
-    BYTE* memory;
-
     // ID-to-Register maps
     DWORD* treg32[8];
     WORD* treg16[8];
@@ -740,6 +737,8 @@ private:
     VgaMemory* m_vgaMemory;
 
     Debugger* m_debugger;
+
+    BYTE* m_memory;
 
     WORD* m_segmentMap[8];
     DWORD* m_controlRegisterMap[8];
@@ -1286,12 +1285,12 @@ void _CMP_RM32_reg32(VCpu*);
 
 BYTE VCpu::readUnmappedMemory8(DWORD address) const
 {
-    return this->memory[address];
+    return m_memory[address];
 }
 
 WORD VCpu::readUnmappedMemory16(DWORD address) const
 {
-    return vomit_read16FromPointer(reinterpret_cast<WORD*>(this->memory + address));
+    return vomit_read16FromPointer(reinterpret_cast<WORD*>(m_memory + address));
 }
 
 void VCpu::writeUnmappedMemory8(DWORD address, BYTE value)
@@ -1299,7 +1298,7 @@ void VCpu::writeUnmappedMemory8(DWORD address, BYTE value)
 #ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
     m_dirtMap[address] = true;
 #endif
-    this->memory[address] = value;
+    m_memory[address] = value;
 }
 
 void VCpu::writeUnmappedMemory16(DWORD address, WORD value)
@@ -1308,7 +1307,7 @@ void VCpu::writeUnmappedMemory16(DWORD address, WORD value)
     m_dirtMap[address] = true;
     m_dirtMap[address + 1] = true;
 #endif
-    vomit_write16ToPointer(reinterpret_cast<WORD*>(this->memory + address), value);
+    vomit_write16ToPointer(reinterpret_cast<WORD*>(m_memory + address), value);
 }
 
 BYTE* VCpu::codeMemory() const
@@ -1328,7 +1327,7 @@ BYTE* VCpu::memoryPointer(WORD segment, WORD offset) const
 #endif
         address &= 0xFFFFF;
     }
-    return &this->memory[address];
+    return &m_memory[address];
 }
 
 #ifndef VOMIT_PREFETCH_QUEUE

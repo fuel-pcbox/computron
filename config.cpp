@@ -83,7 +83,8 @@ void unspeakable_abomination()
                     vm_exit(1);
                 }
 
-                size_t bytesRead = fread(g_cpu->memory+lseg*16+loff, 1, MAX_FILESIZE, ftmp);
+                void* destination = g_cpu->memoryPointer(lseg, loff);
+                size_t bytesRead = fread(destination, 1, MAX_FILESIZE, ftmp);
 
                 if (!bytesRead) {
                     vlog(VM_CONFIGMSG, "Failure reading from %s", lfname);

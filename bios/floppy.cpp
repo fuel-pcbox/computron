@@ -53,10 +53,13 @@ static void floppy_read(FILE* fp, BYTE drive, WORD cylinder, WORD head, WORD sec
     if (options.disklog)
         vlog(VM_DISKLOG, "Drive %d reading %d sectors at %d/%d/%d (LBA %d) to %04X:%04X [offset=0x%x]", drive, count, cylinder, head, sector, lba, segment, offset, lba*drv_sectsize[drive]);
 
-    ssize_t bytesRead = fread(g_cpu->memory+(segment*16)+(offset), drv_sectsize[drive], count, fp);
+    void* destination = g_cpu->memoryPointer(segment, offset);
+    ssize_t bytesRead = fread(destination, drv_sectsize[drive], count, fp);
 #ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
     for (DWORD address = segment * 16 + offset; address < segment * 16 + offset + BYTEsRead; ++address)
         g_cpu->markDirty(address);
+#else
+    Q_UNUSED(bytesRead);
 #endif
 }
 
@@ -67,7 +70,8 @@ static void floppy_write(FILE* fp, BYTE drive, WORD cylinder, WORD head, WORD se
     if (options.disklog)
         vlog(VM_DISKLOG, "Drive %d writing %d sectors at %d/%d/%d (LBA %d) from %04X:%04X", drive, count, cylinder, head, sector, lba, segment, offset);
 
-    fwrite(g_cpu->memory+(segment<<4)+offset, drv_sectsize[drive], count, fp);
+    void* source = g_cpu->memoryPointer(segment, offset);
+    fwrite(source, drv_sectsize[drive], count, fp);
 }
 
 static void floppy_verify(FILE* fp, BYTE drive, WORD cylinder, WORD head, WORD sector, WORD count, WORD segment, WORD offset)

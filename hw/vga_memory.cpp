@@ -109,8 +109,9 @@ void VgaMemory::write8(DWORD address, BYTE value)
      */
 
     if (address >= 0xAFFFF) {
+        // FIXME: Not sure that this is correct.
         vlog(VM_VIDEOMSG, "OOB write 0x%lx", address);
-        d->cpu->memory[address] = value;
+        d->cpu->writeUnmappedMemory8(address, value);
         return;
     }
 
@@ -262,7 +263,7 @@ void VgaMemory::write8(DWORD address, BYTE value)
 #define D(i) ((d->plane[0][address]>>i) & 1) | (((d->plane[1][address]>>i) & 1)<<1) | (((d->plane[2][address]>>i) & 1)<<2) | (((d->plane[3][address]>>i) & 1)<<3)
 
         // HACK: I don't really like this way of obtaining the current mode...
-        if ((d->cpu->memory[0x449] & 0x7F) == 0x12 && address < (640 * 480 / 8)) {
+        if ((d->cpu->readUnmappedMemory8(0x449) & 0x7F) == 0x12 && address < (640 * 480 / 8)) {
 
             // address 100 -> pixels 800-807
             uchar *px = &d->screen12.bits()[address * 8];
@@ -313,8 +314,9 @@ BYTE VgaMemory::read8(DWORD address) {
         */
         return d->latch[VGA::the()->readRegister2(4)];
     } else {
+        // FIXME: Not sure that this is correct.
         vlog(VM_VIDEOMSG, "OOB read 0x%lx", address);
-        return d->cpu->memory[address];
+        return d->cpu->readUnmappedMemory8(address);
     }
 }
 

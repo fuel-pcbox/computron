@@ -80,8 +80,8 @@ void VCpu::jumpToInterruptHandler(int isr)
     push(getCS());
     push(getIP());
 
-    WORD segment = (this->memory[isr * 4 + 3] << 8) | this->memory[isr * 4 + 2];
-    WORD offset = (this->memory[isr * 4 + 1] << 8) | this->memory[isr * 4];
+    WORD segment = (m_memory[isr * 4 + 3] << 8) | m_memory[isr * 4 + 2];
+    WORD offset = (m_memory[isr * 4 + 1] << 8) | m_memory[isr * 4];
 
     jump16(segment, offset);
 }

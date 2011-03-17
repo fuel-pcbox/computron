@@ -403,8 +403,8 @@ void VCpu::GP(int code)
 VCpu::VCpu(QObject* parent)
     : QObject(parent)
 {
-    this->memory = new BYTE[(8192 * 1024) + 65536];
-    if (!this->memory) {
+    m_memory = new BYTE[(8192 * 1024) + 65536];
+    if (!m_memory) {
         vlog(VM_INITMSG, "Insufficient memory available.");
         vm_exit(1);
     }
@@ -418,7 +418,7 @@ VCpu::VCpu(QObject* parent)
     memset(m_dirtMap, 0, 1048576 + 65536);
 #endif
 
-    memset(this->memory, 0, 1048576 + 65536);
+    memset(m_memory, 0, 1048576 + 65536);
 
     m_vgaMemory = new VgaMemory(this);
 
@@ -549,8 +549,8 @@ VCpu::~VCpu()
     delete [] m_dirtMap;
 #endif
 
-    delete [] this->memory;
-    this->memory = 0;
+    delete [] m_memory;
+    m_memory = 0;
     m_codeMemory = 0;
 
     delete m_debugger;
@@ -704,7 +704,7 @@ void VCpu::jump32(WORD segment, DWORD offset)
     this->EIP = offset;
 
     // Point m_codeMemory to CS:0 for fast opcode fetching.
-    m_codeMemory = this->memory + (segment << 4);
+    m_codeMemory = m_memory + (segment << 4);
     flushFetchQueue();
 }
 
@@ -1062,7 +1062,7 @@ void VCpu::writeMemory32(DWORD address, DWORD data)
 #endif
 
     assert (address < (0xFFFFF - 4));
-    DWORD* ptr = reinterpret_cast<DWORD*>(this->memory + address);
+    DWORD* ptr = reinterpret_cast<DWORD*>(m_memory + address);
     vomit_write32ToPointer(ptr, data);
 }
 
@@ -1078,7 +1078,7 @@ DWORD VCpu::readMemory32(DWORD address) const
     if (!m_dirtMap[address] || !m_dirtMap[address + 1] || !m_dirtMap[address + 2] || !m_dirtMap[address + 3])
         vlog(VM_MEMORYMSG, "%04X:%08X: Uninitialized read from %08X", getBaseCS(), getBaseEIP(), address);
 #endif
-    return vomit_read32FromPointer(reinterpret_cast<DWORD*>(this->memory + address));
+    return vomit_read32FromPointer(reinterpret_cast<DWORD*>(m_memory + address));
 }
 
 BYTE VCpu::readMemory8(DWORD address) const
@@ -1098,7 +1098,7 @@ BYTE VCpu::readMemory8(DWORD address) const
     if (!m_dirtMap[address])
         vlog(VM_MEMORYMSG, "%04X:%04X: Uninitialized read from %08X", getBaseCS(), getBaseIP(), address);
 #endif
-    return this->memory[address];
+    return m_memory[address];
 }
 
 BYTE VCpu::readMemory8(WORD segment, WORD offset) const
@@ -1124,7 +1124,7 @@ WORD VCpu::readMemory16(DWORD address) const
     if (!m_dirtMap[address] || !m_dirtMap[address + 1])
         vlog(VM_MEMORYMSG, "%04X:%04X: Uninitialized read from %08X", getBaseCS(), getBaseIP(), address);
 #endif
-    return vomit_read16FromPointer(reinterpret_cast<WORD*>(this->memory + address));
+    return vomit_read16FromPointer(reinterpret_cast<WORD*>(m_memory + address));
 }
 
 WORD VCpu::readMemory16(WORD segment, WORD offset) const
@@ -1157,7 +1157,7 @@ void VCpu::writeMemory8(DWORD address, BYTE value)
     m_dirtMap[address] = true;
 #endif
 
-    this->memory[address] = value;
+    m_memory[address] = value;
 }
 
 
@@ -1190,7 +1190,7 @@ void VCpu::writeMemory16(DWORD address, WORD value)
     m_dirtMap[address + 1] = true;
 #endif
 
-    WORD* ptr = reinterpret_cast<WORD*>(this->memory + address);
+    WORD* ptr = reinterpret_cast<WORD*>(m_memory + address);
     vomit_write16ToPointer(ptr, value);
 }
 
