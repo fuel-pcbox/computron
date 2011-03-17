@@ -113,37 +113,37 @@ void _MOV_seg_RM32(VCpu* cpu)
 void _MOV_RM8_reg8(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    cpu->writeModRM8(rm, *cpu->treg8[vomit_modRMRegisterPart(rm)]);
+    cpu->writeModRM8(rm, cpu->getRegister8(static_cast<VCpu::RegisterIndex8>(vomit_modRMRegisterPart(rm))));
 }
 
 void _MOV_reg8_RM8(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    *cpu->treg8[vomit_modRMRegisterPart(rm)] = cpu->readModRM8(rm);
+    cpu->setRegister8(static_cast<VCpu::RegisterIndex8>(vomit_modRMRegisterPart(rm)), cpu->readModRM8(rm));
 }
 
 void _MOV_RM16_reg16(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    cpu->writeModRM16(rm, *cpu->treg16[vomit_modRMRegisterPart(rm)]);
+    cpu->writeModRM16(rm, cpu->getRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm))));
 }
 
 void _MOV_RM32_reg32(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    cpu->writeModRM32(rm, *cpu->treg32[vomit_modRMRegisterPart(rm)]);
+    cpu->writeModRM32(rm, cpu->getRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm))));
 }
 
 void _MOV_reg16_RM16(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    *cpu->treg16[vomit_modRMRegisterPart(rm)] = cpu->readModRM16(rm);
+    cpu->setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), cpu->readModRM16(rm));
 }
 
 void _MOV_reg32_RM32(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    *cpu->treg32[vomit_modRMRegisterPart(rm)] = cpu->readModRM32(rm);
+    cpu->setRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)), cpu->readModRM32(rm));
 }
 
 void _MOV_reg32_CR(VCpu* cpu)
@@ -182,7 +182,7 @@ void _MOV_reg32_CR(VCpu* cpu)
         }
     }
 
-    *cpu->treg32[rm & 7] = *cpu->creg[crIndex];
+    cpu->setRegister32(static_cast<VCpu::RegisterIndex32>(rm & 7), *cpu->creg[crIndex]);
 }
 
 void _MOV_CR_reg32(VCpu* cpu)
@@ -221,13 +221,10 @@ void _MOV_CR_reg32(VCpu* cpu)
         }
     }
 
-#ifdef VOMIT_DEBUG
-    if (crIndex == 0) {
-        vlog(VM_CPUMSG, "Protected mode Enable = %u", *cpu->treg32[rm & 7] & 1);
-    }
-#endif
+    *cpu->creg[crIndex] = cpu->getRegister32(static_cast<VCpu::RegisterIndex32>(rm & 7));
 
-    *cpu->creg[crIndex] = *cpu->treg32[rm & 7];
+    if (crIndex == 0)
+        vlog(VM_CPUMSG, "Protected mode Enable = %u", cpu->getPE());
 }
 
 void _MOV_AL_imm8(VCpu* cpu)
@@ -401,17 +398,17 @@ void _MOV_moff32_EAX(VCpu* cpu)
 void _MOVZX_reg16_RM8(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    *cpu->treg16[vomit_modRMRegisterPart(rm)] = cpu->readModRM8(rm);
+    cpu->setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), cpu->readModRM8(rm));
 }
 
 void _MOVZX_reg32_RM8(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    *cpu->treg32[vomit_modRMRegisterPart(rm)] = cpu->readModRM8(rm);
+    cpu->setRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)), cpu->readModRM8(rm));
 }
 
 void _MOVZX_reg32_RM16(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    *cpu->treg32[vomit_modRMRegisterPart(rm)] = cpu->readModRM16(rm);
+    cpu->setRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)), cpu->readModRM16(rm));
 }

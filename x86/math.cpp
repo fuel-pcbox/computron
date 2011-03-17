@@ -327,7 +327,7 @@ void _IMUL_reg16_RM16_imm8(VCpu* cpu)
     SIGNED_WORD value = (SIGNED_WORD)cpu->readModRM16(rm);
     SIGNED_WORD result = cpu_imul16(cpu, value, imm);
 
-    *cpu->treg16[vomit_modRMRegisterPart(rm)] = result;
+    cpu->setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), result);
 
     if ((result & 0xFF00) == 0x00 || (result & 0xFF00) == 0xFF) {
         cpu->setCF(0);

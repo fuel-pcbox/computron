@@ -58,7 +58,7 @@ void _BOUND(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
     WORD* ptr = static_cast<WORD*>(cpu->resolveModRM8(rm));
-    WORD index = *cpu->treg16[vomit_modRMRegisterPart(rm)];
+    WORD index = cpu->getRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)));
 
     if (index < ptr[0] || index > ptr[1]) {
         /* Raise BR exception */

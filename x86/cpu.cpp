@@ -1075,8 +1075,8 @@ void _XCHG_reg16_RM16(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
     WORD value = cpu->readModRM16(rm);
-    WORD tmp = *cpu->treg16[vomit_modRMRegisterPart(rm)];
-    *cpu->treg16[vomit_modRMRegisterPart(rm)] = value;
+    WORD tmp = cpu->getRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)));
+    cpu->setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), value);
     cpu->updateModRM16(tmp);
 }
 
@@ -1084,8 +1084,8 @@ void _XCHG_reg32_RM32(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
     DWORD value = cpu->readModRM32(rm);
-    DWORD tmp = *cpu->treg32[vomit_modRMRegisterPart(rm)];
-    *cpu->treg32[vomit_modRMRegisterPart(rm)] = value;
+    DWORD tmp = cpu->getRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)));
+    cpu->setRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)), value);
     cpu->updateModRM32(tmp);
 }
 
@@ -1178,7 +1178,7 @@ void _LDS_reg16_mem16(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
     WORD* ptr = static_cast<WORD*>(cpu->resolveModRM8(rm));
-    *cpu->treg16[vomit_modRMRegisterPart(rm)] = vomit_read16FromPointer(ptr);
+    cpu->setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), vomit_read16FromPointer(ptr));
     cpu->DS = vomit_read16FromPointer(ptr + 1);}
 
 void _LDS_reg32_mem32(VCpu* cpu)
@@ -1192,7 +1192,7 @@ void _LES_reg16_mem16(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
     WORD* ptr = static_cast<WORD*>(cpu->resolveModRM8(rm));
-    *cpu->treg16[vomit_modRMRegisterPart(rm)] = vomit_read16FromPointer(ptr);
+    cpu->setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), vomit_read16FromPointer(ptr));
     cpu->ES = vomit_read16FromPointer(ptr + 1);
 }
 
@@ -1207,7 +1207,7 @@ void _LFS_reg16_mem16(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
     WORD* ptr = static_cast<WORD*>(cpu->resolveModRM8(rm));
-    *cpu->treg16[vomit_modRMRegisterPart(rm)] = vomit_read16FromPointer(ptr);
+    cpu->setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), vomit_read16FromPointer(ptr));
     cpu->FS = vomit_read16FromPointer(ptr + 1);
 }
 
@@ -1222,7 +1222,7 @@ void _LGS_reg16_mem16(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
     WORD* ptr = static_cast<WORD*>(cpu->resolveModRM8(rm));
-    *cpu->treg16[vomit_modRMRegisterPart(rm)] = vomit_read16FromPointer(ptr);
+    cpu->setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), vomit_read16FromPointer(ptr));
     cpu->GS = vomit_read16FromPointer(ptr + 1);
 }
 
@@ -1291,7 +1291,7 @@ void _LEA_reg16_mem16(VCpu* cpu)
             cpu->exception(6);
             break;
     }
-    *cpu->treg16[vomit_modRMRegisterPart(b)] = retv;
+    cpu->setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(b)), retv);
 }
 
 inline bool isVGAMemory(DWORD address)
