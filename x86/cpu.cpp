@@ -553,7 +553,7 @@ VCpu::~VCpu()
     this->memory = 0;
     m_codeMemory = 0;
 
-    delete [] m_debugger;
+    delete m_debugger;
 
     // FIXME: Don't leak m_vgaMemory.
 }
