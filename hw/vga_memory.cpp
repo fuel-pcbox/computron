@@ -27,7 +27,6 @@
 #include "vcpu.h"
 #include "vga.h"
 #include "debug.h"
-#include "disasm.h" // MAKEWORD
 #include <QtGui/QImage>
 #include <QtGui/QColor>
 #include <QtGui/QBrush>
