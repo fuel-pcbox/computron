@@ -56,7 +56,7 @@ static void floppy_read(FILE* fp, BYTE drive, WORD cylinder, WORD head, WORD sec
     void* destination = g_cpu->memoryPointer(segment, offset);
     ssize_t bytesRead = fread(destination, drv_sectsize[drive], count, fp);
 #ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
-    for (DWORD address = segment * 16 + offset; address < segment * 16 + offset + BYTEsRead; ++address)
+    for (DWORD address = segment * 16 + offset; address < segment * 16 + offset + bytesRead; ++address)
         g_cpu->markDirty(address);
 #else
     Q_UNUSED(bytesRead);
