@@ -34,7 +34,6 @@
 void vm_exit(int);
 void config_reload();
 void vm_loadconf();
-void vm_cbreak(int);
 
 void vm_kill();
 
