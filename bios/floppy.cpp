@@ -29,7 +29,6 @@
 #include "debug.h"
 
 char drv_imgfile[4][MAX_FN_LENGTH];
-char drv_title[4][MAX_DRV_TITLESIZE+1];
 BYTE drv_status[4], drv_type[4];
 DWORD drv_spt[4], drv_heads[4], drv_sectors[4], drv_sectsize[4];
 

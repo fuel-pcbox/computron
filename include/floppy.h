@@ -28,8 +28,6 @@
 
 #include "vomit.h"
 
-#define MAX_DRV_TITLESIZE       24
-
 #define FD_NO_ERROR             0x00
 #define FD_BAD_COMMAND          0x01
 #define FD_BAD_ADDRESS_MARK     0x02
