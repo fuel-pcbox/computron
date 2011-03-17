@@ -999,9 +999,11 @@ protected:
     void _NEG_RM8();
     void _NEG_RM16();
 
+    void _INC_RM8();
     void _INC_RM16();
     void _INC_reg16();
     void _INC_reg32();
+    void _DEC_RM8();
     void _DEC_RM16();
     void _DEC_reg16();
     void _DEC_reg32();

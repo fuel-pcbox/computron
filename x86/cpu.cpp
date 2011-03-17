@@ -932,6 +932,28 @@ void VCpu::_DEC_RM16()
     updateModRM16(value - 1);
 }
 
+void VCpu::_INC_RM8()
+{
+    BYTE value = readModRM8(this->rmbyte);
+    WORD i = value;
+    setOF(value == 0x7F);
+    i++;
+    adjustFlag32(i, value, 1);
+    updateFlags8(i);
+    updateModRM8(value + 1);
+}
+
+void VCpu::_DEC_RM8()
+{
+    BYTE value = readModRM8(this->rmbyte);
+    WORD i = value;
+    setOF(value == 0x80);
+    i--;
+    adjustFlag32(i, value, 1);
+    updateFlags8(i);
+    updateModRM8(value - 1);
+}
+
 void VCpu::_LDS_reg16_mem16()
 {
     BYTE rm = fetchOpcodeByte();

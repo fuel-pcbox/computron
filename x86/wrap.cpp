@@ -369,28 +369,12 @@ void VCpu::_wrap_0xF7_32()
 
 void VCpu::_wrap_0xFE()
 {
-    BYTE rm = fetchOpcodeByte();
-    BYTE value = readModRM8(rm);
-
-    WORD i = value;
-
-    switch (vomit_modRMRegisterPart(rm)) {
-    case 0:
-        setOF(value == 0x7F);
-        i++;
-        adjustFlag32(i, value, 1);
-        updateFlags8(i);
-        updateModRM8(value + 1);
-        break;
-    case 1:
-        setOF(value == 0x80);
-        i--;
-        adjustFlag32(i, value, 1);
-        updateFlags8(i);
-        updateModRM8(value - 1);
-        break;
+    rmbyte = fetchOpcodeByte();
+    switch (vomit_modRMRegisterPart(rmbyte)) {
+    case 0: _INC_RM8(); break;
+    case 1: _DEC_RM8(); break;
     default:
-        vlog(VM_ALERT, "FE /%u not wrapped", vomit_modRMRegisterPart(rm));
+        vlog(VM_ALERT, "FE /%u not wrapped", vomit_modRMRegisterPart(rmbyte));
         exception(6);
         break;
     }
