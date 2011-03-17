@@ -153,19 +153,37 @@ public:
     VCpu(QObject* parent = 0);
     ~VCpu();
 
-    enum {
-        RegisterAL, RegisterCL, RegisterDL, RegisterBL,
-        RegisterAH, RegisterCH, RegisterDH, RegisterBH
+    enum RegisterIndex8 {
+        RegisterAL = 0,
+        RegisterCL,
+        RegisterDL,
+        RegisterBL,
+        RegisterAH,
+        RegisterCH,
+        RegisterDH,
+        RegisterBH
     };
 
-    enum {
-        RegisterAX, RegisterCX, RegisterDX, RegisterBX,
-        RegisterSP, RegisterBP, RegisterSI, RegisterDI
+    enum RegisterIndex16 {
+        RegisterAX = 0,
+        RegisterCX,
+        RegisterDX,
+        RegisterBX,
+        RegisterSP,
+        RegisterBP,
+        RegisterSI,
+        RegisterDI
     };
 
-    enum {
-        RegisterEAX, RegisterECX, RegisterEDX, RegisterEBX,
-        RegisterESP, RegisterEBP, RegisterESI, RegisterEDI
+    enum RegisterIndex32 {
+        RegisterEAX = 0,
+        RegisterECX,
+        RegisterEDX,
+        RegisterEBX,
+        RegisterESP,
+        RegisterEBP,
+        RegisterESI,
+        RegisterEDI
     };
 
     enum {
@@ -386,6 +404,14 @@ public:
 
     void setIP(WORD ip) { this->IP = ip; }
     void setEIP(DWORD eip) { this->EIP = eip; }
+
+    DWORD getRegister32(RegisterIndex32 registerIndex) const { return *treg32[registerIndex]; }
+    WORD getRegister16(RegisterIndex16 registerIndex) const { return *treg16[registerIndex]; }
+    BYTE getRegister8(RegisterIndex8 registerIndex) const { return *treg8[registerIndex]; }
+
+    void setRegister32(RegisterIndex32 registerIndex, DWORD value) { *treg32[registerIndex] = value; }
+    void setRegister16(RegisterIndex16 registerIndex, WORD value) { *treg16[registerIndex] = value; }
+    void setRegister8(RegisterIndex8 registerIndex, BYTE value) { *treg8[registerIndex] = value; }
 
     DWORD getEAX() const { return this->regs.D.EAX; }
     DWORD getEBX() const { return this->regs.D.EBX; }
