@@ -633,7 +633,7 @@ void VCpu::mainLoop()
             PIC::raiseIRQ(0);
         }
 
-        if (PIC::hasPendingIRQ() && getIF())
+        if (getIF() && PIC::hasPendingIRQ())
             PIC::serviceIRQ(this);
     }
 }
