@@ -588,11 +588,13 @@ void VCpu::mainLoop()
 
 #ifdef VOMIT_DEBUG
 
-        DWORD flatPC = vomit_toFlatAddress(getCS(), getEIP());
-        foreach (DWORD breakPoint, m_breakPoints) {
-            if (flatPC == breakPoint) {
-                debugger()->enter();
-                break;
+        if (!m_breakPoints.isEmpty()) {
+            DWORD flatPC = vomit_toFlatAddress(getCS(), getEIP());
+            foreach (DWORD breakPoint, m_breakPoints) {
+                if (flatPC == breakPoint) {
+                    debugger()->enter();
+                    break;
+                }
             }
         }
 
