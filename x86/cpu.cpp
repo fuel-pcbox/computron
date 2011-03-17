@@ -554,8 +554,7 @@ VCpu::~VCpu()
     m_codeMemory = 0;
 
     delete m_debugger;
-
-    // FIXME: Don't leak m_vgaMemory.
+    delete m_vgaMemory;
 }
 
 #ifdef FOR_REFERENCE_ONLY
