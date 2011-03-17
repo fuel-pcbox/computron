@@ -512,14 +512,14 @@ VCpu::VCpu(QObject* parent)
     this->treg8[RegisterCL] = &this->regs.B.CL;
     this->treg8[RegisterDL] = &this->regs.B.DL;
 
-    this->tseg[RegisterCS] = &this->CS;
-    this->tseg[RegisterDS] = &this->DS;
-    this->tseg[RegisterES] = &this->ES;
-    this->tseg[RegisterSS] = &this->SS;
-    this->tseg[RegisterFS] = &this->FS;
-    this->tseg[RegisterGS] = &this->GS;
-    this->tseg[6] = 0;
-    this->tseg[7] = 0;
+    m_segmentMap[RegisterCS] = &this->CS;
+    m_segmentMap[RegisterDS] = &this->DS;
+    m_segmentMap[RegisterES] = &this->ES;
+    m_segmentMap[RegisterSS] = &this->SS;
+    m_segmentMap[RegisterFS] = &this->FS;
+    m_segmentMap[RegisterGS] = &this->GS;
+    m_segmentMap[6] = 0;
+    m_segmentMap[7] = 0;
 
     m_segmentPrefix = 0x0000;
     m_currentSegment = &this->DS;

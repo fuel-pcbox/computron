@@ -94,12 +94,12 @@ void VCpu::dumpTrace() const
 }
 #endif
 
-void dumpSelector(const VCpu* cpu, const char* segmentRegisterName, int segIndex)
+void dumpSelector(const VCpu* cpu, const char* segmentRegisterName, int segmentIndex)
 {
-    const VCpu::SegmentSelector& selector = cpu->m_selector[segIndex];
+    const VCpu::SegmentSelector& selector = cpu->m_selector[segmentIndex];
     vlog(VM_DUMPMSG, "%s: %04X {%08X:%05X}",
         segmentRegisterName,
-        *cpu->tseg[segIndex],
+        cpu->getSegment(static_cast<VCpu::SegmentIndex>(segmentIndex)),
         selector.base,
         selector.limit
     );

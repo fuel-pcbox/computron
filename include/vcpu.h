@@ -31,6 +31,8 @@
 
 // MACROS AND CONVENIENCE METHODS
 
+#define ASSERT_VALID_SEGMENT_INDEX(segmentIndex) VM_ASSERT(static_cast<int>(segmentIndex) >= 0 && static_cast<int>(segmentIndex) <= 5)
+
 inline DWORD vomit_toFlatAddress(WORD segment, WORD offset)
 {
     return (segment << 4) + offset;
@@ -186,9 +188,13 @@ public:
         RegisterEDI
     };
 
-    enum {
-        RegisterES, RegisterCS, RegisterSS, RegisterDS,
-        RegisterFS, RegisterGS
+    enum SegmentIndex {
+        RegisterES = 0,
+        RegisterCS,
+        RegisterSS,
+        RegisterDS,
+        RegisterFS,
+        RegisterGS
     };
 
     union {
@@ -339,7 +345,6 @@ public:
     DWORD* treg32[8];
     WORD* treg16[8];
     BYTE* treg8[8];
-    WORD* tseg[8];
 
     void kill();
 
@@ -412,6 +417,9 @@ public:
     void setRegister32(RegisterIndex32 registerIndex, DWORD value) { *treg32[registerIndex] = value; }
     void setRegister16(RegisterIndex16 registerIndex, WORD value) { *treg16[registerIndex] = value; }
     void setRegister8(RegisterIndex8 registerIndex, BYTE value) { *treg8[registerIndex] = value; }
+
+    WORD getSegment(SegmentIndex segmentIndex) const { ASSERT_VALID_SEGMENT_INDEX(segmentIndex); return *m_segmentMap[segmentIndex]; }
+    void setSegment(SegmentIndex segmentIndex, WORD value) const { ASSERT_VALID_SEGMENT_INDEX(segmentIndex); *m_segmentMap[segmentIndex] = value; }
 
     DWORD getEAX() const { return this->regs.D.EAX; }
     DWORD getEBX() const { return this->regs.D.EBX; }
@@ -730,6 +738,8 @@ private:
     VgaMemory* m_vgaMemory;
 
     Debugger* m_debugger;
+
+    WORD* m_segmentMap[8];
 };
 
 extern VCpu* g_cpu;

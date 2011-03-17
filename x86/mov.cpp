@@ -47,25 +47,25 @@ void _MOV_RM32_imm32(VCpu* cpu)
 void _MOV_RM16_seg(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    int segIndex = vomit_modRMRegisterPart(rm);
-    VM_ASSERT(segIndex >= 0 && segIndex <= 5);
-    cpu->writeModRM16(rm, *cpu->tseg[segIndex]);
+    int segmentIndex = vomit_modRMRegisterPart(rm);
+    ASSERT_VALID_SEGMENT_INDEX(segmentIndex);
+    cpu->writeModRM16(rm, cpu->getSegment(static_cast<VCpu::SegmentIndex>(segmentIndex)));
 }
 
 void _MOV_RM32_seg(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    int segIndex = vomit_modRMRegisterPart(rm);
-    VM_ASSERT(segIndex >= 0 && segIndex <= 5);
-    cpu->writeModRM32(rm, *cpu->tseg[segIndex]);
+    int segmentIndex = vomit_modRMRegisterPart(rm);
+    ASSERT_VALID_SEGMENT_INDEX(segmentIndex);
+    cpu->writeModRM32(rm, cpu->getSegment(static_cast<VCpu::SegmentIndex>(segmentIndex)));
 }
 
-static void syncSegmentRegister(VCpu* cpu, int segIndex)
+static void syncSegmentRegister(VCpu* cpu, VCpu::SegmentIndex segmentIndex)
 {
-    VM_ASSERT(segIndex >= 0 && segIndex <= 5);
-    VCpu::SegmentSelector& selector = cpu->m_selector[segIndex];
+    ASSERT_VALID_SEGMENT_INDEX(segmentIndex);
+    VCpu::SegmentSelector& selector = cpu->m_selector[segmentIndex];
 
-    WORD segment = *cpu->tseg[segIndex];
+    WORD segment = cpu->getSegment(segmentIndex);
 
     if (segment % 8)
         vlog(VM_ALERT, "Segment selector index %u not divisible by 8.", segment);
@@ -91,23 +91,23 @@ static void syncSegmentRegister(VCpu* cpu, int segIndex)
 void _MOV_seg_RM16(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    int segIndex = vomit_modRMRegisterPart(rm);
-    VM_ASSERT(segIndex >= 0 && segIndex <= 5);
-    *cpu->tseg[segIndex] = cpu->readModRM16(rm);
+    VCpu::SegmentIndex segmentIndex = static_cast<VCpu::SegmentIndex>(vomit_modRMRegisterPart(rm));
+    ASSERT_VALID_SEGMENT_INDEX(segmentIndex);
+    cpu->setSegment(segmentIndex, cpu->readModRM16(rm));
 
     if (cpu->getPE())
-        syncSegmentRegister(cpu, segIndex);
+        syncSegmentRegister(cpu, segmentIndex);
 }
 
 void _MOV_seg_RM32(VCpu* cpu)
 {
     BYTE rm = cpu->fetchOpcodeByte();
-    int segIndex = vomit_modRMRegisterPart(rm);
-    VM_ASSERT(segIndex >= 0 && segIndex <= 5);
-    *cpu->tseg[segIndex] = cpu->readModRM32(rm);
+    VCpu::SegmentIndex segmentIndex = static_cast<VCpu::SegmentIndex>(vomit_modRMRegisterPart(rm));
+    ASSERT_VALID_SEGMENT_INDEX(segmentIndex);
+    cpu->setSegment(segmentIndex, cpu->readModRM32(rm));
 
     if (cpu->getPE())
-        syncSegmentRegister(cpu, segIndex);
+        syncSegmentRegister(cpu, static_cast<VCpu::SegmentIndex>(segmentIndex));
 }
 
 void _MOV_RM8_reg8(VCpu* cpu)
