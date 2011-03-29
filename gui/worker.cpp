@@ -53,7 +53,6 @@ Worker::~Worker()
 
 void Worker::run()
 {
-    d->cpu->moveToThread(this);
     while (d->active) {
         d->cpu->mainLoop();
         while (!d->active)
