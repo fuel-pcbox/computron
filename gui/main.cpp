@@ -31,29 +31,13 @@
 #include "vomit.h"
 #include "debugger.h"
 
-static MainWindow *mw = 0L;
+static void parseArguments(const QStringList& arguments);
 
-int
-main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     QApplication app(argc, argv);
 
-    QStringList args = app.arguments();
-
-    memset(&options, 0, sizeof(options));
-    if(args.contains("--disklog")) options.disklog = true;
-    if(args.contains("--trapint")) options.trapint = true;
-    if(args.contains("--iopeek")) options.iopeek = true;
-    if(args.contains("--trace")) options.trace = true;
-    if(args.contains("--debug")) options.start_in_debug = true;
-
-#ifndef VOMIT_TRACE
-    if(options.trace)
-    {
-        fprintf(stderr, "Rebuild with #define VOMIT_TRACE if you want --trace to work.\n");
-        exit(1);
-    }
-#endif
+    parseArguments(app.arguments());
 
     qRegisterMetaType<BYTE>("BYTE");
     qRegisterMetaType<WORD>("WORD");
@@ -74,30 +58,35 @@ main(int argc, char **argv)
 
     vomit_init();
 
-    mw = new MainWindow(g_cpu);
-    mw->show();
+    MainWindow mw(g_cpu);
+    mw.show();
 
     return app.exec();
 }
 
-WORD kbd_getc()
+void parseArguments(const QStringList& arguments)
 {
-    if (!mw || !mw->screen())
-        return 0x0000;
-    return mw->screen()->nextKey();
-}
+    memset(&options, 0, sizeof(options));
 
-WORD kbd_hit()
-{
-    if (!mw || !mw->screen())
-        return 0x0000;
-    return mw->screen()->peekKey();
-}
+    if (arguments.contains("--disklog"))
+        options.disklog = true;
 
-BYTE kbd_pop_raw()
-{
-    if (!mw || !mw->screen())
-        return 0x00;
-    return mw->screen()->popKeyData();
-}
+    if (arguments.contains("--trapint"))
+        options.trapint = true;
 
+    if (arguments.contains("--iopeek"))
+        options.iopeek = true;
+
+    if (arguments.contains("--trace"))
+        options.trace = true;
+
+    if (arguments.contains("--debug"))
+        options.start_in_debug = true;
+
+#ifndef VOMIT_TRACE
+    if (options.trace) {
+        fprintf(stderr, "Rebuild with #define VOMIT_TRACE if you want --trace to work.\n");
+        exit(1);
+    }
+#endif
+}

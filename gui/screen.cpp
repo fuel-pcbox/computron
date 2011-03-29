@@ -798,3 +798,24 @@ void Screen::flushKeyBuffer()
     if (!d->rawQueue.isEmpty() && d->cpu->getIF())
         Keyboard::raiseIRQ();
 }
+
+WORD kbd_getc()
+{
+    if (!s_self)
+        return 0x0000;
+    return s_self->nextKey();
+}
+
+WORD kbd_hit()
+{
+    if (!s_self)
+        return 0x0000;
+    return s_self->peekKey();
+}
+
+BYTE kbd_pop_raw()
+{
+    if (s_self)
+        return 0x00;
+    return s_self->popKeyData();
+}
