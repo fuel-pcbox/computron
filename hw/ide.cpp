@@ -27,8 +27,6 @@
 #include "debug.h"
 #include "ide.h"
 
-// FIXME: Move IDE to separate logging channel.
-
 static IDE theIDE;
 
 struct IDEController
@@ -96,28 +94,28 @@ void IDE::out8(WORD port, BYTE data)
 
     switch (port & 0xF) {
     case 0x2:
-        vlog(VM_DISKLOG, "Controller %d sector count set: %u", controllerIndex, data);
+        vlog(VLOG_IDE, "Controller %d sector count set: %u", controllerIndex, data);
         controller.sectorCount = data;
         break;
     case 0x3:
-        vlog(VM_DISKLOG, "Controller %d sector index set: %u", controllerIndex, data);
+        vlog(VLOG_IDE, "Controller %d sector index set: %u", controllerIndex, data);
         controller.sectorIndex = data;
         break;
     case 0x4:
-        vlog(VM_DISKLOG, "Controller %d cylinder LSB set: %u", controllerIndex, data);
+        vlog(VLOG_IDE, "Controller %d cylinder LSB set: %u", controllerIndex, data);
         controller.cylinderIndex = MAKEWORD(data, MSB(controller.cylinderIndex));
         break;
     case 0x5:
-        vlog(VM_DISKLOG, "Controller %d cylinder MSB set: %u", controllerIndex, data);
+        vlog(VLOG_IDE, "Controller %d cylinder MSB set: %u", controllerIndex, data);
         controller.cylinderIndex = MAKEWORD(LSB(controller.cylinderIndex), data);
         break;
     case 0x6:
-        vlog(VM_DISKLOG, "Controller %d head index set: %u", controllerIndex, data);
+        vlog(VLOG_IDE, "Controller %d head index set: %u", controllerIndex, data);
         controller.headIndex = data;
         break;
     case 0x7:
         // FIXME: ...
-        vlog(VM_DISKLOG, "Controller %d received command %02X", controllerIndex, data);
+        vlog(VLOG_IDE, "Controller %d received command %02X", controllerIndex, data);
         break;
     default:
         IODevice::out8(port, data);
@@ -131,26 +129,26 @@ BYTE IDE::in8(WORD port)
 
     switch (port & 0xF) {
     case 0x1:
-        vlog(VM_DISKLOG, "Controller %d error queried: %02X", controllerIndex, controller.error);
+        vlog(VLOG_IDE, "Controller %d error queried: %02X", controllerIndex, controller.error);
         return controller.error;
     case 0x2:
-        vlog(VM_DISKLOG, "Controller %d sector count queried: %u", controllerIndex, controller.sectorCount);
+        vlog(VLOG_IDE, "Controller %d sector count queried: %u", controllerIndex, controller.sectorCount);
         return controller.sectorCount;
     case 0x3:
-        vlog(VM_DISKLOG, "Controller %d sector index queried: %u", controllerIndex, controller.sectorIndex);
+        vlog(VLOG_IDE, "Controller %d sector index queried: %u", controllerIndex, controller.sectorIndex);
         return controller.sectorIndex;
     case 0x4:
-        vlog(VM_DISKLOG, "Controller %d cylinder LSB queried: %02X", controllerIndex, LSB(controller.cylinderIndex));
+        vlog(VLOG_IDE, "Controller %d cylinder LSB queried: %02X", controllerIndex, LSB(controller.cylinderIndex));
         return LSB(controller.cylinderIndex);
     case 0x5:
-        vlog(VM_DISKLOG, "Controller %d cylinder MSB queried: %02X", controllerIndex, MSB(controller.cylinderIndex));
+        vlog(VLOG_IDE, "Controller %d cylinder MSB queried: %02X", controllerIndex, MSB(controller.cylinderIndex));
         return LSB(controller.cylinderIndex);
     case 0x6:
-        vlog(VM_DISKLOG, "Controller %d head index queried: %u", controllerIndex, controller.headIndex);
+        vlog(VLOG_IDE, "Controller %d head index queried: %u", controllerIndex, controller.headIndex);
         return controller.headIndex;
     case 0x7: {
         BYTE ret = status();
-        vlog(VM_DISKLOG, "Controller %d status queried: %02X", controllerIndex, ret);
+        vlog(VLOG_IDE, "Controller %d status queried: %02X", controllerIndex, ret);
         return ret;
     }
     default:

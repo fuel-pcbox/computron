@@ -56,6 +56,7 @@ void vlog(int category, const char* format, ...)
     case VM_DUMPMSG: show_on_stdout = false; break;
     case VM_VOMCTL: prefix = "vomctl"; break;
     case VLOG_CMOS: prefix = "cmos"; break;
+    case VLOG_IDE: prefix = "ide"; break;
     }
 
     if (!s_logfile) {

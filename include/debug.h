@@ -61,7 +61,7 @@
 #define VM_PICMSG       124
 #define VM_VOMCTL       125
 #define VLOG_CMOS       126
-
+#define VLOG_IDE        127
 
 extern void vlog( int category, const char *format, ... );
 
