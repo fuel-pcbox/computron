@@ -28,7 +28,7 @@
 
 void VCpu::_ESCAPE()
 {
-    vlog(VM_CPUMSG, "%04X:%08X FPU escape via %02X /%u",
+    vlog(LogFPU, "%04X:%08X FPU escape via %02X /%u",
         getBaseCS(), getBaseEIP(),
         opcode, vomit_modRMRegisterPart(readMemory8(getBaseCS(), getBaseIP() + 1)));
 

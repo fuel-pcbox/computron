@@ -145,7 +145,7 @@ void VCpu::out(WORD port, BYTE value)
 {
 #ifdef VOMIT_DEBUG
     if (options.iopeek)
-        vlog(VM_IOMSG, "[%04X:%08X] VCpu::out: %02X --> %04X", getBaseCS(), getBaseEIP(), value, port);
+        vlog(LogIO, "[%04X:%08X] VCpu::out: %02X --> %04X", getBaseCS(), getBaseEIP(), value, port);
 #endif
 
     if (IODevice::writeDevices().contains(port)) {
@@ -154,21 +154,21 @@ void VCpu::out(WORD port, BYTE value)
     }
 
     if (!s_ignorePorts.contains(port))
-        vlog(VM_ALERT, "Unhandled I/O write to port %04X, data %02X", port, value);
+        vlog(LogAlert, "Unhandled I/O write to port %04X, data %02X", port, value);
 }
 
 BYTE VCpu::in(WORD port)
 {
 #ifdef VOMIT_DEBUG
     if (options.iopeek)
-        vlog(VM_IOMSG, "[%04X:%08X] VCpu::in: %04X", getBaseCS(), getBaseEIP(), port);
+        vlog(LogIO, "[%04X:%08X] VCpu::in: %04X", getBaseCS(), getBaseEIP(), port);
 #endif
 
     if (IODevice::readDevices().contains(port))
         return IODevice::readDevices()[port]->in8(port);
 
     if (!s_ignorePorts.contains(port))
-        vlog(VM_ALERT, "Unhandled I/O read from port %04X", port);
+        vlog(LogAlert, "Unhandled I/O read from port %04X", port);
 
     return IODevice::JunkValue;
 }

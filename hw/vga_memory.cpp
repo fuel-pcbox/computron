@@ -109,7 +109,7 @@ void VgaMemory::write8(DWORD address, BYTE value)
 
     if (address >= 0xAFFFF) {
         // FIXME: Not sure that this is correct.
-        vlog(VM_VIDEOMSG, "OOB write 0x%lx", address);
+        vlog(LogVGA, "OOB write 0x%lx", address);
         d->cpu->writeUnmappedMemory8(address, value);
         return;
     }
@@ -141,7 +141,7 @@ void VgaMemory::write8(DWORD address, BYTE value)
             new_val[3] |= (value & 8) ? bitmask : 0;
             break;
         default:
-            vlog(VM_VIDEOMSG, "Gaah, unsupported raster op %d in mode 2 :(\n", DRAWOP);
+            vlog(LogVGA, "Gaah, unsupported raster op %d in mode 2 :(\n", DRAWOP);
             vm_exit(1);
         }
     } else if (WRITE_MODE == 0) {
@@ -152,7 +152,7 @@ void VgaMemory::write8(DWORD address, BYTE value)
         BYTE val = value;
 
         if (ROTATE) {
-            vlog(VM_VIDEOMSG, "Rotate used!");
+            vlog(LogVGA, "Rotate used!");
             val = (val >> ROTATE) | (val << (8 - ROTATE));
         }
 
@@ -227,7 +227,7 @@ void VgaMemory::write8(DWORD address, BYTE value)
                 : (val ^ d->latch[3]) & bitmask);
             break;
         default:
-            vlog(VM_VIDEOMSG, "Unsupported raster operation %d", DRAWOP);
+            vlog(LogVGA, "Unsupported raster operation %d", DRAWOP);
             vm_exit(0);
         }
     } else if(WRITE_MODE == 1) {
@@ -236,7 +236,7 @@ void VgaMemory::write8(DWORD address, BYTE value)
         new_val[2] = d->latch[2];
         new_val[3] = d->latch[3];
     } else {
-        vlog(VM_VIDEOMSG, "Unsupported 6845 write mode %d", WRITE_MODE);
+        vlog(LogVGA, "Unsupported 6845 write mode %d", WRITE_MODE);
         vm_exit(1);
 
         /* This is just here to make GCC stop worrying about accessing new_val[] uninitialized. */
@@ -291,7 +291,7 @@ void VgaMemory::write8(DWORD address, BYTE value)
 
 BYTE VgaMemory::read8(DWORD address) {
     if (READ_MODE != 0) {
-        vlog(VM_VIDEOMSG, "ZOMG! READ_MODE = %u", READ_MODE);
+        vlog(LogVGA, "ZOMG! READ_MODE = %u", READ_MODE);
         vm_exit(1);
     }
 
@@ -314,7 +314,7 @@ BYTE VgaMemory::read8(DWORD address) {
         return d->latch[VGA::the()->readRegister2(4)];
     } else {
         // FIXME: Not sure that this is correct.
-        vlog(VM_VIDEOMSG, "OOB read 0x%lx", address);
+        vlog(LogVGA, "OOB read 0x%lx", address);
         return d->cpu->readUnmappedMemory8(address);
     }
 }
@@ -349,7 +349,7 @@ QImage *VgaMemory::modeImage(BYTE mode) const
         return &d->screen12;
 
 #ifdef VOMIT_DEBUG
-    vlog(VM_ALERT, "Screen image for unknown mode 0x%02X requested. Crashing!", mode);
+    vlog(LogAlert, "Screen image for unknown mode 0x%02X requested. Crashing!", mode);
 #endif
     return 0;
 }

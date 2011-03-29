@@ -35,7 +35,7 @@ DWORD drv_spt[4], drv_heads[4], drv_sectors[4], drv_sectsize[4];
 void vomit_set_drive_image(int drive_id, const char* filename)
 {
     strcpy(drv_imgfile[drive_id], filename);
-    vlog(VM_DISKLOG, "Drive %u image changed to %s", drive_id, filename);
+    vlog(LogDisk, "Drive %u image changed to %s", drive_id, filename);
 }
 
 static WORD chs2lba(BYTE drive, WORD cyl, BYTE head, WORD sector)
@@ -50,7 +50,7 @@ static void floppy_read(FILE* fp, BYTE drive, WORD cylinder, WORD head, WORD sec
     WORD lba = chs2lba(drive, cylinder, head, sector);
 
     if (options.disklog)
-        vlog(VM_DISKLOG, "Drive %d reading %d sectors at %d/%d/%d (LBA %d) to %04X:%04X [offset=0x%x]", drive, count, cylinder, head, sector, lba, segment, offset, lba*drv_sectsize[drive]);
+        vlog(LogDisk, "Drive %d reading %d sectors at %d/%d/%d (LBA %d) to %04X:%04X [offset=0x%x]", drive, count, cylinder, head, sector, lba, segment, offset, lba*drv_sectsize[drive]);
 
     void* destination = g_cpu->memoryPointer(segment, offset);
     ssize_t bytesRead = fread(destination, drv_sectsize[drive], count, fp);
@@ -67,7 +67,7 @@ static void floppy_write(FILE* fp, BYTE drive, WORD cylinder, WORD head, WORD se
     WORD lba = chs2lba(drive, cylinder, head, sector);
 
     if (options.disklog)
-        vlog(VM_DISKLOG, "Drive %d writing %d sectors at %d/%d/%d (LBA %d) from %04X:%04X", drive, count, cylinder, head, sector, lba, segment, offset);
+        vlog(LogDisk, "Drive %d writing %d sectors at %d/%d/%d (LBA %d) from %04X:%04X", drive, count, cylinder, head, sector, lba, segment, offset);
 
     void* source = g_cpu->memoryPointer(segment, offset);
     fwrite(source, drv_sectsize[drive], count, fp);
@@ -78,12 +78,12 @@ static void floppy_verify(FILE* fp, BYTE drive, WORD cylinder, WORD head, WORD s
     WORD lba = chs2lba(drive, cylinder, head, sector);
 
     if (options.disklog)
-        vlog(VM_DISKLOG, "Drive %d verifying %d sectors at %d/%d/%d (LBA %d)", drive, count, cylinder, head, sector, lba);
+        vlog(LogDisk, "Drive %d verifying %d sectors at %d/%d/%d (LBA %d)", drive, count, cylinder, head, sector, lba);
 
     BYTE dummy[count * drv_sectsize[drive]];
     WORD veri = fread(dummy, drv_sectsize[drive], count, fp);
     if (veri != count)
-        vlog(VM_ALERT, "veri != count, something went wrong");
+        vlog(LogAlert, "veri != count, something went wrong");
 
     // FIXME: Actually compare something..
 }
@@ -106,7 +106,7 @@ void bios_disk_call(DiskCallFunction function)
 
     if (!drv_status[drive]) {
         if (options.disklog)
-            vlog(VM_DISKLOG, "Drive %02X not ready", drive);
+            vlog(LogDisk, "Drive %02X not ready", drive);
         if (drive < 2)
             error = FD_CHANGED_OR_REMOVED;
         else if (drive > 1)
@@ -117,21 +117,21 @@ void bios_disk_call(DiskCallFunction function)
     lba = chs2lba(drive, cylinder, head, sector);
     if (lba > drv_sectors[drive]) {
         if (options.disklog)
-            vlog(VM_DISKLOG, "Drive %d bogus sector request (LBA %d)", drive, lba);
+            vlog(LogDisk, "Drive %d bogus sector request (LBA %d)", drive, lba);
         error = FD_TIMEOUT;
         goto epilogue;
     }
 
     if ((sector > drv_spt[drive]) || (head >= drv_heads[drive])) {
         if (options.disklog)
-            vlog(VM_DISKLOG, "%04X:%04X Drive %d request out of geometrical bounds (%d/%d/%d)", g_cpu->getCS(), g_cpu->getIP(), drive, cylinder, head, sector);
+            vlog(LogDisk, "%04X:%04X Drive %d request out of geometrical bounds (%d/%d/%d)", g_cpu->getCS(), g_cpu->getIP(), drive, cylinder, head, sector);
         error = FD_TIMEOUT;
         goto epilogue;
     }
 
     fp = fopen(drv_imgfile[drive], function == WriteSectors ? "rb+" : "rb");
     if (!fp) {
-        vlog(VM_DISKLOG, "PANIC: Could not access drive %d image!", drive);
+        vlog(LogDisk, "PANIC: Could not access drive %d image!", drive);
         vm_exit(1);
     }
 

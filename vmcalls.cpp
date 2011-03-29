@@ -39,7 +39,7 @@ static void vm_handleE6(VCpu* cpu);
 void vm_call8(VCpu* cpu, WORD port, BYTE data) {
     switch (port) {
     case 0xE0:
-        vlog(VM_ALERT, "Interrupt %02X, function %04X requested", cpu->regs.B.BL, cpu->regs.W.AX);
+        vlog(LogAlert, "Interrupt %02X, function %04X requested", cpu->regs.B.BL, cpu->regs.W.AX);
         cpu->dumpAll();
         break;
     case 0xE6:
@@ -58,7 +58,7 @@ void vm_call8(VCpu* cpu, WORD port, BYTE data) {
         vga_scrollup(cpu->regs.B.CL, cpu->regs.B.CH, cpu->regs.B.DL, cpu->regs.B.DH, cpu->regs.B.AL, cpu->regs.B.BH);
         break;
     default:
-        vlog(VM_ALERT, "vm_call8: Unhandled write, %02X -> %04X", data, port);
+        vlog(LogAlert, "vm_call8: Unhandled write, %02X -> %04X", data, port);
         vm_exit(0);
         break;
     }
@@ -117,10 +117,10 @@ void vm_handleE6(VCpu* cpu)
         if (drv_status[drive] != 0) {
             track = (cpu->regs.B.CH | ((cpu->regs.B.CL & 0xC0) << 2)) + 1;
             head = cpu->regs.B.DH;
-            vlog(VM_DISKLOG, "Drive %d: Formatting track %lu, head %d.", drive, track, head);
+            vlog(LogDisk, "Drive %d: Formatting track %lu, head %d.", drive, track, head);
             fpdrv = fopen(drv_imgfile[drive], "rb+");
             if (!fpdrv) {
-                vlog(VM_DISKLOG, "PANIC! Could not access drive %d image.", drive);
+                vlog(LogDisk, "PANIC! Could not access drive %d image.", drive);
                 vm_exit(1);
             }
             fseek(fpdrv, (head + 1) * (track * drv_spt[drive] * drv_sectsize[drive]), SEEK_SET);
@@ -155,7 +155,7 @@ void vm_handleE6(VCpu* cpu)
             else
                 cpu->regs.B.DL = drv_status[2] + drv_status[3];
 
-            vlog(VM_DISKLOG, "Reporting disk%d geo: %d tracks, %d spt, %d sides", drive, tracks, drv_spt[drive], drv_heads[drive]);
+            vlog(LogDisk, "Reporting disk%d geo: %d tracks, %d spt, %d sides", drive, tracks, drv_spt[drive], drv_heads[drive]);
 
             /* WACKY SHIT about to take place. */
             cpu->regs.B.CH = tracks & 0xFF;
@@ -205,9 +205,9 @@ void vm_handleE6(VCpu* cpu)
         if (drive >= 0x80)
             drive = drive - 0x80 + 2;
         if (drv_status[drive]) {
-            vlog(VM_DISKLOG, "Setting media type for drive %d:", drive);
-            vlog(VM_DISKLOG, "%d sectors per track", cpu->regs.B.CL);
-            vlog(VM_DISKLOG, "%d tracks", cpu->regs.B.CH);
+            vlog(LogDisk, "Setting media type for drive %d:", drive);
+            vlog(LogDisk, "%d sectors per track", cpu->regs.B.CL);
+            vlog(LogDisk, "%d tracks", cpu->regs.B.CH);
 
             /* Wacky DBT. */
             cpu->ES = 0x820E; cpu->regs.W.DI = 0x0503;
@@ -236,12 +236,12 @@ void vm_handleE6(VCpu* cpu)
 
     case 0x1A01:
         // Interrupt 1A, 01: Set RTC tick count
-        vlog(VM_ALERT, "INT 1A,01: Attempt to set tick counter to %lu", (DWORD)(cpu->regs.W.CX<<16)|cpu->regs.W.DX);
+        vlog(LogAlert, "INT 1A,01: Attempt to set tick counter to %lu", (DWORD)(cpu->regs.W.CX<<16)|cpu->regs.W.DX);
         break;
 
     case 0x1A05:
         // Interrupt 1A, 05: Set BIOS date
-        vlog(VM_ALERT, "INT 1A,05: Attempt to set BIOS date to %02X-%02X-%04X", cpu->regs.B.DH, cpu->regs.B.DL, cpu->regs.W.CX);
+        vlog(LogAlert, "INT 1A,05: Attempt to set BIOS date to %02X-%02X-%04X", cpu->regs.B.DH, cpu->regs.B.DL, cpu->regs.W.CX);
         break;
 
     /* 0x3333: Is Drive Present?
@@ -267,7 +267,7 @@ void vm_handleE6(VCpu* cpu)
         break;
 
     default:
-        vlog(VM_ALERT, "Unknown VM call %04X received!!", cpu->regs.W.AX);
+        vlog(LogAlert, "Unknown VM call %04X received!!", cpu->regs.W.AX);
         //vm_exit(0);
         break;
     }

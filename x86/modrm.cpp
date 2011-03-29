@@ -360,7 +360,7 @@ void* VCpu::resolveModRM32_internal(BYTE rmbyte)
 
 DWORD VCpu::evaluateSIB(BYTE sib)
 {
-    vlog(VM_ALERT, "evaluateSIB() called.. this is not properly implemented :(");
+    vlog(LogAlert, "evaluateSIB() called.. this is not properly implemented :(");
     vm_exit(1);
 
     switch (sib & 0xC0) {

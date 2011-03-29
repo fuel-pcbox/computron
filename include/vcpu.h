@@ -1330,9 +1330,8 @@ BYTE* VCpu::memoryPointer(WORD segment, WORD offset) const
 
     if (!isA20Enabled()) {
 #ifdef VOMIT_DEBUG
-        if (address > 0xFFFFF) {
-            vlog(VM_MEMORYMSG, "%04X:%08X Get pointer to %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & 0xFFFFF);
-        }
+        if (address > 0xFFFFF)
+            vlog(LogCPU, "%04X:%08X Get pointer to %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & 0xFFFFF);
 #endif
         address &= 0xFFFFF;
     }

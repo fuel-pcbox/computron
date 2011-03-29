@@ -37,17 +37,17 @@ void VCpu::_wrap_0x0F()
         case 0: _SGDT(); return;
         }
         (void) readModRM16(this->rmbyte);
-        vlog(VM_ALERT, "Sliding by 0F 01 /%d\n", vomit_modRMRegisterPart(this->rmbyte));
+        vlog(LogAlert, "Sliding by 0F 01 /%d\n", vomit_modRMRegisterPart(this->rmbyte));
         break;
     }
     case 0xFF: // UD0
     case 0xB9: // UD1
     case 0x0B: // UD2
-        vlog(VM_ALERT, "Undefined opcode 0F %02X", op);
+        vlog(LogAlert, "Undefined opcode 0F %02X", op);
         exception(6);
         break;
     default:
-        vlog(VM_CPUMSG, "_wrap_0x0F passing opcode to VCpu::decodeNext(): 0F %02X", op);
+        vlog(LogCPU, "_wrap_0x0F passing opcode to VCpu::decodeNext(): 0F %02X", op);
         setEIP(getEIP() - 2);
         decodeNext();
         break;

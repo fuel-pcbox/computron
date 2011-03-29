@@ -45,9 +45,9 @@ static void sigint_handler(int)
 
 void vomit_init()
 {
-    vlog(VM_INITMSG, "Registering I/O devices");
+    vlog(LogInit, "Registering I/O devices");
     foreach (IODevice *device, IODevice::devices())
-        vlog(VM_INITMSG, "%s at 0x%p", device->name(), device);
+        vlog(LogInit, "%s at 0x%p", device->name(), device);
 
     vm_loadconf();
 
@@ -56,7 +56,7 @@ void vomit_init()
 
 void vm_kill()
 {
-    vlog(VM_KILLMSG, "Killing VM");
+    vlog(LogExit, "Killing VM");
     delete g_cpu;
 }
 

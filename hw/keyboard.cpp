@@ -83,12 +83,12 @@ BYTE Keyboard::in8(WORD port)
         if (m_hasCommand && m_command <= 0x3F) {
             BYTE ramIndex = m_command & 0x3F;
             m_hasCommand = false;
-            vlog(VM_KEYMSG, "Reading 8042 RAM [%02] = %02X", ramIndex, m_ram[ramIndex]);
+            vlog(LogKeyboard, "Reading 8042 RAM [%02] = %02X", ramIndex, m_ram[ramIndex]);
             return m_ram[ramIndex];
         }
 
         BYTE key = kbd_pop_raw();
-        //vlog(VM_KEYMSG, "keyboard_data = %02X", key);
+        //vlog(LogKeyboard, "keyboard_data = %02X", key);
         return key;
     }
 
@@ -96,7 +96,7 @@ BYTE Keyboard::in8(WORD port)
         // Keyboard not locked, POST completed successfully.
         BYTE status = ATKBD_UNLOCKED | (m_ram[0] & ATKBD_SYSTEM_FLAG);
         status |= m_lastWasCommand ? ATKBD_CMD_DATA : 0;
-        // vlog(VM_KEYMSG, "Keyboard status queried (%02X)", status);
+        // vlog(LogKeyboard, "Keyboard status queried (%02X)", status);
         return status;
     }
 
@@ -115,13 +115,13 @@ BYTE Keyboard::in8(WORD port)
 void Keyboard::out8(WORD port, BYTE data)
 {
     if (port == 0x61) {
-        //vlog(VM_KEYMSG, "System control port <- %02X", data);
+        //vlog(LogKeyboard, "System control port <- %02X", data);
         m_systemControlPortData = data;
         return;
     }
 
     if (port == 0x64) {
-        vlog(VM_KEYMSG, "Keyboard command <- %02X", data);
+        vlog(LogKeyboard, "Keyboard command <- %02X", data);
         m_command = data;
         m_hasCommand = true;
         m_lastWasCommand = true;
@@ -131,14 +131,14 @@ void Keyboard::out8(WORD port, BYTE data)
     if (port == 0x60) {
         m_lastWasCommand = false;
         if (!m_hasCommand) {
-            vlog(VM_KEYMSG, "Got data (%02X) without command", data);
+            vlog(LogKeyboard, "Got data (%02X) without command", data);
             return;
         }
 
         m_hasCommand = false;
 
         if (m_command == 0xD1) {
-            vlog(VM_KEYMSG, "Write output port: A20=%s", (data & 0x02) ? "on" : "off");
+            vlog(LogKeyboard, "Write output port: A20=%s", (data & 0x02) ? "on" : "off");
             g_cpu->setA20Enabled(data & 0x02);
             return;
         }
@@ -149,20 +149,20 @@ void Keyboard::out8(WORD port, BYTE data)
 
             switch (ramIndex) {
             case 0:
-                vlog(VM_KEYMSG, "Controller Command Byte set:", data);
-                vlog(VM_KEYMSG, "  Keyboard interrupt: %s", data & CCB_KEYBOARD_INTERRUPT_ENABLE ? "enabled" : "disabled");
-                vlog(VM_KEYMSG, "  Mouse interrupt:    %s", data & CCB_MOUSE_INTERRUPT_ENABLE ? "enabled" : "disabled");
-                vlog(VM_KEYMSG, "  System flag:        %s", data & CCB_SYSTEM_FLAG ? "enabled" : "disabled");
-                vlog(VM_KEYMSG, "  Keyboard enable:    %s", data & CCB_KEYBOARD_ENABLE ? "enabled" : "disabled");
-                vlog(VM_KEYMSG, "  Mouse enable:       %s", data & CCB_MOUSE_ENABLE ? "enabled" : "disabled");
-                vlog(VM_KEYMSG, "  Translation:        %s", data & CCB_TRANSLATE ? "enabled" : "disabled");
+                vlog(LogKeyboard, "Controller Command Byte set:", data);
+                vlog(LogKeyboard, "  Keyboard interrupt: %s", data & CCB_KEYBOARD_INTERRUPT_ENABLE ? "enabled" : "disabled");
+                vlog(LogKeyboard, "  Mouse interrupt:    %s", data & CCB_MOUSE_INTERRUPT_ENABLE ? "enabled" : "disabled");
+                vlog(LogKeyboard, "  System flag:        %s", data & CCB_SYSTEM_FLAG ? "enabled" : "disabled");
+                vlog(LogKeyboard, "  Keyboard enable:    %s", data & CCB_KEYBOARD_ENABLE ? "enabled" : "disabled");
+                vlog(LogKeyboard, "  Mouse enable:       %s", data & CCB_MOUSE_ENABLE ? "enabled" : "disabled");
+                vlog(LogKeyboard, "  Translation:        %s", data & CCB_TRANSLATE ? "enabled" : "disabled");
                 break;
             default:
-                vlog(VM_KEYMSG, "Writing 8042 RAM [%02] = %02X", ramIndex, data);
+                vlog(LogKeyboard, "Writing 8042 RAM [%02] = %02X", ramIndex, data);
             }
             return;
         }
-        vlog(VM_KEYMSG, "Got data %02X for unknown command %02X", data, m_command);
+        vlog(LogKeyboard, "Got data %02X for unknown command %02X", data, m_command);
         return;
     }
 

@@ -37,7 +37,7 @@ bool g_vomit_exit_main_loop = 0;
 
 void VCpu::_UD0()
 {
-    vlog(VM_ALERT, "Undefined opcode 0F FF (UD0)");
+    vlog(LogAlert, "Undefined opcode 0F FF (UD0)");
     exception(6);
 }
 
@@ -46,7 +46,7 @@ void VCpu::_OperationSizeOverride()
     m_operationSize32 = !m_operationSize32;
 
 #ifdef VOMIT_DEBUG_OVERRIDE_OPCODES
-    vlog(VM_LOGMSG, "%04X:%08X Operation size override detected! Opcode: db 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X ",
+    vlog(LogCPU, "%04X:%08X Operation size override detected! Opcode: db 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X ",
          getBaseCS(),
          getBaseEIP(),
          readMemory8(getCS(), getEIP() - 1),
@@ -70,7 +70,7 @@ void VCpu::_AddressSizeOverride()
     m_addressSize32 = !m_addressSize32;
 
 #ifdef VOMIT_DEBUG_OVERRIDE_OPCODES
-    vlog(VM_LOGMSG, "%04X:%08X Address size override detected! Opcode: db 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X ",
+    vlog(LogCPU, "%04X:%08X Address size override detected! Opcode: db 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X ",
          getBaseCS(),
          getBaseEIP(),
          readMemory8(getCS(), getEIP() - 1),
@@ -388,7 +388,7 @@ void VCpu::decode(BYTE op)
     default:
         this->rmbyte = fetchOpcodeByte();
 fffuuu:
-        vlog(VM_ALERT, "%04X:%08X FFFFUUUU unsupported opcode %02X /%u or %02X %02X or %02X %02X /%u",
+        vlog(LogAlert, "%04X:%08X FFFFUUUU unsupported opcode %02X /%u or %02X %02X or %02X %02X /%u",
             getCS(), getEIP(),
             this->opcode, vomit_modRMRegisterPart(this->rmbyte),
             this->opcode, this->rmbyte,
@@ -400,7 +400,7 @@ fffuuu:
 
 void VCpu::GP(int code)
 {
-    vlog(VM_CPUMSG, "#GP(%d) :-(", code);
+    vlog(LogCPU, "#GP(%d) :-(", code);
     vm_exit(1);
 }
 
@@ -409,14 +409,14 @@ VCpu::VCpu(QObject* parent)
 {
     m_memory = new BYTE[(8192 * 1024) + 65536];
     if (!m_memory) {
-        vlog(VM_INITMSG, "Insufficient memory available.");
+        vlog(LogInit, "Insufficient memory available.");
         vm_exit(1);
     }
 
 #ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
     m_dirtMap = new bool[1048576 + 65536];
     if (!m_dirtMap) {
-        vlog(VM_INITMSG, "Insufficient memory available.");
+        vlog(LogInit, "Insufficient memory available.");
         vm_exit(1);
     }
     memset(m_dirtMap, 0, 1048576 + 65536);
@@ -728,7 +728,7 @@ void VCpu::setInterruptHandler(BYTE isr, WORD segment, WORD offset)
 void VCpu::_UNSUPP()
 {
     // We've come across an unsupported instruction, log it, then vector to the "illegal instruction" ISR.
-    vlog(VM_ALERT, "%04X:%08X: Unsupported opcode %02X", getBaseCS(), getBaseEIP(), opcode);
+    vlog(LogAlert, "%04X:%08X: Unsupported opcode %02X", getBaseCS(), getBaseEIP(), opcode);
     QString ndis = "db ";
     DWORD baseEIP = getBaseEIP();
     QStringList dbs;
@@ -738,7 +738,7 @@ void VCpu::_UNSUPP()
         dbs.append(s);
     }
     ndis.append(dbs.join(", "));
-    vlog(VM_ALERT, qPrintable(ndis));
+    vlog(LogAlert, qPrintable(ndis));
     dumpAll();
     exception(6);
 }
@@ -752,11 +752,11 @@ void VCpu::_HLT()
     setState(VCpu::Halted);
 
     if (!getIF()) {
-        vlog(VM_ALERT, "%04X:%08X: Halted with IF=0", getBaseCS(), getBaseEIP());
+        vlog(LogAlert, "%04X:%08X: Halted with IF=0", getBaseCS(), getBaseEIP());
         vm_exit(0);
     }
 
-    vlog(VM_CPUMSG, "%04X:%08X Halted", getBaseCS(), getBaseEIP());
+    vlog(LogCPU, "%04X:%08X Halted", getBaseCS(), getBaseEIP());
 
     haltedLoop();
 }
@@ -965,7 +965,7 @@ void VCpu::_LDS_reg16_mem16()
 void VCpu::_LDS_reg32_mem32()
 {
 #warning FIXME: need readModRM48
-    vlog(VM_ALERT, "LDS reg32 mem32");
+    vlog(LogAlert, "LDS reg32 mem32");
     vm_exit(0);
 }
 
@@ -980,7 +980,7 @@ void VCpu::_LES_reg16_mem16()
 void VCpu::_LES_reg32_mem32()
 {
 #warning FIXME: need readModRM48
-    vlog(VM_ALERT, "LES reg32 mem32");
+    vlog(LogAlert, "LES reg32 mem32");
     vm_exit(0);
 }
 
@@ -995,7 +995,7 @@ void VCpu::_LFS_reg16_mem16()
 void VCpu::_LFS_reg32_mem32()
 {
 #warning FIXME: need readModRM48
-    vlog(VM_ALERT, "LFS reg32 mem32");
+    vlog(LogAlert, "LFS reg32 mem32");
     vm_exit(0);
 }
 
@@ -1010,14 +1010,14 @@ void VCpu::_LGS_reg16_mem16()
 void VCpu::_LGS_reg32_mem32()
 {
 #warning FIXME: need readModRM48
-    vlog(VM_ALERT, "LGS reg32 mem32");
+    vlog(LogAlert, "LGS reg32 mem32");
     vm_exit(0);
 }
 
 void VCpu::_LEA_reg32_mem32()
 {
 #warning FIXME: need evaluateSIB()
-    vlog(VM_ALERT, "LEA reg32 mem32");
+    vlog(LogAlert, "LEA reg32 mem32");
     vm_exit(0);
 }
 
@@ -1066,7 +1066,7 @@ void VCpu::_LEA_reg16_mem16()
             }
             break;
         case 192:
-            vlog(VM_ALERT, "LEA with register source!");
+            vlog(LogAlert, "LEA with register source!");
             /* LEA with register source, an invalid instruction.
              * Call INT6 (invalid opcode exception) */
             exception(6);
@@ -1105,7 +1105,7 @@ DWORD VCpu::readMemory32(DWORD address) const
 #ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
     assert (address < (0xFFFFF - 4));
     if (!m_dirtMap[address] || !m_dirtMap[address + 1] || !m_dirtMap[address + 2] || !m_dirtMap[address + 3])
-        vlog(VM_MEMORYMSG, "%04X:%08X: Uninitialized read from %08X", getBaseCS(), getBaseEIP(), address);
+        vlog(LogCPU, "%04X:%08X: Uninitialized read from %08X", getBaseCS(), getBaseEIP(), address);
 #endif
     return vomit_read32FromPointer(reinterpret_cast<DWORD*>(m_memory + address));
 }
@@ -1115,7 +1115,7 @@ BYTE VCpu::readMemory8(DWORD address) const
     if (!isA20Enabled()) {
 #ifdef VOMIT_DEBUG
         if (address > 0xFFFFF) {
-            vlog(VM_MEMORYMSG, "%04X:%08X Read byte from %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & 0xFFFFF);
+            vlog(LogCPU, "%04X:%08X Read byte from %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & 0xFFFFF);
         }
 #endif
         address &= 0xFFFFF;
@@ -1125,7 +1125,7 @@ BYTE VCpu::readMemory8(DWORD address) const
         return vgaMemory()->read8(address);
 #ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
     if (!m_dirtMap[address])
-        vlog(VM_MEMORYMSG, "%04X:%04X: Uninitialized read from %08X", getBaseCS(), getBaseIP(), address);
+        vlog(LogCPU, "%04X:%04X: Uninitialized read from %08X", getBaseCS(), getBaseIP(), address);
 #endif
     return m_memory[address];
 }
@@ -1141,7 +1141,7 @@ WORD VCpu::readMemory16(DWORD address) const
         assert(address != 0xFFFFF);
 #ifdef VOMIT_DEBUG
         if (address > 0xFFFFF) {
-            vlog(VM_MEMORYMSG, "%04X:%08X Read word from %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & 0xFFFFF);
+            vlog(LogCPU, "%04X:%08X Read word from %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & 0xFFFFF);
         }
 #endif
         address &= 0xFFFFF;
@@ -1151,7 +1151,7 @@ WORD VCpu::readMemory16(DWORD address) const
         return vgaMemory()->read16(address);
 #ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
     if (!m_dirtMap[address] || !m_dirtMap[address + 1])
-        vlog(VM_MEMORYMSG, "%04X:%04X: Uninitialized read from %08X", getBaseCS(), getBaseIP(), address);
+        vlog(LogCPU, "%04X:%04X: Uninitialized read from %08X", getBaseCS(), getBaseIP(), address);
 #endif
     return vomit_read16FromPointer(reinterpret_cast<WORD*>(m_memory + address));
 }
@@ -1171,7 +1171,7 @@ void VCpu::writeMemory8(DWORD address, BYTE value)
     if (!isA20Enabled()) {
 #ifdef VOMIT_DEBUG
         if (address > 0xFFFFF) {
-            vlog(VM_MEMORYMSG, "%04X:%08X Write byte to %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & 0xFFFFF);
+            vlog(LogCPU, "%04X:%08X Write byte to %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & 0xFFFFF);
         }
 #endif
         address &= 0xFFFFF;
@@ -1202,7 +1202,7 @@ void VCpu::writeMemory16(DWORD address, WORD value)
 
 #ifdef VOMIT_DEBUG
         if (address > 0xFFFFF) {
-            vlog(VM_MEMORYMSG, "%04X:%08X Write word to %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & 0xFFFFF);
+            vlog(LogCPU, "%04X:%08X Write word to %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & 0xFFFFF);
         }
 #endif
 

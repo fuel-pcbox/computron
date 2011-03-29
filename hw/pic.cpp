@@ -75,24 +75,24 @@ void PIC::out8(WORD port, BYTE data)
         }
         if ((data & 0x18) == 0x08) {
             // OCW3
-            vlog(VM_PICMSG, "Got OCW3 %02X on port %02X", data, port);
+            vlog(LogPIC, "Got OCW3 %02X on port %02X", data, port);
             if (data & 0x02)
                 m_readIRR = data & 0x01;
             return;
         }
         if ((data & 0x18) == 0x00) {
             // OCW2
-            vlog(VM_PICMSG, "Got OCW2 %02X on port %02X", data, port);
+            vlog(LogPIC, "Got OCW2 %02X on port %02X", data, port);
             return;
         }
         if (data & 0x10) {
             // ICW1
-            vlog(VM_PICMSG, "Got ICW1 %02X on port %02X", data, port);
+            vlog(LogPIC, "Got ICW1 %02X on port %02X", data, port);
             // I'm not sure we'll ever see an ICW4...
             // m_icw4Needed = data & 0x01;
-            vlog(VM_PICMSG, "[ICW1] Cascade = %s", (data & 2) ? "yes" : "no");
-            vlog(VM_PICMSG, "[ICW1] Vector size = %u", (data & 4) ? 4 : 8);
-            vlog(VM_PICMSG, "[ICW1] Level triggered = %s", (data & 8) ? "yes" : "no");
+            vlog(LogPIC, "[ICW1] Cascade = %s", (data & 2) ? "yes" : "no");
+            vlog(LogPIC, "[ICW1] Vector size = %u", (data & 4) ? 4 : 8);
+            vlog(LogPIC, "[ICW1] Level triggered = %s", (data & 8) ? "yes" : "no");
             m_imr = 0;
             m_isr = 0;
             m_irr = 0;
@@ -105,33 +105,33 @@ void PIC::out8(WORD port, BYTE data)
     } else {
         if (((data & 0x07) == 0x00) && m_icw2Expected) {
             // ICW2
-            vlog(VM_PICMSG, "Got ICW2 %02X on port %02X", data, port);
+            vlog(LogPIC, "Got ICW2 %02X on port %02X", data, port);
             m_isrBase = data & 0xF8;
             m_icw2Expected = false;
             return;
         }
 
         // OCW1 - IMR write
-        vlog(VM_PICMSG, "New IRQ mask set: %02X", data);
+        vlog(LogPIC, "New IRQ mask set: %02X", data);
         for (int i = 0; i < 8; ++i)
-            vlog(VM_PICMSG, " - IRQ %u: %s", i, (data & (1 << i)) ? "masked" : "service");
+            vlog(LogPIC, " - IRQ %u: %s", i, (data & (1 << i)) ? "masked" : "service");
         m_imr = data;
         updatePendingRequests();
         return;
     }
 
-    vlog(VM_PICMSG, "Write PIC ICW on port %04X (data: %02X)", port, data);
-    vlog(VM_PICMSG, "I can't handle that request, better quit!");
+    vlog(LogPIC, "Write PIC ICW on port %04X (data: %02X)", port, data);
+    vlog(LogPIC, "I can't handle that request, better quit!");
     vm_exit(1);
 }
 
 BYTE PIC::in8(WORD)
 {
     if (m_readIRR) {
-        vlog(VM_PICMSG, "Read IRR (%02X)", m_irr);
+        vlog(LogPIC, "Read IRR (%02X)", m_irr);
         return m_irr;
     } else {
-        vlog(VM_PICMSG, "Read ISR (%02X)", m_isr);
+        vlog(LogPIC, "Read ISR (%02X)", m_isr);
         return m_isr;
     }
 }

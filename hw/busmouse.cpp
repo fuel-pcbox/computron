@@ -63,22 +63,22 @@ void BusMouse::out8(WORD port, BYTE data)
     case 0x23f:
         switch (data) {
         case 0x10:
-            vlog(VM_MOUSEMSG, "Bus mouse interrupt disabled");
+            vlog(LogMouse, "Bus mouse interrupt disabled");
             m_interrupts = false;
             break;
         case 0x11:
-            vlog(VM_MOUSEMSG, "Bus mouse interrupt enabled");
+            vlog(LogMouse, "Bus mouse interrupt enabled");
             m_interrupts = true;
             break;
         default:
-            vlog(VM_MOUSEMSG, "Write %02X to %03X, don't know what to do", data, port);
+            vlog(LogMouse, "Write %02X to %03X, don't know what to do", data, port);
         }
         break;
 
     case 0x23c:
     case 0x23d:
     default:
-        vlog(VM_MOUSEMSG, "Write %02X to %03X, don't know what to do", data, port);
+        vlog(LogMouse, "Write %02X to %03X, don't know what to do", data, port);
         break;
     }
 }
@@ -94,7 +94,7 @@ void BusMouse::moveEvent(WORD x, WORD y)
     m_deltaX = m_currentX - m_lastX;
     m_deltaY = m_currentY - m_lastY;
 
-    //vlog(VM_MOUSEMSG, "BusMouse::moveEvent(): dX = %d, dY = %d", m_deltaX, m_deltaY);
+    //vlog(LogMouse, "BusMouse::moveEvent(): dX = %d, dY = %d", m_deltaX, m_deltaY);
 
     if (m_interrupts)
         PIC::raiseIRQ(5);
@@ -175,7 +175,7 @@ BYTE BusMouse::in8(WORD port)
             m_lastY = m_currentY;
             break;
         default:
-            vlog(VM_MOUSEMSG, "Unknown BusMouse command %02X", m_command);
+            vlog(LogMouse, "Unknown BusMouse command %02X", m_command);
         }
         break;
 
@@ -195,7 +195,7 @@ BYTE BusMouse::in8(WORD port)
 
     case 0x23f:
     default:
-        vlog(VM_MOUSEMSG, "Read from %03X, don't know what to do", port);
+        vlog(LogMouse, "Read from %03X, don't know what to do", port);
         break;
     }
 

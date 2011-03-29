@@ -68,10 +68,10 @@ static void syncSegmentRegister(VCpu* cpu, VCpu::SegmentIndex segmentIndex)
     WORD segment = cpu->getSegment(segmentIndex);
 
     if (segment % 8)
-        vlog(VM_ALERT, "Segment selector index %u not divisible by 8.", segment);
+        vlog(LogAlert, "Segment selector index %u not divisible by 8.", segment);
 
     if (segment >= cpu->GDTR.limit)
-        vlog(VM_ALERT, "Segment selector index %u >= GDTR.limit.", segment);
+        vlog(LogAlert, "Segment selector index %u >= GDTR.limit.", segment);
 
     DWORD hi = cpu->readMemory32(cpu->GDTR.base + segment + 4);
     DWORD lo = cpu->readMemory32(cpu->GDTR.base + segment);
@@ -224,7 +224,7 @@ void VCpu::_MOV_CR_reg32()
     setControlRegister(crIndex, getRegister32(static_cast<VCpu::RegisterIndex32>(rm & 7)));
 
     if (crIndex == 0)
-        vlog(VM_CPUMSG, "Protected mode Enable = %u", getPE());
+        vlog(LogCPU, "Protected mode Enable = %u", getPE());
 }
 
 void VCpu::_MOV_AL_imm8()

@@ -73,7 +73,7 @@ BYTE CMOS::in8(WORD)
     case 0x31:
     case 0x18: value = MSB(g_cpu->extendedMemorySize() / 1024); break;
     case 0x32: value = QDate::currentDate().year() / 100; break;
-    default: vlog(VLOG_CMOS, "WARNING: Read unsupported register %02X", m_registerIndex);
+    default: vlog(LogCMOS, "WARNING: Read unsupported register %02X", m_registerIndex);
     }
 
     if (!inBinaryClockMode()) {
@@ -92,12 +92,12 @@ BYTE CMOS::in8(WORD)
         }
     }
 
-    vlog(VLOG_CMOS, "Read register %02X (%02X)", m_registerIndex, value);
+    vlog(LogCMOS, "Read register %02X (%02X)", m_registerIndex, value);
     return value;
 }
 
 void CMOS::out8(WORD, BYTE data)
 {
-    vlog(VLOG_CMOS, "Select register %02X", data);
+    vlog(LogCMOS, "Select register %02X", data);
     m_registerIndex = data;
 }

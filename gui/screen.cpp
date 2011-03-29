@@ -263,7 +263,7 @@ void Screen::resizeEvent(QResizeEvent *e)
 {
     QWidget::resizeEvent(e);
 
-    vlog(VM_VIDEOMSG, "Resizing viewport");
+    vlog(LogScreen, "Resizing viewport");
     update();
 }
 
@@ -281,7 +281,7 @@ void Screen::paintEvent(QPaintEvent *e)
         if (screenImage)
             wp.drawImage(rect(), *screenImage);
         else {
-            vlog(VM_VIDEOMSG, "No screen buffer yet for mode 0x%02X", currentVideoMode);
+            vlog(LogScreen, "No screen buffer yet for mode 0x%02X", currentVideoMode);
             wp.fillRect(rect(), Qt::red);
         }
 
@@ -347,8 +347,8 @@ void Screen::paintEvent(QPaintEvent *e)
         cursorStart *= 2;
     }
 
-    //vlog(VM_VIDEOMSG, "rows: %d, row: %d, col: %d", m_rows, cursor.row, cursor.column);
-    //vlog(VM_VIDEOMSG, "cursor: %d to %d", cursorStart, cursorEnd);
+    //vlog(LogScreen, "rows: %d, row: %d, col: %d", m_rows, cursor.row, cursor.column);
+    //vlog(LogScreen, "cursor: %d to %d", cursorStart, cursorEnd);
 
     //p.setCompositionMode(QPainter::CompositionMode_Xor);
     p.fillRect(cursor.column * m_characterWidth, cursor.row * m_characterHeight + cursorStart, m_characterWidth, cursorEnd - cursorStart, d->brush[14]);

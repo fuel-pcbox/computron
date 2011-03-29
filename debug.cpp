@@ -23,40 +23,40 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "debug.h"
 #include "vomit.h"
 #include "debugger.h"
 #include <stdarg.h>
 #include <stdio.h>
-#include <QStringList>
 
 static FILE* s_logfile = 0L;
 
-void vlog(int category, const char* format, ...)
+void vlog(VLogChannel channel, const char* format, ...)
 {
     va_list ap;
     const char* prefix = 0L;
     bool show_on_stdout = true;
 
-    switch (category) {
-    case VM_INITMSG: prefix = "init"; break;
-    case VM_DISKLOG: prefix = "disk"; break;
-    case VM_KILLMSG: prefix = "kill"; break;
-    case VM_IOMSG:   prefix = "i/o"; show_on_stdout = false; break;
-    case VM_ALERT:   prefix = "alert"; break;
-    case VM_PRNLOG:  prefix = "lpt"; break;
-    case VM_VIDEOMSG: prefix = "video"; break;
-    case VM_CONFIGMSG: prefix = "config"; break;
-    case VM_CPUMSG:  prefix = "cpu"; break;
-    case VM_MEMORYMSG: prefix = "memory"; show_on_stdout = false; break;
-    case VM_MOUSEMSG: prefix = "mouse"; break;
-    case VM_PICMSG: prefix = "pic"; show_on_stdout = false; break;
-    case VM_DMAMSG: prefix = "dma"; show_on_stdout = false; break;
-    case VM_KEYMSG: prefix = "keyb"; break;
-    case VM_FDCMSG: prefix = "fdc"; break;
-    case VM_DUMPMSG: show_on_stdout = false; break;
-    case VM_VOMCTL: prefix = "vomctl"; break;
-    case VLOG_CMOS: prefix = "cmos"; break;
-    case VLOG_IDE: prefix = "ide"; break;
+    switch (channel) {
+    case LogInit: prefix = "init"; break;
+    case LogExit: prefix = "exit"; break;
+    case LogDisk: prefix = "disk"; break;
+    case LogIO: prefix = "i/o"; show_on_stdout = false; break;
+    case LogAlert: prefix = "alert"; break;
+    case LogVGA: prefix = "vga"; break;
+    case LogConfig: prefix = "config"; break;
+    case LogCPU: prefix = "cpu"; break;
+    case LogMouse: prefix = "mouse"; break;
+    case LogPIC: prefix = "pic"; show_on_stdout = false; break;
+    case LogKeyboard: prefix = "keyb"; break;
+    case LogFDC: prefix = "fdc"; break;
+    case LogDump: show_on_stdout = false; break;
+    case LogVomCtl: prefix = "vomctl"; break;
+    case LogCMOS: prefix = "cmos"; break;
+    case LogIDE: prefix = "ide"; break;
+    case LogScreen: prefix = "screen"; break;
+    default:
+        VM_ASSERT(0);
     }
 
     if (!s_logfile) {

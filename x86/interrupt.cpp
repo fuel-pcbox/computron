@@ -41,7 +41,7 @@ void VCpu::_INT3()
 void VCpu::_INTO()
 {
     /* XXX: I've never seen this used, so it's probably good to log it. */
-    vlog(VM_ALERT, "INTO used, can you believe it?");
+    vlog(LogAlert, "INTO used, can you believe it?");
 
     if (getOF())
         jumpToInterruptHandler(4);
@@ -59,11 +59,10 @@ void VCpu::jumpToInterruptHandler(int isr)
 {
 #ifdef VOMIT_DEBUG
     if (options.trapint)
-        vlog(VM_PICMSG, "%04X:%08X Interrupt %02X,%02X trapped", getBaseCS(), getBaseEIP(), isr, this->regs.B.AH);
+        vlog(LogCPU, "%04X:%08X Interrupt %02X,%02X trapped", getBaseCS(), getBaseEIP(), isr, this->regs.B.AH);
 
-    if (isr == 0x06) {
-        vlog(VM_CPUMSG, "Invalid opcode trap at %04X:%08X (%02X)", getBaseCS(), getBaseEIP(), *(codeMemory() + this->getBaseIP()));
-    }
+    if (isr == 0x06)
+        vlog(LogCPU, "Invalid opcode trap at %04X:%08X (%02X)", getBaseCS(), getBaseEIP(), *(codeMemory() + this->getBaseIP()));
 #endif
 
     push(getFlags());

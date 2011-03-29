@@ -106,11 +106,11 @@ BYTE FDC::in8(WORD port)
             /* Second drive installed */
             data |= 0x40;
         }
-        vlog(VM_FDCMSG, "Read status register A: %02X", data);
+        vlog(LogFDC, "Read status register A: %02X", data);
         return data;
     }
     case 0x3F1:
-        vlog(VM_FDCMSG, "Read status register B: (FIXME)");
+        vlog(LogFDC, "Read status register B: (FIXME)");
         // FIXME: What should this register contain?
         return 0;
 
@@ -132,19 +132,19 @@ BYTE FDC::in8(WORD port)
         if (!d->usingDMA)
             status |= 0x20;
 
-        vlog(VM_FDCMSG, "Read main status register: %02X (direction: %s)", status, (d->dataDirection == DATA_FROM_CPU_TO_FDC) ? "to FDC" : "from FDC");
+        vlog(LogFDC, "Read main status register: %02X (direction: %s)", status, (d->dataDirection == DATA_FROM_CPU_TO_FDC) ? "to FDC" : "from FDC");
 
         return status;
     }
 
     case 0x3F5: {
         if (d->commandResult.isEmpty()) {
-            vlog(VM_FDCMSG, "Read from empty command result register");
+            vlog(LogFDC, "Read from empty command result register");
             return IODevice::JunkValue;
         }
 
         BYTE value = d->commandResult.takeFirst();
-        vlog(VM_FDCMSG, "Read command result byte %02X", value);
+        vlog(LogFDC, "Read command result byte %02X", value);
 
         return value;
     }
@@ -160,7 +160,7 @@ void FDC::out8(WORD port, BYTE data)
     case 0x3F2: {
         bool old_fdc_enabled = d->enabled;
 
-        vlog(VM_FDCMSG, "Writing to FDC digital output, data: %02X", data);
+        vlog(LogFDC, "Writing to FDC digital output, data: %02X", data);
 
         d->driveIndex = data & 3;
         d->enabled = (data & 0x04) != 0;
@@ -169,21 +169,21 @@ void FDC::out8(WORD port, BYTE data)
         d->drive[0].motor = (data & 0x10) != 0;
         d->drive[1].motor = (data & 0x20) != 0;
 
-        vlog(VM_FDCMSG, "  Current drive: %u", d->driveIndex);
-        vlog(VM_FDCMSG, "  FDC enabled:   %s", d->enabled ? "yes" : "no");
-        vlog(VM_FDCMSG, "  DMA+I/O mode:  %s", d->usingDMA ? "yes" : "no");
+        vlog(LogFDC, "  Current drive: %u", d->driveIndex);
+        vlog(LogFDC, "  FDC enabled:   %s", d->enabled ? "yes" : "no");
+        vlog(LogFDC, "  DMA+I/O mode:  %s", d->usingDMA ? "yes" : "no");
 
-        vlog(VM_FDCMSG, "  Motors:        %u %u", d->drive[0].motor, d->drive[1].motor);
+        vlog(LogFDC, "  Motors:        %u %u", d->drive[0].motor, d->drive[1].motor);
 
         if (!d->currentDrive().motor)
-            vlog(VM_FDCMSG, "Invalid state: Current drive (%u) has motor off.", d->driveIndex);
+            vlog(LogFDC, "Invalid state: Current drive (%u) has motor off.", d->driveIndex);
 
         if (d->enabled != old_fdc_enabled)
             raiseIRQ();
     }
 
     case 0x3F5: {
-        vlog(VM_FDCMSG, "Command: %02X", data);
+        vlog(LogFDC, "Command: %02X", data);
 
         if (d->commandIndex == 0) {
             // Determine the command length
@@ -210,18 +210,18 @@ void FDC::out8(WORD port, BYTE data)
 
 void FDC::executeCommand()
 {
-    vlog(VM_FDCMSG, "Executing command %02X", d->command[0]);
+    vlog(LogFDC, "Executing command %02X", d->command[0]);
 
     switch (d->command[0]) {
     case 0x08: // Sense Interrupt Status
-        vlog(VM_FDCMSG, "Sense interrupt");
+        vlog(LogFDC, "Sense interrupt");
         d->dataDirection = DATA_FROM_FDC_TO_CPU;
         d->commandResult.clear();
         d->commandResult.append(d->statusRegister[0]);
         d->commandResult.append(d->currentDrive().cylinder);
         break;
     default:
-        vlog(VM_FDCMSG, "Unknown command! %02X", d->command[0]);
+        vlog(LogFDC, "Unknown command! %02X", d->command[0]);
     }
 }
 

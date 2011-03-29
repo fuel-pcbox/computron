@@ -61,7 +61,7 @@ void unspeakable_abomination()
 
     FILE* fconf = fopen("vm.conf", "r");
     if (!fconf) {
-        vlog(VM_CONFIGMSG, "Couldn't load vm.conf");
+        vlog(LogConfig, "Couldn't load vm.conf");
         return;
     }
 
@@ -75,11 +75,11 @@ void unspeakable_abomination()
                 lseg = strtol(strtok(NULL, ": \t\n"),NULL,16);
                 loff = strtol(strtok(NULL, " \t\n"),NULL,16);
 
-                vlog(VM_INITMSG, "Loading %s to %04X:%04X", lfname, lseg, loff);
+                vlog(LogInit, "Loading %s to %04X:%04X", lfname, lseg, loff);
 
                 FILE* ftmp = fopen(lfname, "rb");
                 if (!ftmp) {
-                    vlog(VM_CONFIGMSG, "Error while processing \"loadfile\" line.");
+                    vlog(LogConfig, "Error while processing \"loadfile\" line.");
                     vm_exit(1);
                 }
 
@@ -87,7 +87,7 @@ void unspeakable_abomination()
                 size_t bytesRead = fread(destination, 1, MAX_FILESIZE, ftmp);
 
                 if (!bytesRead) {
-                    vlog(VM_CONFIGMSG, "Failure reading from %s", lfname);
+                    vlog(LogConfig, "Failure reading from %s", lfname);
                     vm_exit(1);
                 }
                 fclose(ftmp);
@@ -101,11 +101,11 @@ void unspeakable_abomination()
                 loff = strtol(strtok(NULL," \t\n"), NULL, 16);
                 curtok = strtok(NULL, " \t\n");
 
-                //vlog(VM_INITMSG, "Entering at %04X:%04X", lseg, loff);
+                //vlog(LogInit, "Entering at %04X:%04X", lseg, loff);
 
                 while (curtok) {
                     BYTE tb = strtol(curtok,NULL,16);
-                    //vlog(VM_INITMSG, "  [%04X] = %02X", loff, tb);
+                    //vlog(LogInit, "  [%04X] = %02X", loff, tb);
                     g_cpu->writeMemory16(lseg, loff++, tb);
                     curtok = strtok(NULL, " \t\n");
                 }
@@ -124,7 +124,7 @@ void unspeakable_abomination()
                 }
 
                 if (!dt->name) {
-                    vlog(VM_INITMSG, "Invalid floppy type: \"%s\"", type);
+                    vlog(LogInit, "Invalid floppy type: \"%s\"", type);
                     continue;
                 }
 
@@ -138,7 +138,7 @@ void unspeakable_abomination()
                 /* TODO: What should the media type be? */
                 drv_type[ldrv] = 0;
 
-                vlog(VM_INITMSG, "Floppy %d: %s (%dspt, %dh, %ds (%db))", ldrv, lfname, dt->sectors_per_track, dt->heads, dt->sectors, dt->bytes_per_sector);
+                vlog(LogInit, "Floppy %d: %s (%dspt, %dh, %ds (%db))", ldrv, lfname, dt->sectors_per_track, dt->heads, dt->sectors, dt->bytes_per_sector);
             }
             else if (strcmp(curtok,"drive")==0) {    /* segfaults ahead! */
                 ldrv = strtol(strtok(NULL, " \t\n"), NULL, 16);
@@ -148,7 +148,7 @@ void unspeakable_abomination()
                 lsect = strtol(strtok(NULL, " \t\n"), NULL, 16);
                 lsectsize = strtol(strtok(NULL, " \t\n"), NULL, 16);
 
-                vlog(VM_INITMSG, "Drive %d: %s (%dspt, %dh, %ds (%db))", ldrv, lfname, lspt, lhds, lsect, lsectsize);
+                vlog(LogInit, "Drive %d: %s (%dspt, %dh, %ds (%db))", ldrv, lfname, lspt, lhds, lsect, lsectsize);
 
                 ldrv += 2;
 
@@ -164,7 +164,7 @@ void unspeakable_abomination()
 
                 long megabytes = strtol(strtok(NULL, " \t\n"), NULL, 10);
 
-                vlog(VM_INITMSG, "Fixed drive %d: %s (%ld MB)", ldrv, lfname, megabytes);
+                vlog(LogInit, "Fixed drive %d: %s (%ld MB)", ldrv, lfname, megabytes);
 
                 ldrv += 2;
 
@@ -177,11 +177,11 @@ void unspeakable_abomination()
             } else if (!reloading && !strcmp(curtok, "memory")) {
                 curtok = strtok(NULL, " \t\n");
                 g_cpu->m_baseMemorySize = strtol(curtok, NULL, 10) * 1024;
-                vlog(VM_INITMSG, "Memory size: %d kilobytes", g_cpu->baseMemorySize() / 1024);
+                vlog(LogInit, "Memory size: %d kilobytes", g_cpu->baseMemorySize() / 1024);
             } else if (!reloading && !strcmp(curtok, "ememory")) {
                 curtok = strtok(NULL, " \t\n");
                 g_cpu->m_extendedMemorySize = strtol(curtok, NULL, 10) * 1024;
-                vlog(VM_INITMSG, "Extended memory size: %d kilobytes", g_cpu->extendedMemorySize() / 1024);
+                vlog(LogInit, "Extended memory size: %d kilobytes", g_cpu->extendedMemorySize() / 1024);
             } else if (!reloading && !strcmp(curtok, "entry")) {
                 WORD entry_cs, entry_ip;
                 curtok = strtok(NULL, ": \t\n");
@@ -193,12 +193,12 @@ void unspeakable_abomination()
                 BYTE isr = strtol(strtok(NULL, " \t\n"), NULL, 16);
                 WORD segment = strtol(strtok(NULL, ": \t\n"), NULL, 16);
                 WORD offset = strtol(strtok(NULL, " \t\n"), NULL, 16);
-                vlog(VM_INITMSG, "Software interrupt %02X at %04X:%04X", isr, segment, offset);
+                vlog(LogInit, "Software interrupt %02X at %04X:%04X", isr, segment, offset);
                 g_cpu->setInterruptHandler(isr, segment, offset);
             } else if (!reloading && !strcmp(curtok, "io_ignore")) {
                 curtok = strtok(NULL, " \t\n");
                 WORD port = strtol(curtok, NULL, 16);
-                vlog(VM_INITMSG, "Ignoring I/O port 0x%04X", port);
+                vlog(LogInit, "Ignoring I/O port 0x%04X", port);
                 vomit_ignore_io_port(port);
             }
         }

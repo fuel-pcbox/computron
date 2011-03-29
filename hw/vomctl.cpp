@@ -62,7 +62,7 @@ BYTE VomCtl::in8(WORD port)
 {
     switch (port) {
     case 0xD6: // VOMCTL_REGISTER
-        vlog(VM_VOMCTL, "Read register %02X", m_registerIndex);
+        vlog(LogVomCtl, "Read register %02X", m_registerIndex);
         switch (m_registerIndex) {
         case 0x00: // Always 0
             return 0;
@@ -73,10 +73,10 @@ BYTE VomCtl::in8(WORD port)
         case 0x03: // RAM size MSB
             return MSB(g_cpu->baseMemorySize() / 1024);
         }
-        vlog(VM_VOMCTL, "Invalid register %02X read", m_registerIndex);
+        vlog(LogVomCtl, "Invalid register %02X read", m_registerIndex);
         return IODevice::JunkValue;
     case 0xD7: // VOMCTL_CONSOLE_WRITE
-        vlog(VM_VOMCTL, "%s", d->consoleWriteBuffer.toLatin1().constData());
+        vlog(LogVomCtl, "%s", d->consoleWriteBuffer.toLatin1().constData());
         d->consoleWriteBuffer.clear();
         return IODevice::JunkValue;
     default:
@@ -88,7 +88,7 @@ void VomCtl::out8(WORD port, BYTE data)
 {
     switch (port) {
     case 0xD6: // VOMCTL_REGISTER
-        //vlog(VM_VOMCTL, "Select register %02X", data);
+        //vlog(LogVomCtl, "Select register %02X", data);
         m_registerIndex = data;
         break;
     case 0xD7: // VOMCTL_CONSOLE_WRITE

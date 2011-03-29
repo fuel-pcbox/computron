@@ -148,18 +148,18 @@ void VGA::out8(WORD port, BYTE data)
     case 0x3D4:
         d->currentRegister = data & 0x1F;
         if (d->currentRegister >= 0x12)
-            vlog(VM_VIDEOMSG, "Invalid IO register #%u selected", d->currentRegister);
+            vlog(LogVGA, "Invalid IO register #%u selected", d->currentRegister);
         break;
 
     case 0x3B5:
     case 0x3D5:
         if (d->currentRegister >= 0x12)
-            vlog(VM_VIDEOMSG, "Invalid IO register #%u written", d->currentRegister);
+            vlog(LogVGA, "Invalid IO register #%u written", d->currentRegister);
         d->ioRegister[d->currentRegister] = data;
         break;
 
     case 0x3BA:
-        vlog(VM_VIDEOMSG, "Writing FCR");
+        vlog(LogVGA, "Writing FCR");
         break;
 
     case 0x3C0: {
@@ -175,12 +175,12 @@ void VGA::out8(WORD port, BYTE data)
     case 0x3C4:
         d->currentSequencer = data & 0x1F;
         if (d->currentSequencer >= 0x4)
-            vlog(VM_VIDEOMSG, "Invalid IO sequencer #%u selected", d->currentSequencer);
+            vlog(LogVGA, "Invalid IO sequencer #%u selected", d->currentSequencer);
         break;
 
     case 0x3C5:
         if (d->currentSequencer >= 0x4)
-            vlog(VM_VIDEOMSG, "Invalid IO sequencer #%u written", d->currentSequencer);
+            vlog(LogVGA, "Invalid IO sequencer #%u written", d->currentSequencer);
         d->ioSequencer[d->currentSequencer] = data;
         break;
 
@@ -195,7 +195,7 @@ void VGA::out8(WORD port, BYTE data)
         break;
 
     case 0x3C9: {
-        // vlog(VM_VIDEOMSG, "Setting component %u of color %02X to %02X", dac_data_subindex, dac_data_index, data);
+        // vlog(LogVGA, "Setting component %u of color %02X to %02X", dac_data_subindex, dac_data_index, data);
         RGBColor& color = d->colorRegister[d->dac_data_write_index];
         switch (d->dac_data_write_subindex) {
         case 0:
@@ -226,7 +226,7 @@ void VGA::out8(WORD port, BYTE data)
 
     case 0x3CF:
         // FIXME: Find the number of valid registers and do something for OOB access.
-        // vlog(VM_VIDEOMSG, "writing to reg2 %d, data is %02X", current_register2, data);
+        // vlog(LogVGA, "writing to reg2 %d, data is %02X", current_register2, data);
         d->ioRegister2[d->currentRegister2] = data;
         break;
 
@@ -245,7 +245,7 @@ BYTE VGA::in8(WORD port)
     case 0x3B5:
     case 0x3D5:
         if (d->currentRegister >= 0x12) {
-            vlog(VM_VIDEOMSG, "Invalid IO register #%u read", d->currentRegister);
+            vlog(LogVGA, "Invalid IO register #%u read", d->currentRegister);
             return IODevice::JunkValue;
         }
         return d->ioRegister[d->currentRegister];
@@ -274,16 +274,16 @@ BYTE VGA::in8(WORD port)
 
     case 0x3C1: {
         QMutexLocker locker(&d->paletteMutex);
-        //vlog(VM_VIDEOMSG, "Read PALETTE[%u] (=%02X)", d->paletteIndex, d->paletteRegister[d->paletteIndex]);
+        //vlog(LogVGA, "Read PALETTE[%u] (=%02X)", d->paletteIndex, d->paletteRegister[d->paletteIndex]);
         return d->paletteRegister[d->paletteIndex];
     }
 
     case 0x3C5:
         if (d->currentSequencer >= 0x4) {
-            vlog(VM_VIDEOMSG, "Invalid IO sequencer #%u read", d->currentSequencer);
+            vlog(LogVGA, "Invalid IO sequencer #%u read", d->currentSequencer);
             return IODevice::JunkValue;
         }
-        //vlog(VM_VIDEOMSG, "Reading sequencer %d, data is %02X", d->currentSequencer, d->ioSequencer[d->currentSequencer]);
+        //vlog(LogVGA, "Reading sequencer %d, data is %02X", d->currentSequencer, d->ioSequencer[d->currentSequencer]);
         return d->ioSequencer[d->currentSequencer];
 
     case 0x3C9: {
@@ -305,23 +305,23 @@ BYTE VGA::in8(WORD port)
             break;
         }
 
-        // vlog(VM_VIDEOMSG, "Reading component %u of color %02X (%02X)", dac_data_read_subindex, dac_data_read_index, data);
+        // vlog(LogVGA, "Reading component %u of color %02X (%02X)", dac_data_read_subindex, dac_data_read_index, data);
         return data;
     }
 
     case 0x3CA:
-        vlog(VM_VIDEOMSG, "Reading FCR");
+        vlog(LogVGA, "Reading FCR");
         return 0x00;
 
     case 0x3CC:
-        vlog(VM_VIDEOMSG, "Read MOR (Miscellaneous Output Register)");
+        vlog(LogVGA, "Read MOR (Miscellaneous Output Register)");
         // 0x01: I/O at 0x3Dx (otherwise at 0x3Bx)
         // 0x02: RAM access enabled?
         return 0x03;
 
     case 0x3CF:
         // FIXME: Find the number of valid registers and do something for OOB access.
-        // vlog(VM_VIDEOMSG, "reading reg2 %d, data is %02X", current_register2, io_register2[current_register2]);
+        // vlog(LogVGA, "reading reg2 %d, data is %02X", current_register2, io_register2[current_register2]);
         return d->ioRegister2[d->currentRegister2];
 
     default:

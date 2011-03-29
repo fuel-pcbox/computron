@@ -107,7 +107,7 @@ void VCpu::_wrap_0x8F_16()
     switch(vomit_modRMRegisterPart(rmbyte)) {
     case 0: _POP_RM16(); break;
     default:
-        vlog(VM_ALERT, "[16bit] 8F /%u not wrapped", vomit_modRMRegisterPart(rmbyte));
+        vlog(LogAlert, "[16bit] 8F /%u not wrapped", vomit_modRMRegisterPart(rmbyte));
         exception(6);
     }
 }
@@ -118,7 +118,7 @@ void VCpu::_wrap_0x8F_32()
     switch(vomit_modRMRegisterPart(rmbyte)) {
     case 0: _POP_RM32(); break;
     default:
-        vlog(VM_ALERT, "[32bit] 8F /%u not wrapped", vomit_modRMRegisterPart(rmbyte));
+        vlog(LogAlert, "[32bit] 8F /%u not wrapped", vomit_modRMRegisterPart(rmbyte));
         exception(6);
     }
 }
@@ -137,7 +137,7 @@ void VCpu::_wrap_0xC0()
     case 4: updateModRM8(cpu_shl(this, value, imm, 8)); break;
     case 5: updateModRM8(cpu_shr(this, value, imm, 8)); break;
     case 6:
-        vlog(VM_ALERT, "C0 /6 not wrapped");
+        vlog(LogAlert, "C0 /6 not wrapped");
         exception(6);
         break;
     case 7: updateModRM8(cpu_sar(this, value, imm, 8)); break;
@@ -158,7 +158,7 @@ void VCpu::_wrap_0xC1_16()
     case 4: updateModRM16(cpu_shl(this, value, imm, 16)); break;
     case 5: updateModRM16(cpu_shr(this, value, imm, 16)); break;
     case 6:
-        vlog(VM_ALERT, "[16bit] C1 /6 not wrapped");
+        vlog(LogAlert, "[16bit] C1 /6 not wrapped");
         exception(6);
         break;
     case 7: updateModRM16(cpu_sar(this, value, imm, 16)); break;
@@ -179,7 +179,7 @@ void VCpu::_wrap_0xC1_32()
     case 4: updateModRM32(cpu_shl(this, value, imm, 32)); break;
     case 5: updateModRM32(cpu_shr(this, value, imm, 32)); break;
     case 6:
-        vlog(VM_ALERT, "[32bit] C1 /6 not wrapped");
+        vlog(LogAlert, "[32bit] C1 /6 not wrapped");
         exception(6);
         break;
     case 7: updateModRM32(cpu_sar(this, value, imm, 32)); break;
@@ -199,7 +199,7 @@ void VCpu::_wrap_0xD0()
     case 4: updateModRM8(cpu_shl(this, value, 1, 8 )); break;
     case 5: updateModRM8(cpu_shr(this, value, 1, 8 )); break;
     case 6:
-        vlog(VM_ALERT, "D0 /6 not wrapped");
+        vlog(LogAlert, "D0 /6 not wrapped");
         exception(6);
         break;
     case 7: updateModRM8(cpu_sar(this, value, 1, 8 )); break;
@@ -219,7 +219,7 @@ void VCpu::_wrap_0xD1_16()
     case 4: updateModRM16(cpu_shl(this, value, 1, 16)); break;
     case 5: updateModRM16(cpu_shr(this, value, 1, 16)); break;
     case 6:
-        vlog(VM_ALERT, "[16bit] D1 /6 not wrapped");
+        vlog(LogAlert, "[16bit] D1 /6 not wrapped");
         exception(6);
         break;
     case 7: updateModRM16(cpu_sar(this, value, 1, 16)); break;
@@ -239,7 +239,7 @@ void VCpu::_wrap_0xD1_32()
     case 4: updateModRM32(cpu_shl(this, value, 1, 32)); break;
     case 5: updateModRM32(cpu_shr(this, value, 1, 32)); break;
     case 6:
-        vlog(VM_ALERT, "[32bit] D1 /6 not wrapped");
+        vlog(LogAlert, "[32bit] D1 /6 not wrapped");
         exception(6);
         break;
     case 7: updateModRM32(cpu_sar(this, value, 1, 32)); break;
@@ -260,7 +260,7 @@ void VCpu::_wrap_0xD2()
     case 4: updateModRM8(cpu_shl(this, value, regs.B.CL, 8 )); break;
     case 5: updateModRM8(cpu_shr(this, value, regs.B.CL, 8 )); break;
     case 6:
-        vlog(VM_ALERT, "D2 /6 not wrapped");
+        vlog(LogAlert, "D2 /6 not wrapped");
         exception(6);
         break;
     case 7: updateModRM8(cpu_sar(this, value, regs.B.CL, 8 )); break;
@@ -280,7 +280,7 @@ void VCpu::_wrap_0xD3_16()
     case 4: updateModRM16(cpu_shl(this, value, regs.B.CL, 16)); break;
     case 5: updateModRM16(cpu_shr(this, value, regs.B.CL, 16)); break;
     case 6:
-        vlog(VM_ALERT, "[16bit] D3 /6 not wrapped");
+        vlog(LogAlert, "[16bit] D3 /6 not wrapped");
         exception(6);
         break;
     case 7: updateModRM16(cpu_sar(this, value, regs.B.CL, 16)); break;
@@ -300,7 +300,7 @@ void VCpu::_wrap_0xD3_32()
     case 4: updateModRM32(cpu_shl(this, value, regs.B.CL, 32)); break;
     case 5: updateModRM32(cpu_shr(this, value, regs.B.CL, 32)); break;
     case 6:
-        vlog(VM_ALERT, "[32bit] D3 /6 not wrapped");
+        vlog(LogAlert, "[32bit] D3 /6 not wrapped");
         exception(6);
         break;
     case 7: updateModRM32(cpu_sar(this, value, regs.B.CL, 32)); break;
@@ -314,7 +314,7 @@ void VCpu::_wrap_0xF6()
     switch (vomit_modRMRegisterPart(rmbyte)) {
     case 0: _TEST_RM8_imm8(); break;
     case 1:
-        vlog(VM_ALERT, "F6 /1 not wrapped");
+        vlog(LogAlert, "F6 /1 not wrapped");
         exception(6);
         break;
     case 2: _NOT_RM8(); break;
@@ -339,7 +339,7 @@ void VCpu::_wrap_0xF7_16()
     case 6: _DIV_RM16(); break;
     case 7: _IDIV_RM16(); break;
     default: // 1
-        vlog(VM_ALERT, "[16bit] F7 /1 not wrapped");
+        vlog(LogAlert, "[16bit] F7 /1 not wrapped");
         exception(6);
         break;
     }
@@ -360,7 +360,7 @@ void VCpu::_wrap_0xF7_32()
     case 7: _IDIV_RM32(); break;
 #endif
     default: // 1
-        vlog(VM_ALERT, "[32bit] F7 /%u not wrapped", vomit_modRMRegisterPart(rmbyte));
+        vlog(LogAlert, "[32bit] F7 /%u not wrapped", vomit_modRMRegisterPart(rmbyte));
         exception(6);
         break;
 
@@ -374,7 +374,7 @@ void VCpu::_wrap_0xFE()
     case 0: _INC_RM8(); break;
     case 1: _DEC_RM8(); break;
     default:
-        vlog(VM_ALERT, "FE /%u not wrapped", vomit_modRMRegisterPart(rmbyte));
+        vlog(LogAlert, "FE /%u not wrapped", vomit_modRMRegisterPart(rmbyte));
         exception(6);
         break;
     }
@@ -392,7 +392,7 @@ void VCpu::_wrap_0xFF_16()
     case 5: _JMP_FAR_mem16(); break;
     case 6: _PUSH_RM16(); break;
     case 7:
-        vlog(VM_ALERT, "[16bit] FF /7 not wrapped");
+        vlog(LogAlert, "[16bit] FF /7 not wrapped");
         exception(6);
         break;
     }
@@ -400,7 +400,7 @@ void VCpu::_wrap_0xFF_16()
 
 void VCpu::_wrap_0xFF_32()
 {
-    vlog(VM_ALERT, "NOT IMPLEMENTED: 32bit 0xFF");
+    vlog(LogAlert, "NOT IMPLEMENTED: 32bit 0xFF");
     exception(6);
 #if 0
     rmbyte = fetchOpcodeByte();
@@ -413,7 +413,7 @@ void VCpu::_wrap_0xFF_32()
     case 5: _JMP_FAR_mem16(); break;
     case 6: _PUSH_RM16(); break;
     case 7:
-        vlog(VM_ALERT, "[32bit] FF /7 not wrapped");
+        vlog(LogAlert, "[32bit] FF /7 not wrapped");
         exception(6);
         break;
     }

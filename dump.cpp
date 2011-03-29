@@ -30,12 +30,12 @@
 
 void VCpu::dump() const
 {
-    vlog(VM_DUMPMSG, "CPU level: %u", VOMIT_CPU_LEVEL);
-    vlog(VM_DUMPMSG, "Base mem: %dK", baseMemorySize());
+    vlog(LogDump, "CPU level: %u", VOMIT_CPU_LEVEL);
+    vlog(LogDump, "Base mem: %dK", baseMemorySize());
 #ifdef VOMIT_PREFETCH_QUEUE
-    vlog(VM_DUMPMSG, "Prefetch queue: %d bytes", m_prefetchQueueSize);
+    vlog(LogDump, "Prefetch queue: %d bytes", m_prefetchQueueSize);
 #else
-    vlog(VM_DUMPMSG, "Prefetch queue: off");
+    vlog(LogDump, "Prefetch queue: off");
 #endif
 }
 
@@ -64,7 +64,7 @@ int VCpu::dumpDisassembled(WORD segment, DWORD offset) const
         fprintf(stderr, "%s\n", buf);
 #endif
 
-    vlog(VM_DUMPMSG, buf);
+    vlog(LogDump, buf);
 
     /* Recurse if this is a prefix instruction. */
     if (*opcode == 0x26 || *opcode == 0x2E || *opcode == 0x36 || *opcode == 0x3E || *opcode == 0xF2 || *opcode == 0xF3)
@@ -97,7 +97,7 @@ void VCpu::dumpTrace() const
 void dumpSelector(const VCpu* cpu, const char* segmentRegisterName, int segmentIndex)
 {
     const VCpu::SegmentSelector& selector = cpu->m_selector[segmentIndex];
-    vlog(VM_DUMPMSG, "%s: %04X {%08X:%05X}",
+    vlog(LogDump, "%s: %04X {%08X:%05X}",
         segmentRegisterName,
         cpu->getSegment(static_cast<VCpu::SegmentIndex>(segmentIndex)),
         selector.base,
@@ -132,9 +132,9 @@ static const char* registerName(VCpu::RegisterIndex16 registerIndex)
 static void dumpRegister(const VCpu* cpu, VCpu::RegisterIndex16 registerIndex)
 {
     if (cpu->getPE())
-        vlog(VM_DUMPMSG, "E%s: %08X", registerName(registerIndex), cpu->getRegister32(static_cast<VCpu::RegisterIndex32>(registerIndex)));
+        vlog(LogDump, "E%s: %08X", registerName(registerIndex), cpu->getRegister32(static_cast<VCpu::RegisterIndex32>(registerIndex)));
     else
-        vlog(VM_DUMPMSG, "%s: %04X", registerName(registerIndex), cpu->getRegister16(registerIndex));
+        vlog(LogDump, "%s: %04X", registerName(registerIndex), cpu->getRegister16(registerIndex));
 }
 
 void VCpu::dumpAll() const
@@ -162,12 +162,12 @@ void VCpu::dumpAll() const
     dumpRegister(this, RegisterDI);
 
     if (!getPE()) {
-        vlog(VM_DUMPMSG, "CS: %04X", getCS());
-        vlog(VM_DUMPMSG, "DS: %04X", getDS());
-        vlog(VM_DUMPMSG, "ES: %04X", getES());
-        vlog(VM_DUMPMSG, "SS: %04X", getSS());
-        vlog(VM_DUMPMSG, "FS: %04X", getFS());
-        vlog(VM_DUMPMSG, "GS: %04X", getGS());
+        vlog(LogDump, "CS: %04X", getCS());
+        vlog(LogDump, "DS: %04X", getDS());
+        vlog(LogDump, "ES: %04X", getES());
+        vlog(LogDump, "SS: %04X", getSS());
+        vlog(LogDump, "FS: %04X", getFS());
+        vlog(LogDump, "GS: %04X", getGS());
     } else {
         dumpSelector(this, "CS", RegisterCS);
         dumpSelector(this, "DS", RegisterDS);
@@ -177,17 +177,17 @@ void VCpu::dumpAll() const
         dumpSelector(this, "GS", RegisterGS);
     }
 
-    vlog(VM_DUMPMSG, "CR0: %08X", getCR0());
+    vlog(LogDump, "CR0: %08X", getCR0());
 
-    vlog(VM_DUMPMSG, "GDTR: {base=%08X, limit=%04X}", this->GDTR.base, this->GDTR.limit);
-    vlog(VM_DUMPMSG, "LDTR: {base=%08X, limit=%04X}", this->LDTR.base, this->LDTR.limit);
-    vlog(VM_DUMPMSG, "IDTR: {base=%08X, limit=%04X}", this->IDTR.base, this->IDTR.limit);
+    vlog(LogDump, "GDTR: {base=%08X, limit=%04X}", this->GDTR.base, this->GDTR.limit);
+    vlog(LogDump, "LDTR: {base=%08X, limit=%04X}", this->LDTR.base, this->LDTR.limit);
+    vlog(LogDump, "IDTR: {base=%08X, limit=%04X}", this->IDTR.base, this->IDTR.limit);
 
-    vlog(VM_DUMPMSG, "C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u", getCF(), getPF(), getAF(), getZF(), getSF(), getIF(), getDF(), getOF());
+    vlog(LogDump, "C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u", getCF(), getPF(), getAF(), getZF(), getSF(), getIF(), getDF(), getOF());
 
-    vlog(VM_DUMPMSG, "  -  (%02X %02X%02X%02X%02X%02X)", csip[0], csip[1], csip[2], csip[3], csip[4], csip[5]);
+    vlog(LogDump, "  -  (%02X %02X%02X%02X%02X%02X)", csip[0], csip[1], csip[2], csip[3], csip[4], csip[5]);
 #ifdef VOMIT_PREFETCH_QUEUE
-    vlog(VM_DUMPMSG, "  -  [%02X %02X%02X%02X%02X%02X]", dpfq[0], dpfq[1], dpfq[2], dpfq[3], dpfq[4], dpfq[5]);
+    vlog(LogDump, "  -  [%02X %02X%02X%02X%02X%02X]", dpfq[0], dpfq[1], dpfq[2], dpfq[3], dpfq[4], dpfq[5]);
 #endif
 
     dumpDisassembled(getBaseCS(), getBaseEIP());
@@ -205,7 +205,7 @@ void VCpu::dumpMemory(WORD segment, DWORD offset, int rows) const
     BYTE* p = memoryPointer(segment, offset);
 
     for (int i = 0; i < rows; ++i) {
-        vlog(VM_DUMPMSG,
+        vlog(LogDump,
             "%04X:%04X   %02X %02X %02X %02X %02X %02X %02X %02X - %02X %02X %02X %02X %02X %02X %02X %02X   %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
             segment, (offset+i*16),
             p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7],
@@ -224,7 +224,7 @@ void VCpu::dumpIVT() const
 {
     // XXX: For alignment reasons, we're skipping INT FF
     for (int i = 0; i < 0xFF; i += 4) {
-        vlog(VM_DUMPMSG,
+        vlog(LogDump,
             "%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X",
             i, iseg(i), ioff(i),
             i+1, iseg(i+1), ioff(i+1),
