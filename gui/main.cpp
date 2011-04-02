@@ -30,6 +30,7 @@
 #include "screen.h"
 #include "vomit.h"
 #include "debugger.h"
+#include "machine.h"
 
 static void parseArguments(const QStringList& arguments);
 
@@ -46,10 +47,10 @@ int main(int argc, char** argv)
     qRegisterMetaType<SIGNED_WORD>("SIGNED_WORD");
     qRegisterMetaType<SIGNED_DWORD>("SIGNED_DWORD");
 
-    g_cpu = new VCpu;
+    Machine machine;
 
     if (options.start_in_debug)
-        g_cpu->debugger()->enter();
+        machine.cpu()->debugger()->enter();
 
     extern void vomit_disasm_init_tables();
     vomit_disasm_init_tables();
@@ -58,7 +59,7 @@ int main(int argc, char** argv)
 
     vomit_init();
 
-    MainWindow mw(g_cpu);
+    MainWindow mw(machine.cpu());
     mw.show();
 
     return app.exec();

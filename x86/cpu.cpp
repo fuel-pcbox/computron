@@ -407,6 +407,9 @@ void VCpu::GP(int code)
 VCpu::VCpu(QObject* parent)
     : QObject(parent)
 {
+    VM_ASSERT(!g_cpu);
+    g_cpu = this;
+
     m_memory = new BYTE[(8192 * 1024) + 65536];
     if (!m_memory) {
         vlog(LogInit, "Insufficient memory available.");

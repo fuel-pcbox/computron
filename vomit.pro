@@ -38,15 +38,18 @@ HEADERS += gui/mainwindow.h \
            include/vcpu.h \
            include/debug.h \
            include/floppy.h \
+           include/machine.h \
            include/templates.h \
            include/vomit.h \
            disasm/include/disasm.h \
            disasm/include/insn-types.h
+
 SOURCES += config.cpp \
            debug.cpp \
            debugger.cpp \
            dump.cpp \
            fpu.cpp \
+           machine.cpp \
            vmcalls.cpp \
            vomit.cpp \
            x86/186.cpp \
