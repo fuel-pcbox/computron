@@ -1236,8 +1236,6 @@ private:
     mutable WORD m_lastModRMSegment;
     mutable DWORD m_lastModRMOffset;
 
-    // FIXME: Don't befriend this... thing.
-    friend void unspeakable_abomination();
     DWORD m_baseMemorySize;
     DWORD m_extendedMemorySize;
 
