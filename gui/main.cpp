@@ -47,10 +47,13 @@ int main(int argc, char** argv)
     qRegisterMetaType<SIGNED_WORD>("SIGNED_WORD");
     qRegisterMetaType<SIGNED_DWORD>("SIGNED_DWORD");
 
-    Machine machine;
+    QScopedPointer<Machine> machine(Machine::createFromFile(QLatin1String("default.vmf")));
+
+    if (!machine)
+        return 1;
 
     if (options.start_in_debug)
-        machine.cpu()->debugger()->enter();
+        machine->cpu()->debugger()->enter();
 
     extern void vomit_disasm_init_tables();
     vomit_disasm_init_tables();
@@ -59,7 +62,7 @@ int main(int argc, char** argv)
 
     vomit_init();
 
-    MainWindow mw(machine.cpu());
+    MainWindow mw(machine->cpu());
     mw.show();
 
     return app.exec();

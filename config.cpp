@@ -29,12 +29,13 @@
 #include "vomit.h"
 #include "floppy.h"
 #include "debug.h"
+#include "settings.h"
+#include <QFile>
+#include <QStringList>
 
-static bool reloading = false;
-
-struct disk_type_t
+struct DiskType
 {
-    char* name;
+    const char* name;
     WORD sectors_per_track;
     WORD heads;
     DWORD sectors;
@@ -42,7 +43,7 @@ struct disk_type_t
     BYTE media_type;
 };
 
-static disk_type_t floppy_types[] =
+static DiskType gFloppyTypes[] =
 {
     { "1.44M", 18, 2, 2880, 512, 4 },
     { "720kB",  9, 2, 1440, 512, 3 },
@@ -53,18 +54,120 @@ static disk_type_t floppy_types[] =
     { 0L,       0, 0,    0,   0, 0 }
 };
 
-void unspeakable_abomination()
+Settings::Settings()
+    : m_memorySize(0)
 {
+}
+
+Settings::~Settings()
+{
+}
+
+static bool parseAddress(const QString& string, DWORD* address)
+{
+    VM_ASSERT(address);
+
+    QStringList parts = string.split(QLatin1Char(':'), QString::SkipEmptyParts);
+    if (parts.count() != 2)
+        return false;
+
+    bool ok;
+    WORD segment = parts.at(0).toUInt(&ok, 16);
+    if (!ok)
+        return false;
+
+    DWORD offset = parts.at(1).toUInt(&ok, 16);
+    if (!ok)
+        return false;
+
+    *address = vomit_toFlatAddress(segment, offset);
+    return true;
+}
+
+bool Settings::handleLoadFile(const QStringList& arguments)
+{
+    // load-file <segment:offset> <path/to/file>
+
+    if (arguments.count() != 2)
+        return false;
+
+    DWORD address;
+    if (!parseAddress(arguments.at(0), &address))
+        return false;
+
+    m_files.insert(address, arguments.at(1));
+    return true;
+}
+
+bool Settings::handleMemorySize(const QStringList& arguments)
+{
+    // memory-size <size>
+
+    if (arguments.count() != 1)
+        return false;
+
+    bool ok;
+    unsigned size = arguments.at(0).toUInt(&ok);
+    if (!ok)
+        return false;
+
+    setMemorySize(size * 1024);
+    return true;
+}
+
+Settings* Settings::createFromFile(const QString& fileName)
+{
+#if 0
     char curline[256], *curtok;
     char lfname[MAX_FN_LENGTH];
     WORD lseg, loff, ldrv, lspt, lhds, lsect, lsectsize;
+#endif
 
-    FILE* fconf = fopen("vm.conf", "r");
-    if (!fconf) {
-        vlog(LogConfig, "Couldn't load vm.conf");
-        return;
+    QFile file(fileName);
+
+    if (!file.open(QIODevice::ReadOnly)) {
+        vlog(LogConfig, "Couldn't load %s", qPrintable(fileName));
+        return 0;
     }
 
+    unsigned lineNumber = 0;
+    Settings* settings = new Settings;
+
+    if (!settings)
+        return 0;
+
+    static QRegExp whitespaceRegExp("\\s");
+
+    while (!file.atEnd()) {
+        QString line = QString::fromLocal8Bit(file.readLine());
+        lineNumber++;
+
+        if (line.startsWith(QLatin1Char('#')))
+            continue;
+
+        QStringList arguments = line.split(whitespaceRegExp, QString::SkipEmptyParts);
+
+        if (arguments.isEmpty())
+            continue;
+
+        QString command = arguments.takeFirst();
+
+        bool success = false;
+
+        if (command == QLatin1String("load-file"))
+            success = settings->handleLoadFile(arguments);
+        else if (command == QLatin1String("memory-size"))
+            success = settings->handleMemorySize(arguments);
+
+        if (!success) {
+            vlog(LogConfig, "Failed parsing %s:%u %s", qPrintable(fileName), lineNumber, qPrintable(line));
+            return 0;
+        }
+    }
+
+    return settings;
+
+#if 0
     while (!feof(fconf)) {
         if (!fgets(curline, 256, fconf))
             break;
@@ -96,7 +199,7 @@ void unspeakable_abomination()
                 for (DWORD address = lseg * 16 + loff; address < lseg * 16 + loff + bytesRead; ++address)
                     g_cpu->markDirty(address);
 #endif
-            } else if (!reloading && !strcmp(curtok, "setbyte")) {
+            } else if (!strcmp(curtok, "setbyte")) {
                 lseg = strtol(strtok(NULL,": \t\n"), NULL, 16);
                 loff = strtol(strtok(NULL," \t\n"), NULL, 16);
                 curtok = strtok(NULL, " \t\n");
@@ -117,8 +220,8 @@ void unspeakable_abomination()
                 strcpy(type, strtok(0L, " \t\n"));
                 strcpy(lfname, strtok(0L, "\n"));
 
-                disk_type_t* dt;
-                for (dt = floppy_types; dt->name; ++dt) {
+                DiskType* dt;
+                for (dt = gFloppyTypes; dt->name; ++dt) {
                     if (!strcmp(type, dt->name))
                         break;
                 }
@@ -174,28 +277,28 @@ void unspeakable_abomination()
                 drv_sectsize[ldrv] = 512;
                 drv_status[ldrv] = 1;
                 drv_sectors[ldrv] = (megabytes * 1048576) / drv_sectsize[ldrv];
-            } else if (!reloading && !strcmp(curtok, "memory")) {
+            } else if (!strcmp(curtok, "memory")) {
                 curtok = strtok(NULL, " \t\n");
                 g_cpu->m_baseMemorySize = strtol(curtok, NULL, 10) * 1024;
                 vlog(LogInit, "Memory size: %d kilobytes", g_cpu->baseMemorySize() / 1024);
-            } else if (!reloading && !strcmp(curtok, "ememory")) {
+            } else if (!strcmp(curtok, "ememory")) {
                 curtok = strtok(NULL, " \t\n");
                 g_cpu->m_extendedMemorySize = strtol(curtok, NULL, 10) * 1024;
                 vlog(LogInit, "Extended memory size: %d kilobytes", g_cpu->extendedMemorySize() / 1024);
-            } else if (!reloading && !strcmp(curtok, "entry")) {
+            } else if (!strcmp(curtok, "entry")) {
                 WORD entry_cs, entry_ip;
                 curtok = strtok(NULL, ": \t\n");
                 entry_cs = (WORD)strtol(curtok, NULL, 16);
                 curtok = strtok(NULL, " \t\n");
                 entry_ip = (WORD)strtol(curtok, NULL, 16);
                 g_cpu->jump16(entry_cs, entry_ip);
-            } else if (!reloading && !strcmp(curtok, "addint")) {
+            } else if (!strcmp(curtok, "addint")) {
                 BYTE isr = strtol(strtok(NULL, " \t\n"), NULL, 16);
                 WORD segment = strtol(strtok(NULL, ": \t\n"), NULL, 16);
                 WORD offset = strtol(strtok(NULL, " \t\n"), NULL, 16);
                 vlog(LogInit, "Software interrupt %02X at %04X:%04X", isr, segment, offset);
                 g_cpu->setInterruptHandler(isr, segment, offset);
-            } else if (!reloading && !strcmp(curtok, "io_ignore")) {
+            } else if (!strcmp(curtok, "io_ignore")) {
                 curtok = strtok(NULL, " \t\n");
                 WORD port = strtol(curtok, NULL, 16);
                 vlog(LogInit, "Ignoring I/O port 0x%04X", port);
@@ -204,18 +307,5 @@ void unspeakable_abomination()
         }
     }
     fclose(fconf);
-}
-
-void
-vm_loadconf()
-{
-    reloading = false;
-    unspeakable_abomination();
-}
-
-void
-config_reload()
-{
-    reloading = true;
-    unspeakable_abomination();
+#endif
 }

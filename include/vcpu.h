@@ -550,6 +550,7 @@ public:
     BYTE in(WORD port);
 
     inline BYTE* memoryPointer(WORD segment, WORD offset) const;
+    inline BYTE* memoryPointer(DWORD address) const;
 
     DWORD getEFlags() const;
     WORD getFlags() const;
@@ -1324,10 +1325,8 @@ BYTE* VCpu::codeMemory() const
     return m_codeMemory;
 }
 
-BYTE* VCpu::memoryPointer(WORD segment, WORD offset) const
+BYTE* VCpu::memoryPointer(DWORD address) const
 {
-    DWORD address = vomit_toFlatAddress(segment, offset);
-
     if (!isA20Enabled()) {
 #ifdef VOMIT_DEBUG
         if (address > 0xFFFFF)
@@ -1336,6 +1335,11 @@ BYTE* VCpu::memoryPointer(WORD segment, WORD offset) const
         address &= 0xFFFFF;
     }
     return &m_memory[address];
+}
+
+BYTE* VCpu::memoryPointer(WORD segment, WORD offset) const
+{
+    return memoryPointer(vomit_toFlatAddress(segment, offset));
 }
 
 #ifndef VOMIT_PREFETCH_QUEUE

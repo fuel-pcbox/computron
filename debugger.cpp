@@ -139,7 +139,7 @@ void Debugger::handleDumpIVT()
 
 void Debugger::handleReconfigure()
 {
-    config_reload();
+    // FIXME: Implement.
 }
 
 void Debugger::handleStep()

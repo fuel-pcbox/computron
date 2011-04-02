@@ -32,9 +32,6 @@
 #define MAX_FN_LENGTH	128
 
 void vm_exit(int);
-void config_reload();
-void vm_loadconf();
-
 void vm_kill();
 
 WORD kbd_hit();

@@ -72,7 +72,7 @@ void vlog(VLogChannel channel, const char* format, ...)
     vfprintf(s_logfile, format, ap);
     va_end(ap);
 
-    if (g_cpu->debugger()->isActive() || show_on_stdout) {
+    if (!g_cpu || g_cpu->debugger()->isActive() || show_on_stdout) {
         if (prefix)
             printf("(%8s) ", prefix);
         va_start(ap, format);

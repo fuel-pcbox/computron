@@ -39,6 +39,7 @@ HEADERS += gui/mainwindow.h \
            include/debug.h \
            include/floppy.h \
            include/machine.h \
+           include/settings.h \
            include/templates.h \
            include/vomit.h \
            disasm/include/disasm.h \

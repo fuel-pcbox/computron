@@ -27,20 +27,29 @@
 #define MACHINE_H
 
 #include <QObject>
+#include "types.h"
 
+class Settings;
 class VCpu;
 
 class Machine : public QObject
 {
     Q_OBJECT
 public:
-    explicit Machine(QObject* parent = 0);
     virtual ~Machine();
+    static Machine* createFromFile(const QString& fileName);
 
     VCpu* cpu() const { return m_cpu; }
+    Settings* settings() const { return m_settings; }
 
 private:
+    explicit Machine(Settings* settings, QObject* parent = 0);
+    bool loadFile(DWORD address, const QString& fileName);
+
+    void applySettings();
+
     VCpu* m_cpu;
+    Settings* m_settings;
 };
 
 #endif

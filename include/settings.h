@@ -23,43 +23,39 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include "vomit.h"
-#include "vcpu.h"
-#include "debug.h"
-#include "debugger.h"
-#include "iodevice.h"
-#include "vga.h"
-#include <signal.h>
+#ifndef SETTINGS_H
+#define SETTINGS_H
 
-vomit_options_t options;
+#include <QtCore/QHash>
+#include <QtCore/QString>
+#include "types.h"
 
-static void sigint_handler(int)
+class QStringList;
+
+class Settings
 {
-    VM_ASSERT(g_cpu);
-    VM_ASSERT(g_cpu->debugger());
-    g_cpu->debugger()->enter();
-}
+public:
+    static Settings* createFromFile(const QString&);
 
-void vomit_init()
-{
-    vlog(LogInit, "Registering I/O devices");
-    foreach (IODevice *device, IODevice::devices())
-        vlog(LogInit, "%s at 0x%p", device->name(), device);
+    unsigned memorySize() const { return m_memorySize; }
+    void setMemorySize(unsigned size) { m_memorySize = size; }
 
-    signal(SIGINT, sigint_handler);
-}
+    QHash<DWORD, QString> files() const { return m_files; }
 
-void vm_kill()
-{
-    vlog(LogExit, "Killing VM");
-    delete g_cpu;
-}
+    ~Settings();
 
-void vm_exit(int exit_code)
-{
-    vm_kill();
-    exit(exit_code);
-}
+private:
+    Settings();
+    Settings(const Settings&);
+    Settings& operator=(const Settings&);
+
+    bool handleLoadFile(const QStringList&);
+    bool handleMemorySize(const QStringList&);
+    bool handleSetByte(const QStringList&);
+    bool handleEntry(const QStringList&);
+
+    QHash<DWORD, QString> m_files;
+    unsigned m_memorySize;
+};
+
+#endif
