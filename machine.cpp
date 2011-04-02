@@ -76,12 +76,13 @@ Machine::~Machine()
 
 void Machine::applySettings()
 {
-    if (!m_settings)
+    if (!settings())
         return;
 
+    cpu()->setExtendedMemorySize(settings()->memorySize());
     // FIXME: Apply memory-size setting.
 
-    QHash<DWORD, QString> files = m_settings->files();
+    QHash<DWORD, QString> files = settings()->files();
 
     QHash<DWORD, QString>::const_iterator it = files.constBegin();
     QHash<DWORD, QString>::const_iterator end = files.constEnd();
