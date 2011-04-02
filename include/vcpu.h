@@ -350,7 +350,6 @@ public:
     bool isA20Enabled() const { return m_a20Enabled; }
 
     void jumpToInterruptHandler(int isr);
-    void setInterruptHandler(BYTE isr, WORD segment, WORD offset);
 
     void GP(int code);
 

@@ -722,12 +722,6 @@ void VCpu::jump16(WORD segment, WORD offset)
     jump32(segment, offset);
 }
 
-void VCpu::setInterruptHandler(BYTE isr, WORD segment, WORD offset)
-{
-    writeMemory16(0x0000, (isr * 4), offset);
-    writeMemory16(0x0000, (isr * 4) + 2, segment);
-}
-
 void VCpu::_UNSUPP()
 {
     // We've come across an unsupported instruction, log it, then vector to the "illegal instruction" ISR.
