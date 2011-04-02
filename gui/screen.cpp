@@ -815,7 +815,7 @@ WORD kbd_hit()
 
 BYTE kbd_pop_raw()
 {
-    if (s_self)
+    if (!s_self)
         return 0x00;
     return s_self->popKeyData();
 }
