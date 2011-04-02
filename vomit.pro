@@ -45,12 +45,12 @@ HEADERS += gui/mainwindow.h \
            disasm/include/disasm.h \
            disasm/include/insn-types.h
 
-SOURCES += config.cpp \
-           debug.cpp \
+SOURCES += debug.cpp \
            debugger.cpp \
            dump.cpp \
            fpu.cpp \
            machine.cpp \
+           settings.cpp \
            vmcalls.cpp \
            vomit.cpp \
            x86/186.cpp \
