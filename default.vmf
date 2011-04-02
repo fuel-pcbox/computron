@@ -13,4 +13,4 @@ fixed-disk 0 images/c.img 32768
 # Available types:
 #     1.44M, 1.2M, 720kB, 360kB, 320kB, 160kB
 
-floppy-disk 0 1.44M images/Dos6.22.img
+#floppy-disk 0 1.44M images/Dos6.22.img
