@@ -2,3 +2,5 @@ memory-size 8192
 
 load-file F000:0000 bios/bios.bin
 load-file C000:4000 font.bin
+
+fixed-disk 0 images/c.img 32768

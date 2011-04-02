@@ -115,6 +115,38 @@ bool Settings::handleMemorySize(const QStringList& arguments)
     return true;
 }
 
+bool Settings::handleFixedDisk(const QStringList& arguments)
+{
+    // fixed-disk <index> <path/to/file> <size>
+
+    if (arguments.count() != 3)
+        return false;
+
+    bool ok;
+    unsigned index = arguments.at(0).toUInt(&ok);
+    if (!ok)
+        return false;
+
+    QString fileName = arguments.at(1);
+
+    unsigned size = arguments.at(2).toUInt(&ok);
+    if (!ok)
+        return false;
+
+    vlog(LogConfig, "Fixed disk %u: %s (%ld KiB)", index, qPrintable(fileName), size);
+
+    // FIXME: This code sucks.
+    index += 2;
+    strcpy(drv_imgfile[index], qPrintable(fileName));
+    drv_spt[index] = 63;
+    drv_heads[index] = 16;
+    drv_sectsize[index] = 512;
+    drv_status[index] = 1;
+    drv_sectors[index] = (size * 1024) / drv_sectsize[index];
+
+    return true;
+}
+
 Settings* Settings::createFromFile(const QString& fileName)
 {
 #if 0
@@ -158,6 +190,8 @@ Settings* Settings::createFromFile(const QString& fileName)
             success = settings->handleLoadFile(arguments);
         else if (command == QLatin1String("memory-size"))
             success = settings->handleMemorySize(arguments);
+        else if (command == QLatin1String("fixed-disk"))
+            success = settings->handleFixedDisk(arguments);
 
         if (!success) {
             vlog(LogConfig, "Failed parsing %s:%u %s", qPrintable(fileName), lineNumber, qPrintable(line));
