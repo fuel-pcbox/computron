@@ -51,8 +51,6 @@ private:
 
     bool handleLoadFile(const QStringList&);
     bool handleMemorySize(const QStringList&);
-    bool handleSetByte(const QStringList&);
-    bool handleEntry(const QStringList&);
 
     QHash<DWORD, QString> m_files;
     unsigned m_memorySize;
