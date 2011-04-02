@@ -333,9 +333,11 @@ public:
 
     // Extended memory size in KiB (will be reported by CMOS)
     DWORD extendedMemorySize() const { return m_extendedMemorySize; }
+    void setExtendedMemorySize(DWORD size) { m_extendedMemorySize = size; }
 
     // Conventional memory size in KiB (will be reported by CMOS)
     DWORD baseMemorySize() const { return m_baseMemorySize; }
+    void setBaseMemorySize(DWORD size) { m_baseMemorySize = size; }
 
     // ID-to-Register maps
     DWORD* treg32[8];
