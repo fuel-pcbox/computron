@@ -4,3 +4,13 @@ load-file F000:0000 bios/bios.bin
 load-file C000:4000 font.bin
 
 fixed-disk 0 images/c.img 32768
+
+# Floppy disks
+#
+# Syntax:
+#     floppy-disk <drive #> <type> <path/to/file>
+#
+# Available types:
+#     1.44M, 1.2M, 720kB, 360kB, 320kB, 160kB
+
+floppy-disk 0 1.44M images/Dos6.22.img

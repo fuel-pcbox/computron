@@ -33,17 +33,17 @@
 #include <QFile>
 #include <QStringList>
 
-struct DiskType
+struct FloppyType
 {
     const char* name;
-    WORD sectors_per_track;
+    WORD sectorsPerTrack;
     WORD heads;
     DWORD sectors;
-    WORD bytes_per_sector;
-    BYTE media_type;
+    WORD bytesPerSector;
+    BYTE mediaType;
 };
 
-static DiskType gFloppyTypes[] =
+static FloppyType gFloppyTypes[] =
 {
     { "1.44M", 18, 2, 2880, 512, 4 },
     { "720kB",  9, 2, 1440, 512, 3 },
@@ -147,6 +147,48 @@ bool Settings::handleFixedDisk(const QStringList& arguments)
     return true;
 }
 
+bool Settings::handleFloppyDisk(const QStringList& arguments)
+{
+    // floppy-disk <index> <type> <path/to/file>
+
+    if (arguments.count() != 3)
+        return false;
+
+    bool ok;
+    unsigned index = arguments.at(0).toUInt(&ok);
+    if (!ok)
+        return false;
+
+    QString type = arguments.at(1);
+    QString fileName = arguments.at(2);
+
+    FloppyType* ft;
+    for (ft = gFloppyTypes; ft->name; ++ft) {
+        if (type == QLatin1String(ft->name))
+            break;
+    }
+
+    if (!ft->name) {
+        vlog(LogConfig, "Invalid floppy type: \"%s\"", qPrintable(type));
+        return false;
+    }
+
+    // FIXME: This code sucks.
+    strcpy(drv_imgfile[index], qPrintable(fileName));
+    drv_spt[index] = ft->sectorsPerTrack;
+    drv_heads[index] = ft->heads;
+    drv_sectors[index] = ft->sectors;
+    drv_sectsize[index] = ft->bytesPerSector;
+    drv_type[index] = ft->mediaType;
+    drv_status[index] = 1;
+
+    // FIXME: What should the media type be?
+    drv_type[index] = 0;
+
+    vlog(LogConfig, "Floppy %u: %s (%uspt, %uh, %us (%ub))", index, qPrintable(fileName), ft->sectorsPerTrack, ft->heads, ft->sectors, ft->bytesPerSector);
+    return true;
+}
+
 Settings* Settings::createFromFile(const QString& fileName)
 {
 #if 0
@@ -192,6 +234,8 @@ Settings* Settings::createFromFile(const QString& fileName)
             success = settings->handleMemorySize(arguments);
         else if (command == QLatin1String("fixed-disk"))
             success = settings->handleFixedDisk(arguments);
+        else if (command == QLatin1String("floppy-disk"))
+            success = settings->handleFloppyDisk(arguments);
 
         if (!success) {
             vlog(LogConfig, "Failed parsing %s:%u %s", qPrintable(fileName), lineNumber, qPrintable(line));
