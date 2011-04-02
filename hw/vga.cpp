@@ -35,12 +35,12 @@
 
 static VGA theVGA;
 
-typedef struct {
+struct RGBColor {
     BYTE red;
     BYTE green;
     BYTE blue;
     operator QColor() { return QColor::fromRgb(red << 2, green << 2, blue << 2); }
-} RGBColor;
+};
 
 struct VGA::Private
 {

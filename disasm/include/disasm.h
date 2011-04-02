@@ -37,10 +37,10 @@
  */
 #define SEG(d)			(segname[(d)])
 
-typedef struct {
-	const char *name;
-	int type;
-} insn_t;
+struct insn_t {
+    const char* name;
+    int type;
+};
 
 extern int insn_base_width[];
 extern const insn_t insn_table[];

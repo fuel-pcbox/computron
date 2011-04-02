@@ -32,7 +32,7 @@
 
 static bool reloading = false;
 
-typedef struct
+struct disk_type_t
 {
     char* name;
     WORD sectors_per_track;
@@ -40,7 +40,7 @@ typedef struct
     DWORD sectors;
     WORD bytes_per_sector;
     BYTE media_type;
-} disk_type_t;
+};
 
 static disk_type_t floppy_types[] =
 {

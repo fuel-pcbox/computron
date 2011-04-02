@@ -43,13 +43,13 @@ BYTE kbd_pop_raw();
 
 void vomit_init();
 
-typedef struct {
+struct vomit_options_t {
     bool trace;
     bool disklog;
     bool trapint;
     bool iopeek;
     bool start_in_debug;
-} vomit_options_t;
+};
 
 extern vomit_options_t options;
 

@@ -39,9 +39,9 @@
 #include <QtCore/QQueue>
 #include <QtCore/QDebug>
 
-typedef struct {
-  BYTE data[16];
-} fontcharbitmap_t;
+struct fontcharbitmap_t {
+    BYTE data[16];
+};
 
 static Screen *s_self = 0L;
 
