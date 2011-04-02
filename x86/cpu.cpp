@@ -754,12 +754,10 @@ void VCpu::_HLT()
 {
     setState(VCpu::Halted);
 
-    if (!getIF()) {
+    if (!getIF())
         vlog(LogAlert, "%04X:%08X: Halted with IF=0", getBaseCS(), getBaseEIP());
-        vm_exit(0);
-    }
-
-    vlog(LogCPU, "%04X:%08X Halted", getBaseCS(), getBaseEIP());
+    else
+        vlog(LogCPU, "%04X:%08X Halted", getBaseCS(), getBaseEIP());
 
     haltedLoop();
 }
