@@ -77,6 +77,8 @@ void Machine::applySettings()
     if (!m_settings)
         return;
 
+    // FIXME: Apply memory-size setting.
+
     QHash<DWORD, QString> files = m_settings->files();
 
     QHash<DWORD, QString>::const_iterator it = files.constBegin();
