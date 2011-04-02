@@ -45,6 +45,9 @@ public:
     static QHash<WORD, IODevice*>& readDevices();
     static QHash<WORD, IODevice*>& writeDevices();
 
+    static bool shouldIgnorePort(WORD port);
+    static void ignorePort(WORD port);
+
     QList<WORD> ports() const;
 
     enum { JunkValue = 0xAA };
@@ -60,6 +63,8 @@ protected:
 private:
     const char* m_name;
     QList<WORD> m_ports;
+
+    static QSet<WORD> s_ignorePorts;
 };
 
 #endif

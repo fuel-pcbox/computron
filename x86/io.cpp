@@ -27,8 +27,6 @@
 #include "debug.h"
 #include "iodevice.h"
 
-static QSet<WORD> s_ignorePorts;
-
 void VCpu::_OUT_imm8_AL()
 {
     out(fetchOpcodeByte(), regs.B.AL);
@@ -153,7 +151,7 @@ void VCpu::out(WORD port, BYTE value)
         return;
     }
 
-    if (!s_ignorePorts.contains(port))
+    if (!IODevice::shouldIgnorePort(port))
         vlog(LogAlert, "Unhandled I/O write to port %04X, data %02X", port, value);
 }
 
@@ -167,13 +165,8 @@ BYTE VCpu::in(WORD port)
     if (IODevice::readDevices().contains(port))
         return IODevice::readDevices()[port]->in8(port);
 
-    if (!s_ignorePorts.contains(port))
+    if (!IODevice::shouldIgnorePort(port))
         vlog(LogAlert, "Unhandled I/O read from port %04X", port);
 
     return IODevice::JunkValue;
-}
-
-void vomit_ignore_io_port(WORD port)
-{
-    s_ignorePorts.insert(port);
 }

@@ -27,6 +27,8 @@
 #include "debug.h"
 #include <QList>
 
+QSet<WORD> IODevice::s_ignorePorts;
+
 QList<IODevice*>& IODevice::devices()
 {
     static QList<IODevice*> s_devices;
@@ -86,4 +88,14 @@ BYTE IODevice::in8(WORD port)
 {
     vlog(LogIO, "FIXME: IODevice[%s]::in8(%04X)", m_name, port);
     return IODevice::JunkValue;
+}
+
+void IODevice::ignorePort(WORD port)
+{
+    s_ignorePorts.insert(port);
+}
+
+bool IODevice::shouldIgnorePort(WORD port)
+{
+    return s_ignorePorts.contains(port);
 }

@@ -26,6 +26,7 @@
 #include "machine.h"
 #include "settings.h"
 #include "vcpu.h"
+#include "iodevice.h"
 #include <QtCore/QFile>
 
 Machine* Machine::createFromFile(const QString& fileName)
@@ -53,6 +54,14 @@ Machine::Machine(Settings* settings, QObject* parent)
 
     cpu()->setCS(0xF000);
     cpu()->setIP(0xFFF0);
+
+    // FIXME: Move this somewhere else.
+    // Mitigate spam about uninteresting ports.
+    IODevice::ignorePort(0x220);
+    IODevice::ignorePort(0x221);
+    IODevice::ignorePort(0x222);
+    IODevice::ignorePort(0x223);
+    IODevice::ignorePort(0x201); // Gameport.
 }
 
 Machine::~Machine()
