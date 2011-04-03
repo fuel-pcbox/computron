@@ -52,8 +52,6 @@ extern vomit_options_t options;
 
 #include "vcpu.h"
 
-void vm_call8(VCpu*, WORD port, BYTE value);
-
 bool vomit_in_vretrace();
 
 #endif
