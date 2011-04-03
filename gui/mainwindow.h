@@ -23,25 +23,23 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __mainwindow_h__
-#define __mainwindow_h__
+#ifndef MAINWINDOW_H
+#define MAINWINDOW_H
 
 #include <QtGui/QMainWindow>
 
 #include "vomit.h"
 
-class Screen;
-class VCpu;
+class Machine;
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 public:
-    MainWindow(VCpu*);
+    MainWindow(Machine*);
     ~MainWindow();
 
-    VCpu* cpu() const;
-    Screen *screen() const;
+    Machine* machine() const;
 
 private slots:
     void slotFloppyAClicked();

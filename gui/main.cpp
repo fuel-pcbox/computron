@@ -82,7 +82,7 @@ int main(int argc, char** argv)
     foreach (IODevice *device, IODevice::devices())
         vlog(LogInit, "%s at 0x%p", device->name(), device);
 
-    MainWindow mw(machine->cpu());
+    MainWindow mw(machine.data());
     mw.show();
 
     return app.exec();

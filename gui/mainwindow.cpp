@@ -24,9 +24,10 @@
  */
 
 #include "mainwindow.h"
-#include "vcpu.h"
+#include "machine.h"
 #include "worker.h"
 #include "screen.h"
+#include "debug.h"
 #include <QtGui/QToolBar>
 #include <QtGui/QAction>
 #include <QtGui/QFileDialog>
@@ -50,16 +51,17 @@ struct MainWindow::Private
 
     QTimer syncTimer;
 
-    VCpu* cpu;
+    Machine* machine;
 };
 
-MainWindow::MainWindow(VCpu* cpu)
+MainWindow::MainWindow(Machine* m)
     : d(new Private)
 {
-    d->screen = new Screen(cpu);
+    d->machine = m;
 
-    d->cpu = cpu;
-    d->worker = new Worker(d->cpu, this);
+    d->screen = new Screen(machine()->cpu());
+    d->worker = new Worker(machine()->cpu(), this);
+
     QObject::connect(d->worker, SIGNAL(finished()), this, SLOT(close()));
     d->worker->startMachine();
     d->worker->start();
@@ -190,14 +192,9 @@ void MainWindow::slotRebootMachine()
     d->worker->rebootMachine();
 }
 
-Screen* MainWindow::screen() const
+Machine* MainWindow::machine() const
 {
-    return d->screen;
-}
-
-VCpu* MainWindow::cpu() const
-{
-    return d->cpu;
+    return d->machine;
 }
 
 void MainWindow::onAboutToQuit()
