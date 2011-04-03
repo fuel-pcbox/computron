@@ -188,8 +188,15 @@ void VCpu::dumpMemory(WORD segment, DWORD offset, int rows) const
     }
 }
 
-static WORD iseg(BYTE isr) { return g_cpu->readMemory16(isr * 4) + 2; }
-static WORD ioff(BYTE isr) { return g_cpu->readMemory16(isr * 4); }
+static inline WORD isrSegment(const VCpu* cpu, BYTE isr)
+{
+    return cpu->readUnmappedMemory16(isr * 4) + 2;
+}
+
+static inline WORD isrOffset(const VCpu* cpu, BYTE isr)
+{
+    return cpu->readUnmappedMemory16(isr * 4);
+}
 
 void VCpu::dumpIVT() const
 {
@@ -197,10 +204,10 @@ void VCpu::dumpIVT() const
     for (int i = 0; i < 0xFF; i += 4) {
         vlog(LogDump,
             "%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X",
-            i, iseg(i), ioff(i),
-            i+1, iseg(i+1), ioff(i+1),
-            i+2, iseg(i+2), ioff(i+2),
-            i+3, iseg(i+3), ioff(i+3)
+            i, isrSegment(this, i), isrOffset(this, i),
+            i + 1, isrSegment(this, i + 1), isrOffset(this, i + 1),
+            i + 2, isrSegment(this, i + 2), isrOffset(this, i + 2),
+            i + 3, isrSegment(this, i + 3), isrOffset(this, i + 3)
         );
     }
 }
