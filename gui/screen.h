@@ -37,9 +37,6 @@ public:
     Screen(VCpu *cpu, QWidget *parent = 0);
     virtual ~Screen();
 
-    int characterWidth() const;
-    int characterHeight() const;
-
     bool inTextMode() const;
     void setTextMode( int w, int h );
 
