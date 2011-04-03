@@ -270,11 +270,6 @@ public:
     DWORD baseMemorySize() const { return m_baseMemorySize; }
     void setBaseMemorySize(DWORD size) { m_baseMemorySize = size; }
 
-    // ID-to-Register maps
-    DWORD* treg32[8];
-    WORD* treg16[8];
-    BYTE* treg8[8];
-
     void kill();
 
     void setA20Enabled(bool value) { m_a20Enabled = value; }
@@ -1187,6 +1182,11 @@ private:
 
     WORD* m_segmentMap[8];
     DWORD* m_controlRegisterMap[8];
+
+    // ID-to-Register maps
+    DWORD* treg32[8];
+    WORD* treg16[8];
+    BYTE* treg8[8];
 };
 
 extern VCpu* g_cpu;
