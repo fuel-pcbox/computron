@@ -26,6 +26,7 @@
 #include "debug.h"
 #include "vomit.h"
 #include "debugger.h"
+#include "vcpu.h"
 #include <stdarg.h>
 #include <stdio.h>
 

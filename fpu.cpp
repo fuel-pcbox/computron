@@ -24,6 +24,7 @@
  */
 
 #include "vomit.h"
+#include "vcpu.h"
 #include "debug.h"
 
 void VCpu::_ESCAPE()

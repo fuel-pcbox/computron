@@ -23,18 +23,19 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __screen_h__
-#define __screen_h__
+#ifndef SCREEN_H
+#define SCREEN_H
 
-#include <QWidget>
+#include <QtGui/QWidget>
+#include "types.h"
 
-#include "vomit.h"
+class VCpu;
 
 class Screen : public QWidget
 {
     Q_OBJECT
 public:
-    Screen(VCpu *cpu, QWidget *parent = 0);
+    Screen(VCpu* cpu, QWidget* parent = 0);
     virtual ~Screen();
 
     bool inTextMode() const;

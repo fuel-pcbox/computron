@@ -24,6 +24,7 @@
  */
 
 #include "vomit.h"
+#include "vcpu.h"
 #include "debug.h"
 #include "debugger.h"
 #include "vga_memory.h"

@@ -26,75 +26,8 @@
 #ifndef VCPU_H
 #define VCPU_H
 
-#include "types.h"
+#include "vomit.h"
 #include "debug.h"
-
-// MACROS AND CONVENIENCE METHODS
-
-#define ASSERT_VALID_SEGMENT_INDEX(segmentIndex) VM_ASSERT(static_cast<int>(segmentIndex) >= 0 && static_cast<int>(segmentIndex) <= 5)
-
-inline DWORD vomit_toFlatAddress(WORD segment, WORD offset)
-{
-    return (segment << 4) + offset;
-}
-
-inline void vomit_write16ToPointer(WORD* pointer, WORD value)
-{
-#ifdef VOMIT_BIG_ENDIAN
-    *pointer = V_BYTESWAP(value);
-#else
-    *pointer = value;
-#endif
-}
-
-inline DWORD vomit_read32FromPointer(DWORD* pointer)
-{
-#ifdef VOMIT_BIG_ENDIAN
-    return V_BYTESWAP(*pointer);
-#else
-    return *pointer;
-#endif
-}
-
-inline void vomit_write32ToPointer(DWORD* pointer, DWORD value)
-{
-#ifdef VOMIT_BIG_ENDIAN
-#error IMPLEMENT ME
-#else
-    *pointer = value;
-#endif
-}
-
-inline WORD vomit_read16FromPointer(WORD* pointer)
-{
-#ifdef VOMIT_BIG_ENDIAN
-    return V_BYTESWAP(*pointer);
-#else
-    return *pointer;
-#endif
-}
-
-inline WORD vomit_signExtend(BYTE b)
-{
-    if (b & 0x80)
-        return b | 0xFF00;
-    else
-        return b;
-}
-
-inline int vomit_modRMRegisterPart(int rmbyte)
-{
-    return (rmbyte >> 3) & 7;
-}
-
-/* Construct a 16-bit word from two 8-bit bytes */
-#define MAKEWORD(l, m)	(((m) << 8) | (l))
-
-#define LSW(d) ((d)&0xFFFF)
-#define MSW(d) (((d)&0xFFFF0000)>>16)
-
-#define LSB(w) ((w)&0xFF)
-#define MSB(w) (((w)&0xFF00)>>8)
 
 // VCPU MONSTROSITY
 

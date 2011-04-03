@@ -25,6 +25,7 @@
 
 #include <stdio.h>
 #include "vomit.h"
+#include "vcpu.h"
 #include "debug.h"
 #include "disasm.h"
 

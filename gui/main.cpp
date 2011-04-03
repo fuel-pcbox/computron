@@ -29,6 +29,7 @@
 #include <QMetaType>
 #include "screen.h"
 #include "vomit.h"
+#include "vcpu.h"
 #include "debugger.h"
 #include "machine.h"
 

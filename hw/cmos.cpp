@@ -25,6 +25,7 @@
 
 #include "cmos.h"
 #include "debug.h"
+#include "vcpu.h"
 #include <QtCore/QDate>
 #include <QtCore/QTime>
 

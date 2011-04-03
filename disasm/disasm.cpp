@@ -27,6 +27,7 @@
 #include "disasm.h"
 #include "debug.h"
 #include "vomit.h"
+#include "vcpu.h"
 
 /* int insn_width (BYTE *data)
  *

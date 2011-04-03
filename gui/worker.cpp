@@ -26,7 +26,8 @@
 #include "worker.h"
 #include <QMutexLocker>
 #include <QDebug>
-#include "../include/vomit.h"
+#include "vcpu.h"
+
 extern bool g_vomit_exit_main_loop;
 extern bool vomit_reboot;
 

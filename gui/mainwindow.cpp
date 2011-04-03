@@ -24,6 +24,7 @@
  */
 
 #include "mainwindow.h"
+#include "vcpu.h"
 #include "worker.h"
 #include "screen.h"
 #include <QtGui/QToolBar>

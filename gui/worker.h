@@ -23,19 +23,19 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __worker_h__
-#define __worker_h__
+#ifndef WORKER_H
+#define WORKER_H
 
-#include <QThread>
-#include <QMutex>
+#include <QtCore/QThread>
+#include <QtCore/QMutex>
 
-#include "vomit.h"
+class VCpu;
 
 class Worker : public QThread
 {
     Q_OBJECT
 public:
-    Worker(VCpu *cpu, QObject *parent = 0);
+    Worker(VCpu* cpu, QObject* parent = 0);
     ~Worker();
 
     void startMachine();
@@ -48,7 +48,7 @@ public slots:
 
 private:
     struct Private;
-    Private *d;
+    Private* d;
 };
 
 #endif

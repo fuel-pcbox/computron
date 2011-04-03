@@ -31,6 +31,7 @@
 #include "vomit.h"
 
 class Screen;
+class VCpu;
 
 class MainWindow : public QMainWindow
 {
