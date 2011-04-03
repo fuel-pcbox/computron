@@ -29,13 +29,13 @@
 #include <QtGui/QWidget>
 #include "types.h"
 
-class VCpu;
+class Machine;
 
 class Screen : public QWidget
 {
     Q_OBJECT
 public:
-    Screen(VCpu* cpu, QWidget* parent = 0);
+    Screen(Machine*);
     virtual ~Screen();
 
     bool inTextMode() const;
@@ -103,6 +103,8 @@ private:
 
     friend int get_current_x();
     friend int get_current_y();
+
+    Machine* machine() const;
 
     struct Private;
     Private *d;

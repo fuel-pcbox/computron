@@ -46,9 +46,6 @@ struct MainWindow::Private
     QAction *pauseMachine;
     QAction *stopMachine;
 
-    Worker *worker;
-    Screen *screen;
-
     QTimer syncTimer;
 
     Machine* machine;
@@ -59,12 +56,7 @@ MainWindow::MainWindow(Machine* m)
 {
     d->machine = m;
 
-    d->screen = new Screen(machine()->cpu());
-    d->worker = new Worker(machine()->cpu(), this);
-
-    QObject::connect(d->worker, SIGNAL(finished()), this, SLOT(close()));
-    d->worker->startMachine();
-    d->worker->start();
+    QObject::connect(machine()->worker(), SIGNAL(finished()), this, SLOT(close()));
 
     setWindowTitle("Vomit");
     setUnifiedTitleAndToolBarOnMac(true);
@@ -76,9 +68,9 @@ MainWindow::MainWindow(Machine* m)
     l->setSpacing(0);
     l->setMargin(0);
     widget->setLayout(l);
-    l->addWidget(d->screen);
+    l->addWidget(machine()->screen());
 
-    d->screen->setFocus();
+    machine()->screen()->setFocus();
 
     setCentralWidget(widget);
 
@@ -115,8 +107,8 @@ MainWindow::MainWindow(Machine* m)
     connect(d->startMachine, SIGNAL(triggered(bool)), SLOT(slotStartMachine()));
     connect(d->stopMachine, SIGNAL(triggered(bool)), SLOT(slotStopMachine()));
 
-    QObject::connect(&d->syncTimer, SIGNAL(timeout()), d->screen, SLOT(refresh()));
-    QObject::connect(&d->syncTimer, SIGNAL(timeout()), d->screen, SLOT(flushKeyBuffer()));
+    QObject::connect(&d->syncTimer, SIGNAL(timeout()), machine()->screen(), SLOT(refresh()));
+    QObject::connect(&d->syncTimer, SIGNAL(timeout()), machine()->screen(), SLOT(flushKeyBuffer()));
     d->syncTimer.start(50);
 
     QObject::connect(qApp, SIGNAL(aboutToQuit()), this, SLOT(onAboutToQuit()));
@@ -156,10 +148,8 @@ void MainWindow::slotPauseMachine()
     d->startMachine->setEnabled(true);
     d->stopMachine->setEnabled(true);
 
-    d->screen->setTinted(true);
-
-    VM_ASSERT(d->worker);
-    d->worker->stopMachine();
+    machine()->screen()->setTinted(true);
+    machine()->worker()->stopMachine();
 }
 
 void MainWindow::slotStopMachine()
@@ -168,10 +158,8 @@ void MainWindow::slotStopMachine()
     d->startMachine->setEnabled(true);
     d->stopMachine->setEnabled(false);
 
-    d->screen->setTinted(true);
-
-    VM_ASSERT(d->worker);
-    d->worker->stopMachine();
+    machine()->screen()->setTinted(true);
+    machine()->worker()->stopMachine();
 }
 
 void MainWindow::slotStartMachine()
@@ -180,16 +168,13 @@ void MainWindow::slotStartMachine()
     d->startMachine->setEnabled(false);
     d->stopMachine->setEnabled(true);
 
-    d->screen->setTinted(false);
-
-    VM_ASSERT(d->worker);
-    d->worker->startMachine();
+    machine()->screen()->setTinted(false);
+    machine()->worker()->startMachine();
 }
 
 void MainWindow::slotRebootMachine()
 {
-    VM_ASSERT(d->worker);
-    d->worker->rebootMachine();
+    machine()->worker()->rebootMachine();
 }
 
 Machine* MainWindow::machine() const
@@ -199,5 +184,5 @@ Machine* MainWindow::machine() const
 
 void MainWindow::onAboutToQuit()
 {
-    d->worker->stopMachine();
+    machine()->worker()->stopMachine();
 }

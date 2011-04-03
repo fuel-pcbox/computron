@@ -35,8 +35,8 @@ class Worker : public QThread
 {
     Q_OBJECT
 public:
-    Worker(VCpu* cpu, QObject* parent = 0);
-    ~Worker();
+    Worker(VCpu*);
+    virtual ~Worker();
 
     void startMachine();
     void stopMachine();
@@ -47,6 +47,8 @@ public slots:
     void shutdown();
 
 private:
+    VCpu* cpu() const;
+
     struct Private;
     Private* d;
 };

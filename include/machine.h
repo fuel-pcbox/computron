@@ -29,8 +29,10 @@
 #include <QObject>
 #include "types.h"
 
+class Screen;
 class Settings;
 class VCpu;
+class Worker;
 
 class Machine : public QObject
 {
@@ -40,7 +42,9 @@ public:
     static Machine* createFromFile(const QString& fileName);
 
     VCpu* cpu() const { return m_cpu; }
+    Screen* screen() const { return m_screen; }
     Settings* settings() const { return m_settings; }
+    Worker* worker() const { return m_worker; }
 
 private:
     explicit Machine(Settings* settings, QObject* parent = 0);
@@ -49,7 +53,9 @@ private:
     void applySettings();
 
     VCpu* m_cpu;
+    Screen* m_screen;
     Settings* m_settings;
+    Worker* m_worker;
 };
 
 #endif

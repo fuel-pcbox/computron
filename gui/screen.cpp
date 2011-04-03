@@ -26,6 +26,7 @@
 #include "screen.h"
 #include "vomit.h"
 #include "vcpu.h"
+#include "machine.h"
 #include "debug.h"
 #include "vga.h"
 #include "vga_memory.h"
@@ -58,15 +59,15 @@ struct Screen::Private
 
     BYTE *videoMemory;
 
-    VCpu *cpu;
+    Machine* machine;
 };
 
-Screen::Screen(VCpu *cpu, QWidget *parent)
-    : QWidget(parent),
+Screen::Screen(Machine* m)
+    : QWidget(0),
       d(new Private)
 {
     s_self = this;
-    d->cpu = cpu;
+    d->machine = m;
 
     m_rows = 0;
     m_columns = 0;
@@ -77,7 +78,7 @@ Screen::Screen(VCpu *cpu, QWidget *parent)
     init();
     synchronizeFont();
     setTextMode(80, 25);
-    d->videoMemory = d->cpu->memoryPointer(0xB800, 0x0000);
+    d->videoMemory = machine()->cpu()->memoryPointer(0xB800, 0x0000);
 
     m_screen12 = QImage(640, 480, QImage::Format_Indexed8);
     m_render12 = QImage(640, 480, QImage::Format_Indexed8);
@@ -141,23 +142,23 @@ void Screen::refresh()
 {
     in_refresh = true;
 
-    BYTE currentVideoMode = d->cpu->readUnmappedMemory8(0x449) & 0x7F;
+    BYTE currentVideoMode = machine()->cpu()->readUnmappedMemory8(0x449) & 0x7F;
 
     if (currentVideoMode == 0x12) {
         if (VGA::the()->isPaletteDirty()) {
             synchronizeColors();
             VGA::the()->setPaletteDirty(false);
         }
-        if (d->cpu->vgaMemory()->isDirty()) {
-            update(d->cpu->vgaMemory()->dirtyRect());
-            d->cpu->vgaMemory()->clearDirty();
+        if (machine()->cpu()->vgaMemory()->isDirty()) {
+            update(machine()->cpu()->vgaMemory()->dirtyRect());
+            machine()->cpu()->vgaMemory()->clearDirty();
         }
     } else if (currentVideoMode == 0x0D) {
         if (VGA::the()->isPaletteDirty()) {
             synchronizeColors();
             VGA::the()->setPaletteDirty(false);
         }
-        if (d->cpu->vgaMemory()->isDirty()) {
+        if (machine()->cpu()->vgaMemory()->isDirty()) {
             renderMode0D(m_render0D);
             update();
         }
@@ -166,12 +167,12 @@ void Screen::refresh()
             synchronizeColors();
             VGA::the()->setPaletteDirty(false);
         }
-        if (d->cpu->vgaMemory()->isDirty()) {
+        if (machine()->cpu()->vgaMemory()->isDirty()) {
             renderMode13(m_render13);
             update();
         }
     } else if (currentVideoMode == 0x03) {
-        int rows = d->cpu->readUnmappedMemory8(0x484) + 1;
+        int rows = machine()->cpu()->readUnmappedMemory8(0x484) + 1;
         switch(rows)
         {
             case 25:
@@ -204,16 +205,16 @@ void Screen::setScreenSize(int width, int height)
 
 void Screen::renderMode13(QImage& target)
 {
-    const BYTE* videoMemory = d->cpu->vgaMemory()->plane(0);
+    const BYTE* videoMemory = machine()->cpu()->vgaMemory()->plane(0);
     memcpy(target.bits(), videoMemory, 320 * 200);
 }
 
 void Screen::renderMode12(QImage &target)
 {
-    const BYTE *p0 = d->cpu->vgaMemory()->plane(0);
-    const BYTE *p1 = d->cpu->vgaMemory()->plane(1);
-    const BYTE *p2 = d->cpu->vgaMemory()->plane(2);
-    const BYTE *p3 = d->cpu->vgaMemory()->plane(3);
+    const BYTE *p0 = machine()->cpu()->vgaMemory()->plane(0);
+    const BYTE *p1 = machine()->cpu()->vgaMemory()->plane(1);
+    const BYTE *p2 = machine()->cpu()->vgaMemory()->plane(2);
+    const BYTE *p3 = machine()->cpu()->vgaMemory()->plane(3);
 
     int offset = 0;
 
@@ -236,10 +237,10 @@ void Screen::renderMode12(QImage &target)
 
 void Screen::renderMode0D(QImage &target)
 {
-    const BYTE *p0 = d->cpu->vgaMemory()->plane(0);
-    const BYTE *p1 = d->cpu->vgaMemory()->plane(1);
-    const BYTE *p2 = d->cpu->vgaMemory()->plane(2);
-    const BYTE *p3 = d->cpu->vgaMemory()->plane(3);
+    const BYTE *p0 = machine()->cpu()->vgaMemory()->plane(0);
+    const BYTE *p1 = machine()->cpu()->vgaMemory()->plane(1);
+    const BYTE *p2 = machine()->cpu()->vgaMemory()->plane(2);
+    const BYTE *p3 = machine()->cpu()->vgaMemory()->plane(3);
 
     int offset = 0;
 
@@ -269,14 +270,14 @@ void Screen::resizeEvent(QResizeEvent *e)
 
 void Screen::paintEvent(QPaintEvent *e)
 {
-    BYTE currentVideoMode = d->cpu->readUnmappedMemory8(0x449) & 0x7F;
+    BYTE currentVideoMode = machine()->cpu()->readUnmappedMemory8(0x449) & 0x7F;
 
     if (currentVideoMode == 0x12) {
         setScreenSize(640, 480);
         QPainter wp(this);
         wp.setClipRegion(e->rect());
 
-        QImage *screenImage = d->cpu->vgaMemory()->modeImage(0x12);
+        QImage *screenImage = machine()->cpu()->vgaMemory()->modeImage(0x12);
 
         if (screenImage)
             wp.drawImage(rect(), *screenImage);
@@ -321,7 +322,7 @@ void Screen::paintEvent(QPaintEvent *e)
 
     BYTE *v = d->videoMemory;
 
-    int screenColumns = d->cpu->readUnmappedMemory8(0x44A);
+    int screenColumns = machine()->cpu()->readUnmappedMemory8(0x44A);
 
     WORD rawCursor = VGA::the()->readRegister(0x0E) << 8 | VGA::the()->readRegister(0x0F);
     BYTE row = screenColumns ? (rawCursor / screenColumns) : 0;
@@ -377,7 +378,7 @@ void Screen::synchronizeFont()
     m_characterHeight = 16;
     const QSize s(8, 16);
 
-    fontcharbitmap_t *fbmp = (fontcharbitmap_t *)(d->cpu->memoryPointer(0xC400, 0x0000));
+    fontcharbitmap_t *fbmp = (fontcharbitmap_t *)(machine()->cpu()->memoryPointer(0xC400, 0x0000));
 
     for (int i = 0; i < 256; ++i) {
         d->character[i] = QBitmap::fromData(s, (const BYTE *)fbmp[i].data, QImage::Format_MonoLSB);
@@ -795,8 +796,13 @@ void Screen::flushKeyBuffer()
 {
     QMutexLocker l(&d->keyQueueLock);
 
-    if (!d->rawQueue.isEmpty() && d->cpu->getIF())
+    if (!d->rawQueue.isEmpty() && machine()->cpu()->getIF())
         Keyboard::raiseIRQ();
+}
+
+Machine* Screen::machine() const
+{
+    return d->machine;
 }
 
 WORD kbd_getc()

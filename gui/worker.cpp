@@ -38,11 +38,11 @@ struct Worker::Private
     VCpu* cpu;
 };
 
-Worker::Worker(VCpu *c, QObject *parent)
-    : QThread(parent),
+Worker::Worker(VCpu* cpu)
+    : QThread(cpu),
       d(new Private)
 {
-    d->cpu = c;
+    d->cpu = cpu;
 }
 
 Worker::~Worker()
@@ -52,10 +52,15 @@ Worker::~Worker()
     d = 0;
 }
 
+VCpu* Worker::cpu() const
+{
+    return d->cpu;
+}
+
 void Worker::run()
 {
     while (d->active) {
-        d->cpu->mainLoop();
+        cpu()->mainLoop();
         while (!d->active)
             msleep(50);
     }

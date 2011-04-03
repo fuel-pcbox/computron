@@ -27,6 +27,8 @@
 #include "settings.h"
 #include "vcpu.h"
 #include "iodevice.h"
+#include "worker.h"
+#include "screen.h"
 #include <QtCore/QFile>
 
 Machine* Machine::createFromFile(const QString& fileName)
@@ -42,7 +44,9 @@ Machine* Machine::createFromFile(const QString& fileName)
 Machine::Machine(Settings* settings, QObject* parent)
     : QObject(parent)
     , m_cpu(new VCpu)
+    , m_screen(0)
     , m_settings(settings)
+    , m_worker(0)
 {
     applySettings();
 
@@ -64,6 +68,13 @@ Machine::Machine(Settings* settings, QObject* parent)
     IODevice::ignorePort(0x222);
     IODevice::ignorePort(0x223);
     IODevice::ignorePort(0x201); // Gameport.
+
+    m_screen = new Screen(this);
+    m_worker = new Worker(cpu());
+
+    worker()->startMachine();
+    worker()->start();
+
 }
 
 Machine::~Machine()
