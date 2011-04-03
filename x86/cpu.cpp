@@ -417,15 +417,6 @@ VCpu::VCpu(QObject* parent)
         vomit_exit(1);
     }
 
-#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
-    m_dirtMap = new bool[1048576 + 65536];
-    if (!m_dirtMap) {
-        vlog(LogInit, "Insufficient memory available.");
-        vm_exit(1);
-    }
-    memset(m_dirtMap, 0, 1048576 + 65536);
-#endif
-
     memset(m_memory, 0, 1048576 + 65536);
 
     m_vgaMemory = new VgaMemory(this);
@@ -551,10 +542,6 @@ VCpu::~VCpu()
 #ifdef VOMIT_PREFETCH_QUEUE
     delete [] m_prefetchQueue;
     m_prefetchQueue = 0;
-#endif
-
-#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
-    delete [] m_dirtMap;
 #endif
 
     delete [] m_memory;
@@ -1096,11 +1083,6 @@ DWORD VCpu::readMemory32(DWORD address) const
     if (isVGAMemory(address))
         return vgaMemory()->read16(address) | (vgaMemory()->read16(address + 2) << 16);
 #endif
-#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
-    assert (address < (0xFFFFF - 4));
-    if (!m_dirtMap[address] || !m_dirtMap[address + 1] || !m_dirtMap[address + 2] || !m_dirtMap[address + 3])
-        vlog(LogCPU, "%04X:%08X: Uninitialized read from %08X", getBaseCS(), getBaseEIP(), address);
-#endif
     return vomit_read32FromPointer(reinterpret_cast<DWORD*>(m_memory + address));
 }
 
@@ -1117,10 +1099,6 @@ BYTE VCpu::readMemory8(DWORD address) const
 
     if (isVGAMemory(address))
         return vgaMemory()->read8(address);
-#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
-    if (!m_dirtMap[address])
-        vlog(LogCPU, "%04X:%04X: Uninitialized read from %08X", getBaseCS(), getBaseIP(), address);
-#endif
     return m_memory[address];
 }
 
@@ -1143,10 +1121,6 @@ WORD VCpu::readMemory16(DWORD address) const
 
     if (isVGAMemory(address))
         return vgaMemory()->read16(address);
-#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
-    if (!m_dirtMap[address] || !m_dirtMap[address + 1])
-        vlog(LogCPU, "%04X:%04X: Uninitialized read from %08X", getBaseCS(), getBaseIP(), address);
-#endif
     return vomit_read16FromPointer(reinterpret_cast<WORD*>(m_memory + address));
 }
 
@@ -1176,10 +1150,6 @@ void VCpu::writeMemory8(DWORD address, BYTE value)
         return;
     }
 
-#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
-    m_dirtMap[address] = true;
-#endif
-
     m_memory[address] = value;
 }
 
@@ -1207,11 +1177,6 @@ void VCpu::writeMemory16(DWORD address, WORD value)
         vgaMemory()->write16(address, value);
         return;
     }
-
-#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
-    m_dirtMap[address] = true;
-    m_dirtMap[address + 1] = true;
-#endif
 
     WORD* ptr = reinterpret_cast<WORD*>(m_memory + address);
     vomit_write16ToPointer(ptr, value);

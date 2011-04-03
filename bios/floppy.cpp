@@ -53,13 +53,7 @@ static void floppy_read(FILE* fp, BYTE drive, WORD cylinder, WORD head, WORD sec
         vlog(LogDisk, "Drive %d reading %d sectors at %d/%d/%d (LBA %d) to %04X:%04X [offset=0x%x]", drive, count, cylinder, head, sector, lba, segment, offset, lba*drv_sectsize[drive]);
 
     void* destination = g_cpu->memoryPointer(segment, offset);
-    ssize_t bytesRead = fread(destination, drv_sectsize[drive], count, fp);
-#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
-    for (DWORD address = segment * 16 + offset; address < segment * 16 + offset + bytesRead; ++address)
-        g_cpu->markDirty(address);
-#else
-    Q_UNUSED(bytesRead);
-#endif
+    fread(destination, drv_sectsize[drive], count, fp);
 }
 
 static void floppy_write(FILE* fp, BYTE drive, WORD cylinder, WORD head, WORD sector, WORD count, WORD segment, WORD offset)

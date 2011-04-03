@@ -470,10 +470,6 @@ public:
     void dumpTrace() const;
 #endif
 
-#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
-    void markDirty(DWORD address) { m_dirtMap[address] = true; }
-#endif
-
     bool a16() const { return !m_addressSize32; }
     bool a32() const { return m_addressSize32; }
     bool o16() const { return !m_operationSize32; }
@@ -1147,10 +1143,6 @@ private:
     WORD* m_currentSegment;
     WORD m_segmentPrefix;
 
-#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
-    bool* m_dirtMap;
-#endif
-
     mutable void* m_lastModRMPointer;
     mutable WORD m_lastModRMSegment;
     mutable DWORD m_lastModRMOffset;
@@ -1230,18 +1222,11 @@ WORD VCpu::readUnmappedMemory16(DWORD address) const
 
 void VCpu::writeUnmappedMemory8(DWORD address, BYTE value)
 {
-#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
-    m_dirtMap[address] = true;
-#endif
     m_memory[address] = value;
 }
 
 void VCpu::writeUnmappedMemory16(DWORD address, WORD value)
 {
-#ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
-    m_dirtMap[address] = true;
-    m_dirtMap[address + 1] = true;
-#endif
     vomit_write16ToPointer(reinterpret_cast<WORD*>(m_memory + address), value);
 }
 
