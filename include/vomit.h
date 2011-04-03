@@ -46,8 +46,6 @@ struct vomit_options_t {
 
 extern vomit_options_t options;
 
-bool vomit_in_vretrace();
-
 #define ASSERT_VALID_SEGMENT_INDEX(segmentIndex) VM_ASSERT(static_cast<int>(segmentIndex) >= 0 && static_cast<int>(segmentIndex) <= 5)
 
 inline DWORD vomit_toFlatAddress(WORD segment, WORD offset)

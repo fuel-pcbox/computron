@@ -237,6 +237,8 @@ void VGA::out8(WORD port, BYTE data)
 
 BYTE VGA::in8(WORD port)
 {
+    extern bool vomit_in_vretrace();
+
     switch (port) {
     case 0x3B4:
     case 0x3D4:
