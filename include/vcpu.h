@@ -209,8 +209,6 @@ public:
         DWORD limit;
     };
 
-    SegmentSelector m_selector[6];
-
     WORD currentSegment() const { return *m_currentSegment; }
     bool hasSegmentPrefix() const { return m_currentSegment == &m_segmentPrefix; }
 
@@ -1125,6 +1123,10 @@ private:
         m_baseCS = getCS();
         m_baseEIP = getEIP();
     }
+
+    void dumpSelector(const char* segmentRegisterName, SegmentIndex) const;
+    void syncSegmentRegister(SegmentIndex);
+    SegmentSelector m_selector[6];
 
     DWORD m_instructionsPerTick;
 

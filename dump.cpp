@@ -90,12 +90,12 @@ void VCpu::dumpTrace() const
 }
 #endif
 
-void dumpSelector(const VCpu* cpu, const char* segmentRegisterName, int segmentIndex)
+void VCpu::dumpSelector(const char* segmentRegisterName, SegmentIndex segmentIndex) const
 {
-    const VCpu::SegmentSelector& selector = cpu->m_selector[segmentIndex];
+    const SegmentSelector& selector = m_selector[segmentIndex];
     vlog(LogDump, "%s: %04X {%08X:%05X}",
         segmentRegisterName,
-        cpu->getSegment(static_cast<VCpu::SegmentIndex>(segmentIndex)),
+        getSegment(segmentIndex),
         selector.base,
         selector.limit
     );
@@ -165,12 +165,12 @@ void VCpu::dumpAll() const
         vlog(LogDump, "FS: %04X", getFS());
         vlog(LogDump, "GS: %04X", getGS());
     } else {
-        dumpSelector(this, "CS", RegisterCS);
-        dumpSelector(this, "DS", RegisterDS);
-        dumpSelector(this, "ES", RegisterES);
-        dumpSelector(this, "SS", RegisterSS);
-        dumpSelector(this, "FS", RegisterFS);
-        dumpSelector(this, "GS", RegisterGS);
+        dumpSelector("CS", RegisterCS);
+        dumpSelector("DS", RegisterDS);
+        dumpSelector("ES", RegisterES);
+        dumpSelector("SS", RegisterSS);
+        dumpSelector("FS", RegisterFS);
+        dumpSelector("GS", RegisterGS);
     }
 
     vlog(LogDump, "CR0: %08X", getCR0());
