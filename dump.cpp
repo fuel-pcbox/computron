@@ -60,11 +60,6 @@ int VCpu::dumpDisassembled(WORD segment, DWORD offset) const
 
     p += sprintf(p, " %s", disasm);
 
-#ifdef VOMIT_TRACE
-    if (options.trace)
-        fprintf(stderr, "%s\n", buf);
-#endif
-
     vlog(LogDump, buf);
 
     /* Recurse if this is a prefix instruction. */

@@ -611,10 +611,8 @@ void VCpu::mainLoop()
 #endif
 
 #ifdef VOMIT_TRACE
-        if (options.trace) {
-            //dumpDisassembled(getCS(), getEIP());
+        if (options.trace)
             dumpTrace();
-        }
 #endif
 
         // Fetch & decode AKA execute the next instruction.
