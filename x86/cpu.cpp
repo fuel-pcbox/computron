@@ -402,7 +402,7 @@ fffuuu:
 void VCpu::GP(int code)
 {
     vlog(LogCPU, "#GP(%d) :-(", code);
-    vm_exit(1);
+    vomit_exit(1);
 }
 
 VCpu::VCpu(QObject* parent)
@@ -414,7 +414,7 @@ VCpu::VCpu(QObject* parent)
     m_memory = new BYTE[(8192 * 1024) + 65536];
     if (!m_memory) {
         vlog(LogInit, "Insufficient memory available.");
-        vm_exit(1);
+        vomit_exit(1);
     }
 
 #ifdef VOMIT_DETECT_UNINITIALIZED_ACCESS
@@ -960,7 +960,7 @@ void VCpu::_LDS_reg32_mem32()
 {
 #warning FIXME: need readModRM48
     vlog(LogAlert, "LDS reg32 mem32");
-    vm_exit(0);
+    vomit_exit(0);
 }
 
 void VCpu::_LES_reg16_mem16()
@@ -975,7 +975,7 @@ void VCpu::_LES_reg32_mem32()
 {
 #warning FIXME: need readModRM48
     vlog(LogAlert, "LES reg32 mem32");
-    vm_exit(0);
+    vomit_exit(0);
 }
 
 void VCpu::_LFS_reg16_mem16()
@@ -990,7 +990,7 @@ void VCpu::_LFS_reg32_mem32()
 {
 #warning FIXME: need readModRM48
     vlog(LogAlert, "LFS reg32 mem32");
-    vm_exit(0);
+    vomit_exit(0);
 }
 
 void VCpu::_LGS_reg16_mem16()
@@ -1005,14 +1005,14 @@ void VCpu::_LGS_reg32_mem32()
 {
 #warning FIXME: need readModRM48
     vlog(LogAlert, "LGS reg32 mem32");
-    vm_exit(0);
+    vomit_exit(0);
 }
 
 void VCpu::_LEA_reg32_mem32()
 {
 #warning FIXME: need evaluateSIB()
     vlog(LogAlert, "LEA reg32 mem32");
-    vm_exit(0);
+    vomit_exit(0);
 }
 
 void VCpu::_LEA_reg16_mem16()

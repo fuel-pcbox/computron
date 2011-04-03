@@ -132,7 +132,7 @@ void bios_disk_call(DiskCallFunction function)
     fp = fopen(drv_imgfile[drive], function == WriteSectors ? "rb+" : "rb");
     if (!fp) {
         vlog(LogDisk, "PANIC: Could not access drive %d image!", drive);
-        vm_exit(1);
+        vomit_exit(1);
     }
 
     fseek(fp, lba * drv_sectsize[drive], SEEK_SET);

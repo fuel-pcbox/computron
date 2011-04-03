@@ -59,7 +59,7 @@ void vm_call8(VCpu* cpu, WORD port, BYTE data) {
         break;
     default:
         vlog(LogAlert, "vm_call8: Unhandled write, %02X -> %04X", data, port);
-        vm_exit(0);
+        vomit_exit(0);
         break;
     }
 }

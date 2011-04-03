@@ -142,7 +142,7 @@ void VgaMemory::write8(DWORD address, BYTE value)
             break;
         default:
             vlog(LogVGA, "Gaah, unsupported raster op %d in mode 2 :(\n", DRAWOP);
-            vm_exit(1);
+            vomit_exit(1);
         }
     } else if (WRITE_MODE == 0) {
 
@@ -228,7 +228,7 @@ void VgaMemory::write8(DWORD address, BYTE value)
             break;
         default:
             vlog(LogVGA, "Unsupported raster operation %d", DRAWOP);
-            vm_exit(0);
+            vomit_exit(0);
         }
     } else if(WRITE_MODE == 1) {
         new_val[0] = d->latch[0];
@@ -237,7 +237,7 @@ void VgaMemory::write8(DWORD address, BYTE value)
         new_val[3] = d->latch[3];
     } else {
         vlog(LogVGA, "Unsupported 6845 write mode %d", WRITE_MODE);
-        vm_exit(1);
+        vomit_exit(1);
 
         /* This is just here to make GCC stop worrying about accessing new_val[] uninitialized. */
         return;
@@ -292,7 +292,7 @@ void VgaMemory::write8(DWORD address, BYTE value)
 BYTE VgaMemory::read8(DWORD address) {
     if (READ_MODE != 0) {
         vlog(LogVGA, "ZOMG! READ_MODE = %u", READ_MODE);
-        vm_exit(1);
+        vomit_exit(1);
     }
 
     /* We're assuming READ_MODE == 0 now... */

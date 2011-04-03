@@ -31,7 +31,7 @@
 #define MAX_FILESIZE	524288		/* 512kB is max "loadfile" size */
 #define MAX_FN_LENGTH	128
 
-void vm_exit(int exitCode);
+void vomit_exit(int exitCode);
 
 struct VomitOptions {
     bool trace;

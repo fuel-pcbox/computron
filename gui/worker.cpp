@@ -64,7 +64,7 @@ void Worker::run()
 void Worker::shutdown()
 {
     stopMachine();
-    vm_exit(0);
+    vomit_exit(0);
 }
 
 void Worker::startMachine()

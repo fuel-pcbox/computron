@@ -46,7 +46,7 @@ static void sigint_handler(int)
     g_cpu->debugger()->enter();
 }
 
-void vm_exit(int exitCode)
+void vomit_exit(int exitCode)
 {
     exit(exitCode);
 }

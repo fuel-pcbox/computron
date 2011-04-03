@@ -124,7 +124,7 @@ void Debugger::doConsole()
 
 void Debugger::handleQuit()
 {
-    vm_exit(0);
+    vomit_exit(0);
 }
 
 void Debugger::handleDumpRegisters()
