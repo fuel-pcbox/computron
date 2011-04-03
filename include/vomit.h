@@ -34,10 +34,6 @@
 void vm_exit(int);
 void vm_kill();
 
-WORD kbd_hit();
-WORD kbd_getc();
-BYTE kbd_pop_raw();
-
 void vomit_init();
 
 struct vomit_options_t {

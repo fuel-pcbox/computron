@@ -79,6 +79,8 @@ Keyboard::~Keyboard()
 
 BYTE Keyboard::in8(WORD port)
 {
+    extern BYTE kbd_pop_raw();
+
     if (port == 0x60) {
         if (m_hasCommand && m_command <= 0x3F) {
             BYTE ramIndex = m_command & 0x3F;

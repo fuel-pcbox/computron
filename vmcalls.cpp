@@ -66,6 +66,9 @@ void vm_call8(VCpu* cpu, WORD port, BYTE data) {
 
 void vm_handleE6(VCpu* cpu)
 {
+    extern WORD kbd_hit();
+    extern WORD kbd_getc();
+
     struct    tm *t;
     time_t    curtime;
     struct    timeval timv;
