@@ -304,7 +304,7 @@ const insn_t insn_table[256] = {
 insn_t wrapped_insn_table[256][8];
 
 /* Base width of instruction types, a work in progress. */
-int insn_base_width[43];
+int insn_base_width[44];
 
 void
 vomit_disasm_init_tables()
