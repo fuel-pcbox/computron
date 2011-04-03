@@ -130,71 +130,6 @@ public:
         RegisterGS
     };
 
-    union {
-        struct {
-            DWORD EAX, EBX, ECX, EDX;
-            DWORD EBP, ESP, ESI, EDI;
-            DWORD EIP;
-        } D;
-#ifdef VOMIT_BIG_ENDIAN
-        struct {
-            WORD __EAX_high_word, AX;
-            WORD __EBX_high_word, BX;
-            WORD __ECX_high_word, CX;
-            WORD __EDX_high_word, DX;
-            WORD __EBP_high_word, BP;
-            WORD __ESP_high_word, SP;
-            WORD __ESI_high_word, SI;
-            WORD __EDI_high_word, DI;
-            WORD __EIP_high_word, IP;
-        } W;
-        struct {
-            WORD __EAX_high_word;
-            BYTE AH, AL;
-            WORD __EBX_high_word;
-            BYTE BH, BL;
-            WORD __ECX_high_word;
-            BYTE CH, CL;
-            WORD __EDX_high_word;
-            BYTE DH, DL;
-            DWORD EBP;
-            DWORD ESP;
-            DWORD ESI;
-            DWORD EDI;
-            DWORD EIP;
-        } B;
-#else
-        struct {
-            WORD AX, __EAX_high_word;
-            WORD BX, __EBX_high_word;
-            WORD CX, __ECX_high_word;
-            WORD DX, __EDX_high_word;
-            WORD BP, __EBP_high_word;
-            WORD SP, __ESP_high_word;
-            WORD SI, __ESI_high_word;
-            WORD DI, __EDI_high_word;
-            WORD IP, __EIP_high_word;
-        } W;
-        struct {
-            BYTE AL, AH;
-            WORD __EAX_high_word;
-            BYTE BL, BH;
-            WORD __EBX_high_word;
-            BYTE CL, CH;
-            WORD __ECX_high_word;
-            BYTE DL, DH;
-            WORD __EDX_high_word;
-            DWORD EBP;
-            DWORD ESP;
-            DWORD ESI;
-            DWORD EDI;
-            DWORD EIP;
-        } B;
-#endif
-    } regs;
-
-    WORD CS, DS, ES, SS, FS, GS;
-
     struct SegmentSelector {
         unsigned DPL;
         unsigned count;
@@ -1125,6 +1060,70 @@ private:
     // This points to the base of CS for fast opcode fetches.
     BYTE* m_codeMemory;
 
+    union {
+        struct {
+            DWORD EAX, EBX, ECX, EDX;
+            DWORD EBP, ESP, ESI, EDI;
+            DWORD EIP;
+        } D;
+#ifdef VOMIT_BIG_ENDIAN
+        struct {
+            WORD __EAX_high_word, AX;
+            WORD __EBX_high_word, BX;
+            WORD __ECX_high_word, CX;
+            WORD __EDX_high_word, DX;
+            WORD __EBP_high_word, BP;
+            WORD __ESP_high_word, SP;
+            WORD __ESI_high_word, SI;
+            WORD __EDI_high_word, DI;
+            WORD __EIP_high_word, IP;
+        } W;
+        struct {
+            WORD __EAX_high_word;
+            BYTE AH, AL;
+            WORD __EBX_high_word;
+            BYTE BH, BL;
+            WORD __ECX_high_word;
+            BYTE CH, CL;
+            WORD __EDX_high_word;
+            BYTE DH, DL;
+            DWORD EBP;
+            DWORD ESP;
+            DWORD ESI;
+            DWORD EDI;
+            DWORD EIP;
+        } B;
+#else
+        struct {
+            WORD AX, __EAX_high_word;
+            WORD BX, __EBX_high_word;
+            WORD CX, __ECX_high_word;
+            WORD DX, __EDX_high_word;
+            WORD BP, __EBP_high_word;
+            WORD SP, __ESP_high_word;
+            WORD SI, __ESI_high_word;
+            WORD DI, __EDI_high_word;
+            WORD IP, __EIP_high_word;
+        } W;
+        struct {
+            BYTE AL, AH;
+            WORD __EAX_high_word;
+            BYTE BL, BH;
+            WORD __EBX_high_word;
+            BYTE CL, CH;
+            WORD __ECX_high_word;
+            BYTE DL, DH;
+            WORD __EDX_high_word;
+            DWORD EBP;
+            DWORD ESP;
+            DWORD ESI;
+            DWORD EDI;
+            DWORD EIP;
+        } B;
+#endif
+    } regs;
+
+    WORD CS, DS, ES, SS, FS, GS;
     bool CF, DF, TF, PF, AF, ZF, SF, IF, OF;
 
     unsigned int CPL;

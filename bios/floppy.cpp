@@ -93,11 +93,11 @@ void bios_disk_call(DiskCallFunction function)
     FILE* fp;
     WORD lba;
 
-    WORD cylinder = g_cpu->regs.B.CH;
-    WORD sector = g_cpu->regs.B.CL;
-    BYTE drive = g_cpu->regs.B.DL;
-    BYTE head = g_cpu->regs.B.DH;
-    BYTE sectorCount = g_cpu->regs.B.AL;
+    WORD cylinder = g_cpu->getCH();
+    WORD sector = g_cpu->getCL();
+    BYTE drive = g_cpu->getDL();
+    BYTE head = g_cpu->getDH();
+    BYTE sectorCount = g_cpu->getAL();
 
     if (drive >= 0x80)
         drive = drive - 0x80 + 2;
@@ -139,13 +139,13 @@ void bios_disk_call(DiskCallFunction function)
 
     switch (function) {
     case ReadSectors:
-        floppy_read(fp, drive, cylinder, head, sector, sectorCount, g_cpu->ES, g_cpu->regs.W.BX);
+        floppy_read(fp, drive, cylinder, head, sector, sectorCount, g_cpu->getES(), g_cpu->getBX());
         break;
     case WriteSectors:
-        floppy_write(fp, drive, cylinder, head, sector, sectorCount, g_cpu->ES, g_cpu->regs.W.BX);
+        floppy_write(fp, drive, cylinder, head, sector, sectorCount, g_cpu->getES(), g_cpu->getBX());
         break;
     case VerifySectors:
-        floppy_verify(fp, drive, cylinder, head, sector, sectorCount, g_cpu->ES, g_cpu->regs.W.BX);
+        floppy_verify(fp, drive, cylinder, head, sector, sectorCount, g_cpu->getES(), g_cpu->getBX());
         break;
     }
 
@@ -157,10 +157,10 @@ epilogue:
         g_cpu->setCF(0);
     else {
         g_cpu->setCF(1);
-        g_cpu->regs.B.AL = 0x00;
+        g_cpu->setAL(0);
     }
 
-    g_cpu->regs.B.AH = error;
+    g_cpu->setAH(error);
 
     BYTE* bda_fd_status = g_cpu->memoryPointer(0x0000, 0x0441);
     *bda_fd_status = error;
