@@ -584,9 +584,6 @@ public:
     void markDirty(DWORD address) { m_dirtMap[address] = true; }
 #endif
 
-    bool m_addressSize32;
-    bool m_operationSize32;
-
     bool a16() const { return !m_addressSize32; }
     bool a32() const { return m_addressSize32; }
     bool o16() const { return !m_operationSize32; }
@@ -1187,6 +1184,9 @@ private:
     DWORD* treg32[8];
     WORD* treg16[8];
     BYTE* treg8[8];
+
+    bool m_addressSize32;
+    bool m_operationSize32;
 };
 
 extern VCpu* g_cpu;
