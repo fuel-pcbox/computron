@@ -423,15 +423,6 @@ VCpu::VCpu(QObject* parent)
 
     m_debugger = new Debugger(this);
 
-#ifdef VOMIT_PREFETCH_QUEUE
-    if (m_prefetchQueue)
-        delete [] m_prefetchQueue;
-
-    m_prefetchQueueSize = 4;
-    m_prefetchQueue = new BYTE[m_prefetchQueueSize];
-    m_prefetchQueueIndex = 0;
-#endif
-
     m_a20Enabled = false;
 
     memset(&regs, 0, sizeof(regs));
@@ -539,11 +530,6 @@ VCpu::VCpu(QObject* parent)
 
 VCpu::~VCpu()
 {
-#ifdef VOMIT_PREFETCH_QUEUE
-    delete [] m_prefetchQueue;
-    m_prefetchQueue = 0;
-#endif
-
     delete [] m_memory;
     m_memory = 0;
     m_codeMemory = 0;
@@ -569,8 +555,6 @@ void VCpu::haltedLoop()
 
 void VCpu::mainLoop()
 {
-    flushFetchQueue();
-
     forever {
 
         // HACK: This can be set by an external force to make us break out.
@@ -627,69 +611,24 @@ void VCpu::mainLoop()
     }
 }
 
-#ifdef VOMIT_PREFETCH_QUEUE
-//* flushFetchQueue() is inline !VOMIT_PREFETCH_QUEUE
-
-BYTE VCpu::fetchOpcodeByte()
-{
-    BYTE b = m_prefetchQueue[m_prefetchQueueIndex];
-    m_prefetchQueue[m_prefetchQueueIndex] = m_codeMemory[getIP() + m_prefetchQueueSize];
-    if (++m_prefetchQueueIndex == m_prefetchQueueSize)
-        m_prefetchQueueIndex = 0;
-    ++this->IP;
-    return b;
-}
-
-WORD VCpu::fetchOpcodeWord()
-{
-    WORD w = m_prefetchQueue[m_prefetchQueueIndex];
-    m_prefetchQueue[m_prefetchQueueIndex] = this->m_codeMemory[getIP() + m_prefetchQueueSize];
-    if (++m_prefetchQueueIndex == m_prefetchQueueSize)
-        m_prefetchQueueIndex = 0;
-    w |= m_prefetchQueue[m_prefetchQueueIndex] << 8;
-    ++this->IP;
-    m_prefetchQueue[m_prefetchQueueIndex] = this->m_codeMemory[getIP() + m_prefetchQueueSize];
-    if (++m_prefetchQueueIndex == m_prefetchQueueSize)
-        m_prefetchQueueIndex = 0;
-    ++this->IP;
-    return w;
-}
-
-void VCpu::flushFetchQueue()
-{
-    VM_ASSERT(this);
-    VM_ASSERT(m_prefetchQueue);
-    VM_ASSERT(m_codeMemory);
-
-    // Flush the prefetch queue. MUST be done after all jumps/calls.
-    m_prefetchQueueIndex = 0;
-    for (int i = 0; i < m_prefetchQueueSize; ++i)
-        m_prefetchQueue[i] = m_codeMemory[getIP() + i];
-}
-#endif
-
 void VCpu::jumpRelative8(SIGNED_BYTE displacement)
 {
     this->IP += displacement;
-    flushFetchQueue();
 }
 
 void VCpu::jumpRelative16(SIGNED_WORD displacement)
 {
     this->IP += displacement;
-    flushFetchQueue();
 }
 
 void VCpu::jumpRelative32(SIGNED_DWORD displacement)
 {
     this->EIP += displacement;
-    flushFetchQueue();
 }
 
 void VCpu::jumpAbsolute16(WORD address)
 {
     this->IP = address;
-    flushFetchQueue();
 }
 
 void VCpu::jump32(WORD segment, DWORD offset)
@@ -700,7 +639,6 @@ void VCpu::jump32(WORD segment, DWORD offset)
 
     // Point m_codeMemory to CS:0 for fast opcode fetching.
     m_codeMemory = m_memory + (segment << 4);
-    flushFetchQueue();
 }
 
 void VCpu::jump16(WORD segment, WORD offset)

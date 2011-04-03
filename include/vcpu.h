@@ -339,17 +339,9 @@ public:
     // CPU main loop when halted (HLT) - will do nothing until an IRQ is raised
     void haltedLoop();
 
-#ifdef VOMIT_PREFETCH_QUEUE
-    void flushFetchQueue();
-    BYTE fetchOpcodeByte();
-    WORD fetchOpcodeWord();
-    DWORD fetchOpcodeDWord();
-#else
-    void flushFetchQueue() {}
     BYTE fetchOpcodeByte() { return m_codeMemory[this->IP++]; }
     inline WORD fetchOpcodeWord();
     inline DWORD fetchOpcodeDWord();
-#endif
 
     void push32(DWORD value);
     DWORD pop32();
@@ -1252,7 +1244,6 @@ BYTE* VCpu::memoryPointer(WORD segment, WORD offset) const
     return memoryPointer(vomit_toFlatAddress(segment, offset));
 }
 
-#ifndef VOMIT_PREFETCH_QUEUE
 WORD VCpu::fetchOpcodeWord()
 {
     WORD w = *reinterpret_cast<WORD*>(&m_codeMemory[getIP()]);
@@ -1263,7 +1254,6 @@ WORD VCpu::fetchOpcodeWord()
     return w;
 #endif
 }
-#endif
 
 DWORD VCpu::fetchOpcodeDWord()
 {

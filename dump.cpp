@@ -33,11 +33,6 @@ void VCpu::dump() const
 {
     vlog(LogDump, "CPU level: %u", VOMIT_CPU_LEVEL);
     vlog(LogDump, "Base mem: %dK", baseMemorySize());
-#ifdef VOMIT_PREFETCH_QUEUE
-    vlog(LogDump, "Prefetch queue: %d bytes", m_prefetchQueueSize);
-#else
-    vlog(LogDump, "Prefetch queue: off");
-#endif
 }
 
 int VCpu::dumpDisassembled(WORD segment, DWORD offset) const
@@ -137,17 +132,6 @@ void VCpu::dumpAll() const
 {
     BYTE* csip = codeMemory();
 
-#ifdef VOMIT_PREFETCH_QUEUE
-    BYTE x = m_prefetchQueueIndex;
-    BYTE dpfq[6];
-
-    for (int i = 0; i < m_prefetchQueueSize; ++i) {
-        dpfq[i] = m_prefetchQueue[x++];
-        if (x == m_prefetchQueueSize)
-            x = 0;
-    }
-#endif
-
     dumpRegister(this, RegisterAX);
     dumpRegister(this, RegisterBX);
     dumpRegister(this, RegisterCX);
@@ -182,9 +166,6 @@ void VCpu::dumpAll() const
     vlog(LogDump, "C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u", getCF(), getPF(), getAF(), getZF(), getSF(), getIF(), getDF(), getOF());
 
     vlog(LogDump, "  -  (%02X %02X%02X%02X%02X%02X)", csip[0], csip[1], csip[2], csip[3], csip[4], csip[5]);
-#ifdef VOMIT_PREFETCH_QUEUE
-    vlog(LogDump, "  -  [%02X %02X%02X%02X%02X%02X]", dpfq[0], dpfq[1], dpfq[2], dpfq[3], dpfq[4], dpfq[5]);
-#endif
 
     dumpDisassembled(getBaseCS(), getBaseEIP());
 }
