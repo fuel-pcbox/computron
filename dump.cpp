@@ -29,12 +29,6 @@
 #include "debug.h"
 #include "disasm.h"
 
-void VCpu::dump() const
-{
-    vlog(LogDump, "CPU level: %u", VOMIT_CPU_LEVEL);
-    vlog(LogDump, "Base mem: %dK", baseMemorySize());
-}
-
 int VCpu::dumpDisassembled(WORD segment, DWORD offset) const
 {
     char disasm[64];

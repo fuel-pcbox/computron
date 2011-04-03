@@ -444,9 +444,6 @@ public:
     /* TODO: actual PIT implementation.. */
     inline bool tick();
 
-    // Dumps some basic information about this CPU
-    void dump() const;
-
     // Dumps registers, flags & stack
     void dumpAll() const;
 
