@@ -72,9 +72,10 @@ Machine::Machine(Settings* settings, QObject* parent)
     m_screen = new Screen(this);
     m_worker = new Worker(cpu());
 
+    QObject::connect(worker(), SIGNAL(finished()), this, SLOT(onWorkerFinished()));
+
     worker()->startMachine();
     worker()->start();
-
 }
 
 Machine::~Machine()
@@ -123,4 +124,24 @@ bool Machine::loadFile(DWORD address, const QString& fileName)
     // FIXME: Don't overrun the CPU's memory buffer.
     memcpy(memoryPointer, fileContents.constData(), fileContents.size());
     return true;
+}
+
+void Machine::start()
+{
+    worker()->startMachine();
+}
+
+void Machine::stop()
+{
+    worker()->stopMachine();
+}
+
+void Machine::reboot()
+{
+    // FIXME: Implement.
+}
+
+void Machine::onWorkerFinished()
+{
+    // FIXME: Implement.
 }

@@ -44,13 +44,22 @@ public:
     VCpu* cpu() const { return m_cpu; }
     Screen* screen() const { return m_screen; }
     Settings* settings() const { return m_settings; }
-    Worker* worker() const { return m_worker; }
+
+public slots:
+    void start();
+    void stop();
+    void reboot();
+
+private slots:
+    void onWorkerFinished();
 
 private:
     explicit Machine(Settings* settings, QObject* parent = 0);
     bool loadFile(DWORD address, const QString& fileName);
 
     void applySettings();
+
+    Worker* worker() const { return m_worker; }
 
     VCpu* m_cpu;
     Screen* m_screen;

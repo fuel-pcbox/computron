@@ -83,8 +83,3 @@ void Worker::stopMachine()
     d->active = false;
     g_vomit_exit_main_loop = true;
 }
-
-void Worker::rebootMachine()
-{
-    // :(
-}

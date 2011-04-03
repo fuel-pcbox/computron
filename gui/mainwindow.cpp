@@ -56,8 +56,6 @@ MainWindow::MainWindow(Machine* m)
 {
     d->machine = m;
 
-    QObject::connect(machine()->worker(), SIGNAL(finished()), this, SLOT(close()));
-
     setWindowTitle("Vomit");
     setUnifiedTitleAndToolBarOnMac(true);
     setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
@@ -149,7 +147,7 @@ void MainWindow::slotPauseMachine()
     d->stopMachine->setEnabled(true);
 
     machine()->screen()->setTinted(true);
-    machine()->worker()->stopMachine();
+    machine()->stop();
 }
 
 void MainWindow::slotStopMachine()
@@ -159,7 +157,7 @@ void MainWindow::slotStopMachine()
     d->stopMachine->setEnabled(false);
 
     machine()->screen()->setTinted(true);
-    machine()->worker()->stopMachine();
+    machine()->stop();
 }
 
 void MainWindow::slotStartMachine()
@@ -169,12 +167,12 @@ void MainWindow::slotStartMachine()
     d->stopMachine->setEnabled(true);
 
     machine()->screen()->setTinted(false);
-    machine()->worker()->startMachine();
+    machine()->start();
 }
 
 void MainWindow::slotRebootMachine()
 {
-    machine()->worker()->rebootMachine();
+    machine()->reboot();
 }
 
 Machine* MainWindow::machine() const
@@ -184,5 +182,5 @@ Machine* MainWindow::machine() const
 
 void MainWindow::onAboutToQuit()
 {
-    machine()->worker()->stopMachine();
+    machine()->stop();
 }
