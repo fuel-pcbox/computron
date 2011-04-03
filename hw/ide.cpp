@@ -142,7 +142,7 @@ BYTE IDE::in8(WORD port)
         return LSB(controller.cylinderIndex);
     case 0x5:
         vlog(LogIDE, "Controller %d cylinder MSB queried: %02X", controllerIndex, MSB(controller.cylinderIndex));
-        return LSB(controller.cylinderIndex);
+        return MSB(controller.cylinderIndex);
     case 0x6:
         vlog(LogIDE, "Controller %d head index queried: %u", controllerIndex, controller.headIndex);
         return controller.headIndex;
