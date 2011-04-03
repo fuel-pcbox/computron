@@ -52,7 +52,6 @@ SOURCES += debug.cpp \
            machine.cpp \
            settings.cpp \
            vmcalls.cpp \
-           vomit.cpp \
            x86/186.cpp \
            x86/bcd.cpp \
            x86/bitwise.cpp \

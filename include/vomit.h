@@ -31,12 +31,9 @@
 #define MAX_FILESIZE	524288		/* 512kB is max "loadfile" size */
 #define MAX_FN_LENGTH	128
 
-void vm_exit(int);
-void vm_kill();
+void vm_exit(int exitCode);
 
-void vomit_init();
-
-struct vomit_options_t {
+struct VomitOptions {
     bool trace;
     bool disklog;
     bool trapint;
@@ -44,7 +41,7 @@ struct vomit_options_t {
     bool start_in_debug;
 };
 
-extern vomit_options_t options;
+extern VomitOptions options;
 
 #define ASSERT_VALID_SEGMENT_INDEX(segmentIndex) VM_ASSERT(static_cast<int>(segmentIndex) >= 0 && static_cast<int>(segmentIndex) <= 5)
 

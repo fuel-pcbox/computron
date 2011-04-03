@@ -32,8 +32,24 @@
 #include "vcpu.h"
 #include "debugger.h"
 #include "machine.h"
+#include "iodevice.h"
+#include <signal.h>
 
 static void parseArguments(const QStringList& arguments);
+
+VomitOptions options;
+
+static void sigint_handler(int)
+{
+    VM_ASSERT(g_cpu);
+    VM_ASSERT(g_cpu->debugger());
+    g_cpu->debugger()->enter();
+}
+
+void vm_exit(int exitCode)
+{
+    exit(exitCode);
+}
 
 int main(int argc, char** argv)
 {
@@ -48,6 +64,8 @@ int main(int argc, char** argv)
     qRegisterMetaType<SIGNED_WORD>("SIGNED_WORD");
     qRegisterMetaType<SIGNED_DWORD>("SIGNED_DWORD");
 
+    signal(SIGINT, sigint_handler);
+
     QScopedPointer<Machine> machine(Machine::createFromFile(QLatin1String("default.vmf")));
 
     if (!machine)
@@ -61,7 +79,8 @@ int main(int argc, char** argv)
 
     QFile::remove("log.txt");
 
-    vomit_init();
+    foreach (IODevice *device, IODevice::devices())
+        vlog(LogInit, "%s at 0x%p", device->name(), device);
 
     MainWindow mw(machine->cpu());
     mw.show();
