@@ -28,8 +28,6 @@
 
 #include "iodevice.h"
 
-class VCpu;
-
 class VomCtl : public IODevice
 {
 public:
@@ -41,7 +39,6 @@ public:
 
 private:
     BYTE m_registerIndex;
-    VCpu* m_cpu;
 
     struct Private;
     Private* d;
