@@ -155,48 +155,6 @@ public:
 
     void resetSegmentPrefix() { m_currentSegment = &this->DS; }
 
-    struct {
-        DWORD base;
-        WORD limit;
-    } GDTR;
-
-    struct {
-        DWORD base;
-        WORD limit;
-    } IDTR;
-
-    struct {
-        WORD segment;
-        DWORD base;
-        WORD limit;
-        // LDT's index in GDT
-        int index;
-    } LDTR;
-
-    DWORD CR0, CR1, CR2, CR3, CR4, CR5, CR6, CR7;
-    DWORD DR0, DR1, DR2, DR3, DR4, DR5, DR6, DR7;
-
-    union {
-        struct {
-#ifdef VOMIT_BIG_ENDIAN
-            WORD __EIP_high_word, IP;
-#else
-            WORD IP, __EIP_high_word;
-#endif
-        };
-        DWORD EIP;
-    };
-
-    struct {
-        WORD segment;
-        DWORD base;
-        WORD limit;
-    } TR;
-
-    BYTE opcode;
-    BYTE rmbyte;
-    BYTE subrmbyte;
-
     // Extended memory size in KiB (will be reported by CMOS)
     DWORD extendedMemorySize() const { return m_extendedMemorySize; }
     void setExtendedMemorySize(DWORD size) { m_extendedMemorySize = size; }
@@ -490,9 +448,6 @@ public:
     enum State { Dead, Alive, Halted };
     State state() const { return m_state; }
     void setState(State s) { m_state = s; }
-
-    // TODO: make private
-    inline BYTE* codeMemory() const;
 
     /* TODO: actual PIT implementation.. */
     inline bool tick();
@@ -1051,6 +1006,8 @@ private:
         m_baseEIP = getEIP();
     }
 
+    inline BYTE* codeMemory() const;
+
     void dumpSelector(const char* segmentRegisterName, SegmentIndex) const;
     void syncSegmentRegister(SegmentIndex);
     SegmentSelector m_selector[6];
@@ -1135,6 +1092,48 @@ private:
     bool VIF;
     bool VIP;
     bool ID;
+
+    struct {
+        DWORD base;
+        WORD limit;
+    } GDTR;
+
+    struct {
+        DWORD base;
+        WORD limit;
+    } IDTR;
+
+    struct {
+        WORD segment;
+        DWORD base;
+        WORD limit;
+        // LDT's index in GDT
+        int index;
+    } LDTR;
+
+    DWORD CR0, CR1, CR2, CR3, CR4, CR5, CR6, CR7;
+    DWORD DR0, DR1, DR2, DR3, DR4, DR5, DR6, DR7;
+
+    union {
+        struct {
+#ifdef VOMIT_BIG_ENDIAN
+            WORD __EIP_high_word, IP;
+#else
+            WORD IP, __EIP_high_word;
+#endif
+        };
+        DWORD EIP;
+    };
+
+    struct {
+        WORD segment;
+        DWORD base;
+        WORD limit;
+    } TR;
+
+    BYTE opcode;
+    BYTE rmbyte;
+    BYTE subrmbyte;
 
     State m_state;
 
