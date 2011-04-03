@@ -40,8 +40,8 @@ public:
     MainWindow(VCpu*);
     ~MainWindow();
 
-    VCpu* cpu();
-    Screen *screen();
+    VCpu* cpu() const;
+    Screen *screen() const;
 
 private slots:
     void slotFloppyAClicked();

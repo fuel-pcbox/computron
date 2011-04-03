@@ -190,12 +190,12 @@ void MainWindow::slotRebootMachine()
     d->worker->rebootMachine();
 }
 
-Screen *MainWindow::screen()
+Screen* MainWindow::screen() const
 {
     return d->screen;
 }
 
-VCpu* MainWindow::cpu()
+VCpu* MainWindow::cpu() const
 {
     return d->cpu;
 }
