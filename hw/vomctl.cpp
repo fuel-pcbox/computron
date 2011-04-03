@@ -69,9 +69,9 @@ BYTE VomCtl::in8(WORD port)
         case 0x01: // Get CPU type
             return VOMIT_CPU_LEVEL;
         case 0x02: // RAM size LSB
-            return LSB(g_cpu->baseMemorySize() / 1024);
+            return vomit_LSB(g_cpu->baseMemorySize() / 1024);
         case 0x03: // RAM size MSB
-            return MSB(g_cpu->baseMemorySize() / 1024);
+            return vomit_MSB(g_cpu->baseMemorySize() / 1024);
         }
         vlog(LogVomCtl, "Invalid register %02X read", m_registerIndex);
         return IODevice::JunkValue;

@@ -126,7 +126,7 @@ bool disassemble(BYTE* p, long unsigned int offset, char *buf, int len)
 
     /* Single IP-relative immediate word operand */
     case OP_relimm16:
-        w = MAKEWORD(p[1], p[2]);
+        w = vomit_MAKEWORD(p[1], p[2]);
         if (w > 0x7fff)
             snprintf(ptr, len, "%04lX",
                 offset - (0x10000 - w - base_width));
@@ -145,16 +145,16 @@ bool disassemble(BYTE* p, long unsigned int offset, char *buf, int len)
         snprintf(ptr, len, "AL, DX");
         break;
     case OP_AL_moff8:
-        snprintf(ptr, len, "AL, [%04X]", MAKEWORD(p[1], p[2]));
+        snprintf(ptr, len, "AL, [%04X]", vomit_MAKEWORD(p[1], p[2]));
         break;
     case OP_moff8_AL:
-        snprintf(ptr, len, "[%04X], AL", MAKEWORD(p[1], p[2]));
+        snprintf(ptr, len, "[%04X], AL", vomit_MAKEWORD(p[1], p[2]));
         break;
     case OP_moff16_AX:
-        snprintf(ptr, len, "[%04X], AX", MAKEWORD(p[1], p[2]));
+        snprintf(ptr, len, "[%04X], AX", vomit_MAKEWORD(p[1], p[2]));
         break;
     case OP_AX_moff16:
-        snprintf(ptr, len, "AX, [%04X]", MAKEWORD(p[1], p[2]));
+        snprintf(ptr, len, "AX, [%04X]", vomit_MAKEWORD(p[1], p[2]));
         break;
     case OP_RM8:
         snprintf(ptr, len, "%s", modrm_string(&p[1], 8));
@@ -174,14 +174,14 @@ bool disassemble(BYTE* p, long unsigned int offset, char *buf, int len)
     case OP_RM16_imm16:
         {
             int w = modrm_width(p[1]);
-            snprintf(ptr, len, "%s, %04X", modrm_string(&p[1], 16), MAKEWORD(p[w+2], p[w+3]));
+            snprintf(ptr, len, "%s, %04X", modrm_string(&p[1], 16), vomit_MAKEWORD(p[w+2], p[w+3]));
         }
         break;
     case OP_imm16:
-        snprintf(ptr, len, "%04X", MAKEWORD(p[1], p[2]));
+        snprintf(ptr, len, "%04X", vomit_MAKEWORD(p[1], p[2]));
         break;
     case OP_imm16_imm16:
-        snprintf(ptr, len, "%04X:%04X", MAKEWORD(p[3], p[4]), MAKEWORD(p[1], p[2]));
+        snprintf(ptr, len, "%04X:%04X", vomit_MAKEWORD(p[3], p[4]), vomit_MAKEWORD(p[1], p[2]));
         break;
     case OP_reg16:
         snprintf(ptr, len, "%s", R16(*p));
@@ -190,7 +190,7 @@ bool disassemble(BYTE* p, long unsigned int offset, char *buf, int len)
         snprintf(ptr, len, "AL, %02X", p[1]);
         break;
     case OP_AX_imm16:
-        snprintf(ptr, len, "AX, %04X", MAKEWORD(p[1], p[2]));
+        snprintf(ptr, len, "AX, %04X", vomit_MAKEWORD(p[1], p[2]));
         break;
     case OP_imm8_AL:
         snprintf(ptr, len, "%02X, AL", p[1]);
@@ -205,7 +205,7 @@ bool disassemble(BYTE* p, long unsigned int offset, char *buf, int len)
         snprintf(ptr, len, "%s, %02X", R8(*p), p[1]);
         break;
     case OP_reg16_imm16:
-        snprintf(ptr, len, "%s, %04X", R16(*p), MAKEWORD(p[1], p[2]));
+        snprintf(ptr, len, "%s, %04X", R16(*p), vomit_MAKEWORD(p[1], p[2]));
         break;
     case OP_RM8_reg8:
         snprintf(ptr, len, "%s, %s", modrm_string(p+1, 8), R8(vomit_modRMRegisterPart(*(p+1))));
@@ -232,7 +232,7 @@ bool disassemble(BYTE* p, long unsigned int offset, char *buf, int len)
         break;
     case OP_dummy_mem16:
         ++p;
-        snprintf(ptr, len, "[%04X]", MAKEWORD(p[1], p[2]));
+        snprintf(ptr, len, "[%04X]", vomit_MAKEWORD(p[1], p[2]));
         break;
     default:
         snprintf(ptr, len, "???");

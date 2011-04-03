@@ -321,13 +321,13 @@ BYTE VgaMemory::read8(DWORD address) {
 
 void VgaMemory::write16(DWORD address, WORD value)
 {
-    write8(address, LSB(value));
-    write8(address + 1, MSB(value));
+    write8(address, vomit_LSB(value));
+    write8(address + 1, vomit_MSB(value));
 }
 
 WORD VgaMemory::read16(DWORD address)
 {
-    return MAKEWORD(read8(address), read8(address + 1));
+    return vomit_MAKEWORD(read8(address), read8(address + 1));
 }
 
 BYTE *VgaMemory::plane(int index) const

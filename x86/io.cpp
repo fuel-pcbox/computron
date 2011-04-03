@@ -45,8 +45,8 @@ void VCpu::_OUT_imm8_EAX()
     WORD port = fetchOpcodeByte();
     out(port, regs.B.AL);
     out(port + 1, regs.B.AH);
-    out(port + 2, LSB(regs.W.__EAX_high_word));
-    out(port + 3, MSB(regs.W.__EAX_high_word));
+    out(port + 2, vomit_LSB(regs.W.__EAX_high_word));
+    out(port + 3, vomit_MSB(regs.W.__EAX_high_word));
 }
 
 void VCpu::_OUT_DX_AL()
@@ -64,8 +64,8 @@ void VCpu::_OUT_DX_EAX()
 {
     out(getDX(), regs.B.AL);
     out(getDX() + 1, regs.B.AH);
-    out(getDX() + 2, LSB(regs.W.__EAX_high_word));
-    out(getDX() + 3, MSB(regs.W.__EAX_high_word));
+    out(getDX() + 2, vomit_LSB(regs.W.__EAX_high_word));
+    out(getDX() + 3, vomit_MSB(regs.W.__EAX_high_word));
 }
 
 void VCpu::_OUTSB()
@@ -119,7 +119,7 @@ void VCpu::_IN_EAX_imm8()
     WORD port = fetchOpcodeByte();
     regs.B.AL = in(port);
     regs.B.AH = in(port + 1);
-    regs.W.__EAX_high_word = MAKEWORD(in(port + 2), in(port + 3));
+    regs.W.__EAX_high_word = vomit_MAKEWORD(in(port + 2), in(port + 3));
 }
 
 void VCpu::_IN_AL_DX()
@@ -137,7 +137,7 @@ void VCpu::_IN_EAX_DX()
 {
     regs.B.AL = in(getDX());
     regs.B.AH = in(getDX() + 1);
-    regs.W.__EAX_high_word = MAKEWORD(in(getDX() + 2), in(getDX() + 3));
+    regs.W.__EAX_high_word = vomit_MAKEWORD(in(getDX() + 2), in(getDX() + 3));
 }
 
 void VCpu::out(WORD port, BYTE value)

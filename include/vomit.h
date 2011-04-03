@@ -23,8 +23,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __vomit_h__
-#define __vomit_h__
+#ifndef VOMIT_H
+#define VOMIT_H
 
 #include "types.h"
 
@@ -104,13 +104,29 @@ inline int vomit_modRMRegisterPart(int rmbyte)
     return (rmbyte >> 3) & 7;
 }
 
-/* Construct a 16-bit word from two 8-bit bytes */
-#define MAKEWORD(l, m)	(((m) << 8) | (l))
+inline WORD vomit_MSW(DWORD d)
+{
+    return (d >> 16) & 0xFFFF;
+}
 
-#define LSW(d) ((d)&0xFFFF)
-#define MSW(d) (((d)&0xFFFF0000)>>16)
+inline WORD vomit_LSW(DWORD d)
+{
+    return d & 0xFFFF;
+}
 
-#define LSB(w) ((w)&0xFF)
-#define MSB(w) (((w)&0xFF00)>>8)
+inline WORD vomit_MSB(WORD w)
+{
+    return (w >> 8) & 0xFF;
+}
+
+inline WORD vomit_LSB(WORD w)
+{
+    return w & 0xFF;
+}
+
+inline WORD vomit_MAKEWORD(BYTE msb, BYTE lsb)
+{
+    return (msb << 8) | lsb;
+}
 
 #endif

@@ -103,11 +103,11 @@ void IDE::out8(WORD port, BYTE data)
         break;
     case 0x4:
         vlog(LogIDE, "Controller %d cylinder LSB set: %u", controllerIndex, data);
-        controller.cylinderIndex = MAKEWORD(data, MSB(controller.cylinderIndex));
+        controller.cylinderIndex = vomit_MAKEWORD(data, vomit_MSB(controller.cylinderIndex));
         break;
     case 0x5:
         vlog(LogIDE, "Controller %d cylinder MSB set: %u", controllerIndex, data);
-        controller.cylinderIndex = MAKEWORD(LSB(controller.cylinderIndex), data);
+        controller.cylinderIndex = vomit_MAKEWORD(vomit_LSB(controller.cylinderIndex), data);
         break;
     case 0x6:
         vlog(LogIDE, "Controller %d head index set: %u", controllerIndex, data);
@@ -138,11 +138,11 @@ BYTE IDE::in8(WORD port)
         vlog(LogIDE, "Controller %d sector index queried: %u", controllerIndex, controller.sectorIndex);
         return controller.sectorIndex;
     case 0x4:
-        vlog(LogIDE, "Controller %d cylinder LSB queried: %02X", controllerIndex, LSB(controller.cylinderIndex));
-        return LSB(controller.cylinderIndex);
+        vlog(LogIDE, "Controller %d cylinder LSB queried: %02X", controllerIndex, vomit_LSB(controller.cylinderIndex));
+        return vomit_LSB(controller.cylinderIndex);
     case 0x5:
-        vlog(LogIDE, "Controller %d cylinder MSB queried: %02X", controllerIndex, MSB(controller.cylinderIndex));
-        return MSB(controller.cylinderIndex);
+        vlog(LogIDE, "Controller %d cylinder MSB queried: %02X", controllerIndex, vomit_MSB(controller.cylinderIndex));
+        return vomit_MSB(controller.cylinderIndex);
     case 0x6:
         vlog(LogIDE, "Controller %d head index queried: %u", controllerIndex, controller.headIndex);
         return controller.headIndex;
