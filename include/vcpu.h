@@ -978,13 +978,6 @@ protected:
     void _AddressSizeOverride();
     void _OperationSizeOverride();
 
-    // FIXME: Dispatch these.
-    void _TEST_reg8_RM8();
-    void _TEST_reg16_RM16();
-    void _TEST_reg32_RM32();
-    void _TEST_reg16_imm16();
-    void _TEST_RM16_imm8();
-
     // REP* helper.
     void handleRepeatOpcode(BYTE opcode, bool shouldEqual);
 
