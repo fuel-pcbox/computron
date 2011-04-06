@@ -122,7 +122,7 @@ void MainWindow::slotFloppyAClicked()
 {
     QString fileName = QFileDialog::getOpenFileName(
         this,
-        tr("Choose floppy B image")
+        tr("Choose floppy A image")
    );
     if (fileName.isNull())
         return;
