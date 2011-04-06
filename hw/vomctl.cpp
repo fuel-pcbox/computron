@@ -67,7 +67,7 @@ BYTE VomCtl::in8(WORD port)
         case 0x00: // Always 0
             return 0;
         case 0x01: // Get CPU type
-            return VOMIT_CPU_LEVEL;
+            return 3;
         case 0x02: // RAM size LSB
             return vomit_LSB(g_cpu->baseMemorySize() / 1024);
         case 0x03: // RAM size MSB
