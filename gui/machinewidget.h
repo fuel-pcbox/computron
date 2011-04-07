@@ -23,51 +23,35 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MACHINE_H
-#define MACHINE_H
+#ifndef MACHINEWIDGET_H
+#define MACHINEWIDGET_H
 
-#include <QObject>
-#include "types.h"
+#include <QtGui/QWidget>
 
-class Screen;
-class Settings;
-class VCpu;
-class Worker;
+class Machine;
 
-class Machine : public QObject
+class MachineWidget : public QWidget
 {
     Q_OBJECT
 public:
-    virtual ~Machine();
-    static Machine* createFromFile(const QString& fileName);
+    explicit MachineWidget(Machine*);
+    virtual ~MachineWidget();
 
-    QString name() const { return m_name; }
-    VCpu* cpu() const { return m_cpu; }
-    Screen* screen() const { return m_screen; }
-    Settings* settings() const { return m_settings; }
-
-public slots:
-    void start();
-    void stop();
-    void pause();
-    void reboot();
+    Machine* machine() const { return m_machine; }
 
 private slots:
-    void onWorkerFinished();
+    void onStartTriggered();
+    void onStopTriggered();
+    void onPauseTriggered();
+    void onRebootTriggered();
+    void onFloppyATriggered();
+    void onFloppyBTriggered();
 
 private:
-    explicit Machine(const QString& name, Settings*, QObject* parent = 0);
-    bool loadFile(DWORD address, const QString& fileName);
+    Machine* m_machine;
 
-    void applySettings();
-
-    Worker* worker() const { return m_worker; }
-
-    QString m_name;
-    VCpu* m_cpu;
-    Screen* m_screen;
-    Settings* m_settings;
-    Worker* m_worker;
+    struct Private;
+    Private* d;
 };
 
 #endif

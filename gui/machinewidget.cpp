@@ -1,0 +1,160 @@
+/*
+ * Copyright (C) 2003-2011 Andreas Kling <kling@webkit.org>
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY ANDREAS KLING ``AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ANDREAS KLING OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include "machinewidget.h"
+
+#include "debug.h"
+#include "machine.h"
+#include "screen.h"
+#include <QtCore/QCoreApplication>
+#include <QtCore/QTimer>
+#include <QtGui/QAction>
+#include <QtGui/QFileDialog>
+#include <QtGui/QToolBar>
+#include <QtGui/QVBoxLayout>
+
+extern void vomit_set_drive_image(int driveIndex, const char* fileName);
+
+struct MachineWidget::Private
+{
+    QToolBar* toolBar;
+
+    QAction* startMachine;
+    QAction* pauseMachine;
+    QAction* stopMachine;
+    QAction* rebootMachine;
+
+    QTimer syncTimer;
+};
+
+MachineWidget::MachineWidget(Machine* m)
+    : QWidget(0)
+    , m_machine(m)
+    , d(new Private)
+{
+    VM_ASSERT(m_machine);
+
+    d->toolBar = new QToolBar(tr("Virtual Machine"));
+
+    QVBoxLayout* layout = new QVBoxLayout;
+    layout->setSpacing(0);
+    layout->setMargin(0);
+
+    layout->addWidget(d->toolBar);
+    layout->addWidget(machine()->screen());
+
+    setLayout(layout);
+
+    machine()->screen()->setFocus();
+
+    QAction *chooseFloppyAImage = new QAction(QIcon(":/icons/disk.png"), tr("Floppy A:"), this);
+    QAction *chooseFloppyBImage = new QAction(QIcon(":/icons/disk.png"), tr("Floppy B:"), this);
+
+    d->pauseMachine = new QAction(QIcon(":/icons/control_pause.png"), tr("Pause"), this);
+    d->startMachine = new QAction(QIcon(":/icons/control_play.png"), tr("Start"), this);
+    d->stopMachine = new QAction(QIcon(":/icons/control_stop.png"), tr("Stop"), this);
+    d->rebootMachine = new QAction(QIcon(":/icons/arrow_refresh.png"), tr("Reboot"), this);
+
+    d->startMachine->setEnabled(false);
+    d->pauseMachine->setEnabled(true);
+    d->stopMachine->setEnabled(true);
+
+    d->toolBar->addAction(d->startMachine);
+    d->toolBar->addAction(d->pauseMachine);
+    d->toolBar->addAction(d->stopMachine);
+    d->toolBar->addAction(d->rebootMachine);
+
+    d->toolBar->addSeparator();
+
+    d->toolBar->addAction(chooseFloppyAImage);
+    d->toolBar->addAction(chooseFloppyBImage);
+
+    connect(chooseFloppyAImage, SIGNAL(triggered(bool)), SLOT(onFloppyATriggered()));
+    connect(chooseFloppyBImage, SIGNAL(triggered(bool)), SLOT(onFloppyBTriggered()));
+    connect(d->rebootMachine, SIGNAL(triggered(bool)), SLOT(onRebootTriggered()));
+    connect(d->pauseMachine, SIGNAL(triggered(bool)), SLOT(onPauseTriggered()));
+    connect(d->startMachine, SIGNAL(triggered(bool)), SLOT(onStartTriggered()));
+    connect(d->stopMachine, SIGNAL(triggered(bool)), SLOT(onStopTriggered()));
+
+    QObject::connect(&d->syncTimer, SIGNAL(timeout()), machine()->screen(), SLOT(refresh()));
+    QObject::connect(&d->syncTimer, SIGNAL(timeout()), machine()->screen(), SLOT(flushKeyBuffer()));
+    d->syncTimer.start(50);
+
+    QObject::connect(qApp, SIGNAL(aboutToQuit()), machine(), SLOT(stop()));
+}
+
+MachineWidget::~MachineWidget()
+{
+    delete d;
+    d = 0;
+}
+
+void MachineWidget::onFloppyATriggered()
+{
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Choose floppy A image"));
+    if (fileName.isNull())
+        return;
+    vomit_set_drive_image(0, qPrintable(fileName));
+}
+
+void MachineWidget::onFloppyBTriggered()
+{
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Choose floppy B image"));
+    if (fileName.isNull())
+        return;
+    vomit_set_drive_image(1, qPrintable(fileName));
+}
+
+void MachineWidget::onPauseTriggered()
+{
+    d->pauseMachine->setEnabled(false);
+    d->startMachine->setEnabled(true);
+    d->stopMachine->setEnabled(true);
+
+    machine()->pause();
+}
+
+void MachineWidget::onStopTriggered()
+{
+    d->pauseMachine->setEnabled(false);
+    d->startMachine->setEnabled(true);
+    d->stopMachine->setEnabled(false);
+
+    machine()->stop();
+}
+
+void MachineWidget::onStartTriggered()
+{
+    d->pauseMachine->setEnabled(true);
+    d->startMachine->setEnabled(false);
+    d->stopMachine->setEnabled(true);
+
+    machine()->start();
+}
+
+void MachineWidget::onRebootTriggered()
+{
+    machine()->reboot();
+}

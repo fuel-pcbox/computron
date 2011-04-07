@@ -38,11 +38,12 @@ Machine* Machine::createFromFile(const QString& fileName)
     if (!settings)
         return 0;
 
-    return new Machine(settings);
+    return new Machine(fileName, settings);
 }
 
-Machine::Machine(Settings* settings, QObject* parent)
+Machine::Machine(const QString& name, Settings* settings, QObject* parent)
     : QObject(parent)
+    , m_name(name)
     , m_cpu(new VCpu)
     , m_screen(0)
     , m_settings(settings)
@@ -128,7 +129,14 @@ bool Machine::loadFile(DWORD address, const QString& fileName)
 
 void Machine::start()
 {
+    screen()->setTinted(false);
     worker()->startMachine();
+}
+
+void Machine::pause()
+{
+    screen()->setTinted(true);
+    worker()->stopMachine();
 }
 
 void Machine::stop()

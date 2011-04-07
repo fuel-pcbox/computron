@@ -19,7 +19,8 @@ UI_DIR = .ui
 
 RESOURCES = vomit.qrc
 
-HEADERS += gui/mainwindow.h \
+HEADERS += gui/machinewidget.h \
+           gui/mainwindow.h \
            gui/screen.h \
            gui/worker.h \
            hw/fdc.h \
@@ -69,6 +70,7 @@ SOURCES += debug.cpp \
            disasm/disasm.cpp \
            disasm/disasm_modrm.cpp \
            disasm/tables.cpp \
+           gui/machinewidget.cpp \
            gui/main.cpp \
            gui/mainwindow.cpp \
            gui/screen.cpp \

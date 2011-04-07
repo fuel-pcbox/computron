@@ -28,28 +28,16 @@
 
 #include <QtGui/QMainWindow>
 
-#include "vomit.h"
-
 class Machine;
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 public:
-    MainWindow(Machine*);
-    ~MainWindow();
+    MainWindow();
+    virtual ~MainWindow();
 
-    Machine* machine() const;
-
-private slots:
-    void slotFloppyAClicked();
-    void slotFloppyBClicked();
-    void slotPauseMachine();
-    void slotStartMachine();
-    void slotStopMachine();
-    void slotRebootMachine();
-
-    void onAboutToQuit();
+    void addMachine(Machine*);
 
 private:
     struct Private;
