@@ -372,10 +372,3 @@ void VgaMemory::clearDirty()
     d->dirtyRect = QRect();
     d->dirty = false;
 }
-
-void VgaMemory::setDirty()
-{
-    VM_ASSERT(d);
-    d->dirtyRect = QRect(0, 0, 640, 480);
-    d->dirty = true;
-}

@@ -23,8 +23,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __vga_memory_h__
-#define __vga_memory_h__
+#ifndef VGA_MEMORY_H
+#define VGA_MEMORY_H
 
 #include "types.h"
 #include <QtCore/QRect>
@@ -35,7 +35,7 @@ class VCpu;
 class VgaMemory
 {
 public:
-    VgaMemory(VCpu *);
+    VgaMemory(VCpu*);
     ~VgaMemory();
 
     void write8(DWORD address, BYTE value);
@@ -62,8 +62,6 @@ public:
     QRect dirtyRect() const;
 
     void clearDirty();
-
-    QT_DEPRECATED void setDirty();
 
 private:
     struct Private;
