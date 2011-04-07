@@ -27,6 +27,7 @@
 
 #include "debug.h"
 #include "machine.h"
+#include "palettewidget.h"
 #include "screen.h"
 #include <QtCore/QCoreApplication>
 #include <QtCore/QTimer>
@@ -55,6 +56,12 @@ MachineWidget::MachineWidget(Machine* m)
     , d(new Private)
 {
     VM_ASSERT(m_machine);
+
+#if 0
+    // FIXME: Find a way to put this in the UI. Dock widget?
+    PaletteWidget* paletteWidget = new PaletteWidget;
+    paletteWidget->show();
+#endif
 
     d->toolBar = new QToolBar(tr("Virtual Machine"));
 

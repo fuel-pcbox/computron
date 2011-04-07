@@ -358,8 +358,15 @@ void VGA::writeRegister(BYTE index, BYTE value)
 
 void VGA::setPaletteDirty(bool dirty)
 {
-    QMutexLocker locker(&d->paletteMutex);
-    d->paletteDirty = dirty;
+    bool shouldEmit = dirty != d->paletteDirty;
+
+    {
+        QMutexLocker locker(&d->paletteMutex);
+        d->paletteDirty = dirty;
+    }
+
+    if (shouldEmit)
+        emit paletteChanged();
 }
 
 bool VGA::isPaletteDirty()

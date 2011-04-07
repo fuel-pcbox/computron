@@ -23,39 +23,25 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef VGA_H
-#define VGA_H
+#ifndef PALETTEWIDGET_H
+#define PALETTEWIDGET_H
 
-#include "iodevice.h"
-#include <QtCore/QObject>
-#include <QtGui/QColor>
+#include <QtGui/QWidget>
 
-class VGA : public QObject, public IODevice
+class PaletteWidget : public QWidget
 {
     Q_OBJECT
 public:
-    VGA();
-    virtual ~VGA();
+    explicit PaletteWidget(QWidget* parent = 0);
+    virtual ~PaletteWidget();
 
-    virtual BYTE in8(WORD port);
-    virtual void out8(WORD port, BYTE data);
+    QSize sizeHint() const;
 
-    void setPaletteDirty(bool);
-    bool isPaletteDirty();
+protected:
+    virtual void paintEvent(QPaintEvent*);
 
-    BYTE readRegister(BYTE index);
-    BYTE readRegister2(BYTE index);
-    BYTE readSequencer(BYTE index);
-
-    void writeRegister(BYTE index, BYTE value);
-
-    QColor color(int index) const;
-    QColor paletteColor(int paletteIndex) const;
-
-    static VGA* the();
-
-signals:
-    void paletteChanged();
+private slots:
+    void onPaletteChanged();
 
 private:
     struct Private;

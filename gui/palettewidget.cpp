@@ -23,43 +23,50 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef VGA_H
-#define VGA_H
-
-#include "iodevice.h"
-#include <QtCore/QObject>
+#include "palettewidget.h"
+#include "vga.h"
 #include <QtGui/QColor>
+#include <QtGui/QPainter>
 
-class VGA : public QObject, public IODevice
+QSizeF gDabSize(10, 10);
+
+struct PaletteWidget::Private
 {
-    Q_OBJECT
-public:
-    VGA();
-    virtual ~VGA();
-
-    virtual BYTE in8(WORD port);
-    virtual void out8(WORD port, BYTE data);
-
-    void setPaletteDirty(bool);
-    bool isPaletteDirty();
-
-    BYTE readRegister(BYTE index);
-    BYTE readRegister2(BYTE index);
-    BYTE readSequencer(BYTE index);
-
-    void writeRegister(BYTE index, BYTE value);
-
-    QColor color(int index) const;
-    QColor paletteColor(int paletteIndex) const;
-
-    static VGA* the();
-
-signals:
-    void paletteChanged();
-
-private:
-    struct Private;
-    Private* d;
+    QColor color[256];
 };
 
-#endif
+PaletteWidget::PaletteWidget(QWidget* parent)
+    : QWidget(parent)
+    , d(new Private)
+{
+    connect(VGA::the(), SIGNAL(paletteChanged()), this, SLOT(onPaletteChanged()));
+}
+
+PaletteWidget::~PaletteWidget()
+{
+    delete d;
+    d = 0;
+}
+
+void PaletteWidget::onPaletteChanged()
+{
+    for (int i = 0; i < 256; ++i)
+        d->color[i] = VGA::the()->color(i);
+    update();
+}
+
+QSize PaletteWidget::sizeHint() const
+{
+    return QSize(gDabSize.width() * 16, gDabSize.height() * 16);
+}
+
+void PaletteWidget::paintEvent(QPaintEvent*)
+{
+    QPainter painter(this);
+
+    for (int x = 0; x < 16; ++x) {
+        for (int y = 0; y < 16; ++y) {
+            painter.fillRect(x * gDabSize.width(), y * gDabSize.height(), gDabSize.width(), gDabSize.height(), d->color[y * 16 + x]);
+        }
+    }
+}

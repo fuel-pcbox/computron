@@ -25,6 +25,7 @@ RESOURCES = vomit.qrc
 
 HEADERS += gui/machinewidget.h \
            gui/mainwindow.h \
+           gui/palettewidget.h \
            gui/screen.h \
            gui/worker.h \
            hw/fdc.h \
@@ -77,6 +78,7 @@ SOURCES += debug.cpp \
            gui/machinewidget.cpp \
            gui/main.cpp \
            gui/mainwindow.cpp \
+           gui/palettewidget.cpp \
            gui/screen.cpp \
            gui/worker.cpp \
            hw/busmouse.cpp \
