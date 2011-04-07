@@ -547,7 +547,9 @@ void VCpu::exec()
 void VCpu::haltedLoop()
 {
     while (state() == VCpu::Halted) {
+#ifdef HAVE_USLEEP
         usleep(500);
+#endif
         if (PIC::hasPendingIRQ())
             PIC::serviceIRQ(this);
     }

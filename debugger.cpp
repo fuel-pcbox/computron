@@ -31,7 +31,9 @@
 #include <QStringBuilder>
 #include <QStringList>
 #include <QLatin1Literal>
+#ifdef HAVE_READLINE
 #include <readline/readline.h>
+#endif
 
 Debugger::Debugger(VCpu* cpu)
     : m_cpu(cpu)
@@ -68,7 +70,13 @@ static QString doPrompt(const VCpu* cpu)
 
     QString prompt = brightMagenta % QLatin1Literal("VOMIT ") % brightCyan % s % defaultColor % QLatin1Literal("> ");
 
+#ifdef HAVE_READLINE
     char* line = readline(prompt.toLatin1().constData());
+#else
+    char* line = (char*)malloc(1024 * sizeof(char));
+    fgets(line, 1024, stdin);
+#endif
+
     QString command = line ? QString::fromUtf8(line) : QString::fromLatin1("end-of-file");
     free(line);
     return command;

@@ -10,7 +10,11 @@ CONFIG += debug
 
 CONFIG -= app_bundle
 
-LIBS += -lreadline
+unix {
+    LIBS += -lreadline
+    DEFINES += HAVE_READLINE
+    DEFINES += HAVE_USLEEP
+}
 
 OBJECTS_DIR = .obj
 RCC_DIR = .rcc
