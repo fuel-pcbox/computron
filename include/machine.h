@@ -40,6 +40,7 @@ class Machine : public QObject
 public:
     virtual ~Machine();
     static Machine* createFromFile(const QString& fileName);
+    static Machine* createForAutotest(const QString& fileName);
 
     QString name() const { return m_name; }
     VCpu* cpu() const { return m_cpu; }

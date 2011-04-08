@@ -36,9 +36,13 @@ class Settings
 {
 public:
     static Settings* createFromFile(const QString&);
+    static Settings* createForAutotest(const QString& fileName);
 
     unsigned memorySize() const { return m_memorySize; }
     void setMemorySize(unsigned size) { m_memorySize = size; }
+
+    WORD entryCS() const { return m_entryCS; }
+    WORD entryIP() const { return m_entryIP; }
 
     QHash<DWORD, QString> files() const { return m_files; }
 
@@ -56,6 +60,8 @@ private:
 
     QHash<DWORD, QString> m_files;
     unsigned m_memorySize;
+    WORD m_entryCS;
+    WORD m_entryIP;
 };
 
 #endif

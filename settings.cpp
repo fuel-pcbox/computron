@@ -56,6 +56,8 @@ static FloppyType gFloppyTypes[] =
 
 Settings::Settings()
     : m_memorySize(0)
+    , m_entryCS(0)
+    , m_entryIP(0)
 {
 }
 
@@ -189,6 +191,22 @@ bool Settings::handleFloppyDisk(const QStringList& arguments)
     return true;
 }
 
+Settings* Settings::createForAutotest(const QString& fileName)
+{
+    static const WORD autotestEntryCS = 0x1000;
+    static const WORD autotestEntryIP = 0x0000;
+
+    Settings* settings = new Settings;
+
+    if (!settings)
+        return 0;
+
+    settings->m_entryCS = autotestEntryCS;
+    settings->m_entryIP = autotestEntryIP;
+    settings->m_files.insert(vomit_toFlatAddress(autotestEntryCS, autotestEntryIP), fileName);
+    return settings;
+}
+
 Settings* Settings::createFromFile(const QString& fileName)
 {
 #if 0
@@ -209,6 +227,11 @@ Settings* Settings::createFromFile(const QString& fileName)
 
     if (!settings)
         return 0;
+
+    // IBM PC's boot at this location, which usually contains a JMP to the
+    // BIOS entry point. (F000;0000 here, see Machine constructor.)
+    settings->m_entryCS = 0xF000;
+    settings->m_entryIP = 0xFFF0;
 
     static QRegExp whitespaceRegExp("\\s");
 

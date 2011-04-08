@@ -41,6 +41,16 @@ Machine* Machine::createFromFile(const QString& fileName)
     return new Machine(fileName, settings);
 }
 
+Machine* Machine::createForAutotest(const QString& fileName)
+{
+    Settings* settings = Settings::createForAutotest(fileName);
+
+    if (!settings)
+        return 0;
+
+    return new Machine(fileName, settings);
+}
+
 Machine::Machine(const QString& name, Settings* settings, QObject* parent)
     : QObject(parent)
     , m_name(name)
@@ -58,9 +68,6 @@ Machine::Machine(const QString& name, Settings* settings, QObject* parent)
     BYTE* entryPoint = cpu()->memoryPointer(0xF000, 0xFFF0);
     VM_ASSERT(entryPoint);
     memcpy(entryPoint, bootCode, sizeof(bootCode));
-
-    cpu()->setCS(0xF000);
-    cpu()->setIP(0xFFF0);
 
     // FIXME: Move this somewhere else.
     // Mitigate spam about uninteresting ports.
@@ -94,6 +101,9 @@ void Machine::applySettings()
 
     cpu()->setExtendedMemorySize(settings()->memorySize());
     // FIXME: Apply memory-size setting.
+
+    cpu()->setCS(settings()->entryCS());
+    cpu()->setIP(settings()->entryIP());
 
     QHash<DWORD, QString> files = settings()->files();
 
