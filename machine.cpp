@@ -27,6 +27,7 @@
 #include "settings.h"
 #include "vcpu.h"
 #include "iodevice.h"
+#include "pit.h"
 #include "worker.h"
 #include "screen.h"
 #include <QtCore/QFile>
@@ -81,6 +82,8 @@ Machine::Machine(const QString& name, Settings* settings, QObject* parent)
     m_worker = new Worker(cpu());
 
     QObject::connect(worker(), SIGNAL(finished()), this, SLOT(onWorkerFinished()));
+
+    PIT::the()->boot();
 
     worker()->startMachine();
     worker()->start();

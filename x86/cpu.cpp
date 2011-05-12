@@ -520,8 +520,6 @@ VCpu::VCpu(QObject* parent)
 
     setIOPL(3);
 
-    m_instructionsPerTick = 0x50000;
-    m_pitCountdown = m_instructionsPerTick;
     m_state = Alive;
 
     m_addressSize32 = false;
@@ -600,12 +598,6 @@ void VCpu::mainLoop()
             jumpToInterruptHandler(1);
 
             // NOTE: jumpToInterruptHandler() just set IF=0.
-        }
-
-        // HACK: Countdown towards fake PIT interrupt.
-        if (tick()) {
-            // Raise the timer IRQ. This is ugly, I know.
-            PIC::raiseIRQ(0);
         }
 
         if (getIF() && PIC::hasPendingIRQ())

@@ -441,9 +441,6 @@ public:
     State state() const { return m_state; }
     void setState(State s) { m_state = s; }
 
-    /* TODO: actual PIT implementation.. */
-    inline bool tick();
-
     // Dumps registers, flags & stack
     void dumpAll() const;
 
@@ -990,8 +987,6 @@ private:
     void syncSegmentRegister(SegmentIndex);
     SegmentSelector m_selector[6];
 
-    DWORD m_instructionsPerTick;
-
     // This points to the base of CS for fast opcode fetches.
     BYTE* m_codeMemory;
 
@@ -1121,9 +1116,6 @@ private:
     bool m_inDebugger;
     bool m_debugOneStep;
 #endif
-
-    // Cycle counter. May wrap arbitrarily.
-    DWORD m_pitCountdown;
 
     // Actual CS:EIP (when we started fetching the instruction)
     WORD m_baseCS;
@@ -1261,15 +1253,6 @@ DWORD VCpu::fetchOpcodeDWord()
 #else
     return d;
 #endif
-}
-
-bool VCpu::tick()
-{
-    if (--m_pitCountdown == 0) {
-        m_pitCountdown = m_instructionsPerTick;
-        return true;
-    }
-    return false;
 }
 
 #include "debug.h"

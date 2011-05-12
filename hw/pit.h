@@ -28,16 +28,28 @@
 
 #include "iodevice.h"
 
-class PIT : public IODevice
+class PIT : public QObject, public IODevice
 {
 public:
     PIT();
-    ~PIT();
+    virtual ~PIT();
 
-    BYTE in8(WORD port);
-    void out8(WORD port, BYTE data);
+    virtual BYTE in8(WORD port);
+    virtual void out8(WORD port, BYTE data);
+
+    void boot();
+
+    static PIT* the();
 
 private:
+    virtual void timerEvent(QTimerEvent*);
+
+    void raiseIRQ();
+    void modeControl(int timerIndex, BYTE data);
+    void reconfigureTimer();
+
+    struct Private;
+    Private* d;
 };
 
 #endif

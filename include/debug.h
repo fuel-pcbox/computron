@@ -54,6 +54,7 @@ enum VLogChannel {
     LogKeyboard,
     LogDump,
     LogScreen,
+    LogTimer,
 };
 
 extern void vlog(VLogChannel channel, const char *format, ...);

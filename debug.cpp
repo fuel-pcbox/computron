@@ -57,6 +57,7 @@ void vlog(VLogChannel channel, const char* format, ...)
     case LogIDE: prefix = "ide"; break;
     case LogScreen: prefix = "screen"; break;
     case LogFPU: prefix = "fpu"; break;
+    case LogTimer: prefix = "timer"; break;
     default:
         VM_ASSERT(0);
     }
