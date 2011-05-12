@@ -31,6 +31,7 @@ HEADERS += gui/machinewidget.h \
            hw/fdc.h \
            hw/ide.h \
            hw/iodevice.h \
+           hw/keyboard.h \
            hw/vomctl.h \
            hw/vga_memory.h \
            hw/cmos.h \
