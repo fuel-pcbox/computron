@@ -81,72 +81,71 @@ void VCpu::_ENTER()
 {
     WORD Size = fetchOpcodeWord();
     BYTE NestingLevel = fetchOpcodeByte() % 32;
-    WORD FrameTemp;
-    push(regs.W.BP);
-    FrameTemp = regs.W.SP;
+    push(getBP());
+    WORD FrameTemp = getSP();
     if (NestingLevel != 0) {
         for (WORD i = 1; i <= (NestingLevel - 1); ++i) {
-            regs.W.BP -= 2;
-            push(readMemory16(SS, regs.W.BP));
+            setBP(getBP() - 2);
+            push(readMemory16(getSS(), getBP()));
         }
     }
     push(FrameTemp);
-    regs.W.BP = FrameTemp;
-    regs.W.SP = regs.W.BP - Size;
+    setBP(FrameTemp);
+    setSP(getBP() - Size);
 }
 
 void VCpu::_LEAVE()
 {
-    regs.W.SP = regs.W.BP;
-    regs.W.BP = pop();
+    setSP(getBP());
+    setBP(pop());
 }
 
 void VCpu::_PUSHA()
 {
-    WORD oldsp = regs.W.SP;
-    push(regs.W.AX);
-    push(regs.W.BX);
-    push(regs.W.CX);
-    push(regs.W.DX);
-    push(regs.W.BP);
-    push(oldsp);
-    push(regs.W.SI);
-    push(regs.W.DI);
+    WORD oldSP = getSP();
+    push(getAX());
+    push(getBX());
+    push(getCX());
+    push(getDX());
+    push(getBP());
+    push(oldSP);
+    push(getSI());
+    push(getDI());
 }
 
 void VCpu::_PUSHAD()
 {
-    DWORD oldesp = regs.D.ESP;
-    push32(regs.D.EAX);
-    push32(regs.D.EBX);
-    push32(regs.D.ECX);
-    push32(regs.D.EDX);
-    push32(regs.D.EBP);
-    push32(oldesp);
-    push32(regs.D.ESI);
-    push32(regs.D.EDI);
+    DWORD oldESP = getESP();
+    push32(getEAX());
+    push32(getEBX());
+    push32(getECX());
+    push32(getEDX());
+    push32(getEBP());
+    push32(oldESP);
+    push32(getESI());
+    push32(getEDI());
 }
 
 void VCpu::_POPA()
 {
-    regs.W.DI = pop();
-    regs.W.SI = pop();
+    setDI(pop());
+    setSI(pop());
     (void) pop();
-    regs.W.BP = pop();
-    regs.W.DX = pop();
-    regs.W.CX = pop();
-    regs.W.BX = pop();
-    regs.W.AX = pop();
+    setBP(pop());
+    setDX(pop());
+    setCX(pop());
+    setBX(pop());
+    setAX(pop());
 }
 
 void VCpu::_POPAD()
 {
-    regs.D.EDI = pop32();
-    regs.D.ESI = pop32();
+    setEDI(pop32());
+    setESI(pop32());
     (void) pop32();
-    regs.D.EBP = pop32();
-    regs.D.EDX = pop32();
-    regs.D.ECX = pop32();
-    regs.D.EBX = pop32();
-    regs.D.EAX = pop32();
+    setEBP(pop32());
+    setEDX(pop32());
+    setECX(pop32());
+    setEBX(pop32());
+    setEAX(pop32());
 }
