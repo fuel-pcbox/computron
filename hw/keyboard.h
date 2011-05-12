@@ -32,10 +32,10 @@ class Keyboard : public IODevice
 {
 public:
     Keyboard();
-    ~Keyboard();
+    virtual ~Keyboard();
 
-    BYTE in8(WORD port);
-    void out8(WORD port, BYTE data);
+    virtual BYTE in8(WORD port);
+    virtual void out8(WORD port, BYTE data);
 
     static void raiseIRQ();
 
