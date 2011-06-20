@@ -40,6 +40,10 @@
 #include <QtCore/QQueue>
 #include <QtCore/QDebug>
 
+// FIXME: Remove. This is here because VGA has no way of grabbing at the Screen.
+static bool g_screen_in_refresh = false;
+bool vomit_in_vretrace() { return !g_screen_in_refresh; }
+
 struct fontcharbitmap_t {
     BYTE data[16];
 };
@@ -131,39 +135,52 @@ void Screen::putCharacter(QPainter &p, int row, int column, BYTE color, BYTE c)
     }
 }
 
-static bool in_refresh = false;
+class RefreshGuard {
+public:
+    RefreshGuard() { g_screen_in_refresh = true; }
+    ~RefreshGuard() { g_screen_in_refresh = false; }
+};
 
-bool vomit_in_vretrace()
+inline bool isVideoModeUsingVGAMemory(BYTE videoMode)
 {
-    return !in_refresh;
+    return videoMode == 0x0D || videoMode == 0x12 || videoMode == 0x13;
 }
 
 void Screen::refresh()
 {
-    in_refresh = true;
+    RefreshGuard guard;
 
-    if (VGA::the()->isPaletteDirty()) {
-        synchronizeColors();
-        // FIXME: This will probably race with VGAMemory's internal palette.
-        VGA::the()->setPaletteDirty(false);
+    if (isVideoModeUsingVGAMemory(currentVideoMode())) {
+        if (!machine()->vgaMemory()->isDirty())
+            return;
+        if (VGA::the()->isPaletteDirty()) {
+            synchronizeColors();
+            // FIXME: This will probably race with VGAMemory's internal palette.
+            VGA::the()->setPaletteDirty(false);
+        }
     }
 
+    // FIXME: Unify these ridiculous drawing models somehow.
+
     if (currentVideoMode() == 0x12) {
-        if (machine()->vgaMemory()->isDirty()) {
-            update(machine()->vgaMemory()->dirtyRect());
-            machine()->vgaMemory()->clearDirty();
-        }
-    } else if (currentVideoMode() == 0x0D) {
-        if (machine()->vgaMemory()->isDirty()) {
-            renderMode0D(m_render0D);
-            update();
-        }
-    } else if (currentVideoMode() == 0x13) {
-        if (machine()->vgaMemory()->isDirty()) {
-            renderMode13(m_render13);
-            update();
-        }
-    } else if (currentVideoMode() == 0x03) {
+        update(machine()->vgaMemory()->dirtyRect());
+        machine()->vgaMemory()->clearDirty();
+        return;
+    }
+
+    if (currentVideoMode() == 0x0D) {
+        renderMode0D(m_render0D);
+        update();
+        return;
+    }
+
+    if (currentVideoMode() == 0x13) {
+        renderMode13(m_render13);
+        update();
+        return;
+    }
+
+    if (currentVideoMode() == 0x03) {
         int rows = machine()->cpu()->readUnmappedMemory8(0x484) + 1;
         switch(rows)
         {
@@ -176,12 +193,11 @@ void Screen::refresh()
         }
         setTextMode(80, rows);
         update();
+        return;
     }
-    else
-    {
-        update();
-    }
-    in_refresh = false;
+
+    // FIXME: What video mode are we in at this point anyway? :o)
+    update();
 }
 
 void Screen::setScreenSize(int width, int height)
