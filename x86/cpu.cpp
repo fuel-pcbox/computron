@@ -986,7 +986,7 @@ void VCpu::_LEA_reg16_mem16()
     setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(b)), retv);
 }
 
-inline bool isVGAMemory(DWORD address)
+inline bool addressIsInVGAMemory(DWORD address)
 {
     return address >= 0xA0000 && address < 0xB0000;
 }
@@ -995,7 +995,7 @@ void VCpu::writeMemory32(DWORD address, DWORD data)
 {
 #warning FIXME: writeMemory32 to VGA memory
 #if 0
-    if (isVGAMemory(address)) {
+    if (addressIsInVGAMemory(address)) {
         machine()->vgaMemory()->write8(address, value);
         return;
     }
@@ -1010,7 +1010,7 @@ DWORD VCpu::readMemory32(DWORD address) const
 {
 #warning FIXME: readMemory32 from VGA memory
 #if 0
-    if (isVGAMemory(address))
+    if (addressIsInVGAMemory(address))
         return machine()->vgaMemory()->read16(address) | (machine()->vgaMemory()->read16(address + 2) << 16);
 #endif
     return vomit_read32FromPointer(reinterpret_cast<DWORD*>(m_memory + address));
@@ -1027,7 +1027,7 @@ BYTE VCpu::readMemory8(DWORD address) const
         address &= 0xFFFFF;
     }
 
-    if (isVGAMemory(address))
+    if (addressIsInVGAMemory(address))
         return machine()->vgaMemory()->read8(address);
     return m_memory[address];
 }
@@ -1049,7 +1049,7 @@ WORD VCpu::readMemory16(DWORD address) const
         address &= 0xFFFFF;
     }
 
-    if (isVGAMemory(address))
+    if (addressIsInVGAMemory(address))
         return machine()->vgaMemory()->read16(address);
     return vomit_read16FromPointer(reinterpret_cast<WORD*>(m_memory + address));
 }
@@ -1075,7 +1075,7 @@ void VCpu::writeMemory8(DWORD address, BYTE value)
         address &= 0xFFFFF;
     }
 
-    if (isVGAMemory(address)) {
+    if (addressIsInVGAMemory(address)) {
         machine()->vgaMemory()->write8(address, value);
         return;
     }
@@ -1103,7 +1103,7 @@ void VCpu::writeMemory16(DWORD address, WORD value)
         address &= 0xFFFFF;
     }
 
-    if (isVGAMemory(address)) {
+    if (addressIsInVGAMemory(address)) {
         machine()->vgaMemory()->write16(address, value);
         return;
     }
