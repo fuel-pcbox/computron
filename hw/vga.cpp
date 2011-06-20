@@ -24,10 +24,8 @@
  */
 
 #include "vomit.h"
-#include "vcpu.h"
 #include "vga.h"
 #include "debug.h"
-#include "disasm.h"
 #include <string.h>
 #include <QtCore/QMutex>
 #include <QtCore/QMutexLocker>
@@ -213,9 +211,7 @@ void VGA::out8(WORD port, BYTE data)
             break;
         }
 
-        // FIXME: Make asynchronous .
         setPaletteDirty(true);
-        g_cpu->vgaMemory()->syncPalette();
         break;
     }
 

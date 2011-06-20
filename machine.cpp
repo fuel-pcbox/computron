@@ -26,6 +26,7 @@
 #include "machine.h"
 #include "settings.h"
 #include "vcpu.h"
+#include "vga_memory.h"
 #include "iodevice.h"
 #include "pit.h"
 #include "worker.h"
@@ -55,7 +56,7 @@ Machine* Machine::createForAutotest(const QString& fileName)
 Machine::Machine(const QString& name, Settings* settings, QObject* parent)
     : QObject(parent)
     , m_name(name)
-    , m_cpu(new VCpu)
+    , m_cpu(new VCpu(this))
     , m_screen(0)
     , m_settings(settings)
     , m_worker(0)
@@ -78,6 +79,7 @@ Machine::Machine(const QString& name, Settings* settings, QObject* parent)
     IODevice::ignorePort(0x223);
     IODevice::ignorePort(0x201); // Gameport.
 
+    m_vgaMemory = new VGAMemory(this);
     m_screen = new Screen(this);
     m_worker = new Worker(cpu());
 

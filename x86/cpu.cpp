@@ -23,8 +23,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "vomit.h"
 #include "vcpu.h"
+#include "machine.h"
+#include "vomit.h"
 #include "debug.h"
 #include "debugger.h"
 #include "vga_memory.h"
@@ -419,8 +420,6 @@ VCpu::VCpu(QObject* parent)
 
     memset(m_memory, 0, 1048576 + 65536);
 
-    m_vgaMemory = new VGAMemory(this);
-
     m_debugger = new Debugger(this);
 
     m_a20Enabled = false;
@@ -533,7 +532,6 @@ VCpu::~VCpu()
     m_codeMemory = 0;
 
     delete m_debugger;
-    delete m_vgaMemory;
 }
 
 void VCpu::exec()
@@ -998,7 +996,7 @@ void VCpu::writeMemory32(DWORD address, DWORD data)
 #warning FIXME: writeMemory32 to VGA memory
 #if 0
     if (isVGAMemory(address)) {
-        vgaMemory()->write8(address, value);
+        machine()->vgaMemory()->write8(address, value);
         return;
     }
 #endif
@@ -1013,7 +1011,7 @@ DWORD VCpu::readMemory32(DWORD address) const
 #warning FIXME: readMemory32 from VGA memory
 #if 0
     if (isVGAMemory(address))
-        return vgaMemory()->read16(address) | (vgaMemory()->read16(address + 2) << 16);
+        return machine()->vgaMemory()->read16(address) | (machine()->vgaMemory()->read16(address + 2) << 16);
 #endif
     return vomit_read32FromPointer(reinterpret_cast<DWORD*>(m_memory + address));
 }
@@ -1030,7 +1028,7 @@ BYTE VCpu::readMemory8(DWORD address) const
     }
 
     if (isVGAMemory(address))
-        return vgaMemory()->read8(address);
+        return machine()->vgaMemory()->read8(address);
     return m_memory[address];
 }
 
@@ -1052,7 +1050,7 @@ WORD VCpu::readMemory16(DWORD address) const
     }
 
     if (isVGAMemory(address))
-        return vgaMemory()->read16(address);
+        return machine()->vgaMemory()->read16(address);
     return vomit_read16FromPointer(reinterpret_cast<WORD*>(m_memory + address));
 }
 
@@ -1078,7 +1076,7 @@ void VCpu::writeMemory8(DWORD address, BYTE value)
     }
 
     if (isVGAMemory(address)) {
-        vgaMemory()->write8(address, value);
+        machine()->vgaMemory()->write8(address, value);
         return;
     }
 
@@ -1106,7 +1104,7 @@ void VCpu::writeMemory16(DWORD address, WORD value)
     }
 
     if (isVGAMemory(address)) {
-        vgaMemory()->write16(address, value);
+        machine()->vgaMemory()->write16(address, value);
         return;
     }
 
@@ -1114,6 +1112,10 @@ void VCpu::writeMemory16(DWORD address, WORD value)
     vomit_write16ToPointer(ptr, value);
 }
 
+Machine* VCpu::machine() const
+{
+    return qobject_cast<Machine*>(parent());
+}
 
 void VCpu::writeMemory32(WORD segment, WORD offset, DWORD value)
 {

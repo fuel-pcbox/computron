@@ -32,6 +32,7 @@
 // VCPU MONSTROSITY
 
 class Debugger;
+class Machine;
 class VGAMemory;
 
 class VCpu : public QObject
@@ -430,8 +431,6 @@ public:
     void* resolveModRM32(BYTE rmbyte);
 
     DWORD evaluateSIB(BYTE sib);
-
-    VGAMemory* vgaMemory() const { return m_vgaMemory; }
 
     enum Mode { RealMode, ProtectedMode };
     Mode mode() const { return m_mode; }
@@ -1135,8 +1134,6 @@ private:
 
     bool m_a20Enabled;
 
-    VGAMemory* m_vgaMemory;
-
     Debugger* m_debugger;
 
     BYTE* m_memory;
@@ -1148,6 +1145,8 @@ private:
     DWORD* treg32[8];
     WORD* treg16[8];
     BYTE* treg8[8];
+
+    Machine* machine() const;
 
     bool m_addressSize32;
     bool m_operationSize32;
@@ -1188,8 +1187,6 @@ DWORD cpu_rol(VCpu*, WORD, BYTE, BYTE);
 DWORD cpu_ror(VCpu*, WORD, BYTE, BYTE);
 
 // INLINE IMPLEMENTATIONS
-
-#include "vga_memory.h"
 
 BYTE VCpu::readUnmappedMemory8(DWORD address) const
 {

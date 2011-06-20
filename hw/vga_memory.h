@@ -32,13 +32,13 @@
 #include <QtGui/QColor>
 #include <QtGui/QImage>
 
+class Machine;
 class QImage;
-class VCpu;
 
 class VGAMemory
 {
 public:
-    VGAMemory(VCpu*);
+    VGAMemory(Machine*);
     ~VGAMemory();
 
     void write8(DWORD address, BYTE value);
@@ -69,7 +69,8 @@ public:
 private:
     void synchronizeColors();
 
-    VCpu* m_cpu;
+    Machine* machine() const { return m_machine; }
+    Machine* m_machine;
 
     QImage m_screen12;
     QColor m_color[16];

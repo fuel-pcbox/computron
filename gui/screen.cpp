@@ -149,16 +149,16 @@ void Screen::refresh()
             synchronizeColors();
             VGA::the()->setPaletteDirty(false);
         }
-        if (machine()->cpu()->vgaMemory()->isDirty()) {
-            update(machine()->cpu()->vgaMemory()->dirtyRect());
-            machine()->cpu()->vgaMemory()->clearDirty();
+        if (machine()->vgaMemory()->isDirty()) {
+            update(machine()->vgaMemory()->dirtyRect());
+            machine()->vgaMemory()->clearDirty();
         }
     } else if (currentVideoMode == 0x0D) {
         if (VGA::the()->isPaletteDirty()) {
             synchronizeColors();
             VGA::the()->setPaletteDirty(false);
         }
-        if (machine()->cpu()->vgaMemory()->isDirty()) {
+        if (machine()->vgaMemory()->isDirty()) {
             renderMode0D(m_render0D);
             update();
         }
@@ -167,7 +167,7 @@ void Screen::refresh()
             synchronizeColors();
             VGA::the()->setPaletteDirty(false);
         }
-        if (machine()->cpu()->vgaMemory()->isDirty()) {
+        if (machine()->vgaMemory()->isDirty()) {
             renderMode13(m_render13);
             update();
         }
@@ -205,16 +205,16 @@ void Screen::setScreenSize(int width, int height)
 
 void Screen::renderMode13(QImage& target)
 {
-    const BYTE* videoMemory = machine()->cpu()->vgaMemory()->plane(0);
+    const BYTE* videoMemory = machine()->vgaMemory()->plane(0);
     memcpy(target.bits(), videoMemory, 320 * 200);
 }
 
 void Screen::renderMode12(QImage &target)
 {
-    const BYTE *p0 = machine()->cpu()->vgaMemory()->plane(0);
-    const BYTE *p1 = machine()->cpu()->vgaMemory()->plane(1);
-    const BYTE *p2 = machine()->cpu()->vgaMemory()->plane(2);
-    const BYTE *p3 = machine()->cpu()->vgaMemory()->plane(3);
+    const BYTE *p0 = machine()->vgaMemory()->plane(0);
+    const BYTE *p1 = machine()->vgaMemory()->plane(1);
+    const BYTE *p2 = machine()->vgaMemory()->plane(2);
+    const BYTE *p3 = machine()->vgaMemory()->plane(3);
 
     int offset = 0;
 
@@ -237,10 +237,10 @@ void Screen::renderMode12(QImage &target)
 
 void Screen::renderMode0D(QImage &target)
 {
-    const BYTE *p0 = machine()->cpu()->vgaMemory()->plane(0);
-    const BYTE *p1 = machine()->cpu()->vgaMemory()->plane(1);
-    const BYTE *p2 = machine()->cpu()->vgaMemory()->plane(2);
-    const BYTE *p3 = machine()->cpu()->vgaMemory()->plane(3);
+    const BYTE *p0 = machine()->vgaMemory()->plane(0);
+    const BYTE *p1 = machine()->vgaMemory()->plane(1);
+    const BYTE *p2 = machine()->vgaMemory()->plane(2);
+    const BYTE *p3 = machine()->vgaMemory()->plane(3);
 
     int offset = 0;
 
@@ -277,7 +277,7 @@ void Screen::paintEvent(QPaintEvent *e)
         QPainter wp(this);
         wp.setClipRegion(e->rect());
 
-        const QImage *screenImage = machine()->cpu()->vgaMemory()->modeImage(0x12);
+        const QImage *screenImage = machine()->vgaMemory()->modeImage(0x12);
 
         if (screenImage)
             wp.drawImage(rect(), *screenImage);

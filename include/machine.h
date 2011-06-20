@@ -32,6 +32,7 @@
 class Screen;
 class Settings;
 class VCpu;
+class VGAMemory;
 class Worker;
 
 class Machine : public QObject
@@ -44,6 +45,7 @@ public:
 
     QString name() const { return m_name; }
     VCpu* cpu() const { return m_cpu; }
+    VGAMemory* vgaMemory() const { return m_vgaMemory; }
     Screen* screen() const { return m_screen; }
     Settings* settings() const { return m_settings; }
 
@@ -67,6 +69,7 @@ private:
     QString m_name;
     VCpu* m_cpu;
     Screen* m_screen;
+    VGAMemory* m_vgaMemory;
     Settings* m_settings;
     Worker* m_worker;
 };

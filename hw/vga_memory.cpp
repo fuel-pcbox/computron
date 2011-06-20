@@ -24,6 +24,7 @@
  */
 
 #include "vga_memory.h"
+#include "machine.h"
 #include "vomit.h"
 #include "vcpu.h"
 #include "vga.h"
@@ -44,10 +45,9 @@
 #define SET_RESET_ENABLE_BIT(i) ((VGA::the()->readRegister2(1) >> i)&1)
 #define BIT_MASK (VGA::the()->readRegister2(8))
 
-VGAMemory::VGAMemory(VCpu *cpu)
+VGAMemory::VGAMemory(Machine* machine)
+    : m_machine(machine)
 {
-    m_cpu = cpu;
-
     m_screen12 = QImage(640, 480, QImage::Format_Indexed8);
     m_screen12.fill(0);
 
@@ -83,7 +83,7 @@ void VGAMemory::write8(DWORD address, BYTE value)
     if (address >= 0xAFFFF) {
         // FIXME: Not sure that this is correct.
         vlog(LogVGA, "OOB write 0x%lx", address);
-        m_cpu->writeUnmappedMemory8(address, value);
+        machine()->cpu()->writeUnmappedMemory8(address, value);
         return;
     }
 
@@ -232,10 +232,14 @@ void VGAMemory::write8(DWORD address, BYTE value)
         if (plane_mask & 0x08)
             m_plane[3][address] = new_val[3];
 
+        // FIXME: We shouldn't have to check this on every pass.
+        if (VGA::the()->isPaletteDirty())
+            synchronizeColors();
+
 #define D(i) ((m_plane[0][address]>>i) & 1) | (((m_plane[1][address]>>i) & 1)<<1) | (((m_plane[2][address]>>i) & 1)<<2) | (((m_plane[3][address]>>i) & 1)<<3)
 
         // HACK: I don't really like this way of obtaining the current mode...
-        if ((m_cpu->readUnmappedMemory8(0x449) & 0x7F) == 0x12 && address < (640 * 480 / 8)) {
+        if ((machine()->cpu()->readUnmappedMemory8(0x449) & 0x7F) == 0x12 && address < (640 * 480 / 8)) {
 
             // address 100 -> pixels 800-807
             uchar *px = &m_screen12.bits()[address * 8];
@@ -288,7 +292,7 @@ BYTE VGAMemory::read8(DWORD address) {
     } else {
         // FIXME: Not sure that this is correct.
         vlog(LogVGA, "OOB read 0x%lx", address);
-        return m_cpu->readUnmappedMemory8(address);
+        return machine()->cpu()->readUnmappedMemory8(address);
     }
 }
 
