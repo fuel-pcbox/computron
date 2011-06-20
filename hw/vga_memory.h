@@ -81,7 +81,11 @@ private:
 
     BYTE* m_plane[4];
     BYTE m_latch[4];
-
 };
+
+inline bool addressIsInVGAMemory(DWORD address)
+{
+    return address >= 0xA0000 && address < 0xB0000;
+}
 
 #endif

@@ -986,11 +986,6 @@ void VCpu::_LEA_reg16_mem16()
     setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(b)), retv);
 }
 
-inline bool addressIsInVGAMemory(DWORD address)
-{
-    return address >= 0xA0000 && address < 0xB0000;
-}
-
 void VCpu::writeMemory32(DWORD address, DWORD data)
 {
 #warning FIXME: writeMemory32 to VGA memory

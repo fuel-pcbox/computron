@@ -75,7 +75,7 @@ VGAMemory::~VGAMemory()
 
 void VGAMemory::write8(DWORD address, BYTE value)
 {
-    VM_ASSERT(address < 0xB0000);
+    VM_ASSERT(addressIsInVGAMemory(address));
 
     BYTE new_val[4];
 
@@ -264,7 +264,7 @@ BYTE VGAMemory::read8(DWORD address)
 
     // FIXME: We're assuming READ_MODE == 0 from here on, this can't be safe.
 
-    VM_ASSERT(address < 0xB0000);
+    VM_ASSERT(addressIsInVGAMemory(address));
 
     address -= 0xA0000;
 
