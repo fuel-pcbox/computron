@@ -44,62 +44,34 @@
 #define SET_RESET_ENABLE_BIT(i) ((VGA::the()->readRegister2(1) >> i)&1)
 #define BIT_MASK (VGA::the()->readRegister2(8))
 
-struct VGAMemory::Private
-{
-    VCpu *cpu;
-
-    BYTE* plane[4];
-    BYTE latch[4];
-
-    QImage screen12;
-    QColor color[16];
-    QBrush brush[16];
-
-    bool dirty;
-    QRect dirtyRect;
-
-    void synchronizeColors()
-    {
-        for (int i = 0; i < 16; ++i) {
-            color[i] = VGA::the()->paletteColor(i);
-            brush[i] = QBrush(color[i]);
-            screen12.setColor(i, color[i].rgb());
-        }
-    }
-};
-
 VGAMemory::VGAMemory(VCpu *cpu)
-    : d(new Private)
 {
-    d->cpu = cpu;
+    m_cpu = cpu;
 
-    d->screen12 = QImage(640, 480, QImage::Format_Indexed8);
-    d->screen12.fill(0);
+    m_screen12 = QImage(640, 480, QImage::Format_Indexed8);
+    m_screen12.fill(0);
 
-    d->plane[0] = new BYTE[0x40000];
-    d->plane[1] = d->plane[0] + 0x10000;
-    d->plane[2] = d->plane[1] + 0x10000;
-    d->plane[3] = d->plane[2] + 0x10000;
+    m_plane[0] = new BYTE[0x40000];
+    m_plane[1] = m_plane[0] + 0x10000;
+    m_plane[2] = m_plane[1] + 0x10000;
+    m_plane[3] = m_plane[2] + 0x10000;
 
-    memset(d->plane[0], 0x00, 0x40000);
+    memset(m_plane[0], 0x00, 0x40000);
 
-    d->latch[0] = 0;
-    d->latch[1] = 0;
-    d->latch[2] = 0;
-    d->latch[3] = 0;
+    m_latch[0] = 0;
+    m_latch[1] = 0;
+    m_latch[2] = 0;
+    m_latch[3] = 0;
 
-    d->synchronizeColors();
+    synchronizeColors();
     VGA::the()->setPaletteDirty(true);
 
-    d->dirty = true;
+    m_dirty = true;
 }
 
 VGAMemory::~VGAMemory()
 {
-    delete [] d->plane[0];
-
-    delete d;
-    d = 0;
+    delete [] m_plane[0];
 }
 
 void VGAMemory::write8(DWORD address, BYTE value)
@@ -111,7 +83,7 @@ void VGAMemory::write8(DWORD address, BYTE value)
     if (address >= 0xAFFFF) {
         // FIXME: Not sure that this is correct.
         vlog(LogVGA, "OOB write 0x%lx", address);
-        d->cpu->writeUnmappedMemory8(address, value);
+        m_cpu->writeUnmappedMemory8(address, value);
         return;
     }
 
@@ -121,7 +93,7 @@ void VGAMemory::write8(DWORD address, BYTE value)
 
     // FIXME: Don't get current video mode from BDA
     if (g_cpu->readUnmappedMemory8(0x449) == 0x13) {
-        d->plane[0][address] = value;
+        m_plane[0][address] = value;
         return;
     }
 
@@ -129,10 +101,10 @@ void VGAMemory::write8(DWORD address, BYTE value)
 
         BYTE bitmask = BIT_MASK;
 
-        new_val[0] = d->latch[0] & ~bitmask;
-        new_val[1] = d->latch[1] & ~bitmask;
-        new_val[2] = d->latch[2] & ~bitmask;
-        new_val[3] = d->latch[3] & ~bitmask;
+        new_val[0] = m_latch[0] & ~bitmask;
+        new_val[1] = m_latch[1] & ~bitmask;
+        new_val[2] = m_latch[2] & ~bitmask;
+        new_val[3] = m_latch[3] & ~bitmask;
 
         switch (DRAWOP) {
         case 0:
@@ -157,10 +129,10 @@ void VGAMemory::write8(DWORD address, BYTE value)
             val = (val >> ROTATE) | (val << (8 - ROTATE));
         }
 
-        new_val[0] = d->latch[0] & ~bitmask;
-        new_val[1] = d->latch[1] & ~bitmask;
-        new_val[2] = d->latch[2] & ~bitmask;
-        new_val[3] = d->latch[3] & ~bitmask;
+        new_val[0] = m_latch[0] & ~bitmask;
+        new_val[1] = m_latch[1] & ~bitmask;
+        new_val[2] = m_latch[2] & ~bitmask;
+        new_val[3] = m_latch[3] & ~bitmask;
 
         switch (DRAWOP) {
         case 0:
@@ -180,62 +152,62 @@ void VGAMemory::write8(DWORD address, BYTE value)
         case 1:
             new_val[0] |= ((enable_set_reset & 1)
                 ? ((set_reset & 1)
-                    ? (~d->latch[0] & bitmask)
-                    : (d->latch[0] & bitmask))
-                : (val & d->latch[0]) & bitmask);
+                    ? (~m_latch[0] & bitmask)
+                    : (m_latch[0] & bitmask))
+                : (val & m_latch[0]) & bitmask);
 
             new_val[1] |= ((enable_set_reset & 2)
                 ? ((set_reset & 2)
-                    ? (~d->latch[1] & bitmask)
-                    : (d->latch[1] & bitmask))
-                : (val & d->latch[1]) & bitmask);
+                    ? (~m_latch[1] & bitmask)
+                    : (m_latch[1] & bitmask))
+                : (val & m_latch[1]) & bitmask);
 
             new_val[2] |= ((enable_set_reset & 4)
                 ? ((set_reset & 4)
-                    ? (~d->latch[2] & bitmask)
-                    : (d->latch[2] & bitmask))
-                : (val & d->latch[2]) & bitmask);
+                    ? (~m_latch[2] & bitmask)
+                    : (m_latch[2] & bitmask))
+                : (val & m_latch[2]) & bitmask);
 
             new_val[3] |= ((enable_set_reset & 8)
                 ? ((set_reset & 8)
-                    ? (~d->latch[3] & bitmask)
-                    : (d->latch[3] & bitmask))
-                : (val & d->latch[3]) & bitmask);
+                    ? (~m_latch[3] & bitmask)
+                    : (m_latch[3] & bitmask))
+                : (val & m_latch[3]) & bitmask);
             break;
         case 3:
             new_val[0] |= ((enable_set_reset & 1)
                 ? ((set_reset & 1)
-                    ? (~d->latch[0] & bitmask)
-                    : (d->latch[0] & bitmask))
-                : (val ^ d->latch[0]) & bitmask);
+                    ? (~m_latch[0] & bitmask)
+                    : (m_latch[0] & bitmask))
+                : (val ^ m_latch[0]) & bitmask);
 
             new_val[1] |= ((enable_set_reset & 2)
                 ? ((set_reset & 2)
-                    ? (~d->latch[1] & bitmask)
-                    : (d->latch[1] & bitmask))
-                : (val ^ d->latch[1]) & bitmask);
+                    ? (~m_latch[1] & bitmask)
+                    : (m_latch[1] & bitmask))
+                : (val ^ m_latch[1]) & bitmask);
 
             new_val[2] |= ((enable_set_reset & 4)
                 ? ((set_reset & 4)
-                    ? (~d->latch[2] & bitmask)
-                    : (d->latch[2] & bitmask))
-                : (val ^ d->latch[2]) & bitmask);
+                    ? (~m_latch[2] & bitmask)
+                    : (m_latch[2] & bitmask))
+                : (val ^ m_latch[2]) & bitmask);
 
             new_val[3] |= ((enable_set_reset & 8)
                 ? ((set_reset & 8)
-                    ? (~d->latch[3] & bitmask)
-                    : (d->latch[3] & bitmask))
-                : (val ^ d->latch[3]) & bitmask);
+                    ? (~m_latch[3] & bitmask)
+                    : (m_latch[3] & bitmask))
+                : (val ^ m_latch[3]) & bitmask);
             break;
         default:
             vlog(LogVGA, "Unsupported raster operation %d", DRAWOP);
             vomit_exit(0);
         }
     } else if(WRITE_MODE == 1) {
-        new_val[0] = d->latch[0];
-        new_val[1] = d->latch[1];
-        new_val[2] = d->latch[2];
-        new_val[3] = d->latch[3];
+        new_val[0] = m_latch[0];
+        new_val[1] = m_latch[1];
+        new_val[2] = m_latch[2];
+        new_val[3] = m_latch[3];
     } else {
         vlog(LogVGA, "Unsupported 6845 write mode %d", WRITE_MODE);
         vomit_exit(1);
@@ -252,21 +224,21 @@ void VGAMemory::write8(DWORD address, BYTE value)
 
     if (plane_mask) {
         if (plane_mask & 0x01)
-            d->plane[0][address] = new_val[0];
+            m_plane[0][address] = new_val[0];
         if (plane_mask & 0x02)
-            d->plane[1][address] = new_val[1];
+            m_plane[1][address] = new_val[1];
         if (plane_mask & 0x04)
-            d->plane[2][address] = new_val[2];
+            m_plane[2][address] = new_val[2];
         if (plane_mask & 0x08)
-            d->plane[3][address] = new_val[3];
+            m_plane[3][address] = new_val[3];
 
-#define D(i) ((d->plane[0][address]>>i) & 1) | (((d->plane[1][address]>>i) & 1)<<1) | (((d->plane[2][address]>>i) & 1)<<2) | (((d->plane[3][address]>>i) & 1)<<3)
+#define D(i) ((m_plane[0][address]>>i) & 1) | (((m_plane[1][address]>>i) & 1)<<1) | (((m_plane[2][address]>>i) & 1)<<2) | (((m_plane[3][address]>>i) & 1)<<3)
 
         // HACK: I don't really like this way of obtaining the current mode...
-        if ((d->cpu->readUnmappedMemory8(0x449) & 0x7F) == 0x12 && address < (640 * 480 / 8)) {
+        if ((m_cpu->readUnmappedMemory8(0x449) & 0x7F) == 0x12 && address < (640 * 480 / 8)) {
 
             // address 100 -> pixels 800-807
-            uchar *px = &d->screen12.bits()[address * 8];
+            uchar *px = &m_screen12.bits()[address * 8];
 
             *(px++) = D(7);
             *(px++) = D(6);
@@ -282,11 +254,11 @@ void VGAMemory::write8(DWORD address, BYTE value)
 
             // 1 changed byte == 8 dirty pixels
             QRect newDirty(x1, y, 8, 1);
-            if (!d->dirtyRect.contains(newDirty))
-                d->dirtyRect = d->dirtyRect.united(newDirty);
+            if (!m_dirtyRect.contains(newDirty))
+                m_dirtyRect = m_dirtyRect.united(newDirty);
         }
 
-        d->dirty = true;
+        m_dirty = true;
     }
 }
 
@@ -303,20 +275,20 @@ BYTE VGAMemory::read8(DWORD address) {
 
         // FIXME: Don't get current video mode from BDA
         if (g_cpu->readUnmappedMemory8(0x449) == 0x13)
-            return d->plane[0][address];
+            return m_plane[0][address];
 
-        d->latch[0] = d->plane[0][address];
-        d->latch[1] = d->plane[1][address];
-        d->latch[2] = d->plane[2][address];
-        d->latch[3] = d->plane[3][address];
+        m_latch[0] = m_plane[0][address];
+        m_latch[1] = m_plane[1][address];
+        m_latch[2] = m_plane[2][address];
+        m_latch[3] = m_plane[3][address];
         /*
-        fprintf(stderr, "mem_read: %02X {%02X, %02X, %02X, %02X}\n", d->latch[VGA::the()->readRegister2(4)], d->latch[0], d->latch[1], d->latch[2], d->latch[3]);
+        fprintf(stderr, "mem_read: %02X {%02X, %02X, %02X, %02X}\n", m_latch[VGA::the()->readRegister2(4)], m_latch[0], m_latch[1], m_latch[2], m_latch[3]);
         */
-        return d->latch[VGA::the()->readRegister2(4)];
+        return m_latch[VGA::the()->readRegister2(4)];
     } else {
         // FIXME: Not sure that this is correct.
         vlog(LogVGA, "OOB read 0x%lx", address);
-        return d->cpu->readUnmappedMemory8(address);
+        return m_cpu->readUnmappedMemory8(address);
     }
 }
 
@@ -333,21 +305,19 @@ WORD VGAMemory::read16(DWORD address)
 
 BYTE *VGAMemory::plane(int index) const
 {
-    VM_ASSERT(d);
     VM_ASSERT(index >= 0 && index <= 3);
-    return d->plane[index];
+    return m_plane[index];
 }
 
 void VGAMemory::syncPalette()
 {
-    VM_ASSERT(d);
-    d->synchronizeColors();
+    synchronizeColors();
 }
 
-QImage *VGAMemory::modeImage(BYTE mode) const
+const QImage* VGAMemory::modeImage(BYTE mode) const
 {
     if (mode == 0x12)
-        return &d->screen12;
+        return &m_screen12;
 
 #ifdef VOMIT_DEBUG
     vlog(LogAlert, "Screen image for unknown mode 0x%02X requested. Crashing!", mode);
@@ -357,19 +327,25 @@ QImage *VGAMemory::modeImage(BYTE mode) const
 
 bool VGAMemory::isDirty() const
 {
-    VM_ASSERT(d);
-    return d->dirty;
+    return m_dirty;
 }
 
 QRect VGAMemory::dirtyRect() const
 {
-    VM_ASSERT(d);
-    return d->dirtyRect;
+    return m_dirtyRect;
 }
 
 void VGAMemory::clearDirty()
 {
-    VM_ASSERT(d);
-    d->dirtyRect = QRect();
-    d->dirty = false;
+    m_dirtyRect = QRect();
+    m_dirty = false;
+}
+
+void VGAMemory::synchronizeColors()
+{
+    for (int i = 0; i < 16; ++i) {
+        m_color[i] = VGA::the()->paletteColor(i);
+        m_brush[i] = QBrush(m_color[i]);
+        m_screen12.setColor(i, m_color[i].rgb());
+    }
 }

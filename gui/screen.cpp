@@ -277,7 +277,7 @@ void Screen::paintEvent(QPaintEvent *e)
         QPainter wp(this);
         wp.setClipRegion(e->rect());
 
-        QImage *screenImage = machine()->cpu()->vgaMemory()->modeImage(0x12);
+        const QImage *screenImage = machine()->cpu()->vgaMemory()->modeImage(0x12);
 
         if (screenImage)
             wp.drawImage(rect(), *screenImage);

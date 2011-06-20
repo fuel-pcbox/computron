@@ -28,6 +28,9 @@
 
 #include "types.h"
 #include <QtCore/QRect>
+#include <QtGui/QBrush>
+#include <QtGui/QColor>
+#include <QtGui/QImage>
 
 class QImage;
 class VCpu;
@@ -55,7 +58,7 @@ public:
      */
     BYTE *plane(int index) const;
 
-    QImage *modeImage(BYTE mode) const;
+    const QImage* modeImage(BYTE mode) const;
 
     bool isDirty() const;
 
@@ -64,8 +67,20 @@ public:
     void clearDirty();
 
 private:
-    struct Private;
-    Private *d;
+    void synchronizeColors();
+
+    VCpu* m_cpu;
+
+    QImage m_screen12;
+    QColor m_color[16];
+    QBrush m_brush[16];
+
+    QRect m_dirtyRect;
+    bool m_dirty;
+
+    BYTE* m_plane[4];
+    BYTE m_latch[4];
+
 };
 
 #endif
