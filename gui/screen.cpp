@@ -142,29 +142,23 @@ void Screen::refresh()
 {
     in_refresh = true;
 
+    if (VGA::the()->isPaletteDirty()) {
+        synchronizeColors();
+        // FIXME: This will probably race with VGAMemory's internal palette.
+        VGA::the()->setPaletteDirty(false);
+    }
+
     if (currentVideoMode() == 0x12) {
-        if (VGA::the()->isPaletteDirty()) {
-            synchronizeColors();
-            VGA::the()->setPaletteDirty(false);
-        }
         if (machine()->vgaMemory()->isDirty()) {
             update(machine()->vgaMemory()->dirtyRect());
             machine()->vgaMemory()->clearDirty();
         }
     } else if (currentVideoMode() == 0x0D) {
-        if (VGA::the()->isPaletteDirty()) {
-            synchronizeColors();
-            VGA::the()->setPaletteDirty(false);
-        }
         if (machine()->vgaMemory()->isDirty()) {
             renderMode0D(m_render0D);
             update();
         }
     } else if (currentVideoMode() == 0x13) {
-        if (VGA::the()->isPaletteDirty()) {
-            synchronizeColors();
-            VGA::the()->setPaletteDirty(false);
-        }
         if (machine()->vgaMemory()->isDirty()) {
             renderMode13(m_render13);
             update();
