@@ -80,6 +80,8 @@ static void floppy_verify(FILE* fp, BYTE drive, WORD cylinder, WORD head, WORD s
         vlog(LogAlert, "veri != count, something went wrong");
 
     // FIXME: Actually compare something..
+    Q_UNUSED(segment);
+    Q_UNUSED(offset);
 }
 
 void bios_disk_call(DiskCallFunction function)
