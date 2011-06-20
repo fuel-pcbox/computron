@@ -32,7 +32,7 @@
 // VCPU MONSTROSITY
 
 class Debugger;
-class VgaMemory;
+class VGAMemory;
 
 class VCpu : public QObject
 {
@@ -431,7 +431,7 @@ public:
 
     DWORD evaluateSIB(BYTE sib);
 
-    VgaMemory* vgaMemory() const { return m_vgaMemory; }
+    VGAMemory* vgaMemory() const { return m_vgaMemory; }
 
     enum Mode { RealMode, ProtectedMode };
     Mode mode() const { return m_mode; }
@@ -1135,7 +1135,7 @@ private:
 
     bool m_a20Enabled;
 
-    VgaMemory* m_vgaMemory;
+    VGAMemory* m_vgaMemory;
 
     Debugger* m_debugger;
 

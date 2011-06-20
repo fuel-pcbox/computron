@@ -32,11 +32,11 @@
 class QImage;
 class VCpu;
 
-class VgaMemory
+class VGAMemory
 {
 public:
-    VgaMemory(VCpu*);
-    ~VgaMemory();
+    VGAMemory(VCpu*);
+    ~VGAMemory();
 
     void write8(DWORD address, BYTE value);
     void write16(DWORD address, WORD value);
@@ -44,7 +44,7 @@ public:
     WORD read16(DWORD address);
 
     /*!
-        Ask the VgaMemory object to synchronize its internal
+        Ask the VGAMemory object to synchronize its internal
         palette against the 6845 palette.
      */
     void syncPalette();

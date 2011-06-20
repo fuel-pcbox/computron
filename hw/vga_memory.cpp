@@ -23,6 +23,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "vga_memory.h"
 #include "vomit.h"
 #include "vcpu.h"
 #include "vga.h"
@@ -43,7 +44,7 @@
 #define SET_RESET_ENABLE_BIT(i) ((VGA::the()->readRegister2(1) >> i)&1)
 #define BIT_MASK (VGA::the()->readRegister2(8))
 
-struct VgaMemory::Private
+struct VGAMemory::Private
 {
     VCpu *cpu;
 
@@ -67,7 +68,7 @@ struct VgaMemory::Private
     }
 };
 
-VgaMemory::VgaMemory(VCpu *cpu)
+VGAMemory::VGAMemory(VCpu *cpu)
     : d(new Private)
 {
     d->cpu = cpu;
@@ -93,7 +94,7 @@ VgaMemory::VgaMemory(VCpu *cpu)
     d->dirty = true;
 }
 
-VgaMemory::~VgaMemory()
+VGAMemory::~VGAMemory()
 {
     delete [] d->plane[0];
 
@@ -101,7 +102,7 @@ VgaMemory::~VgaMemory()
     d = 0;
 }
 
-void VgaMemory::write8(DWORD address, BYTE value)
+void VGAMemory::write8(DWORD address, BYTE value)
 {
     /*
      * fprintf(stderr,"mem_write: %02X:%04X = %02X <%d>, BM=%02X, ESR=%02X, SR=%02X\n", VGA::the()->readSequencer(2) & 0x0F, a-0xA0000, value, DRAWOP, BIT_MASK, VGA::the()->readRegister2(1), VGA::the()->readRegister2(0));
@@ -289,7 +290,7 @@ void VgaMemory::write8(DWORD address, BYTE value)
     }
 }
 
-BYTE VgaMemory::read8(DWORD address) {
+BYTE VGAMemory::read8(DWORD address) {
     if (READ_MODE != 0) {
         vlog(LogVGA, "ZOMG! READ_MODE = %u", READ_MODE);
         vomit_exit(1);
@@ -319,31 +320,31 @@ BYTE VgaMemory::read8(DWORD address) {
     }
 }
 
-void VgaMemory::write16(DWORD address, WORD value)
+void VGAMemory::write16(DWORD address, WORD value)
 {
     write8(address, vomit_LSB(value));
     write8(address + 1, vomit_MSB(value));
 }
 
-WORD VgaMemory::read16(DWORD address)
+WORD VGAMemory::read16(DWORD address)
 {
     return vomit_MAKEWORD(read8(address), read8(address + 1));
 }
 
-BYTE *VgaMemory::plane(int index) const
+BYTE *VGAMemory::plane(int index) const
 {
     VM_ASSERT(d);
     VM_ASSERT(index >= 0 && index <= 3);
     return d->plane[index];
 }
 
-void VgaMemory::syncPalette()
+void VGAMemory::syncPalette()
 {
     VM_ASSERT(d);
     d->synchronizeColors();
 }
 
-QImage *VgaMemory::modeImage(BYTE mode) const
+QImage *VGAMemory::modeImage(BYTE mode) const
 {
     if (mode == 0x12)
         return &d->screen12;
@@ -354,19 +355,19 @@ QImage *VgaMemory::modeImage(BYTE mode) const
     return 0;
 }
 
-bool VgaMemory::isDirty() const
+bool VGAMemory::isDirty() const
 {
     VM_ASSERT(d);
     return d->dirty;
 }
 
-QRect VgaMemory::dirtyRect() const
+QRect VGAMemory::dirtyRect() const
 {
     VM_ASSERT(d);
     return d->dirtyRect;
 }
 
-void VgaMemory::clearDirty()
+void VGAMemory::clearDirty()
 {
     VM_ASSERT(d);
     d->dirtyRect = QRect();

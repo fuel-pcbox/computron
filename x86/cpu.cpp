@@ -419,7 +419,7 @@ VCpu::VCpu(QObject* parent)
 
     memset(m_memory, 0, 1048576 + 65536);
 
-    m_vgaMemory = new VgaMemory(this);
+    m_vgaMemory = new VGAMemory(this);
 
     m_debugger = new Debugger(this);
 
