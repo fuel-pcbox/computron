@@ -26,7 +26,6 @@
 #include "mainwindow.h"
 #include <QApplication>
 #include <QFile>
-#include <QMetaType>
 #include "screen.h"
 #include "vomit.h"
 #include "vcpu.h"
@@ -56,13 +55,6 @@ int main(int argc, char** argv)
     QApplication app(argc, argv);
 
     parseArguments(app.arguments());
-
-    qRegisterMetaType<BYTE>("BYTE");
-    qRegisterMetaType<WORD>("WORD");
-    qRegisterMetaType<DWORD>("DWORD");
-    qRegisterMetaType<SIGNED_BYTE>("SIGNED_BYTE");
-    qRegisterMetaType<SIGNED_WORD>("SIGNED_WORD");
-    qRegisterMetaType<SIGNED_DWORD>("SIGNED_DWORD");
 
     signal(SIGINT, sigint_handler);
 
