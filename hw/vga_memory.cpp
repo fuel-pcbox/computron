@@ -27,13 +27,11 @@
 #include "machine.h"
 #include "screen.h"
 #include "vomit.h"
-#include "vcpu.h"
 #include "vga.h"
 #include "debug.h"
 #include <QtGui/QImage>
 #include <QtGui/QColor>
 #include <QtGui/QBrush>
-#include <QtCore/QDebug>
 
 #define WRITE_MODE (VGA::the()->readRegister2(5) & 0x03)
 #define READ_MODE ((VGA::the()->readRegister2(5) >> 3) & 1)
@@ -77,16 +75,7 @@ VGAMemory::~VGAMemory()
 
 void VGAMemory::write8(DWORD address, BYTE value)
 {
-    /*
-     * fprintf(stderr,"mem_write: %02X:%04X = %02X <%d>, BM=%02X, ESR=%02X, SR=%02X\n", VGA::the()->readSequencer(2) & 0x0F, a-0xA0000, value, DRAWOP, BIT_MASK, VGA::the()->readRegister2(1), VGA::the()->readRegister2(0));
-     */
-
-    if (address >= 0xAFFFF) {
-        // FIXME: Not sure that this is correct.
-        vlog(LogVGA, "OOB write 0x%lx", address);
-        machine()->cpu()->writeUnmappedMemory8(address, value);
-        return;
-    }
+    VM_ASSERT(address < 0xB0000);
 
     BYTE new_val[4];
 
@@ -266,33 +255,28 @@ void VGAMemory::write8(DWORD address, BYTE value)
     }
 }
 
-BYTE VGAMemory::read8(DWORD address) {
+BYTE VGAMemory::read8(DWORD address)
+{
     if (READ_MODE != 0) {
         vlog(LogVGA, "ZOMG! READ_MODE = %u", READ_MODE);
         vomit_exit(1);
     }
 
-    /* We're assuming READ_MODE == 0 now... */
+    // FIXME: We're assuming READ_MODE == 0 from here on, this can't be safe.
 
-    if (address < 0xB0000) {
-        address -= 0xA0000;
+    VM_ASSERT(address < 0xB0000);
 
-        if (machine()->screen()->currentVideoMode() == 0x13)
-            return m_plane[0][address];
+    address -= 0xA0000;
 
-        m_latch[0] = m_plane[0][address];
-        m_latch[1] = m_plane[1][address];
-        m_latch[2] = m_plane[2][address];
-        m_latch[3] = m_plane[3][address];
-        /*
-        fprintf(stderr, "mem_read: %02X {%02X, %02X, %02X, %02X}\n", m_latch[VGA::the()->readRegister2(4)], m_latch[0], m_latch[1], m_latch[2], m_latch[3]);
-        */
-        return m_latch[VGA::the()->readRegister2(4)];
-    } else {
-        // FIXME: Not sure that this is correct.
-        vlog(LogVGA, "OOB read 0x%lx", address);
-        return machine()->cpu()->readUnmappedMemory8(address);
-    }
+    if (machine()->screen()->currentVideoMode() == 0x13)
+        return m_plane[0][address];
+
+    m_latch[0] = m_plane[0][address];
+    m_latch[1] = m_plane[1][address];
+    m_latch[2] = m_plane[2][address];
+    m_latch[3] = m_plane[3][address];
+
+    return m_latch[VGA::the()->readRegister2(4)];
 }
 
 void VGAMemory::write16(DWORD address, WORD value)
