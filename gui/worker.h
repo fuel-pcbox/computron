@@ -47,10 +47,8 @@ public slots:
     void shutdown();
 
 private:
-    VCpu* cpu() const;
-
-    struct Private;
-    Private* d;
+    VCpu* m_cpu;
+    bool m_active;
 };
 
 #endif

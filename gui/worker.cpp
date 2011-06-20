@@ -24,44 +24,27 @@
  */
 
 #include "worker.h"
-#include <QMutexLocker>
-#include <QDebug>
 #include "vcpu.h"
 
 extern bool g_vomit_exit_main_loop;
 extern bool vomit_reboot;
 
-struct Worker::Private
-{
-    QMutex mutex;
-    bool active;
-    VCpu* cpu;
-};
-
 Worker::Worker(VCpu* cpu)
-    : QThread(cpu),
-      d(new Private)
+    : QThread(cpu)
+    , m_cpu(cpu)
+    , m_active(false)
 {
-    d->cpu = cpu;
 }
 
 Worker::~Worker()
 {
-    d->cpu = 0;
-    delete d;
-    d = 0;
-}
-
-VCpu* Worker::cpu() const
-{
-    return d->cpu;
 }
 
 void Worker::run()
 {
-    while (d->active) {
-        cpu()->mainLoop();
-        while (!d->active)
+    while (m_active) {
+        m_cpu->mainLoop();
+        while (!m_active)
             msleep(50);
     }
 }
@@ -75,11 +58,11 @@ void Worker::shutdown()
 void Worker::startMachine()
 {
     g_vomit_exit_main_loop = false;
-    d->active = true;
+    m_active = true;
 }
 
 void Worker::stopMachine()
 {
-    d->active = false;
+    m_active = false;
     g_vomit_exit_main_loop = true;
 }
