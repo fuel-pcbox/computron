@@ -142,9 +142,7 @@ void Screen::refresh()
 {
     in_refresh = true;
 
-    BYTE currentVideoMode = machine()->cpu()->readUnmappedMemory8(0x449) & 0x7F;
-
-    if (currentVideoMode == 0x12) {
+    if (currentVideoMode() == 0x12) {
         if (VGA::the()->isPaletteDirty()) {
             synchronizeColors();
             VGA::the()->setPaletteDirty(false);
@@ -153,7 +151,7 @@ void Screen::refresh()
             update(machine()->vgaMemory()->dirtyRect());
             machine()->vgaMemory()->clearDirty();
         }
-    } else if (currentVideoMode == 0x0D) {
+    } else if (currentVideoMode() == 0x0D) {
         if (VGA::the()->isPaletteDirty()) {
             synchronizeColors();
             VGA::the()->setPaletteDirty(false);
@@ -162,7 +160,7 @@ void Screen::refresh()
             renderMode0D(m_render0D);
             update();
         }
-    } else if (currentVideoMode == 0x13) {
+    } else if (currentVideoMode() == 0x13) {
         if (VGA::the()->isPaletteDirty()) {
             synchronizeColors();
             VGA::the()->setPaletteDirty(false);
@@ -171,7 +169,7 @@ void Screen::refresh()
             renderMode13(m_render13);
             update();
         }
-    } else if (currentVideoMode == 0x03) {
+    } else if (currentVideoMode() == 0x03) {
         int rows = machine()->cpu()->readUnmappedMemory8(0x484) + 1;
         switch(rows)
         {
@@ -270,9 +268,7 @@ void Screen::resizeEvent(QResizeEvent *e)
 
 void Screen::paintEvent(QPaintEvent *e)
 {
-    BYTE currentVideoMode = machine()->cpu()->readUnmappedMemory8(0x449) & 0x7F;
-
-    if (currentVideoMode == 0x12) {
+    if (currentVideoMode() == 0x12) {
         setScreenSize(640, 480);
         QPainter wp(this);
         wp.setClipRegion(e->rect());
@@ -282,7 +278,7 @@ void Screen::paintEvent(QPaintEvent *e)
         if (screenImage)
             wp.drawImage(rect(), *screenImage);
         else {
-            vlog(LogScreen, "No screen buffer yet for mode 0x%02X", currentVideoMode);
+            vlog(LogScreen, "No screen buffer yet for mode 0x%02X", currentVideoMode());
             wp.fillRect(rect(), Qt::red);
         }
 
@@ -293,7 +289,7 @@ void Screen::paintEvent(QPaintEvent *e)
         return;
     }
 
-    if (currentVideoMode == 0x0D) {
+    if (currentVideoMode() == 0x0D) {
         setScreenSize(640, 400);
         QPainter p(this);
         p.drawImage(0, 0, m_render0D.scaled(640, 400));
@@ -305,7 +301,7 @@ void Screen::paintEvent(QPaintEvent *e)
         return;
     }
 
-    if (currentVideoMode == 0x13) {
+    if (currentVideoMode() == 0x13) {
         setScreenSize(640, 400);
         QPainter p(this);
         p.drawImage(0, 0, m_render13.scaled(640, 400));
@@ -383,6 +379,13 @@ void Screen::synchronizeFont()
     for (int i = 0; i < 256; ++i) {
         d->character[i] = QBitmap::fromData(s, (const BYTE *)fbmp[i].data, QImage::Format_MonoLSB);
     }
+}
+
+BYTE Screen::currentVideoMode() const
+{
+    // FIXME: This is not the correct way to obtain the video mode (BDA.)
+    //        Need to find out how the 6845 stores this information.
+    return machine()->cpu()->readUnmappedMemory8(0x449) & 0x7f;
 }
 
 void Screen::synchronizeColors()

@@ -41,6 +41,9 @@ public:
     bool inTextMode() const;
     void setTextMode( int w, int h );
 
+    // FIXME: Should this be VGA::currentVideoMode() instead?
+    BYTE currentVideoMode() const;
+
     void synchronizeFont();
     void synchronizeColors();
 

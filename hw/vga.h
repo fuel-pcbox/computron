@@ -52,6 +52,8 @@ public:
     QColor color(int index) const;
     QColor paletteColor(int paletteIndex) const;
 
+    BYTE currentVideoMode() const;
+
     static VGA* the();
 
 signals:
