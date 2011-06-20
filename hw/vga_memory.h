@@ -47,12 +47,6 @@ public:
     WORD read16(DWORD address);
 
     /*!
-        Ask the VGAMemory object to synchronize its internal
-        palette against the 6845 palette.
-     */
-    void syncPalette();
-
-    /*!
         Returns the specified pixel plane.
 	Valid indices are 0 through 3.
      */

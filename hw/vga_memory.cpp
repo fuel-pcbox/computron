@@ -296,11 +296,6 @@ BYTE *VGAMemory::plane(int index) const
     return m_plane[index];
 }
 
-void VGAMemory::syncPalette()
-{
-    synchronizeColors();
-}
-
 const QImage* VGAMemory::modeImage(BYTE mode) const
 {
     if (mode == 0x12)
