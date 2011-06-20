@@ -41,8 +41,10 @@ public:
     bool inTextMode() const;
     void setTextMode( int w, int h );
 
-    // FIXME: Should this be VGA::currentVideoMode() instead?
+    // FIXME: These should be moved into VGA.
     BYTE currentVideoMode() const;
+    BYTE currentRowCount() const;
+    BYTE currentColumnCount() const;
 
     void synchronizeFont();
     void synchronizeColors();

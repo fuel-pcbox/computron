@@ -181,7 +181,7 @@ void Screen::refresh()
     }
 
     if (currentVideoMode() == 0x03) {
-        int rows = machine()->cpu()->readUnmappedMemory8(0x484) + 1;
+        int rows = currentRowCount();
         switch(rows)
         {
             case 25:
@@ -328,7 +328,7 @@ void Screen::paintEvent(QPaintEvent *e)
 
     BYTE *v = d->videoMemory;
 
-    int screenColumns = machine()->cpu()->readUnmappedMemory8(0x44A);
+    int screenColumns = currentColumnCount();
 
     WORD rawCursor = VGA::the()->readRegister(0x0E) << 8 | VGA::the()->readRegister(0x0F);
     BYTE row = screenColumns ? (rawCursor / screenColumns) : 0;
@@ -396,6 +396,18 @@ BYTE Screen::currentVideoMode() const
     // FIXME: This is not the correct way to obtain the video mode (BDA.)
     //        Need to find out how the 6845 stores this information.
     return machine()->cpu()->readUnmappedMemory8(0x449) & 0x7f;
+}
+
+BYTE Screen::currentRowCount() const
+{
+    // FIXME: Don't get through BDA.
+    return machine()->cpu()->readUnmappedMemory8(0x484) + 1;
+}
+
+BYTE Screen::currentColumnCount() const
+{
+    // FIXME: Don't get through BDA.
+    return machine()->cpu()->readUnmappedMemory8(0x44A);
 }
 
 void Screen::synchronizeColors()
