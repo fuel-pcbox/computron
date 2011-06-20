@@ -35,58 +35,10 @@ class Debugger;
 class Machine;
 class VGAMemory;
 
-class VCpu : public QObject
+class VCpu
 {
-    Q_OBJECT
 public:
-
-    Q_PROPERTY(DWORD EAX READ getEAX WRITE setEAX)
-    Q_PROPERTY(DWORD EBX READ getEBX WRITE setEBX)
-    Q_PROPERTY(DWORD ECX READ getECX WRITE setECX)
-    Q_PROPERTY(DWORD EDX READ getEDX WRITE setEDX)
-    Q_PROPERTY(DWORD EBP READ getEBP WRITE setEBP)
-    Q_PROPERTY(DWORD ESP READ getESP WRITE setESP)
-    Q_PROPERTY(DWORD ESI READ getESI WRITE setESI)
-    Q_PROPERTY(DWORD SDI READ getEDI WRITE setEDI)
-
-    Q_PROPERTY(WORD AX READ getAX WRITE setAX)
-    Q_PROPERTY(WORD BX READ getBX WRITE setBX)
-    Q_PROPERTY(WORD CX READ getCX WRITE setCX)
-    Q_PROPERTY(WORD DX READ getDX WRITE setDX)
-    Q_PROPERTY(WORD BP READ getBP WRITE setBP)
-    Q_PROPERTY(WORD SP READ getSP WRITE setSP)
-    Q_PROPERTY(WORD SI READ getSI WRITE setSI)
-    Q_PROPERTY(WORD DI READ getDI WRITE setDI)
-
-    Q_PROPERTY(BYTE AL READ getAL WRITE setAL)
-    Q_PROPERTY(BYTE BL READ getBL WRITE setBL)
-    Q_PROPERTY(BYTE CL READ getCL WRITE setCL)
-    Q_PROPERTY(BYTE DL READ getDL WRITE setDL)
-    Q_PROPERTY(BYTE AH READ getAH WRITE setAH)
-    Q_PROPERTY(BYTE BH READ getBH WRITE setBH)
-    Q_PROPERTY(BYTE CH READ getCH WRITE setCH)
-    Q_PROPERTY(BYTE DH READ getDH WRITE setDH)
-
-    Q_PROPERTY(WORD CS READ getCS WRITE setCS)
-    Q_PROPERTY(WORD DS READ getDS WRITE setDS)
-    Q_PROPERTY(WORD ES READ getES WRITE setES)
-    Q_PROPERTY(WORD SS READ getSS WRITE setSS)
-    Q_PROPERTY(WORD FS READ getFS WRITE setFS)
-    Q_PROPERTY(WORD GS READ getGS WRITE setGS)
-
-    Q_PROPERTY(bool IF READ getIF WRITE setIF)
-    Q_PROPERTY(bool OF READ getOF WRITE setOF)
-    Q_PROPERTY(bool ZF READ getZF WRITE setZF)
-    Q_PROPERTY(bool SF READ getSF WRITE setSF)
-    Q_PROPERTY(bool CF READ getCF WRITE setCF)
-    Q_PROPERTY(bool AF READ getAF WRITE setAF)
-    Q_PROPERTY(bool TF READ getTF WRITE setTF)
-    Q_PROPERTY(bool PF READ getPF WRITE setPF)
-
-    Q_PROPERTY(DWORD EIP READ getEIP WRITE setEIP)
-    Q_PROPERTY(WORD IP READ getIP WRITE setIP)
-
-    VCpu(QObject* parent = 0);
+    VCpu(Machine*);
     ~VCpu();
 
     enum RegisterIndex8 {
@@ -1146,7 +1098,8 @@ private:
     WORD* treg16[8];
     BYTE* treg8[8];
 
-    Machine* machine() const;
+    Machine* machine() const { return m_machine; }
+    Machine* m_machine;
 
     bool m_addressSize32;
     bool m_operationSize32;

@@ -30,7 +30,7 @@ extern bool g_vomit_exit_main_loop;
 extern bool vomit_reboot;
 
 Worker::Worker(VCpu* cpu)
-    : QThread(cpu)
+    : QThread(0)
     , m_cpu(cpu)
     , m_active(false)
 {

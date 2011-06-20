@@ -406,8 +406,8 @@ void VCpu::GP(int code)
     vomit_exit(1);
 }
 
-VCpu::VCpu(QObject* parent)
-    : QObject(parent)
+VCpu::VCpu(Machine* machine)
+    : m_machine(machine)
 {
     VM_ASSERT(!g_cpu);
     g_cpu = this;
@@ -1105,11 +1105,6 @@ void VCpu::writeMemory16(DWORD address, WORD value)
 
     WORD* ptr = reinterpret_cast<WORD*>(m_memory + address);
     vomit_write16ToPointer(ptr, value);
-}
-
-Machine* VCpu::machine() const
-{
-    return qobject_cast<Machine*>(parent());
 }
 
 void VCpu::writeMemory32(WORD segment, WORD offset, DWORD value)

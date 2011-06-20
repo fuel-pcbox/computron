@@ -81,6 +81,8 @@ Machine::Machine(const QString& name, Settings* settings, QObject* parent)
 
     m_vgaMemory = new VGAMemory(this);
     m_screen = new Screen(this);
+
+    // FIXME: Sort out worker ownership.
     m_worker = new Worker(cpu());
 
     QObject::connect(worker(), SIGNAL(finished()), this, SLOT(onWorkerFinished()));
