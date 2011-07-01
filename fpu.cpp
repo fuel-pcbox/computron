@@ -33,14 +33,15 @@ void VCpu::_ESCAPE()
         getBaseCS(), getBaseEIP(),
         opcode, vomit_modRMRegisterPart(readMemory8(getBaseCS(), getBaseIP() + 1)));
 
-    //vm_exit(0);
-
+    // Even though we don't dispatch to an FPU, we still have to decode the full
+    // opcode, or the instruction stream will fall out of sync.
     BYTE rm = fetchOpcodeByte();
     (void) readModRM16(rm);
 
-    return;
+    // FIXME: If the code below is enabled, MSD.EXE hangs on startup trying to
+    //        communicate with the FPU.
 #if 0
-    /* 80286+: Coprocessor not available exception. */
+    // 80286+: Coprocessor not available exception.
     exception(7);
 #endif
 }
