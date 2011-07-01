@@ -209,12 +209,6 @@ Settings* Settings::createForAutotest(const QString& fileName)
 
 Settings* Settings::createFromFile(const QString& fileName)
 {
-#if 0
-    char curline[256], *curtok;
-    char lfname[MAX_FN_LENGTH];
-    WORD lseg, loff, ldrv, lspt, lhds, lsect, lsectsize;
-#endif
-
     QFile file(fileName);
 
     if (!file.open(QIODevice::ReadOnly)) {

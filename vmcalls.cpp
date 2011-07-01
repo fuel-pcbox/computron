@@ -112,34 +112,6 @@ void vm_handleE6(VCpu* cpu)
         }
         cpu->writeUnmappedMemory8(drive < 2 ? 0x0441 : 0x0474, cpu->getAH());
         break;
-#if 0
-    case 0x1305:
-        drive = cpu->getDL();
-        if (drive >= 0x80)
-            drive = drive - 0x80 + 2;
-        if (drv_status[drive] != 0) {
-            track = (cpu->getCH() | ((cpu->getCL() & 0xC0) << 2)) + 1;
-            head = cpu->getDH();
-            vlog(LogDisk, "Drive %d: Formatting track %lu, head %d.", drive, track, head);
-            fpdrv = fopen(drv_imgfile[drive], "rb+");
-            if (!fpdrv) {
-                vlog(LogDisk, "PANIC! Could not access drive %d image.", drive);
-                vm_exit(1);
-            }
-            fseek(fpdrv, (head + 1) * (track * drv_spt[drive] * drv_sectsize[drive]), SEEK_SET);
-            fdata = malloc(drv_spt[drive] * drv_sectsize[drive]);
-            memset(fdata, 0xAA, drv_spt[drive] * drv_sectsize[drive]);
-            fwrite(fdata, drv_sectsize[drive], drv_spt[drive], fpdrv);
-            free(fdata);
-            fclose(fpdrv);
-            cpu->setAH(FD_NO_ERROR);
-            cpu->setCF(0);
-        } else {
-            cpu->setAH(FD_CHANGED_OR_REMOVED);
-            cpu->setCF(1);
-        }
-        break;
-#endif
     case 0x1308:
         drive = cpu->getDL();
         if(drive>=0x80) drive = drive - 0x80 + 2;

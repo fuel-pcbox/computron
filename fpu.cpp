@@ -39,14 +39,6 @@ void VCpu::_ESCAPE()
     (void) readModRM16(rm);
 
     return;
-
-#if 0
-    printf("Swallowed %d bytes: ", IP - base_IP);
-    for (int i = 0; i < cpu.IP - base_IP; ++i)
-        printf("%02X ", vomit_cpu_memory_read8(cpu, getBaseCS(), base_IP + i));
-    printf("\n");
-#endif
-
 #if 0
     /* 80286+: Coprocessor not available exception. */
     exception(7);
