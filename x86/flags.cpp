@@ -51,9 +51,9 @@ void VCpu::adjustFlag32(DWORD result, WORD src, WORD dest)
 
 void VCpu::updateFlags32(DWORD data)
 {
-    this->PF = parity_table[data & 0xFF];
-    this->SF = (data & 0x80000000) != 0;
-    this->ZF = data == 0;
+    setPF(parity_table[data & 0xFF]);
+    setSF((data & 0x80000000) != 0);
+    setZF(data == 0);
 }
 
 void VCpu::updateFlags16(WORD data)
