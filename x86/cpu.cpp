@@ -223,22 +223,22 @@ void VCpu::decode(BYTE op)
     case 0x4D:
     case 0x4E:
     case 0x4F: CALL_HANDLER(_DEC_reg16, _DEC_reg32); break;
-    case 0x50: CALL_HANDLER(_PUSH_AX, _PUSH_EAX); break;
-    case 0x51: CALL_HANDLER(_PUSH_CX, _PUSH_ECX); break;
-    case 0x52: CALL_HANDLER(_PUSH_DX, _PUSH_EDX); break;
-    case 0x53: CALL_HANDLER(_PUSH_BX, _PUSH_EBX); break;
-    case 0x54: CALL_HANDLER(_PUSH_SP, _PUSH_ESP); break;
-    case 0x55: CALL_HANDLER(_PUSH_BP, _PUSH_EBP); break;
-    case 0x56: CALL_HANDLER(_PUSH_SI, _PUSH_ESI); break;
-    case 0x57: CALL_HANDLER(_PUSH_DI, _PUSH_EDI); break;
-    case 0x58: CALL_HANDLER(_POP_AX, _POP_EAX); break;
-    case 0x59: CALL_HANDLER(_POP_CX, _POP_ECX); break;
-    case 0x5A: CALL_HANDLER(_POP_DX, _POP_EDX); break;
-    case 0x5B: CALL_HANDLER(_POP_BX, _POP_EBX); break;
-    case 0x5C: CALL_HANDLER(_POP_SP, _POP_ESP); break;
-    case 0x5D: CALL_HANDLER(_POP_BP, _POP_EBP); break;
-    case 0x5E: CALL_HANDLER(_POP_SI, _POP_ESI); break;
-    case 0x5F: CALL_HANDLER(_POP_DI, _POP_EDI); break;
+    case 0x50:
+    case 0x51:
+    case 0x52:
+    case 0x53:
+    case 0x54:
+    case 0x55:
+    case 0x56:
+    case 0x57: CALL_HANDLER(_PUSH_reg16, _PUSH_reg32); break;
+    case 0x58:
+    case 0x59:
+    case 0x5A:
+    case 0x5B:
+    case 0x5C:
+    case 0x5D:
+    case 0x5E:
+    case 0x5F: CALL_HANDLER(_POP_reg16, _POP_reg32); break;
     case 0x60: CALL_HANDLER(_PUSHA, _PUSHAD); break;
     case 0x61: CALL_HANDLER(_POPA, _POPAD); break;
     case 0x64: _FS(); break;

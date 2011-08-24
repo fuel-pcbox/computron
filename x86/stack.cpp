@@ -74,164 +74,25 @@ WORD VCpu::pop()
     return w;
 }
 
-void VCpu::_PUSH_EAX()
+void VCpu::_PUSH_reg16()
 {
-    push32(getEAX());
+    push(*treg16[this->opcode & 7]);
 }
 
-void VCpu::_PUSH_EBX()
+void VCpu::_PUSH_reg32()
 {
-    push32(getEBX());
+    push32(*treg32[this->opcode & 7]);
 }
 
-void VCpu::_PUSH_ECX()
+
+void VCpu::_POP_reg16()
 {
-    push32(getECX());
+    *treg16[this->opcode & 7] = pop();
 }
 
-void VCpu::_PUSH_EDX()
+void VCpu::_POP_reg32()
 {
-    push32(getEDX());
-}
-
-void VCpu::_PUSH_ESP()
-{
-    push32(getESP());
-}
-
-void VCpu::_PUSH_EBP()
-{
-    push32(getEBP());
-}
-
-void VCpu::_PUSH_ESI()
-{
-    push32(getESI());
-}
-
-void VCpu::_PUSH_EDI()
-{
-    push32(getEDI());
-}
-
-void VCpu::_PUSH_AX()
-{
-    push(getAX());
-}
-
-void VCpu::_PUSH_BX()
-{
-    push(getBX());
-}
-
-void VCpu::_PUSH_CX()
-{
-    push(getCX());
-}
-
-void VCpu::_PUSH_DX()
-{
-    push(getDX());
-}
-
-void VCpu::_PUSH_BP()
-{
-    push(getBP());
-}
-
-void VCpu::_PUSH_SP()
-{
-    push(getSP());
-}
-
-void VCpu::_PUSH_SI()
-{
-    push(getSI());
-}
-
-void VCpu::_PUSH_DI()
-{
-    push(getDI());
-}
-
-void VCpu::_POP_AX()
-{
-    regs.W.AX = pop();
-}
-
-void VCpu::_POP_BX()
-{
-    regs.W.BX = pop();
-}
-
-void VCpu::_POP_EAX()
-{
-    regs.D.EAX = pop32();
-}
-
-void VCpu::_POP_EBX()
-{
-    regs.D.EBX = pop32();
-}
-
-void VCpu::_POP_ECX()
-{
-    regs.D.ECX = pop32();
-}
-
-void VCpu::_POP_EDX()
-{
-    regs.D.EDX = pop32();
-}
-
-void VCpu::_POP_ESP()
-{
-    regs.D.ESP = pop32();
-}
-
-void VCpu::_POP_EBP()
-{
-    regs.D.EBP = pop32();
-}
-
-void VCpu::_POP_ESI()
-{
-    regs.D.ESI = pop32();
-}
-
-void VCpu::_POP_EDI()
-{
-    regs.D.EDI = pop32();
-}
-
-void VCpu::_POP_CX()
-{
-    regs.W.CX = pop();
-}
-
-void VCpu::_POP_DX()
-{
-    regs.W.DX = pop();
-}
-
-void VCpu::_POP_BP()
-{
-    regs.W.BP = pop();
-}
-
-void VCpu::_POP_SP()
-{
-    regs.W.SP = pop();
-}
-
-void VCpu::_POP_SI()
-{
-    regs.W.SI = pop();
-}
-
-void VCpu::_POP_DI()
-{
-    regs.W.DI = pop();
+    *treg32[this->opcode & 7] = pop32();
 }
 
 void VCpu::_PUSH_RM16()

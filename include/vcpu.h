@@ -622,22 +622,6 @@ protected:
     void _TEST_EAX_imm32();
 
     void _PUSH_SP_8086_80186();
-    void _PUSH_AX();
-    void _PUSH_BX();
-    void _PUSH_CX();
-    void _PUSH_DX();
-    void _PUSH_BP();
-    void _PUSH_SP();
-    void _PUSH_SI();
-    void _PUSH_DI();
-    void _POP_AX();
-    void _POP_BX();
-    void _POP_CX();
-    void _POP_DX();
-    void _POP_BP();
-    void _POP_SP();
-    void _POP_SI();
-    void _POP_DI();
     void _PUSH_CS();
     void _PUSH_DS();
     void _PUSH_ES();
@@ -822,23 +806,10 @@ protected:
     void _POPFD();
     void _PUSH_imm32();
 
-    void _PUSH_EAX();
-    void _PUSH_EBX();
-    void _PUSH_ECX();
-    void _PUSH_EDX();
-    void _PUSH_EBP();
-    void _PUSH_ESP();
-    void _PUSH_ESI();
-    void _PUSH_EDI();
-
-    void _POP_EAX();
-    void _POP_EBX();
-    void _POP_ECX();
-    void _POP_EDX();
-    void _POP_EBP();
-    void _POP_ESP();
-    void _POP_ESI();
-    void _POP_EDI();
+    void _PUSH_reg16();
+    void _PUSH_reg32();
+    void _POP_reg16();
+    void _POP_reg32();
 
     void _TEST_RM32_imm32();
     void _XOR_RM32_reg32();
