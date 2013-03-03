@@ -188,54 +188,6 @@ DWORD cpu_sar(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
     return result;
 }
 
-DWORD cpu_rol(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
-{
-    DWORD result = data;
-
-    steps &= 0x1F;
-
-    if (bits == 8) {
-        for (BYTE i = 0; i < steps; ++i) {
-            cpu->setCF((result>>7) & 1);
-            result = (result<<1) | cpu->getCF();
-        }
-    } else {
-        for (BYTE i = 0; i < steps; ++i) {
-            cpu->setCF((result>>15) & 1);
-            result = (result<<1) | cpu->getCF();
-        }
-    }
-
-    if (steps == 1)
-        cpu->setOF(((result >> (bits - 1)) & 1) ^ cpu->getCF());
-
-    return result;
-}
-
-DWORD cpu_ror(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
-{
-    DWORD result = (DWORD)data;
-
-    steps &= 0x1F;
-
-    if (bits == 8) {
-        for (BYTE i = 0; i < steps; ++i) {
-            cpu->setCF(result & 1);
-            result = (result>>1) | (cpu->getCF()<<7);
-        }
-    } else {
-        for (BYTE i = 0; i < steps; ++i) {
-            cpu->setCF(result & 1);
-            result = (result>>1) | (cpu->getCF()<<15);
-        }
-    }
-
-    if (steps == 1)
-        cpu->setOF((result >> (bits - 1)) ^ ((result >> (bits - 2) & 1)));
-
-    return result;
-}
-
 DWORD cpu_rcl(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 {
     DWORD result = data;

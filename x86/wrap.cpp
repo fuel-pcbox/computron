@@ -27,6 +27,42 @@
 #include "debug.h"
 
 template<typename T>
+T VCpu::doRol(T data, int steps)
+{
+    T result = data;
+    steps &= 0x1F;
+
+    if (steps) {
+        setCF(data >> (BitSizeOfType<T>::bits - steps) & 1);
+        if ((steps &= BitSizeOfType<T>::bits - 1))
+            result = (data << steps) | (data >> (BitSizeOfType<T>::bits - steps));
+        if (steps == 1)
+            setOF(((data >> (BitSizeOfType<T>::bits - 1)) & 1) ^ getCF());
+    } else
+        setCF(0); // FIXME: Verify that this is correct behavior.
+
+    return result;
+}
+
+template<typename T>
+T VCpu::doRor(T data, int steps)
+{
+    T result = data;
+    steps &= 0x1F;
+
+    if (steps) {
+        setCF((result >> (steps - 1)) & 1);
+        if ((steps &= BitSizeOfType<T>::bits - 1))
+            result = (data >> steps) | (data << (BitSizeOfType<T>::bits - steps));
+        if (steps == 1)
+            setOF((result >> (BitSizeOfType<T>::bits - 1)) ^ ((result >> (BitSizeOfType<T>::bits - 2) & 1)));
+    } else
+        setCF(0); // FIXME: Verify that this is correct behavior.
+
+    return result;
+}
+
+template<typename T>
 T VCpu::rightShift(T data, int steps)
 {
     T result = data;
@@ -39,7 +75,7 @@ T VCpu::rightShift(T data, int steps)
             if (steps == 1)
                 setOF((data >> (BitSizeOfType<T>::bits - 1)) & 1);
         } else
-            setCF(0);
+            setCF(0); // FIXME: Verify that this is correct behavior.
         result >>= steps;
     }
 
@@ -60,7 +96,7 @@ T VCpu::leftShift(T data, int steps)
             if (steps == 1)
                 setOF((data >> (BitSizeOfType<T>::bits - 1)) ^ getCF());
         } else
-            setCF(0);
+            setCF(0); // FIXME: Verify that this is correct behavior.
         result <<= steps;
     }
 
@@ -173,8 +209,8 @@ void VCpu::_wrap_0xC0()
     BYTE imm = fetchOpcodeByte();
 
     switch (vomit_modRMRegisterPart(rm)) {
-    case 0: updateModRM8(cpu_rol(this, value, imm, 8)); break;
-    case 1: updateModRM8(cpu_ror(this, value, imm, 8)); break;
+    case 0: updateModRM8(doRol(value, imm)); break;
+    case 1: updateModRM8(doRor(value, imm)); break;
     case 2: updateModRM8(cpu_rcl(this, value, imm, 8)); break;
     case 3: updateModRM8(cpu_rcr(this, value, imm, 8)); break;
     case 4: updateModRM8(leftShift(value, imm)); break;
@@ -194,8 +230,8 @@ void VCpu::_wrap_0xC1_16()
     BYTE imm = fetchOpcodeByte();
 
     switch (vomit_modRMRegisterPart(rm)) {
-    case 0: updateModRM16(cpu_rol(this, value, imm, 16)); break;
-    case 1: updateModRM16(cpu_ror(this, value, imm, 16)); break;
+    case 0: updateModRM16(doRol(value, imm)); break;
+    case 1: updateModRM16(doRor(value, imm)); break;
     case 2: updateModRM16(cpu_rcl(this, value, imm, 16)); break;
     case 3: updateModRM16(cpu_rcr(this, value, imm, 16)); break;
     case 4: updateModRM16(leftShift(value, imm)); break;
@@ -215,8 +251,8 @@ void VCpu::_wrap_0xC1_32()
     BYTE imm = fetchOpcodeByte();
 
     switch (vomit_modRMRegisterPart(rm)) {
-    case 0: updateModRM32(cpu_rol(this, value, imm, 32)); break;
-    case 1: updateModRM32(cpu_ror(this, value, imm, 32)); break;
+    case 0: updateModRM32(doRol(value, imm)); break;
+    case 1: updateModRM32(doRor(value, imm)); break;
     case 2: updateModRM32(cpu_rcl(this, value, imm, 32)); break;
     case 3: updateModRM32(cpu_rcr(this, value, imm, 32)); break;
     case 4: updateModRM32(leftShift(value, imm)); break;
@@ -235,8 +271,8 @@ void VCpu::_wrap_0xD0()
     BYTE value = readModRM8(rm);
 
     switch (vomit_modRMRegisterPart(rm)) {
-    case 0: updateModRM8(cpu_rol(this, value, 1, 8 )); break;
-    case 1: updateModRM8(cpu_ror(this, value, 1, 8 )); break;
+    case 0: updateModRM8(doRol(value, 1)); break;
+    case 1: updateModRM8(doRor(value, 1)); break;
     case 2: updateModRM8(cpu_rcl(this, value, 1, 8 )); break;
     case 3: updateModRM8(cpu_rcr(this, value, 1, 8 )); break;
     case 4: updateModRM8(leftShift(value, 1)); break;
@@ -255,8 +291,8 @@ void VCpu::_wrap_0xD1_16()
     WORD value = readModRM16(rm);
 
     switch (vomit_modRMRegisterPart(rm)) {
-    case 0: updateModRM16(cpu_rol(this, value, 1, 16)); break;
-    case 1: updateModRM16(cpu_ror(this, value, 1, 16)); break;
+    case 0: updateModRM16(doRol(value, 1)); break;
+    case 1: updateModRM16(doRor(value, 1)); break;
     case 2: updateModRM16(cpu_rcl(this, value, 1, 16)); break;
     case 3: updateModRM16(cpu_rcr(this, value, 1, 16)); break;
     case 4: updateModRM16(leftShift(value, 1)); break;
@@ -275,8 +311,8 @@ void VCpu::_wrap_0xD1_32()
     DWORD value = readModRM32(rm);
 
     switch (vomit_modRMRegisterPart(rm)) {
-    case 0: updateModRM32(cpu_rol(this, value, 1, 32)); break;
-    case 1: updateModRM32(cpu_ror(this, value, 1, 32)); break;
+    case 0: updateModRM32(doRol(value, 1)); break;
+    case 1: updateModRM32(doRor(value, 1)); break;
     case 2: updateModRM32(cpu_rcl(this, value, 1, 32)); break;
     case 3: updateModRM32(cpu_rcr(this, value, 1, 32)); break;
     case 4: updateModRM32(leftShift(value, 1)); break;
@@ -296,8 +332,8 @@ void VCpu::_wrap_0xD2()
     BYTE value = readModRM8(rm);
 
     switch (vomit_modRMRegisterPart(rm)) {
-    case 0: updateModRM8(cpu_rol(this, value, regs.B.CL, 8 )); break;
-    case 1: updateModRM8(cpu_ror(this, value, regs.B.CL, 8 )); break;
+    case 0: updateModRM8(doRol(value, regs.B.CL)); break;
+    case 1: updateModRM8(doRor(value, regs.B.CL)); break;
     case 2: updateModRM8(cpu_rcl(this, value, regs.B.CL, 8 )); break;
     case 3: updateModRM8(cpu_rcr(this, value, regs.B.CL, 8 )); break;
     case 4: updateModRM8(leftShift(value, regs.B.CL)); break;
@@ -316,8 +352,8 @@ void VCpu::_wrap_0xD3_16()
     WORD value = readModRM16(rm);
 
     switch (vomit_modRMRegisterPart(rm)) {
-    case 0: updateModRM16(cpu_rol(this, value, regs.B.CL, 16)); break;
-    case 1: updateModRM16(cpu_ror(this, value, regs.B.CL, 16)); break;
+    case 0: updateModRM16(doRol(value, regs.B.CL)); break;
+    case 1: updateModRM16(doRor(value, regs.B.CL)); break;
     case 2: updateModRM16(cpu_rcl(this, value, regs.B.CL, 16)); break;
     case 3: updateModRM16(cpu_rcr(this, value, regs.B.CL, 16)); break;
     case 4: updateModRM16(leftShift(value, regs.B.CL)); break;
@@ -336,8 +372,8 @@ void VCpu::_wrap_0xD3_32()
     DWORD value = readModRM32(rm);
 
     switch (vomit_modRMRegisterPart(rm)) {
-    case 0: updateModRM32(cpu_rol(this, value, regs.B.CL, 32)); break;
-    case 1: updateModRM32(cpu_ror(this, value, regs.B.CL, 32)); break;
+    case 0: updateModRM32(doRol(value, regs.B.CL)); break;
+    case 1: updateModRM32(doRor(value, regs.B.CL)); break;
     case 2: updateModRM32(cpu_rcl(this, value, regs.B.CL, 32)); break;
     case 3: updateModRM32(cpu_rcr(this, value, regs.B.CL, 32)); break;
     case 4: updateModRM32(leftShift(value, regs.B.CL)); break;

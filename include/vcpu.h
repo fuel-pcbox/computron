@@ -895,6 +895,9 @@ private:
     template<typename T>
     T leftShift(T, int steps);
 
+    template<typename T> T doRol(T, int steps);
+    template<typename T> T doRor(T, int steps);
+
     template<typename T> T doXor(T, T);
     template<typename T> T doOr(T, T);
     template<typename T> T doAnd(T, T);
@@ -1108,8 +1111,6 @@ extern VCpu* g_cpu;
 DWORD cpu_sar(VCpu*, WORD, BYTE, BYTE);
 DWORD cpu_rcl(VCpu*, WORD, BYTE, BYTE);
 DWORD cpu_rcr(VCpu*, WORD, BYTE, BYTE);
-DWORD cpu_rol(VCpu*, WORD, BYTE, BYTE);
-DWORD cpu_ror(VCpu*, WORD, BYTE, BYTE);
 
 // INLINE IMPLEMENTATIONS
 
