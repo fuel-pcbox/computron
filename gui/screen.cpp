@@ -32,6 +32,7 @@
 #include "vga_memory.h"
 #include "busmouse.h"
 #include "keyboard.h"
+#include "settings.h"
 
 #include <QtGui/QPainter>
 #include <QtGui/QPaintEvent>
@@ -625,8 +626,11 @@ bool Screen::loadKeymap(const QString& filename)
 
 void Screen::init()
 {
-    // FIXME: Grab this name from configuration file.
-    loadKeymap("keymaps/mbp.vkeymap");
+    QString keymap = machine()->settings()->keymap();
+    if (keymap.isEmpty())
+        vlog(LogScreen, "No keymap to load!");
+    else
+        loadKeymap(keymap);
 }
 
 WORD Screen::scanCodeFromKeyEvent(const QKeyEvent* event) const

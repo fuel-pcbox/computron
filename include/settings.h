@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Andreas Kling <kling@webkit.org>
+ * Copyright (C) 2003-2013 Andreas Kling <kling@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -45,6 +45,7 @@ public:
     WORD entryIP() const { return m_entryIP; }
 
     QHash<DWORD, QString> files() const { return m_files; }
+    QString keymap() const { return m_keymap; }
 
     ~Settings();
 
@@ -57,8 +58,10 @@ private:
     bool handleMemorySize(const QStringList&);
     bool handleFixedDisk(const QStringList&);
     bool handleFloppyDisk(const QStringList&);
+    bool handleKeymap(const QStringList&);
 
     QHash<DWORD, QString> m_files;
+    QString m_keymap;
     unsigned m_memorySize;
     WORD m_entryCS;
     WORD m_entryIP;

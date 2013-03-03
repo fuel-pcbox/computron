@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Andreas Kling <kling@webkit.org>
+ * Copyright (C) 2003-2013 Andreas Kling <kling@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -114,6 +114,22 @@ bool Settings::handleMemorySize(const QStringList& arguments)
         return false;
 
     setMemorySize(size * 1024);
+    return true;
+}
+
+bool Settings::handleKeymap(const QStringList& arguments)
+{
+    // keymap <path/to/file>
+
+    if (arguments.count() != 1)
+        return false;
+
+    QString fileName = arguments.at(0);
+    if (!QFile::exists(fileName))
+        return false;
+
+    vlog(LogConfig, "Keymap %s", qPrintable(fileName));
+    m_keymap = fileName;
     return true;
 }
 
@@ -253,6 +269,8 @@ Settings* Settings::createFromFile(const QString& fileName)
             success = settings->handleFixedDisk(arguments);
         else if (command == QLatin1String("floppy-disk"))
             success = settings->handleFloppyDisk(arguments);
+        else if (command == QLatin1String("keymap"))
+            success = settings->handleKeymap(arguments);
 
         if (!success) {
             vlog(LogConfig, "Failed parsing %s:%u %s", qPrintable(fileName), lineNumber, qPrintable(line));
