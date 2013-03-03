@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Andreas Kling <kling@webkit.org>
+ * Copyright (C) 2003-2013 Andreas Kling <kling@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,6 +26,7 @@
 #ifndef SCREEN_H
 #define SCREEN_H
 
+#include <QtCore/QHash>
 #include <QtGui/QWidget>
 #include "types.h"
 
@@ -75,7 +76,7 @@ protected:
 
 public slots:
     void refresh();
-    void loadKeymap(const QString &filename);
+    bool loadKeymap(const QString& filename);
 
 private slots:
     void flushKeyBuffer();
@@ -110,6 +111,13 @@ private:
     friend int get_current_y();
 
     Machine* machine() const;
+
+    WORD scanCodeFromKeyEvent(const QKeyEvent*) const;
+    QString keyNameFromKeyEvent(const QKeyEvent*) const;
+
+    WORD keyToScanCode(const QString& keyName, Qt::KeyboardModifiers) const;
+
+    QHash<BYTE, QString> m_keyMappings;
 
     struct Private;
     Private *d;
