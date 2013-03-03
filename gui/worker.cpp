@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Andreas Kling <kling@webkit.org>
+ * Copyright (C) 2003-2013 Andreas Kling <kling@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,9 +25,6 @@
 
 #include "worker.h"
 #include "vcpu.h"
-
-extern bool g_vomit_exit_main_loop;
-extern bool vomit_reboot;
 
 Worker::Worker(VCpu* cpu)
     : QThread(0)
@@ -57,12 +54,12 @@ void Worker::shutdown()
 
 void Worker::startMachine()
 {
-    g_vomit_exit_main_loop = false;
+    m_cpu->queueCommand(VCpu::EnterMainLoop);
     m_active = true;
 }
 
 void Worker::stopMachine()
 {
+    m_cpu->queueCommand(VCpu::ExitMainLoop);
     m_active = false;
-    g_vomit_exit_main_loop = true;
 }

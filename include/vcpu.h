@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Andreas Kling <kling@webkit.org>
+ * Copyright (C) 2003-2013 Andreas Kling <kling@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,8 +28,8 @@
 
 #include "vomit.h"
 #include "debug.h"
-
-// VCPU MONSTROSITY
+#include <QtCore/QMutex>
+#include <QtCore/QQueue>
 
 class Debugger;
 class Machine;
@@ -416,6 +416,9 @@ public:
     void nextDI(int size) { this->regs.W.DI += (getDF() ? -size : size); }
     void nextESI(int size) { this->regs.D.ESI += (getDF() ? -size : size); }
     void nextEDI(int size) { this->regs.D.EDI += (getDF() ? -size : size); }
+
+    enum Command { EnterMainLoop, ExitMainLoop };
+    void queueCommand(Command);
 
 protected:
     void _UNSUPP();
@@ -905,6 +908,8 @@ private:
 
     inline BYTE* codeMemory() const;
 
+    void flushCommandQueue();
+
     void dumpSelector(const char* segmentRegisterName, SegmentIndex) const;
     void syncSegmentRegister(SegmentIndex);
     SegmentSelector m_selector[6];
@@ -1074,6 +1079,11 @@ private:
 
     bool m_addressSize32;
     bool m_operationSize32;
+
+    bool m_shouldBreakOutOfMainLoop;
+
+    QQueue<Command> m_commandQueue;
+    QMutex m_commandMutex;
 };
 
 extern VCpu* g_cpu;

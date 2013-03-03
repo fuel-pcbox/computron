@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Andreas Kling <kling@webkit.org>
+ * Copyright (C) 2003-2013 Andreas Kling <kling@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,7 +33,6 @@
 #include <QtCore/QStringList>
 
 VCpu* g_cpu = 0;
-bool g_vomit_exit_main_loop = 0;
 
 #define CALL_HANDLER(handler16, handler32) if (o16()) { handler16(); } else { handler32(); }
 
@@ -408,6 +407,7 @@ void VCpu::GP(int code)
 
 VCpu::VCpu(Machine* machine)
     : m_machine(machine)
+    , m_shouldBreakOutOfMainLoop(false)
 {
     VM_ASSERT(!g_cpu);
     g_cpu = this;
@@ -551,12 +551,34 @@ void VCpu::haltedLoop()
     }
 }
 
+void VCpu::queueCommand(Command command)
+{
+    QMutexLocker locker(&m_commandMutex);
+    m_commandQueue.enqueue(command);
+}
+
+void VCpu::flushCommandQueue()
+{
+    QMutexLocker locker(&m_commandMutex);
+    while (!m_commandQueue.isEmpty()) {
+        switch (m_commandQueue.dequeue()) {
+        case ExitMainLoop:
+            m_shouldBreakOutOfMainLoop = true;
+            break;
+        case EnterMainLoop:
+            m_shouldBreakOutOfMainLoop = false;
+            break;
+        }
+    }
+}
+
 void VCpu::mainLoop()
 {
     forever {
 
-        // HACK: This can be set by an external force to make us break out.
-        if (g_vomit_exit_main_loop)
+        // FIXME: Throttle this so we don't spend the majority of CPU time in locking/unlocking this mutex.
+        flushCommandQueue();
+        if (m_shouldBreakOutOfMainLoop)
             return;
 
 #ifdef VOMIT_DEBUG
