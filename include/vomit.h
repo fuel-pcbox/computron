@@ -35,6 +35,12 @@ void vomit_exit(int exitCode);
 
 template<typename T> struct BitSizeOfType { static const int bits = sizeof(T) * 8; };
 
+template<typename T> struct SignedTypeMaker { };
+template<> struct SignedTypeMaker<BYTE> { typedef SIGNED_BYTE SignedType; };
+template<> struct SignedTypeMaker<WORD> { typedef SIGNED_WORD SignedType; };
+template<> struct SignedTypeMaker<DWORD> { typedef SIGNED_DWORD SignedType; };
+template<> struct SignedTypeMaker<QWORD> { typedef SIGNED_QWORD SignedType; };
+
 struct VomitOptions {
     bool trace;
     bool disklog;
@@ -88,12 +94,21 @@ inline WORD vomit_read16FromPointer(WORD* pointer)
 #endif
 }
 
-inline WORD vomit_signExtend(BYTE b)
+inline void CRASH()
 {
-    if (b & 0x80)
-        return b | 0xFF00;
-    else
-        return b;
+    WORD* p = reinterpret_cast<WORD*>(0xBB0DB00F);
+    *p = 0xDEAD;
+}
+
+template<typename T>
+inline T vomit_signExtend(BYTE value)
+{
+    if (!(value & 0x80))
+        return value;
+    if (BitSizeOfType<T>::bits == 16)
+        return value | 0xFF00;
+    if (BitSizeOfType<T>::bits == 32)
+        return value | 0xFFFFFF00;
 }
 
 inline int vomit_modRMRegisterPart(int rmbyte)

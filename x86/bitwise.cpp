@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Andreas Kling <kling@webkit.org>
+ * Copyright (C) 2003-2013 Andreas Kling <kling@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,60 +26,60 @@
 #include "vcpu.h"
 #include "templates.h"
 
-DEFAULT_RM8_reg8(cpu_and, _AND_RM8_reg8)
-DEFAULT_RM16_reg16(cpu_and, _AND_RM16_reg16)
-DEFAULT_RM32_reg32(cpu_and, _AND_RM32_reg32)
-DEFAULT_reg8_RM8(cpu_and, _AND_reg8_RM8)
-DEFAULT_reg16_RM16(cpu_and, _AND_reg16_RM16)
-DEFAULT_reg32_RM32(cpu_and, _AND_reg32_RM32)
-DEFAULT_RM8_imm8(cpu_and, _AND_RM8_imm8)
-DEFAULT_RM16_imm16(cpu_and, _AND_RM16_imm16)
-DEFAULT_RM32_imm32(cpu_and, _AND_RM32_imm32)
-DEFAULT_RM32_imm8(cpu_and, _AND_RM32_imm8)
-DEFAULT_RM16_imm8(cpu_and, _AND_RM16_imm8)
-DEFAULT_AL_imm8(cpu_and, _AND_AL_imm8)
-DEFAULT_AX_imm16(cpu_and, _AND_AX_imm16)
-DEFAULT_EAX_imm32(cpu_and, _AND_EAX_imm32)
+DEFAULT_RM8_reg8(doAnd, _AND_RM8_reg8)
+DEFAULT_RM16_reg16(doAnd, _AND_RM16_reg16)
+DEFAULT_RM32_reg32(doAnd, _AND_RM32_reg32)
+DEFAULT_reg8_RM8(doAnd, _AND_reg8_RM8)
+DEFAULT_reg16_RM16(doAnd, _AND_reg16_RM16)
+DEFAULT_reg32_RM32(doAnd, _AND_reg32_RM32)
+DEFAULT_RM8_imm8(doAnd, _AND_RM8_imm8)
+DEFAULT_RM16_imm16(doAnd, _AND_RM16_imm16)
+DEFAULT_RM32_imm32(doAnd, _AND_RM32_imm32)
+DEFAULT_RM32_imm8(doAnd, _AND_RM32_imm8)
+DEFAULT_RM16_imm8(doAnd, _AND_RM16_imm8)
+DEFAULT_AL_imm8(doAnd, _AND_AL_imm8)
+DEFAULT_AX_imm16(doAnd, _AND_AX_imm16)
+DEFAULT_EAX_imm32(doAnd, _AND_EAX_imm32)
 
-DEFAULT_RM8_reg8(cpu_xor, _XOR_RM8_reg8)
-DEFAULT_RM16_reg16(cpu_xor, _XOR_RM16_reg16)
-DEFAULT_RM32_reg32(cpu_xor, _XOR_RM32_reg32)
-DEFAULT_reg8_RM8(cpu_xor, _XOR_reg8_RM8)
-DEFAULT_reg16_RM16(cpu_xor, _XOR_reg16_RM16)
-DEFAULT_reg32_RM32(cpu_xor, _XOR_reg32_RM32)
-DEFAULT_RM8_imm8(cpu_xor, _XOR_RM8_imm8)
-DEFAULT_RM16_imm16(cpu_xor, _XOR_RM16_imm16)
-DEFAULT_RM32_imm32(cpu_xor, _XOR_RM32_imm32)
-DEFAULT_RM16_imm8(cpu_xor, _XOR_RM16_imm8)
-DEFAULT_RM32_imm8(cpu_xor, _XOR_RM32_imm8)
-DEFAULT_AL_imm8(cpu_xor, _XOR_AL_imm8)
-DEFAULT_AX_imm16(cpu_xor, _XOR_AX_imm16)
-DEFAULT_EAX_imm32(cpu_xor, _XOR_EAX_imm32)
+DEFAULT_RM8_reg8(doXor, _XOR_RM8_reg8)
+DEFAULT_RM16_reg16(doXor, _XOR_RM16_reg16)
+DEFAULT_RM32_reg32(doXor, _XOR_RM32_reg32)
+DEFAULT_reg8_RM8(doXor, _XOR_reg8_RM8)
+DEFAULT_reg16_RM16(doXor, _XOR_reg16_RM16)
+DEFAULT_reg32_RM32(doXor, _XOR_reg32_RM32)
+DEFAULT_RM8_imm8(doXor, _XOR_RM8_imm8)
+DEFAULT_RM16_imm16(doXor, _XOR_RM16_imm16)
+DEFAULT_RM32_imm32(doXor, _XOR_RM32_imm32)
+DEFAULT_RM16_imm8(doXor, _XOR_RM16_imm8)
+DEFAULT_RM32_imm8(doXor, _XOR_RM32_imm8)
+DEFAULT_AL_imm8(doXor, _XOR_AL_imm8)
+DEFAULT_AX_imm16(doXor, _XOR_AX_imm16)
+DEFAULT_EAX_imm32(doXor, _XOR_EAX_imm32)
 
-DEFAULT_RM8_reg8(cpu_or, _OR_RM8_reg8)
-DEFAULT_RM16_reg16(cpu_or, _OR_RM16_reg16)
-DEFAULT_RM32_reg32(cpu_or, _OR_RM32_reg32)
-DEFAULT_reg8_RM8(cpu_or, _OR_reg8_RM8)
-DEFAULT_reg16_RM16(cpu_or, _OR_reg16_RM16)
-DEFAULT_reg32_RM32(cpu_or, _OR_reg32_RM32)
-DEFAULT_RM8_imm8(cpu_or, _OR_RM8_imm8)
-DEFAULT_RM16_imm16(cpu_or, _OR_RM16_imm16)
-DEFAULT_RM32_imm32(cpu_or, _OR_RM32_imm32)
-DEFAULT_RM16_imm8(cpu_or, _OR_RM16_imm8)
-DEFAULT_RM32_imm8(cpu_or, _OR_RM32_imm8)
-DEFAULT_AL_imm8(cpu_or, _OR_AL_imm8)
-DEFAULT_AX_imm16(cpu_or, _OR_AX_imm16)
-DEFAULT_EAX_imm32(cpu_or, _OR_EAX_imm32)
+DEFAULT_RM8_reg8(doOr, _OR_RM8_reg8)
+DEFAULT_RM16_reg16(doOr, _OR_RM16_reg16)
+DEFAULT_RM32_reg32(doOr, _OR_RM32_reg32)
+DEFAULT_reg8_RM8(doOr, _OR_reg8_RM8)
+DEFAULT_reg16_RM16(doOr, _OR_reg16_RM16)
+DEFAULT_reg32_RM32(doOr, _OR_reg32_RM32)
+DEFAULT_RM8_imm8(doOr, _OR_RM8_imm8)
+DEFAULT_RM16_imm16(doOr, _OR_RM16_imm16)
+DEFAULT_RM32_imm32(doOr, _OR_RM32_imm32)
+DEFAULT_RM16_imm8(doOr, _OR_RM16_imm8)
+DEFAULT_RM32_imm8(doOr, _OR_RM32_imm8)
+DEFAULT_AL_imm8(doOr, _OR_AL_imm8)
+DEFAULT_AX_imm16(doOr, _OR_AX_imm16)
+DEFAULT_EAX_imm32(doOr, _OR_EAX_imm32)
 
-READONLY_RM8_reg8(cpu_and, _TEST_RM8_reg8)
-READONLY_RM16_reg16(cpu_and, _TEST_RM16_reg16)
-READONLY_RM32_reg32(cpu_and, _TEST_RM32_reg32)
-READONLY_RM8_imm8(cpu_and, _TEST_RM8_imm8)
-READONLY_RM16_imm16(cpu_and, _TEST_RM16_imm16)
-READONLY_RM32_imm32(cpu_and, _TEST_RM32_imm32)
-READONLY_AL_imm8(cpu_and, _TEST_AL_imm8)
-READONLY_AX_imm16(cpu_and, _TEST_AX_imm16)
-READONLY_EAX_imm32(cpu_and, _TEST_EAX_imm32)
+READONLY_RM8_reg8(doAnd, _TEST_RM8_reg8)
+READONLY_RM16_reg16(doAnd, _TEST_RM16_reg16)
+READONLY_RM32_reg32(doAnd, _TEST_RM32_reg32)
+READONLY_RM8_imm8(doAnd, _TEST_RM8_imm8)
+READONLY_RM16_imm16(doAnd, _TEST_RM16_imm16)
+READONLY_RM32_imm32(doAnd, _TEST_RM32_imm32)
+READONLY_AL_imm8(doAnd, _TEST_AL_imm8)
+READONLY_AX_imm16(doAnd, _TEST_AX_imm16)
+READONLY_EAX_imm32(doAnd, _TEST_EAX_imm32)
 
 void VCpu::_CBW()
 {
@@ -118,84 +118,45 @@ void VCpu::_SALC()
     setAL(getCF() ? 0xFF : 0);
 }
 
-BYTE cpu_or8(VCpu* cpu, BYTE dest, BYTE src)
+// FIXME: Move this method into VCpu.
+template<typename T>
+inline void updateCpuFlags(VCpu* cpu, T result)
 {
-    BYTE result = dest | src;
-    cpu->updateFlags8(result);
-    cpu->setOF(0);
-    cpu->setCF(0);
+    if (BitSizeOfType<T>::bits == 8)
+        cpu->updateFlags8(result);
+    else if (BitSizeOfType<T>::bits == 16)
+        cpu->updateFlags16(result);
+    else if (BitSizeOfType<T>::bits == 32)
+        cpu->updateFlags32(result);
+}
+
+template <typename T>
+T VCpu::doOr(T dest, T src)
+{
+    T result = dest | src;
+    updateCpuFlags(this, result);
+    setOF(0);
+    setCF(0);
     return result;
 }
 
-WORD cpu_or16(VCpu* cpu, WORD dest, WORD src)
+template<typename T>
+T VCpu::doXor(T dest, T src)
 {
-    WORD result = dest | src;
-    cpu->updateFlags16(result);
-    cpu->setOF(0);
-    cpu->setCF(0);
+    T result = dest ^ src;
+    updateCpuFlags(this, result);
+    setOF(0);
+    setCF(0);
     return result;
 }
 
-DWORD cpu_or32(VCpu* cpu, DWORD dest, DWORD src)
+template<typename T>
+T VCpu::doAnd(T dest, T src)
 {
-    DWORD result = dest | src;
-    cpu->updateFlags32(result);
-    cpu->setOF(0);
-    cpu->setCF(0);
-    return result;
-}
-
-BYTE cpu_xor8(VCpu* cpu, BYTE dest, BYTE src)
-{
-    BYTE result = dest ^ src;
-    cpu->updateFlags8(result);
-    cpu->setOF(0);
-    cpu->setCF(0);
-    return result;
-}
-
-WORD cpu_xor16(VCpu* cpu, WORD dest, WORD src)
-{
-    WORD result = dest ^ src;
-    cpu->updateFlags16(result);
-    cpu->setOF(0);
-    cpu->setCF(0);
-    return result;
-}
-
-DWORD cpu_xor32(VCpu* cpu, DWORD dest, DWORD src)
-{
-    DWORD result = dest ^ src;
-    cpu->updateFlags32(result);
-    cpu->setOF(0);
-    cpu->setCF(0);
-    return result;
-}
-
-BYTE cpu_and8(VCpu* cpu, BYTE dest, BYTE src)
-{
-    BYTE result = dest & src;
-    cpu->updateFlags8(result);
-    cpu->setOF(0);
-    cpu->setCF(0);
-    return result;
-}
-
-WORD cpu_and16(VCpu* cpu, WORD dest, WORD src)
-{
-    WORD result = dest & src;
-    cpu->updateFlags16(result);
-    cpu->setOF(0);
-    cpu->setCF(0);
-    return result;
-}
-
-DWORD cpu_and32(VCpu* cpu, DWORD dest, DWORD src)
-{
-    DWORD result = dest & src;
-    cpu->updateFlags32(result);
-    cpu->setOF(0);
-    cpu->setCF(0);
+    T result = dest & src;
+    updateCpuFlags(this, result);
+    setOF(0);
+    setCF(0);
     return result;
 }
 

@@ -975,14 +975,14 @@ void VCpu::_LEA_reg16_mem16()
         case 64:
             switch(b & 0x07)
             {
-                case 0: retv = regs.W.BX+regs.W.SI + vomit_signExtend(fetchOpcodeByte()); break;
-                case 1: retv = regs.W.BX+regs.W.DI + vomit_signExtend(fetchOpcodeByte()); break;
-                case 2: retv = regs.W.BP+regs.W.SI + vomit_signExtend(fetchOpcodeByte()); break;
-                case 3: retv = regs.W.BP+regs.W.DI + vomit_signExtend(fetchOpcodeByte()); break;
-                case 4: retv = regs.W.SI + vomit_signExtend(fetchOpcodeByte()); break;
-                case 5: retv = regs.W.DI + vomit_signExtend(fetchOpcodeByte()); break;
-                case 6: retv = regs.W.BP + vomit_signExtend(fetchOpcodeByte()); break;
-                default: retv = regs.W.BX + vomit_signExtend(fetchOpcodeByte()); break;
+                case 0: retv = regs.W.BX+regs.W.SI + vomit_signExtend<WORD>(fetchOpcodeByte()); break;
+                case 1: retv = regs.W.BX+regs.W.DI + vomit_signExtend<WORD>(fetchOpcodeByte()); break;
+                case 2: retv = regs.W.BP+regs.W.SI + vomit_signExtend<WORD>(fetchOpcodeByte()); break;
+                case 3: retv = regs.W.BP+regs.W.DI + vomit_signExtend<WORD>(fetchOpcodeByte()); break;
+                case 4: retv = regs.W.SI + vomit_signExtend<WORD>(fetchOpcodeByte()); break;
+                case 5: retv = regs.W.DI + vomit_signExtend<WORD>(fetchOpcodeByte()); break;
+                case 6: retv = regs.W.BP + vomit_signExtend<WORD>(fetchOpcodeByte()); break;
+                default: retv = regs.W.BX + vomit_signExtend<WORD>(fetchOpcodeByte()); break;
             }
             break;
         case 128:

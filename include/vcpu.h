@@ -895,6 +895,17 @@ private:
     template<typename T>
     T leftShift(T, int steps);
 
+    template<typename T> T doXor(T, T);
+    template<typename T> T doOr(T, T);
+    template<typename T> T doAnd(T, T);
+
+    template<typename T> QWORD doAdd(T, T);
+    template<typename T> QWORD doAdc(T, T);
+    template<typename T> QWORD doSub(T, T);
+    template<typename T> QWORD doSbb(T, T);
+    template<typename T> QWORD doMul(T, T);
+    template<typename T> SIGNED_QWORD doImul(T, T);
+
     enum ValueSize {
         ByteSize,
         WordSize,
@@ -1093,30 +1104,6 @@ private:
 };
 
 extern VCpu* g_cpu;
-
-WORD cpu_add8(BYTE, BYTE);
-WORD cpu_sub8(BYTE, BYTE);
-WORD cpu_mul8(BYTE, BYTE);
-WORD cpu_div8(BYTE, BYTE);
-SIGNED_WORD cpu_imul8(SIGNED_BYTE, SIGNED_BYTE);
-
-DWORD cpu_add16(VCpu*, WORD, WORD);
-QWORD cpu_add32(VCpu*, DWORD, DWORD);
-DWORD cpu_sub16(VCpu*, WORD, WORD);
-QWORD cpu_sub32(VCpu*, DWORD, DWORD);
-DWORD cpu_mul16(VCpu*, WORD, WORD);
-DWORD cpu_div16(VCpu*, WORD, WORD);
-SIGNED_DWORD cpu_imul16(VCpu*, SIGNED_WORD, SIGNED_WORD);
-
-BYTE cpu_or8(VCpu*, BYTE, BYTE);
-BYTE cpu_and8(VCpu*, BYTE, BYTE);
-BYTE cpu_xor8(VCpu*, BYTE, BYTE);
-WORD cpu_or16(VCpu*, WORD, WORD);
-WORD cpu_and16(VCpu*, WORD, WORD);
-WORD cpu_xor16(VCpu*, WORD, WORD);
-DWORD cpu_or32(VCpu*, DWORD, DWORD);
-DWORD cpu_xor32(VCpu*, DWORD, DWORD);
-DWORD cpu_and32(VCpu*, DWORD, DWORD);
 
 DWORD cpu_sar(VCpu*, WORD, BYTE, BYTE);
 DWORD cpu_rcl(VCpu*, WORD, BYTE, BYTE);

@@ -69,7 +69,7 @@ void VCpu::_BOUND()
 
 void VCpu::_PUSH_imm8()
 {
-    push(vomit_signExtend(fetchOpcodeByte()));
+    push(vomit_signExtend<WORD>(fetchOpcodeByte()));
 }
 
 void VCpu::_PUSH_imm16()
