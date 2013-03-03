@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Andreas Kling <kling@webkit.org>
+ * Copyright (C) 2003-2013 Andreas Kling <kling@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,6 +25,49 @@
 
 #include "vcpu.h"
 #include "debug.h"
+
+template<typename T>
+T VCpu::rightShift(T data, int steps)
+{
+    T result = data;
+
+    steps &= 0x1F;
+
+    if (steps) {
+        if (steps <= BitSizeOfType<T>::bits) {
+            setCF((result >> (steps - 1)) & 1);
+            if (steps == 1)
+                setOF((data >> (BitSizeOfType<T>::bits - 1)) & 1);
+        } else
+            setCF(0);
+        result >>= steps;
+    }
+
+    updateFlags(result, BitSizeOfType<T>::bits);
+    return result;
+}
+
+template<typename T>
+T VCpu::leftShift(T data, int steps)
+{
+    T result = data;
+
+    steps &= 0x1F;
+
+    if (steps) {
+        if (steps <= BitSizeOfType<T>::bits) {
+            setCF(result >> (BitSizeOfType<T>::bits - steps) & 1);
+            if (steps == 1)
+                setOF((data >> (BitSizeOfType<T>::bits - 1)) ^ getCF());
+        } else
+            setCF(0);
+        result <<= steps;
+    }
+
+    updateFlags(result, BitSizeOfType<T>::bits);
+    return result;
+}
+
 
 void VCpu::_wrap_0x80()
 {
@@ -134,8 +177,8 @@ void VCpu::_wrap_0xC0()
     case 1: updateModRM8(cpu_ror(this, value, imm, 8)); break;
     case 2: updateModRM8(cpu_rcl(this, value, imm, 8)); break;
     case 3: updateModRM8(cpu_rcr(this, value, imm, 8)); break;
-    case 4: updateModRM8(cpu_shl(this, value, imm, 8)); break;
-    case 5: updateModRM8(cpu_shr(this, value, imm, 8)); break;
+    case 4: updateModRM8(leftShift(value, imm)); break;
+    case 5: updateModRM8(rightShift(value, imm)); break;
     case 6:
         vlog(LogAlert, "C0 /6 not wrapped");
         exception(6);
@@ -155,8 +198,8 @@ void VCpu::_wrap_0xC1_16()
     case 1: updateModRM16(cpu_ror(this, value, imm, 16)); break;
     case 2: updateModRM16(cpu_rcl(this, value, imm, 16)); break;
     case 3: updateModRM16(cpu_rcr(this, value, imm, 16)); break;
-    case 4: updateModRM16(cpu_shl(this, value, imm, 16)); break;
-    case 5: updateModRM16(cpu_shr(this, value, imm, 16)); break;
+    case 4: updateModRM16(leftShift(value, imm)); break;
+    case 5: updateModRM16(rightShift(value, imm)); break;
     case 6:
         vlog(LogAlert, "[16bit] C1 /6 not wrapped");
         exception(6);
@@ -176,8 +219,8 @@ void VCpu::_wrap_0xC1_32()
     case 1: updateModRM32(cpu_ror(this, value, imm, 32)); break;
     case 2: updateModRM32(cpu_rcl(this, value, imm, 32)); break;
     case 3: updateModRM32(cpu_rcr(this, value, imm, 32)); break;
-    case 4: updateModRM32(cpu_shl(this, value, imm, 32)); break;
-    case 5: updateModRM32(cpu_shr(this, value, imm, 32)); break;
+    case 4: updateModRM32(leftShift(value, imm)); break;
+    case 5: updateModRM32(rightShift(value, imm)); break;
     case 6:
         vlog(LogAlert, "[32bit] C1 /6 not wrapped");
         exception(6);
@@ -196,8 +239,8 @@ void VCpu::_wrap_0xD0()
     case 1: updateModRM8(cpu_ror(this, value, 1, 8 )); break;
     case 2: updateModRM8(cpu_rcl(this, value, 1, 8 )); break;
     case 3: updateModRM8(cpu_rcr(this, value, 1, 8 )); break;
-    case 4: updateModRM8(cpu_shl(this, value, 1, 8 )); break;
-    case 5: updateModRM8(cpu_shr(this, value, 1, 8 )); break;
+    case 4: updateModRM8(leftShift(value, 1)); break;
+    case 5: updateModRM8(rightShift(value, 1)); break;
     case 6:
         vlog(LogAlert, "D0 /6 not wrapped");
         exception(6);
@@ -216,8 +259,8 @@ void VCpu::_wrap_0xD1_16()
     case 1: updateModRM16(cpu_ror(this, value, 1, 16)); break;
     case 2: updateModRM16(cpu_rcl(this, value, 1, 16)); break;
     case 3: updateModRM16(cpu_rcr(this, value, 1, 16)); break;
-    case 4: updateModRM16(cpu_shl(this, value, 1, 16)); break;
-    case 5: updateModRM16(cpu_shr(this, value, 1, 16)); break;
+    case 4: updateModRM16(leftShift(value, 1)); break;
+    case 5: updateModRM16(rightShift(value, 1)); break;
     case 6:
         vlog(LogAlert, "[16bit] D1 /6 not wrapped");
         exception(6);
@@ -236,8 +279,8 @@ void VCpu::_wrap_0xD1_32()
     case 1: updateModRM32(cpu_ror(this, value, 1, 32)); break;
     case 2: updateModRM32(cpu_rcl(this, value, 1, 32)); break;
     case 3: updateModRM32(cpu_rcr(this, value, 1, 32)); break;
-    case 4: updateModRM32(cpu_shl(this, value, 1, 32)); break;
-    case 5: updateModRM32(cpu_shr(this, value, 1, 32)); break;
+    case 4: updateModRM32(leftShift(value, 1)); break;
+    case 5: updateModRM32(rightShift(value, 1)); break;
     case 6:
         vlog(LogAlert, "[32bit] D1 /6 not wrapped");
         exception(6);
@@ -257,8 +300,8 @@ void VCpu::_wrap_0xD2()
     case 1: updateModRM8(cpu_ror(this, value, regs.B.CL, 8 )); break;
     case 2: updateModRM8(cpu_rcl(this, value, regs.B.CL, 8 )); break;
     case 3: updateModRM8(cpu_rcr(this, value, regs.B.CL, 8 )); break;
-    case 4: updateModRM8(cpu_shl(this, value, regs.B.CL, 8 )); break;
-    case 5: updateModRM8(cpu_shr(this, value, regs.B.CL, 8 )); break;
+    case 4: updateModRM8(leftShift(value, regs.B.CL)); break;
+    case 5: updateModRM8(rightShift(value, regs.B.CL)); break;
     case 6:
         vlog(LogAlert, "D2 /6 not wrapped");
         exception(6);
@@ -277,8 +320,8 @@ void VCpu::_wrap_0xD3_16()
     case 1: updateModRM16(cpu_ror(this, value, regs.B.CL, 16)); break;
     case 2: updateModRM16(cpu_rcl(this, value, regs.B.CL, 16)); break;
     case 3: updateModRM16(cpu_rcr(this, value, regs.B.CL, 16)); break;
-    case 4: updateModRM16(cpu_shl(this, value, regs.B.CL, 16)); break;
-    case 5: updateModRM16(cpu_shr(this, value, regs.B.CL, 16)); break;
+    case 4: updateModRM16(leftShift(value, regs.B.CL)); break;
+    case 5: updateModRM16(rightShift(value, regs.B.CL)); break;
     case 6:
         vlog(LogAlert, "[16bit] D3 /6 not wrapped");
         exception(6);
@@ -290,15 +333,15 @@ void VCpu::_wrap_0xD3_16()
 void VCpu::_wrap_0xD3_32()
 {
     BYTE rm = fetchOpcodeByte();
-    WORD value = readModRM32(rm);
+    DWORD value = readModRM32(rm);
 
     switch (vomit_modRMRegisterPart(rm)) {
     case 0: updateModRM32(cpu_rol(this, value, regs.B.CL, 32)); break;
     case 1: updateModRM32(cpu_ror(this, value, regs.B.CL, 32)); break;
     case 2: updateModRM32(cpu_rcl(this, value, regs.B.CL, 32)); break;
     case 3: updateModRM32(cpu_rcr(this, value, regs.B.CL, 32)); break;
-    case 4: updateModRM32(cpu_shl(this, value, regs.B.CL, 32)); break;
-    case 5: updateModRM32(cpu_shr(this, value, regs.B.CL, 32)); break;
+    case 4: updateModRM32(leftShift(value, regs.B.CL)); break;
+    case 5: updateModRM32(rightShift(value, regs.B.CL)); break;
     case 6:
         vlog(LogAlert, "[32bit] D3 /6 not wrapped");
         exception(6);

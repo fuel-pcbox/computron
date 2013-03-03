@@ -889,6 +889,12 @@ protected:
     void handleRepeatOpcode(BYTE opcode, bool shouldEqual);
 
 private:
+    template<typename T>
+    T rightShift(T, int steps);
+
+    template<typename T>
+    T leftShift(T, int steps);
+
     enum ValueSize {
         ByteSize,
         WordSize,
@@ -1112,8 +1118,6 @@ DWORD cpu_or32(VCpu*, DWORD, DWORD);
 DWORD cpu_xor32(VCpu*, DWORD, DWORD);
 DWORD cpu_and32(VCpu*, DWORD, DWORD);
 
-DWORD cpu_shl(VCpu*, WORD, BYTE, BYTE);
-DWORD cpu_shr(VCpu*, WORD, BYTE, BYTE);
 DWORD cpu_sar(VCpu*, WORD, BYTE, BYTE);
 DWORD cpu_rcl(VCpu*, WORD, BYTE, BYTE);
 DWORD cpu_rcr(VCpu*, WORD, BYTE, BYTE);

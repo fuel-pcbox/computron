@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Andreas Kling <kling@webkit.org>
+ * Copyright (C) 2003-2013 Andreas Kling <kling@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,6 +32,8 @@
 #define MAX_FN_LENGTH	128
 
 void vomit_exit(int exitCode);
+
+template<typename T> struct BitSizeOfType { static const int bits = sizeof(T) * 8; };
 
 struct VomitOptions {
     bool trace;

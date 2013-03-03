@@ -199,56 +199,6 @@ DWORD cpu_and32(VCpu* cpu, DWORD dest, DWORD src)
     return result;
 }
 
-DWORD cpu_shl(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
-{
-    DWORD result = data;
-
-    steps &= 0x1F;
-
-    if (bits == 8) {
-        for (BYTE i = 0; i < steps; ++i) {
-            cpu->setCF((result >> 7) & 1);
-            result <<= 1;
-        }
-    } else {
-        for (BYTE i = 0; i < steps; ++i) {
-            cpu->setCF((result >> 15) & 1);
-            result <<= 1;
-        }
-    }
-
-    if (steps == 1)
-        cpu->setOF((data >> (bits - 1)) ^ cpu->getCF());
-
-    cpu->updateFlags(result, bits);
-    return result;
-}
-
-DWORD cpu_shr(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
-{
-    DWORD result = data;
-
-    steps &= 0x1F;
-
-    if (bits == 8) {
-        for (BYTE i = 0; i < steps; ++i) {
-            cpu->setCF(result & 1);
-            result >>= 1;
-        }
-    } else {
-        for (BYTE i = 0; i < steps; ++i) {
-            cpu->setCF(result & 1);
-            result >>= 1;
-        }
-    }
-
-    if (steps == 1)
-        cpu->setOF((data >> (bits - 1)) & 1);
-
-    cpu->updateFlags(result, bits);
-    return result;
-}
-
 DWORD cpu_sar(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
 {
     DWORD result = data;
