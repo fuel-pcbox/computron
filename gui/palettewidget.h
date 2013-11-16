@@ -26,7 +26,7 @@
 #ifndef PALETTEWIDGET_H
 #define PALETTEWIDGET_H
 
-#include <QtGui/QWidget>
+#include <QtWidgets/QWidget>
 
 class PaletteWidget : public QWidget
 {

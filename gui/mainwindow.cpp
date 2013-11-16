@@ -27,7 +27,7 @@
 #include "machinewidget.h"
 #include "machine.h"
 #include "screen.h"
-#include <QtGui/QTabWidget>
+#include <QtWidgets/QTabWidget>
 
 struct MainWindow::Private
 {

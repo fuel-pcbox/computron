@@ -31,10 +31,10 @@
 #include "screen.h"
 #include <QtCore/QCoreApplication>
 #include <QtCore/QTimer>
-#include <QtGui/QAction>
-#include <QtGui/QFileDialog>
-#include <QtGui/QToolBar>
-#include <QtGui/QVBoxLayout>
+#include <QtWidgets/QAction>
+#include <QtWidgets/QFileDialog>
+#include <QtWidgets/QToolBar>
+#include <QtWidgets/QVBoxLayout>
 
 extern void vomit_set_drive_image(int driveIndex, const char* fileName);
 

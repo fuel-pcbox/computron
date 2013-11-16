@@ -27,7 +27,7 @@
 #define SCREEN_H
 
 #include <QtCore/QHash>
-#include <QtGui/QWidget>
+#include <QtWidgets/QWidget>
 #include "types.h"
 
 class Machine;

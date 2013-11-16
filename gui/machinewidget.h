@@ -26,7 +26,7 @@
 #ifndef MACHINEWIDGET_H
 #define MACHINEWIDGET_H
 
-#include <QtGui/QWidget>
+#include <QtWidgets/QWidget>
 
 class Machine;
 

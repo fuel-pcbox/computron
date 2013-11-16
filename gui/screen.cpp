@@ -506,7 +506,7 @@ bool Screen::loadKeymap(const QString& filename)
 
     while (!keymapFile.atEnd()) {
         QByteArray rawLine = keymapFile.readLine();
-        QString line = QString::fromAscii(rawLine);
+        QString line = QString::fromLatin1(rawLine);
         QStringList pieces = line.split(QChar(' '));
 
         if (line.startsWith('#'))

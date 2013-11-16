@@ -1,5 +1,5 @@
 TEMPLATE = app
-TARGET = 
+TARGET = vomit
 DEPENDPATH += . x86 bios disasm gui hw include disasm/include
 INCLUDEPATH += . include disasm/include gui hw
 CXXFLAGS += -std=gnu++0x -O0 -W -Wall -Wshadow
@@ -7,6 +7,7 @@ DEFINES += VOMIT_DEBUG
 DEFINES += VOMIT_TRACE
 CONFIG += silent
 CONFIG += debug
+QT += widgets
 
 CONFIG -= app_bundle
 

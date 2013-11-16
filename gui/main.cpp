@@ -24,7 +24,7 @@
  */
 
 #include "mainwindow.h"
-#include <QApplication>
+#include <QtWidgets/QApplication>
 #include <QFile>
 #include "screen.h"
 #include "vomit.h"
