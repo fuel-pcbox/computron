@@ -1048,6 +1048,8 @@ void VCpu::writeMemory32(DWORD address, DWORD data)
     }
 #endif
 
+    assert(!getPE());
+
     assert (address < (0xFFFFF - 4));
     DWORD* ptr = reinterpret_cast<DWORD*>(m_memory + address);
     vomit_write32ToPointer(ptr, data);
@@ -1060,6 +1062,7 @@ DWORD VCpu::readMemory32(DWORD address) const
     if (addressIsInVGAMemory(address))
         return machine()->vgaMemory()->read16(address) | (machine()->vgaMemory()->read16(address + 2) << 16);
 #endif
+    assert(!getPE());
     return vomit_read32FromPointer(reinterpret_cast<DWORD*>(m_memory + address));
 }
 
@@ -1074,6 +1077,7 @@ BYTE VCpu::readMemory8(DWORD address) const
         address &= 0xFFFFF;
     }
 
+    assert(!getPE());
     if (addressIsInVGAMemory(address))
         return machine()->vgaMemory()->read8(address);
     return m_memory[address];
@@ -1096,6 +1100,7 @@ WORD VCpu::readMemory16(DWORD address) const
         address &= 0xFFFFF;
     }
 
+    assert(!getPE());
     if (addressIsInVGAMemory(address))
         return machine()->vgaMemory()->read16(address);
     return vomit_read16FromPointer(reinterpret_cast<WORD*>(m_memory + address));
@@ -1121,6 +1126,8 @@ void VCpu::writeMemory8(DWORD address, BYTE value)
 #endif
         address &= 0xFFFFF;
     }
+
+    assert(!getPE());
 
     if (addressIsInVGAMemory(address)) {
         machine()->vgaMemory()->write8(address, value);
@@ -1149,6 +1156,8 @@ void VCpu::writeMemory16(DWORD address, WORD value)
 
         address &= 0xFFFFF;
     }
+
+    assert(!getPE());
 
     if (addressIsInVGAMemory(address)) {
         machine()->vgaMemory()->write16(address, value);
