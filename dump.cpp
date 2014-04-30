@@ -153,6 +153,8 @@ void VCpu::dumpAll() const
 
     vlog(LogDump, "CR0: %08X", getCR0());
 
+    vlog(LogDump, "A20: %u", isA20Enabled());
+
     vlog(LogDump, "GDTR: {base=%08X, limit=%04X}", this->GDTR.base, this->GDTR.limit);
     vlog(LogDump, "LDTR: {base=%08X, limit=%04X}", this->LDTR.base, this->LDTR.limit);
     vlog(LogDump, "IDTR: {base=%08X, limit=%04X}", this->IDTR.base, this->IDTR.limit);
