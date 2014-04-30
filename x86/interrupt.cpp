@@ -26,6 +26,7 @@
 #include "vomit.h"
 #include "vcpu.h"
 #include "debug.h"
+#include "debugger.h"
 
 void VCpu::_INT_imm8()
 {
@@ -61,8 +62,11 @@ void VCpu::jumpToInterruptHandler(int isr)
     if (options.trapint)
         vlog(LogCPU, "%04X:%08X Interrupt %02X,%02X trapped", getBaseCS(), getBaseEIP(), isr, this->regs.B.AH);
 
-    if (isr == 0x06)
+    if (isr == 0x06) {
         vlog(LogCPU, "Invalid opcode trap at %04X:%08X (%02X)", getBaseCS(), getBaseEIP(), *(codeMemory() + this->getBaseIP()));
+        dumpAll();
+        debugger()->enter();
+    }
 #endif
 
     push(getFlags());
