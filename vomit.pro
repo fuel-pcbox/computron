@@ -39,6 +39,7 @@ HEADERS += gui/machinewidget.h \
            hw/cmos.h \
            hw/pic.h \
            hw/vga.h \
+           hw/PS2.h \
            include/debugger.h \
            include/types.h \
            include/vcpu.h \
@@ -94,4 +95,5 @@ SOURCES += debug.cpp \
            hw/vomctl.cpp \
            hw/iodevice.cpp \
            hw/vga_memory.cpp \
-           hw/cmos.cpp
+           hw/cmos.cpp \
+           hw/PS2.cpp
