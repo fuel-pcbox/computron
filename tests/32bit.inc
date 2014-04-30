@@ -2,3 +2,5 @@
 
 mov eax, 1
 mov cr0, eax
+
+[bits 32]
