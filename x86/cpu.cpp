@@ -126,7 +126,8 @@ void VCpu::decode(BYTE op)
             case 1: _SIDT(); break;
             case 2: _LGDT(); break;
             case 3: _LIDT(); break;
-            case 6: _LMSW(); break;
+            case 4: _SMSW_RM16(); break;
+            case 6: _LMSW_RM16(); break;
             default: goto fffuuu;
             }
             break;

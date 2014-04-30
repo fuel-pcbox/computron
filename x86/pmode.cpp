@@ -53,8 +53,13 @@ void VCpu::_LIDT()
     IDTR.limit = readMemory16(currentSegment(), tableAddress);
 }
 
-void VCpu::_LMSW()
+void VCpu::_LMSW_RM16()
 {
     BYTE msw = readModRM16(subrmbyte);
     CR0 = (CR0 & 0xFFFFFFF0) | msw;
+}
+
+void VCpu::_SMSW_RM16()
+{
+    writeModRM16(subrmbyte, CR0 & 0xFFFF);
 }

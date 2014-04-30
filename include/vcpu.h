@@ -795,8 +795,8 @@ protected:
 
     // 80386+ INSTRUCTIONS
 
-    void _LMSW();
-    void _SMSW();
+    void _LMSW_RM16();
+    void _SMSW_RM16();
 
     void _SGDT();
     void _LGDT();
