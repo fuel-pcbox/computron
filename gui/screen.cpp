@@ -637,14 +637,18 @@ WORD Screen::scanCodeFromKeyEvent(const QKeyEvent* event) const
 {
     QString keyName = keyNameFromKeyEvent(event);
 
-    if (event->modifiers() == Qt::NoModifier)
+    auto modifiers = event->modifiers() & ~Qt::KeypadModifier;
+
+    switch (modifiers) {
+    case Qt::NoModifier:
         return normals[keyName];
-    if (event->modifiers() & Qt::ShiftModifier)
+    case Qt::ShiftModifier:
         return shifts[keyName];
-    if (event->modifiers() & Qt::AltModifier)
+    case Qt::AltModifier:
         return alts[keyName];
-    if (event->modifiers() & Qt::ControlModifier)
+    case Qt::ControlModifier:
         return ctrls[keyName];
+    }
 
     qDebug() << Q_FUNC_INFO << "Unhandled key" << event->modifiers() << keyName;
     return 0xffff;
