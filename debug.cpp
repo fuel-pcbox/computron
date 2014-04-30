@@ -42,7 +42,7 @@ void vlog(VLogChannel channel, const char* format, ...)
     case LogInit: prefix = "init"; break;
     case LogExit: prefix = "exit"; break;
     case LogDisk: prefix = "disk"; break;
-    case LogIO: prefix = "i/o"; show_on_stdout = false; break;
+    case LogIO: prefix = "i/o"; break;
     case LogAlert: prefix = "alert"; break;
     case LogVGA: prefix = "vga"; break;
     case LogConfig: prefix = "config"; break;

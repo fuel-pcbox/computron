@@ -45,7 +45,7 @@ BYTE PS2::in8(WORD port)
 {
     if (port == SystemControlPortA) {
         BYTE data = g_cpu->isA20Enabled() << 1;
-        vlog(LogIO, "System Control Port A read, returning %02X\n", data);
+        vlog(LogIO, "System Control Port A read, returning %02X", data);
         return data;
     }
     return IODevice::in8(port);
@@ -54,7 +54,7 @@ BYTE PS2::in8(WORD port)
 void PS2::out8(WORD port, BYTE data)
 {
     if (port == SystemControlPortA) {
-        vlog(LogIO, "A20=%u->%u (System Control Port A)\n", g_cpu->isA20Enabled(), !!(data & 0x2));
+        vlog(LogIO, "A20=%u->%u (System Control Port A)", g_cpu->isA20Enabled(), !!(data & 0x2));
         g_cpu->setA20Enabled(data & 0x2);
         return;
     }
