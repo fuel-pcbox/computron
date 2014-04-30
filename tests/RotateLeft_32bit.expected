@@ -1,0 +1,37 @@
+(  config) Loading tmp.bin at 0x00010000
+(  screen) No keymap to load!
+(    init) BusMouse present
+(    init) FDC present
+(    init) IDE present
+(    init) Keyboard present
+(    init) PIC present
+(    init) PIC present
+(    init) PIT present
+(    init) VGA present
+(    init) VomCtl present
+(    init) CMOS present
+(    init) PS2 present
+(     cpu) Protected mode Enable = 1
+(     cpu) 0xF1: Secret shutdown command received!
+(    dump) EAX: 12233441
+(    dump) EBX: 56677885
+(    dump) ECX: 9AABBCC9
+(    dump) EDX: DEEFF00D
+(    dump) EBP: 23344112
+(    dump) ESP: 67788556
+(    dump) ESI: ABBCC99A
+(    dump) EDI: EFF00DDE
+(    dump) CS: 1000 {00000000:00000}
+(    dump) DS: 0000 {00000000:00000}
+(    dump) ES: 0000 {00000000:00000}
+(    dump) SS: 0000 {00000000:00000}
+(    dump) FS: 0000 {00000000:00000}
+(    dump) GS: 0000 {00000000:00000}
+(    dump) CR0: 00000001
+(    dump) A20: 0
+(    dump) GDTR: {base=00000000, limit=0000}
+(    dump) LDTR: {base=00000000, limit=0000}
+(    dump) IDTR: {base=00000000, limit=0000}
+(    dump) C=0 P=0 A=0 Z=0 S=0 I=1 D=0 O=0
+(    dump)   -  (66 B801000000)
+(    dump) 1000:00000059 F1             ??? 
