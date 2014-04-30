@@ -311,7 +311,7 @@ void* VCpu::resolveModRM32_internal(BYTE rmbyte)
         m_lastModRMPointer = 0;
         break;
     case 0x40:
-        offset = vomit_signExtend<WORD>(fetchOpcodeByte());
+        offset = vomit_signExtend<DWORD>(fetchOpcodeByte());
         switch (rmbyte & 0x07) {
         case 0: offset += getEAX(); break;
         case 1: offset += getECX(); break;
@@ -327,7 +327,7 @@ void* VCpu::resolveModRM32_internal(BYTE rmbyte)
         m_lastModRMPointer = 0;
         break;
     case 0x80:
-        offset = fetchOpcodeWord();
+        offset = fetchOpcodeDWord();
         switch (rmbyte & 0x07) {
         case 0: offset += getEAX(); break;
         case 1: offset += getECX(); break;
