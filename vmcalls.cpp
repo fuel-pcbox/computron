@@ -40,7 +40,6 @@ void vm_call8(VCpu* cpu, WORD port, BYTE data) {
     switch (port) {
     case 0xE0:
         vlog(LogAlert, "Interrupt %02X, function %04X requested", cpu->getBL(), cpu->getAX());
-        cpu->dumpAll();
         break;
     case 0xE6:
         vm_handleE6(cpu);
