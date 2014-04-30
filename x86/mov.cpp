@@ -223,6 +223,8 @@ void VCpu::_MOV_CR_reg32()
 
     setControlRegister(crIndex, getRegister32(static_cast<VCpu::RegisterIndex32>(rm & 7)));
 
+    updateSizeModes();
+
     if (crIndex == 0)
         vlog(LogCPU, "Protected mode Enable = %u", getPE());
 }

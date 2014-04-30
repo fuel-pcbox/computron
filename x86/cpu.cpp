@@ -1148,3 +1148,9 @@ void VCpu::writeMemory16(WORD segment, WORD offset, WORD value)
 {
     writeMemory16(vomit_toFlatAddress(segment, offset), value);
 }
+
+void VCpu::updateSizeModes()
+{
+    m_addressSize32 = getPE();
+    m_operationSize32 = getPE();
+}

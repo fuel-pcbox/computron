@@ -407,6 +407,8 @@ public:
     void dumpTrace() const;
 #endif
 
+    void updateSizeModes();
+
     bool a16() const { return !m_addressSize32; }
     bool a32() const { return m_addressSize32; }
     bool o16() const { return !m_operationSize32; }
