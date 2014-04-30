@@ -1565,20 +1565,30 @@ _bios_interrupt14:
 ; INT 15 - System BIOS Services
 ;
 _bios_interrupt15:
-    je      .ps2mouse
     cmp     ah, 0xc0
     je      .getSystemConfigurationParameters
     cmp     ah, 0x88
     je      .queryExtendedMemorySize
     cmp     ah, 0x24
     je      .a20control
-    jmp     .unsupported
+
+    stub    0x15                    ; Unsupported int 15,%ah
+    stc                             ; Return failure.
+    mov     ah, 0x86                ; 80 for PC, 86 for XT/AT. FIXME: Change this?
+.end:
+    push    bp
+    mov     bp, sp
+    jc      .carry
+    and     byte [bp+6], 0xfe       ; No carry
+    pop     bp
+    iret
+.carry:
+    or      byte [bp+6], 0x01       ; Carry
+    pop     bp
+    iret
+
 .getSystemConfigurationParameters:
-    push    .end
-    jmp     bios_get_system_configuration_parameters
-    jmp     .end
-.ps2mouse:
-    out     0xE1, al
+    call     bios_get_system_configuration_parameters
     jmp     .end
 
 .queryExtendedMemorySize:
@@ -1597,21 +1607,6 @@ _bios_interrupt15:
 
 .a20control:
     jmp     bios_a20_control
-.unsupported:
-    stub    0x15
-    stc                             ; This ain't no fucking PS/2 system, dickweed.
-    mov     ah, 0x86                ; 80 for PC, 86 for XT/AT
-.end:
-    push    bp
-    mov     bp, sp
-    jc      .carry
-    and     byte [bp+6], 0xfe       ; No carry
-    pop     bp
-    iret
-.carry:
-    or      byte [bp+6], 0x01       ; Carry
-    pop     bp
-    iret
 
 bios_a20_control:
     cmp     al, 0x03
