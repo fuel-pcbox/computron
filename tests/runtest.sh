@@ -20,7 +20,7 @@ nasm -f bin -o $COMPILED $TEST || \
 
 $PROGRAM $COMPILED > $RESULT
 if [ -e $EXPECTATION ]; then
-    diff -u $RESULT $EXPECTATION
+    diff -u $EXPECTATION $RESULT
 else
     cat $RESULT > $EXPECTATION
     echo "Wrote new expectation: $EXPECTATION"
