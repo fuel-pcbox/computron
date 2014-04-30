@@ -1,3 +1,4 @@
+macx:QMAKE_MAC_SDK = macosx10.9
 TEMPLATE = app
 TARGET = vomit
 DEPENDPATH += . x86 bios disasm gui hw include disasm/include
