@@ -1533,7 +1533,6 @@ _bios_interrupt13:
     out     LEGACY_VM_CALL, al
     mov     al, byte [cs:temp]
     jmp     .end
-    ; no jmp .end here ;-)
 .end:
     push    bp
     mov     bp, sp
