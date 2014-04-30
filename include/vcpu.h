@@ -35,6 +35,14 @@ class Debugger;
 class Machine;
 class VGAMemory;
 
+struct FarPointer {
+    FarPointer() : segment(0), offset(0) { }
+    FarPointer(WORD s, DWORD o) : segment(s), offset(o) { }
+
+    WORD segment;
+    DWORD offset;
+};
+
 class VCpu
 {
 public:
@@ -359,6 +367,7 @@ public:
     BYTE readModRM8(BYTE rmbyte);
     WORD readModRM16(BYTE rmbyte);
     DWORD readModRM32(BYTE rmbyte);
+    FarPointer readModRMFarPointer(BYTE rmbyte);
     void writeModRM8(BYTE rmbyte, BYTE value);
     void writeModRM16(BYTE rmbyte, WORD value);
     void writeModRM32(BYTE rmbyte, DWORD value);
@@ -831,6 +840,8 @@ protected:
     void _LFS_reg32_mem32();
     void _LGS_reg16_mem16();
     void _LGS_reg32_mem32();
+    void _LSS_reg16_mem16();
+    void _LSS_reg32_mem32();
 
     void _PUSH_FS();
     void _PUSH_GS();

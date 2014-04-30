@@ -153,6 +153,7 @@ void VCpu::decode(BYTE op)
         case 0xA1: _POP_FS(); break;
         case 0xA8: _PUSH_GS(); break;
         case 0xA9: _POP_GS(); break;
+        case 0xB2: CALL_HANDLER(_LSS_reg16_mem16, _LSS_reg32_mem32); break;
         case 0xB4: CALL_HANDLER(_LFS_reg16_mem16, _LFS_reg32_mem32); break;
         case 0xB5: CALL_HANDLER(_LFS_reg16_mem16, _LFS_reg32_mem32); break;
         case 0xB6: CALL_HANDLER(_MOVZX_reg16_RM8, _MOVZX_reg32_RM8); break;
@@ -942,6 +943,23 @@ void VCpu::_LFS_reg32_mem32()
 #warning FIXME: need readModRM48
     vlog(LogAlert, "LFS reg32 mem32");
     vomit_exit(0);
+}
+
+void VCpu::_LSS_reg16_mem16()
+{
+    BYTE rm = fetchOpcodeByte();
+    WORD* ptr = static_cast<WORD*>(resolveModRM8(rm));
+    setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), vomit_read16FromPointer(ptr));
+    setSS(vomit_read16FromPointer(ptr + 1));
+}
+
+void VCpu::_LSS_reg32_mem32()
+{
+    BYTE rm = fetchOpcodeByte();
+    FarPointer ptr = readModRMFarPointer(rm);
+    setRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)), ptr.offset);
+    setSS(ptr.segment);
+    vlog(LogCPU, "LSS %04X:%08X", ptr.segment, ptr.offset);
 }
 
 void VCpu::_LGS_reg16_mem16()

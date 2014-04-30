@@ -145,6 +145,20 @@ DWORD VCpu::readModRM32(BYTE rmbyte)
     return readMemory32(m_lastModRMSegment, m_lastModRMOffset);
 }
 
+FarPointer VCpu::readModRMFarPointer(BYTE rmbyte)
+{
+    void* registerPointer = resolveModRM_internal(rmbyte, DWordSize);
+
+    // FIXME: What should I do if it's a register? :|
+    assert(!registerPointer);
+
+    vlog(LogCPU, "Loading far pointer from %04X:%08X [PE=%u]", m_lastModRMSegment, m_lastModRMOffset, getPE());
+    FarPointer ptr;
+    ptr.offset = readMemory32(m_lastModRMSegment, m_lastModRMOffset);
+    ptr.segment = readMemory16(m_lastModRMSegment, m_lastModRMOffset + 4);
+    return ptr;
+}
+
 void *VCpu::resolveModRM8_internal(BYTE rmbyte)
 {
     VM_ASSERT(a16());
