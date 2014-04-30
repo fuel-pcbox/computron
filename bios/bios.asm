@@ -1617,7 +1617,7 @@ bios_a20_control:
     iret
 
 .querySupport:
-    mov     bx, 0x0001              ; A20 gate controlled via 8042.
+    mov     bx, 0x0003              ; A20 gate controlled both via 8042 and System Control Port A (0x92)
     jmp     .end
 
 .end:
