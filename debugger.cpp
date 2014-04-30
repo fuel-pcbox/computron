@@ -168,10 +168,10 @@ void Debugger::handleDumpMemory(const QStringList& arguments)
     DWORD offset = cpu()->getEIP() & 0xFFF0;
 
     if (arguments.size() == 1)
-        offset = arguments.at(1).toUInt(0, 16);
+        offset = arguments.at(0).toUInt(0, 16);
     else if (arguments.size() == 2) {
-        segment = arguments.at(1).toUInt(0, 16);
-        offset = arguments.at(2).toUInt(0, 16);
+        segment = arguments.at(0).toUInt(0, 16);
+        offset = arguments.at(1).toUInt(0, 16);
     }
 
     cpu()->dumpMemory(segment, offset, 16);
