@@ -51,7 +51,7 @@ void vlog(VLogChannel channel, const char* format, ...)
     case LogPIC: prefix = "pic"; show_on_stdout = false; break;
     case LogKeyboard: prefix = "keyb"; break;
     case LogFDC: prefix = "fdc"; break;
-    case LogDump: show_on_stdout = false; break;
+    case LogDump: prefix = "dump"; break;
     case LogVomCtl: prefix = "vomctl"; break;
     case LogCMOS: prefix = "cmos"; break;
     case LogIDE: prefix = "ide"; break;
