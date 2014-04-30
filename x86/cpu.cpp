@@ -339,6 +339,7 @@ void VCpu::decode(BYTE op)
     case 0xC9: _LEAVE(); break;
     case 0xCA: _RETF_imm16(); break;
     case 0xCB: _RETF(); break;
+    case 0xCC: _INT3(); break;
     case 0xCD: _INT_imm8(); break;
     case 0xCF: _IRET(); break;
     case 0xD0: _wrap_0xD0(); break;
