@@ -11,6 +11,7 @@
 (    init) VomCtl present
 (    init) CMOS present
 (    init) PS2 present
+(     i/o) A20=0->1 (System Control Port A)
 (     cpu) 0xF1: Secret shutdown command received!
 (    dump) AX: 0001
 (    dump) BX: 0000

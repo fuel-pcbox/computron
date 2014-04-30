@@ -11,6 +11,7 @@
 (    init) VomCtl present
 (    init) CMOS present
 (    init) PS2 present
+(     i/o) A20=0->0 (System Control Port A)
 (     cpu) 1000:00000022 Read byte from 00100500 with A20 disabled, wrapping to 00000500
 (     cpu) 1000:0000002A Get pointer to 00100500 with A20 disabled, wrapping to 00000500
 (     cpu) 1000:0000002A Write byte to 00100500 with A20 disabled, wrapping to 00000500
