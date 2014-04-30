@@ -87,6 +87,19 @@
     pop     ax
 %endmacro
 
+%macro iret_with_carry 0
+    push    bp
+    mov     bp, sp
+    jc      .carry
+    and     byte [bp+6], 0xfe
+    pop     bp
+    iret
+.carry:
+    or      byte [bp+6], 0x01
+    pop     bp
+    iret
+%endmacro
+
 [org 0]
 [bits 16]
 
@@ -1534,16 +1547,7 @@ _bios_interrupt13:
     mov     al, byte [cs:temp]
     jmp     .end
 .end:
-    push    bp
-    mov     bp, sp
-    jc      .carry
-    and     byte [bp+6], 0xfe       ; No carry
-    pop     bp
-    iret
-.carry:
-    or      byte [bp+6], 0x01       ; Carry
-    pop     bp
-    iret
+    iret_with_carry
 
 _bios_interrupt14:
     or      ah, 0x00
@@ -1575,16 +1579,7 @@ _bios_interrupt15:
     stc                             ; Return failure.
     mov     ah, 0x86                ; 80 for PC, 86 for XT/AT. FIXME: Change this?
 .end:
-    push    bp
-    mov     bp, sp
-    jc      .carry
-    and     byte [bp+6], 0xfe       ; No carry
-    pop     bp
-    iret
-.carry:
-    or      byte [bp+6], 0x01       ; Carry
-    pop     bp
-    iret
+    iret_with_carry
 
 .getSystemConfigurationParameters:
     call     bios_get_system_configuration_parameters
@@ -1614,7 +1609,7 @@ bios_a20_control:
     stub    0x15
     mov     ah, 0x86
     stc
-    iret
+    iret_with_carry
 
 .querySupport:
     mov     bx, 0x0003              ; A20 gate controlled both via 8042 and System Control Port A (0x92)
@@ -1623,7 +1618,7 @@ bios_a20_control:
 .end:
     mov     ah, 0x00
     clc
-    iret
+    iret_with_carry
 
 _bios_interrupt16:
     or      ah, 0x00
@@ -1733,16 +1728,7 @@ _bios_interrupt1a:
     out     LEGACY_VM_CALL, al
     pop     ax                      ; there used to be a 'jmp .end' here. phwa.
 .end:
-    push    bp
-    mov     bp, sp
-    jc      .carry
-    and     byte [bp+6], 0xfe       ; No carry
-    pop     bp
-    iret
-.carry:
-    or      byte [bp+6], 0x01       ; Carry
-    pop     bp
-    iret
+    iret_with_carry
 .getticks:                          ; This thingie is placed separately for
     mov     ax, 0x1A00              ; optimization. DOS calls it all the time
     out     LEGACY_VM_CALL, al      ; and a speed boost can't hurt :-)
