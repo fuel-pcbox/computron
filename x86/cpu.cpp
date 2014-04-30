@@ -248,6 +248,7 @@ void VCpu::decode(BYTE op)
     case 0x67: _AddressSizeOverride(); break;
     case 0x68: CALL_HANDLER(_PUSH_imm16, _PUSH_imm32); break;
     case 0x6A: _PUSH_imm8(); break;
+    case 0x6B: CALL_HANDLER(_IMUL_reg16_RM16_imm8, _IMUL_reg32_RM32_imm8); break;
     case 0x6E: _OUTSB(); break;
     case 0x70: _JO_imm8(); break;
     case 0x71: _JNO_imm8(); break;

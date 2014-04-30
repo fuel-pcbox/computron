@@ -106,7 +106,6 @@ SIGNED_QWORD VCpu::doImul(T acc, T multi)
 {
     // FIXME: This function should protect against T being an unsigned type.
     SIGNED_QWORD result = acc * multi;
-    updateCpuMathFlags(this, result, acc, multi);
     return result;
 }
 
@@ -245,22 +244,24 @@ void VCpu::_IMUL_RM8()
     }
 }
 
+void VCpu::_IMUL_reg32_RM32_imm8()
+{
+    vlog(LogCPU, "Not implemented: IMUL reg32,rm32,imm8");
+    vomit_exit(1);
+}
+
 void VCpu::_IMUL_reg16_RM16_imm8()
 {
     BYTE rm = fetchOpcodeByte();
     SIGNED_BYTE imm = fetchOpcodeByte();
     SIGNED_WORD value = readModRM16(rm);
     SIGNED_WORD result = doImul(value, static_cast<SIGNED_WORD>(imm));
+    SIGNED_DWORD largeResult = doImul(value, static_cast<SIGNED_WORD>(imm));
 
     setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), result);
 
-    if ((result & 0xFF00) == 0x00 || (result & 0xFF00) == 0xFF) {
-        setCF(0);
-        setOF(0);
-    } else {
-        setCF(1);
-        setOF(1);
-    }
+    setCF(result != largeResult);
+    setOF(result != largeResult);
 }
 
 void VCpu::_IMUL_RM16()

@@ -794,6 +794,7 @@ protected:
     void _PUSH_imm16();
 
     void _IMUL_reg16_RM16_imm8();
+    void _IMUL_reg32_RM32_imm8();
 
     // 80386+ INSTRUCTIONS
 
