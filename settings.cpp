@@ -58,6 +58,7 @@ Settings::Settings()
     : m_memorySize(0)
     , m_entryCS(0)
     , m_entryIP(0)
+    , m_forAutotest(false)
 {
 }
 
@@ -220,6 +221,8 @@ Settings* Settings::createForAutotest(const QString& fileName)
     settings->m_entryCS = autotestEntryCS;
     settings->m_entryIP = autotestEntryIP;
     settings->m_files.insert(vomit_toFlatAddress(autotestEntryCS, autotestEntryIP), fileName);
+
+    settings->m_forAutotest = true;
     return settings;
 }
 

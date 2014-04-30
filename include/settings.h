@@ -47,6 +47,9 @@ public:
     QHash<DWORD, QString> files() const { return m_files; }
     QString keymap() const { return m_keymap; }
 
+    bool isForAutotest() const { return m_forAutotest; }
+    void setForAutotest(bool b) { m_forAutotest = b; }
+
     ~Settings();
 
 private:
@@ -65,6 +68,7 @@ private:
     unsigned m_memorySize;
     WORD m_entryCS;
     WORD m_entryIP;
+    bool m_forAutotest;
 };
 
 #endif

@@ -67,10 +67,10 @@ private:
     Worker* worker() const { return m_worker; }
 
     QString m_name;
+    Settings* m_settings;
     VCpu* m_cpu;
     Screen* m_screen;
     VGAMemory* m_vgaMemory;
-    Settings* m_settings;
     Worker* m_worker;
 };
 

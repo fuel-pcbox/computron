@@ -32,6 +32,7 @@
 #include "debugger.h"
 #include "machine.h"
 #include "iodevice.h"
+#include "settings.h"
 #include <signal.h>
 
 static void parseArguments(const QStringList& arguments);
@@ -58,7 +59,13 @@ int main(int argc, char** argv)
 
     signal(SIGINT, sigint_handler);
 
-    QScopedPointer<Machine> machine(Machine::createFromFile(QLatin1String("default.vmf")));
+    QScopedPointer<Machine> machine;
+
+    if (options.file_to_run.length()) {
+        machine.reset(Machine::createForAutotest(QString::fromStdString(options.file_to_run)));
+    } else {
+        machine.reset(Machine::createFromFile(QLatin1String("default.vmf")));
+    }
 
     if (!machine)
         return 1;
@@ -72,7 +79,12 @@ int main(int argc, char** argv)
     QFile::remove("log.txt");
 
     foreach (IODevice *device, IODevice::devices())
-        vlog(LogInit, "%s at 0x%p", device->name(), device);
+        vlog(LogInit, "%s present", device->name());
+
+    if (machine->settings()->isForAutotest()) {
+        machine->cpu()->mainLoop();
+        return 0;
+    }
 
     MainWindow mainWindow;
     mainWindow.addMachine(machine.data());
@@ -81,29 +93,45 @@ int main(int argc, char** argv)
     return app.exec();
 }
 
+VomitOptions::VomitOptions()
+    : trace(false)
+    , disklog(false)
+    , trapint(false)
+    , iopeek(false)
+    , start_in_debug(false)
+{
+}
+
 void parseArguments(const QStringList& arguments)
 {
-    memset(&options, 0, sizeof(options));
-
-    if (arguments.contains("--disklog"))
-        options.disklog = true;
-
-    if (arguments.contains("--trapint"))
-        options.trapint = true;
-
-    if (arguments.contains("--iopeek"))
-        options.iopeek = true;
-
-    if (arguments.contains("--trace"))
-        options.trace = true;
-
-    if (arguments.contains("--debug"))
-        options.start_in_debug = true;
+    for (auto it = arguments.begin(); it != arguments.end(); ) {
+        const auto& argument = *it;
+        if (argument == "--disklog")
+            options.disklog = true;
+        else if (argument == "--trapint")
+            options.trapint = true;
+        else if (argument == "--iopeek")
+            options.iopeek = true;
+        else if (argument == "--trace")
+            options.trace = true;
+        else if (argument == "--debug")
+            options.start_in_debug = true;
+        else if (argument == "--run") {
+            ++it;
+            if (it == arguments.end()) {
+                fprintf(stderr, "usage: vomit --run [filename]\n");
+                vomit_exit(1);
+            }
+            options.file_to_run = (*it).toStdString();
+            continue;
+        }
+        ++it;
+    }
 
 #ifndef VOMIT_TRACE
     if (options.trace) {
         fprintf(stderr, "Rebuild with #define VOMIT_TRACE if you want --trace to work.\n");
-        exit(1);
+        vomit_exit(1);
     }
 #endif
 }

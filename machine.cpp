@@ -56,9 +56,9 @@ Machine* Machine::createForAutotest(const QString& fileName)
 Machine::Machine(const QString& name, Settings* settings, QObject* parent)
     : QObject(parent)
     , m_name(name)
+    , m_settings(settings)
     , m_cpu(new VCpu(this))
     , m_screen(0)
-    , m_settings(settings)
     , m_worker(0)
 {
     applySettings();
@@ -71,26 +71,31 @@ Machine::Machine(const QString& name, Settings* settings, QObject* parent)
     VM_ASSERT(entryPoint);
     memcpy(entryPoint, bootCode, sizeof(bootCode));
 
-    // FIXME: Move this somewhere else.
-    // Mitigate spam about uninteresting ports.
-    IODevice::ignorePort(0x220);
-    IODevice::ignorePort(0x221);
-    IODevice::ignorePort(0x222);
-    IODevice::ignorePort(0x223);
-    IODevice::ignorePort(0x201); // Gameport.
+    if (!m_settings->isForAutotest()) {
+        // FIXME: Move this somewhere else.
+        // Mitigate spam about uninteresting ports.
+        IODevice::ignorePort(0x220);
+        IODevice::ignorePort(0x221);
+        IODevice::ignorePort(0x222);
+        IODevice::ignorePort(0x223);
+        IODevice::ignorePort(0x201); // Gameport.
+    }
 
     m_vgaMemory = new VGAMemory(this);
     m_screen = new Screen(this);
 
-    // FIXME: Sort out worker ownership.
-    m_worker = new Worker(cpu());
+    if (!m_settings->isForAutotest()) {
+        // FIXME: Sort out worker ownership.
+        m_worker = new Worker(cpu());
 
-    QObject::connect(worker(), SIGNAL(finished()), this, SLOT(onWorkerFinished()));
+        QObject::connect(worker(), SIGNAL(finished()), this, SLOT(onWorkerFinished()));
 
-    PIT::the()->boot();
+        // Why are we booting the PIT slightly later anyway? I smell a race.
+        PIT::the()->boot();
 
-    worker()->startMachine();
-    worker()->start();
+        worker()->startMachine();
+        worker()->start();
+    }
 }
 
 Machine::~Machine()

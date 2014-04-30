@@ -27,6 +27,7 @@
 #define VOMIT_H
 
 #include "types.h"
+#include <string>
 
 #define MAX_FILESIZE	524288		/* 512kB is max "loadfile" size */
 #define MAX_FN_LENGTH	128
@@ -42,11 +43,13 @@ template<> struct SignedTypeMaker<DWORD> { typedef SIGNED_DWORD SignedType; };
 template<> struct SignedTypeMaker<QWORD> { typedef SIGNED_QWORD SignedType; };
 
 struct VomitOptions {
+    VomitOptions();
     bool trace;
     bool disklog;
     bool trapint;
     bool iopeek;
     bool start_in_debug;
+    std::string file_to_run;
 };
 
 extern VomitOptions options;

@@ -30,6 +30,7 @@
 #include "debugger.h"
 #include "vga_memory.h"
 #include "pic.h"
+#include "settings.h"
 #include <QtCore/QStringList>
 
 VCpu* g_cpu = 0;
@@ -372,6 +373,11 @@ void VCpu::decode(BYTE op)
     case 0xEE: _OUT_DX_AL(); break;
     case 0xEF: CALL_HANDLER(_OUT_DX_AX, _OUT_DX_EAX); break;
     case 0xF0: /* LOCK */ break;
+    case 0xF1:
+        vlog(LogCPU, "0xF1: Secret shutdown command received!");
+        dumpAll();
+        vomit_exit(1);
+        break;
     case 0xF2: _REPNE(); break;
     case 0xF3: _REP(); break;
     case 0xF4: _HLT(); break;
@@ -513,7 +519,10 @@ VCpu::VCpu(Machine* machine)
     m_segmentPrefix = 0x0000;
     m_currentSegment = &this->DS;
 
-    jump32(0xF000, 0x00000000);
+    if (machine->settings()->isForAutotest())
+        jump32(machine->settings()->entryCS(), machine->settings()->entryIP());
+    else
+        jump32(0xF000, 0x00000000);
 
     setFlags(0x0200);
 
