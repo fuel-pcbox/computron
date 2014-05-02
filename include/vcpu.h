@@ -414,6 +414,7 @@ public:
     void dumpIVT() const;
 
     void dumpMemory(WORD segment, DWORD offset, int rows) const;
+    void dumpFlatMemory(DWORD address) const;
 
     int dumpDisassembled(WORD segment, DWORD offset) const;
 
@@ -1163,9 +1164,9 @@ BYTE* VCpu::memoryPointer(DWORD address) const
     if (!isA20Enabled()) {
 #ifdef VOMIT_DEBUG
         if (address > 0xFFFFF)
-            vlog(LogCPU, "%04X:%08X Get pointer to %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & 0xFFFFF);
+            vlog(LogCPU, "%04X:%08X Get pointer to %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & a20Mask());
 #endif
-        address &= 0xFFFFF;
+        address &= a20Mask();
     }
     return &m_memory[address];
 }

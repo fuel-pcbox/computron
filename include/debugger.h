@@ -58,6 +58,7 @@ private:
     void handleStep();
     void handleContinue();
     void handleDumpMemory(const QStringList&);
+    void handleDumpFlatMemory(const QStringList&);
 };
 
 #endif

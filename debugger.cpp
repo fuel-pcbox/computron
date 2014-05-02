@@ -113,6 +113,8 @@ void Debugger::handleCommand(const QString& rawCommand)
     if (lowerCommand == "d" || lowerCommand == "dump-memory")
         return handleDumpMemory(arguments);
 
+    if (lowerCommand == "m")
+        return handleDumpFlatMemory(arguments);
 
     printf("Unknown command: %s\n", command.toUtf8().constData());
 }
@@ -175,4 +177,14 @@ void Debugger::handleDumpMemory(const QStringList& arguments)
     }
 
     cpu()->dumpMemory(segment, offset, 16);
+}
+
+void Debugger::handleDumpFlatMemory(const QStringList& arguments)
+{
+    DWORD address = cpu()->getEIP();
+
+    if (arguments.size() == 1)
+        address = arguments.at(0).toUInt(0, 16);
+
+    cpu()->dumpFlatMemory(address);
 }

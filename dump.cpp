@@ -173,6 +173,35 @@ static inline BYTE n(BYTE b)
     return b;
 }
 
+void VCpu::dumpFlatMemory(DWORD address) const
+{
+    address &= 0xFFFFFFF0;
+
+    BYTE* p = &m_memory[address];
+    int rows = 16;
+
+    for (int i = 0; i < rows; ++i) {
+        vlog(LogDump,
+            "%08X   %02X %02X %02X %02X %02X %02X %02X %02X - %02X %02X %02X %02X %02X %02X %02X %02X   %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+            (address+i*16),
+            p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7],
+            p[8], p[9], p[10], p[11], p[12], p[13], p[14], p[15],
+            n(p[0]), n(p[1]), n(p[2]), n(p[3]), n(p[4]), n(p[5]), n(p[6]), n(p[7]),
+            n(p[8]), n(p[9]), n(p[10]), n(p[11]), n(p[12]), n(p[13]), n(p[14]), n(p[15])
+        );
+        p+=16;
+    }
+
+    for (int i = 0; i < rows; ++i) {
+        fprintf(stderr,
+            "db 0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X\n",
+            p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7],
+            p[8], p[9], p[10], p[11], p[12], p[13], p[14], p[15]
+        );
+        p+=16;
+    }
+}
+
 void VCpu::dumpMemory(WORD segment, DWORD offset, int rows) const
 {
     BYTE* p = memoryPointer(segment, offset);
