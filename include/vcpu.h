@@ -133,6 +133,8 @@ public:
     void setA20Enabled(bool value) { m_a20Enabled = value; }
     bool isA20Enabled() const { return m_a20Enabled; }
 
+    DWORD a20Mask() const { return isA20Enabled() ? 0xFFFFFFFF : 0xFFEFFFFF; }
+
     void jumpToInterruptHandler(int isr);
 
     void GP(int code);
@@ -314,7 +316,7 @@ public:
     void push(WORD value);
     WORD pop();
 
-    Debugger* debugger() { return m_debugger; }
+    Debugger* debugger() const { return m_debugger; }
 
     /*!
         Writes an 8-bit value to an output port.

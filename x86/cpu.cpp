@@ -1069,10 +1069,10 @@ BYTE VCpu::readMemory8(DWORD address) const
     if (!isA20Enabled()) {
 #ifdef VOMIT_DEBUG
         if (address > 0xFFFFF) {
-            vlog(LogCPU, "%04X:%08X Read byte from %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & 0xFFFFF);
+            vlog(LogCPU, "%04X:%08X Read byte from %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & a20Mask());
         }
 #endif
-        address &= 0xFFFFF;
+        address &= a20Mask();
     }
 
     assert(!getPE());
@@ -1087,10 +1087,11 @@ WORD VCpu::readMemory16(DWORD address) const
         assert(address != 0xFFFFF);
 #ifdef VOMIT_DEBUG
         if (address > 0xFFFFF) {
-            vlog(LogCPU, "%04X:%08X Read word from %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & 0xFFFFF);
+            vlog(LogCPU, "%04X:%08X Read word from %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & a20Mask());
+            //debugger()->enter();
         }
 #endif
-        address &= 0xFFFFF;
+        address &= a20Mask();
     }
 
     assert(!getPE());
@@ -1143,10 +1144,10 @@ void VCpu::writeMemory8(DWORD address, BYTE value)
     if (!isA20Enabled()) {
 #ifdef VOMIT_DEBUG
         if (address > 0xFFFFF) {
-            vlog(LogCPU, "%04X:%08X Write byte to %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & 0xFFFFF);
+            vlog(LogCPU, "%04X:%08X Write byte to %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & a20Mask());
         }
 #endif
-        address &= 0xFFFFF;
+        address &= a20Mask();
     }
 
     assert(!getPE());
@@ -1166,11 +1167,12 @@ void VCpu::writeMemory16(DWORD address, WORD value)
 
 #ifdef VOMIT_DEBUG
         if (address > 0xFFFFF) {
-            vlog(LogCPU, "%04X:%08X Write word to %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & 0xFFFFF);
+            vlog(LogCPU, "%04X:%08X Write word to %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & a20Mask());
+            //debugger()->enter();
         }
 #endif
 
-        address &= 0xFFFFF;
+        address &= a20Mask();
     }
 
     assert(!getPE());
