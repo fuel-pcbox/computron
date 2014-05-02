@@ -213,3 +213,18 @@ void VCpu::dumpIVT() const
         );
     }
 }
+
+void VCpu::dumpSegment(WORD index) const
+{
+    SegmentSelector selector = makeSegmentSelector(index);
+
+    vlog(LogCPU, "Segment 0x%04X: { base: 0x%08X, limit: %06X, bits: %u, present: %s, granularity: %s }",
+        index,
+        selector.base,
+        selector.limit,
+        selector._32bit ? 32 : 16,
+        selector.present ? "yes" : "no",
+        selector.big ? "4K" : "1b"
+    );
+}
+

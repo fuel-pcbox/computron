@@ -959,7 +959,6 @@ void VCpu::_LSS_reg32_mem32()
     FarPointer ptr = readModRMFarPointer(rm);
     setRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)), ptr.offset);
     setSS(ptr.segment);
-    vlog(LogCPU, "LSS %04X:%08X", ptr.segment, ptr.offset);
 }
 
 void VCpu::_LGS_reg16_mem16()
@@ -1062,7 +1061,6 @@ DWORD VCpu::readMemory32(DWORD address) const
     if (addressIsInVGAMemory(address))
         return machine().vgaMemory()->read16(address) | (machine().vgaMemory()->read16(address + 2) << 16);
 #endif
-    assert(!getPE());
     return vomit_read32FromPointer(reinterpret_cast<DWORD*>(m_memory + address));
 }
 
@@ -1083,11 +1081,6 @@ BYTE VCpu::readMemory8(DWORD address) const
     return m_memory[address];
 }
 
-BYTE VCpu::readMemory8(WORD segment, WORD offset) const
-{
-    return readMemory8(vomit_toFlatAddress(segment, offset));
-}
-
 WORD VCpu::readMemory16(DWORD address) const
 {
     if (!isA20Enabled()) {
@@ -1106,14 +1099,43 @@ WORD VCpu::readMemory16(DWORD address) const
     return vomit_read16FromPointer(reinterpret_cast<WORD*>(m_memory + address));
 }
 
-WORD VCpu::readMemory16(WORD segment, WORD offset) const
+BYTE VCpu::readMemory8(WORD segmentIndex, DWORD offset) const
 {
-    return readMemory16(vomit_toFlatAddress(segment, offset));
+    if (getPE()) {
+        assert(isA20Enabled());
+        SegmentSelector segment = makeSegmentSelector(segmentIndex);
+        DWORD flatAddress = segment.base + offset;
+        BYTE value = m_memory[flatAddress];
+        vlog(LogCPU, "8-bit PE read [A20=%s] %04X:%08X (flat: %08X), value: %02X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
+        return value;
+    }
+    return readMemory8(vomit_toFlatAddress(segmentIndex, offset));
 }
 
-DWORD VCpu::readMemory32(WORD segment, WORD offset) const
+WORD VCpu::readMemory16(WORD segmentIndex, DWORD offset) const
 {
-    return readMemory32(vomit_toFlatAddress(segment, offset));
+    if (getPE()) {
+        assert(isA20Enabled());
+        SegmentSelector segment = makeSegmentSelector(segmentIndex);
+        DWORD flatAddress = segment.base + offset;
+        WORD value = vomit_read16FromPointer(reinterpret_cast<WORD*>(&m_memory[flatAddress]));
+        vlog(LogCPU, "16-bit PE read [A20=%s] %04X:%08X (flat: %08X), value: %04X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
+        return value;
+    }
+    return readMemory16(vomit_toFlatAddress(segmentIndex, offset));
+}
+
+DWORD VCpu::readMemory32(WORD segmentIndex, DWORD offset) const
+{
+    if (getPE()) {
+        assert(isA20Enabled());
+        SegmentSelector segment = makeSegmentSelector(segmentIndex);
+        DWORD flatAddress = segment.base + offset;
+        DWORD value = vomit_read32FromPointer(reinterpret_cast<DWORD*>(&m_memory[flatAddress]));
+        vlog(LogCPU, "32-bit PE read [A20=%s] %04X:%08X (flat: %08X), value: %08X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
+        return value;
+    }
+    return readMemory32(vomit_toFlatAddress(segmentIndex, offset));
 }
 
 void VCpu::writeMemory8(DWORD address, BYTE value)
@@ -1135,12 +1157,6 @@ void VCpu::writeMemory8(DWORD address, BYTE value)
     }
 
     m_memory[address] = value;
-}
-
-
-void VCpu::writeMemory8(WORD segment, WORD offset, BYTE value)
-{
-    writeMemory8(vomit_toFlatAddress(segment, offset), value);
 }
 
 void VCpu::writeMemory16(DWORD address, WORD value)
@@ -1168,18 +1184,89 @@ void VCpu::writeMemory16(DWORD address, WORD value)
     vomit_write16ToPointer(ptr, value);
 }
 
-void VCpu::writeMemory32(WORD segment, WORD offset, DWORD value)
+void VCpu::writeMemory8(WORD segmentIndex, DWORD offset, BYTE value)
 {
-    writeMemory32(vomit_toFlatAddress(segment, offset), value);
+    if (getPE()) {
+        assert(isA20Enabled());
+        SegmentSelector segment = makeSegmentSelector(segmentIndex);
+        DWORD flatAddress = segment.base + offset;
+        vlog(LogCPU, "8-bit PE write [A20=%s] %04X:%08X (flat: %08X), value: %04X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
+        m_memory[flatAddress] = value;
+        return;
+    }
+    writeMemory8(vomit_toFlatAddress(segmentIndex, offset), value);
 }
 
-void VCpu::writeMemory16(WORD segment, WORD offset, WORD value)
+void VCpu::writeMemory16(WORD segmentIndex, DWORD offset, WORD value)
 {
-    writeMemory16(vomit_toFlatAddress(segment, offset), value);
+    if (getPE()) {
+        assert(isA20Enabled());
+        SegmentSelector segment = makeSegmentSelector(segmentIndex);
+        DWORD flatAddress = segment.base + offset;
+        vlog(LogCPU, "16-bit PE write [A20=%s] %04X:%08X (flat: %08X), value: %04X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
+        vomit_write16ToPointer(reinterpret_cast<WORD*>(&m_memory[flatAddress]), value);
+        return;
+    }
+    writeMemory16(vomit_toFlatAddress(segmentIndex, offset), value);
+}
+
+void VCpu::writeMemory32(WORD segmentIndex, DWORD offset, DWORD value)
+{
+    if (getPE()) {
+        assert(isA20Enabled());
+        SegmentSelector segment = makeSegmentSelector(segmentIndex);
+        DWORD flatAddress = segment.base + offset;
+        vlog(LogCPU, "32-bit PE write [A20=%s] %04X:%08X (flat: %08X), value: %08X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
+        vomit_write32ToPointer(reinterpret_cast<DWORD*>(&m_memory[flatAddress]), value);
+        return;
+    }
+    writeMemory32(vomit_toFlatAddress(segmentIndex, offset), value);
 }
 
 void VCpu::updateSizeModes()
 {
     m_addressSize32 = getPE();
     m_operationSize32 = getPE();
+}
+
+void VCpu::setCS(WORD value)
+{
+    this->CS = value;
+    if (getPE())
+        syncSegmentRegister(RegisterCS);
+}
+
+void VCpu::setDS(WORD value)
+{
+    this->DS = value;
+    if (getPE())
+        syncSegmentRegister(RegisterDS);
+}
+
+void VCpu::setES(WORD value)
+{
+    this->ES = value;
+    if (getPE())
+        syncSegmentRegister(RegisterES);
+}
+
+void VCpu::setSS(WORD value)
+{
+    this->SS = value;
+    if (getPE())
+        syncSegmentRegister(RegisterSS);
+}
+
+void VCpu::setFS(WORD value)
+{
+    this->FS = value;
+    if (getPE())
+        syncSegmentRegister(RegisterFS);
+}
+
+void VCpu::setGS(WORD value)
+{
+    this->GS = value;
+    if (getPE())
+        syncSegmentRegister(RegisterGS);
 }

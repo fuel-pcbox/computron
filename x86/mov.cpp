@@ -60,34 +60,6 @@ void VCpu::_MOV_RM32_seg()
     writeModRM32(rm, getSegment(static_cast<VCpu::SegmentIndex>(segmentIndex)));
 }
 
-void VCpu::syncSegmentRegister(SegmentIndex segmentIndex)
-{
-    ASSERT_VALID_SEGMENT_INDEX(segmentIndex);
-    VCpu::SegmentSelector& selector = m_selector[segmentIndex];
-
-    WORD segment = getSegment(segmentIndex);
-
-    if (segment % 8)
-        vlog(LogAlert, "Segment selector index %u not divisible by 8.", segment);
-
-    if (segment >= this->GDTR.limit)
-        vlog(LogAlert, "Segment selector index %u >= GDTR.limit.", segment);
-
-    DWORD hi = readMemory32(this->GDTR.base + segment + 4);
-    DWORD lo = readMemory32(this->GDTR.base + segment);
-
-    selector.base = (hi & 0xFF000000) | ((hi & 0xFF) << 16) | ((lo >> 16) & 0xFFFF);
-    selector.limit = (hi & 0xF0000) | (lo & 0xFFFF);
-    selector.acc = hi >> 7;
-    selector.BRW = hi >> 8;
-    selector.CE = hi >> 9;
-    selector._32bit = hi >> 10;
-    selector.DPL = (hi >> 12) & 3;
-    selector.present = hi >> 14;
-    selector.big = hi >> 22;
-    selector.granularity = hi >> 23;
-}
-
 void VCpu::_MOV_seg_RM16()
 {
     BYTE rm = fetchOpcodeByte();

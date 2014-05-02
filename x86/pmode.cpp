@@ -64,3 +64,38 @@ void VCpu::_SMSW_RM16()
 {
     writeModRM16(subrmbyte, CR0 & 0xFFFF);
 }
+
+VCpu::SegmentSelector VCpu::makeSegmentSelector(WORD index) const
+{
+    if (index % 8)
+        vlog(LogAlert, "Segment selector index %u not divisible by 8.", index);
+
+    if (index >= this->GDTR.limit)
+        vlog(LogAlert, "Segment selector index %u >= GDTR.limit.", index);
+
+    DWORD hi = readMemory32(this->GDTR.base + index + 4);
+    DWORD lo = readMemory32(this->GDTR.base + index);
+
+    SegmentSelector selector;
+
+    selector.base = (hi & 0xFF000000) | ((hi & 0xFF) << 16) | ((lo >> 16) & 0xFFFF);
+    selector.limit = (hi & 0xF0000) | (lo & 0xFFFF);
+    selector.acc = hi >> 7;
+    selector.BRW = hi >> 8;
+    selector.CE = hi >> 9;
+    selector._32bit = hi >> 10;
+    selector.DPL = (hi >> 12) & 3;
+    selector.present = hi >> 14;
+    selector.big = hi >> 22;
+    selector.granularity = hi >> 23;
+
+    return selector;
+}
+
+void VCpu::syncSegmentRegister(SegmentIndex segmentRegisterIndex)
+{
+    ASSERT_VALID_SEGMENT_INDEX(segmentRegisterIndex);
+    VCpu::SegmentSelector& selector = m_selector[segmentRegisterIndex];
+    selector = makeSegmentSelector(getSegment(segmentRegisterIndex));
+}
+

@@ -106,6 +106,9 @@ public:
         DWORD limit;
     };
 
+    void dumpSegment(WORD index) const;
+    SegmentSelector makeSegmentSelector(WORD index) const;
+
     WORD currentSegment() const { return *m_currentSegment; }
     bool hasSegmentPrefix() const { return m_currentSegment == &m_segmentPrefix; }
 
@@ -178,12 +181,12 @@ public:
     WORD getFS() const { return this->FS; }
     WORD getGS() const { return this->GS; }
 
-    void setCS(WORD cs) { this->CS = cs; }
-    void setDS(WORD ds) { this->DS = ds; }
-    void setES(WORD es) { this->ES = es; }
-    void setSS(WORD ss) { this->SS = ss; }
-    void setFS(WORD fs) { this->FS = fs; }
-    void setGS(WORD gs) { this->GS = gs; }
+    void setCS(WORD cs);
+    void setDS(WORD ds);
+    void setES(WORD es);
+    void setSS(WORD ss);
+    void setFS(WORD fs);
+    void setGS(WORD gs);
 
     void setIP(WORD ip) { this->IP = ip; }
     void setEIP(DWORD eip) { this->EIP = eip; }
@@ -353,17 +356,17 @@ public:
     inline void writeUnmappedMemory16(DWORD address, WORD data);
 
     BYTE readMemory8(DWORD address) const;
-    BYTE readMemory8(WORD segment, WORD offset) const;
+    BYTE readMemory8(WORD segment, DWORD offset) const;
     WORD readMemory16(DWORD address) const;
-    WORD readMemory16(WORD segment, WORD offset) const;
+    WORD readMemory16(WORD segment, DWORD offset) const;
     DWORD readMemory32(DWORD address) const;
-    DWORD readMemory32(WORD segment, WORD offset) const;
+    DWORD readMemory32(WORD segment, DWORD offset) const;
     void writeMemory8(DWORD address, BYTE data);
-    void writeMemory8(WORD segment, WORD offset, BYTE data);
+    void writeMemory8(WORD segment, DWORD offset, BYTE data);
     void writeMemory16(DWORD address, WORD data);
-    void writeMemory16(WORD segment, WORD offset, WORD data);
+    void writeMemory16(WORD segment, DWORD offset, WORD data);
     void writeMemory32(DWORD address, DWORD data);
-    void writeMemory32(WORD segment, WORD offset, DWORD data);
+    void writeMemory32(WORD segment, DWORD offset, DWORD data);
 
     BYTE readModRM8(BYTE rmbyte);
     WORD readModRM16(BYTE rmbyte);
