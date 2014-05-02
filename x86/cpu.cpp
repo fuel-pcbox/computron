@@ -572,6 +572,9 @@ void VCpu::queueCommand(Command command)
 
 void VCpu::flushCommandQueue()
 {
+    // FIXME: Blocking on the mutex on every pass through here is dumb.
+    return;
+
     QMutexLocker locker(&m_commandMutex);
     while (!m_commandQueue.isEmpty()) {
         switch (m_commandQueue.dequeue()) {
