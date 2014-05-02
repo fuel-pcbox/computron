@@ -43,11 +43,12 @@ struct FarPointer {
     DWORD offset;
 };
 
-class VCpu
-{
+class VCpu {
 public:
-    VCpu(Machine*);
+    explicit VCpu(Machine&);
     ~VCpu();
+
+    Machine& machine() const { return m_machine; }
 
     enum RegisterIndex8 {
         RegisterAL = 0,
@@ -1108,8 +1109,7 @@ private:
     WORD* treg16[8];
     BYTE* treg8[8];
 
-    Machine* machine() const { return m_machine; }
-    Machine* m_machine;
+    Machine& m_machine;
 
     bool m_addressSize32;
     bool m_operationSize32;

@@ -415,8 +415,8 @@ void VCpu::GP(int code)
     vomit_exit(1);
 }
 
-VCpu::VCpu(Machine* machine)
-    : m_machine(machine)
+VCpu::VCpu(Machine& m)
+    : m_machine(m)
     , m_shouldBreakOutOfMainLoop(false)
 {
     VM_ASSERT(!g_cpu);
@@ -523,8 +523,8 @@ VCpu::VCpu(Machine* machine)
     m_segmentPrefix = 0x0000;
     m_currentSegment = &this->DS;
 
-    if (machine->settings()->isForAutotest())
-        jump32(machine->settings()->entryCS(), machine->settings()->entryIP());
+    if (machine().settings()->isForAutotest())
+        jump32(machine().settings()->entryCS(), machine().settings()->entryIP());
     else
         jump32(0xF000, 0x00000000);
 
@@ -1043,7 +1043,7 @@ void VCpu::writeMemory32(DWORD address, DWORD data)
 #warning FIXME: writeMemory32 to VGA memory
 #if 0
     if (addressIsInVGAMemory(address)) {
-        machine()->vgaMemory()->write8(address, value);
+        machine().vgaMemory()->write8(address, value);
         return;
     }
 #endif
@@ -1060,7 +1060,7 @@ DWORD VCpu::readMemory32(DWORD address) const
 #warning FIXME: readMemory32 from VGA memory
 #if 0
     if (addressIsInVGAMemory(address))
-        return machine()->vgaMemory()->read16(address) | (machine()->vgaMemory()->read16(address + 2) << 16);
+        return machine().vgaMemory()->read16(address) | (machine().vgaMemory()->read16(address + 2) << 16);
 #endif
     assert(!getPE());
     return vomit_read32FromPointer(reinterpret_cast<DWORD*>(m_memory + address));
@@ -1079,7 +1079,7 @@ BYTE VCpu::readMemory8(DWORD address) const
 
     assert(!getPE());
     if (addressIsInVGAMemory(address))
-        return machine()->vgaMemory()->read8(address);
+        return machine().vgaMemory()->read8(address);
     return m_memory[address];
 }
 
@@ -1102,7 +1102,7 @@ WORD VCpu::readMemory16(DWORD address) const
 
     assert(!getPE());
     if (addressIsInVGAMemory(address))
-        return machine()->vgaMemory()->read16(address);
+        return machine().vgaMemory()->read16(address);
     return vomit_read16FromPointer(reinterpret_cast<WORD*>(m_memory + address));
 }
 
@@ -1130,7 +1130,7 @@ void VCpu::writeMemory8(DWORD address, BYTE value)
     assert(!getPE());
 
     if (addressIsInVGAMemory(address)) {
-        machine()->vgaMemory()->write8(address, value);
+        machine().vgaMemory()->write8(address, value);
         return;
     }
 
@@ -1160,7 +1160,7 @@ void VCpu::writeMemory16(DWORD address, WORD value)
     assert(!getPE());
 
     if (addressIsInVGAMemory(address)) {
-        machine()->vgaMemory()->write16(address, value);
+        machine().vgaMemory()->write16(address, value);
         return;
     }
 

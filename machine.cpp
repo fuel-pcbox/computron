@@ -57,7 +57,7 @@ Machine::Machine(const QString& name, Settings* settings, QObject* parent)
     : QObject(parent)
     , m_name(name)
     , m_settings(settings)
-    , m_cpu(new VCpu(this))
+    , m_cpu(new VCpu(*this))
     , m_screen(0)
     , m_worker(0)
 {
