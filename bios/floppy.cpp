@@ -98,7 +98,7 @@ void bios_disk_call(DiskCallFunction function)
     if (drive >= 0x80)
         drive = drive - 0x80 + 2;
 
-    BYTE error;
+    BYTE error = FD_NO_ERROR;
 
     if (!drv_status[drive]) {
         if (options.disklog)
