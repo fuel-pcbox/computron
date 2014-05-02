@@ -1,5 +1,5 @@
 ;
-; Copyright (C) 2003-2011 Andreas Kling <kling@webkit.org>
+; Copyright (C) 2003-2014 Andreas Kling <kling@webkit.org>
 ;
 ; Redistribution and use in source and binary forms, with or without
 ; modification, are permitted provided that the following conditions
@@ -1930,8 +1930,8 @@ iret_with_carry:
 
 ; DATA
 
-    msg_version        db "Vomit Virtual PC - http://github.com/kling/vomit", 0x0d, 0x0a
-                       db "(C) 2003-2011 Andreas Kling <kling@webkit.org>", 0x0d, 0x0a, 0x0d, 0x0a, 0
+    msg_version        db "Vomit Virtual PC - http://github.com/awesomekling/vomit", 0x0d, 0x0a
+                       db "(C) 2003-2014 Andreas Kling <kling@webkit.org>", 0x0d, 0x0a, 0x0d, 0x0a, 0
 
     msg_8086           db "8086", 0
     msg_80186          db "80186", 0
