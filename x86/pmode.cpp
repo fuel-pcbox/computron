@@ -24,6 +24,7 @@
  */
 
 #include "vcpu.h"
+#include "debugger.h"
 
 void VCpu::_SGDT()
 {
@@ -67,8 +68,10 @@ void VCpu::_SMSW_RM16()
 
 VCpu::SegmentSelector VCpu::makeSegmentSelector(WORD index) const
 {
-    if (index % 8)
+    if (index % 8) {
         vlog(LogAlert, "Segment selector index %u not divisible by 8.", index);
+        debugger()->enter();
+    }
 
     if (index >= this->GDTR.limit)
         vlog(LogAlert, "Segment selector index %u >= GDTR.limit.", index);
