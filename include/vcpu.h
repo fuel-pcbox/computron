@@ -30,6 +30,7 @@
 #include "debug.h"
 #include <QtCore/QMutex>
 #include <QtCore/QQueue>
+#include <set>
 
 class Debugger;
 class Machine;
@@ -49,6 +50,8 @@ public:
     ~VCpu();
 
     Machine& machine() const { return m_machine; }
+
+    std::set<DWORD>& breakpoints() { return m_breakpoints; }
 
     enum RegisterIndex8 {
         RegisterAL = 0,
@@ -1099,7 +1102,7 @@ private:
     DWORD m_baseMemorySize;
     DWORD m_extendedMemorySize;
 
-    QList<DWORD> m_breakPoints;
+    std::set<DWORD> m_breakpoints;
 
     bool m_a20Enabled;
 

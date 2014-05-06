@@ -116,7 +116,36 @@ void Debugger::handleCommand(const QString& rawCommand)
     if (lowerCommand == "m")
         return handleDumpFlatMemory(arguments);
 
+    if (lowerCommand == "b")
+        return handleBreakpoint(arguments);
+
     printf("Unknown command: %s\n", command.toUtf8().constData());
+}
+
+void Debugger::handleBreakpoint(const QStringList& arguments)
+{
+    if (arguments.size() != 3) {
+        printf("usage: b <add|del> segment:offset\n");
+        if (!cpu()->breakpoints().empty()) {
+            printf("\nCurrent breakpoints:\n");
+            for (auto& breakpoint : cpu()->breakpoints()) {
+                printf("    @0x%08X\n", breakpoint);
+            }
+            printf("\n");
+        }
+        return;
+    }
+    WORD segment = arguments.at(1).toUInt(0, 16);
+    DWORD offset = arguments.at(2).toUInt(0, 16);
+    DWORD flat = vomit_toFlatAddress(segment, offset);
+    if (arguments[0] == "add") {
+        printf("add breakpoint: %04X:%08X -> @0x%08X\n", segment, offset, flat);
+        cpu()->breakpoints().insert(flat);
+    }
+    if (arguments[0] == "del") {
+        printf("delete breakpoint: %04X:%08X -> @0x%08X\n", segment, offset, flat);
+        cpu()->breakpoints().erase(flat);
+    }
 }
 
 void Debugger::doConsole()

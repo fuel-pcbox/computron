@@ -57,6 +57,7 @@ private:
     void handleReconfigure();
     void handleStep();
     void handleContinue();
+    void handleBreakpoint(const QStringList&);
     void handleDumpMemory(const QStringList&);
     void handleDumpFlatMemory(const QStringList&);
 };

@@ -599,10 +599,10 @@ void VCpu::mainLoop()
 
 #ifdef VOMIT_DEBUG
 
-        if (!m_breakPoints.isEmpty()) {
+        if (!m_breakpoints.empty()) {
             DWORD flatPC = vomit_toFlatAddress(getCS(), getEIP());
-            foreach (DWORD breakPoint, m_breakPoints) {
-                if (flatPC == breakPoint) {
+            for (auto& breakpoint : m_breakpoints) {
+                if (flatPC == breakpoint) {
                     debugger()->enter();
                     break;
                 }
@@ -1064,21 +1064,24 @@ DWORD VCpu::readMemory32(DWORD address) const
     if (addressIsInVGAMemory(address))
         return machine().vgaMemory()->read16(address) | (machine().vgaMemory()->read16(address + 2) << 16);
 #endif
+    assert (address < (0xFFFFF - 4));
     return vomit_read32FromPointer(reinterpret_cast<DWORD*>(m_memory + address));
 }
 
 BYTE VCpu::readMemory8(DWORD address) const
 {
-    if (!isA20Enabled()) {
 #ifdef VOMIT_DEBUG
-        if (address > 0xFFFFF) {
-            vlog(LogCPU, "%04X:%08X Read byte from %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & a20Mask());
-        }
-#endif
-        address &= a20Mask();
+    if (address > 0xFFFFF) {
+        if (isA20Enabled()) {
+            vlog(LogCPU, "%04X:%08X Read byte from @0x%08X with A20 enabled", getBaseCS(), getBaseEIP(), address);
+            debugger()->enter();
+        } else
+            vlog(LogCPU, "%04X:%08X Read byte from @0x%08X with A20 disabled, wrapping to @0x%08X", getBaseCS(), getBaseEIP(), address, address & a20Mask());
     }
+#endif
 
     assert(!getPE());
+    address &= a20Mask();
     if (addressIsInVGAMemory(address))
         return machine().vgaMemory()->read8(address);
     return m_memory[address];
@@ -1088,16 +1091,19 @@ WORD VCpu::readMemory16(DWORD address) const
 {
     if (!isA20Enabled()) {
         assert(address != 0xFFFFF);
-#ifdef VOMIT_DEBUG
-        if (address > 0xFFFFF) {
-            vlog(LogCPU, "%04X:%08X Read word from %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & a20Mask());
-            //debugger()->enter();
-        }
-#endif
-        address &= a20Mask();
     }
 
+#ifdef VOMIT_DEBUG
+    if (address > 0xFFFFF) {
+        if (isA20Enabled())
+            vlog(LogCPU, "%04X:%08X Read word from @0x%08X with A20 enabled", getBaseCS(), getBaseEIP(), address);
+        else
+            vlog(LogCPU, "%04X:%08X Read word from @0x%08X with A20 disabled, wrapping to @0x%08X", getBaseCS(), getBaseEIP(), address, address & a20Mask());
+    }
+#endif
     assert(!getPE());
+
+    address &= a20Mask();
     if (addressIsInVGAMemory(address))
         return machine().vgaMemory()->read16(address);
     return vomit_read16FromPointer(reinterpret_cast<WORD*>(m_memory + address));
@@ -1167,18 +1173,19 @@ void VCpu::writeMemory16(DWORD address, WORD value)
 {
     if (!isA20Enabled()) {
         assert(address != 0xFFFFF);
-
+    }
 #ifdef VOMIT_DEBUG
-        if (address > 0xFFFFF) {
-            vlog(LogCPU, "%04X:%08X Write word to %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & a20Mask());
-            //debugger()->enter();
-        }
+    if (address > 0xFFFFF) {
+        if (isA20Enabled())
+            vlog(LogCPU, "%04X:%08X Write word $0x%00X -> @0x%08X with A20=on", getBaseCS(), getBaseEIP(), address);
+        else
+            vlog(LogCPU, "%04X:%08X Write word $0x%08X -> @0x%08X with A20=off, wrapping to @0x%08X", getBaseCS(), getBaseEIP(), address, address & a20Mask());
+    }
 #endif
 
-        address &= a20Mask();
-    }
-
     assert(!getPE());
+
+    address &= a20Mask();
 
     if (addressIsInVGAMemory(address)) {
         machine().vgaMemory()->write16(address, value);
