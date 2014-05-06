@@ -192,6 +192,7 @@ void VCpu::dumpFlatMemory(DWORD address) const
         p+=16;
     }
 
+    p = &m_memory[address];
     for (int i = 0; i < rows; ++i) {
         fprintf(stderr,
             "db 0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X\n",
@@ -220,6 +221,7 @@ void VCpu::dumpMemory(WORD segment, DWORD offset, int rows) const
         p+=16;
     }
 
+    p = memoryPointer(segment, offset);
     for (int i = 0; i < rows; ++i) {
         fprintf(stderr,
             "db 0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X\n",
