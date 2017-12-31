@@ -32,6 +32,7 @@
 #include "pic.h"
 #include "settings.h"
 #include <QtCore/QStringList>
+#include <unistd.h>
 
 VCpu* g_cpu = 0;
 

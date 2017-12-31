@@ -88,7 +88,7 @@ void vm_handleE6(VCpu* cpu)
     case 0x1A00:
         // Interrupt 1A, 00: Get RTC tick count
         cpu->setAL(0); // Midnight flag.
-        curtime = time((time_t) NULL);
+        curtime = time(nullptr);
         t = localtime(&curtime);
         tick_count = ((t->tm_hour*3600) + (t->tm_min*60) + (t->tm_sec)) * 18.206; // yuck..
         gettimeofday(&timv, NULL);
