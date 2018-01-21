@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2013 Andreas Kling <kling@webkit.org>
+ * Copyright (C) 2003-2018 Andreas Kling <awesomekling@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -248,6 +248,26 @@ void VCpu::_IMUL_reg32_RM32_imm8()
 {
     vlog(LogCPU, "Not implemented: IMUL reg32,rm32,imm8");
     vomit_exit(1);
+}
+
+void VCpu::_IMUL_reg32_RM32_imm32()
+{
+    vlog(LogCPU, "Not implemented: IMUL reg32,rm32,imm32");
+    vomit_exit(1);
+}
+
+void VCpu::_IMUL_reg16_RM16_imm16()
+{
+    BYTE rm = fetchOpcodeByte();
+    SIGNED_WORD imm = fetchOpcodeWord();
+    SIGNED_WORD value = readModRM16(rm);
+    SIGNED_WORD result = doImul(value, static_cast<SIGNED_WORD>(imm));
+    SIGNED_DWORD largeResult = doImul(value, static_cast<SIGNED_WORD>(imm));
+
+    setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), result);
+
+    setCF(result != largeResult);
+    setOF(result != largeResult);
 }
 
 void VCpu::_IMUL_reg16_RM16_imm8()

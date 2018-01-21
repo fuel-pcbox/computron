@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Andreas Kling <kling@webkit.org>
+ * Copyright (C) 2014 Andreas Kling <awesomekling@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

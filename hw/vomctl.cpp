@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Andreas Kling <kling@webkit.org>
+ * Copyright (C) 2003-2018 Andreas Kling <awesomekling@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -102,6 +102,7 @@ void VomCtl::out8(WORD port, BYTE data)
     case 0xE4:
     case 0xE6:
     case 0xE7:
+    case 0xE8:
         vm_call8(g_cpu, port, data);
         break;
     default:

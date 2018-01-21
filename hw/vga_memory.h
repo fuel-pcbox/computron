@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Andreas Kling <kling@webkit.org>
+ * Copyright (C) 2003-2018 Andreas Kling <awesomekling@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -43,8 +43,10 @@ public:
 
     void write8(DWORD address, BYTE value);
     void write16(DWORD address, WORD value);
+    void write32(DWORD address, DWORD value);
     BYTE read8(DWORD address);
     WORD read16(DWORD address);
+    DWORD read32(DWORD address);
 
     /*!
         Returns the specified pixel plane.

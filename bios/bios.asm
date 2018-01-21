@@ -1,5 +1,5 @@
 ;
-; Copyright (C) 2003-2014 Andreas Kling <kling@webkit.org>
+; Copyright (C) 2003-2018 Andreas Kling <awesomekling@gmail.com>
 ;
 ; Redistribution and use in source and binary forms, with or without
 ; modification, are permitted provided that the following conditions
@@ -661,10 +661,14 @@ _bios_interrupt10:
     cmp     ah, 0x05
     je      .selectActiveDisplayPage
     cmp     ah, 0x06
-    je      .scrollWindow
+    je      .scrollWindowUp
+    cmp     ah, 0x07
+    je      .scrollWindowDown
     cmp     ah, 0x08
     je      .readChar
-    cmp     ah, 0x09
+    cmp     ah, 0x09 ; Write Character and Attribute at Cursor Position
+    je      .outCharStill
+    cmp     ah, 0x0a ; Write Character Only at Current Cursor Position (FIXME)
     je      .outCharStill
     cmp     ah, 0x11
     je      .characterGeneratorRoutine
@@ -704,8 +708,11 @@ _bios_interrupt10:
     jmp     vga_get_video_state
 .videoSubsystemConfiguration:
     jmp     vga_video_subsystem_configuration
-.scrollWindow:
+.scrollWindowUp:
     out     0xE7, al
+    jmp     .end
+.scrollWindowDown:
+    out     0xE8, al
     jmp     .end
 .selectActiveDisplayPage:
     jmp     vga_select_active_display_page
@@ -1557,6 +1564,8 @@ _bios_interrupt14:
 _bios_interrupt15:
     cmp     ah, 0xc0
     je      .getSystemConfigurationParameters
+    cmp     ah, 0x87
+    je      .moveExtendedBlock
     cmp     ah, 0x88
     je      .queryExtendedMemorySize
     cmp     ah, 0x24
@@ -1570,6 +1579,10 @@ _bios_interrupt15:
 
 .getSystemConfigurationParameters:
     call     bios_get_system_configuration_parameters
+    jmp     .end
+
+.moveExtendedBlock:
+    call    bios_move_extended_block
     jmp     .end
 
 .queryExtendedMemorySize:
@@ -1589,7 +1602,198 @@ _bios_interrupt15:
 .a20control:
     jmp     bios_a20_control
 
+bios_move_extended_block:
+    push    bp
+    mov     bp, sp
+
+    pusha
+
+    stub 0x15 ; FIXME: remove this when no longer needed for debugging
+
+    mov     bx, cx
+
+    cli
+    mov     ax, 0x01
+    call    a20_set
+    mov     [bp-4], ax
+
+    ; base15_00 = (ES << 4) + regs.u.r16.si;
+    mov     ax, es
+    mov     cl, 4
+    shl     ax, cl
+    add     ax, si
+    mov     [bp-6], ax
+
+    ; base23_16 = ES >> 12;
+    mov     ax, es
+    mov     al, ah
+    xor     ah, ah
+    mov     cl, 4
+    shr     ax, cl
+    mov     [bp-7], al
+
+    ; if (base15_00 < (ES<<4))
+    ;   base23_16++;
+    mov     ax, es
+    mov     cl, 4
+    shl     ax, cl
+    cmp     ax, [bp-6]
+    jna     .skip
+    mov     al, [bp-7]
+    inc     ax
+    mov     [bp-7], al
+.skip:
+
+    ; write_word(ES, regs.u.r16.si+0x08+0, 47);       // limit 15:00 = 6 * 8bytes/descriptor
+    mov     [es:si+0x08+0], word 47
+
+    ; write_word(ES, regs.u.r16.si+0x08+2, base15_00);// base 15:00
+    mov     ax, [bp-6]
+    mov     [es:si+0x08+2], ax
+    
+    ; write_byte(ES, regs.u.r16.si+0x08+4, base23_16);// base 23:16
+    mov     ax, [bp-7]
+    mov     [es:si+0x08+4], al
+
+    ; write_byte(ES, regs.u.r16.si+0x08+5, 0x93);     // access
+    ; write_word(ES, regs.u.r16.si+0x08+6, 0x0000);   // base 31:24/reserved/limit 19:16
+    mov     [es:si+0x08+5], byte 0x93
+    mov     [es:si+0x08+6], word 0x0000
+
+    ; // Initialize CS descriptor
+    ; write_word(ES, regs.u.r16.si+0x20+0, 0xffff);// limit 15:00 = normal 64K limit
+    ; write_word(ES, regs.u.r16.si+0x20+2, 0x0000);// base 15:00
+    ; write_byte(ES, regs.u.r16.si+0x20+4, 0x000f);// base 23:16
+    ; write_byte(ES, regs.u.r16.si+0x20+5, 0x9b);  // access
+    ; write_word(ES, regs.u.r16.si+0x20+6, 0x0000);// base 31:24/reserved/limit 19:16
+    mov     [es:si+0x20+0], word 0xffff
+    mov     [es:si+0x20+2], word 0x0000
+    mov     [es:si+0x20+4], byte 0x0f
+    mov     [es:si+0x20+5], byte 0x9b
+    mov     [es:si+0x20+6], word 0x0000
+
+    ; // Initialize SS descriptor
+    ; ss = get_SS();
+    mov     ax, ss
+    ; base15_00 = ss << 4;
+    mov     cl, 4
+    shl     ax, cl
+    mov     [bp-6], ax
+
+    ; ss = get_SS();
+    mov     ax, ss
+    ; base23_16 = ss >> 12;
+    mov     al, ah
+    xor     ah, ah
+    mov     cl, 4
+    shr     ax, cl
+    mov     [bp-7], al
+
+    ; write_word(ES, regs.u.r16.si+0x28+0, 0xffff);   // limit 15:00 = normal 64K limit
+    mov     [es:si+0x28+0], word 0xffff
+
+    ; write_word(ES, regs.u.r16.si+0x08+2, base15_00);// base 15:00
+    mov     ax, [bp-6]
+    mov     [es:si+0x28+2], ax
+    
+    ; write_byte(ES, regs.u.r16.si+0x08+4, base23_16);// base 23:16
+    mov     ax, [bp-7]
+    mov     [es:si+0x28+4], al
+
+    ; write_byte(ES, regs.u.r16.si+0x08+5, 0x93);     // access
+    ; write_word(ES, regs.u.r16.si+0x08+6, 0x0000);   // base 31:24/reserved/limit 19:16
+    mov     [es:si+0x28+5], byte 0x93
+    mov     [es:si+0x28+6], word 0x0000
+
+    ; BX contains moveblock word count
+    mov     cx, bx
+    
+    push    eax
+    xor     eax, eax
+    mov     ds, ax
+    mov     [0x469], ss
+    mov     [0x467], sp
+
+    lgdt    [es:si+0x08]
+    lidt    [cs:pmode_idt_info]
+
+    mov     eax, cr0
+    or      al, 1
+    mov     cr0, eax
+
+    jmp     0x0020:.protty_mode
+.protty_mode:
+    mov     ax, 0x28
+    mov     ss, ax
+    mov     ax, 0x10
+    mov     ds, ax
+    mov     ax, 0x18
+    mov     es, ax
+    xor     si, si
+    xor     di, di
+    cld
+    rep     movsw
+
+    mov     ax, 0x28
+    mov     ds, ax
+    mov     es, ax
+
+    mov     eax, cr0
+    and     al, 0xfe
+    mov     cr0, eax
+    jmp     0xF000:.real_mode
+.real_mode:
+    lidt    [cs:rmode_idt_info]
+    xor     ax, ax
+    mov     ds, ax
+    mov     ss, [0x469]
+    mov     sp, [0x467]
+    pop     eax
+
+    mov     ax, [bp-4]
+    call    a20_set
+
+    sti
+
+    popa
+
+    pop     bp
+    ret
+
+pmode_idt_info:
+dw 0x0000  ;; limit 15:00
+dw 0x0000  ;; base  15:00
+db 0x0f    ;; base  23:16
+
+rmode_idt_info:
+dw 0x03ff  ;; limit 15:00
+dw 0x0000  ;; base  15:00
+db 0x00    ;; base  23:16
+
+a20_set:
+    push    dx
+    xchg    ah, al      ; AH = value to set
+
+    mov     dx, 0x92
+    in      al, dx
+    shr     al, 1       ; AL = A20 enabled? (0/1)
+
+    xchg    ah, al      ; AL = value to set
+
+    shl     al, 1
+    out     dx, al
+    xchg    ah, al      ; AL = prev value
+
+    pop     dx
+    ret
+
 bios_a20_control:
+    cmp     al, 0x01
+    je      .enableA20
+
+    cmp     al, 0x02
+    je      .disableA20
+
     cmp     al, 0x03
     je      .querySupport
 
@@ -1598,12 +1802,28 @@ bios_a20_control:
     stc
     jmp     iret_with_carry
 
+.enableA20:
+    push    ax
+    mov     ax, 1
+    call    a20_set
+    pop     ax
+    xor     ah, ah
+    jmp     .end
+
+.disableA20:
+    push    ax
+    xor     ax, ax
+    call    a20_set
+    pop     ax
+    xor     ah, ah
+    jmp     .end
+
 .querySupport:
     mov     bx, 0x0003              ; A20 gate controlled both via 8042 and System Control Port A (0x92)
     jmp     .end
 
 .end:
-    mov     ah, 0x00
+    xor     ah, ah
     clc
     jmp     iret_with_carry
 
@@ -1930,8 +2150,8 @@ iret_with_carry:
 
 ; DATA
 
-    msg_version        db "Vomit Virtual PC - http://github.com/awesomekling/vomit", 0x0d, 0x0a
-                       db "(C) 2003-2014 Andreas Kling <kling@webkit.org>", 0x0d, 0x0a, 0x0d, 0x0a, 0
+    msg_version        db "Vomit Virtual PC - https://github.com/awesomekling/vomit", 0x0d, 0x0a
+                       db "(C) 2003-2018 Andreas Kling <awesomekling@gmail.com>", 0x0d, 0x0a, 0x0d, 0x0a, 0
 
     msg_8086           db "8086", 0
     msg_80186          db "80186", 0

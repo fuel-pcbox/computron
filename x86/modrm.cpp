@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Andreas Kling <kling@webkit.org>
+ * Copyright (C) 2003-2018 Andreas Kling <awesomekling@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -152,10 +152,12 @@ FarPointer VCpu::readModRMFarPointer(BYTE rmbyte)
     // FIXME: What should I do if it's a register? :|
     assert(!registerPointer);
 
-    vlog(LogCPU, "Loading far pointer from %04X:%08X [PE=%u]", m_lastModRMSegment, m_lastModRMOffset, getPE());
     FarPointer ptr;
-    ptr.offset = readMemory32(m_lastModRMSegment, m_lastModRMOffset);
-    ptr.segment = readMemory16(m_lastModRMSegment, m_lastModRMOffset + 4);
+    ptr.segment = readMemory16(m_lastModRMSegment, m_lastModRMOffset);
+    ptr.offset = readMemory32(m_lastModRMSegment, m_lastModRMOffset + 2);
+
+    vlog(LogCPU, "Loaded far pointer from %04X:%08X [PE=%u], got %04X:%08X", m_lastModRMSegment, m_lastModRMOffset, getPE(), ptr.segment, ptr.offset);
+
     return ptr;
 }
 
@@ -374,57 +376,63 @@ void* VCpu::resolveModRM32_internal(BYTE rmbyte)
 
 DWORD VCpu::evaluateSIB(BYTE sib)
 {
-    vlog(LogAlert, "evaluateSIB() called.. this is not properly implemented :(");
+    unsigned scale = 1 << ((sib >> 6) & 3);
+    RegisterIndex32 indexRegister = (RegisterIndex32)((sib >> 3) & 7);
+    RegisterIndex32 baseRegister = (RegisterIndex32)(sib & 7);
+
+    DWORD result = getRegister32(baseRegister) + getRegister32(indexRegister) * scale;
+
+    vlog(LogCPU, "%04X:%08X: evaluateSIB(): sib=%02X -> %s+%s*%u", getBaseCS(), getBaseEIP(), sib, registerName(baseRegister), registerName(indexRegister), scale);
     dumpAll();
-    vomit_exit(1);
+//    vomit_exit(1);
 
     switch (sib & 0xC0) {
     case 0x00:
         switch (rmbyte & 0x07) {
-        case 0: return getEAX();
-        case 1: return getECX();
-        case 2: return getEDX();
-        case 3: return getEBX();
-        case 4: return 0;
-        case 5: return getEBP();
-        case 6: return getESI();
-        default: return getEDI();
+        case 0: return getEAX() + fetchOpcodeDWord();
+        case 1: return getECX() + fetchOpcodeDWord();
+        case 2: return getEDX() + fetchOpcodeDWord();
+        case 3: return getEBX() + fetchOpcodeDWord();
+        case 4: return fetchOpcodeDWord();
+        case 5: return getEBP() + fetchOpcodeDWord();
+        case 6: return getESI() + fetchOpcodeDWord();
+        default: return getEDI() + fetchOpcodeDWord();
         }
         break;
     case 0x40:
         switch (rmbyte & 0x07) {
-        case 0: return getEAX() * 2;
-        case 1: return getECX() * 2;
-        case 2: return getEDX() * 2;
-        case 3: return getEBX() * 2;
-        case 4: return 0;
-        case 5: return getEBP() * 2;
-        case 6: return getESI() * 2;
-        default: return getEDI() * 2;
+        case 0: return getEAX() * 2 + fetchOpcodeDWord();
+        case 1: return getECX() * 2 + fetchOpcodeDWord();
+        case 2: return getEDX() * 2 + fetchOpcodeDWord();
+        case 3: return getEBX() * 2 + fetchOpcodeDWord();
+        case 4: return fetchOpcodeDWord();
+        case 5: return getEBP() * 2 + fetchOpcodeDWord();
+        case 6: return getESI() * 2 + fetchOpcodeDWord();
+        default: return getEDI() * 2 + fetchOpcodeDWord();
         }
         break;
     case 0x80:
         switch (rmbyte & 0x07) {
-        case 0: return getEAX() * 4;
-        case 1: return getECX() * 4;
-        case 2: return getEDX() * 4;
-        case 3: return getEBX() * 4;
-        case 4: return 0;
-        case 5: return getEBP() * 4;
-        case 6: return getESI() * 4;
-        default: return getEDI() * 4;
+        case 0: return getEAX() * 4 + fetchOpcodeDWord();
+        case 1: return getECX() * 4 + fetchOpcodeDWord();
+        case 2: return getEDX() * 4 + fetchOpcodeDWord();
+        case 3: return getEBX() * 4 + fetchOpcodeDWord();
+        case 4: return fetchOpcodeDWord();
+        case 5: return getEBP() * 4 + fetchOpcodeDWord();
+        case 6: return getESI() * 4 + fetchOpcodeDWord();
+        default: return getEDI() * 4 + fetchOpcodeDWord();
         }
         break;
     default: // 0xC0
         switch (rmbyte & 0x07) {
-        case 0: return getEAX() * 8;
-        case 1: return getECX() * 8;
-        case 2: return getEDX() * 8;
-        case 3: return getEBX() * 8;
-        case 4: return 0;
-        case 5: return getEBP() * 8;
-        case 6: return getESI() * 8;
-        default: return getEDI() * 8;
+        case 0: return getEAX() * 8 + fetchOpcodeDWord();
+        case 1: return getECX() * 8 + fetchOpcodeDWord();
+        case 2: return getEDX() * 8 + fetchOpcodeDWord();
+        case 3: return getEBX() * 8 + fetchOpcodeDWord();
+        case 4: return fetchOpcodeDWord();
+        case 5: return getEBP() * 8 + fetchOpcodeDWord();
+        case 6: return getESI() * 8 + fetchOpcodeDWord();
+        default: return getEDI() * 8 + fetchOpcodeDWord();
         }
         break;
     }

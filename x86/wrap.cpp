@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2013 Andreas Kling <kling@webkit.org>
+ * Copyright (C) 2003-2018 Andreas Kling <awesomekling@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,6 +25,7 @@
 
 #include "vcpu.h"
 #include "debug.h"
+#include "debugger.h"
 
 template<typename T>
 T VCpu::doRol(T data, int steps)
@@ -480,6 +481,7 @@ void VCpu::_wrap_0xFF_16()
 void VCpu::_wrap_0xFF_32()
 {
     vlog(LogAlert, "NOT IMPLEMENTED: 32bit 0xFF");
+    debugger()->enter();
     exception(6);
 #if 0
     rmbyte = fetchOpcodeByte();

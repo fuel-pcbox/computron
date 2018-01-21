@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2013 Andreas Kling <kling@webkit.org>
+ * Copyright (C) 2003-2018 Andreas Kling <awesomekling@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -282,4 +282,16 @@ void VCpu::_NEG_RM16()
         ((0)^(value))
         )>>(15))&1);
     adjustFlag32(value, 0, old);
+}
+
+DEFAULT_RM16_imm8(doBtr, _BTR_RM16_imm8)
+DEFAULT_RM32_imm8(doBtr, _BTR_RM32_imm8)
+
+template<typename T, typename U>
+T VCpu::doBtr(T dest, U bitIndex)
+{
+    T bitMask = 1 << bitIndex;
+    T result = dest & ~bitMask;
+    setCF((dest & bitMask) != 0);
+    return result;
 }

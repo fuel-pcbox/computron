@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Andreas Kling <kling@webkit.org>
+ * Copyright (C) 2003-2018 Andreas Kling <awesomekling@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,12 +34,16 @@
 #include <sys/time.h>
 
 static void vga_scrollup(BYTE x1, BYTE y1, BYTE x2, BYTE y2, BYTE num, BYTE attr);
+static void vga_scrolldown(BYTE x1, BYTE y1, BYTE x2, BYTE y2, BYTE num, BYTE attr);
 static void vm_handleE6(VCpu* cpu);
 
 void vm_call8(VCpu* cpu, WORD port, BYTE data) {
     switch (port) {
     case 0xE0:
         vlog(LogAlert, "Interrupt %02X, function %04X requested", cpu->getBL(), cpu->getAX());
+        if (cpu->getBL() == 0x15 && cpu->getAH() == 0x87) {
+            vlog(LogAlert, "MoveBlock GDT{ %04X:%04X } x %04X", cpu->getES(), cpu->getSI(), cpu->getCX());
+        }
         break;
     case 0xE6:
         vm_handleE6(cpu);
@@ -55,6 +59,9 @@ void vm_call8(VCpu* cpu, WORD port, BYTE data) {
         break;
     case 0xE7:
         vga_scrollup(cpu->getCL(), cpu->getCH(), cpu->getDL(), cpu->getDH(), cpu->getAL(), cpu->getBH());
+        break;
+    case 0xE8:
+        vga_scrolldown(cpu->getCL(), cpu->getCH(), cpu->getDL(), cpu->getDH(), cpu->getAL(), cpu->getBH());
         break;
     default:
         vlog(LogAlert, "vm_call8: Unhandled write, %02X -> %04X", data, port);
@@ -244,7 +251,38 @@ void vga_scrollup(BYTE x1, BYTE y1, BYTE x2, BYTE y2, BYTE num, BYTE attr)
 
     // TODO: Scroll graphics when in graphics mode (using text coordinates)
 
-    //vlog(VM_VIDEOMSG, "vga_scrollup(%d, %d, %d, %d, %d)", x1, y1, x2, y2, num);
+    vlog(LogVGA, "vga_scrollup(%d, %d, %d, %d, %d)", x1, y1, x2, y2, num);
+    if ((num == 0) || (num > g_cpu->readUnmappedMemory8(0x484) + 1)) {
+        for (BYTE y = y1; y <= y2; ++y) {
+            for (BYTE x = x1; x < x2; ++x) {
+                videoMemory[(y * 160 + x * 2) + 0] = 0x20;
+                videoMemory[(y * 160 + x * 2) + 1] = attr;
+            }
+        }
+        return;
+    }
+    for (BYTE i = 0; i < num; ++i) {
+        for (BYTE y = y1; y < y2; ++y) {
+            for (BYTE x = x1; x < x2; ++x) {
+                videoMemory[(y * 160 + x * 2) + 0] = videoMemory[(((y+1)*160)+x*2)+0];
+                videoMemory[(y * 160 + x * 2) + 1] = videoMemory[(((y+1)*160)+x*2)+1];
+            }
+        }
+        for (BYTE x = x1; x < x2; ++x) {
+            videoMemory[(y2 * 160 + x * 2) + 0] = 0x20;
+            videoMemory[(y2 * 160 + x * 2) + 1] = attr;
+        }
+        y2--;
+    }
+}
+
+void vga_scrolldown(BYTE x1, BYTE y1, BYTE x2, BYTE y2, BYTE num, BYTE attr)
+{
+    BYTE *videoMemory = g_cpu->memoryPointer(0xB800, 0x0000);
+
+    // TODO: Scroll graphics when in graphics mode (using text coordinates)
+
+    vlog(LogVGA, "vga_scrolldown(%d, %d, %d, %d, %d)", x1, y1, x2, y2, num);
     if ((num == 0) || (num > g_cpu->readUnmappedMemory8(0x484) + 1)) {
         for (BYTE y = y1; y <= y2; ++y) {
             for (BYTE x = x1; x < x2; ++x) {

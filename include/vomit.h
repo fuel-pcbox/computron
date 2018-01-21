@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2013 Andreas Kling <kling@webkit.org>
+ * Copyright (C) 2003-2018 Andreas Kling <awesomekling@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -142,6 +142,11 @@ inline WORD vomit_LSB(WORD w)
 inline WORD vomit_MAKEWORD(BYTE msb, BYTE lsb)
 {
     return (msb << 8) | lsb;
+}
+
+inline DWORD vomit_MAKEDWORD(WORD msw, WORD lsw)
+{
+    return (msw << 16) | lsw;
 }
 
 #endif

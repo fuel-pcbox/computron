@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Andreas Kling <kling@webkit.org>
+ * Copyright (C) 2003-2018 Andreas Kling <awesomekling@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -69,10 +69,10 @@ BYTE CMOS::in8(WORD)
     case 0x0B: value = m_statusRegisterB; break;
     case 0x15: value = vomit_LSB(g_cpu->baseMemorySize() / 1024); break;
     case 0x16: value = vomit_MSB(g_cpu->baseMemorySize() / 1024); break;
-    case 0x30:
-    case 0x17: value = vomit_LSB(g_cpu->extendedMemorySize() / 1024); break;
-    case 0x31:
-    case 0x18: value = vomit_MSB(g_cpu->extendedMemorySize() / 1024); break;
+    case 0x17: value = vomit_LSB(g_cpu->extendedMemorySize() / 1024 - 1024); break;
+    case 0x18: value = vomit_MSB(g_cpu->extendedMemorySize() / 1024 - 1024); break;
+    case 0x30: value = vomit_LSB(g_cpu->extendedMemorySize() / 1024 - 1024); break;
+    case 0x31: value = vomit_MSB(g_cpu->extendedMemorySize() / 1024 - 1024); break;
     case 0x32: value = QDate::currentDate().year() / 100; break;
     default: vlog(LogCMOS, "WARNING: Read unsupported register %02X", m_registerIndex);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2013 Andreas Kling <kling@webkit.org>
+ * Copyright (C) 2003-2018 Andreas Kling <awesomekling@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -107,10 +107,12 @@ public:
         bool acc;
         DWORD base;
         DWORD limit;
+
+        DWORD effectiveLimit() const { return granularity ? (limit * 4096) : limit; }
     };
 
-    void dumpSegment(WORD index) const;
-    SegmentSelector makeSegmentSelector(WORD index) const;
+    void dumpSegment(WORD index);
+    SegmentSelector makeSegmentSelector(WORD index);
 
     WORD currentSegment() const { return *m_currentSegment; }
     bool hasSegmentPrefix() const { return m_currentSegment == &m_segmentPrefix; }
@@ -294,6 +296,9 @@ public:
     void jumpRelative32(SIGNED_DWORD displacement);
     void jumpAbsolute16(WORD offset);
 
+    FarPointer getInterruptVector16(int isr);
+    FarPointer getInterruptVector32(int isr);
+
     // Execute the next instruction at CS:IP (huge switch version)
     void decodeNext();
 
@@ -309,9 +314,9 @@ public:
     // CPU main loop when halted (HLT) - will do nothing until an IRQ is raised
     void haltedLoop();
 
-    BYTE fetchOpcodeByte() { return m_codeMemory[this->IP++]; }
-    inline WORD fetchOpcodeWord();
-    inline DWORD fetchOpcodeDWord();
+    BYTE fetchOpcodeByte();
+    WORD fetchOpcodeWord();
+    DWORD fetchOpcodeDWord();
 
     void push32(DWORD value);
     DWORD pop32();
@@ -331,8 +336,8 @@ public:
      */
     BYTE in(WORD port);
 
-    inline BYTE* memoryPointer(WORD segment, WORD offset) const;
-    inline BYTE* memoryPointer(DWORD address) const;
+    BYTE* memoryPointer(WORD segment, WORD offset);
+    BYTE* memoryPointer(DWORD address);
 
     DWORD getEFlags() const;
     WORD getFlags() const;
@@ -360,12 +365,25 @@ public:
     inline void writeUnmappedMemory8(DWORD address, BYTE data);
     inline void writeUnmappedMemory16(DWORD address, WORD data);
 
-    BYTE readMemory8(DWORD address) const;
-    BYTE readMemory8(WORD segment, DWORD offset) const;
-    WORD readMemory16(DWORD address) const;
-    WORD readMemory16(WORD segment, DWORD offset) const;
-    DWORD readMemory32(DWORD address) const;
-    DWORD readMemory32(WORD segment, DWORD offset) const;
+    enum class MemoryAccessType {
+        Read8,
+        Read16,
+        Read32,
+        Read64,
+        Write8,
+        Write16,
+        Write32,
+        Write64,
+    };
+
+    bool validateAddress(WORD segment, DWORD offset, MemoryAccessType);
+
+    BYTE readMemory8(DWORD address);
+    BYTE readMemory8(WORD segment, DWORD offset);
+    WORD readMemory16(DWORD address);
+    WORD readMemory16(WORD segment, DWORD offset);
+    DWORD readMemory32(DWORD address);
+    DWORD readMemory32(WORD segment, DWORD offset);
     void writeMemory8(DWORD address, BYTE data);
     void writeMemory8(WORD segment, DWORD offset, BYTE data);
     void writeMemory16(DWORD address, WORD data);
@@ -376,6 +394,7 @@ public:
     BYTE readModRM8(BYTE rmbyte);
     WORD readModRM16(BYTE rmbyte);
     DWORD readModRM32(BYTE rmbyte);
+    void readModRM48(BYTE rmbyte, WORD& segment, DWORD& offset);
     FarPointer readModRMFarPointer(BYTE rmbyte);
     void writeModRM8(BYTE rmbyte, BYTE value);
     void writeModRM16(BYTE rmbyte, WORD value);
@@ -411,19 +430,20 @@ public:
     void setState(State s) { m_state = s; }
 
     // Dumps registers, flags & stack
-    void dumpAll() const;
+    void dumpAll();
 
     // Dumps all ISR handler pointers (0000:0000 - 0000:03FF)
-    void dumpIVT() const;
+    void dumpIVT();
 
-    void dumpMemory(WORD segment, DWORD offset, int rows) const;
-    void dumpFlatMemory(DWORD address) const;
+    void dumpMemory(WORD segment, DWORD offset, int rows);
+    void dumpFlatMemory(DWORD address);
+    void dumpRawMemory(BYTE*);
 
-    int dumpDisassembled(WORD segment, DWORD offset) const;
+    int dumpDisassembled(WORD segment, DWORD offset);
 
 #ifdef VOMIT_TRACE
     // Dumps registers (used by --trace)
-    void dumpTrace() const;
+    void dumpTrace();
 #endif
 
     void updateSizeModes();
@@ -441,7 +461,12 @@ public:
     enum Command { EnterMainLoop, ExitMainLoop };
     void queueCommand(Command);
 
+    static const char* registerName(VCpu::RegisterIndex16);
+    static const char* registerName(VCpu::RegisterIndex32);
+
 protected:
+    void _CPUID();
+
     void _UNSUPP();
     void _ESCAPE();
 
@@ -814,6 +839,8 @@ protected:
 
     void _IMUL_reg16_RM16_imm8();
     void _IMUL_reg32_RM32_imm8();
+    void _IMUL_reg16_RM16_imm16();
+    void _IMUL_reg32_RM32_imm32();
 
     // 80386+ INSTRUCTIONS
 
@@ -841,6 +868,9 @@ protected:
     void _ADD_RM32_reg32();
     void _ADC_RM32_reg32();
     void _SUB_RM32_reg32();
+
+    void _BTR_RM16_imm8();
+    void _BTR_RM32_imm8();
 
     void _MOVZX_reg16_RM8();
     void _MOVZX_reg32_RM8();
@@ -926,6 +956,8 @@ private:
     template<typename T> T doOr(T, T);
     template<typename T> T doAnd(T, T);
 
+    template<typename T, typename U> T doBtr(T, U);
+
     template<typename T> QWORD doAdd(T, T);
     template<typename T> QWORD doAdc(T, T);
     template<typename T> QWORD doSub(T, T);
@@ -954,7 +986,7 @@ private:
 
     void flushCommandQueue();
 
-    void dumpSelector(const char* segmentRegisterName, SegmentIndex) const;
+    void dumpSelector(const char* segmentRegisterName, SegmentIndex);
     void syncSegmentRegister(SegmentIndex);
     SegmentSelector m_selector[6];
 
@@ -1108,7 +1140,8 @@ private:
 
     Debugger* m_debugger;
 
-    BYTE* m_memory;
+    BYTE* m_memory { nullptr };
+    size_t m_memorySize { 8192 * 1024 };
 
     WORD* m_segmentMap[8];
     DWORD* m_controlRegisterMap[8];
@@ -1160,45 +1193,6 @@ void VCpu::writeUnmappedMemory16(DWORD address, WORD value)
 BYTE* VCpu::codeMemory() const
 {
     return m_codeMemory;
-}
-
-BYTE* VCpu::memoryPointer(DWORD address) const
-{
-    if (!isA20Enabled()) {
-#ifdef VOMIT_DEBUG
-        if (address > 0xFFFFF)
-            vlog(LogCPU, "%04X:%08X Get pointer to %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & a20Mask());
-#endif
-        address &= a20Mask();
-    }
-    return &m_memory[address];
-}
-
-BYTE* VCpu::memoryPointer(WORD segment, WORD offset) const
-{
-    return memoryPointer(vomit_toFlatAddress(segment, offset));
-}
-
-WORD VCpu::fetchOpcodeWord()
-{
-    WORD w = *reinterpret_cast<WORD*>(&m_codeMemory[getIP()]);
-    this->IP += 2;
-#ifdef VOMIT_BIG_ENDIAN
-    return V_BYTESWAP(w);
-#else
-    return w;
-#endif
-}
-
-DWORD VCpu::fetchOpcodeDWord()
-{
-    DWORD d = *reinterpret_cast<DWORD*>(&m_codeMemory[getIP()]);
-    this->IP += 4;
-#ifdef VOMIT_BIG_ENDIAN
-#error IMPLEMENT ME
-#else
-    return d;
-#endif
 }
 
 #include "debug.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Andreas Kling <kling@webkit.org>
+ * Copyright (C) 2003-2018 Andreas Kling <awesomekling@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,6 +25,8 @@
 
 #include "vcpu.h"
 #include "debug.h"
+
+#include "debugger.h"
 
 void VCpu::_LOOP_imm8()
 {
@@ -87,6 +89,7 @@ void VCpu::handleRepeatOpcode(BYTE opcode, bool shouldEqual)
     case 0xAF: DO_REPZ(_SCASW); return;
 
     default:
+        debugger()->enter();
         vlog(LogAlert, "SUSPICIOUS: Opcode %02X used with REP* prefix", opcode);
         decode(opcode);
         return;

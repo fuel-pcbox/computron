@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Andreas Kling <kling@webkit.org>
+ * Copyright (C) 2003-2018 Andreas Kling <awesomekling@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -285,9 +285,22 @@ void VGAMemory::write16(DWORD address, WORD value)
     write8(address + 1, vomit_MSB(value));
 }
 
+void VGAMemory::write32(DWORD address, DWORD value)
+{
+    write8(address + 0, vomit_LSB(vomit_LSW(value)));
+    write8(address + 1, vomit_MSB(vomit_LSW(value)));
+    write8(address + 2, vomit_LSB(vomit_MSW(value)));
+    write8(address + 3, vomit_MSB(vomit_MSW(value)));
+}
+
 WORD VGAMemory::read16(DWORD address)
 {
     return vomit_MAKEWORD(read8(address), read8(address + 1));
+}
+
+DWORD VGAMemory::read32(DWORD address)
+{
+    return vomit_MAKEDWORD(read16(address), read16(address + 2));
 }
 
 BYTE *VGAMemory::plane(int index) const

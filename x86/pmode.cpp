@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Andreas Kling <kling@webkit.org>
+ * Copyright (C) 2003-2018 Andreas Kling <awesomekling@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,55 +42,88 @@ void VCpu::_SIDT()
 
 void VCpu::_LGDT()
 {
-    WORD tableAddress = fetchOpcodeWord();
-    GDTR.base = readMemory32(currentSegment(), tableAddress + 2);
-    GDTR.limit = readMemory16(currentSegment(), tableAddress);
+    vlog(LogAlert, "%04X:%08X Begin LGDT", getBaseCS(), getBaseEIP());
+    FarPointer ptr = readModRMFarPointer(this->subrmbyte);
+    DWORD baseMask = o32() ? 0xffffffff : 0x00ffffff;
+    GDTR.base = ptr.offset & baseMask;
+    GDTR.limit = ptr.segment;
+    dumpAll();
+    dumpMemory(getES(), getSI() + 8, 2);
+    vlog(LogAlert, "%04X:%08X LGDT { base:%08X, limit: %08X }", getBaseCS(), getBaseEIP(), GDTR.base, GDTR.limit);
+
+    for (unsigned i = 0; i < GDTR.limit; i += 8) {
+        dumpSegment(i);
+    }
 }
 
 void VCpu::_LIDT()
 {
-    WORD tableAddress = fetchOpcodeWord();
-    IDTR.base = readMemory32(currentSegment(), tableAddress + 2);
-    IDTR.limit = readMemory16(currentSegment(), tableAddress);
+    vlog(LogAlert, "%04X:%08X Begin LIDT", getBaseCS(), getBaseEIP());
+    FarPointer ptr = readModRMFarPointer(this->subrmbyte);
+    DWORD baseMask = o32() ? 0xffffffff : 0x00ffffff;
+    IDTR.base = ptr.offset & baseMask;
+    IDTR.limit = ptr.segment;
+    vlog(LogAlert, "%04X:%08X LIDT { base:%08X, limit: %08X }", getBaseCS(), getBaseEIP(), IDTR.base, IDTR.limit);
 }
 
 void VCpu::_LMSW_RM16()
 {
     BYTE msw = readModRM16(subrmbyte);
     CR0 = (CR0 & 0xFFFFFFF0) | msw;
-    updateSizeModes();
+    vlog(LogCPU, "%04X:%08X LMSW set CR0=%08X, PE=%u", getBaseCS(), getBaseEIP(), CR0, getPE());
+    //updateSizeModes();
 }
 
 void VCpu::_SMSW_RM16()
 {
+    vlog(LogCPU, "%04X:%08X SMSW get LSW(CR0)=%04X, PE=%u", getBaseCS(), getBaseEIP(), CR0 & 0xFFFF, getPE());
     writeModRM16(subrmbyte, CR0 & 0xFFFF);
 }
 
-VCpu::SegmentSelector VCpu::makeSegmentSelector(WORD index) const
+VCpu::SegmentSelector VCpu::makeSegmentSelector(WORD index)
 {
     if (index % 8) {
-        vlog(LogAlert, "Segment selector index %u not divisible by 8.", index);
+        vlog(LogAlert, "%04X:%08X: Segment selector index 0x%04X not divisible by 8.", getBaseCS(), getBaseEIP(), index);
         debugger()->enter();
+        vomit_exit(1);
     }
 
-    if (index >= this->GDTR.limit)
-        vlog(LogAlert, "Segment selector index %u >= GDTR.limit.", index);
+    if (index >= this->GDTR.limit) {
+        vlog(LogAlert, "%04X:%08X: Segment selector index 0x%04X >= GDTR.limit (0x%04X).", getBaseCS(), getBaseEIP(), index, GDTR.limit);
+        debugger()->enter();
+        //vomit_exit(1);
+    }
+
+    //vlog(LogAlert, "makeSegmentSelector: GDTR.base{%08X} + index{%04X}", GDTR.base, index);
+    //dumpAll();
 
     DWORD hi = readMemory32(this->GDTR.base + index + 4);
     DWORD lo = readMemory32(this->GDTR.base + index);
+
+    struct SegDescr{
+        uint16_t limit_1;   // limit, bits 0..15
+        uint16_t base_1;    // base, bits 0..15
+        uint8_t base_2;     // base, bits 16..23
+        uint8_t type_attr;  // type_attr
+        uint8_t lim_attr;
+          //^ bits 0..3: limit, bits 16..19
+          //^ bits 4..7: additional data/code attributes
+        uint8_t base_3;     // base, bits 24..31
+    };
 
     SegmentSelector selector;
 
     selector.base = (hi & 0xFF000000) | ((hi & 0xFF) << 16) | ((lo >> 16) & 0xFFFF);
     selector.limit = (hi & 0xF0000) | (lo & 0xFFFF);
-    selector.acc = hi >> 7;
-    selector.BRW = hi >> 8;
-    selector.CE = hi >> 9;
-    selector._32bit = hi >> 10;
+    selector.acc = (hi >> 7) & 1;
+    selector.BRW = (hi >> 8) & 1;
+    selector.CE = (hi >> 9) & 1;
+    selector._32bit = (hi >> 10) & 1;
     selector.DPL = (hi >> 12) & 3;
-    selector.present = hi >> 14;
-    selector.big = hi >> 22;
-    selector.granularity = hi >> 23;
+
+    selector.present = (hi >> 14) & 1;
+    selector.big = (hi >> 22) & 1;
+    selector.granularity = (hi >> 23) & 1;
 
     return selector;
 }

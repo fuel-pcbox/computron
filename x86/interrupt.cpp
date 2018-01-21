@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Andreas Kling <kling@webkit.org>
+ * Copyright (C) 2003-2018 Andreas Kling <awesomekling@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -66,17 +66,43 @@ void VCpu::jumpToInterruptHandler(int isr)
         vlog(LogCPU, "Invalid opcode trap at %04X:%08X (%02X)", getBaseCS(), getBaseEIP(), *(codeMemory() + this->getBaseIP()));
         dumpAll();
         debugger()->enter();
+        //return;
     }
 #endif
 
-    push(getFlags());
+    if (o16()) {
+        push(getFlags());
+        setIF(0);
+        setTF(0);
+        push(getCS());
+        push(getIP());
+
+        // FIXME: should use PE-safe reads
+        WORD segment = (m_memory[isr * 4 + 3] << 8) | m_memory[isr * 4 + 2];
+        WORD offset = (m_memory[isr * 4 + 1] << 8) | m_memory[isr * 4];
+
+        jump16(segment, offset);
+        return;
+    }
+    push(getEFlags());
     setIF(0);
     setTF(0);
     push(getCS());
-    push(getIP());
+    push(getEIP());
 
-    WORD segment = (m_memory[isr * 4 + 3] << 8) | m_memory[isr * 4 + 2];
-    WORD offset = (m_memory[isr * 4 + 1] << 8) | m_memory[isr * 4];
+    FarPointer iv = getInterruptVector32(isr);
+    jump32(iv.segment, iv.offset);
+}
 
-    jump16(segment, offset);
+FarPointer VCpu::getInterruptVector16(int isr)
+{
+    vlog(LogAlert, "getInterruptVector16(%d)", isr);
+    vomit_exit(1);
+    return { 0, 0 };
+}
+
+FarPointer VCpu::getInterruptVector32(int isr)
+{
+    vlog(LogAlert, "getInterruptVector32(%d)", isr);
+    return { 0, 0 };
 }

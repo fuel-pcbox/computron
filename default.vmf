@@ -15,4 +15,10 @@ keymap keymaps/mbp.vkeymap
 # Available types:
 #     1.44M, 1.2M, 720kB, 360kB, 320kB, 160kB
 
-floppy-disk 0 1.44M images/slackware-3.3-bare.i
+#floppy-disk 0 1.44M images/slackware-3.3-bare.i
+#floppy-disk 0 1.44M images/msdos622-1.img
+floppy-disk 0 1.44M images/win311-1.img
+#floppy-disk 0 1.44M images/msdos600-1.img
+#floppy-disk 0 1.44M images/netbsd7-1.img
+#floppy-disk 0 1.44M images/netbsd2-1.img
+#floppy-disk 0 1.44M images/xenix-1.img

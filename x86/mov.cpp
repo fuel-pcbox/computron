@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2011 Andreas Kling <kling@webkit.org>
+ * Copyright (C) 2003-2018 Andreas Kling <awesomekling@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -195,10 +195,13 @@ void VCpu::_MOV_CR_reg32()
 
     setControlRegister(crIndex, getRegister32(static_cast<VCpu::RegisterIndex32>(rm & 7)));
 
-    updateSizeModes();
+    //updateSizeModes();
 
     if (crIndex == 0)
-        vlog(LogCPU, "Protected mode Enable = %u", getPE());
+        vlog(LogCPU, "%04X:%08X MOV CR0 set CR0=%08X, PE=%u", getBaseCS(), getBaseEIP(), CR0, getPE());
+
+    //if (crIndex == 0 && !getPE())
+//        updateSizeModes();
 }
 
 void VCpu::_MOV_AL_imm8()
