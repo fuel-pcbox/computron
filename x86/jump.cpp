@@ -126,7 +126,7 @@ void VCpu::_CALL_imm16()
 
 void VCpu::_CALL_imm32()
 {
-    SIGNED_DWORD imm = fetchOpcodeWord();
+    SIGNED_DWORD imm = fetchOpcodeDWord();
     push(EIP);
     jumpRelative32(imm);
 }
