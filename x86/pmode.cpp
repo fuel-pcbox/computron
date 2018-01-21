@@ -43,7 +43,7 @@ void VCpu::_SIDT()
 void VCpu::_LGDT()
 {
     vlog(LogAlert, "%04X:%08X Begin LGDT", getBaseCS(), getBaseEIP());
-    FarPointer ptr = readModRMFarPointer(this->subrmbyte);
+    FarPointer ptr = readModRMFarPointerSegmentFirst(this->subrmbyte);
     DWORD baseMask = o32() ? 0xffffffff : 0x00ffffff;
     GDTR.base = ptr.offset & baseMask;
     GDTR.limit = ptr.segment;
@@ -59,7 +59,7 @@ void VCpu::_LGDT()
 void VCpu::_LIDT()
 {
     vlog(LogAlert, "%04X:%08X Begin LIDT", getBaseCS(), getBaseEIP());
-    FarPointer ptr = readModRMFarPointer(this->subrmbyte);
+    FarPointer ptr = readModRMFarPointerSegmentFirst(this->subrmbyte);
     DWORD baseMask = o32() ? 0xffffffff : 0x00ffffff;
     IDTR.base = ptr.offset & baseMask;
     IDTR.limit = ptr.segment;
@@ -115,16 +115,14 @@ VCpu::SegmentSelector VCpu::makeSegmentSelector(WORD index)
 
     selector.base = (hi & 0xFF000000) | ((hi & 0xFF) << 16) | ((lo >> 16) & 0xFFFF);
     selector.limit = (hi & 0xF0000) | (lo & 0xFFFF);
-    selector.acc = (hi >> 7) & 1;
-    selector.BRW = (hi >> 8) & 1;
-    selector.CE = (hi >> 9) & 1;
-    selector._32bit = (hi >> 10) & 1;
-    selector.DPL = (hi >> 12) & 3;
-
+    selector.accessed = (hi >> 8) & 1;
+    selector.RW = (hi >> 9) & 1; // Read/Write
+    selector.DC = (hi >> 10) & 1; // Direction/Conforming
+    selector.executable = (hi >> 11) & 1;
+    selector.DPL = (hi >> 12) & 3; // Privilege (ring) level
     selector.present = (hi >> 14) & 1;
-    selector.big = (hi >> 22) & 1;
-    selector.granularity = (hi >> 23) & 1;
-
+    selector._32bit = (hi >> 22) & 1;
+    selector.granularity = (hi >> 23) & 1; // Limit granularity, 0=1b, 1=4kB
     return selector;
 }
 

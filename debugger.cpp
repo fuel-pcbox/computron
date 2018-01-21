@@ -113,6 +113,9 @@ void Debugger::handleCommand(const QString& rawCommand)
     if (lowerCommand == "d" || lowerCommand == "dump-memory")
         return handleDumpMemory(arguments);
 
+    if (lowerCommand == "seg")
+        return handleDumpSegment(arguments);
+
     if (lowerCommand == "m")
         return handleDumpFlatMemory(arguments);
 
@@ -206,6 +209,16 @@ void Debugger::handleDumpMemory(const QStringList& arguments)
     }
 
     cpu()->dumpMemory(segment, offset, 16);
+}
+
+void Debugger::handleDumpSegment(const QStringList& arguments)
+{
+    WORD segment = cpu()->getCS();
+
+    if (arguments.size() >= 1)
+        segment = arguments.at(0).toUInt(0, 16);
+
+    cpu()->dumpSegment(segment);
 }
 
 void Debugger::handleDumpFlatMemory(const QStringList& arguments)

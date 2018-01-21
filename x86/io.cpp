@@ -143,8 +143,11 @@ void VCpu::_IN_EAX_DX()
 void VCpu::out(WORD port, BYTE value)
 {
 #ifdef VOMIT_DEBUG
-    if (options.iopeek)
-        vlog(LogIO, "[%04X:%08X] VCpu::out: %02X --> %04X", getBaseCS(), getBaseEIP(), value, port);
+    if (options.iopeek) {
+        if (port != 0x00E6 && port != 0x0020 && port != 0x3D4 && port != 0x03d5 && port != 0xe2 && port != 0xe0) {
+            vlog(LogIO, "[%04X:%08X] VCpu::out: %02X --> %04X", getBaseCS(), getBaseEIP(), value, port);
+        }
+    }
 #endif
 
     if (IODevice::writeDevices().contains(port)) {
@@ -159,8 +162,11 @@ void VCpu::out(WORD port, BYTE value)
 BYTE VCpu::in(WORD port)
 {
 #ifdef VOMIT_DEBUG
-    if (options.iopeek)
-        vlog(LogIO, "[%04X:%08X] VCpu::in: %04X", getBaseCS(), getBaseEIP(), port);
+    if (options.iopeek) {
+        if (port != 0x00E6 && port != 0x0020 && port != 0x3D4 && port != 0x03d5) {
+            vlog(LogIO, "[%04X:%08X] VCpu::in: %04X", getBaseCS(), getBaseEIP(), port);
+        }
+    }
 #endif
 
     if (IODevice::readDevices().contains(port))

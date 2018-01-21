@@ -98,6 +98,7 @@ BYTE Keyboard::in8(WORD port)
         // Keyboard not locked, POST completed successfully.
         BYTE status = ATKBD_UNLOCKED | (m_ram[0] & ATKBD_SYSTEM_FLAG);
         status |= m_lastWasCommand ? ATKBD_CMD_DATA : 0;
+        //status |= m_hasCommand ? ATKBD_OUTPUT_STATUS : 0;
         // vlog(LogKeyboard, "Keyboard status queried (%02X)", status);
         return status;
     }

@@ -145,7 +145,7 @@ DWORD VCpu::readModRM32(BYTE rmbyte)
     return readMemory32(m_lastModRMSegment, m_lastModRMOffset);
 }
 
-FarPointer VCpu::readModRMFarPointer(BYTE rmbyte)
+FarPointer VCpu::readModRMFarPointerSegmentFirst(BYTE rmbyte)
 {
     void* registerPointer = resolveModRM_internal(rmbyte, DWordSize);
 
@@ -156,7 +156,23 @@ FarPointer VCpu::readModRMFarPointer(BYTE rmbyte)
     ptr.segment = readMemory16(m_lastModRMSegment, m_lastModRMOffset);
     ptr.offset = readMemory32(m_lastModRMSegment, m_lastModRMOffset + 2);
 
-    vlog(LogCPU, "Loaded far pointer from %04X:%08X [PE=%u], got %04X:%08X", m_lastModRMSegment, m_lastModRMOffset, getPE(), ptr.segment, ptr.offset);
+    vlog(LogCPU, "Loaded far pointer (segment first) from %04X:%08X [PE=%u], got %04X:%08X", m_lastModRMSegment, m_lastModRMOffset, getPE(), ptr.segment, ptr.offset);
+
+    return ptr;
+}
+
+FarPointer VCpu::readModRMFarPointerOffsetFirst(BYTE rmbyte)
+{
+    void* registerPointer = resolveModRM_internal(rmbyte, DWordSize);
+
+    // FIXME: What should I do if it's a register? :|
+    assert(!registerPointer);
+
+    FarPointer ptr;
+    ptr.segment = readMemory16(m_lastModRMSegment, m_lastModRMOffset + 4);
+    ptr.offset = readMemory32(m_lastModRMSegment, m_lastModRMOffset);
+
+    vlog(LogCPU, "Loaded far pointer (offset first) from %04X:%08X [PE=%u], got %04X:%08X", m_lastModRMSegment, m_lastModRMOffset, getPE(), ptr.segment, ptr.offset);
 
     return ptr;
 }

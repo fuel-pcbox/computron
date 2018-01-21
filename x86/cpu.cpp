@@ -53,7 +53,7 @@ void VCpu::_UD0()
 
 void VCpu::_OperationSizeOverride()
 {
-    //debugger()->enter();
+    m_shouldRestoreSizesAfterOverride = true;
     bool prevOperationSize = m_operationSize32;
     m_operationSize32 = !m_operationSize32;
 
@@ -74,12 +74,15 @@ void VCpu::_OperationSizeOverride()
 
     decodeNext();
 
-    //VM_ASSERT(m_operationSize32 != prevOperationSize);
-    m_operationSize32 = prevOperationSize;
+    if (m_shouldRestoreSizesAfterOverride) {
+        VM_ASSERT(m_operationSize32 != prevOperationSize);
+        m_operationSize32 = prevOperationSize;
+    }
 }
 
 void VCpu::_AddressSizeOverride()
 {
+    m_shouldRestoreSizesAfterOverride = true;
     bool prevAddressSize32 = m_addressSize32;
     m_addressSize32 = !m_addressSize32;
 
@@ -100,8 +103,10 @@ void VCpu::_AddressSizeOverride()
 
     decodeNext();
 
-    VM_ASSERT(m_addressSize32 != prevAddressSize32);
-    m_addressSize32 = prevAddressSize32;
+    if (m_shouldRestoreSizesAfterOverride) {
+        VM_ASSERT(m_addressSize32 != prevAddressSize32);
+        m_addressSize32 = prevAddressSize32;
+    }
 }
 
 void VCpu::decodeNext()
@@ -697,8 +702,8 @@ void VCpu::jump32(WORD segment, DWORD offset)
     m_codeMemory = memoryPointer(segment, 0);
     //m_codeMemory = m_memory + (segment << 4);
 
-    //if (getPE())
-    //    syncSegmentRegister(RegisterCS);
+    if (getPE())
+        syncSegmentRegister(RegisterCS);
 
     updateSizeModes();
 }
@@ -993,7 +998,7 @@ void VCpu::_LSS_reg32_mem32()
     vlog(LogAlert, "%04X:%08X Begin LSS o32:%u a32:%u", getBaseCS(), getBaseEIP(), o32(), a32());
     dumpFlatMemory(0x1000);
     BYTE rm = fetchOpcodeByte();
-    FarPointer ptr = readModRMFarPointer(rm);
+    FarPointer ptr = readModRMFarPointerOffsetFirst(rm);
     setRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)), ptr.offset);
     setSS(ptr.segment);
 }
@@ -1158,6 +1163,13 @@ WORD VCpu::readMemory16(DWORD address)
             vlog(LogCPU, "%04X:%08X Read word from @0x%08X with A20 enabled", getBaseCS(), getBaseEIP(), address);
         else
             vlog(LogCPU, "%04X:%08X Read word from @0x%08X with A20 disabled, wrapping to @0x%08X", getBaseCS(), getBaseEIP(), address, address & a20Mask());
+    } else {
+#if 0
+        if (isA20Enabled())
+            vlog(LogCPU, "%04X:%08X Normal Read word from @0x%08X with A20 enabled", getBaseCS(), getBaseEIP(), address);
+        else
+            vlog(LogCPU, "%04X:%08X Normal Read word from @0x%08X with A20 disabled, wrapping to @0x%08X", getBaseCS(), getBaseEIP(), address, address & a20Mask());
+#endif
     }
 #endif
 
@@ -1367,6 +1379,8 @@ void VCpu::writeMemory32(WORD segmentIndex, DWORD offset, DWORD value)
 
 void VCpu::updateSizeModes()
 {
+    m_shouldRestoreSizesAfterOverride = false;
+
     if (!getPE()) {
         m_addressSize32 = false;
         m_operationSize32 = false;
@@ -1422,7 +1436,7 @@ void VCpu::setGS(WORD value)
         syncSegmentRegister(RegisterGS);
 }
 
-BYTE* VCpu::memoryPointer(WORD segmentIndex, WORD offset)
+BYTE* VCpu::memoryPointer(WORD segmentIndex, DWORD offset)
 {
     if (getPE()) {
         if (!validateAddress(segmentIndex, offset, MemoryAccessType::Read8)) {

@@ -61,6 +61,7 @@ int VCpu::dumpDisassembled(WORD segment, DWORD offset)
 #ifdef VOMIT_TRACE
 void VCpu::dumpTrace()
 {
+#if 0
     fprintf(stderr,
         "%04X:%08X "
         "EAX=%08X EBX=%08X ECX=%08X EDX=%08X ESP=%08X EBP=%08X ESI=%08X EDI=%08X "
@@ -76,6 +77,21 @@ void VCpu::dumpTrace()
         getCF(), getPF(), getAF(), getZF(),
         getSF(), getIF(), getDF(), getOF()
     );
+#else
+    fprintf(stderr,
+        "%04X:%08X "
+        "EAX=%08X EBX=%08X ECX=%08X EDX=%08X ESP=%08X EBP=%08X ESI=%08X EDI=%08X "
+        "CR0=%08X "
+        "DS=%04X ES=%04X SS=%04X FS=%04X GS=%04X "
+        "C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u\n",
+        getCS(), getEIP(),
+        getEAX(), getEBX(), getECX(), getEDX(), getESP(), getEBP(), getESI(), getEDI(),
+        getCR0(),
+        getDS(), getES(), getSS(), getFS(), getGS(),
+        getCF(), getPF(), getAF(), getZF(),
+        getSF(), getIF(), getDF(), getOF()
+    );
+#endif
 }
 #endif
 
@@ -174,6 +190,7 @@ void VCpu::dumpAll()
         dumpSelector("FS", RegisterFS);
         dumpSelector("GS", RegisterGS);
     }
+    vlog(LogDump, "EIP: %08X", getEIP());
 
     vlog(LogDump, "CR0: %08X", getCR0());
 
@@ -307,7 +324,7 @@ void VCpu::dumpSegment(WORD index)
         selector.limit,
         selector._32bit ? 32 : 16,
         selector.present ? "yes" : "no",
-        selector.big ? "4K" : "1b",
+        selector.granularity ? "4K" : "1b",
         selector.DPL
     );
 }

@@ -53,6 +53,7 @@ private:
 
     void handleQuit();
     void handleDumpRegisters();
+    void handleDumpSegment(const QStringList&);
     void handleDumpIVT();
     void handleReconfigure();
     void handleStep();

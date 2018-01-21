@@ -99,12 +99,12 @@ public:
         unsigned DPL;
         unsigned count;
         bool present;
-        bool big;
         bool granularity;
         bool _32bit;
-        bool CE;
-        bool BRW;
-        bool acc;
+        bool executable;
+        bool DC;
+        bool RW;
+        bool accessed;
         DWORD base;
         DWORD limit;
 
@@ -287,7 +287,7 @@ public:
     // Base CS:EIP is the start address of the currently executing instruction
     WORD getBaseCS() const { return m_baseCS; }
     WORD getBaseIP() const { return m_baseEIP & 0xFFFF; }
-    WORD getBaseEIP() const { return m_baseEIP; }
+    DWORD getBaseEIP() const { return m_baseEIP; }
 
     void jump32(WORD segment, DWORD offset);
     void jump16(WORD segment, WORD offset);
@@ -336,7 +336,7 @@ public:
      */
     BYTE in(WORD port);
 
-    BYTE* memoryPointer(WORD segment, WORD offset);
+    BYTE* memoryPointer(WORD segment, DWORD offset);
     BYTE* memoryPointer(DWORD address);
 
     DWORD getEFlags() const;
@@ -395,7 +395,8 @@ public:
     WORD readModRM16(BYTE rmbyte);
     DWORD readModRM32(BYTE rmbyte);
     void readModRM48(BYTE rmbyte, WORD& segment, DWORD& offset);
-    FarPointer readModRMFarPointer(BYTE rmbyte);
+    FarPointer readModRMFarPointerSegmentFirst(BYTE rmbyte);
+    FarPointer readModRMFarPointerOffsetFirst(BYTE rmbyte);
     void writeModRM8(BYTE rmbyte, BYTE value);
     void writeModRM16(BYTE rmbyte, WORD value);
     void writeModRM32(BYTE rmbyte, DWORD value);
@@ -1160,6 +1161,8 @@ private:
 
     QQueue<Command> m_commandQueue;
     QMutex m_commandMutex;
+
+    bool m_shouldRestoreSizesAfterOverride { false };
 };
 
 extern VCpu* g_cpu;
