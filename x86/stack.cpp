@@ -28,6 +28,7 @@
 
 void VCpu::push32(DWORD value)
 {
+    //vlog(LogCPU, "%04X:%08X push32: %08X", getBaseCS(), getBaseEIP(), value);
     if (a16()) {
         this->regs.W.SP -= 4;
         writeMemory32(getSS(), this->getSP(), value);
@@ -39,6 +40,7 @@ void VCpu::push32(DWORD value)
 
 void VCpu::push(WORD value)
 {
+    //vlog(LogCPU, "%04X:%08X push16: %04X", getBaseCS(), getBaseEIP(), value);
     if (a16()) {
         this->regs.W.SP -= 2;
         writeMemory16(getSS(), this->getSP(), value);
@@ -58,6 +60,7 @@ DWORD VCpu::pop32()
         d = readMemory32(getSS(), this->getESP());
         this->regs.D.ESP += 4;
     }
+    //vlog(LogCPU, "%04X:%08X pop32: %08X", getBaseCS(), getBaseEIP(), d);
     return d;
 }
 
@@ -71,6 +74,7 @@ WORD VCpu::pop()
         w = readMemory16(getSS(), this->getESP());
         this->regs.D.ESP += 2;
     }
+    //vlog(LogCPU, "%04X:%08X pop16: %08X", getBaseCS(), getBaseEIP(), w);
     return w;
 }
 
@@ -98,6 +102,11 @@ void VCpu::_POP_reg32()
 void VCpu::_PUSH_RM16()
 {
     push(readModRM16(rmbyte));
+}
+
+void VCpu::_PUSH_RM32()
+{
+    push32(readModRM32(rmbyte));
 }
 
 void VCpu::_POP_RM16()

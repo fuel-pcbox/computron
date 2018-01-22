@@ -433,8 +433,8 @@ void VCpu::_wrap_0xF7_32()
     case 0: _TEST_RM32_imm32(); break;
     case 4: _MUL_RM32(); break;
     case 6: _DIV_RM32(); break;
-#if 0
     case 2: _NOT_RM32(); break;
+#if 0
     case 3: _NEG_RM32(); break;
     case 5: _IMUL_RM32(); break;
     case 7: _IDIV_RM32(); break;
@@ -460,43 +460,20 @@ void VCpu::_wrap_0xFE()
     }
 }
 
-void VCpu::_wrap_0xFF_16()
+void VCpu::_wrap_0xFF()
 {
     rmbyte = fetchOpcodeByte();
     switch (vomit_modRMRegisterPart(rmbyte)) {
-    case 0: _INC_RM16(); break;
-    case 1: _DEC_RM16(); break;
-    case 2: _CALL_RM16(); break;
-    case 3: _CALL_FAR_mem16(); break;
-    case 4: _JMP_RM16(); break;
-    case 5: _JMP_FAR_mem16(); break;
-    case 6: _PUSH_RM16(); break;
+    case 0: CALL_HANDLER(_INC_RM16, _INC_RM32); break;
+    case 1: CALL_HANDLER(_DEC_RM16, _DEC_RM32); break;
+    case 2: CALL_HANDLER(_CALL_RM16, _CALL_RM32); break;
+    case 3: CALL_HANDLER(_CALL_FAR_mem16, _CALL_FAR_mem32); break;
+    case 4: CALL_HANDLER(_JMP_RM16, _JMP_RM32); break;
+    case 5: CALL_HANDLER(_JMP_FAR_mem16, _JMP_FAR_mem32); break;
+    case 6: CALL_HANDLER(_PUSH_RM16, _PUSH_RM32); break;
     case 7:
-        vlog(LogAlert, "[16bit] FF /7 not wrapped");
+        vlog(LogAlert, "FF /7 not wrapped");
         exception(6);
         break;
     }
-}
-
-void VCpu::_wrap_0xFF_32()
-{
-    vlog(LogAlert, "NOT IMPLEMENTED: 32bit 0xFF");
-    debugger()->enter();
-    exception(6);
-#if 0
-    rmbyte = fetchOpcodeByte();
-    switch (vomit_modRMRegisterPart(rmbyte)) {
-    case 0: _INC_RM16(); break;
-    case 1: _DEC_RM16(); break;
-    case 2: _CALL_RM16(); break;
-    case 3: _CALL_FAR_mem16(); break;
-    case 4: _JMP_RM16(); break;
-    case 5: _JMP_FAR_mem16(); break;
-    case 6: _PUSH_RM16(); break;
-    case 7:
-        vlog(LogAlert, "[32bit] FF /7 not wrapped");
-        exception(6);
-        break;
-    }
-#endif
 }

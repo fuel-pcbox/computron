@@ -95,7 +95,7 @@ WORD VCpu::readModRM16(BYTE rmbyte)
 void* VCpu::resolveModRM_internal(BYTE rmbyte, ValueSize size)
 {
     if (a32())
-        return reinterpret_cast<DWORD*>(resolveModRM32_internal(rmbyte));
+        return reinterpret_cast<DWORD*>(resolveModRM32_internal(rmbyte, size));
 
     if (size == ByteSize)
         return reinterpret_cast<DWORD*>(resolveModRM8_internal(rmbyte));
@@ -319,7 +319,7 @@ void* VCpu::resolveModRM16_internal(BYTE rmbyte)
     return m_lastModRMPointer;
 }
 
-void* VCpu::resolveModRM32_internal(BYTE rmbyte)
+void* VCpu::resolveModRM32_internal(BYTE rmbyte, ValueSize size)
 {
     VM_ASSERT(a32());
 
@@ -373,15 +373,39 @@ void* VCpu::resolveModRM32_internal(BYTE rmbyte)
         m_lastModRMPointer = 0;
         break;
     default: // 0xC0
-        switch (rmbyte & 0x07) {
-        case 0: m_lastModRMPointer = &this->regs.D.EAX; break;
-        case 1: m_lastModRMPointer = &this->regs.D.ECX; break;
-        case 2: m_lastModRMPointer = &this->regs.D.EDX; break;
-        case 3: m_lastModRMPointer = &this->regs.D.EBX; break;
-        case 4: m_lastModRMPointer = &this->regs.D.ESP; break;
-        case 5: m_lastModRMPointer = &this->regs.D.EBP; break;
-        case 6: m_lastModRMPointer = &this->regs.D.ESI; break;
-        default: m_lastModRMPointer = &this->regs.D.EDI; break;
+        if (size == DWordSize) {
+            switch (rmbyte & 0x07) {
+            case 0: m_lastModRMPointer = &this->regs.D.EAX; break;
+            case 1: m_lastModRMPointer = &this->regs.D.ECX; break;
+            case 2: m_lastModRMPointer = &this->regs.D.EDX; break;
+            case 3: m_lastModRMPointer = &this->regs.D.EBX; break;
+            case 4: m_lastModRMPointer = &this->regs.D.ESP; break;
+            case 5: m_lastModRMPointer = &this->regs.D.EBP; break;
+            case 6: m_lastModRMPointer = &this->regs.D.ESI; break;
+            default: m_lastModRMPointer = &this->regs.D.EDI; break;
+            }
+        } else if (size == WordSize) {
+            switch (rmbyte & 0x07) {
+            case 0: m_lastModRMPointer = &this->regs.W.AX; break;
+            case 1: m_lastModRMPointer = &this->regs.W.CX; break;
+            case 2: m_lastModRMPointer = &this->regs.W.DX; break;
+            case 3: m_lastModRMPointer = &this->regs.W.BX; break;
+            case 4: m_lastModRMPointer = &this->regs.W.SP; break;
+            case 5: m_lastModRMPointer = &this->regs.W.BP; break;
+            case 6: m_lastModRMPointer = &this->regs.W.SI; break;
+            default: m_lastModRMPointer = &this->regs.W.DI; break;
+            }
+        } else if (size == ByteSize) {
+            switch (rmbyte & 0x07) {
+            case 0: m_lastModRMPointer = &this->regs.B.AL; break;
+            case 1: m_lastModRMPointer = &this->regs.B.CL; break;
+            case 2: m_lastModRMPointer = &this->regs.B.DL; break;
+            case 3: m_lastModRMPointer = &this->regs.B.BL; break;
+            case 4: m_lastModRMPointer = &this->regs.B.AH; break;
+            case 5: m_lastModRMPointer = &this->regs.B.CH; break;
+            case 6: m_lastModRMPointer = &this->regs.B.DH; break;
+            default: m_lastModRMPointer = &this->regs.B.BH; break;
+            }
         }
         break;
     }
@@ -450,14 +474,25 @@ DWORD VCpu::evaluateSIB(BYTE rm, BYTE sib)
     }
 
     DWORD base = 0;
-    switch ((rm >> 6) & 3) {
-    case 0: base = fetchOpcodeDWord(); break;
-    case 1: base = vomit_signExtend<DWORD>(fetchOpcodeByte()) + getEBP(); break;
-    case 2: base = fetchOpcodeDWord() + getEBP(); break;
-    default: VM_ASSERT(false); break;
+    switch (sib & 0x07) {
+    case 0: base = getEAX(); break;
+    case 1: base = getECX(); break;
+    case 2: base = getEDX(); break;
+    case 3: base = getEBX(); break;
+    case 4: base = getESP(); break;
+    case 6: base = getESI(); break;
+    case 7: base = getEDI(); break;
+    default: // 5
+        switch ((rm >> 6) & 3) {
+        case 0: base = fetchOpcodeDWord(); break;
+        case 1: base = vomit_signExtend<DWORD>(fetchOpcodeByte()) + getEBP(); break;
+        case 2: base = fetchOpcodeDWord() + getEBP(); break;
+        default: VM_ASSERT(false); break;
+        }
+        break;
     }
 
-    dumpAll();
+    //dumpAll();
     vlog(LogCPU, "%04X:%08X: evaluateSIB(): sib=%02X -> %s+%s*%u, scaledIndex:%08X, base:%08X", getBaseCS(), getBaseEIP(), sib, registerName(baseRegister), registerName(indexRegister), scale, scaledIndex, base);
     return scaledIndex + base;
 }

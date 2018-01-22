@@ -36,6 +36,8 @@ class Debugger;
 class Machine;
 class VGAMemory;
 
+#define CALL_HANDLER(handler16, handler32) if (o16()) { handler16(); } else { handler32(); }
+
 struct FarPointer {
     FarPointer() : segment(0), offset(0) { }
     FarPointer(WORD s, DWORD o) : segment(s), offset(o) { }
@@ -295,6 +297,7 @@ public:
     void jumpRelative16(SIGNED_WORD displacement);
     void jumpRelative32(SIGNED_DWORD displacement);
     void jumpAbsolute16(WORD offset);
+    void jumpAbsolute32(DWORD offset);
 
     FarPointer getInterruptVector16(int isr);
     FarPointer getInterruptVector32(int isr);
@@ -317,6 +320,8 @@ public:
     BYTE fetchOpcodeByte();
     WORD fetchOpcodeWord();
     DWORD fetchOpcodeDWord();
+
+    void pushInstructionPointer();
 
     void push32(DWORD value);
     DWORD pop32();
@@ -448,6 +453,10 @@ public:
 #endif
 
     void updateSizeModes();
+
+    // Current execution mode (16 or 32 bit)
+    bool x16() const { return !x32(); }
+    bool x32() const;
 
     bool a16() const { return !m_addressSize32; }
     bool a32() const { return m_addressSize32; }
@@ -778,27 +787,35 @@ protected:
     void _TEST_RM16_imm16();
     void _NOT_RM8();
     void _NOT_RM16();
+    void _NOT_RM32();
     void _NEG_RM8();
     void _NEG_RM16();
 
     void _INC_RM8();
     void _INC_RM16();
+    void _INC_RM32();
     void _INC_reg16();
     void _INC_reg32();
     void _DEC_RM8();
     void _DEC_RM16();
+    void _DEC_RM32();
     void _DEC_reg16();
     void _DEC_reg32();
 
     void _CALL_RM16();
+    void _CALL_RM32();
     void _CALL_FAR_mem16();
+    void _CALL_FAR_mem32();
     void _CALL_imm16_imm16();
     void _CALL_imm16_imm32();
 
     void _JMP_RM16();
+    void _JMP_RM32();
     void _JMP_FAR_mem16();
+    void _JMP_FAR_mem32();
 
     void _PUSH_RM16();
+    void _PUSH_RM32();
     void _POP_RM16();
     void _POP_RM32();
 
@@ -822,8 +839,7 @@ protected:
     void _wrap_0xF7_16();
     void _wrap_0xF7_32();
     void _wrap_0xFE();
-    void _wrap_0xFF_16();
-    void _wrap_0xFF_32();
+    void _wrap_0xFF();
 
     // 80186+ INSTRUCTIONS
 
@@ -838,6 +854,8 @@ protected:
     void _PUSH_imm8();
     void _PUSH_imm16();
 
+    void _IMUL_reg16_RM16();
+    void _IMUL_reg32_RM32();
     void _IMUL_reg16_RM16_imm8();
     void _IMUL_reg32_RM32_imm8();
     void _IMUL_reg16_RM16_imm16();
@@ -975,7 +993,7 @@ private:
     void* resolveModRM_internal(BYTE rmbyte, ValueSize size);
     void* resolveModRM8_internal(BYTE rmbyte);
     void* resolveModRM16_internal(BYTE rmbyte);
-    void* resolveModRM32_internal(BYTE rmbyte);
+    void* resolveModRM32_internal(BYTE rmbyte, ValueSize);
 
     void saveBaseAddress()
     {

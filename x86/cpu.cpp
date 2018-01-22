@@ -43,8 +43,6 @@ inline bool hasA20Bit(DWORD address)
 
 VCpu* g_cpu = 0;
 
-#define CALL_HANDLER(handler16, handler32) if (o16()) { handler16(); } else { handler32(); }
-
 void VCpu::_UD0()
 {
     vlog(LogAlert, "Undefined opcode 0F FF (UD0)");
@@ -172,6 +170,7 @@ void VCpu::decode(BYTE op)
         case 0xA2: _CPUID(); break;
         case 0xA8: _PUSH_GS(); break;
         case 0xA9: _POP_GS(); break;
+        case 0xAF: CALL_HANDLER(_IMUL_reg16_RM16, _IMUL_reg32_RM32); break;
         case 0xB2: CALL_HANDLER(_LSS_reg16_mem16, _LSS_reg32_mem32); break;
         case 0xB4: CALL_HANDLER(_LFS_reg16_mem16, _LFS_reg32_mem32); break;
         case 0xB5: CALL_HANDLER(_LFS_reg16_mem16, _LFS_reg32_mem32); break;
@@ -416,7 +415,7 @@ void VCpu::decode(BYTE op)
     case 0xFC: _CLD(); break;
     case 0xFD: _STD(); break;
     case 0xFE: _wrap_0xFE(); break;
-    case 0xFF: CALL_HANDLER(_wrap_0xFF_16, _wrap_0xFF_32); break;
+    case 0xFF: _wrap_0xFF(); break;
     default:
         this->rmbyte = fetchOpcodeByte();
 fffuuu:
@@ -691,6 +690,11 @@ void VCpu::jumpAbsolute16(WORD address)
     this->IP = address;
 }
 
+void VCpu::jumpAbsolute32(DWORD address)
+{
+    this->EIP = address;
+}
+
 void VCpu::jump32(WORD segment, DWORD offset)
 {
     //vlog(LogCPU, "%04X:%08X [PE=%u] Far jump to %04X:%08X", getBaseCS(), getBaseEIP(), getPE(), segment, offset);
@@ -901,7 +905,20 @@ void VCpu::_INC_RM16()
     adjustFlag32(i, value, 1);
     updateFlags16(i);
     updateModRM16(value + 1);
-    updateModRM16(value + 1);
+}
+
+void VCpu::_INC_RM32()
+{
+    DWORD value = readModRM32(rmbyte);
+    DWORD i = value;
+
+    /* Overflow if we'll wrap. */
+    setOF(value == 0x7FFFFFFF);
+
+    ++i;
+    adjustFlag32(i, value, 1);
+    updateFlags32(i);
+    updateModRM32(value + 1);
 }
 
 void VCpu::_DEC_RM16()
@@ -916,6 +933,20 @@ void VCpu::_DEC_RM16()
     adjustFlag32(i, value, 1); // XXX: i can be (dword)(-1)...
     updateFlags16(i);
     updateModRM16(value - 1);
+}
+
+void VCpu::_DEC_RM32()
+{
+    DWORD value = readModRM32(rmbyte);
+    DWORD i = value;
+
+    /* Overflow if we'll wrap. */
+    setOF(value == 0x80000000);
+
+    --i;
+    adjustFlag32(i, value, 1); // XXX: i can be (dword)(-1)...
+    updateFlags32(i);
+    updateModRM32(value - 1);
 }
 
 void VCpu::_INC_RM8()
@@ -953,6 +984,22 @@ void VCpu::_LDS_reg32_mem32()
 #warning FIXME: need readModRM48
     vlog(LogAlert, "LDS reg32 mem32");
     vomit_exit(0);
+}
+
+bool VCpu::x32() const
+{
+    if (!getPE())
+        return false;
+
+    return m_selector[RegisterCS]._32bit;
+}
+
+void VCpu::pushInstructionPointer()
+{
+    if (x32())
+        push32(getEIP());
+    else
+        push(getIP());
 }
 
 void VCpu::_LES_reg16_mem16()

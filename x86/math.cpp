@@ -270,6 +270,35 @@ void VCpu::_IMUL_reg16_RM16_imm16()
     setOF(result != largeResult);
 }
 
+void VCpu::_IMUL_reg16_RM16()
+{
+    BYTE rm = fetchOpcodeByte();
+    SIGNED_WORD src = readModRM16(rm);
+    SIGNED_WORD dest = getRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)));
+    SIGNED_WORD result = doImul(dest, src);
+    SIGNED_DWORD largeResult = doImul(dest, src);
+
+    setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), result);
+
+    setCF(result != largeResult);
+    setOF(result != largeResult);
+}
+
+void VCpu::_IMUL_reg32_RM32()
+{
+    BYTE rm = fetchOpcodeByte();
+    SIGNED_DWORD src = readModRM32(rm);
+    SIGNED_DWORD dest = getRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)));
+
+    SIGNED_DWORD result = doImul(dest, src);
+    SIGNED_QWORD largeResult = doImul(dest, src);
+
+    setRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)), result);
+
+    setCF(result != largeResult);
+    setOF(result != largeResult);
+}
+
 void VCpu::_IMUL_reg16_RM16_imm8()
 {
     BYTE rm = fetchOpcodeByte();

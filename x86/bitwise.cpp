@@ -254,6 +254,12 @@ void VCpu::_NOT_RM16()
     updateModRM16(~value);
 }
 
+void VCpu::_NOT_RM32()
+{
+    DWORD value = readModRM32(rmbyte);
+    updateModRM32(~value);
+}
+
 void VCpu::_NEG_RM8()
 {
     BYTE value = readModRM8(rmbyte);

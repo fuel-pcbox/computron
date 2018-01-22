@@ -76,10 +76,21 @@ void VCpu::_JMP_RM16()
     jumpAbsolute16(readModRM16(rmbyte));
 }
 
+void VCpu::_JMP_RM32()
+{
+    jumpAbsolute32(readModRM32(rmbyte));
+}
+
 void VCpu::_JMP_FAR_mem16()
 {
     WORD* ptr = static_cast<WORD*>(resolveModRM8(rmbyte));
     jump16(ptr[1], ptr[0]);
+}
+
+void VCpu::_JMP_FAR_mem32()
+{
+    // FIXME: Implement!
+    VM_ASSERT(false);
 }
 
 #define DO_JCC_imm(name, condition) \
@@ -120,14 +131,14 @@ DO_JCC_imm(JG,   !((getSF() ^ getOF()) | getZF()))
 void VCpu::_CALL_imm16()
 {
     SIGNED_WORD imm = fetchOpcodeWord();
-    push(IP);
+    pushInstructionPointer();
     jumpRelative16(imm);
 }
 
 void VCpu::_CALL_imm32()
 {
     SIGNED_DWORD imm = fetchOpcodeDWord();
-    push(EIP);
+    pushInstructionPointer();
     jumpRelative32(imm);
 }
 
@@ -136,7 +147,7 @@ void VCpu::_CALL_imm16_imm16()
     WORD newip = fetchOpcodeWord();
     WORD segment = fetchOpcodeWord();
     push(getCS());
-    push(getIP());
+    pushInstructionPointer();
     jump16(segment, newip);
 }
 
@@ -145,47 +156,81 @@ void VCpu::_CALL_imm16_imm32()
     DWORD neweip = fetchOpcodeDWord();
     WORD segment = fetchOpcodeWord();
     push(getCS());
-    push(getEIP());
-    jump16(segment, neweip);
+    pushInstructionPointer();
+    jump32(segment, neweip);
 }
 
 void VCpu::_CALL_FAR_mem16()
 {
     WORD* ptr = static_cast<WORD*>(resolveModRM8(rmbyte));
     push(getCS());
-    push(getIP());
+    pushInstructionPointer();
     jump16(ptr[1], ptr[0]);
+}
+
+void VCpu::_CALL_FAR_mem32()
+{
+    // FIXME: Implement!
+    VM_ASSERT(false);
 }
 
 void VCpu::_CALL_RM16()
 {
     WORD value = readModRM16(rmbyte);
-    push(getIP());
+    pushInstructionPointer();
     jumpAbsolute16(value);
+}
+
+void VCpu::_CALL_RM32()
+{
+    DWORD value = readModRM32(rmbyte);
+    pushInstructionPointer();
+    jumpAbsolute32(value);
 }
 
 void VCpu::_RET()
 {
-    jumpAbsolute16(pop());
+    if (x32())
+        jumpAbsolute32(pop32());
+    else
+        jumpAbsolute16(pop());
 }
 
 void VCpu::_RET_imm16()
 {
-    WORD imm = fetchOpcodeWord();
-    jumpAbsolute16(pop());
-    regs.W.SP += imm;
+    if (x32()) {
+        WORD imm = fetchOpcodeWord();
+        jumpAbsolute32(pop32());
+        regs.D.ESP += imm;
+    } else {
+        WORD imm = fetchOpcodeWord();
+        jumpAbsolute16(pop());
+        regs.W.SP += imm;
+    }
 }
 
 void VCpu::_RETF()
 {
-    WORD nip = pop();
-    jump16(pop(), nip);
+    if (x32()) {
+        WORD nip = pop32();
+        jump32(pop(), nip);
+    } else {
+        WORD nip = pop();
+        jump16(pop(), nip);
+    }
 }
 
 void VCpu::_RETF_imm16()
 {
-    WORD nip = pop();
-    WORD imm = fetchOpcodeWord();
-    jump16(pop(), nip);
-    regs.W.SP += imm;
+    if (x32()) {
+        DWORD nip = pop32();
+        WORD imm = fetchOpcodeWord();
+        jump32(pop(), nip);
+        regs.D.ESP += imm;
+    } else {
+        WORD nip = pop();
+        WORD imm = fetchOpcodeWord();
+        jump16(pop(), nip);
+        regs.W.SP += imm;
+    }
 }
