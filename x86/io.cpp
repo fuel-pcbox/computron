@@ -156,7 +156,7 @@ void VCpu::out(WORD port, BYTE value)
     }
 
     if (!IODevice::shouldIgnorePort(port))
-        vlog(LogAlert, "Unhandled I/O write to port %04X, data %02X", port, value);
+        vlog(LogAlert, "%04X:%08X Unhandled I/O write to port %04X, data %02X", getBaseCS(), getBaseEIP(), port, value);
 }
 
 BYTE VCpu::in(WORD port)

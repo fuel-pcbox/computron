@@ -79,6 +79,7 @@ Machine::Machine(const QString& name, Settings* settings, QObject* parent)
         IODevice::ignorePort(0x222);
         IODevice::ignorePort(0x223);
         IODevice::ignorePort(0x201); // Gameport.
+        IODevice::ignorePort(0x80); // Linux outb_p() uses this for small delays.
     }
 
     m_vgaMemory = new VGAMemory(this);
