@@ -1020,9 +1020,61 @@ void VCpu::_LGS_reg32_mem32()
 
 void VCpu::_LEA_reg32_mem32()
 {
-#warning FIXME: need evaluateSIB()
-    vlog(LogAlert, "LEA reg32 mem32");
-    vomit_exit(0);
+    vlog(LogCPU, "LEA reg32 mem32");
+    VM_ASSERT(a32());
+
+    DWORD retv = 0;
+    BYTE b = fetchOpcodeByte();
+    WORD segment = currentSegment();
+    DWORD offset = 0x00000000;
+
+    switch (b & 0xC0) {
+    case 0x00:
+        switch (b & 0x07) {
+        case 0: retv = getEAX(); break;
+        case 1: retv = getECX(); break;
+        case 2: retv = getEDX(); break;
+        case 3: retv = getEBX(); break;
+        case 4: retv = evaluateSIB(b, fetchOpcodeByte()); break;
+        case 5: retv = fetchOpcodeDWord(); break;
+        case 6: retv = getESI(); break;
+        default: retv = getEDI(); break;
+        }
+        break;
+    case 0x40:
+        retv = vomit_signExtend<DWORD>(fetchOpcodeByte());
+        switch (b & 0x07) {
+        case 0: retv += getEAX(); break;
+        case 1: retv += getECX(); break;
+        case 2: retv += getEDX(); break;
+        case 3: retv += getEBX(); break;
+        case 4: retv += evaluateSIB(b, fetchOpcodeByte()); break;
+        case 5: retv += getEBP(); break;
+        case 6: retv += getESI(); break;
+        default: retv += getEDI(); break;
+        }
+        break;
+    case 0x80:
+        retv = fetchOpcodeDWord();
+        switch (b & 0x07) {
+        case 0: retv += getEAX(); break;
+        case 1: retv += getECX(); break;
+        case 2: retv += getEDX(); break;
+        case 3: retv += getEBX(); break;
+        case 4: retv += evaluateSIB(b, fetchOpcodeByte()); break;
+        case 5: retv += getEBP(); break;
+        case 6: retv += getESI(); break;
+        default: retv += getEDI(); break;
+        }
+        break;
+    default: // 0xC0
+        vlog(LogAlert, "LEA_reg32_mem32 with register source!");
+        /* LEA with register source, an invalid instruction.
+         * Call INT6 (invalid opcode exception) */
+        exception(6);
+        break;
+    }
+    setRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(b)), retv);
 }
 
 void VCpu::_LEA_reg16_mem16()
@@ -1336,7 +1388,8 @@ void VCpu::writeMemory8(WORD segmentIndex, DWORD offset, BYTE value)
         }
         SegmentSelector segment = makeSegmentSelector(segmentIndex);
         DWORD flatAddress = segment.base + offset;
-        vlog(LogCPU, "8-bit PE write [A20=%s] %04X:%08X (flat: %08X), value: %02X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
+        assert(!addressIsInVGAMemory(flatAddress));
+        //vlog(LogCPU, "8-bit PE write [A20=%s] %04X:%08X (flat: %08X), value: %02X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
         m_memory[flatAddress] = value;
         return;
     }
@@ -1352,6 +1405,7 @@ void VCpu::writeMemory16(WORD segmentIndex, DWORD offset, WORD value)
         }
         SegmentSelector segment = makeSegmentSelector(segmentIndex);
         DWORD flatAddress = segment.base + offset;
+        assert(!addressIsInVGAMemory(flatAddress));
         vlog(LogCPU, "16-bit PE write [A20=%s] %04X:%08X (flat: %08X), value: %04X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
         //dumpSegment(segmentIndex);
         vomit_write16ToPointer(reinterpret_cast<WORD*>(&m_memory[flatAddress]), value);

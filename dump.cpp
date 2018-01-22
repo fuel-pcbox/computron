@@ -79,12 +79,13 @@ void VCpu::dumpTrace()
     );
 #else
     fprintf(stderr,
-        "%04X:%08X "
+        "%04X:%08X %02X "
         "EAX=%08X EBX=%08X ECX=%08X EDX=%08X ESP=%08X EBP=%08X ESI=%08X EDI=%08X "
         "CR0=%08X "
         "DS=%04X ES=%04X SS=%04X FS=%04X GS=%04X "
         "C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u\n",
         getCS(), getEIP(),
+        codeMemory()[getEIP()],
         getEAX(), getEBX(), getECX(), getEDX(), getESP(), getEBP(), getESI(), getEDI(),
         getCR0(),
         getDS(), getES(), getSS(), getFS(), getGS(),

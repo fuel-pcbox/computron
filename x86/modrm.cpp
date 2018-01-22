@@ -333,7 +333,7 @@ void* VCpu::resolveModRM32_internal(BYTE rmbyte)
         case 1: offset = getECX(); break;
         case 2: offset = getEDX(); break;
         case 3: offset = getEBX(); break;
-        case 4: offset = evaluateSIB(fetchOpcodeByte()); break;
+        case 4: offset = evaluateSIB(rmbyte, fetchOpcodeByte()); break;
         case 5: offset = fetchOpcodeDWord(); break;
         case 6: offset = getESI(); break;
         default: offset = getEDI(); break;
@@ -343,32 +343,30 @@ void* VCpu::resolveModRM32_internal(BYTE rmbyte)
         m_lastModRMPointer = 0;
         break;
     case 0x40:
-        offset = vomit_signExtend<DWORD>(fetchOpcodeByte());
         switch (rmbyte & 0x07) {
-        case 0: offset += getEAX(); break;
-        case 1: offset += getECX(); break;
-        case 2: offset += getEDX(); break;
-        case 3: offset += getEBX(); break;
-        case 4: offset += evaluateSIB(fetchOpcodeByte()); break;
-        case 5: DEFAULT_TO_SS; offset += getEBP(); break;
-        case 6: offset += getESI(); break;
-        default: offset += getEDI(); break;
+        case 0: offset = getEAX() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
+        case 1: offset = getECX() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
+        case 2: offset = getEDX() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
+        case 3: offset = getEBX() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
+        case 4: offset = evaluateSIB(rmbyte, fetchOpcodeByte()); break;
+        case 5: DEFAULT_TO_SS; offset = getEBP() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
+        case 6: offset = getESI() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
+        default: offset = getEDI() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
         }
         m_lastModRMSegment = segment;
         m_lastModRMOffset = offset;
         m_lastModRMPointer = 0;
         break;
     case 0x80:
-        offset = fetchOpcodeDWord();
         switch (rmbyte & 0x07) {
-        case 0: offset += getEAX(); break;
-        case 1: offset += getECX(); break;
-        case 2: offset += getEDX(); break;
-        case 3: offset += getEBX(); break;
-        case 4: offset += evaluateSIB(fetchOpcodeByte()); break;
-        case 5: DEFAULT_TO_SS; offset += getEBP(); break;
-        case 6: offset += getESI(); break;
-        default: offset += getEDI(); break;
+        case 0: offset = getEAX() + fetchOpcodeDWord(); break;
+        case 1: offset = getECX() + fetchOpcodeDWord(); break;
+        case 2: offset = getEDX() + fetchOpcodeDWord(); break;
+        case 3: offset = getEBX() + fetchOpcodeDWord(); break;
+        case 4: offset = evaluateSIB(rmbyte, fetchOpcodeByte()); break;
+        case 5: DEFAULT_TO_SS; offset = getEBP() + fetchOpcodeDWord(); break;
+        case 6: offset = getESI() + fetchOpcodeDWord(); break;
+        default: offset = getEDI() + fetchOpcodeDWord(); break;
         }
         m_lastModRMSegment = segment;
         m_lastModRMOffset = offset;
@@ -390,66 +388,76 @@ void* VCpu::resolveModRM32_internal(BYTE rmbyte)
     return m_lastModRMPointer;
 }
 
-DWORD VCpu::evaluateSIB(BYTE sib)
+DWORD VCpu::evaluateSIB(BYTE rm, BYTE sib)
 {
     unsigned scale = 1 << ((sib >> 6) & 3);
     RegisterIndex32 indexRegister = (RegisterIndex32)((sib >> 3) & 7);
     RegisterIndex32 baseRegister = (RegisterIndex32)(sib & 7);
 
     DWORD result = getRegister32(baseRegister) + getRegister32(indexRegister) * scale;
-
-    vlog(LogCPU, "%04X:%08X: evaluateSIB(): sib=%02X -> %s+%s*%u", getBaseCS(), getBaseEIP(), sib, registerName(baseRegister), registerName(indexRegister), scale);
-    dumpAll();
 //    vomit_exit(1);
 
+    DWORD scaledIndex;
     switch (sib & 0xC0) {
     case 0x00:
-        switch (rmbyte & 0x07) {
-        case 0: return getEAX() + fetchOpcodeDWord();
-        case 1: return getECX() + fetchOpcodeDWord();
-        case 2: return getEDX() + fetchOpcodeDWord();
-        case 3: return getEBX() + fetchOpcodeDWord();
-        case 4: return fetchOpcodeDWord();
-        case 5: return getEBP() + fetchOpcodeDWord();
-        case 6: return getESI() + fetchOpcodeDWord();
-        default: return getEDI() + fetchOpcodeDWord();
+        switch ((sib >> 3) & 0x07) {
+        case 0: scaledIndex = getEAX(); break;
+        case 1: scaledIndex = getECX(); break;
+        case 2: scaledIndex = getEDX(); break;
+        case 3: scaledIndex = getEBX(); break;
+        case 4: scaledIndex = 0; break;
+        case 5: scaledIndex = getEBP(); break;
+        case 6: scaledIndex = getESI(); break;
+        default: scaledIndex = getEDI(); break;
         }
         break;
     case 0x40:
-        switch (rmbyte & 0x07) {
-        case 0: return getEAX() * 2 + fetchOpcodeDWord();
-        case 1: return getECX() * 2 + fetchOpcodeDWord();
-        case 2: return getEDX() * 2 + fetchOpcodeDWord();
-        case 3: return getEBX() * 2 + fetchOpcodeDWord();
-        case 4: return fetchOpcodeDWord();
-        case 5: return getEBP() * 2 + fetchOpcodeDWord();
-        case 6: return getESI() * 2 + fetchOpcodeDWord();
-        default: return getEDI() * 2 + fetchOpcodeDWord();
+        switch ((sib >> 3) & 0x07) {
+        case 0: scaledIndex = getEAX() * 2; break;
+        case 1: scaledIndex = getECX() * 2; break;
+        case 2: scaledIndex = getEDX() * 2; break;
+        case 3: scaledIndex = getEBX() * 2; break;
+        case 4: scaledIndex = 0; break;
+        case 5: scaledIndex = getEBP() * 2; break;
+        case 6: scaledIndex = getESI() * 2; break;
+        default: scaledIndex = getEDI() * 2; break;
         }
         break;
     case 0x80:
-        switch (rmbyte & 0x07) {
-        case 0: return getEAX() * 4 + fetchOpcodeDWord();
-        case 1: return getECX() * 4 + fetchOpcodeDWord();
-        case 2: return getEDX() * 4 + fetchOpcodeDWord();
-        case 3: return getEBX() * 4 + fetchOpcodeDWord();
-        case 4: return fetchOpcodeDWord();
-        case 5: return getEBP() * 4 + fetchOpcodeDWord();
-        case 6: return getESI() * 4 + fetchOpcodeDWord();
-        default: return getEDI() * 4 + fetchOpcodeDWord();
+        switch ((sib >> 3) & 0x07) {
+        case 0: scaledIndex = getEAX() * 4; break;
+        case 1: scaledIndex = getECX() * 4; break;
+        case 2: scaledIndex = getEDX() * 4; break;
+        case 3: scaledIndex = getEBX() * 4; break;
+        case 4: scaledIndex = 0; break;
+        case 5: scaledIndex = getEBP() * 4; break;
+        case 6: scaledIndex = getESI() * 4; break;
+        default: scaledIndex = getEDI() * 4; break;
         }
         break;
     default: // 0xC0
-        switch (rmbyte & 0x07) {
-        case 0: return getEAX() * 8 + fetchOpcodeDWord();
-        case 1: return getECX() * 8 + fetchOpcodeDWord();
-        case 2: return getEDX() * 8 + fetchOpcodeDWord();
-        case 3: return getEBX() * 8 + fetchOpcodeDWord();
-        case 4: return fetchOpcodeDWord();
-        case 5: return getEBP() * 8 + fetchOpcodeDWord();
-        case 6: return getESI() * 8 + fetchOpcodeDWord();
-        default: return getEDI() * 8 + fetchOpcodeDWord();
+        switch ((sib >> 3) & 0x07) {
+        case 0: scaledIndex = getEAX() * 8; break;
+        case 1: scaledIndex = getECX() * 8; break;
+        case 2: scaledIndex = getEDX() * 8; break;
+        case 3: scaledIndex = getEBX() * 8; break;
+        case 4: scaledIndex = 0; break;
+        case 5: scaledIndex = getEBP() * 8; break;
+        case 6: scaledIndex = getESI() * 8; break;
+        default: scaledIndex = getEDI() * 8; break;
         }
         break;
     }
+
+    DWORD base = 0;
+    switch ((rm >> 6) & 3) {
+    case 0: base = fetchOpcodeDWord(); break;
+    case 1: base = vomit_signExtend<DWORD>(fetchOpcodeByte()) + getEBP(); break;
+    case 2: base = fetchOpcodeDWord() + getEBP(); break;
+    default: VM_ASSERT(false); break;
+    }
+
+    dumpAll();
+    vlog(LogCPU, "%04X:%08X: evaluateSIB(): sib=%02X -> %s+%s*%u, scaledIndex:%08X, base:%08X", getBaseCS(), getBaseEIP(), sib, registerName(baseRegister), registerName(indexRegister), scale, scaledIndex, base);
+    return scaledIndex + base;
 }
