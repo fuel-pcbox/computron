@@ -104,6 +104,9 @@ void Debugger::handleCommand(const QString& rawCommand)
     if (lowerCommand == "reconf")
         return handleReconfigure();
 
+    if (lowerCommand == "t" || lowerCommand == "tracing")
+        return handleTracing(arguments);
+
     if (lowerCommand == "s" || lowerCommand == "step")
         return handleStep();
 
@@ -155,6 +158,10 @@ void Debugger::doConsole()
 {
     VM_ASSERT(isActive());
     VM_ASSERT(cpu());
+
+    printf("\n");
+    cpu()->dumpAll();
+    printf(">>> Entering debugger @ %04X:%08X\n", cpu()->getBaseCS(), cpu()->getBaseEIP());
 
     while (isActive()) {
         QString rawCommand = doPrompt(cpu());
@@ -229,4 +236,15 @@ void Debugger::handleDumpFlatMemory(const QStringList& arguments)
         address = arguments.at(0).toUInt(0, 16);
 
     cpu()->dumpFlatMemory(address);
+}
+
+void Debugger::handleTracing(const QStringList& arguments)
+{
+    if (arguments.size() == 1) {
+        unsigned value = arguments.at(0).toUInt(0, 16);
+        options.trace = value != 0;
+        return;
+    }
+
+    printf("Usage: tracing <0|1>\n");
 }

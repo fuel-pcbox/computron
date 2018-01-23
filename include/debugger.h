@@ -61,6 +61,7 @@ private:
     void handleBreakpoint(const QStringList&);
     void handleDumpMemory(const QStringList&);
     void handleDumpFlatMemory(const QStringList&);
+    void handleTracing(const QStringList&);
 };
 
 #endif
