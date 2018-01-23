@@ -50,6 +50,7 @@ VomCtl::VomCtl()
     listen(0xE4, IODevice::WriteOnly);
     listen(0xE6, IODevice::WriteOnly);
     listen(0xE7, IODevice::WriteOnly);
+    listen(0xE8, IODevice::WriteOnly);
 }
 
 VomCtl::~VomCtl()

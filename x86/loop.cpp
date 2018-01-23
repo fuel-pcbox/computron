@@ -73,6 +73,14 @@ void VCpu::handleRepeatOpcode(BYTE opcode, bool shouldEqual)
         return;
     }
 
+    case 0x67: {
+        m_addressSize32 = !m_addressSize32;
+        BYTE op = fetchOpcodeByte();
+        handleRepeatOpcode(op, shouldEqual);
+        m_addressSize32 = !m_addressSize32;
+        return;
+    }
+
     case 0x6E: DO_REP(_OUTSB); return;
     case 0x6F: DO_REP(_OUTSW); return;
 

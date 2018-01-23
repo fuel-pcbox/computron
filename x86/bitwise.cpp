@@ -290,6 +290,21 @@ void VCpu::_NEG_RM16()
     adjustFlag32(value, 0, old);
 }
 
+void VCpu::_NEG_RM32()
+{
+    DWORD value = readModRM32(rmbyte);
+    DWORD old = value;
+    value = -value;
+    updateModRM32(value);
+    setCF(old != 0);
+    updateFlags32(value);
+    setOF(((
+        ((0)^(old)) &
+        ((0)^(value))
+        )>>(31))&1);
+    adjustFlag32(value, 0, old);
+}
+
 DEFAULT_RM16_imm8(doBtr, _BTR_RM16_imm8)
 DEFAULT_RM32_imm8(doBtr, _BTR_RM32_imm8)
 

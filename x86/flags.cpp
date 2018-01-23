@@ -44,7 +44,7 @@ static const BYTE parity_table[0x100] = {
     1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1
 };
 
-void VCpu::adjustFlag32(DWORD result, WORD src, WORD dest)
+void VCpu::adjustFlag32(QWORD result, DWORD src, DWORD dest)
 {
     setAF((((result ^ (src ^ dest)) & 0x10) >> 4) & 1);
 }

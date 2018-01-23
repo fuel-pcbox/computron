@@ -434,8 +434,8 @@ void VCpu::_wrap_0xF7_32()
     case 4: _MUL_RM32(); break;
     case 6: _DIV_RM32(); break;
     case 2: _NOT_RM32(); break;
-#if 0
     case 3: _NEG_RM32(); break;
+#if 0
     case 5: _IMUL_RM32(); break;
     case 7: _IDIV_RM32(); break;
 #endif

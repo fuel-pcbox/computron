@@ -362,7 +362,7 @@ public:
     void cmpFlags16(DWORD result, WORD dest, WORD src);
     void cmpFlags32(QWORD result, DWORD dest, DWORD src);
 
-    void adjustFlag32(DWORD result, WORD dest, WORD src);
+    void adjustFlag32(QWORD result, DWORD dest, DWORD src);
 
     // These are faster than readMemory*() but will not access VGA memory, etc.
     inline BYTE readUnmappedMemory8(DWORD address) const;
@@ -790,6 +790,7 @@ protected:
     void _NOT_RM32();
     void _NEG_RM8();
     void _NEG_RM16();
+    void _NEG_RM32();
 
     void _INC_RM8();
     void _INC_RM16();

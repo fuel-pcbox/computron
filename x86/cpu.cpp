@@ -271,6 +271,7 @@ void VCpu::decode(BYTE op)
     case 0x6A: _PUSH_imm8(); break;
     case 0x6B: CALL_HANDLER(_IMUL_reg16_RM16_imm8, _IMUL_reg32_RM32_imm8); break;
     case 0x6E: _OUTSB(); break;
+    case 0x6F: _OUTSW(); break;
     case 0x70: _JO_imm8(); break;
     case 0x71: _JNO_imm8(); break;
     case 0x72: _JC_imm8(); break;
@@ -425,8 +426,7 @@ fffuuu:
             this->opcode, this->rmbyte,
             this->opcode, this->rmbyte, vomit_modRMRegisterPart(this->subrmbyte)
         );
-        //dumpRawMemory(codeMemory() - 0x16);
-        dumpFlatMemory(0x90000);
+        dumpRawMemory(codeMemory() - 0x16);
         exception(6);
     }
 }
@@ -672,12 +672,18 @@ void VCpu::mainLoop()
 
 void VCpu::jumpRelative8(SIGNED_BYTE displacement)
 {
-    this->IP += displacement;
+    if (x32())
+        this->EIP += displacement;
+    else
+        this->IP += displacement;
 }
 
 void VCpu::jumpRelative16(SIGNED_WORD displacement)
 {
-    this->IP += displacement;
+    if (x32())
+        this->EIP += displacement;
+    else
+        this->IP += displacement;
 }
 
 void VCpu::jumpRelative32(SIGNED_DWORD displacement)
@@ -687,7 +693,10 @@ void VCpu::jumpRelative32(SIGNED_DWORD displacement)
 
 void VCpu::jumpAbsolute16(WORD address)
 {
-    this->IP = address;
+    if (x32())
+        this->EIP = address;
+    else
+        this->IP = address;
 }
 
 void VCpu::jumpAbsolute32(DWORD address)
@@ -1568,7 +1577,10 @@ BYTE* VCpu::memoryPointer(DWORD address)
 
 BYTE VCpu::fetchOpcodeByte()
 {
-    return m_codeMemory[this->IP++];
+    if (x32())
+        return m_codeMemory[this->EIP++];
+    else
+        return m_codeMemory[this->IP++];
 #if 0
     BYTE b = readMemory8(getCS(), getEIP());
     this->IP += 1;
@@ -1578,8 +1590,14 @@ BYTE VCpu::fetchOpcodeByte()
 
 WORD VCpu::fetchOpcodeWord()
 {
-    WORD w = *reinterpret_cast<WORD*>(&m_codeMemory[getIP()]);
-    this->IP += 2;
+    WORD w;
+    if (x32()) {
+        w = *reinterpret_cast<WORD*>(&m_codeMemory[getEIP()]);
+        this->EIP += 2;
+    } else {
+        w = *reinterpret_cast<WORD*>(&m_codeMemory[getIP()]);
+        this->IP += 2;
+    }
     return w;
 #if 0
     WORD w = readMemory16(getCS(), getEIP());
@@ -1590,8 +1608,14 @@ WORD VCpu::fetchOpcodeWord()
 
 DWORD VCpu::fetchOpcodeDWord()
 {
-    DWORD d = *reinterpret_cast<DWORD*>(&m_codeMemory[getIP()]);
-    this->IP += 4;
+    DWORD d;
+    if (x32()) {
+        d = *reinterpret_cast<DWORD*>(&m_codeMemory[getEIP()]);
+        this->EIP += 4;
+    } else {
+        d = *reinterpret_cast<DWORD*>(&m_codeMemory[getIP()]);
+        this->IP += 4;
+    }
     return d;
 #if 0
     DWORD d = readMemory32(getCS(), getEIP());

@@ -51,7 +51,7 @@ inline void updateCpuCmpFlags(VCpu* cpu, QWORD result, T dest, T src)
 template<typename T>
 QWORD VCpu::doAdd(T dest, T src)
 {
-    QWORD result = dest + src;
+    QWORD result = (QWORD)dest + (QWORD)src;
     updateCpuMathFlags(this, result, dest, src);
     setOF(((
           ((result)^(dest)) &
@@ -65,7 +65,7 @@ QWORD VCpu::doAdc(T dest, T src)
 {
     QWORD result;
     src += getCF();
-    result = dest + src;
+    result = (QWORD)dest + (QWORD)src;
 
     updateCpuMathFlags(this, result, dest, src);
     setOF(((
@@ -78,7 +78,7 @@ QWORD VCpu::doAdc(T dest, T src)
 template<typename T>
 QWORD VCpu::doSub(T dest, T src)
 {
-    QWORD result = dest - src;
+    QWORD result = (QWORD)dest - (QWORD)src;
     updateCpuCmpFlags(this, result, dest, src);
     return result;
 }
@@ -88,7 +88,7 @@ QWORD VCpu::doSbb(T dest, T src)
 {
     QWORD result;
     src += getCF();
-    result = dest - src;
+    result = (QWORD)dest - (QWORD)src;
     updateCpuCmpFlags(this, result, dest, src);
     return result;
 }
