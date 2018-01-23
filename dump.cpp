@@ -36,6 +36,11 @@ int VCpu::dumpDisassembled(WORD segment, DWORD offset)
     char* p = buf;
 
     BYTE* opcode = memoryPointer(segment, offset);
+
+    if (!opcode) {
+        vlog(LogCPU, "dumpDisassembled can't dump %04X:%08X", segment, offset);
+        return 0;
+    }
     int width = insn_width(opcode);
     disassemble(opcode, offset, disasm, sizeof(disasm));
 
@@ -267,6 +272,10 @@ void VCpu::dumpMemory(WORD segment, DWORD offset, int rows)
     offset &= 0xFFFFFFF0;
 
     BYTE* p = memoryPointer(segment, offset);
+    if (!p) {
+        vlog(LogCPU, "dumpMemory can't dump %04X:%08X", segment, offset);
+        return;
+    }
 
     for (int i = 0; i < rows; ++i) {
         vlog(LogDump,

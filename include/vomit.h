@@ -43,12 +43,13 @@ template<> struct SignedTypeMaker<DWORD> { typedef SIGNED_DWORD SignedType; };
 template<> struct SignedTypeMaker<QWORD> { typedef SIGNED_QWORD SignedType; };
 
 struct VomitOptions {
-    VomitOptions();
-    bool trace;
-    bool disklog;
-    bool trapint;
-    bool iopeek;
-    bool start_in_debug;
+    VomitOptions() { }
+    bool trace { false };
+    bool disklog { false };
+    bool trapint { false };
+    bool iopeek { false };
+    bool start_in_debug { false };
+    bool memdebug { false };
     std::string file_to_run;
 };
 

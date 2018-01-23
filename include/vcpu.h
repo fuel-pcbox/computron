@@ -425,7 +425,7 @@ public:
     void* resolveModRM16(BYTE rmbyte);
     void* resolveModRM32(BYTE rmbyte);
 
-    DWORD evaluateSIB(BYTE rm, BYTE sib);
+    DWORD evaluateSIB(BYTE rm, BYTE sib, unsigned sizeOfImmediate = 0);
 
     enum Mode { RealMode, ProtectedMode };
     Mode mode() const { return m_mode; }

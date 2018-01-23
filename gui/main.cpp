@@ -93,15 +93,6 @@ int main(int argc, char** argv)
     return app.exec();
 }
 
-VomitOptions::VomitOptions()
-    : trace(false)
-    , disklog(false)
-    , trapint(false)
-    , iopeek(false)
-    , start_in_debug(false)
-{
-}
-
 void parseArguments(const QStringList& arguments)
 {
     for (auto it = arguments.begin(); it != arguments.end(); ) {
@@ -110,6 +101,8 @@ void parseArguments(const QStringList& arguments)
             options.disklog = true;
         else if (argument == "--trapint")
             options.trapint = true;
+        else if (argument == "--memdebug")
+            options.memdebug = true;
         else if (argument == "--iopeek")
             options.iopeek = true;
         else if (argument == "--trace")

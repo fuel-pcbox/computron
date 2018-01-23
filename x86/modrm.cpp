@@ -26,6 +26,7 @@
 #include "vomit.h"
 #include "vcpu.h"
 #include "debug.h"
+#include "debugger.h"
 
 #define DEFAULT_TO_SS if (!hasSegmentPrefix()) { segment = getSS(); }
 
@@ -348,7 +349,7 @@ void* VCpu::resolveModRM32_internal(BYTE rmbyte, ValueSize size)
         case 1: offset = getECX() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
         case 2: offset = getEDX() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
         case 3: offset = getEBX() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
-        case 4: offset = evaluateSIB(rmbyte, fetchOpcodeByte()); break;
+        case 4: offset = evaluateSIB(rmbyte, fetchOpcodeByte(), 8); break;
         case 5: DEFAULT_TO_SS; offset = getEBP() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
         case 6: offset = getESI() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
         default: offset = getEDI() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
@@ -363,7 +364,7 @@ void* VCpu::resolveModRM32_internal(BYTE rmbyte, ValueSize size)
         case 1: offset = getECX() + fetchOpcodeDWord(); break;
         case 2: offset = getEDX() + fetchOpcodeDWord(); break;
         case 3: offset = getEBX() + fetchOpcodeDWord(); break;
-        case 4: offset = evaluateSIB(rmbyte, fetchOpcodeByte()); break;
+        case 4: offset = evaluateSIB(rmbyte, fetchOpcodeByte(), 32); break;
         case 5: DEFAULT_TO_SS; offset = getEBP() + fetchOpcodeDWord(); break;
         case 6: offset = getESI() + fetchOpcodeDWord(); break;
         default: offset = getEDI() + fetchOpcodeDWord(); break;
@@ -412,14 +413,13 @@ void* VCpu::resolveModRM32_internal(BYTE rmbyte, ValueSize size)
     return m_lastModRMPointer;
 }
 
-DWORD VCpu::evaluateSIB(BYTE rm, BYTE sib)
+DWORD VCpu::evaluateSIB(BYTE rm, BYTE sib, unsigned sizeOfImmediate)
 {
     unsigned scale = 1 << ((sib >> 6) & 3);
     RegisterIndex32 indexRegister = (RegisterIndex32)((sib >> 3) & 7);
     RegisterIndex32 baseRegister = (RegisterIndex32)(sib & 7);
 
     DWORD result = getRegister32(baseRegister) + getRegister32(indexRegister) * scale;
-//    vomit_exit(1);
 
     DWORD scaledIndex;
     switch (sib & 0xC0) {
@@ -483,6 +483,8 @@ DWORD VCpu::evaluateSIB(BYTE rm, BYTE sib)
     case 6: base = getESI(); break;
     case 7: base = getEDI(); break;
     default: // 5
+        // FIXME: Uh, what to do if the ModR/M byte signalled a different size of immediate?
+        sizeOfImmediate = 0;
         switch ((rm >> 6) & 3) {
         case 0: base = fetchOpcodeDWord(); break;
         case 1: base = vomit_signExtend<DWORD>(fetchOpcodeByte()) + getEBP(); break;
@@ -492,7 +494,11 @@ DWORD VCpu::evaluateSIB(BYTE rm, BYTE sib)
         break;
     }
 
+    if (sizeOfImmediate == 8)
+        base = vomit_signExtend<DWORD>(fetchOpcodeByte());
+    else if (sizeOfImmediate == 32)
+        base = fetchOpcodeDWord();
     //dumpAll();
-    vlog(LogCPU, "%04X:%08X: evaluateSIB(): sib=%02X -> %s+%s*%u, scaledIndex:%08X, base:%08X", getBaseCS(), getBaseEIP(), sib, registerName(baseRegister), registerName(indexRegister), scale, scaledIndex, base);
+    //vlog(LogCPU, "%04X:%08X: evaluateSIB(): sib=%02X -> %s+%s*%u, scaledIndex:%08X, base:%08X", getBaseCS(), getBaseEIP(), sib, registerName(baseRegister), registerName(indexRegister), scale, scaledIndex, base);
     return scaledIndex + base;
 }

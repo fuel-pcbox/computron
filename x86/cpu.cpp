@@ -1076,7 +1076,6 @@ void VCpu::_LGS_reg32_mem32()
 
 void VCpu::_LEA_reg32_mem32()
 {
-    vlog(LogCPU, "LEA reg32 mem32");
     VM_ASSERT(a32());
 
     DWORD retv = 0;
@@ -1348,7 +1347,8 @@ BYTE VCpu::readMemory8(WORD segmentIndex, DWORD offset)
         SegmentSelector segment = makeSegmentSelector(segmentIndex);
         DWORD flatAddress = segment.base + offset;
         BYTE value = m_memory[flatAddress];
-        vlog(LogCPU, "8-bit PE read [A20=%s] %04X:%08X (flat: %08X), value: %02X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
+        if (options.memdebug)
+            vlog(LogCPU, "8-bit PE read [A20=%s] %04X:%08X (flat: %08X), value: %02X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
         return value;
     }
     return readMemory8(vomit_toFlatAddress(segmentIndex, offset));
@@ -1358,14 +1358,16 @@ WORD VCpu::readMemory16(WORD segmentIndex, DWORD offset)
 {
     if (getPE()) {
         if (!validateAddress(segmentIndex, offset, MemoryAccessType::Read16)) {
-            VM_ASSERT(false);
+            //VM_ASSERT(false);
             return 0x00;
         }
         SegmentSelector segment = makeSegmentSelector(segmentIndex);
         DWORD flatAddress = segment.base + offset;
         WORD value = vomit_read16FromPointer(reinterpret_cast<WORD*>(&m_memory[flatAddress]));
-        vlog(LogCPU, "16-bit PE read [A20=%s] %04X:%08X (flat: %08X), value: %04X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
-        dumpSegment(segmentIndex);
+        if (options.memdebug) {
+            vlog(LogCPU, "16-bit PE read [A20=%s] %04X:%08X (flat: %08X), value: %04X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
+            //dumpSegment(segmentIndex);
+        }
         return value;
     }
     return readMemory16(vomit_toFlatAddress(segmentIndex, offset));
@@ -1375,13 +1377,14 @@ DWORD VCpu::readMemory32(WORD segmentIndex, DWORD offset)
 {
     if (getPE()) {
         if (!validateAddress(segmentIndex, offset, MemoryAccessType::Read32)) {
-            VM_ASSERT(false);
+            //VM_ASSERT(false);
             return 0x00;
         }
         SegmentSelector segment = makeSegmentSelector(segmentIndex);
         DWORD flatAddress = segment.base + offset;
         DWORD value = vomit_read32FromPointer(reinterpret_cast<DWORD*>(&m_memory[flatAddress]));
-        vlog(LogCPU, "32-bit PE read [A20=%s] %04X:%08X (flat: %08X), value: %08X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
+        if (options.memdebug)
+            vlog(LogCPU, "32-bit PE read [A20=%s] %04X:%08X (flat: %08X), value: %08X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
         return value;
     }
     return readMemory32(vomit_toFlatAddress(segmentIndex, offset));
@@ -1445,7 +1448,8 @@ void VCpu::writeMemory8(WORD segmentIndex, DWORD offset, BYTE value)
         SegmentSelector segment = makeSegmentSelector(segmentIndex);
         DWORD flatAddress = segment.base + offset;
         assert(!addressIsInVGAMemory(flatAddress));
-        //vlog(LogCPU, "8-bit PE write [A20=%s] %04X:%08X (flat: %08X), value: %02X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
+        if (options.memdebug)
+            vlog(LogCPU, "8-bit PE write [A20=%s] %04X:%08X (flat: %08X), value: %02X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
         m_memory[flatAddress] = value;
         return;
     }
@@ -1456,13 +1460,14 @@ void VCpu::writeMemory16(WORD segmentIndex, DWORD offset, WORD value)
 {
     if (getPE()) {
         if (!validateAddress(segmentIndex, offset, MemoryAccessType::Write16)) {
-            VM_ASSERT(false);
+            //VM_ASSERT(false);
             return;
         }
         SegmentSelector segment = makeSegmentSelector(segmentIndex);
         DWORD flatAddress = segment.base + offset;
         assert(!addressIsInVGAMemory(flatAddress));
-        vlog(LogCPU, "16-bit PE write [A20=%s] %04X:%08X (flat: %08X), value: %04X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
+        if (options.memdebug)
+            vlog(LogCPU, "16-bit PE write [A20=%s] %04X:%08X (flat: %08X), value: %04X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
         //dumpSegment(segmentIndex);
         vomit_write16ToPointer(reinterpret_cast<WORD*>(&m_memory[flatAddress]), value);
         //debugger()->enter();
@@ -1475,12 +1480,13 @@ void VCpu::writeMemory32(WORD segmentIndex, DWORD offset, DWORD value)
 {
     if (getPE()) {
         if (!validateAddress(segmentIndex, offset, MemoryAccessType::Write32)) {
-            VM_ASSERT(false);
+            //VM_ASSERT(false);
             return;
         }
         SegmentSelector segment = makeSegmentSelector(segmentIndex);
         DWORD flatAddress = segment.base + offset;
-        vlog(LogCPU, "32-bit PE write [A20=%s] %04X:%08X (flat: %08X), value: %08X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
+        if (options.memdebug)
+            vlog(LogCPU, "32-bit PE write [A20=%s] %04X:%08X (flat: %08X), value: %08X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
         vomit_write32ToPointer(reinterpret_cast<DWORD*>(&m_memory[flatAddress]), value);
         return;
     }
@@ -1550,7 +1556,7 @@ BYTE* VCpu::memoryPointer(WORD segmentIndex, DWORD offset)
 {
     if (getPE()) {
         if (!validateAddress(segmentIndex, offset, MemoryAccessType::Read8)) {
-            VM_ASSERT(false);
+            //VM_ASSERT(false);
             return nullptr;
         }
         SegmentSelector segment = makeSegmentSelector(segmentIndex);
