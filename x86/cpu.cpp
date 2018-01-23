@@ -1076,7 +1076,11 @@ void VCpu::_LGS_reg32_mem32()
 
 void VCpu::_LEA_reg32_mem32()
 {
-    VM_ASSERT(a32());
+    //VM_ASSERT(a32());
+    if (!a32()) {
+        dumpAll();
+        debugger()->enter();
+    }
 
     DWORD retv = 0;
     BYTE b = fetchOpcodeByte();

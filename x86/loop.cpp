@@ -64,6 +64,8 @@ void VCpu::handleRepeatOpcode(BYTE opcode, bool shouldEqual)
     case 0x2E: setSegmentPrefix(getCS()); break;
     case 0x36: setSegmentPrefix(getSS()); break;
     case 0x3E: setSegmentPrefix(getDS()); break;
+    case 0x64: setSegmentPrefix(getFS()); break;
+    case 0x65: setSegmentPrefix(getGS()); break;
 
     case 0x66: {
         m_operationSize32 = !m_operationSize32;

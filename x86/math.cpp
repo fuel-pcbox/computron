@@ -96,7 +96,7 @@ QWORD VCpu::doSbb(T dest, T src)
 template<typename T>
 QWORD VCpu::doMul(T acc, T multi)
 {
-    QWORD result = acc * multi;
+    QWORD result = (DWORD)acc * (DWORD)multi;
     updateCpuMathFlags(this, result, acc, multi);
     return result;
 }
@@ -105,7 +105,7 @@ template<typename T>
 SIGNED_QWORD VCpu::doImul(T acc, T multi)
 {
     // FIXME: This function should protect against T being an unsigned type.
-    SIGNED_QWORD result = acc * multi;
+    SIGNED_QWORD result = (SIGNED_QWORD)acc * (SIGNED_QWORD)multi;
     return result;
 }
 
