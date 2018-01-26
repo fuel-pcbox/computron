@@ -193,7 +193,7 @@ void VCpu::_SCASD()
         nextEDI(4);
     }
 
-    cmpFlags16(getEAX() - dest, dest, getEAX());
+    cmpFlags32(getEAX() - dest, dest, getEAX());
 }
 
 void VCpu::_MOVSB()

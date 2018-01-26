@@ -137,7 +137,9 @@ void VCpu::_IN_EAX_DX()
 {
     regs.B.AL = in(getDX());
     regs.B.AH = in(getDX() + 1);
-    regs.W.__EAX_high_word = vomit_MAKEWORD(in(getDX() + 2), in(getDX() + 3));
+    BYTE c = in(getDX() + 2);
+    BYTE d = in(getDX() + 3);
+    regs.W.__EAX_high_word = vomit_MAKEWORD(c, d);
 }
 
 void VCpu::out(WORD port, BYTE value)

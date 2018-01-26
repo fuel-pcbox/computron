@@ -919,7 +919,7 @@ void VCpu::_INC_RM16()
 void VCpu::_INC_RM32()
 {
     DWORD value = readModRM32(rmbyte);
-    DWORD i = value;
+    QWORD i = value;
 
     /* Overflow if we'll wrap. */
     setOF(value == 0x7FFFFFFF);
@@ -947,7 +947,7 @@ void VCpu::_DEC_RM16()
 void VCpu::_DEC_RM32()
 {
     DWORD value = readModRM32(rmbyte);
-    DWORD i = value;
+    QWORD i = value;
 
     /* Overflow if we'll wrap. */
     setOF(value == 0x80000000);
