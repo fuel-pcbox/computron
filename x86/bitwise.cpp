@@ -251,46 +251,19 @@ void VCpu::_NOT_RM32()
 void VCpu::_NEG_RM8()
 {
     BYTE value = readModRM8(rmbyte);
-    BYTE old = value;
-    value = -value;
-    updateModRM8(value);
-    setCF(old != 0);
-    updateFlags8(value);
-    setOF(((
-        ((0)^(old)) &
-        ((0)^(value))
-        )>>(7))&1);
-    adjustFlag32(value, 0, old);
+    updateModRM8(doSub((BYTE)0, value));
 }
 
 void VCpu::_NEG_RM16()
 {
     WORD value = readModRM16(rmbyte);
-    WORD old = value;
-    value = -value;
-    updateModRM16(value);
-    setCF(old != 0);
-    updateFlags16(value);
-    setOF(((
-        ((0)^(old)) &
-        ((0)^(value))
-        )>>(15))&1);
-    adjustFlag32(value, 0, old);
+    updateModRM16(doSub((WORD)0, value));
 }
 
 void VCpu::_NEG_RM32()
 {
     DWORD value = readModRM32(rmbyte);
-    DWORD old = value;
-    value = -value;
-    updateModRM32(value);
-    setCF(old != 0);
-    updateFlags32(value);
-    setOF(((
-        ((0)^(old)) &
-        ((0)^(value))
-        )>>(31))&1);
-    adjustFlag32(value, 0, old);
+    updateModRM32(doSub((DWORD)0, value));
 }
 
 DEFAULT_RM16_imm8(doBtr, _BTR_RM16_imm8)
