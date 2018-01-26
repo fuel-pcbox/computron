@@ -160,31 +160,28 @@ T VCpu::doAnd(T dest, T src)
     return result;
 }
 
+inline DWORD allOnes(unsigned bits)
+{
+    if (bits == 8)
+        return 0xFF;
+    if (bits == 16)
+        return 0xFFFF;
+    VM_ASSERT(bits == 32);
+    return 0xFFFFFFFF;
+}
+
 DWORD cpu_sar(VCpu* cpu, DWORD data, BYTE steps, BYTE bits)
 {
     DWORD result = data;
-    WORD n;
+    DWORD n;
+    DWORD mask = 1 << (bits - 1);
 
     steps &= 0x1F;
 
-    if (bits == 8) {
-        for (BYTE i = 0; i < steps; ++i) {
-            n = result;
-            result = (result>>1) | (n&0x80);
-            cpu->setCF(n & 1);
-        }
-    } else if (bits == 16) {
-        for (BYTE i = 0; i < steps; ++i) {
-            n = result;
-            result = (result>>1) | (n&0x8000);
-            cpu->setCF(n & 1);
-        }
-    } else {
-        for (BYTE i = 0; i < steps; ++i) {
-            n = result;
-            result = (result>>1) | (n&0x80000000);
-            cpu->setCF(n & 1);
-        }
+    for (BYTE i = 0; i < steps; ++i) {
+        n = result;
+        result = (result >> 1) | (n & mask);
+        cpu->setCF(n & 1);
     }
 
     if (steps == 1)
@@ -197,29 +194,15 @@ DWORD cpu_sar(VCpu* cpu, DWORD data, BYTE steps, BYTE bits)
 DWORD cpu_rcl(VCpu* cpu, DWORD data, BYTE steps, BYTE bits)
 {
     DWORD result = data;
-    WORD n;
+    DWORD n;
+    DWORD mask = allOnes(bits);
 
     steps &= 0x1F;
 
-    if (bits == 8) {
-        for (BYTE i = 0; i < steps; ++i) {
-            n = result;
-            result = ((result<<1) & 0xFF) | cpu->getCF();
-            cpu->setCF((n>>7) & 1);
-        }
-    } else if (bits == 16) {
-        for (BYTE i = 0; i < steps; ++i) {
-            n = result;
-            result = ((result<<1) & 0xFFFF) | cpu->getCF();
-            cpu->setCF((n>>15) & 1);
-        }
-    } else {
-        vlog(LogAlert, "RCL %08X (-( %u", data, steps);
-        for (BYTE i = 0; i < steps; ++i) {
-            n = result;
-            result = ((result<<1) & 0xFFFFFFFF) | cpu->getCF();
-            cpu->setCF((n>>31) & 1);
-        }
+    for (BYTE i = 0; i < steps; ++i) {
+        n = result;
+        result = ((result<<1) & mask) | cpu->getCF();
+        cpu->setCF((n>>(bits-1)) & 1);
     }
 
     if (steps == 1)
@@ -230,24 +213,15 @@ DWORD cpu_rcl(VCpu* cpu, DWORD data, BYTE steps, BYTE bits)
 
 DWORD cpu_rcr(VCpu* cpu, DWORD data, BYTE steps, BYTE bits)
 {
-    VM_ASSERT(bits != 32);
     DWORD result = (DWORD)data;
-    WORD n;
+    DWORD n;
 
     steps &= 0x1F;
 
-    if (bits == 8) {
-        for (BYTE i = 0; i < steps; ++i) {
-            n = result;
-            result = (result>>1) | (cpu->getCF()<<7);
-            cpu->setCF(n & 1);
-        }
-    } else {
-        for (BYTE i = 0; i < steps; ++i) {
-            n = result;
-            result = (result>>1) | (cpu->getCF()<<15);
-            cpu->setCF(n & 1);
-        }
+    for (BYTE i = 0; i < steps; ++i) {
+        n = result;
+        result = (result>>1) | (cpu->getCF()<<(bits-1));
+        cpu->setCF(n & 1);
     }
 
     if (steps == 1)

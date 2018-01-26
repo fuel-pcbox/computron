@@ -50,6 +50,7 @@ void VCpu::_INTO()
 
 void VCpu::_IRET()
 {
+    VM_ASSERT(!x32());
     WORD nip = pop();
     WORD ncs = pop();
     jump16(ncs, nip);

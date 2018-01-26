@@ -212,7 +212,7 @@ void VCpu::_RET_imm16()
 void VCpu::_RETF()
 {
     if (x32()) {
-        WORD nip = pop32();
+        DWORD nip = pop32();
         jump32(pop(), nip);
     } else {
         WORD nip = pop();

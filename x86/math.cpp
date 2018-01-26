@@ -216,8 +216,8 @@ void VCpu::_MUL_RM16()
 
 void VCpu::_MUL_RM32()
 {
-    WORD value = readModRM32(rmbyte);
-    QWORD result = doMul(regs.W.AX, value);
+    DWORD value = readModRM32(rmbyte);
+    QWORD result = doMul(regs.D.EAX, value);
     setEAX(result & 0xFFFFFFFF);
     setEDX((result >> 32) & 0xFFFFFFFF);
 
@@ -360,7 +360,7 @@ void VCpu::_DIV_RM16()
 void VCpu::_DIV_RM32()
 {
     DWORD value = readModRM32(rmbyte);
-    QWORD tEDXEAX = getEAX() | (getEDX() << 16);
+    QWORD tEDXEAX = getEAX() | ((QWORD)getEDX() << 32);
 
     if (value == 0) {
         exception(0);
