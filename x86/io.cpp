@@ -122,8 +122,8 @@ void VCpu::_OUTSD()
 
     out(getDX(), b1);
     out(getDX() + 1, b2);
-    out(getDX() + 1, b3);
-    out(getDX() + 1, b4);
+    out(getDX() + 2, b3);
+    out(getDX() + 3, b4);
 }
 
 void VCpu::_IN_AL_imm8()
