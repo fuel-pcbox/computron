@@ -141,9 +141,12 @@ void VCpu::_IN_AX_imm8()
 void VCpu::_IN_EAX_imm8()
 {
     WORD port = fetchOpcodeByte();
-    regs.B.AL = in(port);
-    regs.B.AH = in(port + 1);
-    regs.W.__EAX_high_word = vomit_MAKEWORD(in(port + 2), in(port + 3));
+    BYTE b1 = in(port);
+    BYTE b2 = in(port + 1);
+    BYTE b3 = in(port + 2);
+    BYTE b4 = in(port + 3);
+    regs.W.AX = vomit_MAKEWORD(b1, b2);
+    regs.W.__EAX_high_word = vomit_MAKEWORD(b3, b4);
 }
 
 void VCpu::_IN_AL_DX()
