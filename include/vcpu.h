@@ -351,7 +351,7 @@ public:
 
     inline bool evaluate(BYTE) const;
 
-    void updateFlags(WORD value, BYTE bits);
+    void updateFlags(DWORD value, BYTE bits);
     void updateFlags32(DWORD value);
     void updateFlags16(WORD value);
     void updateFlags8(BYTE value);
@@ -1186,9 +1186,9 @@ private:
 
 extern VCpu* g_cpu;
 
-DWORD cpu_sar(VCpu*, WORD, BYTE, BYTE);
-DWORD cpu_rcl(VCpu*, WORD, BYTE, BYTE);
-DWORD cpu_rcr(VCpu*, WORD, BYTE, BYTE);
+DWORD cpu_sar(VCpu*, DWORD, BYTE, BYTE);
+DWORD cpu_rcl(VCpu*, DWORD, BYTE, BYTE);
+DWORD cpu_rcr(VCpu*, DWORD, BYTE, BYTE);
 
 // INLINE IMPLEMENTATIONS
 

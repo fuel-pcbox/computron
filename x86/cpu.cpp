@@ -1565,7 +1565,8 @@ BYTE* VCpu::memoryPointer(WORD segmentIndex, DWORD offset)
         }
         SegmentSelector segment = makeSegmentSelector(segmentIndex);
         DWORD flatAddress = segment.base + offset;
-        vlog(LogCPU, "MemoryPointer PE [A20=%s] %04X:%08X (flat: %08X)", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress);
+        if (options.memdebug)
+            vlog(LogCPU, "MemoryPointer PE [A20=%s] %04X:%08X (flat: %08X)", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress);
         return &m_memory[flatAddress];
     }
     return memoryPointer(vomit_toFlatAddress(segmentIndex, offset));

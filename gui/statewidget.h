@@ -23,29 +23,27 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "mainwindow.h"
-#include "machinewidget.h"
-#include "machine.h"
-#include "screen.h"
+#pragma once
 
-struct MainWindow::Private
+#include <QtWidgets/QWidget>
+
+class Machine;
+
+class StateWidget : public QWidget
 {
+    Q_OBJECT
+public:
+    explicit StateWidget(Machine&);
+    virtual ~StateWidget();
+
+    Machine& machine() const { return m_machine; }
+
+private slots:
+    void sync();
+
+private:
+    Machine& m_machine;
+
+    struct Private;
+    Private* d;
 };
-
-MainWindow::MainWindow()
-    : d(new Private)
-{
-    setWindowTitle("V O M I T");
-}
-
-MainWindow::~MainWindow()
-{
-    delete d;
-    d = 0L;
-}
-
-void MainWindow::addMachine(Machine* machine)
-{
-    MachineWidget* machineWidget = new MachineWidget(machine);
-    setCentralWidget(machineWidget);
-}

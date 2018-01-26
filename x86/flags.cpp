@@ -70,13 +70,17 @@ void VCpu::updateFlags8(BYTE data)
     setZF(data == 0);
 }
 
-void VCpu::updateFlags(WORD data, BYTE bits)
+void VCpu::updateFlags(DWORD data, BYTE bits)
 {
     if (bits == 8) {
         data &= 0xFF;
         setSF(data & 0x80);
-    } else
+    } else if (bits == 16) {
+        data &= 0xFFFF;
         setSF(data & 0x8000);
+    } else {
+        setSF(data & 0x80000000);
+    }
 
     setPF(parity_table[data & 0xFF]);
     setZF(data == 0);

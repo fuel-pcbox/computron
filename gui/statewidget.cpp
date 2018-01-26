@@ -23,29 +23,63 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "mainwindow.h"
-#include "machinewidget.h"
-#include "machine.h"
-#include "screen.h"
+#include "statewidget.h"
 
-struct MainWindow::Private
+#include "ui_statewidget.h"
+#include "debug.h"
+#include "machine.h"
+#include "vcpu.h"
+#include "screen.h"
+#include <QtCore/QCoreApplication>
+#include <QtCore/QTimer>
+#include <QtWidgets/QVBoxLayout>
+
+struct StateWidget::Private
 {
+    QTimer syncTimer;
+    Ui_StateWidget ui;
 };
 
-MainWindow::MainWindow()
-    : d(new Private)
+StateWidget::StateWidget(Machine& m)
+    : QWidget(nullptr)
+    , m_machine(m)
+    , d(new Private)
 {
-    setWindowTitle("V O M I T");
+    setFixedSize(180, 400);
+    d->ui.setupUi(this);
+
+    connect(&d->syncTimer, SIGNAL(timeout()), this, SLOT(sync()));
+    d->syncTimer.start(100);
 }
 
-MainWindow::~MainWindow()
+StateWidget::~StateWidget()
 {
     delete d;
-    d = 0L;
+    d = nullptr;
 }
 
-void MainWindow::addMachine(Machine* machine)
+#define DO_LABEL(name, fmt) d->ui.lbl ## name->setText(s.sprintf(fmt, cpu.get ## name()));
+
+void StateWidget::sync()
 {
-    MachineWidget* machineWidget = new MachineWidget(machine);
-    setCentralWidget(machineWidget);
+    QString s;
+    auto& cpu = *machine().cpu();
+
+    DO_LABEL(EAX, "%08X");
+    DO_LABEL(EBX, "%08X");
+    DO_LABEL(ECX, "%08X");
+    DO_LABEL(EDX, "%08X");
+    DO_LABEL(EBP, "%08X");
+    DO_LABEL(ESP, "%08X");
+    DO_LABEL(ESI, "%08X");
+    DO_LABEL(EDI, "%08X");
+    DO_LABEL(CS, "%04X");
+    DO_LABEL(DS, "%04X");
+    DO_LABEL(ES, "%04X");
+    DO_LABEL(SS, "%04X");
+    DO_LABEL(FS, "%04X");
+    DO_LABEL(GS, "%04X");
+    DO_LABEL(CR0, "%08X");
+
+    d->ui.lblPC->setText(s.sprintf("%04X:%08X", cpu.getBaseCS(), cpu.getBaseEIP()));
 }

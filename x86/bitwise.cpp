@@ -160,7 +160,7 @@ T VCpu::doAnd(T dest, T src)
     return result;
 }
 
-DWORD cpu_sar(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
+DWORD cpu_sar(VCpu* cpu, DWORD data, BYTE steps, BYTE bits)
 {
     DWORD result = data;
     WORD n;
@@ -173,10 +173,16 @@ DWORD cpu_sar(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
             result = (result>>1) | (n&0x80);
             cpu->setCF(n & 1);
         }
-    } else {
+    } else if (bits == 16) {
         for (BYTE i = 0; i < steps; ++i) {
             n = result;
             result = (result>>1) | (n&0x8000);
+            cpu->setCF(n & 1);
+        }
+    } else {
+        for (BYTE i = 0; i < steps; ++i) {
+            n = result;
+            result = (result>>1) | (n&0x80000000);
             cpu->setCF(n & 1);
         }
     }
@@ -188,7 +194,7 @@ DWORD cpu_sar(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
     return result;
 }
 
-DWORD cpu_rcl(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
+DWORD cpu_rcl(VCpu* cpu, DWORD data, BYTE steps, BYTE bits)
 {
     DWORD result = data;
     WORD n;
@@ -201,11 +207,18 @@ DWORD cpu_rcl(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
             result = ((result<<1) & 0xFF) | cpu->getCF();
             cpu->setCF((n>>7) & 1);
         }
-    } else {
+    } else if (bits == 16) {
         for (BYTE i = 0; i < steps; ++i) {
             n = result;
             result = ((result<<1) & 0xFFFF) | cpu->getCF();
             cpu->setCF((n>>15) & 1);
+        }
+    } else {
+        vlog(LogAlert, "RCL %08X (-( %u", data, steps);
+        for (BYTE i = 0; i < steps; ++i) {
+            n = result;
+            result = ((result<<1) & 0xFFFFFFFF) | cpu->getCF();
+            cpu->setCF((n>>31) & 1);
         }
     }
 
@@ -215,8 +228,9 @@ DWORD cpu_rcl(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
     return result;
 }
 
-DWORD cpu_rcr(VCpu* cpu, WORD data, BYTE steps, BYTE bits)
+DWORD cpu_rcr(VCpu* cpu, DWORD data, BYTE steps, BYTE bits)
 {
+    VM_ASSERT(bits != 32);
     DWORD result = (DWORD)data;
     WORD n;
 

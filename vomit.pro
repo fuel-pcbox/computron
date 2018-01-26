@@ -25,7 +25,10 @@ UI_DIR = .ui
 
 RESOURCES = vomit.qrc
 
+FORMS += gui/statewidget.ui
+
 HEADERS += gui/machinewidget.h \
+           gui/statewidget.h \
            gui/mainwindow.h \
            gui/palettewidget.h \
            gui/screen.h \
@@ -83,6 +86,7 @@ SOURCES += debug.cpp \
            gui/main.cpp \
            gui/mainwindow.cpp \
            gui/palettewidget.cpp \
+           gui/statewidget.cpp \
            gui/screen.cpp \
            gui/worker.cpp \
            hw/busmouse.cpp \
