@@ -34,7 +34,7 @@
 #include <QtCore/QStringList>
 #include <unistd.h>
 
-#define VOMIT_DEBUG_A20
+//#define VOMIT_DEBUG_A20
 
 inline bool hasA20Bit(DWORD address)
 {
@@ -1198,9 +1198,9 @@ void VCpu::writeMemory32(DWORD address, DWORD data)
 #ifdef VOMIT_DEBUG_A20
     if (hasA20Bit(address)) {
         if (isA20Enabled())
-            vlog(LogCPU, "%04X:%08X Write dword $08X -> @0x%08X with A20 enabled", getBaseCS(), getBaseEIP(), data, address);
+            vlog(LogCPU, "%04X:%08X Write dword $0x%08X -> @0x%08X with A20 enabled", getBaseCS(), getBaseEIP(), data, address);
         else
-            vlog(LogCPU, "%04X:%08X Write dword $08X -> @0x%08X with A20 disabled, wrapping to @0x%08X", getBaseCS(), getBaseEIP(), data, address, address & a20Mask());
+            vlog(LogCPU, "%04X:%08X Write dword $0x%08X -> @0x%08X with A20 disabled, wrapping to @0x%08X", getBaseCS(), getBaseEIP(), data, address, address & a20Mask());
     }
 #endif
     address &= a20Mask();
@@ -1212,7 +1212,6 @@ void VCpu::writeMemory32(DWORD address, DWORD data)
 
     assert(!getPE());
 
-    assert (address < (0xFFFFF - 4));
     DWORD* ptr = reinterpret_cast<DWORD*>(m_memory + address);
     vomit_write32ToPointer(ptr, data);
 }
@@ -1347,6 +1346,7 @@ bool VCpu::validateAddress(WORD segmentIndex, DWORD offset, MemoryAccessType acc
 BYTE VCpu::readMemory8(WORD segmentIndex, DWORD offset)
 {
     if (getPE()) {
+        VM_ASSERT(isA20Enabled());
         if (!validateAddress(segmentIndex, offset, MemoryAccessType::Read8)) {
             //VM_ASSERT(false);
             return 0x00;
@@ -1364,6 +1364,7 @@ BYTE VCpu::readMemory8(WORD segmentIndex, DWORD offset)
 WORD VCpu::readMemory16(WORD segmentIndex, DWORD offset)
 {
     if (getPE()) {
+        VM_ASSERT(isA20Enabled());
         if (!validateAddress(segmentIndex, offset, MemoryAccessType::Read16)) {
             //VM_ASSERT(false);
             return 0x00;
@@ -1389,6 +1390,7 @@ DWORD VCpu::readMemory32(WORD segmentIndex, DWORD offset)
         }
         SegmentSelector segment = makeSegmentSelector(segmentIndex);
         DWORD flatAddress = segment.base + offset;
+        VM_ASSERT(isA20Enabled() || !hasA20Bit(flatAddress));
         DWORD value = vomit_read32FromPointer(reinterpret_cast<DWORD*>(&m_memory[flatAddress]));
         if (options.memdebug)
             vlog(LogCPU, "32-bit PE read [A20=%s] %04X:%08X (flat: %08X), value: %08X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
@@ -1448,6 +1450,7 @@ void VCpu::writeMemory16(DWORD address, WORD value)
 void VCpu::writeMemory8(WORD segmentIndex, DWORD offset, BYTE value)
 {
     if (getPE()) {
+        VM_ASSERT(isA20Enabled());
         if (!validateAddress(segmentIndex, offset, MemoryAccessType::Write8)) {
             //VM_ASSERT(false);
             return;
@@ -1466,6 +1469,7 @@ void VCpu::writeMemory8(WORD segmentIndex, DWORD offset, BYTE value)
 void VCpu::writeMemory16(WORD segmentIndex, DWORD offset, WORD value)
 {
     if (getPE()) {
+        VM_ASSERT(isA20Enabled());
         if (!validateAddress(segmentIndex, offset, MemoryAccessType::Write16)) {
             //VM_ASSERT(false);
             return;
@@ -1492,6 +1496,7 @@ void VCpu::writeMemory32(WORD segmentIndex, DWORD offset, DWORD value)
         }
         SegmentSelector segment = makeSegmentSelector(segmentIndex);
         DWORD flatAddress = segment.base + offset;
+        VM_ASSERT(isA20Enabled() || !hasA20Bit(flatAddress));
         if (options.memdebug)
             vlog(LogCPU, "32-bit PE write [A20=%s] %04X:%08X (flat: %08X), value: %08X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
         vomit_write32ToPointer(reinterpret_cast<DWORD*>(&m_memory[flatAddress]), value);
