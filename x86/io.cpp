@@ -93,13 +93,37 @@ void VCpu::_OUTSW()
         msb = readMemory8(currentSegment(), regs.W.SI + 1);
         nextSI(2);
     } else {
-        lsb = readMemory8(currentSegment(), getSI());
-        msb = readMemory8(currentSegment(), getESI() + 1);
+        lsb = readMemory8(currentSegment(), regs.D.ESI);
+        msb = readMemory8(currentSegment(), regs.D.ESI + 1);
         nextESI(2);
     }
 
     out(getDX(), lsb);
     out(getDX() + 1, msb);
+}
+
+void VCpu::_OUTSD()
+{
+    BYTE b1, b2, b3, b4;
+
+    if (a16()) {
+        b1 = readMemory8(currentSegment(), regs.W.SI);
+        b2 = readMemory8(currentSegment(), regs.W.SI + 1);
+        b3 = readMemory8(currentSegment(), regs.W.SI + 2);
+        b4 = readMemory8(currentSegment(), regs.W.SI + 3);
+        nextSI(4);
+    } else {
+        b1 = readMemory8(currentSegment(), regs.D.ESI);
+        b2 = readMemory8(currentSegment(), regs.D.ESI + 1);
+        b3 = readMemory8(currentSegment(), regs.D.ESI + 2);
+        b4 = readMemory8(currentSegment(), regs.D.ESI + 3);
+        nextESI(4);
+    }
+
+    out(getDX(), b1);
+    out(getDX() + 1, b2);
+    out(getDX() + 1, b3);
+    out(getDX() + 1, b4);
 }
 
 void VCpu::_IN_AL_imm8()

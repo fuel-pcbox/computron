@@ -271,7 +271,7 @@ void VCpu::decode(BYTE op)
     case 0x6A: _PUSH_imm8(); break;
     case 0x6B: CALL_HANDLER(_IMUL_reg16_RM16_imm8, _IMUL_reg32_RM32_imm8); break;
     case 0x6E: _OUTSB(); break;
-    case 0x6F: _OUTSW(); break;
+    case 0x6F: CALL_HANDLER(_OUTSW, _OUTSD); break;
     case 0x70: _JO_imm8(); break;
     case 0x71: _JNO_imm8(); break;
     case 0x72: _JC_imm8(); break;
@@ -384,7 +384,7 @@ void VCpu::decode(BYTE op)
     case 0xE0: _LOOPNE_imm8(); break;
     case 0xE1: _LOOPE_imm8(); break;
     case 0xE2: _LOOP_imm8(); break;
-    case 0xE3: CALL_HANDLER(_JCXZ_imm8, _JECXZ_imm8); break;
+    case 0xE3: CALL_ASIZE_HANDLER(_JCXZ_imm8, _JECXZ_imm8); break;
     case 0xE4: _IN_AL_imm8(); break;
     case 0xE5: CALL_HANDLER(_IN_AX_imm8, _IN_EAX_imm8); break;
     case 0xE6: _OUT_imm8_AL(); break;

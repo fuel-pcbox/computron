@@ -37,6 +37,7 @@ class Machine;
 class VGAMemory;
 
 #define CALL_HANDLER(handler16, handler32) if (o16()) { handler16(); } else { handler32(); }
+#define CALL_ASIZE_HANDLER(handler16, handler32) if (a16()) { handler16(); } else { handler32(); }
 
 struct FarPointer {
     FarPointer() : segment(0), offset(0) { }

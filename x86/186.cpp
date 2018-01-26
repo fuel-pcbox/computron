@@ -107,11 +107,11 @@ void VCpu::_PUSHA()
 {
     WORD oldSP = getSP();
     push(getAX());
-    push(getBX());
     push(getCX());
     push(getDX());
-    push(getBP());
+    push(getBX());
     push(oldSP);
+    push(getBP());
     push(getSI());
     push(getDI());
 }
@@ -120,11 +120,11 @@ void VCpu::_PUSHAD()
 {
     DWORD oldESP = getESP();
     push32(getEAX());
-    push32(getEBX());
     push32(getECX());
     push32(getEDX());
-    push32(getEBP());
+    push32(getEBX());
     push32(oldESP);
+    push32(getEBP());
     push32(getESI());
     push32(getEDI());
 }
@@ -133,11 +133,11 @@ void VCpu::_POPA()
 {
     setDI(pop());
     setSI(pop());
-    (void) pop();
     setBP(pop());
+    (void) pop();
+    setBX(pop());
     setDX(pop());
     setCX(pop());
-    setBX(pop());
     setAX(pop());
 }
 
@@ -145,10 +145,10 @@ void VCpu::_POPAD()
 {
     setEDI(pop32());
     setESI(pop32());
-    (void) pop32();
     setEBP(pop32());
+    (void) pop32();
+    setEBX(pop32());
     setEDX(pop32());
     setECX(pop32());
-    setEBX(pop32());
     setEAX(pop32());
 }
