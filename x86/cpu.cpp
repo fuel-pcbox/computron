@@ -762,7 +762,10 @@ void VCpu::_HLT()
 
 void VCpu::_XLAT()
 {
-    setAL(readMemory8(currentSegment(), getBX() + getAL()));
+    if (a32())
+        setAL(readMemory8(currentSegment(), getEBX() + getAL()));
+    else
+        setAL(readMemory8(currentSegment(), getBX() + getAL()));
 }
 
 void VCpu::_CS()
