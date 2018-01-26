@@ -137,7 +137,7 @@ void VCpu::handleRepeatOpcode(BYTE opcode, bool shouldEqual)
     case 0xAD: DO_REP_NEW(_LODSW, _LODSD); return;
 
     case 0xA6: DO_REPZ(_CMPSB); return;
-    case 0xA7: DO_REPZ_NEW(_CMPSW, _SCASD); return;
+    case 0xA7: DO_REPZ_NEW(_CMPSW, _CMPSD); return;
     case 0xAE: DO_REPZ(_SCASB); return;
     case 0xAF: DO_REPZ_NEW(_SCASW, _SCASD); return;
 
