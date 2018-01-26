@@ -1079,7 +1079,8 @@ void VCpu::_LGS_reg32_mem32()
 
 void VCpu::_LEA_reg32_mem32()
 {
-    //VM_ASSERT(a32());
+    VM_ASSERT(a32() == o32());
+
     if (!a32()) {
         dumpAll();
         debugger()->enter();
@@ -1087,8 +1088,6 @@ void VCpu::_LEA_reg32_mem32()
 
     DWORD retv = 0;
     BYTE b = fetchOpcodeByte();
-    WORD segment = currentSegment();
-    DWORD offset = 0x00000000;
 
     switch (b & 0xC0) {
     case 0x00:
@@ -1141,6 +1140,7 @@ void VCpu::_LEA_reg32_mem32()
 
 void VCpu::_LEA_reg16_mem16()
 {
+    VM_ASSERT(a32() == o32());
     WORD retv = 0x0000;
     BYTE b = fetchOpcodeByte();
     switch (b & 0xC0) {

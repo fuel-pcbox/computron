@@ -57,6 +57,7 @@ void VCpu::_wrap_0x0F()
 
 void VCpu::_BOUND()
 {
+    assert(false);
     BYTE rm = fetchOpcodeByte();
     WORD* ptr = static_cast<WORD*>(resolveModRM8(rm));
     WORD index = getRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)));
@@ -82,7 +83,8 @@ void VCpu::_PUSH_imm16()
 
 void VCpu::_ENTER()
 {
-    assert(false);
+    assert(o16());
+
     WORD Size = fetchOpcodeWord();
     BYTE NestingLevel = fetchOpcodeByte() % 32;
     push(getBP());
@@ -100,7 +102,7 @@ void VCpu::_ENTER()
 
 void VCpu::_LEAVE()
 {
-    assert(false);
+    assert(o16());
     setSP(getBP());
     setBP(pop());
 }

@@ -59,6 +59,7 @@ void VCpu::_IRET()
 
 void VCpu::jumpToInterruptHandler(int isr)
 {
+    VM_ASSERT(!x32());
 #ifdef VOMIT_DEBUG
     if (options.trapint)
         vlog(LogCPU, "%04X:%08X Interrupt %02X,%02X trapped", getBaseCS(), getBaseEIP(), isr, this->regs.B.AH);
