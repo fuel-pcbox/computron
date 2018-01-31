@@ -678,8 +678,6 @@ void VCpu::mainLoop()
         if (debugger()->isActive()) {
             saveBaseAddress();
             debugger()->doConsole();
-            if (!debugger()->isActive())
-                continue;
         }
 #endif
 
