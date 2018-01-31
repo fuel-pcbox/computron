@@ -42,8 +42,7 @@
 #include <QtCore/QDebug>
 
 // FIXME: Remove. This is here because VGA has no way of grabbing at the Screen.
-static bool g_screen_in_refresh = false;
-bool vomit_in_vretrace() { return !g_screen_in_refresh; }
+volatile bool g_screen_in_refresh = false;
 
 struct fontcharbitmap_t {
     BYTE data[16];

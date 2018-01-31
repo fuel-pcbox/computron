@@ -174,7 +174,7 @@ void VCpu::out(WORD port, BYTE value)
 #ifdef VOMIT_DEBUG
     if (options.iopeek) {
         if (port != 0x00E6 && port != 0x0020 && port != 0x3D4 && port != 0x03d5 && port != 0xe2 && port != 0xe0) {
-            vlog(LogIO, "[%04X:%08X] VCpu::out: %02X --> %04X", getBaseCS(), getBaseEIP(), value, port);
+            vlog(LogIO, "VCpu::out: %02X --> %04X", value, port);
         }
     }
 #endif
@@ -185,24 +185,25 @@ void VCpu::out(WORD port, BYTE value)
     }
 
     if (!IODevice::shouldIgnorePort(port))
-        vlog(LogAlert, "%04X:%08X Unhandled I/O write to port %04X, data %02X", getBaseCS(), getBaseEIP(), port, value);
+        vlog(LogAlert, "Unhandled I/O write to port %04X, data %02X", port, value);
 }
 
 BYTE VCpu::in(WORD port)
 {
+    BYTE value;
+    if (IODevice::readDevices().contains(port)) {
+        value = IODevice::readDevices()[port]->in8(port);
+    } else {
+        if (!IODevice::shouldIgnorePort(port))
+            vlog(LogAlert, "Unhandled I/O read from port %04X", port);
+        value = IODevice::JunkValue;
+    }
 #ifdef VOMIT_DEBUG
     if (options.iopeek) {
-        if (port != 0x00E6 && port != 0x0020 && port != 0x3D4 && port != 0x03d5) {
-            vlog(LogIO, "[%04X:%08X] VCpu::in: %04X", getBaseCS(), getBaseEIP(), port);
+        if (port != 0x00E6 && port != 0x0020 && port != 0x3D4 && port != 0x03D5 && port != 0x3DA) {
+            vlog(LogIO, "VCpu::in: %04X = %02X", port, value);
         }
     }
 #endif
-
-    if (IODevice::readDevices().contains(port))
-        return IODevice::readDevices()[port]->in8(port);
-
-    if (!IODevice::shouldIgnorePort(port))
-        vlog(LogAlert, "Unhandled I/O read from port %04X", port);
-
-    return IODevice::JunkValue;
+    return value;
 }

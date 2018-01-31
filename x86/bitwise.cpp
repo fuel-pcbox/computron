@@ -184,10 +184,11 @@ DWORD cpu_sar(VCpu* cpu, DWORD data, BYTE steps, BYTE bits)
         cpu->setCF(n & 1);
     }
 
-    if (steps == 1)
+    if (steps == 1) {
         cpu->setOF(0);
+        cpu->updateFlags(result, bits);
+    }
 
-    cpu->updateFlags(result, bits);
     return result;
 }
 
@@ -248,32 +249,40 @@ void VCpu::_NOT_RM32()
     updateModRM32(~value);
 }
 
-void VCpu::_NEG_RM8()
-{
-    BYTE value = readModRM8(rmbyte);
-    updateModRM8(doSub((BYTE)0, value));
-}
-
-void VCpu::_NEG_RM16()
-{
-    WORD value = readModRM16(rmbyte);
-    updateModRM16(doSub((WORD)0, value));
-}
-
-void VCpu::_NEG_RM32()
-{
-    DWORD value = readModRM32(rmbyte);
-    updateModRM32(doSub((DWORD)0, value));
-}
-
 DEFAULT_RM16_imm8(doBtr, _BTR_RM16_imm8)
 DEFAULT_RM32_imm8(doBtr, _BTR_RM32_imm8)
+DEFAULT_RM16_imm8(doBtc, _BTC_RM16_imm8)
+DEFAULT_RM32_imm8(doBtc, _BTC_RM32_imm8)
+DEFAULT_RM16_imm8(doBts, _BTS_RM16_imm8)
+DEFAULT_RM32_imm8(doBts, _BTS_RM32_imm8)
 
 template<typename T, typename U>
 T VCpu::doBtr(T dest, U bitIndex)
 {
     T bitMask = 1 << bitIndex;
     T result = dest & ~bitMask;
+    setCF((dest & bitMask) != 0);
+    return result;
+}
+
+template<typename T, typename U>
+T VCpu::doBts(T dest, U bitIndex)
+{
+    T bitMask = 1 << bitIndex;
+    T result = dest | bitMask;
+    setCF((dest & bitMask) != 0);
+    return result;
+}
+
+template<typename T, typename U>
+T VCpu::doBtc(T dest, U bitIndex)
+{
+    T bitMask = 1 << bitIndex;
+    T result;
+    if (dest & bitMask)
+        result = dest & ~bitMask;
+    else
+        result = dest | bitMask;
     setCF((dest & bitMask) != 0);
     return result;
 }

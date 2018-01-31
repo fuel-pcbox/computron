@@ -41,6 +41,38 @@ inline bool hasA20Bit(DWORD address)
     return address & 0x100000;
 }
 
+static bool shouldLogAllMemoryAccesses(DWORD address)
+{
+#ifdef SLACKWARE33_DEBUG
+    //if (address >= 0x100000) return true;
+    //if (address >= 0x100000 && address <= 0x100100) return true;
+    if (address == 0x070510) return true;
+    //if (address >= 0x00004380 && address <= 0x00004480) return true;
+#endif
+    return false;
+}
+
+static bool shouldLogMemoryPointer(DWORD address)
+{
+    if (shouldLogAllMemoryAccesses(address))
+        return true;
+    return false;
+}
+
+static bool shouldLogMemoryWrite(DWORD address)
+{
+    if (shouldLogAllMemoryAccesses(address))
+        return true;
+    return false;
+}
+
+static bool shouldLogMemoryRead(DWORD address)
+{
+    if (shouldLogAllMemoryAccesses(address))
+        return true;
+    return false;
+}
+
 VCpu* g_cpu = 0;
 
 void VCpu::_UD0()
@@ -56,9 +88,7 @@ void VCpu::_OperationSizeOverride()
     m_operationSize32 = !m_operationSize32;
 
 #ifdef VOMIT_DEBUG_OVERRIDE_OPCODES
-    vlog(LogCPU, "%04X:%08X Operation size override detected! Opcode: db 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X ",
-         getBaseCS(),
-         getBaseEIP(),
+    vlog(LogCPU, "Operation size override detected! Opcode: db 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X ",
          readMemory8(getCS(), getEIP() - 1),
          readMemory8(getCS(), getEIP()),
          readMemory8(getCS(), getEIP() + 1),
@@ -85,9 +115,7 @@ void VCpu::_AddressSizeOverride()
     m_addressSize32 = !m_addressSize32;
 
 #ifdef VOMIT_DEBUG_OVERRIDE_OPCODES
-    vlog(LogCPU, "%04X:%08X Address size override detected! Opcode: db 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X ",
-         getBaseCS(),
-         getBaseEIP(),
+    vlog(LogCPU, "Address size override detected! Opcode: db 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X ",
          readMemory8(getCS(), getEIP() - 1),
          readMemory8(getCS(), getEIP()),
          readMemory8(getCS(), getEIP() + 1),
@@ -176,7 +204,15 @@ void VCpu::decode(BYTE op)
         case 0xB5: CALL_HANDLER(_LFS_reg16_mem16, _LFS_reg32_mem32); break;
         case 0xB6: CALL_HANDLER(_MOVZX_reg16_RM8, _MOVZX_reg32_RM8); break;
         case 0xB7: CALL_HANDLER(_UNSUPP, _MOVZX_reg32_RM16); break;
-        case 0xBA: CALL_HANDLER(_BTR_RM16_imm8, _BTR_RM32_imm8); break;
+        case 0xBA:
+            this->subrmbyte = fetchOpcodeByte();
+            switch (subrmbyte) {
+            case 6: CALL_HANDLER(_BTR_RM16_imm8, _BTR_RM32_imm8); break;
+            case 7: CALL_HANDLER(_BTC_RM16_imm8, _BTC_RM32_imm8); break;
+            case 5: CALL_HANDLER(_BTS_RM16_imm8, _BTS_RM32_imm8); break;
+            default: VM_ASSERT(false);
+            }
+            break;
         case 0xFF: _UD0(); break;
         default: goto fffuuu;
         }
@@ -420,8 +456,7 @@ void VCpu::decode(BYTE op)
     default:
         this->rmbyte = fetchOpcodeByte();
 fffuuu:
-        vlog(LogAlert, "%04X:%08X FFFFUUUU unsupported opcode %02X /%u or %02X %02X or %02X %02X /%u",
-            getCS(), getEIP(),
+        vlog(LogAlert, "FFFFUUUU unsupported opcode %02X /%u or %02X %02X or %02X %02X /%u",
             this->opcode, vomit_modRMRegisterPart(this->rmbyte),
             this->opcode, this->rmbyte,
             this->opcode, this->rmbyte, vomit_modRMRegisterPart(this->subrmbyte)
@@ -560,6 +595,8 @@ VCpu::VCpu(Machine& m)
 
     m_addressSize32 = false;
     m_operationSize32 = false;
+
+    initWatches();
 }
 
 VCpu::~VCpu()
@@ -651,6 +688,34 @@ void VCpu::mainLoop()
             dumpTrace();
 #endif
 
+        if (!m_watches.isEmpty())
+            dumpWatches();
+
+#ifdef SLACKWARE33_DEBUG
+        if (1 && CS == 0x10 && getBaseEIP() == 0x00001A41) {
+            DWORD src = 0x70510 + getESI();
+            VM_ASSERT(src == getEAX());
+            DWORD dest = getEDX();
+            DWORD n = getEBX();
+            BYTE* m = &m_memory[src];
+            DWORD inflate_dynamic_EBP = 0x0007C8B4;
+            DWORD nlAddr = inflate_dynamic_EBP;
+            nlAddr += 0xfffffaf0;
+            DWORD ndAddr = inflate_dynamic_EBP;
+            ndAddr += 0xfffffaec;
+            vlog(LogCPU, "memcpy(%08X, %08X, %u) { %02X %02X %02X %02X %02X %02X %02X %02X } w=%08X, d=%08X, EBP=%08X, nl=%u, nd=%u",
+                 src, dest, n,
+                 m[0], m[1], m[2], m[3],
+                 m[4], m[5], m[6], m[7],
+                 getESI(),
+                 readMemory32(getEBP() - 8),
+                 getEBP(),
+                 readMemory32(nlAddr),
+                 readMemory32(ndAddr)
+            );
+        }
+#endif
+
         // Fetch & decode AKA execute the next instruction.
         exec();
 
@@ -706,7 +771,7 @@ void VCpu::jumpAbsolute32(DWORD address)
 
 void VCpu::jump32(WORD segment, DWORD offset)
 {
-    //vlog(LogCPU, "%04X:%08X [PE=%u] Far jump to %04X:%08X", getBaseCS(), getBaseEIP(), getPE(), segment, offset);
+    //vlog(LogCPU, "[PE=%u] Far jump to %04X:%08X", getPE(), segment, offset);
     // Jump to specified location.
     this->CS = segment;
     this->EIP = offset;
@@ -729,7 +794,7 @@ void VCpu::jump16(WORD segment, WORD offset)
 void VCpu::_UNSUPP()
 {
     // We've come across an unsupported instruction, log it, then vector to the "illegal instruction" ISR.
-    vlog(LogAlert, "%04X:%08X: Unsupported opcode %02X", getBaseCS(), getBaseEIP(), opcode);
+    vlog(LogAlert, "Unsupported opcode %02X", opcode);
     QString ndis = "db ";
     DWORD baseEIP = getBaseEIP();
     QStringList dbs;
@@ -753,9 +818,9 @@ void VCpu::_HLT()
     setState(VCpu::Halted);
 
     if (!getIF())
-        vlog(LogAlert, "%04X:%08X: Halted with IF=0", getBaseCS(), getBaseEIP());
+        vlog(LogCPU, "Halted with IF=0");
     else
-        vlog(LogCPU, "%04X:%08X Halted", getBaseCS(), getBaseEIP());
+        vlog(LogCPU, "Halted");
 
     haltedLoop();
 }
@@ -985,6 +1050,7 @@ void VCpu::_DEC_RM8()
 
 void VCpu::_LDS_reg16_mem16()
 {
+    VM_ASSERT(a16());
     BYTE rm = fetchOpcodeByte();
     WORD* ptr = static_cast<WORD*>(resolveModRM8(rm));
     setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), vomit_read16FromPointer(ptr));
@@ -1016,6 +1082,7 @@ void VCpu::pushInstructionPointer()
 
 void VCpu::_LES_reg16_mem16()
 {
+    VM_ASSERT(a16());
     BYTE rm = fetchOpcodeByte();
     WORD* ptr = static_cast<WORD*>(resolveModRM8(rm));
     setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), vomit_read16FromPointer(ptr));
@@ -1031,6 +1098,7 @@ void VCpu::_LES_reg32_mem32()
 
 void VCpu::_LFS_reg16_mem16()
 {
+    VM_ASSERT(a16());
     BYTE rm = fetchOpcodeByte();
     WORD* ptr = static_cast<WORD*>(resolveModRM8(rm));
     setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), vomit_read16FromPointer(ptr));
@@ -1046,6 +1114,7 @@ void VCpu::_LFS_reg32_mem32()
 
 void VCpu::_LSS_reg16_mem16()
 {
+    VM_ASSERT(a16());
     BYTE rm = fetchOpcodeByte();
     WORD* ptr = static_cast<WORD*>(resolveModRM8(rm));
     setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), vomit_read16FromPointer(ptr));
@@ -1054,8 +1123,8 @@ void VCpu::_LSS_reg16_mem16()
 
 void VCpu::_LSS_reg32_mem32()
 {
-    vlog(LogAlert, "%04X:%08X Begin LSS o32:%u a32:%u", getBaseCS(), getBaseEIP(), o32(), a32());
-    dumpFlatMemory(0x1000);
+    VM_ASSERT(a32());
+    vlog(LogAlert, "Begin LSS o32:%u a32:%u", o32(), a32());
     BYTE rm = fetchOpcodeByte();
     FarPointer ptr = readModRMFarPointerOffsetFirst(rm);
     setRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)), ptr.offset);
@@ -1064,6 +1133,7 @@ void VCpu::_LSS_reg32_mem32()
 
 void VCpu::_LGS_reg16_mem16()
 {
+    VM_ASSERT(a16());
     BYTE rm = fetchOpcodeByte();
     WORD* ptr = static_cast<WORD*>(resolveModRM8(rm));
     setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), vomit_read16FromPointer(ptr));
@@ -1088,6 +1158,7 @@ void VCpu::_LEA_reg32_mem32()
 
     DWORD retv = 0;
     BYTE b = fetchOpcodeByte();
+    WORD dummy;
 
     switch (b & 0xC0) {
     case 0x00:
@@ -1096,36 +1167,34 @@ void VCpu::_LEA_reg32_mem32()
         case 1: retv = getECX(); break;
         case 2: retv = getEDX(); break;
         case 3: retv = getEBX(); break;
-        case 4: retv = evaluateSIB(b, fetchOpcodeByte()); break;
+        case 4: retv = evaluateSIB(b, fetchOpcodeByte(), dummy, 0); break;
         case 5: retv = fetchOpcodeDWord(); break;
         case 6: retv = getESI(); break;
         default: retv = getEDI(); break;
         }
         break;
     case 0x40:
-        retv = vomit_signExtend<DWORD>(fetchOpcodeByte());
         switch (b & 0x07) {
-        case 0: retv += getEAX(); break;
-        case 1: retv += getECX(); break;
-        case 2: retv += getEDX(); break;
-        case 3: retv += getEBX(); break;
-        case 4: retv += evaluateSIB(b, fetchOpcodeByte()); break;
-        case 5: retv += getEBP(); break;
-        case 6: retv += getESI(); break;
-        default: retv += getEDI(); break;
+        case 0: retv = getEAX() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
+        case 1: retv = getECX() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
+        case 2: retv = getEDX() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
+        case 3: retv = getEBX() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
+        case 4: retv = evaluateSIB(b, fetchOpcodeByte(), dummy, 8); break;
+        case 5: retv = getEBP() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
+        case 6: retv = getESI() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
+        default: retv = getEDI() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
         }
         break;
     case 0x80:
-        retv = fetchOpcodeDWord();
         switch (b & 0x07) {
-        case 0: retv += getEAX(); break;
-        case 1: retv += getECX(); break;
-        case 2: retv += getEDX(); break;
-        case 3: retv += getEBX(); break;
-        case 4: retv += evaluateSIB(b, fetchOpcodeByte()); break;
-        case 5: retv += getEBP(); break;
-        case 6: retv += getESI(); break;
-        default: retv += getEDI(); break;
+        case 0: retv = getEAX() + fetchOpcodeDWord(); break;
+        case 1: retv = getECX() + fetchOpcodeDWord(); break;
+        case 2: retv = getEDX() + fetchOpcodeDWord(); break;
+        case 3: retv = getEBX() + fetchOpcodeDWord(); break;
+        case 4: retv = evaluateSIB(b, fetchOpcodeByte(), dummy, 32); break;
+        case 5: retv = getEBP() + fetchOpcodeDWord(); break;
+        case 6: retv = getESI() + fetchOpcodeDWord(); break;
+        default: retv = getEDI() + fetchOpcodeDWord(); break;
         }
         break;
     default: // 0xC0
@@ -1198,9 +1267,9 @@ void VCpu::writeMemory32(DWORD address, DWORD data)
 #ifdef VOMIT_DEBUG_A20
     if (hasA20Bit(address)) {
         if (isA20Enabled())
-            vlog(LogCPU, "%04X:%08X Write dword $0x%08X -> @0x%08X with A20 enabled", getBaseCS(), getBaseEIP(), data, address);
+            vlog(LogCPU, "Write dword $0x%08X -> @0x%08X with A20 enabled", data, address);
         else
-            vlog(LogCPU, "%04X:%08X Write dword $0x%08X -> @0x%08X with A20 disabled, wrapping to @0x%08X", getBaseCS(), getBaseEIP(), data, address, address & a20Mask());
+            vlog(LogCPU, "Write dword $0x%08X -> @0x%08X with A20 disabled, wrapping to @0x%08X", data, address, address & a20Mask());
     }
 #endif
     address &= a20Mask();
@@ -1221,9 +1290,9 @@ DWORD VCpu::readMemory32(DWORD address)
 #ifdef VOMIT_DEBUG_A20
     if (hasA20Bit(address)) {
         if (isA20Enabled())
-            vlog(LogCPU, "%04X:%08X Read dword from @0x%08X with A20 enabled", getBaseCS(), getBaseEIP(), address);
+            vlog(LogCPU, "Read dword from @0x%08X with A20 enabled", address);
         else
-            vlog(LogCPU, "%04X:%08X Read dword from @0x%08X with A20 disabled, wrapping to @0x%08X", getBaseCS(), getBaseEIP(), address, address & a20Mask());
+            vlog(LogCPU, "Read dword from @0x%08X with A20 disabled, wrapping to @0x%08X", address, address & a20Mask());
     }
 #endif
     address &= a20Mask();
@@ -1248,16 +1317,16 @@ BYTE VCpu::readMemory8(DWORD address)
 #ifdef VOMIT_DEBUG_A20
     if (hasA20Bit(address)) {
         if (isA20Enabled()) {
-            vlog(LogCPU, "%04X:%08X Read byte $%02X <- @0x%08X with A20 enabled", getBaseCS(), getBaseEIP(), value, address);
+            vlog(LogCPU, "Read byte $%02X <- @0x%08X with A20 enabled", value, address);
             //debugger()->enter();
         } else
-            vlog(LogCPU, "%04X:%08X Read byte $%02X <- @0x%08X with A20 disabled, wrapping to @0x%08X", getBaseCS(), getBaseEIP(), value, address, address & a20Mask());
+            vlog(LogCPU, "Read byte $%02X <- @0x%08X with A20 disabled, wrapping to @0x%08X", value, address, address & a20Mask());
     } else {
 #if 0
         if (isA20Enabled()) {
-            vlog(LogCPU, "%04X:%08X Normal Read byte $%02X <- @0x%08X with A20 enabled", getBaseCS(), getBaseEIP(), value, address);
+            vlog(LogCPU, "Normal Read byte $%02X <- @0x%08X with A20 enabled", value, address);
         } else
-            vlog(LogCPU, "%04X:%08X Normal Read byte $%02X <- @0x%08X with A20 disabled, wrapping to @0x%08X", getBaseCS(), getBaseEIP(), value, address, address & a20Mask());
+            vlog(LogCPU, "Normal Read byte $%02X <- @0x%08X with A20 disabled, wrapping to @0x%08X", value, address, address & a20Mask());
 #endif
     }
 #endif
@@ -1273,15 +1342,15 @@ WORD VCpu::readMemory16(DWORD address)
 #ifdef VOMIT_DEBUG_A20
     if (hasA20Bit(address)) {
         if (isA20Enabled())
-            vlog(LogCPU, "%04X:%08X Read word from @0x%08X with A20 enabled", getBaseCS(), getBaseEIP(), address);
+            vlog(LogCPU, "Read word from @0x%08X with A20 enabled", address);
         else
-            vlog(LogCPU, "%04X:%08X Read word from @0x%08X with A20 disabled, wrapping to @0x%08X", getBaseCS(), getBaseEIP(), address, address & a20Mask());
+            vlog(LogCPU, "Read word from @0x%08X with A20 disabled, wrapping to @0x%08X", address, address & a20Mask());
     } else {
 #if 0
         if (isA20Enabled())
-            vlog(LogCPU, "%04X:%08X Normal Read word from @0x%08X with A20 enabled", getBaseCS(), getBaseEIP(), address);
+            vlog(LogCPU, "Normal Read word from @0x%08X with A20 enabled", address);
         else
-            vlog(LogCPU, "%04X:%08X Normal Read word from @0x%08X with A20 disabled, wrapping to @0x%08X", getBaseCS(), getBaseEIP(), address, address & a20Mask());
+            vlog(LogCPU, "Normal Read word from @0x%08X with A20 disabled, wrapping to @0x%08X", address, address & a20Mask());
 #endif
     }
 #endif
@@ -1315,7 +1384,7 @@ bool VCpu::validateAddress(WORD segmentIndex, DWORD offset, MemoryAccessType acc
 
     SegmentSelector segment = makeSegmentSelector(segmentIndex);
     if (offset > segment.effectiveLimit()) {
-        vlog(LogAlert, "%04X:%08X: FUG! offset %08X outside limit", getBaseCS(), getBaseEIP(), offset);
+        vlog(LogAlert, "FUG! offset %08X outside limit", offset);
         dumpSegment(segmentIndex);
         //dumpAll();
         debugger()->enter();
@@ -1354,7 +1423,7 @@ BYTE VCpu::readMemory8(WORD segmentIndex, DWORD offset)
         SegmentSelector segment = makeSegmentSelector(segmentIndex);
         DWORD flatAddress = segment.base + offset;
         BYTE value = m_memory[flatAddress];
-        if (options.memdebug)
+        if (options.memdebug || shouldLogMemoryRead(flatAddress))
             vlog(LogCPU, "8-bit PE read [A20=%s] %04X:%08X (flat: %08X), value: %02X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
         return value;
     }
@@ -1372,10 +1441,8 @@ WORD VCpu::readMemory16(WORD segmentIndex, DWORD offset)
         SegmentSelector segment = makeSegmentSelector(segmentIndex);
         DWORD flatAddress = segment.base + offset;
         WORD value = vomit_read16FromPointer(reinterpret_cast<WORD*>(&m_memory[flatAddress]));
-        if (options.memdebug) {
+        if (options.memdebug || shouldLogMemoryRead(flatAddress))
             vlog(LogCPU, "16-bit PE read [A20=%s] %04X:%08X (flat: %08X), value: %04X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
-            //dumpSegment(segmentIndex);
-        }
         return value;
     }
     return readMemory16(vomit_toFlatAddress(segmentIndex, offset));
@@ -1392,7 +1459,7 @@ DWORD VCpu::readMemory32(WORD segmentIndex, DWORD offset)
         DWORD flatAddress = segment.base + offset;
         VM_ASSERT(isA20Enabled() || !hasA20Bit(flatAddress));
         DWORD value = vomit_read32FromPointer(reinterpret_cast<DWORD*>(&m_memory[flatAddress]));
-        if (options.memdebug)
+        if (options.memdebug || shouldLogMemoryRead(flatAddress))
             vlog(LogCPU, "32-bit PE read [A20=%s] %04X:%08X (flat: %08X), value: %08X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
         return value;
     }
@@ -1404,9 +1471,9 @@ void VCpu::writeMemory8(DWORD address, BYTE value)
 #ifdef VOMIT_DEBUG_A20
     if (hasA20Bit(address)) {
         if (isA20Enabled())
-            vlog(LogCPU, "%04X:%08X Write byte $0x%02X -> @0x%08X with A20 enabled", getBaseCS(), getBaseEIP(), value, address);
+            vlog(LogCPU, "Write byte $0x%02X -> @0x%08X with A20 enabled", value, address);
         else
-            vlog(LogCPU, "%04X:%08X Write byte $0x%02X -> @0x%08X with A20 disabled, wrapping to @0x%08X", getBaseCS(), getBaseEIP(), value, address, address & a20Mask());
+            vlog(LogCPU, "Write byte $0x%02X -> @0x%08X with A20 disabled, wrapping to @0x%08X", value, address, address & a20Mask());
     }
 #endif
 
@@ -1429,9 +1496,9 @@ void VCpu::writeMemory16(DWORD address, WORD value)
 #ifdef VOMIT_DEBUG_A20
     if (hasA20Bit(address)) {
         if (isA20Enabled())
-            vlog(LogCPU, "%04X:%08X Write word $0x%04X -> @0x%08X with A20=on", getBaseCS(), getBaseEIP(), value, address);
+            vlog(LogCPU, "Write word $0x%04X -> @0x%08X with A20=on", value, address);
         else
-            vlog(LogCPU, "%04X:%08X Write word $0x%04X -> @0x%08X with A20=off, wrapping to @0x%08X", getBaseCS(), getBaseEIP(), value, address, address & a20Mask());
+            vlog(LogCPU, "Write word $0x%04X -> @0x%08X with A20=off, wrapping to @0x%08X", value, address, address & a20Mask());
     }
 #endif
 
@@ -1458,7 +1525,7 @@ void VCpu::writeMemory8(WORD segmentIndex, DWORD offset, BYTE value)
         SegmentSelector segment = makeSegmentSelector(segmentIndex);
         DWORD flatAddress = segment.base + offset;
         assert(!addressIsInVGAMemory(flatAddress));
-        if (options.memdebug)
+        if (options.memdebug || shouldLogMemoryWrite(flatAddress))
             vlog(LogCPU, "8-bit PE write [A20=%s] %04X:%08X (flat: %08X), value: %02X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
         m_memory[flatAddress] = value;
         return;
@@ -1477,7 +1544,7 @@ void VCpu::writeMemory16(WORD segmentIndex, DWORD offset, WORD value)
         SegmentSelector segment = makeSegmentSelector(segmentIndex);
         DWORD flatAddress = segment.base + offset;
         assert(!addressIsInVGAMemory(flatAddress));
-        if (options.memdebug)
+        if (options.memdebug || shouldLogMemoryWrite(flatAddress))
             vlog(LogCPU, "16-bit PE write [A20=%s] %04X:%08X (flat: %08X), value: %04X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
         //dumpSegment(segmentIndex);
         vomit_write16ToPointer(reinterpret_cast<WORD*>(&m_memory[flatAddress]), value);
@@ -1497,7 +1564,7 @@ void VCpu::writeMemory32(WORD segmentIndex, DWORD offset, DWORD value)
         SegmentSelector segment = makeSegmentSelector(segmentIndex);
         DWORD flatAddress = segment.base + offset;
         VM_ASSERT(isA20Enabled() || !hasA20Bit(flatAddress));
-        if (options.memdebug)
+        if (options.memdebug || shouldLogMemoryWrite(flatAddress))
             vlog(LogCPU, "32-bit PE write [A20=%s] %04X:%08X (flat: %08X), value: %08X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
         vomit_write32ToPointer(reinterpret_cast<DWORD*>(&m_memory[flatAddress]), value);
         return;
@@ -1519,7 +1586,7 @@ void VCpu::updateSizeModes()
     auto codeSegment = makeSegmentSelector(CS);
     m_addressSize32 = codeSegment._32bit;
     m_operationSize32 = codeSegment._32bit;
-    vlog(LogCPU, "%04X:%08X: O:%u A:%u (newCS: %04X)", getBaseCS(), getBaseEIP(), o16() ? 16 : 32, a16() ? 16 : 32, CS);
+    vlog(LogCPU, "O:%u A:%u (newCS: %04X)", o16() ? 16 : 32, a16() ? 16 : 32, CS);
 }
 
 void VCpu::setCS(WORD value)
@@ -1573,7 +1640,7 @@ BYTE* VCpu::memoryPointer(WORD segmentIndex, DWORD offset)
         }
         SegmentSelector segment = makeSegmentSelector(segmentIndex);
         DWORD flatAddress = segment.base + offset;
-        if (options.memdebug)
+        if (options.memdebug || shouldLogMemoryPointer(flatAddress))
             vlog(LogCPU, "MemoryPointer PE [A20=%s] %04X:%08X (flat: %08X)", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress);
         return &m_memory[flatAddress];
     }
@@ -1585,9 +1652,9 @@ BYTE* VCpu::memoryPointer(DWORD address)
 #ifdef VOMIT_DEBUG_A20
     if (hasA20Bit(address)) {
         if (isA20Enabled())
-            vlog(LogCPU, "%04X:%08X Get pointer to %08X with A20 enabled", getBaseCS(), getBaseEIP(), address);
+            vlog(LogCPU, "Get pointer to %08X with A20 enabled", address);
         else
-            vlog(LogCPU, "%04X:%08X Get pointer to %08X with A20 disabled, wrapping to %08X", getBaseCS(), getBaseEIP(), address, address & a20Mask());
+            vlog(LogCPU, "Get pointer to %08X with A20 disabled, wrapping to %08X", address, address & a20Mask());
     }
 #endif
     address &= a20Mask();
@@ -1652,4 +1719,25 @@ void VCpu::_CPUID()
         setECX(0x68696e65);
         return;
     }
+}
+
+void VCpu::initWatches()
+{
+#ifdef SLACKWARE33_DEBUG
+    //m_watches.append(WatchedAddress{ name, address, size, breakOnChange? });
+    m_watches.append(WatchedAddress{ "inbuf", 0x7050C, DWordSize });
+    m_watches.append(WatchedAddress{ "input_len", 0x437C, DWordSize });
+    m_watches.append(WatchedAddress{ "insize", 0x41A8, DWordSize });
+    //m_watches.append(WatchedAddress{ "inptr", 0x41AC, DWordSize });
+    //m_watches.append(WatchedAddress{ "wp (outcnt)", 0x41B0, DWordSize });
+    m_watches.append(WatchedAddress{ "bk (bb bits)", 0x78528, DWordSize });
+    m_watches.append(WatchedAddress{ "bb (bit buffer)", 0x78524, DWordSize });
+    m_watches.append(WatchedAddress{ "hufts (mem)", 0x7852c, DWordSize });
+    //m_watches.append(WatchedAddress{ "bytes_out", 0x41b4, DWordSize });
+    m_watches.append(WatchedAddress{ "output_ptr", 0x41b8, DWordSize });
+    m_watches.append(WatchedAddress{ "free_mem_ptr", 0x41bc, DWordSize });
+    //m_watches.append(WatchedAddress{ "lbits", 0x4330, DWordSize });
+    //m_watches.append(WatchedAddress{ "dbits", 0x4334, DWordSize });
+    //m_watches.append(WatchedAddress{ "output_buffer", 0x78510, DWordSize });
+#endif
 }

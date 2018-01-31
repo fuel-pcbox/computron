@@ -168,6 +168,31 @@ static void dumpRegister(const VCpu* cpu, VCpu::RegisterIndex16 registerIndex)
         vlog(LogDump, "%s: %04X", VCpu::registerName(registerIndex), cpu->getRegister16(registerIndex));
 }
 
+void VCpu::dumpWatches()
+{
+    for (WatchedAddress& watch : m_watches) {
+        if (watch.size == ByteSize) {
+            BYTE data = readUnmappedMemory8(watch.address);
+            if (data != watch.lastSeenValue) {
+                vlog(LogDump, "\033[32;1m%08X\033[0m [%-16s] %02X", watch.address, qPrintable(watch.name), data);
+                watch.lastSeenValue = data;
+            }
+        } else if (watch.size == WordSize) {
+            WORD data = readUnmappedMemory16(watch.address);
+            if (data != watch.lastSeenValue) {
+                vlog(LogDump, "\033[32;1m%08X\033[0m [%-16s] %04X", watch.address, qPrintable(watch.name), data);
+                watch.lastSeenValue = data;
+            }
+        } else if (watch.size == DWordSize) {
+            DWORD data = readUnmappedMemory32(watch.address);
+            if (data != watch.lastSeenValue) {
+                vlog(LogDump, "\033[32;1m%08X\033[0m [%-16s] %08X", watch.address, qPrintable(watch.name), data);
+                watch.lastSeenValue = data;
+            }
+        }
+    }
+}
+
 void VCpu::dumpAll()
 {
     BYTE* csip = codeMemory();

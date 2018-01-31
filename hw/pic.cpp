@@ -172,14 +172,14 @@ void PIC::serviceIRQ(VCpu* cpu)
         theMaster.m_irr &= ~(1 << interrupt_to_service);
         theMaster.m_isr |= (1 << interrupt_to_service);
 
-        cpu->jumpToInterruptHandler(theMaster.m_isrBase | interrupt_to_service);
+        cpu->jumpToInterruptHandler(theMaster.m_isrBase | interrupt_to_service, true);
     }
     else
     {
         theSlave.m_irr &= ~(1 << (interrupt_to_service - 8));
         theSlave.m_isr |= (1 << (interrupt_to_service - 8));
 
-        cpu->jumpToInterruptHandler(theSlave.m_isrBase | interrupt_to_service);
+        cpu->jumpToInterruptHandler(theSlave.m_isrBase | interrupt_to_service, true);
     }
 
     lockerGlobal.unlock();

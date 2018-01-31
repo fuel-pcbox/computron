@@ -49,7 +49,7 @@ StateWidget::StateWidget(Machine& m)
     d->ui.setupUi(this);
 
     connect(&d->syncTimer, SIGNAL(timeout()), this, SLOT(sync()));
-    d->syncTimer.start(100);
+    d->syncTimer.start(200);
 }
 
 StateWidget::~StateWidget()

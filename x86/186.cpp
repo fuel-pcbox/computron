@@ -84,6 +84,7 @@ void VCpu::_PUSH_imm16()
 void VCpu::_ENTER()
 {
     assert(o16());
+    assert(a16());
 
     WORD Size = fetchOpcodeWord();
     BYTE NestingLevel = fetchOpcodeByte() % 32;
@@ -103,6 +104,7 @@ void VCpu::_ENTER()
 void VCpu::_LEAVE()
 {
     assert(o16());
+    assert(a16());
     setSP(getBP());
     setBP(pop());
 }

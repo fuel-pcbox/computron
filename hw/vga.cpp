@@ -233,7 +233,7 @@ void VGA::out8(WORD port, BYTE data)
 
 BYTE VGA::in8(WORD port)
 {
-    extern bool vomit_in_vretrace();
+    extern volatile bool g_screen_in_refresh;
 
     switch (port) {
     case 0x3B4:
@@ -263,8 +263,10 @@ BYTE VGA::in8(WORD port)
         BYTE value = 0x04;
 
         // FIXME: Needs mutex protection (or more clever mechanism.)
-        if (vomit_in_vretrace())
+        if (!g_screen_in_refresh) {
             value |= 0x08;
+            value |= 0x01;
+        }
 
         d->next3C0IsIndex = true;
         return value;

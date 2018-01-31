@@ -47,6 +47,23 @@ struct FarPointer {
     DWORD offset;
 };
 
+enum ValueSize {
+    ByteSize,
+    WordSize,
+    DWordSize
+};
+
+struct WatchedAddress {
+    WatchedAddress() { }
+    WatchedAddress(QString n, DWORD a, ValueSize s, bool b = false) : name(n), address(a), size(s), breakOnChange(b) { }
+    QString name;
+    DWORD address { 0xBEEFBABE };
+    ValueSize size { ByteSize };
+    bool breakOnChange { false };
+    static const QWORD neverSeen = 0xFFFFFFFFFFFFFFFF;
+    QWORD lastSeenValue { neverSeen };
+};
+
 class VCpu {
 public:
     explicit VCpu(Machine&);
@@ -143,7 +160,7 @@ public:
 
     DWORD a20Mask() const { return isA20Enabled() ? 0xFFFFFFFF : 0xFFEFFFFF; }
 
-    void jumpToInterruptHandler(int isr);
+    void jumpToInterruptHandler(int isr, bool requestedByPIC = false);
 
     void GP(int code);
 
@@ -368,6 +385,7 @@ public:
     // These are faster than readMemory*() but will not access VGA memory, etc.
     inline BYTE readUnmappedMemory8(DWORD address) const;
     inline WORD readUnmappedMemory16(DWORD address) const;
+    inline DWORD readUnmappedMemory32(DWORD address) const;
     inline void writeUnmappedMemory8(DWORD address, BYTE data);
     inline void writeUnmappedMemory16(DWORD address, WORD data);
 
@@ -426,7 +444,7 @@ public:
     void* resolveModRM16(BYTE rmbyte);
     void* resolveModRM32(BYTE rmbyte);
 
-    DWORD evaluateSIB(BYTE rm, BYTE sib, unsigned sizeOfImmediate = 0);
+    DWORD evaluateSIB(BYTE rm, BYTE sib, WORD& segment, unsigned sizeOfImmediate);
 
     enum Mode { RealMode, ProtectedMode };
     Mode mode() const { return m_mode; }
@@ -438,6 +456,8 @@ public:
 
     // Dumps registers, flags & stack
     void dumpAll();
+
+    void dumpWatches();
 
     // Dumps all ISR handler pointers (0000:0000 - 0000:03FF)
     void dumpIVT();
@@ -452,6 +472,8 @@ public:
     // Dumps registers (used by --trace)
     void dumpTrace();
 #endif
+
+    QVector<WatchedAddress>& watches() { return m_watches; }
 
     void updateSizeModes();
 
@@ -892,6 +914,10 @@ protected:
 
     void _BTR_RM16_imm8();
     void _BTR_RM32_imm8();
+    void _BTC_RM16_imm8();
+    void _BTC_RM32_imm8();
+    void _BTS_RM16_imm8();
+    void _BTS_RM32_imm8();
 
     void _MOVZX_reg16_RM8();
     void _MOVZX_reg32_RM8();
@@ -964,6 +990,8 @@ protected:
     void handleRepeatOpcode(BYTE opcode, bool shouldEqual);
 
 private:
+    void initWatches();
+
     template<typename T>
     T rightShift(T, int steps);
 
@@ -978,6 +1006,8 @@ private:
     template<typename T> T doAnd(T, T);
 
     template<typename T, typename U> T doBtr(T, U);
+    template<typename T, typename U> T doBtc(T, U);
+    template<typename T, typename U> T doBts(T, U);
 
     template<typename T> QWORD doAdd(T, T);
     template<typename T> QWORD doAdc(T, T);
@@ -985,12 +1015,6 @@ private:
     template<typename T> QWORD doSbb(T, T);
     template<typename T> QWORD doMul(T, T);
     template<typename T> SIGNED_QWORD doImul(T, T);
-
-    enum ValueSize {
-        ByteSize,
-        WordSize,
-        DWordSize
-    };
 
     void* resolveModRM_internal(BYTE rmbyte, ValueSize size);
     void* resolveModRM8_internal(BYTE rmbyte);
@@ -1179,6 +1203,8 @@ private:
 
     bool m_shouldBreakOutOfMainLoop;
 
+    QVector<WatchedAddress> m_watches;
+
     QQueue<Command> m_commandQueue;
     QMutex m_commandMutex;
 
@@ -1201,6 +1227,11 @@ BYTE VCpu::readUnmappedMemory8(DWORD address) const
 WORD VCpu::readUnmappedMemory16(DWORD address) const
 {
     return vomit_read16FromPointer(reinterpret_cast<WORD*>(m_memory + address));
+}
+
+DWORD VCpu::readUnmappedMemory32(DWORD address) const
+{
+    return vomit_read32FromPointer(reinterpret_cast<DWORD*>(m_memory + address));
 }
 
 void VCpu::writeUnmappedMemory8(DWORD address, BYTE value)

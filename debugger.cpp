@@ -195,6 +195,7 @@ void Debugger::handleStep()
 {
     cpu()->exec();
     cpu()->dumpAll();
+    cpu()->dumpWatches();
 }
 
 void Debugger::handleContinue()

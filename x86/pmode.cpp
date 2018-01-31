@@ -28,6 +28,8 @@
 
 void VCpu::_SGDT()
 {
+    VM_ASSERT(false);
+    // FIXME: I don't think is implemented correctly.
     WORD tableAddress = fetchOpcodeWord();
     writeMemory32(currentSegment(), tableAddress + 2, GDTR.base);
     writeMemory16(currentSegment(), tableAddress, GDTR.limit);
@@ -35,6 +37,8 @@ void VCpu::_SGDT()
 
 void VCpu::_SIDT()
 {
+    VM_ASSERT(false);
+    // FIXME: I don't think is implemented correctly.
     WORD tableAddress = fetchOpcodeWord();
     writeMemory32(currentSegment(), tableAddress + 2, IDTR.base);
     writeMemory16(currentSegment(), tableAddress, IDTR.limit);
@@ -42,14 +46,14 @@ void VCpu::_SIDT()
 
 void VCpu::_LGDT()
 {
-    vlog(LogAlert, "%04X:%08X Begin LGDT", getBaseCS(), getBaseEIP());
+    vlog(LogAlert, "Begin LGDT");
     FarPointer ptr = readModRMFarPointerSegmentFirst(this->subrmbyte);
     DWORD baseMask = o32() ? 0xffffffff : 0x00ffffff;
     GDTR.base = ptr.offset & baseMask;
     GDTR.limit = ptr.segment;
     dumpAll();
     dumpMemory(getES(), getSI() + 8, 2);
-    vlog(LogAlert, "%04X:%08X LGDT { base:%08X, limit: %08X }", getBaseCS(), getBaseEIP(), GDTR.base, GDTR.limit);
+    vlog(LogAlert, "LGDT { base:%08X, limit: %08X }", GDTR.base, GDTR.limit);
 
     for (unsigned i = 0; i < GDTR.limit; i += 8) {
         dumpSegment(i);
@@ -58,38 +62,38 @@ void VCpu::_LGDT()
 
 void VCpu::_LIDT()
 {
-    vlog(LogAlert, "%04X:%08X Begin LIDT", getBaseCS(), getBaseEIP());
+    vlog(LogAlert, "Begin LIDT");
     FarPointer ptr = readModRMFarPointerSegmentFirst(this->subrmbyte);
     DWORD baseMask = o32() ? 0xffffffff : 0x00ffffff;
     IDTR.base = ptr.offset & baseMask;
     IDTR.limit = ptr.segment;
-    vlog(LogAlert, "%04X:%08X LIDT { base:%08X, limit: %08X }", getBaseCS(), getBaseEIP(), IDTR.base, IDTR.limit);
+    vlog(LogAlert, "LIDT { base:%08X, limit: %08X }", IDTR.base, IDTR.limit);
 }
 
 void VCpu::_LMSW_RM16()
 {
     BYTE msw = readModRM16(subrmbyte);
     CR0 = (CR0 & 0xFFFFFFF0) | msw;
-    vlog(LogCPU, "%04X:%08X LMSW set CR0=%08X, PE=%u", getBaseCS(), getBaseEIP(), CR0, getPE());
+    vlog(LogCPU, "LMSW set CR0=%08X, PE=%u", CR0, getPE());
     //updateSizeModes();
 }
 
 void VCpu::_SMSW_RM16()
 {
-    vlog(LogCPU, "%04X:%08X SMSW get LSW(CR0)=%04X, PE=%u", getBaseCS(), getBaseEIP(), CR0 & 0xFFFF, getPE());
+    vlog(LogCPU, "SMSW get LSW(CR0)=%04X, PE=%u", CR0 & 0xFFFF, getPE());
     writeModRM16(subrmbyte, CR0 & 0xFFFF);
 }
 
 VCpu::SegmentSelector VCpu::makeSegmentSelector(WORD index)
 {
     if (index % 8) {
-        vlog(LogAlert, "%04X:%08X: Segment selector index 0x%04X not divisible by 8.", getBaseCS(), getBaseEIP(), index);
+        vlog(LogCPU, "Segment selector index 0x%04X not divisible by 8.", index);
         debugger()->enter();
         vomit_exit(1);
     }
 
     if (index >= this->GDTR.limit) {
-        vlog(LogAlert, "%04X:%08X: Segment selector index 0x%04X >= GDTR.limit (0x%04X).", getBaseCS(), getBaseEIP(), index, GDTR.limit);
+        vlog(LogCPU, "Segment selector index 0x%04X >= GDTR.limit (0x%04X).", index, GDTR.limit);
         debugger()->enter();
         //vomit_exit(1);
     }

@@ -198,7 +198,7 @@ void VCpu::_MOV_CR_reg32()
     //updateSizeModes();
 
     if (crIndex == 0)
-        vlog(LogCPU, "%04X:%08X MOV CR0 set CR0=%08X, PE=%u", getBaseCS(), getBaseEIP(), CR0, getPE());
+        vlog(LogCPU, "MOV CR0 set CR0=%08X, PE=%u", CR0, getPE());
 
     //if (crIndex == 0 && !getPE())
 //        updateSizeModes();
@@ -376,16 +376,19 @@ void VCpu::_MOVZX_reg16_RM8()
 {
     BYTE rm = fetchOpcodeByte();
     setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), readModRM8(rm));
+    VM_ASSERT(0 == (getRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm))) & 0xFF00));
 }
 
 void VCpu::_MOVZX_reg32_RM8()
 {
     BYTE rm = fetchOpcodeByte();
     setRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)), readModRM8(rm));
+    VM_ASSERT(0 == (getRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm))) & 0xFFFFFF00));
 }
 
 void VCpu::_MOVZX_reg32_RM16()
 {
     BYTE rm = fetchOpcodeByte();
     setRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)), readModRM16(rm));
+    VM_ASSERT(0 == (getRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm))) & 0xFFFF0000));
 }

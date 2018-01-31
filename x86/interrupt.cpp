@@ -57,15 +57,15 @@ void VCpu::_IRET()
     setFlags(pop());
 }
 
-void VCpu::jumpToInterruptHandler(int isr)
+void VCpu::jumpToInterruptHandler(int isr, bool requestedByPIC)
 {
     VM_ASSERT(!x32());
 #ifdef VOMIT_DEBUG
     if (options.trapint)
-        vlog(LogCPU, "%04X:%08X Interrupt %02X,%02X trapped", getBaseCS(), getBaseEIP(), isr, this->regs.B.AH);
+        vlog(LogCPU, "Interrupt %02X,%02X trapped%s", isr, this->regs.B.AH, requestedByPIC ? " (from PIC)" : "");
 
     if (isr == 0x06) {
-        vlog(LogCPU, "Invalid opcode trap at %04X:%08X (%02X)", getBaseCS(), getBaseEIP(), *(codeMemory() + this->getBaseIP()));
+        vlog(LogCPU, "Invalid opcode trap (%02X)", *(codeMemory() + this->getBaseEIP()));
         dumpAll();
         debugger()->enter();
         //return;

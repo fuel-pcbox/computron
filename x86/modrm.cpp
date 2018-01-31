@@ -334,7 +334,7 @@ void* VCpu::resolveModRM32_internal(BYTE rmbyte, ValueSize size)
         case 1: offset = getECX(); break;
         case 2: offset = getEDX(); break;
         case 3: offset = getEBX(); break;
-        case 4: offset = evaluateSIB(rmbyte, fetchOpcodeByte()); break;
+        case 4: offset = evaluateSIB(rmbyte, fetchOpcodeByte(), segment, 0); break;
         case 5: offset = fetchOpcodeDWord(); break;
         case 6: offset = getESI(); break;
         default: offset = getEDI(); break;
@@ -349,7 +349,7 @@ void* VCpu::resolveModRM32_internal(BYTE rmbyte, ValueSize size)
         case 1: offset = getECX() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
         case 2: offset = getEDX() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
         case 3: offset = getEBX() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
-        case 4: offset = evaluateSIB(rmbyte, fetchOpcodeByte(), 8); break;
+        case 4: offset = evaluateSIB(rmbyte, fetchOpcodeByte(), segment, 8); break;
         case 5: DEFAULT_TO_SS; offset = getEBP() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
         case 6: offset = getESI() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
         default: offset = getEDI() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
@@ -364,7 +364,7 @@ void* VCpu::resolveModRM32_internal(BYTE rmbyte, ValueSize size)
         case 1: offset = getECX() + fetchOpcodeDWord(); break;
         case 2: offset = getEDX() + fetchOpcodeDWord(); break;
         case 3: offset = getEBX() + fetchOpcodeDWord(); break;
-        case 4: offset = evaluateSIB(rmbyte, fetchOpcodeByte(), 32); break;
+        case 4: offset = evaluateSIB(rmbyte, fetchOpcodeByte(), segment, 32); break;
         case 5: DEFAULT_TO_SS; offset = getEBP() + fetchOpcodeDWord(); break;
         case 6: offset = getESI() + fetchOpcodeDWord(); break;
         default: offset = getEDI() + fetchOpcodeDWord(); break;
@@ -413,14 +413,8 @@ void* VCpu::resolveModRM32_internal(BYTE rmbyte, ValueSize size)
     return m_lastModRMPointer;
 }
 
-DWORD VCpu::evaluateSIB(BYTE rm, BYTE sib, unsigned sizeOfImmediate)
+DWORD VCpu::evaluateSIB(BYTE rm, BYTE sib, WORD& segment, unsigned sizeOfImmediate)
 {
-    unsigned scale = 1 << ((sib >> 6) & 3);
-    RegisterIndex32 indexRegister = (RegisterIndex32)((sib >> 3) & 7);
-    RegisterIndex32 baseRegister = (RegisterIndex32)(sib & 7);
-
-    DWORD result = getRegister32(baseRegister) + getRegister32(indexRegister) * scale;
-
     DWORD scaledIndex;
     switch (sib & 0xC0) {
     case 0x00:
@@ -430,7 +424,7 @@ DWORD VCpu::evaluateSIB(BYTE rm, BYTE sib, unsigned sizeOfImmediate)
         case 2: scaledIndex = getEDX(); break;
         case 3: scaledIndex = getEBX(); break;
         case 4: scaledIndex = 0; break;
-        case 5: scaledIndex = getEBP(); break;
+        case 5: DEFAULT_TO_SS; scaledIndex = getEBP(); break;
         case 6: scaledIndex = getESI(); break;
         default: scaledIndex = getEDI(); break;
         }
@@ -442,7 +436,7 @@ DWORD VCpu::evaluateSIB(BYTE rm, BYTE sib, unsigned sizeOfImmediate)
         case 2: scaledIndex = getEDX() * 2; break;
         case 3: scaledIndex = getEBX() * 2; break;
         case 4: scaledIndex = 0; break;
-        case 5: scaledIndex = getEBP() * 2; break;
+        case 5: DEFAULT_TO_SS; scaledIndex = getEBP() * 2; break;
         case 6: scaledIndex = getESI() * 2; break;
         default: scaledIndex = getEDI() * 2; break;
         }
@@ -454,7 +448,7 @@ DWORD VCpu::evaluateSIB(BYTE rm, BYTE sib, unsigned sizeOfImmediate)
         case 2: scaledIndex = getEDX() * 4; break;
         case 3: scaledIndex = getEBX() * 4; break;
         case 4: scaledIndex = 0; break;
-        case 5: scaledIndex = getEBP() * 4; break;
+        case 5: DEFAULT_TO_SS; scaledIndex = getEBP() * 4; break;
         case 6: scaledIndex = getESI() * 4; break;
         default: scaledIndex = getEDI() * 4; break;
         }
@@ -466,7 +460,7 @@ DWORD VCpu::evaluateSIB(BYTE rm, BYTE sib, unsigned sizeOfImmediate)
         case 2: scaledIndex = getEDX() * 8; break;
         case 3: scaledIndex = getEBX() * 8; break;
         case 4: scaledIndex = 0; break;
-        case 5: scaledIndex = getEBP() * 8; break;
+        case 5: DEFAULT_TO_SS; scaledIndex = getEBP() * 8; break;
         case 6: scaledIndex = getESI() * 8; break;
         default: scaledIndex = getEDI() * 8; break;
         }
@@ -479,7 +473,7 @@ DWORD VCpu::evaluateSIB(BYTE rm, BYTE sib, unsigned sizeOfImmediate)
     case 1: base = getECX(); break;
     case 2: base = getEDX(); break;
     case 3: base = getEBX(); break;
-    case 4: base = getESP(); break;
+    case 4: DEFAULT_TO_SS; base = getESP(); break;
     case 6: base = getESI(); break;
     case 7: base = getEDI(); break;
     default: // 5
@@ -487,8 +481,8 @@ DWORD VCpu::evaluateSIB(BYTE rm, BYTE sib, unsigned sizeOfImmediate)
         sizeOfImmediate = 0;
         switch ((rm >> 6) & 3) {
         case 0: base = fetchOpcodeDWord(); break;
-        case 1: base = vomit_signExtend<DWORD>(fetchOpcodeByte()) + getEBP(); break;
-        case 2: base = fetchOpcodeDWord() + getEBP(); break;
+        case 1: DEFAULT_TO_SS; base = vomit_signExtend<DWORD>(fetchOpcodeByte()) + getEBP(); break;
+        case 2: DEFAULT_TO_SS; base = fetchOpcodeDWord() + getEBP(); break;
         default: VM_ASSERT(false); break;
         }
         break;
@@ -499,6 +493,6 @@ DWORD VCpu::evaluateSIB(BYTE rm, BYTE sib, unsigned sizeOfImmediate)
     else if (sizeOfImmediate == 32)
         base = fetchOpcodeDWord();
     //dumpAll();
-    //vlog(LogCPU, "%04X:%08X: evaluateSIB(): sib=%02X -> %s+%s*%u, scaledIndex:%08X, base:%08X", getBaseCS(), getBaseEIP(), sib, registerName(baseRegister), registerName(indexRegister), scale, scaledIndex, base);
+    //vlog(LogCPU, "evaluateSIB(): sib=%02X -> %s+%s*%u, scaledIndex:%08X, base:%08X", sib, registerName(baseRegister), registerName(indexRegister), scale, scaledIndex, base);
     return scaledIndex + base;
 }

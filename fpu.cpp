@@ -29,8 +29,7 @@
 
 void VCpu::_ESCAPE()
 {
-    vlog(LogFPU, "%04X:%08X FPU escape via %02X /%u",
-        getBaseCS(), getBaseEIP(),
+    vlog(LogFPU, "FPU escape via %02X /%u",
         opcode, vomit_modRMRegisterPart(readMemory8(getBaseCS(), getBaseIP() + 1)));
 
     // Even though we don't dispatch to an FPU, we still have to decode the full

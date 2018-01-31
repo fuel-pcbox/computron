@@ -96,7 +96,7 @@ QWORD VCpu::doSbb(T dest, T src)
 template<typename T>
 QWORD VCpu::doMul(T acc, T multi)
 {
-    QWORD result = (DWORD)acc * (DWORD)multi;
+    QWORD result = (QWORD)acc * (QWORD)multi;
     updateCpuMathFlags(this, result, acc, multi);
     return result;
 }
@@ -233,14 +233,15 @@ void VCpu::_MUL_RM32()
 void VCpu::_IMUL_RM8()
 {
     SIGNED_BYTE value = readModRM8(rmbyte);
-    regs.W.AX = doImul(static_cast<SIGNED_BYTE>(getAL()), value);
+    SIGNED_WORD result = doImul(static_cast<SIGNED_BYTE>(getAL()), value);
+    regs.W.AX = result;
 
-    if (regs.B.AH == 0x00 || regs.B.AH == 0xFF) {
-        setCF(0);
-        setOF(0);
-    } else {
+    if (result > 0x7F || result < -0x80) {
         setCF(1);
         setOF(1);
+    } else {
+        setCF(0);
+        setOF(0);
     }
 }
 
@@ -261,13 +262,17 @@ void VCpu::_IMUL_reg16_RM16_imm16()
     BYTE rm = fetchOpcodeByte();
     SIGNED_WORD imm = fetchOpcodeWord();
     SIGNED_WORD value = readModRM16(rm);
-    SIGNED_WORD result = doImul(value, static_cast<SIGNED_WORD>(imm));
-    SIGNED_DWORD largeResult = doImul(value, static_cast<SIGNED_WORD>(imm));
+    SIGNED_DWORD result = doImul(value, static_cast<SIGNED_WORD>(imm));
 
     setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), result);
 
-    setCF(result != largeResult);
-    setOF(result != largeResult);
+    if (result > 0x7FFF || result < -0x8000) {
+        setCF(1);
+        setOF(1);
+    } else {
+        setCF(0);
+        setOF(0);
+    }
 }
 
 void VCpu::_IMUL_reg16_RM16()
@@ -275,13 +280,17 @@ void VCpu::_IMUL_reg16_RM16()
     BYTE rm = fetchOpcodeByte();
     SIGNED_WORD src = readModRM16(rm);
     SIGNED_WORD dest = getRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)));
-    SIGNED_WORD result = doImul(dest, src);
-    SIGNED_DWORD largeResult = doImul(dest, src);
+    SIGNED_DWORD result = doImul(dest, src);
 
     setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), result);
 
-    setCF(result != largeResult);
-    setOF(result != largeResult);
+    if (result > 0x7FFF || result < -0x8000) {
+        setCF(1);
+        setOF(1);
+    } else {
+        setCF(0);
+        setOF(0);
+    }
 }
 
 void VCpu::_IMUL_reg32_RM32()
@@ -289,14 +298,17 @@ void VCpu::_IMUL_reg32_RM32()
     BYTE rm = fetchOpcodeByte();
     SIGNED_DWORD src = readModRM32(rm);
     SIGNED_DWORD dest = getRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)));
-
-    SIGNED_DWORD result = doImul(dest, src);
-    SIGNED_QWORD largeResult = doImul(dest, src);
+    SIGNED_QWORD result = doImul(dest, src);
 
     setRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)), result);
 
-    setCF(result != largeResult);
-    setOF(result != largeResult);
+    if (result > 0x7FFFFFFF || result < -0x80000000) {
+        setCF(1);
+        setOF(1);
+    } else {
+        setCF(0);
+        setOF(0);
+    }
 }
 
 void VCpu::_IMUL_reg16_RM16_imm8()
@@ -304,13 +316,17 @@ void VCpu::_IMUL_reg16_RM16_imm8()
     BYTE rm = fetchOpcodeByte();
     SIGNED_BYTE imm = fetchOpcodeByte();
     SIGNED_WORD value = readModRM16(rm);
-    SIGNED_WORD result = doImul(value, static_cast<SIGNED_WORD>(imm));
-    SIGNED_DWORD largeResult = doImul(value, static_cast<SIGNED_WORD>(imm));
+    SIGNED_DWORD result = doImul(value, static_cast<SIGNED_WORD>(imm));
 
     setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), result);
 
-    setCF(result != largeResult);
-    setOF(result != largeResult);
+    if (result > 0x7FFF || result < -0x8000) {
+        setCF(1);
+        setOF(1);
+    } else {
+        setCF(0);
+        setOF(0);
+    }
 }
 
 void VCpu::_IMUL_RM16()
@@ -320,12 +336,12 @@ void VCpu::_IMUL_RM16()
     regs.W.AX = result;
     regs.W.DX = result >> 16;
 
-    if (regs.W.DX == 0x0000 || regs.W.DX == 0xFFFF) {
-        setCF(0);
-        setOF(0);
-    } else {
+    if (result > 0x7FFF || result < -0x8000) {
         setCF(1);
         setOF(1);
+    } else {
+        setCF(0);
+        setOF(0);
     }
 }
 
@@ -339,6 +355,7 @@ void VCpu::_DIV_RM8()
         return;
     }
 
+    // FIXME: divide error if result overflows
     regs.B.AL = (BYTE)(tAX / value); // Quote
     regs.B.AH = (BYTE)(tAX % value); // Remainder
 }
@@ -353,6 +370,7 @@ void VCpu::_DIV_RM16()
         return;
     }
 
+    // FIXME: divide error if result overflows
     regs.W.AX = (WORD)(tDXAX / value); // Quote
     regs.W.DX = (WORD)(tDXAX % value); // Remainder
 }
@@ -367,6 +385,7 @@ void VCpu::_DIV_RM32()
         return;
     }
 
+    // FIXME: divide error if result overflows
     setEAX(tEDXEAX / value); // Quote
     setEDX(tEDXEAX % value); // Remainder
 }
@@ -381,6 +400,7 @@ void VCpu::_IDIV_RM8()
         return;
     }
 
+    // FIXME: divide error if result overflows
     regs.B.AL = (SIGNED_BYTE)(tAX / value); // Quote
     regs.B.AH = (SIGNED_BYTE)(tAX % value); // Remainder
 }
@@ -395,6 +415,25 @@ void VCpu::_IDIV_RM16()
         return;
     }
 
+    // FIXME: divide error if result overflows
     regs.W.AX = (SIGNED_WORD)(tDXAX / value); // Quote
     regs.W.DX = (SIGNED_WORD)(tDXAX % value); // Remainder
+}
+
+void VCpu::_NEG_RM8()
+{
+    BYTE value = readModRM8(rmbyte);
+    updateModRM8(doSub((BYTE)0, value));
+}
+
+void VCpu::_NEG_RM16()
+{
+    WORD value = readModRM16(rmbyte);
+    updateModRM16(doSub((WORD)0, value));
+}
+
+void VCpu::_NEG_RM32()
+{
+    DWORD value = readModRM32(rmbyte);
+    updateModRM32(doSub((DWORD)0, value));
 }
