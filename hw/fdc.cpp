@@ -180,6 +180,8 @@ void FDC::out8(WORD port, BYTE data)
 
         if (d->enabled != old_fdc_enabled)
             raiseIRQ();
+
+        break;
     }
 
     case 0x3F5: {
