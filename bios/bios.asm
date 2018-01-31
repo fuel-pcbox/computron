@@ -470,6 +470,7 @@ check_for_8086:
     mov     al, 0xff
     mov     cl, 0x80
     shr     al, cl
+    test    al, al
     ret
 
 check_for_80186:
