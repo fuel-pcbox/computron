@@ -209,12 +209,12 @@ void VCpu::decode(BYTE op)
         case 0xB7: CALL_HANDLER(_UNSUPP, _MOVZX_reg32_RM16); break;
         case 0xBA:
             this->subrmbyte = fetchOpcodeByte();
-            switch (subrmbyte) {
+            switch (vomit_modRMRegisterPart(subrmbyte)) {
             case 4: CALL_HANDLER(_BT_RM16_imm8, _BT_RM32_imm8); break;
             case 5: CALL_HANDLER(_BTS_RM16_imm8, _BTS_RM32_imm8); break;
             case 6: CALL_HANDLER(_BTR_RM16_imm8, _BTR_RM32_imm8); break;
             case 7: CALL_HANDLER(_BTC_RM16_imm8, _BTC_RM32_imm8); break;
-            default: VM_ASSERT(false);
+            default: goto fffuuu;
             }
             break;
         case 0xBB: CALL_HANDLER(_BTC_RM16_reg16, _BTC_RM32_reg32); break;
