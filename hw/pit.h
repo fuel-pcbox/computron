@@ -29,25 +29,23 @@
 #include "iodevice.h"
 #include <QtCore/QObject>
 
-class PIT : public QObject, public IODevice
+class PIT final : public QObject, public IODevice
 {
     Q_OBJECT
 public:
-    PIT();
+    explicit PIT(Machine&);
     virtual ~PIT();
 
-    virtual BYTE in8(WORD port);
-    virtual void out8(WORD port, BYTE data);
+    virtual BYTE in8(WORD port) override;
+    virtual void out8(WORD port, BYTE data) override;
 
     void boot();
-
-    static PIT* the();
 
 private slots:
     void reconfigureTimer();
 
 private:
-    virtual void timerEvent(QTimerEvent*);
+    virtual void timerEvent(QTimerEvent*) override;
 
     void raiseIRQ();
     void modeControl(int timerIndex, BYTE data);

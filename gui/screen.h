@@ -36,7 +36,7 @@ class Screen : public QWidget
 {
     Q_OBJECT
 public:
-    Screen(Machine*);
+    explicit Screen(Machine&);
     virtual ~Screen();
 
     bool inTextMode() const;
@@ -110,7 +110,7 @@ private:
     friend int get_current_x();
     friend int get_current_y();
 
-    Machine* machine() const;
+    Machine& machine() const { return m_machine; }
 
     WORD scanCodeFromKeyEvent(const QKeyEvent*) const;
     QString keyNameFromKeyEvent(const QKeyEvent*) const;
@@ -123,6 +123,7 @@ private:
     Private *d;
 
     BYTE m_videoModeInLastRefresh { 0xFF };
+    Machine& m_machine;
 };
 
 #endif

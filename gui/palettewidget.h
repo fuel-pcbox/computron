@@ -28,11 +28,13 @@
 
 #include <QtWidgets/QWidget>
 
+class Machine;
+
 class PaletteWidget : public QWidget
 {
     Q_OBJECT
 public:
-    explicit PaletteWidget(QWidget* parent = 0);
+    explicit PaletteWidget(Machine&, QWidget* parent = 0);
     virtual ~PaletteWidget();
 
     QSize sizeHint() const;
@@ -46,6 +48,8 @@ private slots:
 private:
     struct Private;
     Private* d;
+
+    Machine& m_machine;
 };
 
 #endif

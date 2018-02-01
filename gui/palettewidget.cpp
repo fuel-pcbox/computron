@@ -24,6 +24,7 @@
  */
 
 #include "palettewidget.h"
+#include "machine.h"
 #include "vga.h"
 #include <QtGui/QColor>
 #include <QtGui/QPainter>
@@ -35,11 +36,12 @@ struct PaletteWidget::Private
     QColor color[256];
 };
 
-PaletteWidget::PaletteWidget(QWidget* parent)
+PaletteWidget::PaletteWidget(Machine& machine, QWidget* parent)
     : QWidget(parent)
     , d(new Private)
+    , m_machine(machine)
 {
-    connect(VGA::the(), SIGNAL(paletteChanged()), this, SLOT(onPaletteChanged()));
+    connect(&m_machine.vga(), SIGNAL(paletteChanged()), this, SLOT(onPaletteChanged()));
 }
 
 PaletteWidget::~PaletteWidget()
@@ -51,7 +53,7 @@ PaletteWidget::~PaletteWidget()
 void PaletteWidget::onPaletteChanged()
 {
     for (int i = 0; i < 256; ++i)
-        d->color[i] = VGA::the()->color(i);
+        d->color[i] = m_machine.vga().color(i);
     update();
 }
 

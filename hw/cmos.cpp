@@ -29,19 +29,22 @@
 #include <QtCore/QDate>
 #include <QtCore/QTime>
 
-static CMOS the;
-
-CMOS::CMOS()
-    : IODevice("CMOS")
+CMOS::CMOS(Machine& machine)
+    : IODevice("CMOS", machine)
 {
-    m_registerIndex = 0;
-    m_statusRegisterB = 0x00;
     listen(0x70, IODevice::WriteOnly);
     listen(0x71, IODevice::ReadWrite);
+    reset();
 }
 
 CMOS::~CMOS()
 {
+}
+
+void CMOS::reset()
+{
+    m_registerIndex = 0;
+    m_statusRegisterB = 0x00;
 }
 
 bool CMOS::inBinaryClockMode() const

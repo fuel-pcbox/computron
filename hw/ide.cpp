@@ -27,8 +27,6 @@
 #include "debug.h"
 #include "ide.h"
 
-static IDE theIDE;
-
 struct IDEController
 {
     WORD cylinderIndex;
@@ -56,8 +54,8 @@ struct IDE::Private
     IDEController controller[gNumControllers];
 };
 
-IDE::IDE()
-    : IODevice("IDE")
+IDE::IDE(Machine& machine)
+    : IODevice("IDE", machine)
     , d(new Private)
 {
     listen(0x171, IODevice::ReadOnly);
@@ -80,11 +78,6 @@ IDE::~IDE()
 {
     delete d;
     d = 0;
-}
-
-IDE* IDE::the()
-{
-    return &theIDE;
 }
 
 void IDE::out8(WORD port, BYTE data)

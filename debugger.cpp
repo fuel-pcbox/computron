@@ -35,9 +35,8 @@
 #include <readline/readline.h>
 #endif
 
-Debugger::Debugger(VCpu* cpu)
+Debugger::Debugger(VCpu& cpu)
     : m_cpu(cpu)
-    , m_active(false)
 {
 }
 
@@ -55,7 +54,7 @@ void Debugger::exit()
     m_active = false;
 }
 
-static QString doPrompt(const VCpu* cpu)
+static QString doPrompt(const VCpu& cpu)
 {
     static QString brightMagenta("\033[35;1m");
     static QString brightCyan("\033[34;1m");
@@ -63,10 +62,10 @@ static QString doPrompt(const VCpu* cpu)
 
     QString s;
 
-    if (cpu->getPE())
-        s.sprintf("%04X:%08X", cpu->getCS(), cpu->getEIP());
+    if (cpu.getPE())
+        s.sprintf("%04X:%08X", cpu.getCS(), cpu.getEIP());
     else
-        s.sprintf("%04X:%04X", cpu->getCS(), cpu->getIP());
+        s.sprintf("%04X:%04X", cpu.getCS(), cpu.getIP());
 
     QString prompt = brightMagenta % QLatin1Literal("VOMIT ") % brightCyan % s % defaultColor % QLatin1Literal("> ");
 
@@ -132,9 +131,9 @@ void Debugger::handleBreakpoint(const QStringList& arguments)
 {
     if (arguments.size() != 3) {
         printf("usage: b <add|del> segment:offset\n");
-        if (!cpu()->breakpoints().empty()) {
+        if (!cpu().breakpoints().empty()) {
             printf("\nCurrent breakpoints:\n");
-            for (auto& breakpoint : cpu()->breakpoints()) {
+            for (auto& breakpoint : cpu().breakpoints()) {
                 printf("    @0x%08X\n", breakpoint);
             }
             printf("\n");
@@ -146,29 +145,26 @@ void Debugger::handleBreakpoint(const QStringList& arguments)
     DWORD flat = vomit_toFlatAddress(segment, offset);
     if (arguments[0] == "add") {
         printf("add breakpoint: %04X:%08X -> @0x%08X\n", segment, offset, flat);
-        cpu()->breakpoints().insert(flat);
+        cpu().breakpoints().insert(flat);
     }
     if (arguments[0] == "del") {
         printf("delete breakpoint: %04X:%08X -> @0x%08X\n", segment, offset, flat);
-        cpu()->breakpoints().erase(flat);
+        cpu().breakpoints().erase(flat);
     }
 }
 
 void Debugger::doConsole()
 {
     VM_ASSERT(isActive());
-    VM_ASSERT(cpu());
 
     printf("\n");
-    cpu()->dumpAll();
-    printf(">>> Entering debugger @ %04X:%08X\n", cpu()->getBaseCS(), cpu()->getBaseEIP());
+    cpu().dumpAll();
+    printf(">>> Entering debugger @ %04X:%08X\n", cpu().getBaseCS(), cpu().getBaseEIP());
 
     while (isActive()) {
         QString rawCommand = doPrompt(cpu());
         handleCommand(rawCommand);
     }
-
-
 }
 
 void Debugger::handleQuit()
@@ -178,12 +174,12 @@ void Debugger::handleQuit()
 
 void Debugger::handleDumpRegisters()
 {
-    cpu()->dumpAll();
+    cpu().dumpAll();
 }
 
 void Debugger::handleDumpIVT()
 {
-    cpu()->dumpIVT();
+    cpu().dumpIVT();
 }
 
 void Debugger::handleReconfigure()
@@ -193,9 +189,9 @@ void Debugger::handleReconfigure()
 
 void Debugger::handleStep()
 {
-    cpu()->exec();
-    cpu()->dumpAll();
-    cpu()->dumpWatches();
+    cpu().exec();
+    cpu().dumpAll();
+    cpu().dumpWatches();
 }
 
 void Debugger::handleContinue()
@@ -206,8 +202,8 @@ void Debugger::handleContinue()
 void Debugger::handleDumpMemory(const QStringList& arguments)
 {
     // FIXME: Handle 32-bit offsets.
-    WORD segment = cpu()->getCS();
-    DWORD offset = cpu()->getEIP() & 0xFFF0;
+    WORD segment = cpu().getCS();
+    DWORD offset = cpu().getEIP() & 0xFFF0;
 
     if (arguments.size() == 1)
         offset = arguments.at(0).toUInt(0, 16);
@@ -216,27 +212,27 @@ void Debugger::handleDumpMemory(const QStringList& arguments)
         offset = arguments.at(1).toUInt(0, 16);
     }
 
-    cpu()->dumpMemory(segment, offset, 16);
+    cpu().dumpMemory(segment, offset, 16);
 }
 
 void Debugger::handleDumpSegment(const QStringList& arguments)
 {
-    WORD segment = cpu()->getCS();
+    WORD segment = cpu().getCS();
 
     if (arguments.size() >= 1)
         segment = arguments.at(0).toUInt(0, 16);
 
-    cpu()->dumpSegment(segment);
+    cpu().dumpSegment(segment);
 }
 
 void Debugger::handleDumpFlatMemory(const QStringList& arguments)
 {
-    DWORD address = cpu()->getEIP();
+    DWORD address = cpu().getEIP();
 
     if (arguments.size() == 1)
         address = arguments.at(0).toUInt(0, 16);
 
-    cpu()->dumpFlatMemory(address);
+    cpu().dumpFlatMemory(address);
 }
 
 void Debugger::handleTracing(const QStringList& arguments)

@@ -29,13 +29,6 @@
 #include "pit.h"
 #include <QtCore/QThread>
 
-static PIT thePIT;
-
-PIT* PIT::the()
-{
-    return &thePIT;
-}
-
 enum DecrementMode { DecrementBinary = 0, DecrementBCD = 1 };
 
 struct CounterInfo {
@@ -58,9 +51,9 @@ struct PIT::Private
     int timerId;
 };
 
-PIT::PIT()
-    : QObject(0)
-    , IODevice("PIT")
+PIT::PIT(Machine& machine)
+    : QObject(nullptr)
+    , IODevice("PIT", machine)
     , d(new Private)
 {
     listen(0x40, IODevice::ReadWrite);
@@ -185,5 +178,5 @@ void PIT::modeControl(int timerIndex, BYTE data)
 
 void PIT::raiseIRQ()
 {
-    PIC::raiseIRQ(0);
+    PIC::raiseIRQ(machine(), 0);
 }

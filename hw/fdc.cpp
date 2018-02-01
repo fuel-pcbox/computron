@@ -63,10 +63,8 @@ struct FDC::Private
     FDCDrive& currentDrive() { return drive[driveIndex]; }
 };
 
-FDC theFDC;
-
-FDC::FDC()
-    : IODevice("FDC")
+FDC::FDC(Machine& machine)
+    : IODevice("FDC", machine)
     , d(new Private)
 {
     listen(0x3F0, IODevice::ReadOnly);
@@ -232,5 +230,5 @@ void FDC::raiseIRQ()
     d->statusRegister[0] = d->driveIndex;
     d->statusRegister[0] |= d->currentDrive().head * 0x02;
     d->statusRegister[0] |= 0x20;
-    PIC::raiseIRQ(6);
+    PIC::raiseIRQ(machine(), 6);
 }

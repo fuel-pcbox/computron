@@ -28,7 +28,16 @@
 #include "vcpu.h"
 #include "vga_memory.h"
 #include "iodevice.h"
+#include "fdc.h"
+#include "ide.h"
+#include "PS2.h"
+#include "busmouse.h"
+#include "keyboard.h"
+#include "pic.h"
 #include "pit.h"
+#include "vga.h"
+#include "cmos.h"
+#include "vomctl.h"
 #include "worker.h"
 #include "screen.h"
 #include <QtCore/QFile>
@@ -63,11 +72,11 @@ Machine::Machine(const QString& name, Settings* settings, QObject* parent)
 {
     applySettings();
 
-    cpu()->setBaseMemorySize(640 * 1024);
+    cpu().setBaseMemorySize(640 * 1024);
 
     // FIXME: Move this somewhere else.
     static const BYTE bootCode[] = { 0xEA, 0x00, 0x00, 0x00, 0xF0 };
-    BYTE* entryPoint = cpu()->memoryPointer(0xF000, 0xFFF0);
+    BYTE* entryPoint = cpu().memoryPointer(0xF000, 0xFFF0);
     VM_ASSERT(entryPoint);
     memcpy(entryPoint, bootCode, sizeof(bootCode));
 
@@ -84,20 +93,31 @@ Machine::Machine(const QString& name, Settings* settings, QObject* parent)
         IODevice::ignorePort(0x331); // MIDI
     }
 
-    m_vgaMemory = new VGAMemory(this);
-    m_screen = new Screen(this);
+    m_busMouse = new BusMouse(*this);
+    m_cmos = new CMOS(*this);
+    m_fdc = new FDC(*this);
+    m_ide = new IDE(*this);
+    m_keyboard = new Keyboard(*this);
+    m_masterPIC = new PIC(true, *this);
+    m_slavePIC = new PIC(false, *this);
+    m_ps2 = new PS2(*this);
+    m_vomCtl = new VomCtl(*this);
+    m_pit = new PIT(*this);
+    m_vga = new VGA(*this);
+    m_vgaMemory = new VGAMemory(*this);
+    m_screen = new Screen(*this);
 
     if (!m_settings->isForAutotest()) {
         // FIXME: Sort out worker ownership.
         m_worker = new Worker(cpu());
 
-        QObject::connect(worker(), SIGNAL(finished()), this, SLOT(onWorkerFinished()));
+        QObject::connect(&worker(), SIGNAL(finished()), this, SLOT(onWorkerFinished()));
 
         // Why are we booting the PIT slightly later anyway? I smell a race.
-        PIT::the()->boot();
+        pit().boot();
 
-        worker()->startMachine();
-        worker()->start();
+        worker().startMachine();
+        worker().start();
     }
 }
 
@@ -111,16 +131,13 @@ Machine::~Machine()
 
 void Machine::applySettings()
 {
-    if (!settings())
-        return;
-
-    cpu()->setExtendedMemorySize(settings()->memorySize());
+    cpu().setExtendedMemorySize(settings().memorySize());
     // FIXME: Apply memory-size setting.
 
-    cpu()->setCS(settings()->entryCS());
-    cpu()->setIP(settings()->entryIP());
+    cpu().setCS(settings().entryCS());
+    cpu().setIP(settings().entryIP());
 
-    QHash<DWORD, QString> files = settings()->files();
+    QHash<DWORD, QString> files = settings().files();
 
     QHash<DWORD, QString>::const_iterator it = files.constBegin();
     QHash<DWORD, QString>::const_iterator end = files.constEnd();
@@ -144,7 +161,7 @@ bool Machine::loadFile(DWORD address, const QString& fileName)
 
     vlog(LogConfig, "Loading %s at 0x%08X", qPrintable(fileName), address);
 
-    BYTE* memoryPointer = cpu()->memoryPointer(address);
+    BYTE* memoryPointer = cpu().memoryPointer(address);
     VM_ASSERT(memoryPointer);
 
     // FIXME: Don't overrun the CPU's memory buffer.
@@ -154,24 +171,24 @@ bool Machine::loadFile(DWORD address, const QString& fileName)
 
 void Machine::start()
 {
-    screen()->setTinted(false);
-    worker()->startMachine();
+    screen().setTinted(false);
+    worker().startMachine();
 }
 
 void Machine::pause()
 {
-    screen()->setTinted(true);
-    worker()->stopMachine();
+    screen().setTinted(true);
+    worker().stopMachine();
 }
 
 void Machine::stop()
 {
-    worker()->stopMachine();
+    worker().stopMachine();
 }
 
 void Machine::reboot()
 {
-    worker()->rebootMachine();
+    worker().rebootMachine();
 }
 
 void Machine::onWorkerFinished()

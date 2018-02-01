@@ -68,7 +68,7 @@ StateWidget::~StateWidget()
 void StateWidget::sync()
 {
     QString s;
-    auto& cpu = *machine().cpu();
+    auto& cpu = machine().cpu();
 
     if (cpu.x32()) {
         DO_LABEL_N(EBX, "EBX", "%08X");

@@ -46,6 +46,6 @@ MainWindow::~MainWindow()
 
 void MainWindow::addMachine(Machine* machine)
 {
-    MachineWidget* machineWidget = new MachineWidget(machine);
+    MachineWidget* machineWidget = new MachineWidget(*machine);
     setCentralWidget(machineWidget);
 }

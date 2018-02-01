@@ -71,7 +71,7 @@ int main(int argc, char** argv)
         return 1;
 
     if (options.start_in_debug)
-        machine->cpu()->debugger()->enter();
+        machine->cpu().debugger()->enter();
 
     extern void vomit_disasm_init_tables();
     vomit_disasm_init_tables();
@@ -81,8 +81,8 @@ int main(int argc, char** argv)
     foreach (IODevice *device, IODevice::devices())
         vlog(LogInit, "%s present", device->name());
 
-    if (machine->settings()->isForAutotest()) {
-        machine->cpu()->mainLoop();
+    if (machine->settings().isForAutotest()) {
+        machine->cpu().mainLoop();
         return 0;
     }
 

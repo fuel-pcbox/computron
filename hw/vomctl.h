@@ -28,14 +28,14 @@
 
 #include "iodevice.h"
 
-class VomCtl : public IODevice
+class VomCtl final : public IODevice
 {
 public:
-    VomCtl();
+    explicit VomCtl(Machine&);
     virtual ~VomCtl();
 
-    virtual void out8(WORD port, BYTE data);
-    virtual BYTE in8(WORD port);
+    virtual void out8(WORD port, BYTE data) override;
+    virtual BYTE in8(WORD port) override;
 
 private:
     BYTE m_registerIndex;

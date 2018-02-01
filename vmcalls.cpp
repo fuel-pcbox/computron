@@ -35,14 +35,14 @@
 
 static void vga_scrollup(BYTE x1, BYTE y1, BYTE x2, BYTE y2, BYTE num, BYTE attr);
 static void vga_scrolldown(BYTE x1, BYTE y1, BYTE x2, BYTE y2, BYTE num, BYTE attr);
-static void vm_handleE6(VCpu* cpu);
+static void vm_handleE6(VCpu& cpu);
 
-void vm_call8(VCpu* cpu, WORD port, BYTE data) {
+void vm_call8(VCpu& cpu, WORD port, BYTE data) {
     switch (port) {
     case 0xE0:
-        vlog(LogAlert, "Interrupt %02X, function %04X requested", cpu->getBL(), cpu->getAX());
-        if (cpu->getBL() == 0x15 && cpu->getAH() == 0x87) {
-            vlog(LogAlert, "MoveBlock GDT{ %04X:%04X } x %04X", cpu->getES(), cpu->getSI(), cpu->getCX());
+        vlog(LogAlert, "Interrupt %02X, function %04X requested", cpu.getBL(), cpu.getAX());
+        if (cpu.getBL() == 0x15 && cpu.getAH() == 0x87) {
+            vlog(LogAlert, "MoveBlock GDT{ %04X:%04X } x %04X", cpu.getES(), cpu.getSI(), cpu.getCX());
         }
         break;
     case 0xE6:
@@ -58,10 +58,10 @@ void vm_call8(VCpu* cpu, WORD port, BYTE data) {
         bios_disk_call(VerifySectors);
         break;
     case 0xE7:
-        vga_scrollup(cpu->getCL(), cpu->getCH(), cpu->getDL(), cpu->getDH(), cpu->getAL(), cpu->getBH());
+        vga_scrollup(cpu.getCL(), cpu.getCH(), cpu.getDL(), cpu.getDH(), cpu.getAL(), cpu.getBH());
         break;
     case 0xE8:
-        vga_scrolldown(cpu->getCL(), cpu->getCH(), cpu->getDL(), cpu->getDH(), cpu->getAL(), cpu->getBH());
+        vga_scrolldown(cpu.getCL(), cpu.getCH(), cpu.getDL(), cpu.getDH(), cpu.getAL(), cpu.getBH());
         break;
     default:
         vlog(LogAlert, "vm_call8: Unhandled write, %02X -> %04X", data, port);
@@ -70,7 +70,7 @@ void vm_call8(VCpu* cpu, WORD port, BYTE data) {
     }
 }
 
-void vm_handleE6(VCpu* cpu)
+void vm_handleE6(VCpu& cpu)
 {
     extern WORD kbd_hit();
     extern WORD kbd_getc();
@@ -82,138 +82,138 @@ void vm_handleE6(VCpu* cpu)
     BYTE    drive;
     FILE    *fpdrv;
 
-    switch (cpu->getAX()) {
+    switch (cpu.getAX()) {
     case 0x1601:
         if (kbd_hit()) {
-            cpu->setAX(kbd_hit());
-            cpu->setZF(0);
+            cpu.setAX(kbd_hit());
+            cpu.setZF(0);
         } else {
-            cpu->setAX(0);
-            cpu->setZF(1);
+            cpu.setAX(0);
+            cpu.setZF(1);
         }
         break;
     case 0x1A00:
         // Interrupt 1A, 00: Get RTC tick count
-        cpu->setAL(0); // Midnight flag.
+        cpu.setAL(0); // Midnight flag.
         curtime = time(nullptr);
         t = localtime(&curtime);
         tick_count = ((t->tm_hour*3600) + (t->tm_min*60) + (t->tm_sec)) * 18.206; // yuck..
         gettimeofday(&timv, NULL);
         tick_count += timv.tv_usec / 54926.9471602768;
-        cpu->setCX(tick_count >> 16);
-        cpu->setDX(tick_count & 0xFFFF);
-        cpu->writeUnmappedMemory16(0x046C, tick_count & 0xFFFF);
-        cpu->writeUnmappedMemory16(0x046D, tick_count >> 16);
+        cpu.setCX(tick_count >> 16);
+        cpu.setDX(tick_count & 0xFFFF);
+        cpu.writeUnmappedMemory16(0x046C, tick_count & 0xFFFF);
+        cpu.writeUnmappedMemory16(0x046D, tick_count >> 16);
         break;
     case 0x1300:
-        drive = cpu->getDL();
+        drive = cpu.getDL();
         if (drive >= 0x80)
             drive = drive - 0x80 + 2;
         if (drv_status[drive] != 0) {
-            cpu->setAH(FD_NO_ERROR);
-            cpu->setCF(0);
+            cpu.setAH(FD_NO_ERROR);
+            cpu.setCF(0);
         } else {
-            cpu->setAH(FD_CHANGED_OR_REMOVED);
-            cpu->setCF(1);
+            cpu.setAH(FD_CHANGED_OR_REMOVED);
+            cpu.setCF(1);
         }
-        cpu->writeUnmappedMemory8(drive < 2 ? 0x0441 : 0x0474, cpu->getAH());
+        cpu.writeUnmappedMemory8(drive < 2 ? 0x0441 : 0x0474, cpu.getAH());
         break;
     case 0x1308:
-        drive = cpu->getDL();
+        drive = cpu.getDL();
         if(drive>=0x80) drive = drive - 0x80 + 2;
         if(drv_status[drive]!=0) {
             tracks = (drv_sectors[drive] / drv_spt[drive] / drv_heads[drive]) - 2;
-            cpu->setAL(0);
-            cpu->setAH(FD_NO_ERROR);
-            cpu->setBL(drv_type[drive]);
-            cpu->setBH(0);
-            cpu->setCH(tracks & 0xFF); // Tracks.
-            cpu->setCL(((tracks >> 2) & 0xC0) | (drv_spt[drive] & 0x3F)); // Sectors per track.
-            cpu->setDH(drv_heads[drive] - 1); // Sides.
+            cpu.setAL(0);
+            cpu.setAH(FD_NO_ERROR);
+            cpu.setBL(drv_type[drive]);
+            cpu.setBH(0);
+            cpu.setCH(tracks & 0xFF); // Tracks.
+            cpu.setCL(((tracks >> 2) & 0xC0) | (drv_spt[drive] & 0x3F)); // Sectors per track.
+            cpu.setDH(drv_heads[drive] - 1); // Sides.
 
             if (drive < 2)
-                cpu->setDL(drv_status[0] + drv_status[1]);
+                cpu.setDL(drv_status[0] + drv_status[1]);
             else
-                cpu->setDL(drv_status[2] + drv_status[3]);
+                cpu.setDL(drv_status[2] + drv_status[3]);
 
             vlog(LogDisk, "Reporting disk%d geo: %d tracks, %d spt, %d sides", drive, tracks, drv_spt[drive], drv_heads[drive]);
 
-            cpu->setCH(tracks & 0xFF);
-            cpu->setCL(cpu->getCL() | (tracks & 0x00030000) >> 10);
+            cpu.setCH(tracks & 0xFF);
+            cpu.setCL(cpu.getCL() | (tracks & 0x00030000) >> 10);
 
             // FIXME: ES:DI should points to some wacky Disk Base Table.
-            cpu->setCF(0);
+            cpu.setCF(0);
         } else {
             if (drive < 2)
-                cpu->setAH(FD_CHANGED_OR_REMOVED);
+                cpu.setAH(FD_CHANGED_OR_REMOVED);
             else if(drive > 1)
-                cpu->setAH(FD_FIXED_NOT_READY);
-            cpu->setCF(1);
+                cpu.setAH(FD_FIXED_NOT_READY);
+            cpu.setCF(1);
         }
 
         break;
     case 0x1315:
-        drive = cpu->getDL();
+        drive = cpu.getDL();
         if (drive >= 0x80)
             drive = drive - 0x80 + 2;
         if (drv_status[drive] != 0) {
-            cpu->setAH(0x01); // Diskette, no change detection present.
+            cpu.setAH(0x01); // Diskette, no change detection present.
             if (drive > 1) {
-                cpu->setAH(0x03); // FIXED DISK :-)
+                cpu.setAH(0x03); // FIXED DISK :-)
                 // If fixed disk, CX:DX = sectors.
-                cpu->setDX(drv_sectors[drive]);
-                cpu->setCX((drv_sectors[drive] << 16));
+                cpu.setDX(drv_sectors[drive]);
+                cpu.setCX((drv_sectors[drive] << 16));
             }
-            cpu->setCF(0);
+            cpu.setCF(0);
         } else {
             // Drive not present.
-            cpu->setAH(0);
-            cpu->setCF(1);
+            cpu.setAH(0);
+            cpu.setCF(1);
         }
         break;
     case 0x1318:
-        drive = cpu->getDL();
+        drive = cpu.getDL();
         if (drive >= 0x80)
             drive = drive - 0x80 + 2;
         if (drv_status[drive]) {
             vlog(LogDisk, "Setting media type for drive %d:", drive);
-            vlog(LogDisk, "%d sectors per track", cpu->getCL());
-            vlog(LogDisk, "%d tracks", cpu->getCH());
+            vlog(LogDisk, "%d sectors per track", cpu.getCL());
+            vlog(LogDisk, "%d tracks", cpu.getCH());
 
             /* Wacky DBT. */
-            cpu->setES(0x820E);
-            cpu->setDI(0x0503);
-            cpu->setAH(0);
-            cpu->setCF(0);
+            cpu.setES(0x820E);
+            cpu.setDI(0x0503);
+            cpu.setAH(0);
+            cpu.setCF(0);
         } else {
-            cpu->setCF(1);
-            cpu->setAH(0x80); // No media in drive
+            cpu.setCF(1);
+            cpu.setAH(0x80); // No media in drive
         }
         break;
 
     case 0x1600:
-        cpu->setAX(kbd_getc());
+        cpu.setAX(kbd_getc());
         break;
 
     case 0x1700:
         // Interrupt 17, 00: Print character on LPT
         {
             char tmp[80];
-            sprintf(tmp, "prn%d.txt", cpu->getDX());
+            sprintf(tmp, "prn%d.txt", cpu.getDX());
             fpdrv = fopen(tmp, "a");
-            fputc(cpu->getCL(), fpdrv);
+            fputc(cpu.getCL(), fpdrv);
             fclose(fpdrv);
         }
         break;
 
     case 0x1A01:
         // Interrupt 1A, 01: Set RTC tick count
-        vlog(LogAlert, "INT 1A,01: Attempt to set tick counter to %lu", (DWORD)(cpu->getCX() << 16) | cpu->getDX());
+        vlog(LogAlert, "INT 1A,01: Attempt to set tick counter to %lu", (DWORD)(cpu.getCX() << 16) | cpu.getDX());
         break;
 
     case 0x1A05:
         // Interrupt 1A, 05: Set BIOS date
-        vlog(LogAlert, "INT 1A,05: Attempt to set BIOS date to %02X-%02X-%04X", cpu->getDH(), cpu->getDL(), cpu->getCX());
+        vlog(LogAlert, "INT 1A,05: Attempt to set BIOS date to %02X-%02X-%04X", cpu.getDH(), cpu.getDL(), cpu.getCX());
         break;
 
     /* 0x3333: Is Drive Present?
@@ -226,20 +226,20 @@ void vm_handleE6(VCpu* cpu)
      * CF = !AL
      */
     case 0x3333:
-        drive = cpu->getDL();
+        drive = cpu.getDL();
         if (drive >= 0x80)
             drive = drive - 0x80 + 2;
         if (drv_status[drive] != 0) {
-            cpu->setAL(1);
-            cpu->setCF(0);
+            cpu.setAL(1);
+            cpu.setCF(0);
         } else {
-            cpu->setAL(0);
-            cpu->setCF(1);
+            cpu.setAL(0);
+            cpu.setCF(1);
         }
         break;
 
     default:
-        vlog(LogAlert, "Unknown VM call %04X received!!", cpu->getAX());
+        vlog(LogAlert, "Unknown VM call %04X received!!", cpu.getAX());
         //vomit_exit(0);
         break;
     }

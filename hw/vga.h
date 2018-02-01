@@ -30,15 +30,15 @@
 #include <QtCore/QObject>
 #include <QtGui/QColor>
 
-class VGA : public QObject, public IODevice
+class VGA final : public QObject, public IODevice
 {
     Q_OBJECT
 public:
-    VGA();
+    explicit VGA(Machine&);
     virtual ~VGA();
 
-    virtual BYTE in8(WORD port);
-    virtual void out8(WORD port, BYTE data);
+    virtual BYTE in8(WORD port) override;
+    virtual void out8(WORD port, BYTE data) override;
 
     void setPaletteDirty(bool);
     bool isPaletteDirty();
@@ -55,8 +55,6 @@ public:
     BYTE currentVideoMode() const;
 
     WORD startAddress() const;
-
-    static VGA* the();
 
 signals:
     void paletteChanged();

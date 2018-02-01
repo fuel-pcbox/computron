@@ -1227,9 +1227,9 @@ private:
 
 extern VCpu* g_cpu;
 
-DWORD cpu_sar(VCpu*, DWORD, BYTE, BYTE);
-DWORD cpu_rcl(VCpu*, DWORD, BYTE, BYTE);
-DWORD cpu_rcr(VCpu*, DWORD, BYTE, BYTE);
+DWORD cpu_sar(VCpu&, DWORD, BYTE, BYTE);
+DWORD cpu_rcl(VCpu&, DWORD, BYTE, BYTE);
+DWORD cpu_rcr(VCpu&, DWORD, BYTE, BYTE);
 
 // INLINE IMPLEMENTATIONS
 

@@ -38,7 +38,7 @@ class QImage;
 class VGAMemory
 {
 public:
-    VGAMemory(Machine*);
+    explicit VGAMemory(Machine&);
     ~VGAMemory();
 
     void write8(DWORD address, BYTE value);
@@ -65,15 +65,15 @@ public:
 private:
     void synchronizeColors();
 
-    Machine* machine() const { return m_machine; }
-    Machine* m_machine;
+    Machine& machine() const { return m_machine; }
+    Machine& m_machine;
 
     QImage m_screen12;
     QColor m_color[16];
     QBrush m_brush[16];
 
     QRect m_dirtyRect;
-    bool m_dirty;
+    bool m_dirty { false };
 
     BYTE* m_plane[4];
     BYTE m_latch[4];

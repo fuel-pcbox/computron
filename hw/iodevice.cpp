@@ -47,8 +47,9 @@ QHash<WORD, IODevice*>& IODevice::writeDevices()
     return s_writeDevices;
 }
 
-IODevice::IODevice(const char* name)
-    : m_name(name)
+IODevice::IODevice(const char* name, Machine& machine)
+    : m_machine(machine)
+    , m_name(name)
 {
     devices().append(this);
 }

@@ -35,7 +35,7 @@ class Worker : public QThread
 {
     Q_OBJECT
 public:
-    Worker(VCpu*);
+    explicit Worker(VCpu&);
     virtual ~Worker();
 
     void startMachine();
@@ -47,7 +47,7 @@ public slots:
     void shutdown();
 
 private:
-    VCpu* m_cpu;
+    VCpu& m_cpu;
     bool m_active;
 };
 

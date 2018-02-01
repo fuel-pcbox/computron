@@ -33,10 +33,10 @@ class QStringList;
 class Debugger
 {
 public:
-    Debugger(VCpu*);
+    explicit Debugger(VCpu&);
     ~Debugger();
 
-    VCpu* cpu() { return m_cpu; }
+    VCpu& cpu() { return m_cpu; }
 
     void enter();
     void exit();
@@ -46,8 +46,8 @@ public:
     void doConsole();
 
 private:
-    VCpu* m_cpu;
-    bool m_active;
+    VCpu& m_cpu;
+    bool m_active { false };
 
     void handleCommand(const QString&);
 

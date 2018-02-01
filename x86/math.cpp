@@ -27,32 +27,32 @@
 #include "templates.h"
 
 template<typename T>
-inline void updateCpuMathFlags(VCpu* cpu, QWORD result, T dest, T src)
+inline void updateCpuMathFlags(VCpu& cpu, QWORD result, T dest, T src)
 {
     if (BitSizeOfType<T>::bits == 8)
-        cpu->mathFlags8(result, dest, src);
+        cpu.mathFlags8(result, dest, src);
     else if (BitSizeOfType<T>::bits == 16)
-        cpu->mathFlags16(result, dest, src);
+        cpu.mathFlags16(result, dest, src);
     else if (BitSizeOfType<T>::bits == 32)
-        cpu->mathFlags32(result, dest, src);
+        cpu.mathFlags32(result, dest, src);
 }
 
 template<typename T>
-inline void updateCpuCmpFlags(VCpu* cpu, QWORD result, T dest, T src)
+inline void updateCpuCmpFlags(VCpu& cpu, QWORD result, T dest, T src)
 {
     if (BitSizeOfType<T>::bits == 8)
-        cpu->cmpFlags8(result, dest, src);
+        cpu.cmpFlags8(result, dest, src);
     else if (BitSizeOfType<T>::bits == 16)
-        cpu->cmpFlags16(result, dest, src);
+        cpu.cmpFlags16(result, dest, src);
     else if (BitSizeOfType<T>::bits == 32)
-        cpu->cmpFlags32(result, dest, src);
+        cpu.cmpFlags32(result, dest, src);
 }
 
 template<typename T>
 QWORD VCpu::doAdd(T dest, T src)
 {
     QWORD result = (QWORD)dest + (QWORD)src;
-    updateCpuMathFlags(this, result, dest, src);
+    updateCpuMathFlags(*this, result, dest, src);
     setOF(((
           ((result)^(dest)) &
           ((result)^(src))
@@ -65,7 +65,7 @@ QWORD VCpu::doAdc(T dest, T src)
 {
     QWORD result = (QWORD)dest + (QWORD)src + (QWORD)getCF();
 
-    updateCpuMathFlags(this, result, dest, src);
+    updateCpuMathFlags(*this, result, dest, src);
     setOF(((
           ((result)^(dest)) &
           ((result)^(src))
@@ -77,7 +77,7 @@ template<typename T>
 QWORD VCpu::doSub(T dest, T src)
 {
     QWORD result = (QWORD)dest - (QWORD)src;
-    updateCpuCmpFlags(this, result, dest, src);
+    updateCpuCmpFlags(*this, result, dest, src);
     return result;
 }
 
@@ -85,7 +85,7 @@ template<typename T>
 QWORD VCpu::doSbb(T dest, T src)
 {
     QWORD result = (QWORD)dest - (QWORD)src - (QWORD)getCF();
-    updateCpuCmpFlags(this, result, dest, src);
+    updateCpuCmpFlags(*this, result, dest, src);
     return result;
 }
 
@@ -93,7 +93,7 @@ template<typename T>
 QWORD VCpu::doMul(T acc, T multi)
 {
     QWORD result = (QWORD)acc * (QWORD)multi;
-    updateCpuMathFlags(this, result, acc, multi);
+    updateCpuMathFlags(*this, result, acc, multi);
     return result;
 }
 

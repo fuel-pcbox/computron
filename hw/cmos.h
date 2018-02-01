@@ -29,18 +29,19 @@
 #include "iodevice.h"
 #include "vomit.h"
 
-class CMOS : public IODevice
+class CMOS final : public IODevice
 {
 public:
-    CMOS();
+    explicit CMOS(Machine&);
     ~CMOS();
 
-    void out8(WORD port, BYTE data);
-    BYTE in8(WORD port);
+    void reset() override;
+    void out8(WORD port, BYTE data) override;
+    BYTE in8(WORD port) override;
 
 private:
-    BYTE m_statusRegisterB;
-    BYTE m_registerIndex;
+    BYTE m_statusRegisterB { 0 };
+    BYTE m_registerIndex { 0 };
 
     bool inBinaryClockMode() const;
     bool in24HourMode() const;

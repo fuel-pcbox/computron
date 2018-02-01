@@ -31,14 +31,15 @@
 
 class VCpu;
 
-class PIC : public IODevice
+class PIC final : public IODevice
 {
 public:
-    PIC(WORD baseAddress, BYTE isrBase);
+    PIC(bool isMaster, Machine&);
     ~PIC();
 
-    void out8(WORD port, BYTE data);
-    BYTE in8(WORD port);
+    virtual void reset() override;
+    void out8(WORD port, BYTE data) override;
+    BYTE in8(WORD port) override;
 
     void raise(BYTE num);
 
@@ -47,22 +48,22 @@ public:
     BYTE getISR() const { return m_isr; }
 
     static bool hasPendingIRQ();
-    static void serviceIRQ(VCpu*);
-    static void raiseIRQ(BYTE num);
+    static void serviceIRQ(VCpu&);
+    static void raiseIRQ(Machine&, BYTE num);
 
 private:
-    WORD m_baseAddress;
-    BYTE m_isrBase;
+    WORD m_baseAddress { 0 };
+    BYTE m_isrBase { 0 };
 
-    BYTE m_isr;
-    BYTE m_irr;
-    BYTE m_imr;
+    BYTE m_isr { 0 };
+    BYTE m_irr { 0 };
+    BYTE m_imr { 0 };
 
-    bool m_icw2Expected;
-    bool m_readIRR;
+    bool m_icw2Expected { 0 };
+    bool m_readIRR { 0 };
 
     static WORD s_pendingRequests;
-    static void updatePendingRequests();
+    static void updatePendingRequests(Machine&);
     static QMutex s_mutex;
 };
 

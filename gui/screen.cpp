@@ -62,16 +62,14 @@ struct Screen::Private
     QQueue<BYTE> rawQueue;
 
     BYTE *videoMemory;
-
-    Machine* machine;
 };
 
-Screen::Screen(Machine* m)
-    : QWidget(0),
-      d(new Private)
+Screen::Screen(Machine& m)
+    : QWidget(nullptr),
+      d(new Private),
+      m_machine(m)
 {
     s_self = this;
-    d->machine = m;
 
     m_rows = 0;
     m_columns = 0;
@@ -82,7 +80,7 @@ Screen::Screen(Machine* m)
     init();
     synchronizeFont();
     setTextMode(80, 25);
-    d->videoMemory = machine()->cpu()->memoryPointer(0xB800, 0x0000);
+    d->videoMemory = machine().cpu().memoryPointer(0xB800, 0x0000);
 
     m_screen12 = QImage(640, 480, QImage::Format_Indexed8);
     m_render12 = QImage(640, 480, QImage::Format_Indexed8);
@@ -158,20 +156,20 @@ void Screen::refresh()
     }
 
     if (isVideoModeUsingVGAMemory(videoMode)) {
-        if (!machine()->vgaMemory()->isDirty())
+        if (!machine().vgaMemory().isDirty())
             return;
-        if (VGA::the()->isPaletteDirty()) {
+        if (machine().vga().isPaletteDirty()) {
             synchronizeColors();
             // FIXME: This will probably race with VGAMemory's internal palette.
-            VGA::the()->setPaletteDirty(false);
+            machine().vga().setPaletteDirty(false);
         }
     }
 
     // FIXME: Unify these ridiculous drawing models somehow.
 
     if (videoMode == 0x12) {
-        update(machine()->vgaMemory()->dirtyRect());
-        machine()->vgaMemory()->clearDirty();
+        update(machine().vgaMemory().dirtyRect());
+        machine().vgaMemory().clearDirty();
         return;
     }
 
@@ -220,18 +218,18 @@ void Screen::setScreenSize(int width, int height)
 
 void Screen::renderMode13(QImage& target)
 {
-    const BYTE* videoMemory = machine()->vgaMemory()->plane(0);
-    WORD startAddress = VGA::the()->startAddress();
+    const BYTE* videoMemory = machine().vgaMemory().plane(0);
+    WORD startAddress = machine().vga().startAddress();
     videoMemory += startAddress;
     memcpy(target.bits(), videoMemory, 320 * 200);
 }
 
 void Screen::renderMode12(QImage &target)
 {
-    const BYTE *p0 = machine()->vgaMemory()->plane(0);
-    const BYTE *p1 = machine()->vgaMemory()->plane(1);
-    const BYTE *p2 = machine()->vgaMemory()->plane(2);
-    const BYTE *p3 = machine()->vgaMemory()->plane(3);
+    const BYTE *p0 = machine().vgaMemory().plane(0);
+    const BYTE *p1 = machine().vgaMemory().plane(1);
+    const BYTE *p2 = machine().vgaMemory().plane(2);
+    const BYTE *p3 = machine().vgaMemory().plane(3);
 
     int offset = 0;
 
@@ -254,10 +252,10 @@ void Screen::renderMode12(QImage &target)
 
 void Screen::renderMode0D(QImage &target)
 {
-    const BYTE *p0 = machine()->vgaMemory()->plane(0);
-    const BYTE *p1 = machine()->vgaMemory()->plane(1);
-    const BYTE *p2 = machine()->vgaMemory()->plane(2);
-    const BYTE *p3 = machine()->vgaMemory()->plane(3);
+    const BYTE *p0 = machine().vgaMemory().plane(0);
+    const BYTE *p1 = machine().vgaMemory().plane(1);
+    const BYTE *p2 = machine().vgaMemory().plane(2);
+    const BYTE *p3 = machine().vgaMemory().plane(3);
 
     int offset = 0;
 
@@ -292,7 +290,7 @@ void Screen::paintEvent(QPaintEvent *e)
         QPainter wp(this);
         wp.setClipRegion(e->rect());
 
-        const QImage *screenImage = machine()->vgaMemory()->modeImage(0x12);
+        const QImage *screenImage = machine().vgaMemory().modeImage(0x12);
 
         if (screenImage)
             wp.drawImage(rect(), *screenImage);
@@ -339,7 +337,7 @@ void Screen::paintEvent(QPaintEvent *e)
 
     int screenColumns = currentColumnCount();
 
-    WORD rawCursor = VGA::the()->readRegister(0x0E) << 8 | VGA::the()->readRegister(0x0F);
+    WORD rawCursor = machine().vga().readRegister(0x0E) << 8 | machine().vga().readRegister(0x0F);
     BYTE row = screenColumns ? (rawCursor / screenColumns) : 0;
     BYTE column = screenColumns ? (rawCursor % screenColumns) : 0;
 
@@ -353,8 +351,8 @@ void Screen::paintEvent(QPaintEvent *e)
         }
     }
 
-    BYTE cursorStart = VGA::the()->readRegister(0x0A);
-    BYTE cursorEnd = VGA::the()->readRegister(0x0B);
+    BYTE cursorStart = machine().vga().readRegister(0x0A);
+    BYTE cursorEnd = machine().vga().readRegister(0x0B);
 
     // HACK 2000!
     if (cursorEnd < 14)
@@ -393,7 +391,7 @@ void Screen::synchronizeFont()
     m_characterHeight = 16;
     const QSize s(8, 16);
 
-    fontcharbitmap_t *fbmp = (fontcharbitmap_t *)(machine()->cpu()->memoryPointer(0xC400, 0x0000));
+    fontcharbitmap_t *fbmp = (fontcharbitmap_t *)(machine().cpu().memoryPointer(0xC400, 0x0000));
 
     for (int i = 0; i < 256; ++i) {
         d->character[i] = QBitmap::fromData(s, (const BYTE *)fbmp[i].data, QImage::Format_MonoLSB);
@@ -404,26 +402,26 @@ BYTE Screen::currentVideoMode() const
 {
     // FIXME: This is not the correct way to obtain the video mode (BDA.)
     //        Need to find out how the 6845 stores this information.
-    return machine()->cpu()->readUnmappedMemory8(0x449) & 0x7f;
+    return machine().cpu().readUnmappedMemory8(0x449) & 0x7f;
 }
 
 BYTE Screen::currentRowCount() const
 {
     // FIXME: Don't get through BDA.
-    return machine()->cpu()->readUnmappedMemory8(0x484) + 1;
+    return machine().cpu().readUnmappedMemory8(0x484) + 1;
 }
 
 BYTE Screen::currentColumnCount() const
 {
     // FIXME: Don't get through BDA.
-    return machine()->cpu()->readUnmappedMemory8(0x44A);
+    return machine().cpu().readUnmappedMemory8(0x44A);
 }
 
 void Screen::synchronizeColors()
 {
     for (int i = 0; i < 16; ++i)
     {
-        d->color[i] = VGA::the()->paletteColor(i);
+        d->color[i] = machine().vga().paletteColor(i);
         d->brush[i] = QBrush(d->color[i]);
 
         m_screen12.setColor(i, d->color[i].rgb());
@@ -432,7 +430,7 @@ void Screen::synchronizeColors()
     }
 
     for (int i = 0; i < 256; ++i) {
-        QColor color = VGA::the()->color(i);
+        QColor color = machine().vga().color(i);
         m_render13.setColor(i, color.rgb());
     }
 }
@@ -440,7 +438,7 @@ void Screen::synchronizeColors()
 void Screen::mouseMoveEvent(QMouseEvent* e)
 {
     QWidget::mouseMoveEvent(e);
-    BusMouse::the()->moveEvent(e->x(), e->y());
+    machine().busMouse().moveEvent(e->x(), e->y());
 }
 
 void Screen::mousePressEvent(QMouseEvent* e)
@@ -448,10 +446,10 @@ void Screen::mousePressEvent(QMouseEvent* e)
     QWidget::mousePressEvent(e);
     switch (e->button()) {
     case Qt::LeftButton:
-        BusMouse::the()->buttonPressEvent(e->x(), e->y(), BusMouse::LeftButton);
+        machine().busMouse().buttonPressEvent(e->x(), e->y(), BusMouse::LeftButton);
         break;
     case Qt::RightButton:
-        BusMouse::the()->buttonPressEvent(e->x(), e->y(), BusMouse::RightButton);
+        machine().busMouse().buttonPressEvent(e->x(), e->y(), BusMouse::RightButton);
         break;
     default:
         break;
@@ -463,10 +461,10 @@ void Screen::mouseReleaseEvent(QMouseEvent *e)
     QWidget::mouseReleaseEvent(e);
     switch (e->button()) {
     case Qt::LeftButton:
-        BusMouse::the()->buttonReleaseEvent(e->x(), e->y(), BusMouse::LeftButton);
+        machine().busMouse().buttonReleaseEvent(e->x(), e->y(), BusMouse::LeftButton);
         break;
     case Qt::RightButton:
-        BusMouse::the()->buttonReleaseEvent(e->x(), e->y(), BusMouse::RightButton);
+        machine().busMouse().buttonReleaseEvent(e->x(), e->y(), BusMouse::RightButton);
         break;
     default:
         break;
@@ -634,7 +632,7 @@ bool Screen::loadKeymap(const QString& filename)
 
 void Screen::init()
 {
-    QString keymap = machine()->settings()->keymap();
+    QString keymap = machine().settings().keymap();
     if (keymap.isEmpty())
         vlog(LogScreen, "No keymap to load!");
     else
@@ -722,7 +720,7 @@ void Screen::keyPressEvent(QKeyEvent* event)
 
     d->rawQueue.enqueue(makeCode[keyName]);
 
-    Keyboard::raiseIRQ();
+    machine().keyboard().raiseIRQ();
 }
 
 void Screen::keyReleaseEvent(QKeyEvent* event)
@@ -734,7 +732,7 @@ void Screen::keyReleaseEvent(QKeyEvent* event)
         d->rawQueue.enqueue(0xE0);
 
     d->rawQueue.enqueue(breakCode[keyName]);
-    Keyboard::raiseIRQ();
+    machine().keyboard().raiseIRQ();
     event->ignore();
 }
 
@@ -774,13 +772,8 @@ void Screen::flushKeyBuffer()
 {
     QMutexLocker l(&d->keyQueueLock);
 
-    if (!d->rawQueue.isEmpty() && machine()->cpu()->getIF())
-        Keyboard::raiseIRQ();
-}
-
-Machine* Screen::machine() const
-{
-    return d->machine;
+    if (!d->rawQueue.isEmpty() && machine().cpu().getIF())
+        machine().keyboard().raiseIRQ();
 }
 
 WORD kbd_getc()

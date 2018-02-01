@@ -27,12 +27,10 @@
 #include "vomit.h"
 #include "vcpu.h"
 
-static PS2 thePS2;
-
 static const WORD SystemControlPortA = 0x92;
 
-PS2::PS2()
-    : IODevice("PS2")
+PS2::PS2(Machine& machine)
+    : IODevice("PS2", machine)
 {
     listen(SystemControlPortA, IODevice::ReadWrite);
 }

@@ -29,10 +29,20 @@
 #include <QObject>
 #include "types.h"
 
+class BusMouse;
+class CMOS;
+class FDC;
+class IDE;
+class Keyboard;
+class PIC;
+class PIT;
+class PS2;
 class Screen;
 class Settings;
 class VCpu;
+class VGA;
 class VGAMemory;
+class VomCtl;
 class Worker;
 
 class Machine : public QObject
@@ -44,10 +54,17 @@ public:
     static Machine* createForAutotest(const QString& fileName);
 
     QString name() const { return m_name; }
-    VCpu* cpu() const { return m_cpu; }
-    VGAMemory* vgaMemory() const { return m_vgaMemory; }
-    Screen* screen() const { return m_screen; }
-    Settings* settings() const { return m_settings; }
+    VCpu& cpu() const { return *m_cpu; }
+    VGA& vga() const { return *m_vga; }
+    PIT& pit() const { return *m_pit; }
+    BusMouse& busMouse() const { return *m_busMouse; }
+    Keyboard& keyboard() const { return *m_keyboard; }
+    VomCtl& vomCtl() const { return *m_vomCtl; }
+    PIC& masterPIC() const { return *m_masterPIC; }
+    PIC& slavePIC() const { return *m_slavePIC; }
+    VGAMemory& vgaMemory() const { return *m_vgaMemory; }
+    Screen& screen() const { return *m_screen; }
+    Settings& settings() const { return *m_settings; }
 
 public slots:
     void start();
@@ -64,14 +81,25 @@ private:
 
     void applySettings();
 
-    Worker* worker() const { return m_worker; }
+    Worker& worker() const { return *m_worker; }
 
     QString m_name;
-    Settings* m_settings;
-    VCpu* m_cpu;
-    Screen* m_screen;
-    VGAMemory* m_vgaMemory;
-    Worker* m_worker;
+    Settings* m_settings { nullptr };
+    VCpu* m_cpu { nullptr };
+    Screen* m_screen { nullptr };
+    VGAMemory* m_vgaMemory { nullptr };
+    Worker* m_worker { nullptr };
+    VGA* m_vga { nullptr };
+    PIT* m_pit { nullptr };
+    BusMouse* m_busMouse { nullptr };
+    CMOS* m_cmos { nullptr };
+    FDC* m_fdc { nullptr };
+    IDE* m_ide { nullptr };
+    Keyboard* m_keyboard { nullptr };
+    PIC* m_masterPIC { nullptr };
+    PIC* m_slavePIC { nullptr };
+    PS2* m_ps2 { nullptr };
+    VomCtl* m_vomCtl { nullptr };
 };
 
 #endif

@@ -31,8 +31,6 @@
 #include <QtCore/QMutexLocker>
 #include <QtGui/QColor>
 
-static VGA theVGA;
-
 struct RGBColor {
     BYTE red;
     BYTE green;
@@ -78,13 +76,8 @@ static const RGBColor default_vga_color_registers[256] =
     {0x15,0x15,0x15}, {0x15,0x15,0x3f}, {0x15,0x3f,0x15}, {0x15,0x3f,0x3f}, {0x3f,0x15,0x15}, {0x3f,0x15,0x3f}, {0x3f,0x3f,0x15}, {0x3f,0x3f,0x3f},
 };
 
-VGA* VGA::the()
-{
-    return &theVGA;
-}
-
-VGA::VGA()
-    : IODevice("VGA")
+VGA::VGA(Machine& m)
+    : IODevice("VGA", m)
     , d(new Private)
 {
     listen(0x3B4, IODevice::ReadWrite);

@@ -28,7 +28,7 @@
 
 #include "iodevice.h"
 
-class IDE : public IODevice
+class IDE final : public IODevice
 {
 public:
     enum Status {
@@ -42,15 +42,13 @@ public:
         BUSY  = 0x80
     };
 
-    IDE();
+    explicit IDE(Machine&);
     virtual ~IDE();
 
-    virtual BYTE in8(WORD port);
-    virtual void out8(WORD port, BYTE data);
+    virtual BYTE in8(WORD port) override;
+    virtual void out8(WORD port, BYTE data) override;
 
     Status status() const;
-
-    static IDE* the();
 
 private:
     struct Private;

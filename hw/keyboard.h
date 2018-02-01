@@ -28,16 +28,16 @@
 
 #include "iodevice.h"
 
-class Keyboard : public IODevice
+class Keyboard final : public IODevice
 {
 public:
-    Keyboard();
+    explicit Keyboard(Machine&);
     virtual ~Keyboard();
 
-    virtual BYTE in8(WORD port);
-    virtual void out8(WORD port, BYTE data);
+    virtual BYTE in8(WORD port) override;
+    virtual void out8(WORD port, BYTE data) override;
 
-    static void raiseIRQ();
+    void raiseIRQ();
 
 private:
     BYTE m_systemControlPortData;

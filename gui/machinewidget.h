@@ -34,10 +34,10 @@ class MachineWidget : public QWidget
 {
     Q_OBJECT
 public:
-    explicit MachineWidget(Machine*);
+    explicit MachineWidget(Machine&);
     virtual ~MachineWidget();
 
-    Machine* machine() const { return m_machine; }
+    Machine& machine() const { return m_machine; }
 
 private slots:
     void onStartTriggered();
@@ -48,7 +48,7 @@ private slots:
     void onFloppyBTriggered();
 
 private:
-    Machine* m_machine;
+    Machine& m_machine;
 
     struct Private;
     Private* d;

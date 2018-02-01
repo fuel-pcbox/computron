@@ -28,14 +28,14 @@
 
 #include "iodevice.h"
 
-class PS2 : public IODevice
+class PS2 final : public IODevice
 {
 public:
-    PS2();
+    explicit PS2(Machine&);
     virtual ~PS2();
 
-    virtual BYTE in8(WORD port);
-    virtual void out8(WORD port, BYTE data);
+    virtual BYTE in8(WORD port) override;
+    virtual void out8(WORD port, BYTE data) override;
 };
 
 #endif

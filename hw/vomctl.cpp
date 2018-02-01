@@ -28,15 +28,13 @@
 #include "vomit.h"
 #include "debug.h"
 
-static VomCtl theVomCtl;
-
 struct VomCtl::Private
 {
     QString consoleWriteBuffer;
 };
 
-VomCtl::VomCtl()
-    : IODevice("VomCtl")
+VomCtl::VomCtl(Machine& machine)
+    : IODevice("VomCtl", machine)
     , d(new Private)
 {
     m_registerIndex = 0;
@@ -87,7 +85,7 @@ BYTE VomCtl::in8(WORD port)
 
 void VomCtl::out8(WORD port, BYTE data)
 {
-    extern void vm_call8(VCpu*, WORD port, BYTE value);
+    extern void vm_call8(VCpu&, WORD port, BYTE value);
 
     switch (port) {
     case 0xD6: // VOMCTL_REGISTER
@@ -104,7 +102,7 @@ void VomCtl::out8(WORD port, BYTE data)
     case 0xE6:
     case 0xE7:
     case 0xE8:
-        vm_call8(g_cpu, port, data);
+        vm_call8(*g_cpu, port, data);
         break;
     default:
         IODevice::out8(port, data);

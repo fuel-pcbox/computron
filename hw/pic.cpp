@@ -27,18 +27,17 @@
 #include "vcpu.h"
 #include "pic.h"
 #include "debug.h"
+#include "machine.h"
 
-static PIC theMaster(0x20, 0x08);
-static PIC theSlave(0xA0, 0x70);
-
+// FIXME: These should not be globals.
 static volatile bool s_haveRequests = false;
 WORD PIC::s_pendingRequests = 0x0000;
 QMutex PIC::s_mutex;
 
-void PIC::updatePendingRequests()
+void PIC::updatePendingRequests(Machine& machine)
 {
     QMutexLocker locker(&s_mutex);
-    s_pendingRequests = (theMaster.getIRR() & ~theMaster.getIMR() ) | ((theSlave.getIRR() & ~theSlave.getIMR()) << 8);
+    s_pendingRequests = (machine.masterPIC().getIRR() & ~machine.masterPIC().getIMR() ) | ((machine.slavePIC().getIRR() & ~machine.slavePIC().getIMR()) << 8);
     s_haveRequests = s_pendingRequests != 0;
 }
 
@@ -47,22 +46,29 @@ bool PIC::hasPendingIRQ()
     return s_haveRequests;
 }
 
-PIC::PIC(WORD baseAddress, BYTE isrBase)
-    : IODevice("PIC")
-    , m_baseAddress(baseAddress)
-    , m_isrBase(isrBase)
-    , m_isr(0x00)
-    , m_irr(0x00)
-    , m_imr(0x00)
-    , m_icw2Expected(false)
-    , m_readIRR(true)
-{
+PIC::PIC(bool isMaster, Machine& machine)
+    : IODevice("PIC", machine)
+    , m_baseAddress(isMaster ? 0x20 : 0xA0)
+    , m_isrBase(isMaster ? 0x08 : 0x70)
+{    
     listen(m_baseAddress, IODevice::ReadWrite);
     listen(m_baseAddress + 1, IODevice::ReadWrite);
+
+    reset();
 }
 
 PIC::~PIC()
 {
+}
+
+void PIC::reset()
+{
+    m_isr = 0x00;
+    m_irr = 0x00;
+    m_imr = 0x00;
+    m_icw2Expected = false;
+    m_readIRR = true;
+    IODevice::reset();
 }
 
 void PIC::out8(WORD port, BYTE data)
@@ -98,7 +104,7 @@ void PIC::out8(WORD port, BYTE data)
             m_irr = 0;
             m_readIRR = true;
             m_icw2Expected = true;
-            updatePendingRequests();
+            updatePendingRequests(machine());
             return;
         }
 
@@ -116,7 +122,7 @@ void PIC::out8(WORD port, BYTE data)
         for (int i = 0; i < 8; ++i)
             vlog(LogPIC, " - IRQ %u: %s", i, (data & (1 << i)) ? "masked" : "service");
         m_imr = data;
-        updatePendingRequests();
+        updatePendingRequests(machine());
         return;
     }
 
@@ -142,19 +148,20 @@ void PIC::raise(BYTE num)
     m_isr |= 1 << num;
 }
 
-void PIC::raiseIRQ(BYTE num)
+void PIC::raiseIRQ(Machine& machine, BYTE num)
 {
     if (num < 8)
-        theMaster.raise(num);
+        machine.masterPIC().raise(num);
     else
-        theSlave.raise(num - 8);
+        machine.slavePIC().raise(num - 8);
 
-    updatePendingRequests();
+    updatePendingRequests(machine);
 }
 
-void PIC::serviceIRQ(VCpu* cpu)
+void PIC::serviceIRQ(VCpu& cpu)
 {
     QMutexLocker lockerGlobal(&s_mutex);
+    Machine& machine = cpu.machine();
 
     if (!s_pendingRequests)
         return;
@@ -169,21 +176,21 @@ void PIC::serviceIRQ(VCpu* cpu)
         return;
 
     if (interrupt_to_service < 8) {
-        theMaster.m_irr &= ~(1 << interrupt_to_service);
-        theMaster.m_isr |= (1 << interrupt_to_service);
+        machine.masterPIC().m_irr &= ~(1 << interrupt_to_service);
+        machine.masterPIC().m_isr |= (1 << interrupt_to_service);
 
-        cpu->jumpToInterruptHandler(theMaster.m_isrBase | interrupt_to_service, true);
+        cpu.jumpToInterruptHandler(machine.masterPIC().m_isrBase | interrupt_to_service, true);
     }
     else
     {
-        theSlave.m_irr &= ~(1 << (interrupt_to_service - 8));
-        theSlave.m_isr |= (1 << (interrupt_to_service - 8));
+        machine.slavePIC().m_irr &= ~(1 << (interrupt_to_service - 8));
+        machine.slavePIC().m_isr |= (1 << (interrupt_to_service - 8));
 
-        cpu->jumpToInterruptHandler(theSlave.m_isrBase | interrupt_to_service, true);
+        cpu.jumpToInterruptHandler(machine.slavePIC().m_isrBase | interrupt_to_service, true);
     }
 
     lockerGlobal.unlock();
-    updatePendingRequests();
+    updatePendingRequests(machine);
 
-    cpu->setState(VCpu::Alive);
+    cpu.setState(VCpu::Alive);
 }

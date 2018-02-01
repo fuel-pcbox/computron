@@ -26,7 +26,7 @@
 #include "worker.h"
 #include "vcpu.h"
 
-Worker::Worker(VCpu* cpu)
+Worker::Worker(VCpu& cpu)
     : QThread(0)
     , m_cpu(cpu)
     , m_active(false)
@@ -40,7 +40,7 @@ Worker::~Worker()
 void Worker::run()
 {
     while (m_active) {
-        m_cpu->mainLoop();
+        m_cpu.mainLoop();
         while (!m_active)
             msleep(50);
     }
@@ -54,17 +54,17 @@ void Worker::shutdown()
 
 void Worker::startMachine()
 {
-    m_cpu->queueCommand(VCpu::EnterMainLoop);
+    m_cpu.queueCommand(VCpu::EnterMainLoop);
     m_active = true;
 }
 
 void Worker::stopMachine()
 {
-    m_cpu->queueCommand(VCpu::ExitMainLoop);
+    m_cpu.queueCommand(VCpu::ExitMainLoop);
     m_active = false;
 }
 
 void Worker::rebootMachine()
 {
-    m_cpu->queueCommand(VCpu::SoftReboot);
+    m_cpu.queueCommand(VCpu::SoftReboot);
 }

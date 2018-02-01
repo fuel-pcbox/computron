@@ -51,20 +51,18 @@ struct MachineWidget::Private
     QTimer syncTimer;
 };
 
-MachineWidget::MachineWidget(Machine* m)
+MachineWidget::MachineWidget(Machine& m)
     : QWidget(0)
     , m_machine(m)
     , d(new Private)
 {
-    VM_ASSERT(m_machine);
-
 #if 0
     // FIXME: Find a way to put this in the UI. Dock widget?
     PaletteWidget* paletteWidget = new PaletteWidget;
     paletteWidget->show();
 #endif
 
-    StateWidget* stateWidget = new StateWidget(*m);
+    StateWidget* stateWidget = new StateWidget(m);
 
     d->toolBar = new QToolBar(tr("Virtual Machine"));
 
@@ -77,14 +75,14 @@ MachineWidget::MachineWidget(Machine* m)
     QHBoxLayout* hLayout = new QHBoxLayout;
     hLayout->setSpacing(0);
     hLayout->setMargin(0);
-    hLayout->addWidget(machine()->screen());
+    hLayout->addWidget(&machine().screen());
     hLayout->addWidget(stateWidget);
 
     layout->addLayout(hLayout);
 
     setLayout(layout);
 
-    machine()->screen()->setFocus();
+    machine().screen().setFocus();
 
     QAction *chooseFloppyAImage = new QAction(QIcon(":/icons/toolbar-floppy.svg"), tr("Floppy A:"), this);
     QAction *chooseFloppyBImage = new QAction(QIcon(":/icons/toolbar-floppy.svg"), tr("Floppy B:"), this);
@@ -115,11 +113,11 @@ MachineWidget::MachineWidget(Machine* m)
     connect(d->startMachine, SIGNAL(triggered(bool)), SLOT(onStartTriggered()));
     connect(d->stopMachine, SIGNAL(triggered(bool)), SLOT(onStopTriggered()));
 
-    QObject::connect(&d->syncTimer, SIGNAL(timeout()), machine()->screen(), SLOT(refresh()));
-    QObject::connect(&d->syncTimer, SIGNAL(timeout()), machine()->screen(), SLOT(flushKeyBuffer()));
+    QObject::connect(&d->syncTimer, SIGNAL(timeout()), &machine().screen(), SLOT(refresh()));
+    QObject::connect(&d->syncTimer, SIGNAL(timeout()), &machine().screen(), SLOT(flushKeyBuffer()));
     d->syncTimer.start(50);
 
-    QObject::connect(qApp, SIGNAL(aboutToQuit()), machine(), SLOT(stop()));
+    QObject::connect(qApp, SIGNAL(aboutToQuit()), &machine(), SLOT(stop()));
 }
 
 MachineWidget::~MachineWidget()
@@ -150,7 +148,7 @@ void MachineWidget::onPauseTriggered()
     d->startMachine->setEnabled(true);
     d->stopMachine->setEnabled(true);
 
-    machine()->pause();
+    machine().pause();
 }
 
 void MachineWidget::onStopTriggered()
@@ -159,7 +157,7 @@ void MachineWidget::onStopTriggered()
     d->startMachine->setEnabled(true);
     d->stopMachine->setEnabled(false);
 
-    machine()->stop();
+    machine().stop();
 }
 
 void MachineWidget::onStartTriggered()
@@ -168,10 +166,10 @@ void MachineWidget::onStartTriggered()
     d->startMachine->setEnabled(false);
     d->stopMachine->setEnabled(true);
 
-    machine()->start();
+    machine().start();
 }
 
 void MachineWidget::onRebootTriggered()
 {
-    machine()->reboot();
+    machine().reboot();
 }

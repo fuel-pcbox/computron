@@ -28,16 +28,14 @@
 
 #include "iodevice.h"
 
-class FDC : public IODevice
+class FDC final : public IODevice
 {
 public:
-    FDC();
+    explicit FDC(Machine&);
     virtual ~FDC();
 
-    virtual BYTE in8(WORD port);
-    virtual void out8(WORD port, BYTE data);
-
-    static FDC* the();
+    virtual BYTE in8(WORD port) override;
+    virtual void out8(WORD port, BYTE data) override;
 
 private:
     void executeCommand();

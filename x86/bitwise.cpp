@@ -120,21 +120,21 @@ void VCpu::_SALC()
 
 // FIXME: Move this method into VCpu.
 template<typename T>
-inline void updateCpuFlags(VCpu* cpu, T result)
+inline void updateCpuFlags(VCpu& cpu, T result)
 {
     if (BitSizeOfType<T>::bits == 8)
-        cpu->updateFlags8(result);
+        cpu.updateFlags8(result);
     else if (BitSizeOfType<T>::bits == 16)
-        cpu->updateFlags16(result);
+        cpu.updateFlags16(result);
     else if (BitSizeOfType<T>::bits == 32)
-        cpu->updateFlags32(result);
+        cpu.updateFlags32(result);
 }
 
 template <typename T>
 T VCpu::doOr(T dest, T src)
 {
     T result = dest | src;
-    updateCpuFlags(this, result);
+    updateCpuFlags(*this, result);
     setOF(0);
     setCF(0);
     return result;
@@ -144,7 +144,7 @@ template<typename T>
 T VCpu::doXor(T dest, T src)
 {
     T result = dest ^ src;
-    updateCpuFlags(this, result);
+    updateCpuFlags(*this, result);
     setOF(0);
     setCF(0);
     return result;
@@ -154,7 +154,7 @@ template<typename T>
 T VCpu::doAnd(T dest, T src)
 {
     T result = dest & src;
-    updateCpuFlags(this, result);
+    updateCpuFlags(*this, result);
     setOF(0);
     setCF(0);
     return result;
@@ -170,7 +170,7 @@ inline DWORD allOnes(unsigned bits)
     return 0xFFFFFFFF;
 }
 
-DWORD cpu_sar(VCpu* cpu, DWORD data, BYTE steps, BYTE bits)
+DWORD cpu_sar(VCpu& cpu, DWORD data, BYTE steps, BYTE bits)
 {
     DWORD result = data;
     DWORD n;
@@ -181,18 +181,18 @@ DWORD cpu_sar(VCpu* cpu, DWORD data, BYTE steps, BYTE bits)
     for (BYTE i = 0; i < steps; ++i) {
         n = result;
         result = (result >> 1) | (n & mask);
-        cpu->setCF(n & 1);
+        cpu.setCF(n & 1);
     }
 
     if (steps == 1) {
-        cpu->setOF(0);
-        cpu->updateFlags(result, bits);
+        cpu.setOF(0);
+        cpu.updateFlags(result, bits);
     }
 
     return result;
 }
 
-DWORD cpu_rcl(VCpu* cpu, DWORD data, BYTE steps, BYTE bits)
+DWORD cpu_rcl(VCpu& cpu, DWORD data, BYTE steps, BYTE bits)
 {
     DWORD result = data;
     DWORD n;
@@ -202,17 +202,17 @@ DWORD cpu_rcl(VCpu* cpu, DWORD data, BYTE steps, BYTE bits)
 
     for (BYTE i = 0; i < steps; ++i) {
         n = result;
-        result = ((result<<1) & mask) | cpu->getCF();
-        cpu->setCF((n>>(bits-1)) & 1);
+        result = ((result<<1) & mask) | cpu.getCF();
+        cpu.setCF((n>>(bits-1)) & 1);
     }
 
     if (steps == 1)
-        cpu->setOF((result >> (bits - 1)) ^ cpu->getCF());
+        cpu.setOF((result >> (bits - 1)) ^ cpu.getCF());
 
     return result;
 }
 
-DWORD cpu_rcr(VCpu* cpu, DWORD data, BYTE steps, BYTE bits)
+DWORD cpu_rcr(VCpu& cpu, DWORD data, BYTE steps, BYTE bits)
 {
     DWORD result = (DWORD)data;
     DWORD n;
@@ -221,12 +221,12 @@ DWORD cpu_rcr(VCpu* cpu, DWORD data, BYTE steps, BYTE bits)
 
     for (BYTE i = 0; i < steps; ++i) {
         n = result;
-        result = (result>>1) | (cpu->getCF()<<(bits-1));
-        cpu->setCF(n & 1);
+        result = (result>>1) | (cpu.getCF()<<(bits-1));
+        cpu.setCF(n & 1);
     }
 
     if (steps == 1)
-        cpu->setOF((result >> (bits - 1)) ^ ((result >> (bits - 2) & 1)));
+        cpu.setOF((result >> (bits - 1)) ^ ((result >> (bits - 2) & 1)));
 
     return result;
 }

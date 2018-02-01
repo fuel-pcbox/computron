@@ -32,7 +32,7 @@
 class BusMouse : public IODevice
 {
 public:
-    BusMouse();
+    explicit BusMouse(Machine&);
     virtual ~BusMouse();
 
     virtual void out8(WORD port, BYTE data);
@@ -47,16 +47,16 @@ public:
     static BusMouse* the();
 
 private:
-    bool m_interrupts;
-    BYTE m_command;
-    BYTE m_buttons;
+    bool m_interrupts { true };
+    BYTE m_command { 0 };
+    BYTE m_buttons { 0 };
 
-    WORD m_currentX;
-    WORD m_currentY;
-    WORD m_lastX;
-    WORD m_lastY;
-    WORD m_deltaX;
-    WORD m_deltaY;
+    WORD m_currentX { 0 };
+    WORD m_currentY { 0 };
+    WORD m_lastX { 0 };
+    WORD m_lastY { 0 };
+    WORD m_deltaX { 0 };
+    WORD m_deltaY { 0 };
 
     QMutex m_mutex;
 };

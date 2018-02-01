@@ -33,19 +33,19 @@
 #include <QtGui/QColor>
 #include <QtGui/QBrush>
 
-#define WRITE_MODE (VGA::the()->readRegister2(5) & 0x03)
-#define READ_MODE ((VGA::the()->readRegister2(5) >> 3) & 1)
-#define ODD_EVEN ((VGA::the()->readRegister2(5) >> 4) & 1)
-#define SHIFT_REG ((VGA::the()->readRegister2(5) >> 5) & 0x03)
-#define ROTATE ((VGA::the()->readRegister2(3)) & 0x07)
-#define DRAWOP ((VGA::the()->readRegister2(3) >> 3) & 3)
-#define MAP_MASK_BIT(i) ((VGA::the()->readSequencer(2) >> i)&1)
-#define SET_RESET_BIT(i) ((VGA::the()->readRegister2(0) >> i)&1)
-#define SET_RESET_ENABLE_BIT(i) ((VGA::the()->readRegister2(1) >> i)&1)
-#define BIT_MASK (VGA::the()->readRegister2(8))
+#define WRITE_MODE (machine().vga().readRegister2(5) & 0x03)
+#define READ_MODE ((machine().vga().readRegister2(5) >> 3) & 1)
+#define ODD_EVEN ((machine().vga().readRegister2(5) >> 4) & 1)
+#define SHIFT_REG ((machine().vga().readRegister2(5) >> 5) & 0x03)
+#define ROTATE ((machine().vga().readRegister2(3)) & 0x07)
+#define DRAWOP ((machine().vga().readRegister2(3) >> 3) & 3)
+#define MAP_MASK_BIT(i) ((machine().vga().readSequencer(2) >> i)&1)
+#define SET_RESET_BIT(i) ((machine().vga().readRegister2(0) >> i)&1)
+#define SET_RESET_ENABLE_BIT(i) ((machine().vga().readRegister2(1) >> i)&1)
+#define BIT_MASK (machine().vga().readRegister2(8))
 
-VGAMemory::VGAMemory(Machine* machine)
-    : m_machine(machine)
+VGAMemory::VGAMemory(Machine& m)
+    : m_machine(m)
 {
     m_screen12 = QImage(640, 480, QImage::Format_Indexed8);
     m_screen12.fill(0);
@@ -63,7 +63,7 @@ VGAMemory::VGAMemory(Machine* machine)
     m_latch[3] = 0;
 
     synchronizeColors();
-    VGA::the()->setPaletteDirty(true);
+    machine().vga().setPaletteDirty(true);
 
     m_dirty = true;
 }
@@ -81,7 +81,7 @@ void VGAMemory::write8(DWORD address, BYTE value)
 
     address -= 0xA0000;
 
-    if (machine()->screen()->currentVideoMode() == 0x13) {
+    if (machine().screen().currentVideoMode() == 0x13) {
         m_plane[0][address] = value;
         return;
     }
@@ -109,8 +109,8 @@ void VGAMemory::write8(DWORD address, BYTE value)
     } else if (WRITE_MODE == 0) {
 
         BYTE bitmask = BIT_MASK;
-        BYTE set_reset = VGA::the()->readRegister2(0);
-        BYTE enable_set_reset = VGA::the()->readRegister2(1);
+        BYTE set_reset = machine().vga().readRegister2(0);
+        BYTE enable_set_reset = machine().vga().readRegister2(1);
         BYTE val = value;
 
         if (ROTATE) {
@@ -209,7 +209,7 @@ void VGAMemory::write8(DWORD address, BYTE value)
      * Check first if any planes should be written.
      */
 
-    BYTE plane_mask = VGA::the()->readSequencer(2) & 0x0F;
+    BYTE plane_mask = machine().vga().readSequencer(2) & 0x0F;
 
     if (plane_mask) {
         if (plane_mask & 0x01)
@@ -222,13 +222,13 @@ void VGAMemory::write8(DWORD address, BYTE value)
             m_plane[3][address] = new_val[3];
 
         // FIXME: We shouldn't have to check this on every pass.
-        if (VGA::the()->isPaletteDirty())
+        if (machine().vga().isPaletteDirty())
             synchronizeColors();
 
 #define D(i) ((m_plane[0][address]>>i) & 1) | (((m_plane[1][address]>>i) & 1)<<1) | (((m_plane[2][address]>>i) & 1)<<2) | (((m_plane[3][address]>>i) & 1)<<3)
 
         // HACK: I don't really like this way of obtaining the current mode...
-        if (machine()->screen()->currentVideoMode() == 0x12 && address < (640 * 480 / 8)) {
+        if (machine().screen().currentVideoMode() == 0x12 && address < (640 * 480 / 8)) {
 
             // address 100 -> pixels 800-807
             uchar *px = &m_screen12.bits()[address * 8];
@@ -268,7 +268,7 @@ BYTE VGAMemory::read8(DWORD address)
 
     address -= 0xA0000;
 
-    if (machine()->screen()->currentVideoMode() == 0x13)
+    if (machine().screen().currentVideoMode() == 0x13)
         return m_plane[0][address];
 
     m_latch[0] = m_plane[0][address];
@@ -276,7 +276,7 @@ BYTE VGAMemory::read8(DWORD address)
     m_latch[2] = m_plane[2][address];
     m_latch[3] = m_plane[3][address];
 
-    return m_latch[VGA::the()->readRegister2(4)];
+    return m_latch[machine().vga().readRegister2(4)];
 }
 
 void VGAMemory::write16(DWORD address, WORD value)
@@ -339,7 +339,7 @@ void VGAMemory::clearDirty()
 void VGAMemory::synchronizeColors()
 {
     for (int i = 0; i < 16; ++i) {
-        m_color[i] = VGA::the()->paletteColor(i);
+        m_color[i] = machine().vga().paletteColor(i);
         m_brush[i] = QBrush(m_color[i]);
         m_screen12.setColor(i, m_color[i].rgb());
     }

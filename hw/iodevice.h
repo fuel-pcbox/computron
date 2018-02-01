@@ -30,13 +30,17 @@
 #include <QList>
 #include <QHash>
 
+class Machine;
 class IODevice
 {
 public:
-    IODevice(const char* name);
+    IODevice(const char* name, Machine&);
     virtual ~IODevice();
 
     const char* name() const;
+    Machine& machine() const { return m_machine; }
+
+    virtual void reset() { }
 
     virtual BYTE in8(WORD port);
     virtual void out8(WORD port, BYTE data);
@@ -61,6 +65,7 @@ protected:
     virtual void listen(WORD port, ListenMask mask);
 
 private:
+    Machine& m_machine;
     const char* m_name;
     QList<WORD> m_ports;
 

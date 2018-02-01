@@ -50,10 +50,8 @@
 #define CMD_READ_CCB                  0x20
 #define CMD_WRITE_CCB                 0x60
 
-static Keyboard theKeyboard;
-
-Keyboard::Keyboard()
-    : IODevice("Keyboard")
+Keyboard::Keyboard(Machine& machine)
+    : IODevice("Keyboard", machine)
 {
     memset(m_ram, 0, sizeof(m_ram));
 
@@ -174,6 +172,6 @@ void Keyboard::out8(WORD port, BYTE data)
 
 void Keyboard::raiseIRQ()
 {
-    if (theKeyboard.m_ram[0] & CCB_KEYBOARD_INTERRUPT_ENABLE)
-        PIC::raiseIRQ(1);
+    if (m_ram[0] & CCB_KEYBOARD_INTERRUPT_ENABLE)
+        PIC::raiseIRQ(machine(), 1);
 }

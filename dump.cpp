@@ -160,14 +160,6 @@ const char* VCpu::registerName(VCpu::RegisterIndex32 registerIndex)
     return nullptr;
 }
 
-static void dumpRegister(const VCpu* cpu, VCpu::RegisterIndex16 registerIndex)
-{
-    if (cpu->getPE())
-        vlog(LogDump, "E%s: %08X", VCpu::registerName(registerIndex), cpu->getRegister32(static_cast<VCpu::RegisterIndex32>(registerIndex)));
-    else
-        vlog(LogDump, "%s: %04X", VCpu::registerName(registerIndex), cpu->getRegister16(registerIndex));
-}
-
 void VCpu::dumpWatches()
 {
     for (WatchedAddress& watch : m_watches) {
@@ -197,14 +189,22 @@ void VCpu::dumpAll()
 {
     BYTE* csip = codeMemory();
 
-    dumpRegister(this, RegisterAX);
-    dumpRegister(this, RegisterBX);
-    dumpRegister(this, RegisterCX);
-    dumpRegister(this, RegisterDX);
-    dumpRegister(this, RegisterBP);
-    dumpRegister(this, RegisterSP);
-    dumpRegister(this, RegisterSI);
-    dumpRegister(this, RegisterDI);
+    auto dumpRegister = [this](VCpu::RegisterIndex16 registerIndex)
+    {
+        if (getPE())
+            vlog(LogDump, "E%s: %08X", VCpu::registerName(registerIndex), getRegister32(static_cast<VCpu::RegisterIndex32>(registerIndex)));
+        else
+            vlog(LogDump, "%s: %04X", VCpu::registerName(registerIndex), getRegister16(registerIndex));
+    };
+
+    dumpRegister(RegisterAX);
+    dumpRegister(RegisterBX);
+    dumpRegister(RegisterCX);
+    dumpRegister(RegisterDX);
+    dumpRegister(RegisterBP);
+    dumpRegister(RegisterSP);
+    dumpRegister(RegisterSI);
+    dumpRegister(RegisterDI);
 
     if (!getPE()) {
         vlog(LogDump, "CS: %04X", getCS());
@@ -325,14 +325,14 @@ void VCpu::dumpMemory(WORD segment, DWORD offset, int rows)
     }
 }
 
-static inline WORD isrSegment(const VCpu* cpu, BYTE isr)
+static inline WORD isrSegment(const VCpu& cpu, BYTE isr)
 {
-    return cpu->readUnmappedMemory16(isr * 4) + 2;
+    return cpu.readUnmappedMemory16(isr * 4) + 2;
 }
 
-static inline WORD isrOffset(const VCpu* cpu, BYTE isr)
+static inline WORD isrOffset(const VCpu& cpu, BYTE isr)
 {
-    return cpu->readUnmappedMemory16(isr * 4);
+    return cpu.readUnmappedMemory16(isr * 4);
 }
 
 void VCpu::dumpIVT()
@@ -341,10 +341,10 @@ void VCpu::dumpIVT()
     for (int i = 0; i < 0xFF; i += 4) {
         vlog(LogDump,
             "%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X",
-            i, isrSegment(this, i), isrOffset(this, i),
-            i + 1, isrSegment(this, i + 1), isrOffset(this, i + 1),
-            i + 2, isrSegment(this, i + 2), isrOffset(this, i + 2),
-            i + 3, isrSegment(this, i + 3), isrOffset(this, i + 3)
+            i, isrSegment(*this, i), isrOffset(*this, i),
+            i + 1, isrSegment(*this, i + 1), isrOffset(*this, i + 1),
+            i + 2, isrSegment(*this, i + 2), isrOffset(*this, i + 2),
+            i + 3, isrSegment(*this, i + 3), isrOffset(*this, i + 3)
         );
     }
 }
