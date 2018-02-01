@@ -439,8 +439,8 @@ void VCpu::_wrap_0xF7_32()
     case 3: _NEG_RM32(); break;
 #if 0
     case 5: _IMUL_RM32(); break;
-    case 7: _IDIV_RM32(); break;
 #endif
+    case 7: _IDIV_RM32(); break;
     default: // 1
         vlog(LogAlert, "[32bit] F7 /%u not wrapped", vomit_modRMRegisterPart(rmbyte));
         exception(6);

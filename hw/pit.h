@@ -27,9 +27,11 @@
 #define PIT_H
 
 #include "iodevice.h"
+#include <QtCore/QObject>
 
 class PIT : public QObject, public IODevice
 {
+    Q_OBJECT
 public:
     PIT();
     virtual ~PIT();
@@ -41,12 +43,14 @@ public:
 
     static PIT* the();
 
+private slots:
+    void reconfigureTimer();
+
 private:
     virtual void timerEvent(QTimerEvent*);
 
     void raiseIRQ();
     void modeControl(int timerIndex, BYTE data);
-    void reconfigureTimer();
 
     struct Private;
     Private* d;

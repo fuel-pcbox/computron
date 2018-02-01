@@ -145,14 +145,18 @@ void VGA::out8(WORD port, BYTE data)
     case 0x3B4:
     case 0x3D4:
         d->currentRegister = data & 0x1F;
-        if (d->currentRegister >= 0x12)
-            vlog(LogVGA, "Invalid IO register #%u selected", d->currentRegister);
+        if (d->currentRegister > 0x18)
+            vlog(LogVGA, "Invalid I/O register 0x%02X selected through port %03X", d->currentRegister, port);
+        else if (options.vgadebug)
+            vlog(LogVGA, "I/O register 0x%02X selected through port %03X", d->currentRegister, port);
         break;
 
     case 0x3B5:
     case 0x3D5:
-        if (d->currentRegister >= 0x12)
-            vlog(LogVGA, "Invalid IO register #%u written", d->currentRegister);
+        if (d->currentRegister > 0x18)
+            vlog(LogVGA, "Invalid I/O register 0x%02X written (%02X) through port %03X", d->currentRegister, data, port);
+        else if (options.vgadebug)
+            vlog(LogVGA, "I/O register 0x%02X written (%02X) through port %03X", d->currentRegister, data, port);
         d->ioRegister[d->currentRegister] = data;
         break;
 
@@ -172,13 +176,13 @@ void VGA::out8(WORD port, BYTE data)
 
     case 0x3C4:
         d->currentSequencer = data & 0x1F;
-        if (d->currentSequencer >= 0x4)
-            vlog(LogVGA, "Invalid IO sequencer #%u selected", d->currentSequencer);
+        if (d->currentSequencer > 0x4)
+            vlog(LogVGA, "Invalid I/O sequencer #%u selected", d->currentSequencer);
         break;
 
     case 0x3C5:
-        if (d->currentSequencer >= 0x4)
-            vlog(LogVGA, "Invalid IO sequencer #%u written", d->currentSequencer);
+        if (d->currentSequencer > 0x4)
+            vlog(LogVGA, "Invalid I/O sequencer #%u written", d->currentSequencer);
         d->ioSequencer[d->currentSequencer] = data;
         break;
 
@@ -242,10 +246,12 @@ BYTE VGA::in8(WORD port)
 
     case 0x3B5:
     case 0x3D5:
-        if (d->currentRegister >= 0x12) {
-            vlog(LogVGA, "Invalid IO register #%u read", d->currentRegister);
+        if (d->currentRegister > 0x18) {
+            vlog(LogVGA, "Invalid I/O register 0x%02X read through port %03X", d->currentRegister, port);
             return IODevice::JunkValue;
         }
+        if (options.vgadebug)
+            vlog(LogVGA, "I/O register 0x%02X read through port %03X", d->currentRegister, port);
         return d->ioRegister[d->currentRegister];
 
     case 0x3BA:
@@ -279,7 +285,7 @@ BYTE VGA::in8(WORD port)
     }
 
     case 0x3C5:
-        if (d->currentSequencer >= 0x4) {
+        if (d->currentSequencer > 0x4) {
             vlog(LogVGA, "Invalid IO sequencer #%u read", d->currentSequencer);
             return IODevice::JunkValue;
         }
@@ -385,3 +391,7 @@ QColor VGA::color(int index) const
     return c;
 }
 
+WORD VGA::startAddress() const
+{
+    return vomit_MAKEWORD(d->ioRegister[0x0C], d->ioRegister[0x0D]);
+}

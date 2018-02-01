@@ -27,6 +27,7 @@
 #include "debug.h"
 #include "pic.h"
 #include "pit.h"
+#include <QtCore/QThread>
 
 static PIT thePIT;
 
@@ -81,6 +82,11 @@ PIT::~PIT()
 
 void PIT::reconfigureTimer()
 {
+    if (QThread::currentThread() != thread()) {
+        QMetaObject::invokeMethod(this, "reconfigureTimer", Qt::QueuedConnection);
+        return;
+    }
+
     if (d->timerId >= 0)
         killTimer(d->timerId);
 
@@ -166,7 +172,7 @@ void PIT::modeControl(int timerIndex, BYTE data)
     counter.mode = (data >> 1) & 7;
     timer.gotLSB = false;
 
-#if 0
+#if 1
     vlog(LogTimer, "Setting mode for counter %d", counterIndex);
     vlog(LogTimer, " - Decrement %s", (counter.decrementMode == DecrementBCD) ? "BCD" : "binary");
     vlog(LogTimer, " - Mode %d", counter.mode);

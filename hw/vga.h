@@ -54,6 +54,8 @@ public:
 
     BYTE currentVideoMode() const;
 
+    WORD startAddress() const;
+
     static VGA* the();
 
 signals:

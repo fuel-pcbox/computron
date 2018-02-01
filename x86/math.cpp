@@ -416,6 +416,21 @@ void VCpu::_IDIV_RM16()
     regs.W.DX = (SIGNED_WORD)(tDXAX % value); // Remainder
 }
 
+void VCpu::_IDIV_RM32()
+{
+    SIGNED_DWORD value = readModRM32(rmbyte);
+    SIGNED_QWORD tEDXEAX = ((QWORD)regs.D.EAX + ((QWORD)regs.D.EDX << 32));
+
+    if (value == 0) {
+        exception(0);
+        return;
+    }
+
+    // FIXME: divide error if result overflows
+    regs.D.EAX = (SIGNED_DWORD)(tEDXEAX / value); // Quote
+    regs.D.EDX = (SIGNED_DWORD)(tEDXEAX % value); // Remainder
+}
+
 void VCpu::_NEG_RM8()
 {
     BYTE value = readModRM8(rmbyte);

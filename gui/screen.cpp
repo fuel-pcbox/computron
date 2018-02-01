@@ -150,7 +150,14 @@ void Screen::refresh()
 {
     RefreshGuard guard;
 
-    if (isVideoModeUsingVGAMemory(currentVideoMode())) {
+    BYTE videoMode = currentVideoMode();
+
+    if (m_videoModeInLastRefresh != videoMode) {
+        vlog(LogScreen, "Video mode changed to %02X", videoMode);
+        m_videoModeInLastRefresh = videoMode;
+    }
+
+    if (isVideoModeUsingVGAMemory(videoMode)) {
         if (!machine()->vgaMemory()->isDirty())
             return;
         if (VGA::the()->isPaletteDirty()) {
@@ -162,25 +169,25 @@ void Screen::refresh()
 
     // FIXME: Unify these ridiculous drawing models somehow.
 
-    if (currentVideoMode() == 0x12) {
+    if (videoMode == 0x12) {
         update(machine()->vgaMemory()->dirtyRect());
         machine()->vgaMemory()->clearDirty();
         return;
     }
 
-    if (currentVideoMode() == 0x0D) {
+    if (videoMode == 0x0D) {
         renderMode0D(m_render0D);
         update();
         return;
     }
 
-    if (currentVideoMode() == 0x13) {
+    if (videoMode == 0x13) {
         renderMode13(m_render13);
         update();
         return;
     }
 
-    if (currentVideoMode() == 0x03) {
+    if (videoMode == 0x03) {
         int rows = currentRowCount();
         switch(rows)
         {
@@ -214,6 +221,8 @@ void Screen::setScreenSize(int width, int height)
 void Screen::renderMode13(QImage& target)
 {
     const BYTE* videoMemory = machine()->vgaMemory()->plane(0);
+    WORD startAddress = VGA::the()->startAddress();
+    videoMemory += startAddress;
     memcpy(target.bits(), videoMemory, 320 * 200);
 }
 

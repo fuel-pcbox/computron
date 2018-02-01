@@ -50,6 +50,7 @@ struct VomitOptions {
     bool iopeek { false };
     bool start_in_debug { false };
     bool memdebug { false };
+    bool vgadebug { false };
     std::string file_to_run;
 };
 

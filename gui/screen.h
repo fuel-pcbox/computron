@@ -121,6 +121,8 @@ private:
 
     struct Private;
     Private *d;
+
+    BYTE m_videoModeInLastRefresh { 0xFF };
 };
 
 #endif

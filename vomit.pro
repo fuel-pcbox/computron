@@ -41,6 +41,7 @@ HEADERS += gui/machinewidget.h \
            hw/vga_memory.h \
            hw/cmos.h \
            hw/pic.h \
+           hw/pit.h \
            hw/vga.h \
            hw/PS2.h \
            include/debugger.h \
