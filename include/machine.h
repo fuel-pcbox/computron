@@ -69,6 +69,8 @@ public:
     Screen& screen() { return *m_screen; }
     Settings& settings() { return *m_settings; }
 
+    bool isForAutotest();
+
 public slots:
     void start();
     void stop();

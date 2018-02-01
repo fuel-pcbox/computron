@@ -184,3 +184,8 @@ void Machine::onWorkerFinished()
 {
     // FIXME: Implement.
 }
+
+bool Machine::isForAutotest()
+{
+    return settings().isForAutotest();
+}

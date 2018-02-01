@@ -83,19 +83,24 @@ void VCpu::dumpTrace()
         getSF(), getIF(), getDF(), getOF()
     );
 #else
-    fprintf(stderr,
+    printf(
         "%04X:%08X %02X "
         "EAX=%08X EBX=%08X ECX=%08X EDX=%08X ESP=%08X EBP=%08X ESI=%08X EDI=%08X "
-        "CR0=%08X "
+        "CR0=%08X A20=%u "
         "DS=%04X ES=%04X SS=%04X FS=%04X GS=%04X "
-        "C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u\n",
+        "C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u "
+        "A%u O%u X%u\n",
         getCS(), getEIP(),
         codeMemory()[getEIP()],
         getEAX(), getEBX(), getECX(), getEDX(), getESP(), getEBP(), getESI(), getEDI(),
         getCR0(),
+        isA20Enabled(),
         getDS(), getES(), getSS(), getFS(), getGS(),
         getCF(), getPF(), getAF(), getZF(),
-        getSF(), getIF(), getDF(), getOF()
+        getSF(), getIF(), getDF(), getOF(),
+        a16() ? 16 : 32,
+        o16() ? 16 : 32,
+        x16() ? 16 : 32
     );
 #endif
 }

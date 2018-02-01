@@ -26,6 +26,7 @@
 #include "debug.h"
 #include "vomit.h"
 #include "debugger.h"
+#include "machine.h"
 #include "vcpu.h"
 #include <stdarg.h>
 #include <stdio.h>
@@ -34,6 +35,9 @@ static FILE* s_logfile = 0L;
 
 void vlog(VLogChannel channel, const char* format, ...)
 {
+    if (g_cpu && g_cpu->machine().isForAutotest())
+        return;
+
     va_list ap;
     const char* prefix = 0L;
     bool show_on_stdout = true;

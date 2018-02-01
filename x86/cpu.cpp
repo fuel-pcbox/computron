@@ -137,6 +137,11 @@ void VCpu::_AddressSizeOverride()
 
 void VCpu::decodeNext()
 {
+#ifdef VOMIT_TRACE
+    if (machine().isForAutotest())
+        dumpTrace();
+#endif
+
     this->opcode = fetchOpcodeByte();
     decode(this->opcode);
 }
@@ -197,9 +202,13 @@ void VCpu::decode(BYTE op)
         case 0xA1: _POP_FS(); break;
         case 0xA2: _CPUID(); break;
         case 0xA3: CALL_HANDLER(_BT_RM16_reg16, _BT_RM32_reg32); break;
+        //case 0xA4: CALL_HANDLER(_SHLD_RM16_reg16_imm8, _SHLD_RM32_reg32_imm8); break;
+        //case 0xA5: CALL_HANDLER(_SHLD_RM16_reg16_CL, _SHLD_RM32_reg32_CL); break;
         case 0xA8: _PUSH_GS(); break;
         case 0xA9: _POP_GS(); break;
         case 0xAB: CALL_HANDLER(_BTS_RM16_reg16, _BTS_RM32_reg32); break;
+        //case 0xAC: CALL_HANDLER(_SHRD_RM16_reg16_imm8, _SHRD_RM32_reg32_imm8); break;
+        //case 0xAD: CALL_HANDLER(_SHRD_RM16_reg16_CL, _SHRD_RM32_reg32_CL); break;
         case 0xAF: CALL_HANDLER(_IMUL_reg16_RM16, _IMUL_reg32_RM32); break;
         case 0xB2: CALL_HANDLER(_LSS_reg16_mem16, _LSS_reg32_mem32); break;
         case 0xB3: CALL_HANDLER(_BTR_RM16_reg16, _BTR_RM32_reg32); break;
@@ -441,8 +450,8 @@ void VCpu::decode(BYTE op)
     case 0xF0: /* LOCK */ break;
     case 0xF1:
         vlog(LogCPU, "0xF1: Secret shutdown command received!");
-        dumpAll();
-        vomit_exit(1);
+        //dumpAll();
+        vomit_exit(0);
         break;
     case 0xF2: _REPNE(); break;
     case 0xF3: _REP(); break;
@@ -592,7 +601,7 @@ void VCpu::boot()
     m_segmentPrefix = 0x0000;
     m_currentSegment = &this->DS;
 
-    if (machine().settings().isForAutotest())
+    if (machine().isForAutotest())
         jump32(machine().settings().entryCS(), machine().settings().entryIP());
     else
         jump32(0xF000, 0x00000000);
