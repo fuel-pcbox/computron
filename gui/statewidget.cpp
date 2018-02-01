@@ -45,7 +45,7 @@ StateWidget::StateWidget(Machine& m)
     , m_machine(m)
     , d(new Private)
 {
-    setFixedSize(180, 400);
+    setFixedSize(200, 400);
     d->ui.setupUi(this);
 
     connect(&d->syncTimer, SIGNAL(timeout()), this, SLOT(sync()));
@@ -60,19 +60,37 @@ StateWidget::~StateWidget()
 
 #define DO_LABEL(name, fmt) d->ui.lbl ## name->setText(s.sprintf(fmt, cpu.get ## name()));
 
+#define DO_LABEL_N(name, title, fmt) do { \
+        d->ui.lblTitle ## name->setText(title); \
+        d->ui.lbl ## name->setText(s.sprintf(fmt, cpu.get ## name())); \
+    } while (0);
+
 void StateWidget::sync()
 {
     QString s;
     auto& cpu = *machine().cpu();
 
-    DO_LABEL(EAX, "%08X");
-    DO_LABEL(EBX, "%08X");
-    DO_LABEL(ECX, "%08X");
-    DO_LABEL(EDX, "%08X");
-    DO_LABEL(EBP, "%08X");
-    DO_LABEL(ESP, "%08X");
-    DO_LABEL(ESI, "%08X");
-    DO_LABEL(EDI, "%08X");
+    if (cpu.x32()) {
+        DO_LABEL_N(EBX, "EBX", "%08X");
+        DO_LABEL_N(EAX, "EAX", "%08X");
+        DO_LABEL_N(ECX, "ECX", "%08X");
+        DO_LABEL_N(EDX, "EDX", "%08X");
+        DO_LABEL_N(EBP, "EBP", "%08X");
+        DO_LABEL_N(ESP, "ESP", "%08X");
+        DO_LABEL_N(ESI, "ESI", "%08X");
+        DO_LABEL_N(EDI, "EDI", "%08X");
+        d->ui.lblPC->setText(s.sprintf("%04X:%08X", cpu.getBaseCS(), cpu.getBaseEIP()));
+    } else {
+        DO_LABEL_N(EBX, "BX", "%04X");
+        DO_LABEL_N(EAX, "AX", "%04X");
+        DO_LABEL_N(ECX, "CX", "%04X");
+        DO_LABEL_N(EDX, "DX", "%04X");
+        DO_LABEL_N(EBP, "BP", "%04X");
+        DO_LABEL_N(ESP, "SP", "%04X");
+        DO_LABEL_N(ESI, "SI", "%04X");
+        DO_LABEL_N(EDI, "DI", "%04X");
+        d->ui.lblPC->setText(s.sprintf("%04X:%04X", cpu.getBaseCS(), cpu.getBaseIP()));
+    }
     DO_LABEL(CS, "%04X");
     DO_LABEL(DS, "%04X");
     DO_LABEL(ES, "%04X");
@@ -81,5 +99,19 @@ void StateWidget::sync()
     DO_LABEL(GS, "%04X");
     DO_LABEL(CR0, "%08X");
 
-    d->ui.lblPC->setText(s.sprintf("%04X:%08X", cpu.getBaseCS(), cpu.getBaseEIP()));
+#define DO_FLAG(name) flagString += QString("<font color='%1'>%2</font> ").arg(cpu.get ## name() ? "black" : "#ccc").arg(# name);
+
+    QString flagString;
+    DO_FLAG(OF);
+    DO_FLAG(SF);
+    DO_FLAG(ZF);
+    DO_FLAG(AF);
+    DO_FLAG(PF);
+    DO_FLAG(CF);
+    DO_FLAG(IF);
+    DO_FLAG(TF);
+
+    d->ui.lblFlags->setText(flagString);
+
+    d->ui.lblSizes->setText(QString("A%1 O%2 X%3").arg(cpu.a16() ? 16 : 32).arg(cpu.o16() ? 16 : 32).arg(cpu.x16() ? 16 : 32));
 }
