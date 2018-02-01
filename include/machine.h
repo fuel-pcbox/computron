@@ -38,13 +38,13 @@ class Keyboard;
 class PIC;
 class PIT;
 class PS2;
-class Screen;
 class Settings;
 class VCpu;
 class VGA;
 class VGAMemory;
 class VomCtl;
 class Worker;
+class MachineWidget;
 
 class Machine : public QObject
 {
@@ -66,10 +66,12 @@ public:
     PIC& masterPIC() { return *m_masterPIC; }
     PIC& slavePIC() { return *m_slavePIC; }
     VGAMemory& vgaMemory() { return *m_vgaMemory; }
-    Screen& screen() { return *m_screen; }
     Settings& settings() { return *m_settings; }
 
     bool isForAutotest();
+
+    MachineWidget* widget() { return m_widget; }
+    void setWidget(MachineWidget* widget) { m_widget = widget; }
 
 public slots:
     void start();
@@ -90,7 +92,6 @@ private:
     QString m_name;
     OwnPtr<Settings> m_settings;
     OwnPtr<VCpu> m_cpu;
-    OwnPtr<Screen> m_screen;
     OwnPtr<Worker> m_worker;
 
     // Memory mappers
@@ -108,6 +109,8 @@ private:
     OwnPtr<PIC> m_slavePIC;
     OwnPtr<PS2> m_ps2;
     OwnPtr<VomCtl> m_vomCtl;
+
+    MachineWidget* m_widget { nullptr };
 };
 
 #endif

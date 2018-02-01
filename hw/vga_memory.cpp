@@ -81,7 +81,7 @@ void VGAMemory::write8(DWORD address, BYTE value)
 
     address -= 0xA0000;
 
-    if (machine().screen().currentVideoMode() == 0x13) {
+    if (machine().vga().currentVideoMode() == 0x13) {
         m_plane[0][address] = value;
         return;
     }
@@ -228,7 +228,7 @@ void VGAMemory::write8(DWORD address, BYTE value)
 #define D(i) ((m_plane[0][address]>>i) & 1) | (((m_plane[1][address]>>i) & 1)<<1) | (((m_plane[2][address]>>i) & 1)<<2) | (((m_plane[3][address]>>i) & 1)<<3)
 
         // HACK: I don't really like this way of obtaining the current mode...
-        if (machine().screen().currentVideoMode() == 0x12 && address < (640 * 480 / 8)) {
+        if (machine().vga().currentVideoMode() == 0x12 && address < (640 * 480 / 8)) {
 
             // address 100 -> pixels 800-807
             uchar *px = &m_screen12.bits()[address * 8];
@@ -268,7 +268,7 @@ BYTE VGAMemory::read8(DWORD address)
 
     address -= 0xA0000;
 
-    if (machine().screen().currentVideoMode() == 0x13)
+    if (machine().vga().currentVideoMode() == 0x13)
         return m_plane[0][address];
 
     m_latch[0] = m_plane[0][address];

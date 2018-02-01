@@ -52,9 +52,19 @@ void vomit_exit(int exitCode)
 
 int main(int argc, char** argv)
 {
-    QApplication app(argc, argv);
+    OwnPtr<QCoreApplication> app;
 
-    parseArguments(app.arguments());
+    for (int i = 1; i < argc; ++i) {
+        if (QString::fromLatin1(argv[i]) == "--no-gui") {
+            app = make<QCoreApplication>(argc, argv);
+            break;
+        }
+    }
+
+    if (!app)
+        app = make<QApplication>(argc, argv);
+
+    parseArguments(app->arguments());
 
     signal(SIGINT, sigint_handler);
 
@@ -89,7 +99,7 @@ int main(int argc, char** argv)
     mainWindow.addMachine(machine.ptr());
     mainWindow.show();
 
-    return app.exec();
+    return app->exec();
 }
 
 void parseArguments(const QStringList& arguments)

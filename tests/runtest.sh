@@ -5,7 +5,7 @@ if [ "$1" = "" ] ; then
 	exit 1
 fi
 
-PROGRAM="../vomit --run"
+PROGRAM="../vomit --no-gui --run"
 TEST=$1
 EXPECTATION=$(echo $TEST | sed s/.asm/.expected/)
 COMPILED=tmp.bin

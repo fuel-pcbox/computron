@@ -30,6 +30,7 @@
 #include "OwnPtr.h"
 
 class Machine;
+class Screen;
 
 class MachineWidget : public QWidget
 {
@@ -39,6 +40,7 @@ public:
     virtual ~MachineWidget();
 
     Machine& machine() const { return m_machine; }
+    Screen& screen() { return *m_screen; }
 
 private slots:
     void onStartTriggered();
@@ -53,6 +55,8 @@ private:
 
     struct Private;
     OwnPtr<Private> d;
+
+    OwnPtr<Screen> m_screen;
 };
 
 #endif

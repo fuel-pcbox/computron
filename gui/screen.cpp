@@ -400,9 +400,7 @@ void Screen::synchronizeFont()
 
 BYTE Screen::currentVideoMode() const
 {
-    // FIXME: This is not the correct way to obtain the video mode (BDA.)
-    //        Need to find out how the 6845 stores this information.
-    return machine().cpu().readUnmappedMemory8(0x449) & 0x7f;
+    return machine().vga().currentVideoMode();
 }
 
 BYTE Screen::currentRowCount() const

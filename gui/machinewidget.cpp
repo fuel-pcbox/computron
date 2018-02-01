@@ -62,6 +62,10 @@ MachineWidget::MachineWidget(Machine& m)
     paletteWidget->show();
 #endif
 
+    m_machine.setWidget(this);
+
+    m_screen = make<Screen>(m);
+
     StateWidget* stateWidget = new StateWidget(m);
 
     d->toolBar = new QToolBar(tr("Virtual Machine"));
@@ -75,14 +79,14 @@ MachineWidget::MachineWidget(Machine& m)
     QHBoxLayout* hLayout = new QHBoxLayout;
     hLayout->setSpacing(0);
     hLayout->setMargin(0);
-    hLayout->addWidget(&machine().screen());
+    hLayout->addWidget(&screen());
     hLayout->addWidget(stateWidget);
 
     layout->addLayout(hLayout);
 
     setLayout(layout);
 
-    machine().screen().setFocus();
+    screen().setFocus();
 
     QAction *chooseFloppyAImage = new QAction(QIcon(":/icons/toolbar-floppy.svg"), tr("Floppy A:"), this);
     QAction *chooseFloppyBImage = new QAction(QIcon(":/icons/toolbar-floppy.svg"), tr("Floppy B:"), this);
@@ -113,8 +117,8 @@ MachineWidget::MachineWidget(Machine& m)
     connect(d->startMachine, SIGNAL(triggered(bool)), SLOT(onStartTriggered()));
     connect(d->stopMachine, SIGNAL(triggered(bool)), SLOT(onStopTriggered()));
 
-    QObject::connect(&d->syncTimer, SIGNAL(timeout()), &machine().screen(), SLOT(refresh()));
-    QObject::connect(&d->syncTimer, SIGNAL(timeout()), &machine().screen(), SLOT(flushKeyBuffer()));
+    QObject::connect(&d->syncTimer, SIGNAL(timeout()), &screen(), SLOT(refresh()));
+    QObject::connect(&d->syncTimer, SIGNAL(timeout()), &screen(), SLOT(flushKeyBuffer()));
     d->syncTimer.start(50);
 
     QObject::connect(qApp, SIGNAL(aboutToQuit()), &machine(), SLOT(stop()));

@@ -26,6 +26,8 @@
 #include "vomit.h"
 #include "vga.h"
 #include "debug.h"
+#include "machine.h"
+#include "vcpu.h"
 #include <string.h>
 #include <QtCore/QMutex>
 #include <QtCore/QMutexLocker>
@@ -385,4 +387,11 @@ QColor VGA::color(int index) const
 WORD VGA::startAddress() const
 {
     return vomit_MAKEWORD(d->ioRegister[0x0C], d->ioRegister[0x0D]);
+}
+
+BYTE VGA::currentVideoMode() const
+{
+    // FIXME: This is not the correct way to obtain the video mode (BDA.)
+    //        Need to find out how the 6845 stores this information.
+    return machine().cpu().readUnmappedMemory8(0x449) & 0x7f;
 }

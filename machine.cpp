@@ -40,6 +40,7 @@
 #include "vomctl.h"
 #include "worker.h"
 #include "screen.h"
+#include "machinewidget.h"
 #include <QtCore/QFile>
 
 OwnPtr<Machine> Machine::createFromFile(const QString& fileName)
@@ -99,7 +100,6 @@ Machine::Machine(const QString& name, OwnPtr<Settings>&& settings, QObject* pare
     m_pit = make<PIT>(*this);
     m_vga = make<VGA>(*this);
     m_vgaMemory = make<VGAMemory>(*this);
-    m_screen = make<Screen>(*this);
 
     if (!m_settings->isForAutotest()) {
         m_worker = make<Worker>(cpu());
@@ -160,13 +160,15 @@ bool Machine::loadFile(DWORD address, const QString& fileName)
 
 void Machine::start()
 {
-    screen().setTinted(false);
+    if (widget())
+        widget()->screen().setTinted(false);
     worker().startMachine();
 }
 
 void Machine::pause()
 {
-    screen().setTinted(true);
+    if (widget())
+        widget()->screen().setTinted(true);
     worker().stopMachine();
 }
 
