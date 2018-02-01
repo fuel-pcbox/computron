@@ -1,11 +1,10 @@
 <RCC>
     <qresource prefix="/">
-        <file>icons/arrow_refresh.png</file>
-        <file>icons/control_play.png</file>
-        <file>icons/control_pause.png</file>
-        <file>icons/control_stop.png</file>
-        <file>icons/monitor_edit.png</file>
-        <file>icons/disk.png</file>
+        <file>icons/toolbar-reset.svg</file>
+        <file>icons/toolbar-start.svg</file>
+        <file>icons/toolbar-pause.svg</file>
+        <file>icons/toolbar-stop.svg</file>
+        <file>icons/toolbar-floppy.svg</file>
         <file>gui/statewidget.ui</file>
     </qresource>
 </RCC>

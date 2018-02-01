@@ -86,13 +86,13 @@ MachineWidget::MachineWidget(Machine* m)
 
     machine()->screen()->setFocus();
 
-    QAction *chooseFloppyAImage = new QAction(QIcon(":/icons/disk.png"), tr("Floppy A:"), this);
-    QAction *chooseFloppyBImage = new QAction(QIcon(":/icons/disk.png"), tr("Floppy B:"), this);
+    QAction *chooseFloppyAImage = new QAction(QIcon(":/icons/toolbar-floppy.svg"), tr("Floppy A:"), this);
+    QAction *chooseFloppyBImage = new QAction(QIcon(":/icons/toolbar-floppy.svg"), tr("Floppy B:"), this);
 
-    d->pauseMachine = new QAction(QIcon(":/icons/control_pause.png"), tr("Pause"), this);
-    d->startMachine = new QAction(QIcon(":/icons/control_play.png"), tr("Start"), this);
-    d->stopMachine = new QAction(QIcon(":/icons/control_stop.png"), tr("Stop"), this);
-    d->rebootMachine = new QAction(QIcon(":/icons/arrow_refresh.png"), tr("Reboot"), this);
+    d->pauseMachine = new QAction(QIcon(":/icons/toolbar-pause.svg"), tr("Pause"), this);
+    d->startMachine = new QAction(QIcon(":/icons/toolbar-start.svg"), tr("Start"), this);
+    d->stopMachine = new QAction(QIcon(":/icons/toolbar-stop.svg"), tr("Stop"), this);
+    d->rebootMachine = new QAction(QIcon(":/icons/toolbar-reset.svg"), tr("Reboot"), this);
 
     d->startMachine->setEnabled(false);
     d->pauseMachine->setEnabled(true);
