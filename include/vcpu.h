@@ -912,12 +912,22 @@ protected:
     void _ADC_RM32_reg32();
     void _SUB_RM32_reg32();
 
+    void _BT_RM16_imm8();
+    void _BT_RM32_imm8();
+    void _BT_RM16_reg16();
+    void _BT_RM32_reg32();
     void _BTR_RM16_imm8();
     void _BTR_RM32_imm8();
+    void _BTR_RM16_reg16();
+    void _BTR_RM32_reg32();
     void _BTC_RM16_imm8();
     void _BTC_RM32_imm8();
+    void _BTC_RM16_reg16();
+    void _BTC_RM32_reg32();
     void _BTS_RM16_imm8();
     void _BTS_RM32_imm8();
+    void _BTS_RM16_reg16();
+    void _BTS_RM32_reg32();
 
     void _MOVZX_reg16_RM8();
     void _MOVZX_reg32_RM8();
@@ -1005,6 +1015,7 @@ private:
     template<typename T> T doOr(T, T);
     template<typename T> T doAnd(T, T);
 
+    template<typename T, typename U> T doBt(T, U);
     template<typename T, typename U> T doBtr(T, U);
     template<typename T, typename U> T doBtc(T, U);
     template<typename T, typename U> T doBts(T, U);

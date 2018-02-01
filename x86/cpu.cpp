@@ -196,10 +196,13 @@ void VCpu::decode(BYTE op)
         case 0xA0: _PUSH_FS(); break;
         case 0xA1: _POP_FS(); break;
         case 0xA2: _CPUID(); break;
+        case 0xA3: CALL_HANDLER(_BT_RM16_reg16, _BT_RM32_reg32); break;
         case 0xA8: _PUSH_GS(); break;
         case 0xA9: _POP_GS(); break;
+        case 0xAB: CALL_HANDLER(_BTS_RM16_reg16, _BTS_RM32_reg32); break;
         case 0xAF: CALL_HANDLER(_IMUL_reg16_RM16, _IMUL_reg32_RM32); break;
         case 0xB2: CALL_HANDLER(_LSS_reg16_mem16, _LSS_reg32_mem32); break;
+        case 0xB3: CALL_HANDLER(_BTR_RM16_reg16, _BTR_RM32_reg32); break;
         case 0xB4: CALL_HANDLER(_LFS_reg16_mem16, _LFS_reg32_mem32); break;
         case 0xB5: CALL_HANDLER(_LFS_reg16_mem16, _LFS_reg32_mem32); break;
         case 0xB6: CALL_HANDLER(_MOVZX_reg16_RM8, _MOVZX_reg32_RM8); break;
@@ -207,12 +210,14 @@ void VCpu::decode(BYTE op)
         case 0xBA:
             this->subrmbyte = fetchOpcodeByte();
             switch (subrmbyte) {
+            case 4: CALL_HANDLER(_BT_RM16_imm8, _BT_RM32_imm8); break;
+            case 5: CALL_HANDLER(_BTS_RM16_imm8, _BTS_RM32_imm8); break;
             case 6: CALL_HANDLER(_BTR_RM16_imm8, _BTR_RM32_imm8); break;
             case 7: CALL_HANDLER(_BTC_RM16_imm8, _BTC_RM32_imm8); break;
-            case 5: CALL_HANDLER(_BTS_RM16_imm8, _BTS_RM32_imm8); break;
             default: VM_ASSERT(false);
             }
             break;
+        case 0xBB: CALL_HANDLER(_BTC_RM16_reg16, _BTC_RM32_reg32); break;
         case 0xFF: _UD0(); break;
         default: goto fffuuu;
         }

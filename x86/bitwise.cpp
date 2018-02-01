@@ -249,12 +249,30 @@ void VCpu::_NOT_RM32()
     updateModRM32(~value);
 }
 
+DEFAULT_RM16_imm8(doBt, _BT_RM16_imm8)
+DEFAULT_RM32_imm8(doBt, _BT_RM32_imm8)
+DEFAULT_RM16_reg16(doBt, _BT_RM16_reg16)
+DEFAULT_RM32_reg32(doBt, _BT_RM32_reg32)
 DEFAULT_RM16_imm8(doBtr, _BTR_RM16_imm8)
 DEFAULT_RM32_imm8(doBtr, _BTR_RM32_imm8)
+DEFAULT_RM16_reg16(doBtr, _BTR_RM16_reg16)
+DEFAULT_RM32_reg32(doBtr, _BTR_RM32_reg32)
 DEFAULT_RM16_imm8(doBtc, _BTC_RM16_imm8)
 DEFAULT_RM32_imm8(doBtc, _BTC_RM32_imm8)
+DEFAULT_RM16_reg16(doBtc, _BTC_RM16_reg16)
+DEFAULT_RM32_reg32(doBtc, _BTC_RM32_reg32)
 DEFAULT_RM16_imm8(doBts, _BTS_RM16_imm8)
 DEFAULT_RM32_imm8(doBts, _BTS_RM32_imm8)
+DEFAULT_RM16_reg16(doBts, _BTS_RM16_reg16)
+DEFAULT_RM32_reg32(doBts, _BTS_RM32_reg32)
+
+template<typename T, typename U>
+T VCpu::doBt(T src, U bitIndex)
+{
+    T bitMask = 1 << bitIndex;
+    setCF((src & bitMask) != 0);
+    return src;
+}
 
 template<typename T, typename U>
 T VCpu::doBtr(T dest, U bitIndex)
