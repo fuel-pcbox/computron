@@ -27,6 +27,7 @@
 #define VOMCTL_H
 
 #include "iodevice.h"
+#include "OwnPtr.h"
 
 class VomCtl final : public IODevice
 {
@@ -41,7 +42,7 @@ private:
     BYTE m_registerIndex;
 
     struct Private;
-    Private* d;
+    OwnPtr<Private> d;
 };
 
 #endif

@@ -35,7 +35,7 @@ struct VomCtl::Private
 
 VomCtl::VomCtl(Machine& machine)
     : IODevice("VomCtl", machine)
-    , d(new Private)
+    , d(make<Private>())
 {
     m_registerIndex = 0;
     listen(0xD6, IODevice::ReadWrite);
@@ -53,8 +53,6 @@ VomCtl::VomCtl(Machine& machine)
 
 VomCtl::~VomCtl()
 {
-    delete d;
-    d = 0;
 }
 
 BYTE VomCtl::in8(WORD port)

@@ -33,15 +33,13 @@ struct MainWindow::Private
 };
 
 MainWindow::MainWindow()
-    : d(new Private)
+    : d(make<Private>())
 {
     setWindowTitle("V O M I T");
 }
 
 MainWindow::~MainWindow()
 {
-    delete d;
-    d = 0L;
 }
 
 void MainWindow::addMachine(Machine* machine)

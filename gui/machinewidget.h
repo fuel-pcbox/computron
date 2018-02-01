@@ -27,6 +27,7 @@
 #define MACHINEWIDGET_H
 
 #include <QtWidgets/QWidget>
+#include "OwnPtr.h"
 
 class Machine;
 
@@ -51,7 +52,7 @@ private:
     Machine& m_machine;
 
     struct Private;
-    Private* d;
+    OwnPtr<Private> d;
 };
 
 #endif

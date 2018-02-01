@@ -27,6 +27,7 @@
 #define IDE_H
 
 #include "iodevice.h"
+#include "OwnPtr.h"
 
 class IDE final : public IODevice
 {
@@ -52,7 +53,7 @@ public:
 
 private:
     struct Private;
-    Private* d;
+    OwnPtr<Private> d;
 };
 
 #endif

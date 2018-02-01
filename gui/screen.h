@@ -26,9 +26,10 @@
 #ifndef SCREEN_H
 #define SCREEN_H
 
+#include "OwnPtr.h"
+#include "types.h"
 #include <QtCore/QHash>
 #include <QtWidgets/QWidget>
-#include "types.h"
 
 class Machine;
 
@@ -120,7 +121,7 @@ private:
     QHash<BYTE, QString> m_keyMappings;
 
     struct Private;
-    Private *d;
+    OwnPtr<Private> d;
 
     BYTE m_videoModeInLastRefresh { 0xFF };
     Machine& m_machine;

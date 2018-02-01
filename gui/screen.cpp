@@ -66,7 +66,7 @@ struct Screen::Private
 
 Screen::Screen(Machine& m)
     : QWidget(nullptr),
-      d(new Private),
+      d(make<Private>()),
       m_machine(m)
 {
     s_self = this;

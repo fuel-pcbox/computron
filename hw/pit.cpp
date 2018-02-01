@@ -54,7 +54,7 @@ struct PIT::Private
 PIT::PIT(Machine& machine)
     : QObject(nullptr)
     , IODevice("PIT", machine)
-    , d(new Private)
+    , d(make<Private>())
 {
     listen(0x40, IODevice::ReadWrite);
     listen(0x42, IODevice::WriteOnly);
@@ -69,8 +69,6 @@ PIT::PIT(Machine& machine)
 
 PIT::~PIT()
 {
-    delete d;
-    d = 0;
 }
 
 void PIT::reconfigureTimer()

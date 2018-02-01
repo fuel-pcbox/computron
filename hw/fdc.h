@@ -27,6 +27,7 @@
 #define FDC_H
 
 #include "iodevice.h"
+#include "OwnPtr.h"
 
 class FDC final : public IODevice
 {
@@ -42,7 +43,7 @@ private:
     void raiseIRQ();
 
     struct Private;
-    Private* d;
+    OwnPtr<Private> d;
 };
 
 #endif

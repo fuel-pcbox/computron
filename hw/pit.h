@@ -27,6 +27,7 @@
 #define PIT_H
 
 #include "iodevice.h"
+#include "OwnPtr.h"
 #include <QtCore/QObject>
 
 class PIT final : public QObject, public IODevice
@@ -51,7 +52,7 @@ private:
     void modeControl(int timerIndex, BYTE data);
 
     struct Private;
-    Private* d;
+    OwnPtr<Private> d;
 };
 
 #endif

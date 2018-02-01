@@ -35,7 +35,7 @@ struct RGBColor {
     BYTE red;
     BYTE green;
     BYTE blue;
-    operator QColor() { return QColor::fromRgb(red << 2, green << 2, blue << 2); }
+    operator QColor() const { return QColor::fromRgb(red << 2, green << 2, blue << 2); }
 };
 
 struct VGA::Private
@@ -78,7 +78,7 @@ static const RGBColor default_vga_color_registers[256] =
 
 VGA::VGA(Machine& m)
     : IODevice("VGA", m)
-    , d(new Private)
+    , d(make<Private>())
 {
     listen(0x3B4, IODevice::ReadWrite);
     listen(0x3B5, IODevice::ReadWrite);
@@ -128,8 +128,6 @@ VGA::VGA(Machine& m)
 
 VGA::~VGA()
 {
-    delete d;
-    d = 0;
 }
 
 void VGA::out8(WORD port, BYTE data)
@@ -374,13 +372,13 @@ bool VGA::isPaletteDirty()
 
 QColor VGA::paletteColor(int paletteIndex) const
 {
-    RGBColor& c = d->colorRegister[d->paletteRegister[paletteIndex]];
+    const RGBColor& c = d->colorRegister[d->paletteRegister[paletteIndex]];
     return c;
 }
 
 QColor VGA::color(int index) const
 {
-    RGBColor& c = d->colorRegister[index];
+    const RGBColor& c = d->colorRegister[index];
     return c;
 }
 

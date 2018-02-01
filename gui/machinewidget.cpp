@@ -54,11 +54,11 @@ struct MachineWidget::Private
 MachineWidget::MachineWidget(Machine& m)
     : QWidget(0)
     , m_machine(m)
-    , d(new Private)
+    , d(make<Private>())
 {
 #if 0
     // FIXME: Find a way to put this in the UI. Dock widget?
-    PaletteWidget* paletteWidget = new PaletteWidget;
+    PaletteWidget* paletteWidget = new PaletteWidget(m);
     paletteWidget->show();
 #endif
 
@@ -122,8 +122,6 @@ MachineWidget::MachineWidget(Machine& m)
 
 MachineWidget::~MachineWidget()
 {
-    delete d;
-    d = 0;
 }
 
 void MachineWidget::onFloppyATriggered()

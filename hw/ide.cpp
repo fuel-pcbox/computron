@@ -56,7 +56,7 @@ struct IDE::Private
 
 IDE::IDE(Machine& machine)
     : IODevice("IDE", machine)
-    , d(new Private)
+    , d(make<Private>())
 {
     listen(0x171, IODevice::ReadOnly);
     listen(0x172, IODevice::ReadWrite);
@@ -76,8 +76,6 @@ IDE::IDE(Machine& machine)
 
 IDE::~IDE()
 {
-    delete d;
-    d = 0;
 }
 
 void IDE::out8(WORD port, BYTE data)

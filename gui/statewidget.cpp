@@ -43,7 +43,7 @@ struct StateWidget::Private
 StateWidget::StateWidget(Machine& m)
     : QWidget(nullptr)
     , m_machine(m)
-    , d(new Private)
+    , d(make<Private>())
 {
     setFixedSize(200, 400);
     d->ui.setupUi(this);
@@ -54,8 +54,6 @@ StateWidget::StateWidget(Machine& m)
 
 StateWidget::~StateWidget()
 {
-    delete d;
-    d = nullptr;
 }
 
 #define DO_LABEL(name, fmt) d->ui.lbl ## name->setText(s.sprintf(fmt, cpu.get ## name()));

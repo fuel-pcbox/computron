@@ -27,6 +27,7 @@
 #define VGA_H
 
 #include "iodevice.h"
+#include "OwnPtr.h"
 #include <QtCore/QObject>
 #include <QtGui/QColor>
 
@@ -61,7 +62,7 @@ signals:
 
 private:
     struct Private;
-    Private* d;
+    OwnPtr<Private> d;
 };
 
 #endif

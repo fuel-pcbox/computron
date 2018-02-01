@@ -65,7 +65,7 @@ struct FDC::Private
 
 FDC::FDC(Machine& machine)
     : IODevice("FDC", machine)
-    , d(new Private)
+    , d(make<Private>())
 {
     listen(0x3F0, IODevice::ReadOnly);
     listen(0x3F1, IODevice::ReadOnly);
@@ -91,8 +91,6 @@ FDC::FDC(Machine& machine)
 
 FDC::~FDC()
 {
-    delete d;
-    d = 0;
 }
 
 BYTE FDC::in8(WORD port)

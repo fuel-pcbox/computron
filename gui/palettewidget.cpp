@@ -38,7 +38,7 @@ struct PaletteWidget::Private
 
 PaletteWidget::PaletteWidget(Machine& machine, QWidget* parent)
     : QWidget(parent)
-    , d(new Private)
+    , d(make<Private>())
     , m_machine(machine)
 {
     connect(&m_machine.vga(), SIGNAL(paletteChanged()), this, SLOT(onPaletteChanged()));
@@ -46,8 +46,6 @@ PaletteWidget::PaletteWidget(Machine& machine, QWidget* parent)
 
 PaletteWidget::~PaletteWidget()
 {
-    delete d;
-    d = 0;
 }
 
 void PaletteWidget::onPaletteChanged()

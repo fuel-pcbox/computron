@@ -27,6 +27,7 @@
 #define MAINWINDOW_H
 
 #include <QtWidgets/QMainWindow>
+#include "OwnPtr.h"
 
 class Machine;
 
@@ -41,7 +42,7 @@ public:
 
 private:
     struct Private;
-    Private *d;
+    OwnPtr<Private> d;
 };
 
 #endif

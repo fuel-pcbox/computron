@@ -26,6 +26,7 @@
 #ifndef PALETTEWIDGET_H
 #define PALETTEWIDGET_H
 
+#include "OwnPtr.h"
 #include <QtWidgets/QWidget>
 
 class Machine;
@@ -47,7 +48,7 @@ private slots:
 
 private:
     struct Private;
-    Private* d;
+    OwnPtr<Private> d;
 
     Machine& m_machine;
 };
