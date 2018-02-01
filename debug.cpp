@@ -82,7 +82,7 @@ void vlog(VLogChannel channel, const char* format, ...)
     vfprintf(s_logfile, format, ap);
     va_end(ap);
 
-    if (!g_cpu || g_cpu->debugger()->isActive() || show_on_stdout) {
+    if (!g_cpu || g_cpu->debugger().isActive() || show_on_stdout) {
         if (prefix)
             printf("(\033[33;1m%8s\033[0m) ", prefix);
         if (g_cpu) {

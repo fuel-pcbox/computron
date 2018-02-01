@@ -42,33 +42,27 @@
 #include "screen.h"
 #include <QtCore/QFile>
 
-Machine* Machine::createFromFile(const QString& fileName)
+OwnPtr<Machine> Machine::createFromFile(const QString& fileName)
 {
-    Settings* settings = Settings::createFromFile(fileName);
-
+    auto settings = Settings::createFromFile(fileName);
     if (!settings)
-        return 0;
-
-    return new Machine(fileName, settings);
+        return nullptr;
+    return make<Machine>(fileName, std::move(settings));
 }
 
-Machine* Machine::createForAutotest(const QString& fileName)
+OwnPtr<Machine> Machine::createForAutotest(const QString& fileName)
 {
-    Settings* settings = Settings::createForAutotest(fileName);
-
+    auto settings = Settings::createForAutotest(fileName);
     if (!settings)
-        return 0;
-
-    return new Machine(fileName, settings);
+        return nullptr;
+    return make<Machine>(fileName, std::move(settings));
 }
 
-Machine::Machine(const QString& name, Settings* settings, QObject* parent)
+Machine::Machine(const QString& name, OwnPtr<Settings>&& settings, QObject* parent)
     : QObject(parent)
     , m_name(name)
-    , m_settings(settings)
-    , m_cpu(new VCpu(*this))
-    , m_screen(0)
-    , m_worker(0)
+    , m_settings(std::move(settings))
+    , m_cpu(make<VCpu>(*this))
 {
     applySettings();
 
@@ -93,23 +87,22 @@ Machine::Machine(const QString& name, Settings* settings, QObject* parent)
         IODevice::ignorePort(0x331); // MIDI
     }
 
-    m_busMouse = new BusMouse(*this);
-    m_cmos = new CMOS(*this);
-    m_fdc = new FDC(*this);
-    m_ide = new IDE(*this);
-    m_keyboard = new Keyboard(*this);
-    m_masterPIC = new PIC(true, *this);
-    m_slavePIC = new PIC(false, *this);
-    m_ps2 = new PS2(*this);
-    m_vomCtl = new VomCtl(*this);
-    m_pit = new PIT(*this);
-    m_vga = new VGA(*this);
-    m_vgaMemory = new VGAMemory(*this);
-    m_screen = new Screen(*this);
+    m_busMouse = make<BusMouse>(*this);
+    m_cmos = make<CMOS>(*this);
+    m_fdc = make<FDC>(*this);
+    m_ide = make<IDE>(*this);
+    m_keyboard = make<Keyboard>(*this);
+    m_masterPIC = make<PIC>(true, *this);
+    m_slavePIC = make<PIC>(false, *this);
+    m_ps2 = make<PS2>(*this);
+    m_vomCtl = make<VomCtl>(*this);
+    m_pit = make<PIT>(*this);
+    m_vga = make<VGA>(*this);
+    m_vgaMemory = make<VGAMemory>(*this);
+    m_screen = make<Screen>(*this);
 
     if (!m_settings->isForAutotest()) {
-        // FIXME: Sort out worker ownership.
-        m_worker = new Worker(cpu());
+        m_worker = make<Worker>(cpu());
 
         QObject::connect(&worker(), SIGNAL(finished()), this, SLOT(onWorkerFinished()));
 
@@ -123,10 +116,6 @@ Machine::Machine(const QString& name, Settings* settings, QObject* parent)
 
 Machine::~Machine()
 {
-    delete m_cpu;
-    m_cpu = 0;
-    delete m_settings;
-    m_settings = 0;
 }
 
 void Machine::applySettings()

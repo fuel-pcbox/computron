@@ -31,6 +31,7 @@
 #include <QtCore/QMutex>
 #include <QtCore/QQueue>
 #include <set>
+#include "OwnPtr.h"
 
 class Debugger;
 class Machine;
@@ -349,7 +350,7 @@ public:
     void push(WORD value);
     WORD pop();
 
-    Debugger* debugger() const { return m_debugger; }
+    Debugger& debugger() { return *m_debugger; }
 
     /*!
         Writes an 8-bit value to an output port.
@@ -1196,7 +1197,7 @@ private:
 
     bool m_a20Enabled;
 
-    Debugger* m_debugger;
+    OwnPtr<Debugger> m_debugger;
 
     BYTE* m_memory { nullptr };
     size_t m_memorySize { 8192 * 1024 };

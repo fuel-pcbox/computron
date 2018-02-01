@@ -60,8 +60,8 @@ void Worker::startMachine()
 
 void Worker::stopMachine()
 {
-    m_cpu.queueCommand(VCpu::ExitMainLoop);
     m_active = false;
+    m_cpu.queueCommand(VCpu::ExitMainLoop);
 }
 
 void Worker::rebootMachine()

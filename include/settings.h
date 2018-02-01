@@ -29,14 +29,15 @@
 #include <QtCore/QHash>
 #include <QtCore/QString>
 #include "types.h"
+#include "OwnPtr.h"
 
 class QStringList;
 
 class Settings
 {
 public:
-    static Settings* createFromFile(const QString&);
-    static Settings* createForAutotest(const QString& fileName);
+    static OwnPtr<Settings> createFromFile(const QString&);
+    static OwnPtr<Settings> createForAutotest(const QString& fileName);
 
     unsigned memorySize() const { return m_memorySize; }
     void setMemorySize(unsigned size) { m_memorySize = size; }
@@ -50,12 +51,12 @@ public:
     bool isForAutotest() const { return m_forAutotest; }
     void setForAutotest(bool b) { m_forAutotest = b; }
 
+    Settings();
     ~Settings();
 
 private:
-    Settings();
-    Settings(const Settings&);
-    Settings& operator=(const Settings&);
+    Settings(const Settings&) = delete;
+    Settings& operator=(const Settings&) = delete;
 
     bool handleLoadFile(const QStringList&);
     bool handleMemorySize(const QStringList&);

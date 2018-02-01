@@ -67,7 +67,7 @@ void VCpu::jumpToInterruptHandler(int isr, bool requestedByPIC)
     if (isr == 0x06) {
         vlog(LogCPU, "Invalid opcode trap (%02X)", *(codeMemory() + this->getBaseEIP()));
         dumpAll();
-        debugger()->enter();
+        debugger().enter();
         //return;
     }
 #endif

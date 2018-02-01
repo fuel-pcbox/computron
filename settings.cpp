@@ -208,15 +208,12 @@ bool Settings::handleFloppyDisk(const QStringList& arguments)
     return true;
 }
 
-Settings* Settings::createForAutotest(const QString& fileName)
+OwnPtr<Settings> Settings::createForAutotest(const QString& fileName)
 {
     static const WORD autotestEntryCS = 0x1000;
     static const WORD autotestEntryIP = 0x0000;
 
-    Settings* settings = new Settings;
-
-    if (!settings)
-        return 0;
+    auto settings = make<Settings>();
 
     settings->m_entryCS = autotestEntryCS;
     settings->m_entryIP = autotestEntryIP;
@@ -226,20 +223,17 @@ Settings* Settings::createForAutotest(const QString& fileName)
     return settings;
 }
 
-Settings* Settings::createFromFile(const QString& fileName)
+OwnPtr<Settings> Settings::createFromFile(const QString& fileName)
 {
     QFile file(fileName);
 
     if (!file.open(QIODevice::ReadOnly)) {
         vlog(LogConfig, "Couldn't load %s", qPrintable(fileName));
-        return 0;
+        return nullptr;
     }
 
     unsigned lineNumber = 0;
-    Settings* settings = new Settings;
-
-    if (!settings)
-        return 0;
+    auto settings = make<Settings>();
 
     // IBM PC's boot at this location, which usually contains a JMP to the
     // BIOS entry point. (F000;0000 here, see Machine constructor.)

@@ -475,7 +475,7 @@ void VCpu::GP(int code)
 {
     vlog(LogCPU, "#GP(%d) :-(", code);
     exception(13);
-    debugger()->enter();
+    debugger().enter();
     //vomit_exit(1);
 }
 
@@ -494,7 +494,7 @@ VCpu::VCpu(Machine& m)
 
     memset(m_memory, 0, 1048576 + 65536);
 
-    m_debugger = new Debugger(*this);
+    m_debugger = make<Debugger>(*this);
 
     m_controlRegisterMap[0] = &this->CR0;
     m_controlRegisterMap[1] = &this->CR1;
@@ -612,10 +612,8 @@ void VCpu::boot()
 VCpu::~VCpu()
 {
     delete [] m_memory;
-    m_memory = 0;
-    m_codeMemory = 0;
-
-    delete m_debugger;
+    m_memory = nullptr;
+    m_codeMemory = nullptr;
 }
 
 void VCpu::exec()
@@ -690,15 +688,15 @@ void VCpu::mainLoop()
             DWORD flatPC = vomit_toFlatAddress(getCS(), getEIP());
             for (auto& breakpoint : m_breakpoints) {
                 if (flatPC == breakpoint) {
-                    debugger()->enter();
+                    debugger().enter();
                     break;
                 }
             }
         }
 
-        if (debugger()->isActive()) {
+        if (debugger().isActive()) {
             saveBaseAddress();
-            debugger()->doConsole();
+            debugger().doConsole();
         }
 #endif
 
@@ -1173,7 +1171,7 @@ void VCpu::_LEA_reg32_mem32()
 
     if (!a32()) {
         dumpAll();
-        debugger()->enter();
+        debugger().enter();
     }
 
     DWORD retv = 0;
@@ -1338,7 +1336,7 @@ BYTE VCpu::readMemory8(DWORD address)
     if (hasA20Bit(address)) {
         if (isA20Enabled()) {
             vlog(LogCPU, "Read byte $%02X <- @0x%08X with A20 enabled", value, address);
-            //debugger()->enter();
+            //debugger().enter();
         } else
             vlog(LogCPU, "Read byte $%02X <- @0x%08X with A20 disabled, wrapping to @0x%08X", value, address, address & a20Mask());
     } else {
@@ -1407,7 +1405,7 @@ bool VCpu::validateAddress(WORD segmentIndex, DWORD offset, MemoryAccessType acc
         vlog(LogAlert, "FUG! offset %08X outside limit", offset);
         dumpSegment(segmentIndex);
         //dumpAll();
-        debugger()->enter();
+        debugger().enter();
         //GP(0);
         return false;
     }
@@ -1568,7 +1566,7 @@ void VCpu::writeMemory16(WORD segmentIndex, DWORD offset, WORD value)
             vlog(LogCPU, "16-bit PE write [A20=%s] %04X:%08X (flat: %08X), value: %04X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
         //dumpSegment(segmentIndex);
         vomit_write16ToPointer(reinterpret_cast<WORD*>(&m_memory[flatAddress]), value);
-        //debugger()->enter();
+        //debugger().enter();
         return;
     }
     writeMemory16(vomit_toFlatAddress(segmentIndex, offset), value);

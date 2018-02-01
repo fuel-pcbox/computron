@@ -42,8 +42,7 @@ VomitOptions options;
 static void sigint_handler(int)
 {
     VM_ASSERT(g_cpu);
-    VM_ASSERT(g_cpu->debugger());
-    g_cpu->debugger()->enter();
+    g_cpu->debugger().enter();
 }
 
 void vomit_exit(int exitCode)
@@ -59,19 +58,19 @@ int main(int argc, char** argv)
 
     signal(SIGINT, sigint_handler);
 
-    QScopedPointer<Machine> machine;
+    OwnPtr<Machine> machine;
 
     if (options.file_to_run.length()) {
-        machine.reset(Machine::createForAutotest(QString::fromStdString(options.file_to_run)));
+        machine = Machine::createForAutotest(QString::fromStdString(options.file_to_run));
     } else {
-        machine.reset(Machine::createFromFile(QLatin1String("default.vmf")));
+        machine = Machine::createFromFile(QLatin1String("default.vmf"));
     }
 
     if (!machine)
         return 1;
 
     if (options.start_in_debug)
-        machine->cpu().debugger()->enter();
+        machine->cpu().debugger().enter();
 
     extern void vomit_disasm_init_tables();
     vomit_disasm_init_tables();
@@ -87,7 +86,7 @@ int main(int argc, char** argv)
     }
 
     MainWindow mainWindow;
-    mainWindow.addMachine(machine.data());
+    mainWindow.addMachine(machine.ptr());
     mainWindow.show();
 
     return app.exec();

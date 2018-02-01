@@ -142,7 +142,7 @@ void VCpu::handleRepeatOpcode(BYTE opcode, bool shouldEqual)
     case 0xAF: DO_REPZ_NEW(_SCASW, _SCASD); return;
 
     default:
-        debugger()->enter();
+        debugger().enter();
         vlog(LogAlert, "SUSPICIOUS: Opcode %02X used with REP* prefix", opcode);
         decode(opcode);
         return;

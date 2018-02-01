@@ -53,6 +53,7 @@ HEADERS += gui/machinewidget.h \
            include/settings.h \
            include/templates.h \
            include/vomit.h \
+           include/OwnPtr.h \
            disasm/include/disasm.h \
            disasm/include/insn-types.h
 

@@ -88,13 +88,13 @@ VCpu::SegmentSelector VCpu::makeSegmentSelector(WORD index)
 {
     if (index % 8) {
         vlog(LogCPU, "Segment selector index 0x%04X not divisible by 8.", index);
-        debugger()->enter();
+        debugger().enter();
         //vomit_exit(1);
     }
 
     if (index >= this->GDTR.limit) {
         vlog(LogCPU, "Segment selector index 0x%04X >= GDTR.limit (0x%04X).", index, GDTR.limit);
-        debugger()->enter();
+        debugger().enter();
         //vomit_exit(1);
     }
 
