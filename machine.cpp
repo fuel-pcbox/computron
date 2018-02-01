@@ -171,7 +171,7 @@ void Machine::stop()
 
 void Machine::reboot()
 {
-    // FIXME: Implement.
+    worker()->rebootMachine();
 }
 
 void Machine::onWorkerFinished()

@@ -63,3 +63,8 @@ void Worker::stopMachine()
     m_cpu->queueCommand(VCpu::ExitMainLoop);
     m_active = false;
 }
+
+void Worker::rebootMachine()
+{
+    m_cpu->queueCommand(VCpu::SoftReboot);
+}

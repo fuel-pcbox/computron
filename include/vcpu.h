@@ -69,6 +69,8 @@ public:
     explicit VCpu(Machine&);
     ~VCpu();
 
+    void boot();
+
     Machine& machine() const { return m_machine; }
 
     std::set<DWORD>& breakpoints() { return m_breakpoints; }
@@ -491,7 +493,7 @@ public:
     void nextESI(int size) { this->regs.D.ESI += (getDF() ? -size : size); }
     void nextEDI(int size) { this->regs.D.EDI += (getDF() ? -size : size); }
 
-    enum Command { EnterMainLoop, ExitMainLoop };
+    enum Command { EnterMainLoop, ExitMainLoop, SoftReboot };
     void queueCommand(Command);
 
     static const char* registerName(VCpu::RegisterIndex16);
@@ -1213,6 +1215,7 @@ private:
     bool m_operationSize32;
 
     bool m_shouldBreakOutOfMainLoop;
+    bool m_shouldSoftReboot { false };
 
     QVector<WatchedAddress> m_watches;
 

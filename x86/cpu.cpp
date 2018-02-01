@@ -496,49 +496,6 @@ VCpu::VCpu(Machine& m)
 
     m_debugger = new Debugger(this);
 
-    m_a20Enabled = false;
-
-    memset(&regs, 0, sizeof(regs));
-    this->CS = 0;
-    this->DS = 0;
-    this->ES = 0;
-    this->SS = 0;
-    this->FS = 0;
-    this->GS = 0;
-    this->CR0 = 0;
-    this->CR1 = 0;
-    this->CR2 = 0;
-    this->CR3 = 0;
-    this->CR4 = 0;
-    this->CR5 = 0;
-    this->CR6 = 0;
-    this->CR7 = 0;
-    this->DR0 = 0;
-    this->DR1 = 0;
-    this->DR2 = 0;
-    this->DR3 = 0;
-    this->DR4 = 0;
-    this->DR5 = 0;
-    this->DR6 = 0;
-    this->DR7 = 0;
-
-    this->IOPL = 0;
-    this->VM = 0;
-    this->VIP = 0;
-    this->VIF = 0;
-    this->CPL = 0;
-
-    this->GDTR.base = 0;
-    this->GDTR.limit = 0;
-    this->IDTR.base = 0;
-    this->IDTR.limit = 0;
-    this->LDTR.base = 0;
-    this->LDTR.limit = 0;
-    this->LDTR.segment = 0;
-    this->LDTR.index = 0;
-
-    memset(m_selector, 0, sizeof(m_selector));
-
     m_controlRegisterMap[0] = &this->CR0;
     m_controlRegisterMap[1] = &this->CR1;
     m_controlRegisterMap[2] = &this->CR2;
@@ -583,6 +540,54 @@ VCpu::VCpu(Machine& m)
     m_segmentMap[RegisterGS] = &this->GS;
     m_segmentMap[6] = 0;
     m_segmentMap[7] = 0;
+
+    boot();
+}
+
+void VCpu::boot()
+{
+    m_a20Enabled = false;
+
+    memset(&regs, 0, sizeof(regs));
+    this->CS = 0;
+    this->DS = 0;
+    this->ES = 0;
+    this->SS = 0;
+    this->FS = 0;
+    this->GS = 0;
+    this->CR0 = 0;
+    this->CR1 = 0;
+    this->CR2 = 0;
+    this->CR3 = 0;
+    this->CR4 = 0;
+    this->CR5 = 0;
+    this->CR6 = 0;
+    this->CR7 = 0;
+    this->DR0 = 0;
+    this->DR1 = 0;
+    this->DR2 = 0;
+    this->DR3 = 0;
+    this->DR4 = 0;
+    this->DR5 = 0;
+    this->DR6 = 0;
+    this->DR7 = 0;
+
+    this->IOPL = 0;
+    this->VM = 0;
+    this->VIP = 0;
+    this->VIF = 0;
+    this->CPL = 0;
+
+    this->GDTR.base = 0;
+    this->GDTR.limit = 0;
+    this->IDTR.base = 0;
+    this->IDTR.limit = 0;
+    this->LDTR.base = 0;
+    this->LDTR.limit = 0;
+    this->LDTR.segment = 0;
+    this->LDTR.index = 0;
+
+    memset(m_selector, 0, sizeof(m_selector));
 
     m_segmentPrefix = 0x0000;
     m_currentSegment = &this->DS;
@@ -655,6 +660,9 @@ void VCpu::flushCommandQueue()
         case EnterMainLoop:
             m_shouldBreakOutOfMainLoop = false;
             break;
+        case SoftReboot:
+            m_shouldSoftReboot = true;
+            break;
         }
     }
 }
@@ -667,6 +675,14 @@ void VCpu::mainLoop()
         flushCommandQueue();
         if (m_shouldBreakOutOfMainLoop)
             return;
+
+        if (m_shouldSoftReboot) {
+            setA20Enabled(false);
+            setControlRegister(0, 0);
+            jump32(0xF000, 0x0);
+            m_shouldSoftReboot = false;
+            continue;
+        }
 
 #ifdef VOMIT_DEBUG
 
