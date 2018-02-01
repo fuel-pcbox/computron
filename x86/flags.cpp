@@ -185,7 +185,7 @@ void VCpu::_SAHF()
 
 void VCpu::mathFlags8(WORD result, BYTE dest, BYTE src)
 {
-    setCF(result & 0x0100);
+    setCF(result & 0xFF00);
     setSF(result & 0x0080);
     setZF((result & 0x00FF) == 0);
     setPF(parity_table[result & 0xFF]);
@@ -194,7 +194,7 @@ void VCpu::mathFlags8(WORD result, BYTE dest, BYTE src)
 
 void VCpu::mathFlags16(DWORD result, WORD dest, WORD src)
 {
-    setCF(result & 0x10000);
+    setCF(result & 0xFFFF0000);
     setSF(result & 0x8000);
     setZF((result & 0xFFFF) == 0);
     setPF(parity_table[result & 0xFF]);
@@ -203,7 +203,7 @@ void VCpu::mathFlags16(DWORD result, WORD dest, WORD src)
 
 void VCpu::mathFlags32(QWORD result, DWORD dest, DWORD src)
 {
-    setCF(result & 0x100000000ULL);
+    setCF(result & 0xFFFFFFFF00000000ULL);
     setSF(result & 0x80000000);
     setZF((result & 0xFFFFFFFF) == 0);
     setPF(parity_table[result & 0xFF]);

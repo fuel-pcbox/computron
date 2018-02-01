@@ -815,9 +815,10 @@ void VCpu::_HLT()
 {
     setState(VCpu::Halted);
 
-    if (!getIF())
+    if (!getIF()) {
         vlog(LogCPU, "Halted with IF=0");
-    else
+        vomit_exit(0);
+    } else
         vlog(LogCPU, "Halted");
 
     haltedLoop();

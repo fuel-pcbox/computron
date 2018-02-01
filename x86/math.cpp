@@ -63,9 +63,7 @@ QWORD VCpu::doAdd(T dest, T src)
 template<typename T>
 QWORD VCpu::doAdc(T dest, T src)
 {
-    QWORD result;
-    src += getCF();
-    result = (QWORD)dest + (QWORD)src;
+    QWORD result = (QWORD)dest + (QWORD)src + (QWORD)getCF();
 
     updateCpuMathFlags(this, result, dest, src);
     setOF(((
@@ -86,9 +84,7 @@ QWORD VCpu::doSub(T dest, T src)
 template<typename T>
 QWORD VCpu::doSbb(T dest, T src)
 {
-    QWORD result;
-    src += getCF();
-    result = (QWORD)dest - (QWORD)src;
+    QWORD result = (QWORD)dest - (QWORD)src - (QWORD)getCF();
     updateCpuCmpFlags(this, result, dest, src);
     return result;
 }
