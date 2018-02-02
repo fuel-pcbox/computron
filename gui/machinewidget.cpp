@@ -86,7 +86,7 @@ MachineWidget::MachineWidget(Machine& m)
 
     setLayout(layout);
 
-    screen().setFocus();
+    setFocusProxy(&screen());
 
     QAction *chooseFloppyAImage = new QAction(QIcon(":/icons/toolbar-floppy.svg"), tr("Floppy A:"), this);
     QAction *chooseFloppyBImage = new QAction(QIcon(":/icons/toolbar-floppy.svg"), tr("Floppy B:"), this);

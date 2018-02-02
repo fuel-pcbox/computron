@@ -98,6 +98,7 @@ int main(int argc, char** argv)
     MainWindow mainWindow;
     mainWindow.addMachine(machine.ptr());
     mainWindow.show();
+    mainWindow.setFocus();
 
     return app->exec();
 }
