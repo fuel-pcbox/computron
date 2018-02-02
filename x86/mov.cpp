@@ -28,20 +28,20 @@
 
 void VCpu::_MOV_RM8_imm8()
 {
-    (void) resolveModRM8(fetchOpcodeByte());
-    updateModRM8(fetchOpcodeByte());
+    auto location = resolveModRM8(fetchOpcodeByte());
+    location.write8(fetchOpcodeByte());
 }
 
 void VCpu::_MOV_RM16_imm16()
 {
-    (void) resolveModRM16(fetchOpcodeByte());
-    updateModRM16(fetchOpcodeWord());
+    auto location = resolveModRM16(fetchOpcodeByte());
+    location.write16(fetchOpcodeWord());
 }
 
 void VCpu::_MOV_RM32_imm32()
 {
-    (void) resolveModRM32(fetchOpcodeByte());
-    updateModRM32(fetchOpcodeDWord());
+    auto location = resolveModRM32(fetchOpcodeByte());
+    location.write32(fetchOpcodeDWord());
 }
 
 void VCpu::_MOV_RM16_seg()

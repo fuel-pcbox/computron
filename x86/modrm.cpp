@@ -30,155 +30,225 @@
 
 #define DEFAULT_TO_SS if (!hasSegmentPrefix()) { segment = getSS(); }
 
-void* VCpu::resolveModRM8(BYTE rmbyte)
+MemoryOrRegisterReference::MemoryOrRegisterReference(VCpu& cpu, void* registerPointer, ValueSize size)
+    : m_cpu(cpu)
+    , m_registerPointer(registerPointer)
+    , m_size(size)
 {
-    BYTE* registerPointer = static_cast<BYTE*>(resolveModRM_internal(rmbyte, ByteSize));
-    if (registerPointer)
-        return registerPointer;
-    return this->memoryPointer(m_lastModRMSegment, m_lastModRMOffset);
 }
 
-void* VCpu::resolveModRM16(BYTE rmbyte)
+MemoryOrRegisterReference::MemoryOrRegisterReference(VCpu& cpu, WORD segment, DWORD offset, ValueSize size)
+    : m_cpu(cpu)
+    , m_segment(segment)
+    , m_offset(offset)
+    , m_size(size)
 {
-    WORD* registerPointer = static_cast<WORD*>(resolveModRM_internal(rmbyte, WordSize));
-    if (registerPointer)
-        return registerPointer;
-    return this->memoryPointer(m_lastModRMSegment, m_lastModRMOffset);
 }
 
-void* VCpu::resolveModRM32(BYTE rmbyte)
+WORD MemoryOrRegisterReference::segment()
 {
-    DWORD* registerPointer = static_cast<DWORD*>(resolveModRM_internal(rmbyte, DWordSize));
-    if (registerPointer)
-        return registerPointer;
-    return this->memoryPointer(m_lastModRMSegment, m_lastModRMOffset);
+    VM_ASSERT(!isRegister());
+    return m_segment;
+}
+
+DWORD MemoryOrRegisterReference::offset()
+{
+    VM_ASSERT(!isRegister());
+    return m_offset;
+}
+
+void* MemoryOrRegisterReference::memoryPointer()
+{
+    if (isRegister())
+        return m_registerPointer;
+    return m_cpu.memoryPointer(m_segment, m_offset);
+}
+
+BYTE MemoryOrRegisterReference::read8()
+{
+    if (isRegister())
+        return *reinterpret_cast<BYTE*>(m_registerPointer);
+    return m_cpu.readMemory8(m_segment, m_offset);
+}
+
+WORD MemoryOrRegisterReference::read16()
+{
+    if (isRegister())
+        return *reinterpret_cast<WORD*>(m_registerPointer);
+    return m_cpu.readMemory16(m_segment, m_offset);
+}
+
+DWORD MemoryOrRegisterReference::read32()
+{
+    if (isRegister())
+        return *reinterpret_cast<DWORD*>(m_registerPointer);
+    return m_cpu.readMemory32(m_segment, m_offset);
+}
+
+void MemoryOrRegisterReference::write8(BYTE data)
+{
+    if (isRegister()) {
+        *reinterpret_cast<BYTE*>(m_registerPointer) = data;
+        return;
+    }
+    m_cpu.writeMemory8(m_segment, m_offset, data);
+}
+
+void MemoryOrRegisterReference::write16(WORD data)
+{
+    if (isRegister()) {
+        *reinterpret_cast<WORD*>(m_registerPointer) = data;
+        return;
+    }
+    m_cpu.writeMemory16(m_segment, m_offset, data);
+}
+
+void MemoryOrRegisterReference::write32(DWORD data)
+{
+    if (isRegister()) {
+        *reinterpret_cast<DWORD*>(m_registerPointer) = data;
+        return;
+    }
+    m_cpu.writeMemory32(m_segment, m_offset, data);
+}
+
+MemoryOrRegisterReference VCpu::resolveModRM8(BYTE rmbyte)
+{
+    return resolveModRM_internal(rmbyte, ByteSize);
+}
+
+MemoryOrRegisterReference VCpu::resolveModRM16(BYTE rmbyte)
+{
+    return resolveModRM_internal(rmbyte, WordSize);
+}
+
+MemoryOrRegisterReference VCpu::resolveModRM32(BYTE rmbyte)
+{
+    return resolveModRM_internal(rmbyte, DWordSize);
 }
 
 void VCpu::writeModRM32(BYTE rmbyte, DWORD value)
 {
-    DWORD* registerPointer = reinterpret_cast<DWORD*>(resolveModRM_internal(rmbyte, DWordSize));
-
-    if (registerPointer)
-        *registerPointer = value;
-    else
-        writeMemory32(m_lastModRMSegment, m_lastModRMOffset, value);
+    resolveModRM_internal(rmbyte, DWordSize).write32(value);
 }
 
 void VCpu::writeModRM16(BYTE rmbyte, WORD value)
 {
-    WORD* registerPointer = reinterpret_cast<WORD*>(resolveModRM_internal(rmbyte, WordSize));
-
-    if (registerPointer)
-        *registerPointer = value;
-    else
-        writeMemory16(m_lastModRMSegment, m_lastModRMOffset, value);
+    resolveModRM_internal(rmbyte, WordSize).write16(value);
 }
 
 void VCpu::writeModRM8(BYTE rmbyte, BYTE value)
 {
-    BYTE* registerPointer = reinterpret_cast<BYTE*>(resolveModRM_internal(rmbyte, ByteSize));
-
-    if (registerPointer)
-        *registerPointer = value;
-    else
-        writeMemory8(m_lastModRMSegment, m_lastModRMOffset, value);
+    resolveModRM_internal(rmbyte, ByteSize).write8(value);
 }
 
 WORD VCpu::readModRM16(BYTE rmbyte)
 {
-    WORD* registerPointer = reinterpret_cast<WORD*>(resolveModRM_internal(rmbyte, WordSize));
-
-    if (registerPointer)
-        return *registerPointer;
-    return readMemory16(m_lastModRMSegment, m_lastModRMOffset);
+    return resolveModRM_internal(rmbyte, WordSize).read16();
 }
 
-void* VCpu::resolveModRM_internal(BYTE rmbyte, ValueSize size)
+MemoryOrRegisterReference VCpu::resolveModRM_internal(BYTE rmbyte, ValueSize size)
 {
     if (a32())
-        return reinterpret_cast<DWORD*>(resolveModRM32_internal(rmbyte, size));
+        return resolveModRM32_internal(rmbyte, size);
 
     if (size == ByteSize)
-        return reinterpret_cast<DWORD*>(resolveModRM8_internal(rmbyte));
+        return resolveModRM8_internal(rmbyte);
 
-    return reinterpret_cast<DWORD*>(resolveModRM16_internal(rmbyte));
+    return resolveModRM16_internal(rmbyte);
 }
 
 BYTE VCpu::readModRM8(BYTE rmbyte)
 {
-    BYTE* registerPointer = reinterpret_cast<BYTE*>(resolveModRM_internal(rmbyte, ByteSize));
-    if (registerPointer)
-        return *registerPointer;
-    return readMemory8(m_lastModRMSegment, m_lastModRMOffset);
-}
-
-void VCpu::updateModRM32(DWORD value)
-{
-    if (m_lastModRMPointer)
-        *(reinterpret_cast<DWORD*>(m_lastModRMPointer)) = value;
-    else
-        writeMemory32(m_lastModRMSegment, m_lastModRMOffset, value);
-}
-
-void VCpu::updateModRM16(WORD value)
-{
-    if (m_lastModRMPointer)
-        *(reinterpret_cast<WORD*>(m_lastModRMPointer)) = value;
-    else
-        writeMemory16(m_lastModRMSegment, m_lastModRMOffset, value);
-}
-
-void VCpu::updateModRM8(BYTE value)
-{
-    if (m_lastModRMPointer)
-        *(reinterpret_cast<BYTE*>(m_lastModRMPointer)) = value;
-    else
-        writeMemory8(m_lastModRMSegment, m_lastModRMOffset, value);
+    return resolveModRM_internal(rmbyte, ByteSize).read8();
 }
 
 DWORD VCpu::readModRM32(BYTE rmbyte)
 {
-    DWORD* registerPointer = reinterpret_cast<DWORD*>(resolveModRM_internal(rmbyte, DWordSize));
-
-    if (registerPointer)
-        return *registerPointer;
-
-    return readMemory32(m_lastModRMSegment, m_lastModRMOffset);
+    return resolveModRM_internal(rmbyte, DWordSize).read32();
 }
 
 FarPointer VCpu::readModRMFarPointerSegmentFirst(BYTE rmbyte)
 {
-    void* registerPointer = resolveModRM_internal(rmbyte, DWordSize);
-
-    // FIXME: What should I do if it's a register? :|
-    assert(!registerPointer);
+    auto location = resolveModRM_internal(rmbyte, DWordSize);
+    VM_ASSERT(!location.isRegister());
 
     FarPointer ptr;
-    ptr.segment = readMemory16(m_lastModRMSegment, m_lastModRMOffset);
-    ptr.offset = readMemory32(m_lastModRMSegment, m_lastModRMOffset + 2);
+    ptr.segment = readMemory16(location.segment(), location.offset());
+    ptr.offset = readMemory32(location.segment(), location.offset() + 2);
 
-    vlog(LogCPU, "Loaded far pointer (segment first) from %04X:%08X [PE=%u], got %04X:%08X", m_lastModRMSegment, m_lastModRMOffset, getPE(), ptr.segment, ptr.offset);
+    vlog(LogCPU, "Loaded far pointer (segment first) from %04X:%08X [PE=%u], got %04X:%08X", location.segment(), location.offset(), getPE(), ptr.segment, ptr.offset);
 
     return ptr;
 }
 
 FarPointer VCpu::readModRMFarPointerOffsetFirst(BYTE rmbyte)
 {
-    void* registerPointer = resolveModRM_internal(rmbyte, DWordSize);
-
-    // FIXME: What should I do if it's a register? :|
-    assert(!registerPointer);
+    auto location = resolveModRM_internal(rmbyte, DWordSize);
+    VM_ASSERT(!location.isRegister());
 
     FarPointer ptr;
-    ptr.segment = readMemory16(m_lastModRMSegment, m_lastModRMOffset + 4);
-    ptr.offset = readMemory32(m_lastModRMSegment, m_lastModRMOffset);
+    ptr.segment = readMemory16(location.segment(), location.offset() + 4);
+    ptr.offset = readMemory32(location.segment(), location.offset());
 
-    vlog(LogCPU, "Loaded far pointer (offset first) from %04X:%08X [PE=%u], got %04X:%08X", m_lastModRMSegment, m_lastModRMOffset, getPE(), ptr.segment, ptr.offset);
+    vlog(LogCPU, "Loaded far pointer (offset first) from %04X:%08X [PE=%u], got %04X:%08X", location.segment(), location.offset(), getPE(), ptr.segment, ptr.offset);
 
     return ptr;
 }
 
-void *VCpu::resolveModRM8_internal(BYTE rmbyte)
+MemoryOrRegisterReference VCpu::resolveModRM8_internal(BYTE rmbyte)
+{
+    VM_ASSERT(a16());
+
+    WORD segment = currentSegment();
+    WORD offset { 0 };
+
+    switch (rmbyte & 0xC0) {
+    case 0x00:
+        switch (rmbyte & 0x07) {
+        case 0: offset = getBX() + getSI(); break;
+        case 1: offset = getBX() + getDI(); break;
+        case 2: DEFAULT_TO_SS; offset = getBP() + getSI(); break;
+        case 3: DEFAULT_TO_SS; offset = getBP() + getDI(); break;
+        case 4: offset = getSI(); break;
+        case 5: offset = getDI(); break;
+        case 6: offset = fetchOpcodeWord(); break;
+        default: offset = getBX(); break;
+        }
+        return { *this, segment, offset, ByteSize };
+    case 0x40:
+        offset = vomit_signExtend<WORD>(fetchOpcodeByte());
+        switch (rmbyte & 0x07) {
+        case 0: offset += getBX() + getSI(); break;
+        case 1: offset += getBX() + getDI(); break;
+        case 2: DEFAULT_TO_SS; offset += getBP() + getSI(); break;
+        case 3: DEFAULT_TO_SS; offset += getBP() + getDI(); break;
+        case 4: offset += getSI(); break;
+        case 5: offset += getDI(); break;
+        case 6: DEFAULT_TO_SS; offset += getBP(); break;
+        default: offset += getBX(); break;
+        }
+        return { *this, segment, offset, ByteSize };
+        break;
+    case 0x80:
+        offset = fetchOpcodeWord();
+        switch (rmbyte & 0x07) {
+        case 0: offset += getBX() + getSI(); break;
+        case 1: offset += getBX() + getDI(); break;
+        case 2: DEFAULT_TO_SS; offset += getBP() + getSI(); break;
+        case 3: DEFAULT_TO_SS; offset += getBP() + getDI(); break;
+        case 4: offset += getSI(); break;
+        case 5: offset += getDI(); break;
+        case 6: DEFAULT_TO_SS; offset += getBP(); break;
+        default: offset += getBX(); break;
+        }
+        return { *this, segment, offset, ByteSize };
+    default: // 0xC0
+        return { *this, treg8[rmbyte & 7], ByteSize };
+    }
+}
+
+MemoryOrRegisterReference VCpu::resolveModRM16_internal(BYTE rmbyte)
 {
     VM_ASSERT(a16());
 
@@ -197,10 +267,7 @@ void *VCpu::resolveModRM8_internal(BYTE rmbyte)
         case 6: offset = fetchOpcodeWord(); break;
         default: offset = getBX(); break;
         }
-        m_lastModRMSegment = segment;
-        m_lastModRMOffset = offset;
-        m_lastModRMPointer = 0;
-        break;
+        return { *this, segment, offset, WordSize };
     case 0x40:
         offset = vomit_signExtend<WORD>(fetchOpcodeByte());
         switch (rmbyte & 0x07) {
@@ -213,10 +280,7 @@ void *VCpu::resolveModRM8_internal(BYTE rmbyte)
         case 6: DEFAULT_TO_SS; offset += getBP(); break;
         default: offset += getBX(); break;
         }
-        m_lastModRMSegment = segment;
-        m_lastModRMOffset = offset;
-        m_lastModRMPointer = 0;
-        break;
+        return { *this, segment, offset, WordSize };
     case 0x80:
         offset = fetchOpcodeWord();
         switch (rmbyte & 0x07) {
@@ -229,103 +293,18 @@ void *VCpu::resolveModRM8_internal(BYTE rmbyte)
         case 6: DEFAULT_TO_SS; offset += getBP(); break;
         default: offset += getBX(); break;
         }
-        m_lastModRMSegment = segment;
-        m_lastModRMOffset = offset;
-        m_lastModRMPointer = 0;
-        break;
+        return { *this, segment, offset, WordSize };
     default: // 0xC0
-        switch (rmbyte & 0x07) {
-        case 0: m_lastModRMPointer = &this->regs.B.AL; break;
-        case 1: m_lastModRMPointer = &this->regs.B.CL; break;
-        case 2: m_lastModRMPointer = &this->regs.B.DL; break;
-        case 3: m_lastModRMPointer = &this->regs.B.BL; break;
-        case 4: m_lastModRMPointer = &this->regs.B.AH; break;
-        case 5: m_lastModRMPointer = &this->regs.B.CH; break;
-        case 6: m_lastModRMPointer = &this->regs.B.DH; break;
-        default: m_lastModRMPointer = &this->regs.B.BH; break;
-        }
-        break;
+        return { *this, treg16[rmbyte & 7], WordSize };
     }
-    return m_lastModRMPointer;
 }
 
-void* VCpu::resolveModRM16_internal(BYTE rmbyte)
-{
-    VM_ASSERT(a16());
-
-    WORD segment = currentSegment();
-    WORD offset = 0x0000;
-
-    switch (rmbyte & 0xC0) {
-    case 0x00:
-        switch (rmbyte & 0x07) {
-        case 0: offset = getBX() + getSI(); break;
-        case 1: offset = getBX() + getDI(); break;
-        case 2: DEFAULT_TO_SS; offset = getBP() + getSI(); break;
-        case 3: DEFAULT_TO_SS; offset = getBP() + getDI(); break;
-        case 4: offset = getSI(); break;
-        case 5: offset = getDI(); break;
-        case 6: offset = fetchOpcodeWord(); break;
-        default: offset = getBX(); break;
-        }
-        m_lastModRMSegment = segment;
-        m_lastModRMOffset = offset;
-        m_lastModRMPointer = 0;
-        break;
-    case 0x40:
-        offset = vomit_signExtend<WORD>(fetchOpcodeByte());
-        switch (rmbyte & 0x07) {
-        case 0: offset += getBX() + getSI(); break;
-        case 1: offset += getBX() + getDI(); break;
-        case 2: DEFAULT_TO_SS; offset += getBP() + getSI(); break;
-        case 3: DEFAULT_TO_SS; offset += getBP() + getDI(); break;
-        case 4: offset += getSI(); break;
-        case 5: offset += getDI(); break;
-        case 6: DEFAULT_TO_SS; offset += getBP(); break;
-        default: offset += getBX(); break;
-        }
-        m_lastModRMSegment = segment;
-        m_lastModRMOffset = offset;
-        m_lastModRMPointer = 0;
-        break;
-    case 0x80:
-        offset = fetchOpcodeWord();
-        switch (rmbyte & 0x07) {
-        case 0: offset += getBX() + getSI(); break;
-        case 1: offset += getBX() + getDI(); break;
-        case 2: DEFAULT_TO_SS; offset += getBP() + getSI(); break;
-        case 3: DEFAULT_TO_SS; offset += getBP() + getDI(); break;
-        case 4: offset += getSI(); break;
-        case 5: offset += getDI(); break;
-        case 6: DEFAULT_TO_SS; offset += getBP(); break;
-        default: offset += getBX(); break;
-        }
-        m_lastModRMSegment = segment;
-        m_lastModRMOffset = offset;
-        m_lastModRMPointer = 0;
-        break;
-    default: // 0xC0
-        switch (rmbyte & 0x07) {
-        case 0: m_lastModRMPointer = &this->regs.W.AX; break;
-        case 1: m_lastModRMPointer = &this->regs.W.CX; break;
-        case 2: m_lastModRMPointer = &this->regs.W.DX; break;
-        case 3: m_lastModRMPointer = &this->regs.W.BX; break;
-        case 4: m_lastModRMPointer = &this->regs.W.SP; break;
-        case 5: m_lastModRMPointer = &this->regs.W.BP; break;
-        case 6: m_lastModRMPointer = &this->regs.W.SI; break;
-        default: m_lastModRMPointer = &this->regs.W.DI; break;
-        }
-        break;
-    }
-    return m_lastModRMPointer;
-}
-
-void* VCpu::resolveModRM32_internal(BYTE rmbyte, ValueSize size)
+MemoryOrRegisterReference VCpu::resolveModRM32_internal(BYTE rmbyte, ValueSize size)
 {
     VM_ASSERT(a32());
 
     WORD segment = currentSegment();
-    DWORD offset = 0x00000000;
+    DWORD offset { 0 };
 
     switch (rmbyte & 0xC0) {
     case 0x00:
@@ -339,10 +318,7 @@ void* VCpu::resolveModRM32_internal(BYTE rmbyte, ValueSize size)
         case 6: offset = getESI(); break;
         default: offset = getEDI(); break;
         }
-        m_lastModRMSegment = segment;
-        m_lastModRMOffset = offset;
-        m_lastModRMPointer = 0;
-        break;
+        return { *this, segment, offset, size };
     case 0x40:
         switch (rmbyte & 0x07) {
         case 0: offset = getEAX() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
@@ -354,10 +330,7 @@ void* VCpu::resolveModRM32_internal(BYTE rmbyte, ValueSize size)
         case 6: offset = getESI() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
         default: offset = getEDI() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
         }
-        m_lastModRMSegment = segment;
-        m_lastModRMOffset = offset;
-        m_lastModRMPointer = 0;
-        break;
+        return { *this, segment, offset, size };
     case 0x80:
         switch (rmbyte & 0x07) {
         case 0: offset = getEAX() + fetchOpcodeDWord(); break;
@@ -369,48 +342,15 @@ void* VCpu::resolveModRM32_internal(BYTE rmbyte, ValueSize size)
         case 6: offset = getESI() + fetchOpcodeDWord(); break;
         default: offset = getEDI() + fetchOpcodeDWord(); break;
         }
-        m_lastModRMSegment = segment;
-        m_lastModRMOffset = offset;
-        m_lastModRMPointer = 0;
-        break;
+        return { *this, segment, offset, size };
     default: // 0xC0
-        if (size == DWordSize) {
-            switch (rmbyte & 0x07) {
-            case 0: m_lastModRMPointer = &this->regs.D.EAX; break;
-            case 1: m_lastModRMPointer = &this->regs.D.ECX; break;
-            case 2: m_lastModRMPointer = &this->regs.D.EDX; break;
-            case 3: m_lastModRMPointer = &this->regs.D.EBX; break;
-            case 4: m_lastModRMPointer = &this->regs.D.ESP; break;
-            case 5: m_lastModRMPointer = &this->regs.D.EBP; break;
-            case 6: m_lastModRMPointer = &this->regs.D.ESI; break;
-            default: m_lastModRMPointer = &this->regs.D.EDI; break;
-            }
-        } else if (size == WordSize) {
-            switch (rmbyte & 0x07) {
-            case 0: m_lastModRMPointer = &this->regs.W.AX; break;
-            case 1: m_lastModRMPointer = &this->regs.W.CX; break;
-            case 2: m_lastModRMPointer = &this->regs.W.DX; break;
-            case 3: m_lastModRMPointer = &this->regs.W.BX; break;
-            case 4: m_lastModRMPointer = &this->regs.W.SP; break;
-            case 5: m_lastModRMPointer = &this->regs.W.BP; break;
-            case 6: m_lastModRMPointer = &this->regs.W.SI; break;
-            default: m_lastModRMPointer = &this->regs.W.DI; break;
-            }
-        } else if (size == ByteSize) {
-            switch (rmbyte & 0x07) {
-            case 0: m_lastModRMPointer = &this->regs.B.AL; break;
-            case 1: m_lastModRMPointer = &this->regs.B.CL; break;
-            case 2: m_lastModRMPointer = &this->regs.B.DL; break;
-            case 3: m_lastModRMPointer = &this->regs.B.BL; break;
-            case 4: m_lastModRMPointer = &this->regs.B.AH; break;
-            case 5: m_lastModRMPointer = &this->regs.B.CH; break;
-            case 6: m_lastModRMPointer = &this->regs.B.DH; break;
-            default: m_lastModRMPointer = &this->regs.B.BH; break;
-            }
+        switch (size) {
+        case DWordSize: return { *this, treg32[rmbyte & 7], size };
+        case WordSize: return { *this, treg16[rmbyte & 7], size };
+        case ByteSize: return { *this, treg8[rmbyte & 7], size };
         }
-        break;
     }
-    return m_lastModRMPointer;
+    VM_ASSERT(false);
 }
 
 DWORD VCpu::evaluateSIB(BYTE rm, BYTE sib, WORD& segment, unsigned sizeOfImmediate)

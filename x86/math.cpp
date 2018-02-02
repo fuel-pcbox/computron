@@ -433,18 +433,18 @@ void VCpu::_IDIV_RM32()
 
 void VCpu::_NEG_RM8()
 {
-    BYTE value = readModRM8(rmbyte);
-    updateModRM8(doSub((BYTE)0, value));
+    auto location = resolveModRM8(rmbyte);
+    location.write8(doSub((BYTE)0, location.read8()));
 }
 
 void VCpu::_NEG_RM16()
 {
-    WORD value = readModRM16(rmbyte);
-    updateModRM16(doSub((WORD)0, value));
+    auto location = resolveModRM16(rmbyte);
+    location.write16(doSub((WORD)0, location.read16()));
 }
 
 void VCpu::_NEG_RM32()
 {
-    DWORD value = readModRM32(rmbyte);
-    updateModRM32(doSub((DWORD)0, value));
+    auto location = resolveModRM32(rmbyte);
+    location.write32(doSub((DWORD)0, location.read32()));
 }

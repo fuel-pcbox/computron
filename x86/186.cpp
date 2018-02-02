@@ -57,9 +57,9 @@ void VCpu::_wrap_0x0F()
 
 void VCpu::_BOUND()
 {
-    assert(false);
+    VM_ASSERT(false);
     BYTE rm = fetchOpcodeByte();
-    WORD* ptr = static_cast<WORD*>(resolveModRM8(rm));
+    WORD* ptr = static_cast<WORD*>(resolveModRM8(rm).memoryPointer());
     WORD index = getRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)));
 
     if (index < ptr[0] || index > ptr[1]) {

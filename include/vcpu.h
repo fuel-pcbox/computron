@@ -35,6 +35,7 @@
 
 class Debugger;
 class Machine;
+class VCpu;
 class VGAMemory;
 
 #define CALL_HANDLER(handler16, handler32) if (o16()) { handler16(); } else { handler32(); }
@@ -63,6 +64,31 @@ struct WatchedAddress {
     bool breakOnChange { false };
     static const QWORD neverSeen = 0xFFFFFFFFFFFFFFFF;
     QWORD lastSeenValue { neverSeen };
+};
+
+class MemoryOrRegisterReference {
+public:
+    MemoryOrRegisterReference(VCpu&, void* registerPointer, ValueSize);
+    MemoryOrRegisterReference(VCpu&, WORD segment, DWORD offset, ValueSize);
+
+    BYTE read8();
+    WORD read16();
+    DWORD read32();
+    void write8(BYTE);
+    void write16(WORD);
+    void write32(DWORD);
+    void* memoryPointer();
+
+    bool isRegister() { return m_registerPointer; }
+    WORD segment();
+    DWORD offset();
+
+private:
+    VCpu& m_cpu;
+    void* m_registerPointer { nullptr };
+    WORD m_segment { 0 };
+    DWORD m_offset { 0 };
+    ValueSize m_size { ByteSize };
 };
 
 class VCpu {
@@ -428,24 +454,9 @@ public:
     void writeModRM16(BYTE rmbyte, WORD value);
     void writeModRM32(BYTE rmbyte, DWORD value);
 
-    /*!
-        Writes an 8-bit value back to the most recently resolved ModR/M location.
-     */
-    void updateModRM8(BYTE value);
-
-    /*!
-        Writes a 16-bit value back to the most recently resolved ModR/M location.
-     */
-    void updateModRM16(WORD value);
-
-    /*!
-        Writes a 32-bit value back to the most recently resolved ModR/M location.
-     */
-    void updateModRM32(DWORD value);
-
-    void* resolveModRM8(BYTE rmbyte);
-    void* resolveModRM16(BYTE rmbyte);
-    void* resolveModRM32(BYTE rmbyte);
+    MemoryOrRegisterReference resolveModRM8(BYTE rmbyte);
+    MemoryOrRegisterReference resolveModRM16(BYTE rmbyte);
+    MemoryOrRegisterReference resolveModRM32(BYTE rmbyte);
 
     DWORD evaluateSIB(BYTE rm, BYTE sib, WORD& segment, unsigned sizeOfImmediate);
 
@@ -1030,10 +1041,10 @@ private:
     template<typename T> QWORD doMul(T, T);
     template<typename T> SIGNED_QWORD doImul(T, T);
 
-    void* resolveModRM_internal(BYTE rmbyte, ValueSize size);
-    void* resolveModRM8_internal(BYTE rmbyte);
-    void* resolveModRM16_internal(BYTE rmbyte);
-    void* resolveModRM32_internal(BYTE rmbyte, ValueSize);
+    MemoryOrRegisterReference resolveModRM_internal(BYTE rmbyte, ValueSize size);
+    MemoryOrRegisterReference resolveModRM8_internal(BYTE rmbyte);
+    MemoryOrRegisterReference resolveModRM16_internal(BYTE rmbyte);
+    MemoryOrRegisterReference resolveModRM32_internal(BYTE rmbyte, ValueSize);
 
     void saveBaseAddress()
     {
@@ -1185,10 +1196,6 @@ private:
 
     WORD* m_currentSegment;
     WORD m_segmentPrefix;
-
-    mutable void* m_lastModRMPointer;
-    mutable WORD m_lastModRMSegment;
-    mutable DWORD m_lastModRMOffset;
 
     DWORD m_baseMemorySize;
     DWORD m_extendedMemorySize;

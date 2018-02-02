@@ -233,20 +233,20 @@ DWORD cpu_rcr(VCpu& cpu, DWORD data, BYTE steps, BYTE bits)
 
 void VCpu::_NOT_RM8()
 {
-    BYTE value = readModRM8(rmbyte);
-    updateModRM8(~value);
+    auto location = resolveModRM8(rmbyte);
+    location.write8(~location.read8());
 }
 
 void VCpu::_NOT_RM16()
 {
-    WORD value = readModRM16(rmbyte);
-    updateModRM16(~value);
+    auto location = resolveModRM16(rmbyte);
+    location.write16(~location.read16());
 }
 
 void VCpu::_NOT_RM32()
 {
-    DWORD value = readModRM32(rmbyte);
-    updateModRM32(~value);
+    auto location = resolveModRM32(rmbyte);
+    location.write32(~location.read32());
 }
 
 DEFAULT_RM16_imm8(doBt, _BT_RM16_imm8)

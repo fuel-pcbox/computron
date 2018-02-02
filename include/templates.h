@@ -29,15 +29,15 @@
 #define DEFAULT_RM8_reg8(helper, name) \
         void VCpu::name() { \
                 BYTE rm = fetchOpcodeByte(); \
-                BYTE value = readModRM8(rm); \
-                updateModRM8(helper(value, *treg8[vomit_modRMRegisterPart(rm)])); \
+                auto location = resolveModRM8(rm); \
+                location.write8(helper(location.read8(), *treg8[vomit_modRMRegisterPart(rm)])); \
 	}
 
 #define DEFAULT_RM16_reg16(helper, name) \
         void VCpu::name() { \
                 BYTE rm = fetchOpcodeByte(); \
-                WORD value = readModRM16(rm); \
-                updateModRM16(helper(value, *treg16[vomit_modRMRegisterPart(rm)])); \
+                auto location = resolveModRM16(rm); \
+                location.write16(helper(location.read16(), *treg16[vomit_modRMRegisterPart(rm)])); \
 	}
 
 #define DEFAULT_reg8_RM8(helper, name) \
@@ -63,32 +63,32 @@
 
 #define DEFAULT_RM8_imm8(helper, name) \
         void VCpu::name() { \
-                BYTE value = readModRM8(rmbyte); \
-                updateModRM8(helper(value, fetchOpcodeByte())); \
+                auto location = resolveModRM8(rmbyte); \
+                location.write8(helper(location.read8(), fetchOpcodeByte())); \
 	}
 
 #define DEFAULT_RM16_imm16(helper, name) \
         void VCpu::name() { \
-                WORD value = readModRM16(rmbyte); \
-                updateModRM16(helper(value, fetchOpcodeWord())); \
+                auto location = resolveModRM16(rmbyte); \
+                location.write16(helper(location.read16(), fetchOpcodeWord())); \
 	}
 
 #define DEFAULT_RM32_imm32(helper, name) \
         void VCpu::name() { \
-                DWORD value = readModRM32(rmbyte); \
-                updateModRM32(helper(value, fetchOpcodeDWord())); \
+                auto location = resolveModRM32(rmbyte); \
+                location.write32(helper(location.read32(), fetchOpcodeDWord())); \
 	}
 
 #define DEFAULT_RM16_imm8(helper, name) \
         void VCpu::name() { \
-                WORD value = readModRM16(rmbyte); \
-                updateModRM16(helper(value, vomit_signExtend<WORD>(fetchOpcodeByte()))); \
+                auto location = resolveModRM16(rmbyte); \
+                location.write16(helper(location.read16(), vomit_signExtend<WORD>(fetchOpcodeByte()))); \
 	}
 
 #define DEFAULT_RM32_imm8(helper, name) \
         void VCpu::name() { \
-                DWORD value = readModRM32(rmbyte); \
-                updateModRM32(helper(value, vomit_signExtend<DWORD>(fetchOpcodeByte()))); \
+                auto location = resolveModRM32(rmbyte); \
+                location.write32(helper(location.read32(), vomit_signExtend<DWORD>(fetchOpcodeByte()))); \
         }
 
 #define DEFAULT_AL_imm8(helper, name) \
@@ -190,8 +190,8 @@
 #define DEFAULT_RM32_reg32(helper, name) \
         void VCpu::name() { \
                 BYTE rm = fetchOpcodeByte(); \
-                DWORD value = readModRM32(rm); \
-                updateModRM32(helper(value, *treg32[vomit_modRMRegisterPart(rm)])); \
+                auto location = resolveModRM32(rm); \
+                location.write32(helper(location.read32(), *treg32[vomit_modRMRegisterPart(rm)])); \
         }
 
 #endif /* __templates_h__ */

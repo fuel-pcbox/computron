@@ -208,123 +208,129 @@ void VCpu::_wrap_0x8F_32()
 void VCpu::_wrap_0xC0()
 {
     BYTE rm = fetchOpcodeByte();
-    BYTE value = readModRM8(rm);
+    auto location = resolveModRM8(rm);
+    auto value = location.read8();
     BYTE imm = fetchOpcodeByte();
 
     switch (vomit_modRMRegisterPart(rm)) {
-    case 0: updateModRM8(doRol(value, imm)); break;
-    case 1: updateModRM8(doRor(value, imm)); break;
-    case 2: updateModRM8(cpu_rcl(*this, value, imm, 8)); break;
-    case 3: updateModRM8(cpu_rcr(*this, value, imm, 8)); break;
-    case 4: updateModRM8(leftShift(value, imm)); break;
-    case 5: updateModRM8(rightShift(value, imm)); break;
+    case 0: location.write8(doRol(value, imm)); break;
+    case 1: location.write8(doRor(value, imm)); break;
+    case 2: location.write8(cpu_rcl(*this, value, imm, 8)); break;
+    case 3: location.write8(cpu_rcr(*this, value, imm, 8)); break;
+    case 4: location.write8(leftShift(value, imm)); break;
+    case 5: location.write8(rightShift(value, imm)); break;
     case 6:
         vlog(LogAlert, "C0 /6 not wrapped");
         exception(6);
         break;
-    case 7: updateModRM8(cpu_sar(*this, value, imm, 8)); break;
+    case 7: location.write8(cpu_sar(*this, value, imm, 8)); break;
     }
 }
 
 void VCpu::_wrap_0xC1_16()
 {
     BYTE rm = fetchOpcodeByte();
-    WORD value = readModRM16(rm);
+    auto location = resolveModRM16(rm);
+    auto value = location.read16();
     BYTE imm = fetchOpcodeByte();
 
     switch (vomit_modRMRegisterPart(rm)) {
-    case 0: updateModRM16(doRol(value, imm)); break;
-    case 1: updateModRM16(doRor(value, imm)); break;
-    case 2: updateModRM16(cpu_rcl(*this, value, imm, 16)); break;
-    case 3: updateModRM16(cpu_rcr(*this, value, imm, 16)); break;
-    case 4: updateModRM16(leftShift(value, imm)); break;
-    case 5: updateModRM16(rightShift(value, imm)); break;
+    case 0: location.write16(doRol(value, imm)); break;
+    case 1: location.write16(doRor(value, imm)); break;
+    case 2: location.write16(cpu_rcl(*this, value, imm, 16)); break;
+    case 3: location.write16(cpu_rcr(*this, value, imm, 16)); break;
+    case 4: location.write16(leftShift(value, imm)); break;
+    case 5: location.write16(rightShift(value, imm)); break;
     case 6:
         vlog(LogAlert, "[16bit] C1 /6 not wrapped");
         exception(6);
         break;
-    case 7: updateModRM16(cpu_sar(*this, value, imm, 16)); break;
+    case 7: location.write16(cpu_sar(*this, value, imm, 16)); break;
     }
 }
 
 void VCpu::_wrap_0xC1_32()
 {
     BYTE rm = fetchOpcodeByte();
-    DWORD value = readModRM32(rm);
+    auto location = resolveModRM32(rm);
+    auto value = location.read32();
     BYTE imm = fetchOpcodeByte();
 
     switch (vomit_modRMRegisterPart(rm)) {
-    case 0: updateModRM32(doRol(value, imm)); break;
-    case 1: updateModRM32(doRor(value, imm)); break;
-    case 2: updateModRM32(cpu_rcl(*this, value, imm, 32)); break;
-    case 3: updateModRM32(cpu_rcr(*this, value, imm, 32)); break;
-    case 4: updateModRM32(leftShift(value, imm)); break;
-    case 5: updateModRM32(rightShift(value, imm)); break;
+    case 0: location.write32(doRol(value, imm)); break;
+    case 1: location.write32(doRor(value, imm)); break;
+    case 2: location.write32(cpu_rcl(*this, value, imm, 32)); break;
+    case 3: location.write32(cpu_rcr(*this, value, imm, 32)); break;
+    case 4: location.write32(leftShift(value, imm)); break;
+    case 5: location.write32(rightShift(value, imm)); break;
     case 6:
         vlog(LogAlert, "[32bit] C1 /6 not wrapped");
         exception(6);
         break;
-    case 7: updateModRM32(cpu_sar(*this, value, imm, 32)); break;
+    case 7: location.write32(cpu_sar(*this, value, imm, 32)); break;
     }
 }
 
 void VCpu::_wrap_0xD0()
 {
     BYTE rm = fetchOpcodeByte();
-    BYTE value = readModRM8(rm);
+    auto location = resolveModRM8(rm);
+    auto value = location.read8();
 
     switch (vomit_modRMRegisterPart(rm)) {
-    case 0: updateModRM8(doRol(value, 1)); break;
-    case 1: updateModRM8(doRor(value, 1)); break;
-    case 2: updateModRM8(cpu_rcl(*this, value, 1, 8 )); break;
-    case 3: updateModRM8(cpu_rcr(*this, value, 1, 8 )); break;
-    case 4: updateModRM8(leftShift(value, 1)); break;
-    case 5: updateModRM8(rightShift(value, 1)); break;
+    case 0: location.write8(doRol(value, 1)); break;
+    case 1: location.write8(doRor(value, 1)); break;
+    case 2: location.write8(cpu_rcl(*this, value, 1, 8 )); break;
+    case 3: location.write8(cpu_rcr(*this, value, 1, 8 )); break;
+    case 4: location.write8(leftShift(value, 1)); break;
+    case 5: location.write8(rightShift(value, 1)); break;
     case 6:
         vlog(LogAlert, "D0 /6 not wrapped");
         exception(6);
         break;
-    case 7: updateModRM8(cpu_sar(*this, value, 1, 8 )); break;
+    case 7: location.write8(cpu_sar(*this, value, 1, 8 )); break;
     }
 }
 
 void VCpu::_wrap_0xD1_16()
 {
     BYTE rm = fetchOpcodeByte();
-    WORD value = readModRM16(rm);
+    auto location = resolveModRM16(rm);
+    auto value = location.read16();
 
     switch (vomit_modRMRegisterPart(rm)) {
-    case 0: updateModRM16(doRol(value, 1)); break;
-    case 1: updateModRM16(doRor(value, 1)); break;
-    case 2: updateModRM16(cpu_rcl(*this, value, 1, 16)); break;
-    case 3: updateModRM16(cpu_rcr(*this, value, 1, 16)); break;
-    case 4: updateModRM16(leftShift(value, 1)); break;
-    case 5: updateModRM16(rightShift(value, 1)); break;
+    case 0: location.write16(doRol(value, 1)); break;
+    case 1: location.write16(doRor(value, 1)); break;
+    case 2: location.write16(cpu_rcl(*this, value, 1, 16)); break;
+    case 3: location.write16(cpu_rcr(*this, value, 1, 16)); break;
+    case 4: location.write16(leftShift(value, 1)); break;
+    case 5: location.write16(rightShift(value, 1)); break;
     case 6:
         vlog(LogAlert, "[16bit] D1 /6 not wrapped");
         exception(6);
         break;
-    case 7: updateModRM16(cpu_sar(*this, value, 1, 16)); break;
+    case 7: location.write16(cpu_sar(*this, value, 1, 16)); break;
     }
 }
 
 void VCpu::_wrap_0xD1_32()
 {
     BYTE rm = fetchOpcodeByte();
-    DWORD value = readModRM32(rm);
+    auto location = resolveModRM32(rm);
+    auto value = location.read32();
 
     switch (vomit_modRMRegisterPart(rm)) {
-    case 0: updateModRM32(doRol(value, 1)); break;
-    case 1: updateModRM32(doRor(value, 1)); break;
-    case 2: updateModRM32(cpu_rcl(*this, value, 1, 32)); break;
-    case 3: updateModRM32(cpu_rcr(*this, value, 1, 32)); break;
-    case 4: updateModRM32(leftShift(value, 1)); break;
-    case 5: updateModRM32(rightShift(value, 1)); break;
+    case 0: location.write32(doRol(value, 1)); break;
+    case 1: location.write32(doRor(value, 1)); break;
+    case 2: location.write32(cpu_rcl(*this, value, 1, 32)); break;
+    case 3: location.write32(cpu_rcr(*this, value, 1, 32)); break;
+    case 4: location.write32(leftShift(value, 1)); break;
+    case 5: location.write32(rightShift(value, 1)); break;
     case 6:
         vlog(LogAlert, "[32bit] D1 /6 not wrapped");
         exception(6);
         break;
-    case 7: updateModRM32(cpu_sar(*this, value, 1, 32)); break;
+    case 7: location.write32(cpu_sar(*this, value, 1, 32)); break;
     }
 }
 
@@ -332,60 +338,63 @@ void VCpu::_wrap_0xD1_32()
 void VCpu::_wrap_0xD2()
 {
     BYTE rm = fetchOpcodeByte();
-    BYTE value = readModRM8(rm);
+    auto location = resolveModRM8(rm);
+    auto value = location.read8();
 
     switch (vomit_modRMRegisterPart(rm)) {
-    case 0: updateModRM8(doRol(value, regs.B.CL)); break;
-    case 1: updateModRM8(doRor(value, regs.B.CL)); break;
-    case 2: updateModRM8(cpu_rcl(*this, value, regs.B.CL, 8 )); break;
-    case 3: updateModRM8(cpu_rcr(*this, value, regs.B.CL, 8 )); break;
-    case 4: updateModRM8(leftShift(value, regs.B.CL)); break;
-    case 5: updateModRM8(rightShift(value, regs.B.CL)); break;
+    case 0: location.write8(doRol(value, regs.B.CL)); break;
+    case 1: location.write8(doRor(value, regs.B.CL)); break;
+    case 2: location.write8(cpu_rcl(*this, value, regs.B.CL, 8 )); break;
+    case 3: location.write8(cpu_rcr(*this, value, regs.B.CL, 8 )); break;
+    case 4: location.write8(leftShift(value, regs.B.CL)); break;
+    case 5: location.write8(rightShift(value, regs.B.CL)); break;
     case 6:
         vlog(LogAlert, "D2 /6 not wrapped");
         exception(6);
         break;
-    case 7: updateModRM8(cpu_sar(*this, value, regs.B.CL, 8 )); break;
+    case 7: location.write8(cpu_sar(*this, value, regs.B.CL, 8 )); break;
     }
 }
 
 void VCpu::_wrap_0xD3_16()
 {
     BYTE rm = fetchOpcodeByte();
-    WORD value = readModRM16(rm);
+    auto location = resolveModRM16(rm);
+    auto value = location.read16();
 
     switch (vomit_modRMRegisterPart(rm)) {
-    case 0: updateModRM16(doRol(value, regs.B.CL)); break;
-    case 1: updateModRM16(doRor(value, regs.B.CL)); break;
-    case 2: updateModRM16(cpu_rcl(*this, value, regs.B.CL, 16)); break;
-    case 3: updateModRM16(cpu_rcr(*this, value, regs.B.CL, 16)); break;
-    case 4: updateModRM16(leftShift(value, regs.B.CL)); break;
-    case 5: updateModRM16(rightShift(value, regs.B.CL)); break;
+    case 0: location.write16(doRol(value, regs.B.CL)); break;
+    case 1: location.write16(doRor(value, regs.B.CL)); break;
+    case 2: location.write16(cpu_rcl(*this, value, regs.B.CL, 16)); break;
+    case 3: location.write16(cpu_rcr(*this, value, regs.B.CL, 16)); break;
+    case 4: location.write16(leftShift(value, regs.B.CL)); break;
+    case 5: location.write16(rightShift(value, regs.B.CL)); break;
     case 6:
         vlog(LogAlert, "[16bit] D3 /6 not wrapped");
         exception(6);
         break;
-    case 7: updateModRM16(cpu_sar(*this, value, regs.B.CL, 16)); break;
+    case 7: location.write16(cpu_sar(*this, value, regs.B.CL, 16)); break;
     }
 }
 
 void VCpu::_wrap_0xD3_32()
 {
     BYTE rm = fetchOpcodeByte();
-    DWORD value = readModRM32(rm);
+    auto location = resolveModRM32(rm);
+    auto value = location.read32();
 
     switch (vomit_modRMRegisterPart(rm)) {
-    case 0: updateModRM32(doRol(value, regs.B.CL)); break;
-    case 1: updateModRM32(doRor(value, regs.B.CL)); break;
-    case 2: updateModRM32(cpu_rcl(*this, value, regs.B.CL, 32)); break;
-    case 3: updateModRM32(cpu_rcr(*this, value, regs.B.CL, 32)); break;
-    case 4: updateModRM32(leftShift(value, regs.B.CL)); break;
-    case 5: updateModRM32(rightShift(value, regs.B.CL)); break;
+    case 0: location.write32(doRol(value, regs.B.CL)); break;
+    case 1: location.write32(doRor(value, regs.B.CL)); break;
+    case 2: location.write32(cpu_rcl(*this, value, regs.B.CL, 32)); break;
+    case 3: location.write32(cpu_rcr(*this, value, regs.B.CL, 32)); break;
+    case 4: location.write32(leftShift(value, regs.B.CL)); break;
+    case 5: location.write32(rightShift(value, regs.B.CL)); break;
     case 6:
         vlog(LogAlert, "[32bit] D3 /6 not wrapped");
         exception(6);
         break;
-    case 7: updateModRM32(cpu_sar(*this, value, regs.B.CL, 32)); break;
+    case 7: location.write32(cpu_sar(*this, value, regs.B.CL, 32)); break;
     }
 }
 

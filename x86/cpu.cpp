@@ -928,28 +928,28 @@ void VCpu::_XCHG_reg8_RM8()
     BYTE rm = fetchOpcodeByte();
     BYTE &reg(*treg8[vomit_modRMRegisterPart(rm)]);
 
-    BYTE value = readModRM8(rm);
+    auto location = resolveModRM8(rm);
     BYTE tmp = reg;
-    reg = value;
-    updateModRM8(tmp);
+    reg = location.read8();
+    location.write8(tmp);
 }
 
 void VCpu::_XCHG_reg16_RM16()
 {
     BYTE rm = fetchOpcodeByte();
-    WORD value = readModRM16(rm);
+    auto location = resolveModRM16(rm);
     WORD tmp = getRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)));
-    setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), value);
-    updateModRM16(tmp);
+    setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), location.read16());
+    location.write16(tmp);
 }
 
 void VCpu::_XCHG_reg32_RM32()
 {
     BYTE rm = fetchOpcodeByte();
-    DWORD value = readModRM32(rm);
+    auto location = resolveModRM32(rm);
     DWORD tmp = getRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)));
-    setRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)), value);
-    updateModRM32(tmp);
+    setRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)), location.read32());
+    location.write32(tmp);
 }
 
 void VCpu::_DEC_reg16()
@@ -1010,7 +1010,8 @@ void VCpu::_INC_reg32()
 
 void VCpu::_INC_RM16()
 {
-    WORD value = readModRM16(rmbyte);
+    auto location = resolveModRM16(rmbyte);
+    WORD value = location.read16();
     DWORD i = value;
 
     /* Overflow if we'll wrap. */
@@ -1019,12 +1020,13 @@ void VCpu::_INC_RM16()
     ++i;
     adjustFlag32(i, value, 1);
     updateFlags16(i);
-    updateModRM16(value + 1);
+    location.write16(value + 1);
 }
 
 void VCpu::_INC_RM32()
 {
-    DWORD value = readModRM32(rmbyte);
+    auto location = resolveModRM32(rmbyte);
+    DWORD value = location.read32();
     QWORD i = value;
 
     /* Overflow if we'll wrap. */
@@ -1033,12 +1035,13 @@ void VCpu::_INC_RM32()
     ++i;
     adjustFlag32(i, value, 1);
     updateFlags32(i);
-    updateModRM32(value + 1);
+    location.write32(value + 1);
 }
 
 void VCpu::_DEC_RM16()
 {
-    WORD value = readModRM16(rmbyte);
+    auto location = resolveModRM16(rmbyte);
+    WORD value = location.read16();
     DWORD i = value;
 
     /* Overflow if we'll wrap. */
@@ -1047,12 +1050,13 @@ void VCpu::_DEC_RM16()
     --i;
     adjustFlag32(i, value, 1); // XXX: i can be (dword)(-1)...
     updateFlags16(i);
-    updateModRM16(value - 1);
+    location.write16(value - 1);
 }
 
 void VCpu::_DEC_RM32()
 {
-    DWORD value = readModRM32(rmbyte);
+    auto location = resolveModRM32(rmbyte);
+    DWORD value = location.read32();
     QWORD i = value;
 
     /* Overflow if we'll wrap. */
@@ -1061,36 +1065,38 @@ void VCpu::_DEC_RM32()
     --i;
     adjustFlag32(i, value, 1); // XXX: i can be (dword)(-1)...
     updateFlags32(i);
-    updateModRM32(value - 1);
+    location.write32(value - 1);
 }
 
 void VCpu::_INC_RM8()
 {
-    BYTE value = readModRM8(this->rmbyte);
+    auto location = resolveModRM8(rmbyte);
+    BYTE value = location.read8();
     WORD i = value;
     setOF(value == 0x7F);
     i++;
     adjustFlag32(i, value, 1);
     updateFlags8(i);
-    updateModRM8(value + 1);
+    location.write8(value + 1);
 }
 
 void VCpu::_DEC_RM8()
 {
-    BYTE value = readModRM8(this->rmbyte);
+    auto location = resolveModRM8(rmbyte);
+    BYTE value = location.read8();
     WORD i = value;
     setOF(value == 0x80);
     i--;
     adjustFlag32(i, value, 1);
     updateFlags8(i);
-    updateModRM8(value - 1);
+    location.write8(value - 1);
 }
 
 void VCpu::_LDS_reg16_mem16()
 {
     VM_ASSERT(a16());
     BYTE rm = fetchOpcodeByte();
-    WORD* ptr = static_cast<WORD*>(resolveModRM8(rm));
+    WORD* ptr = static_cast<WORD*>(resolveModRM8(rm).memoryPointer());
     setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), vomit_read16FromPointer(ptr));
     setDS(vomit_read16FromPointer(ptr + 1));
 }
@@ -1122,7 +1128,7 @@ void VCpu::_LES_reg16_mem16()
 {
     VM_ASSERT(a16());
     BYTE rm = fetchOpcodeByte();
-    WORD* ptr = static_cast<WORD*>(resolveModRM8(rm));
+    WORD* ptr = static_cast<WORD*>(resolveModRM8(rm).memoryPointer());
     setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), vomit_read16FromPointer(ptr));
     setES(vomit_read16FromPointer(ptr + 1));
 }
@@ -1138,7 +1144,7 @@ void VCpu::_LFS_reg16_mem16()
 {
     VM_ASSERT(a16());
     BYTE rm = fetchOpcodeByte();
-    WORD* ptr = static_cast<WORD*>(resolveModRM8(rm));
+    WORD* ptr = static_cast<WORD*>(resolveModRM8(rm).memoryPointer());
     setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), vomit_read16FromPointer(ptr));
     setFS(vomit_read16FromPointer(ptr + 1));
 }
@@ -1154,7 +1160,7 @@ void VCpu::_LSS_reg16_mem16()
 {
     VM_ASSERT(a16());
     BYTE rm = fetchOpcodeByte();
-    WORD* ptr = static_cast<WORD*>(resolveModRM8(rm));
+    WORD* ptr = static_cast<WORD*>(resolveModRM8(rm).memoryPointer());
     setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), vomit_read16FromPointer(ptr));
     setSS(vomit_read16FromPointer(ptr + 1));
 }
@@ -1173,7 +1179,7 @@ void VCpu::_LGS_reg16_mem16()
 {
     VM_ASSERT(a16());
     BYTE rm = fetchOpcodeByte();
-    WORD* ptr = static_cast<WORD*>(resolveModRM8(rm));
+    WORD* ptr = static_cast<WORD*>(resolveModRM8(rm).memoryPointer());
     setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), vomit_read16FromPointer(ptr));
     setGS(vomit_read16FromPointer(ptr + 1));
 }
