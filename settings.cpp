@@ -54,18 +54,6 @@ static FloppyType gFloppyTypes[] =
     { 0L,       0, 0,    0,   0, 0 }
 };
 
-Settings::Settings()
-    : m_memorySize(0)
-    , m_entryCS(0)
-    , m_entryIP(0)
-    , m_forAutotest(false)
-{
-}
-
-Settings::~Settings()
-{
-}
-
 static bool parseAddress(const QString& string, DWORD* address)
 {
     VM_ASSERT(address);
@@ -212,11 +200,17 @@ OwnPtr<Settings> Settings::createForAutotest(const QString& fileName)
 {
     static const WORD autotestEntryCS = 0x1000;
     static const WORD autotestEntryIP = 0x0000;
+    static const WORD autotestEntryDS = 0x1000;
+    static const WORD autotestEntrySS = 0x9000;
+    static const WORD autotestEntrySP = 0x1000;
 
     auto settings = make<Settings>();
 
     settings->m_entryCS = autotestEntryCS;
     settings->m_entryIP = autotestEntryIP;
+    settings->m_entryDS = autotestEntryDS;
+    settings->m_entrySS = autotestEntrySS;
+    settings->m_entrySP = autotestEntrySP;
     settings->m_files.insert(vomit_toFlatAddress(autotestEntryCS, autotestEntryIP), fileName);
 
     settings->m_forAutotest = true;

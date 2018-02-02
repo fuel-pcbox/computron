@@ -121,6 +121,8 @@ void parseArguments(const QStringList& arguments)
             options.trace = true;
         else if (argument == "--debug")
             options.start_in_debug = true;
+        else if (argument == "--no-vlog")
+            options.novlog = true;
         else if (argument == "--run") {
             ++it;
             if (it == arguments.end()) {

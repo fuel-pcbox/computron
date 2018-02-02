@@ -51,6 +51,7 @@ struct VomitOptions {
     bool start_in_debug { false };
     bool memdebug { false };
     bool vgadebug { false };
+    bool novlog { false };
     std::string file_to_run;
 };
 

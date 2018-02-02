@@ -35,7 +35,7 @@ static FILE* s_logfile = 0L;
 
 void vlog(VLogChannel channel, const char* format, ...)
 {
-    if (g_cpu && g_cpu->machine().isForAutotest())
+    if (options.novlog)
         return;
 
     va_list ap;

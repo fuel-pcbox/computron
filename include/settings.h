@@ -44,6 +44,9 @@ public:
 
     WORD entryCS() const { return m_entryCS; }
     WORD entryIP() const { return m_entryIP; }
+    WORD entryDS() const { return m_entryDS; }
+    WORD entrySS() const { return m_entrySS; }
+    WORD entrySP() const { return m_entrySP; }
 
     QHash<DWORD, QString> files() const { return m_files; }
     QString keymap() const { return m_keymap; }
@@ -51,8 +54,8 @@ public:
     bool isForAutotest() const { return m_forAutotest; }
     void setForAutotest(bool b) { m_forAutotest = b; }
 
-    Settings();
-    ~Settings();
+    Settings() { }
+    ~Settings() { }
 
 private:
     Settings(const Settings&) = delete;
@@ -66,10 +69,13 @@ private:
 
     QHash<DWORD, QString> m_files;
     QString m_keymap;
-    unsigned m_memorySize;
-    WORD m_entryCS;
-    WORD m_entryIP;
-    bool m_forAutotest;
+    unsigned m_memorySize { 0 };
+    WORD m_entryCS { 0 };
+    WORD m_entryIP { 0 };
+    WORD m_entryDS { 0 };
+    WORD m_entrySS { 0 };
+    WORD m_entrySP { 0 };
+    bool m_forAutotest { false };
 };
 
 #endif

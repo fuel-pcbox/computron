@@ -125,6 +125,9 @@ void Machine::applySettings()
 
     cpu().setCS(settings().entryCS());
     cpu().setIP(settings().entryIP());
+    cpu().setDS(settings().entryDS());
+    cpu().setSS(settings().entrySS());
+    cpu().setSP(settings().entrySP());
 
     QHash<DWORD, QString> files = settings().files();
 

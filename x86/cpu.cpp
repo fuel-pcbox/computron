@@ -420,6 +420,7 @@ void VCpu::decode(BYTE op)
     case 0xD2: _wrap_0xD2(); break;
     case 0xD3: CALL_HANDLER(_wrap_0xD3_16, _wrap_0xD3_32); break;
     case 0xD5: _AAD(); break;
+    case 0xD6: _SALC(); break;
     case 0xD7: _XLAT(); break;
     // BEGIN FPU STUBS
     case 0xD8:
