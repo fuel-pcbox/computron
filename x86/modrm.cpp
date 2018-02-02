@@ -415,57 +415,25 @@ void* VCpu::resolveModRM32_internal(BYTE rmbyte, ValueSize size)
 
 DWORD VCpu::evaluateSIB(BYTE rm, BYTE sib, WORD& segment, unsigned sizeOfImmediate)
 {
-    DWORD scaledIndex;
+    DWORD scale;
     switch (sib & 0xC0) {
-    case 0x00:
-        switch ((sib >> 3) & 0x07) {
-        case 0: scaledIndex = getEAX(); break;
-        case 1: scaledIndex = getECX(); break;
-        case 2: scaledIndex = getEDX(); break;
-        case 3: scaledIndex = getEBX(); break;
-        case 4: scaledIndex = 0; break;
-        case 5: DEFAULT_TO_SS; scaledIndex = getEBP(); break;
-        case 6: scaledIndex = getESI(); break;
-        default: scaledIndex = getEDI(); break;
-        }
-        break;
-    case 0x40:
-        switch ((sib >> 3) & 0x07) {
-        case 0: scaledIndex = getEAX() * 2; break;
-        case 1: scaledIndex = getECX() * 2; break;
-        case 2: scaledIndex = getEDX() * 2; break;
-        case 3: scaledIndex = getEBX() * 2; break;
-        case 4: scaledIndex = 0; break;
-        case 5: DEFAULT_TO_SS; scaledIndex = getEBP() * 2; break;
-        case 6: scaledIndex = getESI() * 2; break;
-        default: scaledIndex = getEDI() * 2; break;
-        }
-        break;
-    case 0x80:
-        switch ((sib >> 3) & 0x07) {
-        case 0: scaledIndex = getEAX() * 4; break;
-        case 1: scaledIndex = getECX() * 4; break;
-        case 2: scaledIndex = getEDX() * 4; break;
-        case 3: scaledIndex = getEBX() * 4; break;
-        case 4: scaledIndex = 0; break;
-        case 5: DEFAULT_TO_SS; scaledIndex = getEBP() * 4; break;
-        case 6: scaledIndex = getESI() * 4; break;
-        default: scaledIndex = getEDI() * 4; break;
-        }
-        break;
-    default: // 0xC0
-        switch ((sib >> 3) & 0x07) {
-        case 0: scaledIndex = getEAX() * 8; break;
-        case 1: scaledIndex = getECX() * 8; break;
-        case 2: scaledIndex = getEDX() * 8; break;
-        case 3: scaledIndex = getEBX() * 8; break;
-        case 4: scaledIndex = 0; break;
-        case 5: DEFAULT_TO_SS; scaledIndex = getEBP() * 8; break;
-        case 6: scaledIndex = getESI() * 8; break;
-        default: scaledIndex = getEDI() * 8; break;
-        }
-        break;
+    case 0x00: scale = 1; break;
+    case 0x40: scale = 2; break;
+    case 0x80: scale = 4; break;
+    case 0xC0: scale = 8; break;
     }
+    DWORD index;
+    switch ((sib >> 3) & 0x07) {
+    case 0: index = getEAX(); break;
+    case 1: index = getECX(); break;
+    case 2: index = getEDX(); break;
+    case 3: index = getEBX(); break;
+    case 4: index = 0; break;
+    case 5: DEFAULT_TO_SS; index = getEBP(); break;
+    case 6: index = getESI(); break;
+    case 7: index = getEDI(); break;
+    }
+    DWORD scaledIndex = index * scale;
 
     DWORD base = 0;
     switch (sib & 0x07) {
