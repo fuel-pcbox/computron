@@ -1192,116 +1192,29 @@ void VCpu::_LGS_reg32_mem32()
 void VCpu::_LEA_reg32_mem32()
 {
     VM_ASSERT(a32() == o32());
-
-    if (!a32()) {
-        dumpAll();
-        debugger().enter();
-    }
-
-    DWORD retv = 0;
-    BYTE b = fetchOpcodeByte();
-    WORD dummy;
-
-    switch (b & 0xC0) {
-    case 0x00:
-        switch (b & 0x07) {
-        case 0: retv = getEAX(); break;
-        case 1: retv = getECX(); break;
-        case 2: retv = getEDX(); break;
-        case 3: retv = getEBX(); break;
-        case 4: retv = evaluateSIB(b, fetchOpcodeByte(), dummy, 0); break;
-        case 5: retv = fetchOpcodeDWord(); break;
-        case 6: retv = getESI(); break;
-        default: retv = getEDI(); break;
-        }
-        break;
-    case 0x40:
-        switch (b & 0x07) {
-        case 0: retv = getEAX() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
-        case 1: retv = getECX() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
-        case 2: retv = getEDX() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
-        case 3: retv = getEBX() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
-        case 4: retv = evaluateSIB(b, fetchOpcodeByte(), dummy, 8); break;
-        case 5: retv = getEBP() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
-        case 6: retv = getESI() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
-        default: retv = getEDI() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
-        }
-        break;
-    case 0x80:
-        switch (b & 0x07) {
-        case 0: retv = getEAX() + fetchOpcodeDWord(); break;
-        case 1: retv = getECX() + fetchOpcodeDWord(); break;
-        case 2: retv = getEDX() + fetchOpcodeDWord(); break;
-        case 3: retv = getEBX() + fetchOpcodeDWord(); break;
-        case 4: retv = evaluateSIB(b, fetchOpcodeByte(), dummy, 32); break;
-        case 5: retv = getEBP() + fetchOpcodeDWord(); break;
-        case 6: retv = getESI() + fetchOpcodeDWord(); break;
-        default: retv = getEDI() + fetchOpcodeDWord(); break;
-        }
-        break;
-    default: // 0xC0
+    BYTE rm = fetchOpcodeByte();
+    auto location = resolveModRM32(rm);
+    if (location.isRegister()) {
         vlog(LogAlert, "LEA_reg32_mem32 with register source!");
-        /* LEA with register source, an invalid instruction.
-         * Call INT6 (invalid opcode exception) */
         exception(6);
-        break;
+        return;
     }
-    setRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(b)), retv);
+
+    setRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)), location.offset());
 }
 
 void VCpu::_LEA_reg16_mem16()
 {
     VM_ASSERT(a32() == o32());
-    WORD retv = 0x0000;
-    BYTE b = fetchOpcodeByte();
-    switch (b & 0xC0) {
-        case 0:
-            switch(b & 0x07)
-            {
-                case 0: retv = regs.W.BX+regs.W.SI; break;
-                case 1: retv = regs.W.BX+regs.W.DI; break;
-                case 2: retv = regs.W.BP+regs.W.SI; break;
-                case 3: retv = regs.W.BP+regs.W.DI; break;
-                case 4: retv = regs.W.SI; break;
-                case 5: retv = regs.W.DI; break;
-                case 6: retv = fetchOpcodeWord(); break;
-                default: retv = regs.W.BX; break;
-            }
-            break;
-        case 64:
-            switch(b & 0x07)
-            {
-                case 0: retv = regs.W.BX+regs.W.SI + vomit_signExtend<WORD>(fetchOpcodeByte()); break;
-                case 1: retv = regs.W.BX+regs.W.DI + vomit_signExtend<WORD>(fetchOpcodeByte()); break;
-                case 2: retv = regs.W.BP+regs.W.SI + vomit_signExtend<WORD>(fetchOpcodeByte()); break;
-                case 3: retv = regs.W.BP+regs.W.DI + vomit_signExtend<WORD>(fetchOpcodeByte()); break;
-                case 4: retv = regs.W.SI + vomit_signExtend<WORD>(fetchOpcodeByte()); break;
-                case 5: retv = regs.W.DI + vomit_signExtend<WORD>(fetchOpcodeByte()); break;
-                case 6: retv = regs.W.BP + vomit_signExtend<WORD>(fetchOpcodeByte()); break;
-                default: retv = regs.W.BX + vomit_signExtend<WORD>(fetchOpcodeByte()); break;
-            }
-            break;
-        case 128:
-            switch(b & 0x07)
-            {
-                case 0: retv = regs.W.BX+regs.W.SI+fetchOpcodeWord(); break;
-                case 1: retv = regs.W.BX+regs.W.DI+fetchOpcodeWord(); break;
-                case 2: retv = regs.W.BP+regs.W.SI+fetchOpcodeWord(); break;
-                case 3: retv = regs.W.BP+regs.W.DI+fetchOpcodeWord(); break;
-                case 4: retv = regs.W.SI + fetchOpcodeWord(); break;
-                case 5: retv = regs.W.DI + fetchOpcodeWord(); break;
-                case 6: retv = regs.W.BP + fetchOpcodeWord(); break;
-                default: retv = regs.W.BX + fetchOpcodeWord(); break;
-            }
-            break;
-        case 192:
-            vlog(LogAlert, "LEA with register source!");
-            /* LEA with register source, an invalid instruction.
-             * Call INT6 (invalid opcode exception) */
-            exception(6);
-            break;
+    BYTE rm = fetchOpcodeByte();
+    auto location = resolveModRM16(rm);
+    if (location.isRegister()) {
+        vlog(LogAlert, "LEA_reg16_mem16 with register source!");
+        exception(6);
+        return;
     }
-    setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(b)), retv);
+
+    setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), location.offset());
 }
 static const char* toString(VCpu::MemoryAccessType type)
 {
@@ -1353,7 +1266,6 @@ template<typename T>
 T VCpu::readMemory(DWORD address)
 {
     address &= a20Mask();
-    T value;
     if (addressIsInVGAMemory(address))
         return machine().vgaMemory().read<T>(address);
     return *reinterpret_cast<T*>(&m_memory[address]);
