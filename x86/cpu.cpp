@@ -551,10 +551,10 @@ VCpu::VCpu(Machine& m)
     m_segmentMap[6] = 0;
     m_segmentMap[7] = 0;
 
-    boot();
+    reset();
 }
 
-void VCpu::boot()
+void VCpu::reset()
 {
     m_a20Enabled = false;
 
@@ -668,6 +668,9 @@ void VCpu::flushCommandQueue()
         case EnterMainLoop:
             m_shouldBreakOutOfMainLoop = false;
             break;
+        case HardReboot:
+            m_shouldHardReboot = true;
+            break;
         case SoftReboot:
             m_shouldSoftReboot = true;
             break;
@@ -689,6 +692,13 @@ void VCpu::mainLoop()
             setControlRegister(0, 0);
             jump32(0xF000, 0x0);
             m_shouldSoftReboot = false;
+            continue;
+        }
+
+        if (m_shouldHardReboot) {
+            machine().resetAllIODevices();
+            reset();
+            m_shouldHardReboot = false;
             continue;
         }
 

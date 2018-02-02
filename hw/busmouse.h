@@ -29,14 +29,15 @@
 #include "iodevice.h"
 #include <QtCore/QMutex>
 
-class BusMouse : public IODevice
+class BusMouse final : public IODevice
 {
 public:
     explicit BusMouse(Machine&);
     virtual ~BusMouse();
 
-    virtual void out8(WORD port, BYTE data);
-    virtual BYTE in8(WORD port);
+    virtual void reset() override;
+    virtual void out8(WORD port, BYTE data) override;
+    virtual BYTE in8(WORD port) override;
 
     enum Button { LeftButton, RightButton };
 

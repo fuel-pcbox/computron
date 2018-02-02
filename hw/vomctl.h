@@ -35,6 +35,7 @@ public:
     explicit VomCtl(Machine&);
     virtual ~VomCtl();
 
+    virtual void reset() override;
     virtual void out8(WORD port, BYTE data) override;
     virtual BYTE in8(WORD port) override;
 

@@ -73,6 +73,15 @@ FDC::FDC(Machine& machine)
     listen(0x3F4, IODevice::ReadOnly);
     listen(0x3F5, IODevice::ReadWrite);
 
+    reset();
+}
+
+FDC::~FDC()
+{
+}
+
+void FDC::reset()
+{
     d->driveIndex = 0;
     d->enabled = false;
     d->usingDMA = false;
@@ -87,10 +96,6 @@ FDC::FDC(Machine& machine)
     d->statusRegister[1] = 0;
     d->statusRegister[2] = 0;
     d->statusRegister[3] = 0;
-}
-
-FDC::~FDC()
-{
 }
 
 BYTE FDC::in8(WORD port)

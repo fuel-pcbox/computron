@@ -53,6 +53,19 @@
 Keyboard::Keyboard(Machine& machine)
     : IODevice("Keyboard", machine)
 {
+    listen(0x60, IODevice::ReadWrite);
+    listen(0x61, IODevice::ReadWrite);
+    listen(0x64, IODevice::ReadWrite);
+
+    reset();
+}
+
+Keyboard::~Keyboard()
+{
+}
+
+void Keyboard::reset()
+{
     memset(m_ram, 0, sizeof(m_ram));
 
     m_systemControlPortData = 0;
@@ -65,14 +78,6 @@ Keyboard::Keyboard(Machine& machine)
     // FIXME: The BIOS should do this, no?
     m_ram[0] |= CCB_KEYBOARD_ENABLE;
     m_ram[0] |= CCB_KEYBOARD_INTERRUPT_ENABLE;
-
-    listen(0x60, IODevice::ReadWrite);
-    listen(0x61, IODevice::ReadWrite);
-    listen(0x64, IODevice::ReadWrite);
-}
-
-Keyboard::~Keyboard()
-{
 }
 
 BYTE Keyboard::in8(WORD port)

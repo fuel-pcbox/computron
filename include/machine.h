@@ -26,10 +26,12 @@
 #ifndef MACHINE_H
 #define MACHINE_H
 
+#include <functional>
 #include <QObject>
 #include "types.h"
 #include "OwnPtr.h"
 
+class IODevice;
 class BusMouse;
 class CMOS;
 class FDC;
@@ -65,13 +67,16 @@ public:
     VomCtl& vomCtl() { return *m_vomCtl; }
     PIC& masterPIC() { return *m_masterPIC; }
     PIC& slavePIC() { return *m_slavePIC; }
-    VGAMemory& vgaMemory() { return *m_vgaMemory; }
+    CMOS& cmos() { return *m_cmos; }
     Settings& settings() { return *m_settings; }
+    VGAMemory& vgaMemory() { return *m_vgaMemory; }
 
     bool isForAutotest();
 
     MachineWidget* widget() { return m_widget; }
     void setWidget(MachineWidget* widget) { m_widget = widget; }
+
+    void resetAllIODevices();
 
 public slots:
     void start();
@@ -83,6 +88,7 @@ private slots:
     void onWorkerFinished();
 
 private:
+    void forEachIODevice(std::function<void(IODevice&)>);
     bool loadFile(DWORD address, const QString& fileName);
 
     void applySettings();

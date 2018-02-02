@@ -40,7 +40,7 @@ public:
     const char* name() const;
     Machine& machine() const { return m_machine; }
 
-    virtual void reset() { }
+    virtual void reset() = 0;
 
     virtual BYTE in8(WORD port);
     virtual void out8(WORD port, BYTE data);

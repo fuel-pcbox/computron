@@ -37,7 +37,6 @@ VomCtl::VomCtl(Machine& machine)
     : IODevice("VomCtl", machine)
     , d(make<Private>())
 {
-    m_registerIndex = 0;
     listen(0xD6, IODevice::ReadWrite);
     listen(0xD7, IODevice::ReadWrite);
 
@@ -49,10 +48,18 @@ VomCtl::VomCtl(Machine& machine)
     listen(0xE6, IODevice::WriteOnly);
     listen(0xE7, IODevice::WriteOnly);
     listen(0xE8, IODevice::WriteOnly);
+
+    reset();
 }
 
 VomCtl::~VomCtl()
 {
+}
+
+void VomCtl::reset()
+{
+    m_registerIndex = 0;
+    d->consoleWriteBuffer = QString();
 }
 
 BYTE VomCtl::in8(WORD port)

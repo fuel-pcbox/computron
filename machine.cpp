@@ -194,3 +194,25 @@ bool Machine::isForAutotest()
 {
     return settings().isForAutotest();
 }
+
+void Machine::forEachIODevice(std::function<void (IODevice &)> function)
+{
+    function(*m_pit);
+    function(*m_masterPIC);
+    function(*m_slavePIC);
+    function(*m_vga);
+    function(*m_vomCtl);
+    function(*m_cmos);
+    function(*m_busMouse);
+    function(*m_keyboard);
+    function(*m_fdc);
+    function(*m_ide);
+    function(*m_ps2);
+}
+
+void Machine::resetAllIODevices()
+{
+    forEachIODevice([] (IODevice& device) {
+        device.reset();
+    });
+}

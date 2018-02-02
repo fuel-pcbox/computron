@@ -66,5 +66,5 @@ void Worker::stopMachine()
 
 void Worker::rebootMachine()
 {
-    m_cpu.queueCommand(VCpu::SoftReboot);
+    m_cpu.queueCommand(VCpu::HardReboot);
 }

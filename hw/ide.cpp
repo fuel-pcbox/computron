@@ -29,22 +29,11 @@
 
 struct IDEController
 {
-    WORD cylinderIndex;
-    BYTE sectorIndex;
-    BYTE headIndex;
-    BYTE sectorCount;
-    BYTE error;
-
-    IDEController()
-        : cylinderIndex(0)
-        , sectorIndex(0)
-        , headIndex(0)
-        , sectorCount(0)
-        , error(0)
-    { }
-
-private:
-    IDEController(const IDEController&);
+    WORD cylinderIndex { 0 };
+    BYTE sectorIndex { 0 };
+    BYTE headIndex { 0 };
+    BYTE sectorCount { 0 };
+    BYTE error { 0 };
 };
 
 static const int gNumControllers = 2;
@@ -76,6 +65,12 @@ IDE::IDE(Machine& machine)
 
 IDE::~IDE()
 {
+}
+
+void IDE::reset()
+{
+     d->controller[0] = IDEController();
+     d->controller[1] = IDEController();
 }
 
 void IDE::out8(WORD port, BYTE data)

@@ -43,6 +43,19 @@ BusMouse::~BusMouse()
 {
 }
 
+void BusMouse::reset()
+{
+    m_interrupts = true;
+    m_command = 0;
+    m_buttons = 0 ;
+    m_currentX = 0;
+    m_currentY = 0 ;
+    m_lastX = 0;
+    m_lastY = 0;
+    m_deltaX = 0;
+    m_deltaY = 0;
+}
+
 void BusMouse::out8(WORD port, BYTE data)
 {
     switch (port) {

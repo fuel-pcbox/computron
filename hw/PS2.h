@@ -34,6 +34,7 @@ public:
     explicit PS2(Machine&);
     virtual ~PS2();
 
+    virtual void reset() override;
     virtual BYTE in8(WORD port) override;
     virtual void out8(WORD port, BYTE data) override;
 };

@@ -60,15 +60,20 @@ PIT::PIT(Machine& machine)
     listen(0x42, IODevice::WriteOnly);
     listen(0x43, IODevice::WriteOnly);
 
+    reset();
+}
+
+PIT::~PIT()
+{
+}
+
+void PIT::reset()
+{
     d->frequency = 0;
     d->timerId = -1;
 
     d->timer[0].counter[0].reload = 0xFFFF;
     d->timer[0].counter[0].value = 0xFFFF;
-}
-
-PIT::~PIT()
-{
 }
 
 void PIT::reconfigureTimer()

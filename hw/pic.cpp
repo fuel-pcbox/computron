@@ -68,7 +68,6 @@ void PIC::reset()
     m_imr = 0x00;
     m_icw2Expected = false;
     m_readIRR = true;
-    IODevice::reset();
 }
 
 void PIC::out8(WORD port, BYTE data)

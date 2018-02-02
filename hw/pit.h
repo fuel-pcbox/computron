@@ -37,6 +37,7 @@ public:
     explicit PIT(Machine&);
     virtual ~PIT();
 
+    virtual void reset() override;
     virtual BYTE in8(WORD port) override;
     virtual void out8(WORD port, BYTE data) override;
 

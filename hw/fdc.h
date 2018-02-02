@@ -35,6 +35,7 @@ public:
     explicit FDC(Machine&);
     virtual ~FDC();
 
+    virtual void reset() override;
     virtual BYTE in8(WORD port) override;
     virtual void out8(WORD port, BYTE data) override;
 

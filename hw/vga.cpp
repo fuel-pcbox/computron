@@ -100,6 +100,15 @@ VGA::VGA(Machine& m)
     listen(0x3D5, IODevice::ReadWrite);
     listen(0x3DA, IODevice::ReadOnly);
 
+    reset();
+}
+
+VGA::~VGA()
+{
+}
+
+void VGA::reset()
+{
     d->columns = 80;
     d->rows = 0;
 
@@ -126,10 +135,6 @@ VGA::VGA(Machine& m)
 
     d->next3C0IsIndex = true;
     d->paletteDirty = true;
-}
-
-VGA::~VGA()
-{
 }
 
 void VGA::out8(WORD port, BYTE data)

@@ -39,6 +39,10 @@ PS2::~PS2()
 {
 }
 
+void PS2::reset()
+{
+}
+
 BYTE PS2::in8(WORD port)
 {
     if (port == SystemControlPortA) {
