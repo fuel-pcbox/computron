@@ -1009,7 +1009,7 @@ void VCpu::_INC_reg32()
 void VCpu::_INC_RM16()
 {
     auto location = resolveModRM16(rmbyte);
-    WORD value = location.read16();
+    auto value = location.read16();
     DWORD i = value;
 
     /* Overflow if we'll wrap. */
@@ -1024,7 +1024,7 @@ void VCpu::_INC_RM16()
 void VCpu::_INC_RM32()
 {
     auto location = resolveModRM32(rmbyte);
-    DWORD value = location.read32();
+    auto value = location.read32();
     QWORD i = value;
 
     /* Overflow if we'll wrap. */
@@ -1039,7 +1039,7 @@ void VCpu::_INC_RM32()
 void VCpu::_DEC_RM16()
 {
     auto location = resolveModRM16(rmbyte);
-    WORD value = location.read16();
+    auto value = location.read16();
     DWORD i = value;
 
     /* Overflow if we'll wrap. */
@@ -1054,7 +1054,7 @@ void VCpu::_DEC_RM16()
 void VCpu::_DEC_RM32()
 {
     auto location = resolveModRM32(rmbyte);
-    DWORD value = location.read32();
+    auto value = location.read32();
     QWORD i = value;
 
     /* Overflow if we'll wrap. */
@@ -1069,7 +1069,7 @@ void VCpu::_DEC_RM32()
 void VCpu::_INC_RM8()
 {
     auto location = resolveModRM8(rmbyte);
-    BYTE value = location.read8();
+    auto value = location.read8();
     WORD i = value;
     setOF(value == 0x7F);
     i++;
@@ -1081,7 +1081,7 @@ void VCpu::_INC_RM8()
 void VCpu::_DEC_RM8()
 {
     auto location = resolveModRM8(rmbyte);
-    BYTE value = location.read8();
+    auto value = location.read8();
     WORD i = value;
     setOF(value == 0x80);
     i--;
