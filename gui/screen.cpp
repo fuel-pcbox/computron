@@ -82,15 +82,16 @@ Screen::Screen(Machine& m)
     setTextMode(80, 25);
     d->videoMemory = machine().cpu().memoryPointer(0xB800, 0x0000);
 
+    m_render04 = QImage(320, 200, QImage::Format_Indexed8);
+    m_render0D = QImage(320, 200, QImage::Format_Indexed8);
     m_screen12 = QImage(640, 480, QImage::Format_Indexed8);
     m_render12 = QImage(640, 480, QImage::Format_Indexed8);
-
-    m_render0D = QImage(320, 200, QImage::Format_Indexed8);
     m_render13 = QImage(320, 200, QImage::Format_Indexed8);
 
+    m_render04.fill(0);
+    m_render0D.fill(0);
     m_screen12.fill(0);
     m_render12.fill(0);
-    m_render0D.fill(0);
     m_render13.fill(0);
 
     synchronizeColors();
@@ -173,6 +174,12 @@ void Screen::refresh()
         return;
     }
 
+    if (videoMode == 0x04) {
+        renderMode04(m_render04);
+        update();
+        return;
+    }
+
     if (videoMode == 0x0D) {
         renderMode0D(m_render0D);
         update();
@@ -214,6 +221,26 @@ void Screen::setScreenSize(int width, int height)
     m_height = height;
 
     setFixedSize(m_width, m_height);
+}
+
+void Screen::renderMode04(QImage& target)
+{
+    const BYTE* videoMemory = machine().cpu().memoryPointer(0xB8000);
+    WORD startAddress = machine().vga().startAddress();
+    videoMemory += startAddress;
+    for (unsigned scanLine = 0; scanLine < 200; ++scanLine) {
+        BYTE* out = target.scanLine(scanLine);
+        const BYTE* in = videoMemory;
+        if ((scanLine & 1))
+            in += 0x2000;
+        in += (scanLine / 2) * 80;
+        for (unsigned i = 0; i < 80; ++i) {
+            *(out++) = (in[i] >> 6) & 3;
+            *(out++) = (in[i] >> 4) & 3;
+            *(out++) = (in[i] >> 2) & 3;
+            *(out++) = (in[i] >> 0) & 3;
+        }
+    }
 }
 
 void Screen::renderMode13(QImage& target)
@@ -310,6 +337,18 @@ void Screen::paintEvent(QPaintEvent *e)
         setScreenSize(640, 400);
         QPainter p(this);
         p.drawImage(0, 0, m_render0D.scaled(640, 400));
+
+        if (m_tinted) {
+            p.setOpacity(0.3);
+            p.fillRect(rect(), Qt::blue);
+        }
+        return;
+    }
+
+    if (currentVideoMode() == 0x04) {
+        setScreenSize(640, 400);
+        QPainter p(this);
+        p.drawImage(0, 0, m_render04.scaled(640, 400));
 
         if (m_tinted) {
             p.setOpacity(0.3);
@@ -426,6 +465,11 @@ void Screen::synchronizeColors()
         m_render12.setColor(i, d->color[i].rgb());
         m_render0D.setColor(i, d->color[i].rgb());
     }
+
+    m_render04.setColor(0, QColor(Qt::black).rgb());
+    m_render04.setColor(1, QColor(Qt::cyan).rgb());
+    m_render04.setColor(2, QColor(Qt::magenta).rgb());
+    m_render04.setColor(3, QColor(Qt::white).rgb());
 
     for (int i = 0; i < 256; ++i) {
         QColor color = machine().vga().color(i);
