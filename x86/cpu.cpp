@@ -1229,7 +1229,6 @@ template<typename T>
 bool VCpu::validateAddress(WORD segmentIndex, DWORD offset, MemoryAccessType accessType)
 {
     VM_ASSERT(getPE());
-    //VM_ASSERT(isA20Enabled());
 
     SegmentSelector segment = makeSegmentSelector(segmentIndex);
     if (offset > segment.effectiveLimit()) {
@@ -1275,7 +1274,6 @@ template<typename T>
 T VCpu::readMemory(WORD segmentIndex, DWORD offset)
 {
     if (getPE()) {
-        VM_ASSERT(isA20Enabled());
         if (!validateAddress<T>(segmentIndex, offset, MemoryAccessType::Read)) {
             //VM_ASSERT(false);
             return 0;
@@ -1300,15 +1298,6 @@ DWORD VCpu::readMemory32(WORD segmentIndex, DWORD offset) { return readMemory<DW
 template<typename T>
 void VCpu::writeMemory(DWORD address, T value)
 {
-#ifdef VOMIT_DEBUG_A20
-    if (hasA20Bit(address)) {
-        if (isA20Enabled())
-            vlog(LogCPU, "Write byte $0x%02X -> @0x%08X with A20 enabled", value, address);
-        else
-            vlog(LogCPU, "Write byte $0x%02X -> @0x%08X with A20 disabled, wrapping to @0x%08X", value, address, address & a20Mask());
-    }
-#endif
-
     assert(!getPE());
     address &= a20Mask();
 
@@ -1324,7 +1313,6 @@ template<typename T>
 void VCpu::writeMemory(WORD segmentIndex, DWORD offset, T value)
 {
     if (getPE()) {
-        VM_ASSERT(isA20Enabled());
         if (!validateAddress<T>(segmentIndex, offset, MemoryAccessType::Write)) {
             //VM_ASSERT(false);
             return;
@@ -1424,14 +1412,6 @@ BYTE* VCpu::memoryPointer(WORD segmentIndex, DWORD offset)
 
 BYTE* VCpu::memoryPointer(DWORD address)
 {
-#ifdef VOMIT_DEBUG_A20
-    if (hasA20Bit(address)) {
-        if (isA20Enabled())
-            vlog(LogCPU, "Get pointer to %08X with A20 enabled", address);
-        else
-            vlog(LogCPU, "Get pointer to %08X with A20 disabled, wrapping to %08X", address, address & a20Mask());
-    }
-#endif
     address &= a20Mask();
     return &m_memory[address];
 }
