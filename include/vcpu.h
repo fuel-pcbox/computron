@@ -68,8 +68,8 @@ struct WatchedAddress {
 
 class MemoryOrRegisterReference {
 public:
-    MemoryOrRegisterReference(VCpu&, void* registerPointer, ValueSize);
-    MemoryOrRegisterReference(VCpu&, WORD segment, DWORD offset, ValueSize);
+    MemoryOrRegisterReference(VCpu&, int registerIndex);
+    MemoryOrRegisterReference(VCpu&, WORD segment, DWORD offset);
 
     template<typename T> T read();
     template<typename T> void write(T);
@@ -82,13 +82,13 @@ public:
     void write32(DWORD);
     void* memoryPointer();
 
-    bool isRegister() { return m_registerPointer; }
+    bool isRegister() { return m_registerIndex != 0xffffffff; }
     WORD segment();
     DWORD offset();
 
 private:
     VCpu& m_cpu;
-    void* m_registerPointer { nullptr };
+    unsigned m_registerIndex { 0xffffffff };
     WORD m_segment { 0 };
     DWORD m_offset { 0 };
     ValueSize m_size { ByteSize };
@@ -414,6 +414,9 @@ public:
 
     void adjustFlag32(QWORD result, DWORD dest, DWORD src);
 
+    template<typename T> T readRegister(int registerIndex);
+    template<typename T> void writeRegister(int registerIndex, T value);
+
     // These are faster than readMemory*() but will not access VGA memory, etc.
     inline BYTE readUnmappedMemory8(DWORD address) const;
     inline WORD readUnmappedMemory16(DWORD address) const;
@@ -452,9 +455,7 @@ public:
     void writeModRM16(BYTE rmbyte, WORD value);
     void writeModRM32(BYTE rmbyte, DWORD value);
 
-    MemoryOrRegisterReference resolveModRM8(BYTE rmbyte);
-    MemoryOrRegisterReference resolveModRM16(BYTE rmbyte);
-    MemoryOrRegisterReference resolveModRM32(BYTE rmbyte);
+    MemoryOrRegisterReference resolveModRM(BYTE rmbyte);
 
     DWORD evaluateSIB(BYTE rm, BYTE sib, WORD& segment, unsigned sizeOfImmediate);
 
@@ -1039,10 +1040,8 @@ private:
     template<typename T> QWORD doMul(T, T);
     template<typename T> SIGNED_QWORD doImul(T, T);
 
-    MemoryOrRegisterReference resolveModRM_internal(BYTE rmbyte, ValueSize size);
-    MemoryOrRegisterReference resolveModRM8_internal(BYTE rmbyte);
     MemoryOrRegisterReference resolveModRM16_internal(BYTE rmbyte);
-    MemoryOrRegisterReference resolveModRM32_internal(BYTE rmbyte, ValueSize);
+    MemoryOrRegisterReference resolveModRM32_internal(BYTE rmbyte);
 
     void saveBaseAddress()
     {

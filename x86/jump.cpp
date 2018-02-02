@@ -83,7 +83,7 @@ void VCpu::_JMP_RM32()
 
 void VCpu::_JMP_FAR_mem16()
 {
-    WORD* ptr = static_cast<WORD*>(resolveModRM8(rmbyte).memoryPointer());
+    WORD* ptr = static_cast<WORD*>(resolveModRM(rmbyte).memoryPointer());
     jump16(ptr[1], ptr[0]);
 }
 
@@ -162,7 +162,7 @@ void VCpu::_CALL_imm16_imm32()
 
 void VCpu::_CALL_FAR_mem16()
 {
-    WORD* ptr = static_cast<WORD*>(resolveModRM8(rmbyte).memoryPointer());
+    WORD* ptr = static_cast<WORD*>(resolveModRM(rmbyte).memoryPointer());
     push(getCS());
     pushInstructionPointer();
     jump16(ptr[1], ptr[0]);

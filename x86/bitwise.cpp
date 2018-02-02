@@ -233,19 +233,19 @@ DWORD cpu_rcr(VCpu& cpu, DWORD data, BYTE steps, BYTE bits)
 
 void VCpu::_NOT_RM8()
 {
-    auto location = resolveModRM8(rmbyte);
+    auto location = resolveModRM(rmbyte);
     location.write8(~location.read8());
 }
 
 void VCpu::_NOT_RM16()
 {
-    auto location = resolveModRM16(rmbyte);
+    auto location = resolveModRM(rmbyte);
     location.write16(~location.read16());
 }
 
 void VCpu::_NOT_RM32()
 {
-    auto location = resolveModRM32(rmbyte);
+    auto location = resolveModRM(rmbyte);
     location.write32(~location.read32());
 }
 

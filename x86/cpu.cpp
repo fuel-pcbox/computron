@@ -73,6 +73,38 @@ static bool shouldLogMemoryRead(DWORD address)
 
 VCpu* g_cpu = 0;
 
+template<typename T>
+T VCpu::readRegister(int registerIndex)
+{
+    if (sizeof(T) == 1)
+        return *treg8[registerIndex];
+    if (sizeof(T) == 2)
+        return *treg16[registerIndex];
+    if (sizeof(T) == 4)
+        return *treg32[registerIndex];
+    VM_ASSERT(false);
+}
+
+template<typename T>
+void VCpu::writeRegister(int registerIndex, T value)
+{
+    if (sizeof(T) == 1)
+        *treg8[registerIndex] = value;
+    else if (sizeof(T) == 2)
+        *treg16[registerIndex] = value;
+    else if (sizeof(T) == 4)
+        *treg32[registerIndex] = value;
+    else
+        VM_ASSERT(false);
+}
+
+template BYTE VCpu::readRegister<BYTE>(int);
+template WORD VCpu::readRegister<WORD>(int);
+template DWORD VCpu::readRegister<DWORD>(int);
+template void VCpu::writeRegister<BYTE>(int, BYTE);
+template void VCpu::writeRegister<WORD>(int, WORD);
+template void VCpu::writeRegister<DWORD>(int, DWORD);
+
 void VCpu::_UD0()
 {
     vlog(LogAlert, "Undefined opcode 0F FF (UD0)");
@@ -926,7 +958,7 @@ void VCpu::_XCHG_reg8_RM8()
     BYTE rm = fetchOpcodeByte();
     BYTE &reg(*treg8[vomit_modRMRegisterPart(rm)]);
 
-    auto location = resolveModRM8(rm);
+    auto location = resolveModRM(rm);
     BYTE tmp = reg;
     reg = location.read8();
     location.write8(tmp);
@@ -935,7 +967,7 @@ void VCpu::_XCHG_reg8_RM8()
 void VCpu::_XCHG_reg16_RM16()
 {
     BYTE rm = fetchOpcodeByte();
-    auto location = resolveModRM16(rm);
+    auto location = resolveModRM(rm);
     WORD tmp = getRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)));
     setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), location.read16());
     location.write16(tmp);
@@ -944,7 +976,7 @@ void VCpu::_XCHG_reg16_RM16()
 void VCpu::_XCHG_reg32_RM32()
 {
     BYTE rm = fetchOpcodeByte();
-    auto location = resolveModRM32(rm);
+    auto location = resolveModRM(rm);
     DWORD tmp = getRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)));
     setRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)), location.read32());
     location.write32(tmp);
@@ -1008,7 +1040,7 @@ void VCpu::_INC_reg32()
 
 void VCpu::_INC_RM16()
 {
-    auto location = resolveModRM16(rmbyte);
+    auto location = resolveModRM(rmbyte);
     auto value = location.read16();
     DWORD i = value;
 
@@ -1023,7 +1055,7 @@ void VCpu::_INC_RM16()
 
 void VCpu::_INC_RM32()
 {
-    auto location = resolveModRM32(rmbyte);
+    auto location = resolveModRM(rmbyte);
     auto value = location.read32();
     QWORD i = value;
 
@@ -1038,7 +1070,7 @@ void VCpu::_INC_RM32()
 
 void VCpu::_DEC_RM16()
 {
-    auto location = resolveModRM16(rmbyte);
+    auto location = resolveModRM(rmbyte);
     auto value = location.read16();
     DWORD i = value;
 
@@ -1053,7 +1085,7 @@ void VCpu::_DEC_RM16()
 
 void VCpu::_DEC_RM32()
 {
-    auto location = resolveModRM32(rmbyte);
+    auto location = resolveModRM(rmbyte);
     auto value = location.read32();
     QWORD i = value;
 
@@ -1068,7 +1100,7 @@ void VCpu::_DEC_RM32()
 
 void VCpu::_INC_RM8()
 {
-    auto location = resolveModRM8(rmbyte);
+    auto location = resolveModRM(rmbyte);
     auto value = location.read8();
     WORD i = value;
     setOF(value == 0x7F);
@@ -1080,7 +1112,7 @@ void VCpu::_INC_RM8()
 
 void VCpu::_DEC_RM8()
 {
-    auto location = resolveModRM8(rmbyte);
+    auto location = resolveModRM(rmbyte);
     auto value = location.read8();
     WORD i = value;
     setOF(value == 0x80);
@@ -1094,7 +1126,7 @@ void VCpu::_LDS_reg16_mem16()
 {
     VM_ASSERT(a16());
     BYTE rm = fetchOpcodeByte();
-    WORD* ptr = static_cast<WORD*>(resolveModRM8(rm).memoryPointer());
+    WORD* ptr = static_cast<WORD*>(resolveModRM(rm).memoryPointer());
     setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), vomit_read16FromPointer(ptr));
     setDS(vomit_read16FromPointer(ptr + 1));
 }
@@ -1126,7 +1158,7 @@ void VCpu::_LES_reg16_mem16()
 {
     VM_ASSERT(a16());
     BYTE rm = fetchOpcodeByte();
-    WORD* ptr = static_cast<WORD*>(resolveModRM8(rm).memoryPointer());
+    WORD* ptr = static_cast<WORD*>(resolveModRM(rm).memoryPointer());
     setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), vomit_read16FromPointer(ptr));
     setES(vomit_read16FromPointer(ptr + 1));
 }
@@ -1142,7 +1174,7 @@ void VCpu::_LFS_reg16_mem16()
 {
     VM_ASSERT(a16());
     BYTE rm = fetchOpcodeByte();
-    WORD* ptr = static_cast<WORD*>(resolveModRM8(rm).memoryPointer());
+    WORD* ptr = static_cast<WORD*>(resolveModRM(rm).memoryPointer());
     setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), vomit_read16FromPointer(ptr));
     setFS(vomit_read16FromPointer(ptr + 1));
 }
@@ -1158,7 +1190,7 @@ void VCpu::_LSS_reg16_mem16()
 {
     VM_ASSERT(a16());
     BYTE rm = fetchOpcodeByte();
-    WORD* ptr = static_cast<WORD*>(resolveModRM8(rm).memoryPointer());
+    WORD* ptr = static_cast<WORD*>(resolveModRM(rm).memoryPointer());
     setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), vomit_read16FromPointer(ptr));
     setSS(vomit_read16FromPointer(ptr + 1));
 }
@@ -1177,7 +1209,7 @@ void VCpu::_LGS_reg16_mem16()
 {
     VM_ASSERT(a16());
     BYTE rm = fetchOpcodeByte();
-    WORD* ptr = static_cast<WORD*>(resolveModRM8(rm).memoryPointer());
+    WORD* ptr = static_cast<WORD*>(resolveModRM(rm).memoryPointer());
     setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), vomit_read16FromPointer(ptr));
     setGS(vomit_read16FromPointer(ptr + 1));
 }
@@ -1191,9 +1223,8 @@ void VCpu::_LGS_reg32_mem32()
 
 void VCpu::_LEA_reg32_mem32()
 {
-    VM_ASSERT(a32() == o32());
     BYTE rm = fetchOpcodeByte();
-    auto location = resolveModRM32(rm);
+    auto location = resolveModRM(rm);
     if (location.isRegister()) {
         vlog(LogAlert, "LEA_reg32_mem32 with register source!");
         exception(6);
@@ -1205,9 +1236,8 @@ void VCpu::_LEA_reg32_mem32()
 
 void VCpu::_LEA_reg16_mem16()
 {
-    VM_ASSERT(a32() == o32());
     BYTE rm = fetchOpcodeByte();
-    auto location = resolveModRM16(rm);
+    auto location = resolveModRM(rm);
     if (location.isRegister()) {
         vlog(LogAlert, "LEA_reg16_mem16 with register source!");
         exception(6);

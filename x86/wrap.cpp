@@ -208,7 +208,7 @@ void VCpu::_wrap_0x8F_32()
 void VCpu::_wrap_0xC0()
 {
     BYTE rm = fetchOpcodeByte();
-    auto location = resolveModRM8(rm);
+    auto location = resolveModRM(rm);
     auto value = location.read8();
     BYTE imm = fetchOpcodeByte();
 
@@ -230,7 +230,7 @@ void VCpu::_wrap_0xC0()
 void VCpu::_wrap_0xC1_16()
 {
     BYTE rm = fetchOpcodeByte();
-    auto location = resolveModRM16(rm);
+    auto location = resolveModRM(rm);
     auto value = location.read16();
     BYTE imm = fetchOpcodeByte();
 
@@ -252,7 +252,7 @@ void VCpu::_wrap_0xC1_16()
 void VCpu::_wrap_0xC1_32()
 {
     BYTE rm = fetchOpcodeByte();
-    auto location = resolveModRM32(rm);
+    auto location = resolveModRM(rm);
     auto value = location.read32();
     BYTE imm = fetchOpcodeByte();
 
@@ -274,7 +274,7 @@ void VCpu::_wrap_0xC1_32()
 void VCpu::_wrap_0xD0()
 {
     BYTE rm = fetchOpcodeByte();
-    auto location = resolveModRM8(rm);
+    auto location = resolveModRM(rm);
     auto value = location.read8();
 
     switch (vomit_modRMRegisterPart(rm)) {
@@ -295,7 +295,7 @@ void VCpu::_wrap_0xD0()
 void VCpu::_wrap_0xD1_16()
 {
     BYTE rm = fetchOpcodeByte();
-    auto location = resolveModRM16(rm);
+    auto location = resolveModRM(rm);
     auto value = location.read16();
 
     switch (vomit_modRMRegisterPart(rm)) {
@@ -316,7 +316,7 @@ void VCpu::_wrap_0xD1_16()
 void VCpu::_wrap_0xD1_32()
 {
     BYTE rm = fetchOpcodeByte();
-    auto location = resolveModRM32(rm);
+    auto location = resolveModRM(rm);
     auto value = location.read32();
 
     switch (vomit_modRMRegisterPart(rm)) {
@@ -338,7 +338,7 @@ void VCpu::_wrap_0xD1_32()
 void VCpu::_wrap_0xD2()
 {
     BYTE rm = fetchOpcodeByte();
-    auto location = resolveModRM8(rm);
+    auto location = resolveModRM(rm);
     auto value = location.read8();
 
     switch (vomit_modRMRegisterPart(rm)) {
@@ -359,7 +359,7 @@ void VCpu::_wrap_0xD2()
 void VCpu::_wrap_0xD3_16()
 {
     BYTE rm = fetchOpcodeByte();
-    auto location = resolveModRM16(rm);
+    auto location = resolveModRM(rm);
     auto value = location.read16();
 
     switch (vomit_modRMRegisterPart(rm)) {
@@ -380,7 +380,7 @@ void VCpu::_wrap_0xD3_16()
 void VCpu::_wrap_0xD3_32()
 {
     BYTE rm = fetchOpcodeByte();
-    auto location = resolveModRM32(rm);
+    auto location = resolveModRM(rm);
     auto value = location.read32();
 
     switch (vomit_modRMRegisterPart(rm)) {
