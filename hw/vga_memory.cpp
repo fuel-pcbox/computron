@@ -73,6 +73,28 @@ VGAMemory::~VGAMemory()
     delete [] m_plane[0];
 }
 
+template<typename T>
+void VGAMemory::write(DWORD address, T value)
+{
+    switch (sizeof(T)) {
+    case 1:
+        write8(address, value);
+        return;
+    case 2:
+        write8(address, vomit_LSB(value));
+        write8(address + 1, vomit_MSB(value));
+        return;
+    case 4:
+        write8(address + 0, vomit_LSB(vomit_LSW(value)));
+        write8(address + 1, vomit_MSB(vomit_LSW(value)));
+        write8(address + 2, vomit_LSB(vomit_MSW(value)));
+        write8(address + 3, vomit_MSB(vomit_MSW(value)));
+        return;
+    }
+    // FIXME: This should be a static assert somehow.
+    VM_ASSERT(false);
+}
+
 void VGAMemory::write8(DWORD address, BYTE value)
 {
     VM_ASSERT(addressIsInVGAMemory(address));
@@ -279,29 +301,27 @@ BYTE VGAMemory::read8(DWORD address)
     return m_latch[machine().vga().readRegister2(4)];
 }
 
-void VGAMemory::write16(DWORD address, WORD value)
+template<typename T>
+T VGAMemory::read(DWORD address)
 {
-    write8(address, vomit_LSB(value));
-    write8(address + 1, vomit_MSB(value));
+    switch (sizeof(T)) {
+    case 1:
+        return read8(address);
+    case 2:
+        return vomit_MAKEWORD(read8(address), read8(address + 1));
+    case 4:
+        return vomit_MAKEDWORD(read<WORD>(address), read<WORD>(address + 2));
+    }
+    // FIXME: This should be a static assert somehow.
+    VM_ASSERT(false);
 }
 
-void VGAMemory::write32(DWORD address, DWORD value)
-{
-    write8(address + 0, vomit_LSB(vomit_LSW(value)));
-    write8(address + 1, vomit_MSB(vomit_LSW(value)));
-    write8(address + 2, vomit_LSB(vomit_MSW(value)));
-    write8(address + 3, vomit_MSB(vomit_MSW(value)));
-}
-
-WORD VGAMemory::read16(DWORD address)
-{
-    return vomit_MAKEWORD(read8(address), read8(address + 1));
-}
-
-DWORD VGAMemory::read32(DWORD address)
-{
-    return vomit_MAKEDWORD(read16(address), read16(address + 2));
-}
+template BYTE VGAMemory::read<BYTE>(DWORD address);
+template WORD VGAMemory::read<WORD>(DWORD address);
+template DWORD VGAMemory::read<DWORD>(DWORD address);
+template void VGAMemory::write<BYTE>(DWORD address, BYTE value);
+template void VGAMemory::write<WORD>(DWORD address, WORD value);
+template void VGAMemory::write<DWORD>(DWORD address, DWORD value);
 
 BYTE *VGAMemory::plane(int index) const
 {

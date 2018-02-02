@@ -41,12 +41,11 @@ public:
     explicit VGAMemory(Machine&);
     ~VGAMemory();
 
+    template<typename T> void write(DWORD address, T value);
+    template<typename T> T read(DWORD address);
+
     void write8(DWORD address, BYTE value);
-    void write16(DWORD address, WORD value);
-    void write32(DWORD address, DWORD value);
     BYTE read8(DWORD address);
-    WORD read16(DWORD address);
-    DWORD read32(DWORD address);
 
     /*!
         Returns the specified pixel plane.

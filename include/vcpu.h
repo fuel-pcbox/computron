@@ -71,6 +71,9 @@ public:
     MemoryOrRegisterReference(VCpu&, void* registerPointer, ValueSize);
     MemoryOrRegisterReference(VCpu&, WORD segment, DWORD offset, ValueSize);
 
+    template<typename T> T read();
+    template<typename T> void write(T);
+
     BYTE read8();
     WORD read16();
     DWORD read32();
@@ -418,18 +421,13 @@ public:
     inline void writeUnmappedMemory8(DWORD address, BYTE data);
     inline void writeUnmappedMemory16(DWORD address, WORD data);
 
-    enum class MemoryAccessType {
-        Read8,
-        Read16,
-        Read32,
-        Read64,
-        Write8,
-        Write16,
-        Write32,
-        Write64,
-    };
+    enum class MemoryAccessType { Read, Write };
 
-    bool validateAddress(WORD segment, DWORD offset, MemoryAccessType);
+    template<typename T> bool validateAddress(WORD segment, DWORD offset, MemoryAccessType);
+    template<typename T> T readMemory(DWORD address);
+    template<typename T> T readMemory(WORD segment, DWORD address);
+    template<typename T> void writeMemory(DWORD address, T data);
+    template<typename T> void writeMemory(WORD segment, DWORD address, T data);
 
     BYTE readMemory8(DWORD address);
     BYTE readMemory8(WORD segment, DWORD offset);

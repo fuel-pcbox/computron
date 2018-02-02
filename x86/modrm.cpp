@@ -64,53 +64,30 @@ void* MemoryOrRegisterReference::memoryPointer()
     return m_cpu.memoryPointer(m_segment, m_offset);
 }
 
-BYTE MemoryOrRegisterReference::read8()
+template<typename T>
+T MemoryOrRegisterReference::read()
 {
     if (isRegister())
-        return *reinterpret_cast<BYTE*>(m_registerPointer);
-    return m_cpu.readMemory8(m_segment, m_offset);
+        return *reinterpret_cast<T*>(m_registerPointer);
+    return m_cpu.readMemory<T>(m_segment, m_offset);
 }
 
-WORD MemoryOrRegisterReference::read16()
-{
-    if (isRegister())
-        return *reinterpret_cast<WORD*>(m_registerPointer);
-    return m_cpu.readMemory16(m_segment, m_offset);
-}
-
-DWORD MemoryOrRegisterReference::read32()
-{
-    if (isRegister())
-        return *reinterpret_cast<DWORD*>(m_registerPointer);
-    return m_cpu.readMemory32(m_segment, m_offset);
-}
-
-void MemoryOrRegisterReference::write8(BYTE data)
+template<typename T>
+void MemoryOrRegisterReference::write(T data)
 {
     if (isRegister()) {
-        *reinterpret_cast<BYTE*>(m_registerPointer) = data;
+        *reinterpret_cast<T*>(m_registerPointer) = data;
         return;
     }
-    m_cpu.writeMemory8(m_segment, m_offset, data);
+    m_cpu.writeMemory<T>(m_segment, m_offset, data);
 }
 
-void MemoryOrRegisterReference::write16(WORD data)
-{
-    if (isRegister()) {
-        *reinterpret_cast<WORD*>(m_registerPointer) = data;
-        return;
-    }
-    m_cpu.writeMemory16(m_segment, m_offset, data);
-}
-
-void MemoryOrRegisterReference::write32(DWORD data)
-{
-    if (isRegister()) {
-        *reinterpret_cast<DWORD*>(m_registerPointer) = data;
-        return;
-    }
-    m_cpu.writeMemory32(m_segment, m_offset, data);
-}
+BYTE MemoryOrRegisterReference::read8() { return read<BYTE>(); }
+WORD MemoryOrRegisterReference::read16() { return read<WORD>(); }
+DWORD MemoryOrRegisterReference::read32() { return read<DWORD>(); }
+void MemoryOrRegisterReference::write8(BYTE data) { return write(data); }
+void MemoryOrRegisterReference::write16(WORD data) { return write(data); }
+void MemoryOrRegisterReference::write32(DWORD data) { return write(data); }
 
 MemoryOrRegisterReference VCpu::resolveModRM8(BYTE rmbyte)
 {
