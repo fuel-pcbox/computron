@@ -51,8 +51,6 @@ void VCpu::_LGDT()
     DWORD baseMask = o32() ? 0xffffffff : 0x00ffffff;
     GDTR.base = ptr.offset & baseMask;
     GDTR.limit = ptr.segment;
-    dumpAll();
-    dumpMemory(getES(), getSI() + 8, 2);
     vlog(LogAlert, "LGDT { base:%08X, limit: %08X }", GDTR.base, GDTR.limit);
 
     for (unsigned i = 0; i < GDTR.limit; i += 8) {
@@ -72,16 +70,23 @@ void VCpu::_LIDT()
 
 void VCpu::_LMSW_RM16()
 {
-    BYTE msw = readModRM16(subrmbyte);
-    CR0 = (CR0 & 0xFFFFFFF0) | msw;
+    if (getCPL()) {
+        GP(0);
+    }
+
+    WORD msw = readModRM16(subrmbyte);
+    CR0 = (CR0 & 0xFFFFFFF0) | (msw & 0x0F);
     vlog(LogCPU, "LMSW set CR0=%08X, PE=%u", CR0, getPE());
-    //updateSizeModes();
 }
 
 void VCpu::_SMSW_RM16()
 {
+    auto location = resolveModRM(subrmbyte);
     vlog(LogCPU, "SMSW get LSW(CR0)=%04X, PE=%u", CR0 & 0xFFFF, getPE());
-    writeModRM16(subrmbyte, CR0 & 0xFFFF);
+    if (o32() && location.isRegister())
+        location.write32(CR0);
+    else
+        location.write16(CR0 & 0xFFFF);
 }
 
 VCpu::SegmentSelector VCpu::makeSegmentSelector(WORD index)

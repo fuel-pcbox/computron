@@ -86,19 +86,20 @@ void VCpu::_ENTER()
     assert(o16());
     assert(a16());
 
-    WORD Size = fetchOpcodeWord();
-    BYTE NestingLevel = fetchOpcodeByte() % 32;
+    WORD size = fetchOpcodeWord();
+    BYTE nestingLevel = fetchOpcodeByte() & 31;
     push(getBP());
-    WORD FrameTemp = getSP();
-    if (NestingLevel != 0) {
-        for (WORD i = 1; i <= (NestingLevel - 1); ++i) {
-            setBP(getBP() - 2);
+    WORD frameTemp = getSP();
+    if (nestingLevel > 0) {
+        WORD tmpBP = getBP();
+        for (WORD i = 1; i < nestingLevel - 1; ++i) {
+            tmpBP -= 2;
             push(readMemory16(getSS(), getBP()));
         }
+        push(frameTemp);
     }
-    push(FrameTemp);
-    setBP(FrameTemp);
-    setSP(getBP() - Size);
+    setBP(frameTemp);
+    setSP(getSP() - size);
 }
 
 void VCpu::_LEAVE()
