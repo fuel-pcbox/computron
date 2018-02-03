@@ -32,15 +32,14 @@ T VCpu::doRol(T data, int steps)
 {
     T result = data;
     steps &= 0x1F;
+    if (!steps)
+        return data;
 
-    if (steps) {
-        setCF(data >> (BitSizeOfType<T>::bits - steps) & 1);
-        if ((steps &= BitSizeOfType<T>::bits - 1))
-            result = (data << steps) | (data >> (BitSizeOfType<T>::bits - steps));
-        if (steps == 1)
-            setOF(((data >> (BitSizeOfType<T>::bits - 1)) & 1) ^ getCF());
-    } else
-        setCF(0); // FIXME: Verify that this is correct behavior.
+    setCF(data >> (BitSizeOfType<T>::bits - steps) & 1);
+    if ((steps &= BitSizeOfType<T>::bits - 1))
+        result = (data << steps) | (data >> (BitSizeOfType<T>::bits - steps));
+    if (steps == 1)
+        setOF(((data >> (BitSizeOfType<T>::bits - 1)) & 1) ^ getCF());
 
     return result;
 }
@@ -50,15 +49,14 @@ T VCpu::doRor(T data, int steps)
 {
     T result = data;
     steps &= 0x1F;
+    if (!steps)
+        return data;
 
-    if (steps) {
-        setCF((result >> (steps - 1)) & 1);
-        if ((steps &= BitSizeOfType<T>::bits - 1))
-            result = (data >> steps) | (data << (BitSizeOfType<T>::bits - steps));
-        if (steps == 1)
-            setOF((result >> (BitSizeOfType<T>::bits - 1)) ^ ((result >> (BitSizeOfType<T>::bits - 2) & 1)));
-    } else
-        setCF(0); // FIXME: Verify that this is correct behavior.
+    setCF((result >> (steps - 1)) & 1);
+    if ((steps &= BitSizeOfType<T>::bits - 1))
+        result = (data >> steps) | (data << (BitSizeOfType<T>::bits - steps));
+    if (steps == 1)
+        setOF((result >> (BitSizeOfType<T>::bits - 1)) ^ ((result >> (BitSizeOfType<T>::bits - 2) & 1)));
 
     return result;
 }
@@ -67,18 +65,16 @@ template<typename T>
 T VCpu::rightShift(T data, int steps)
 {
     T result = data;
-
     steps &= 0x1F;
+    if (!steps)
+        return data;
 
-    if (steps) {
-        if (steps <= BitSizeOfType<T>::bits) {
-            setCF((result >> (steps - 1)) & 1);
-            if (steps == 1)
-                setOF((data >> (BitSizeOfType<T>::bits - 1)) & 1);
-        } else
-            setCF(0); // FIXME: Verify that this is correct behavior.
-        result >>= steps;
+    if (steps <= BitSizeOfType<T>::bits) {
+        setCF((result >> (steps - 1)) & 1);
+        if (steps == 1)
+            setOF((data >> (BitSizeOfType<T>::bits - 1)) & 1);
     }
+    result >>= steps;
 
     updateFlags(result, BitSizeOfType<T>::bits);
     return result;
@@ -88,18 +84,16 @@ template<typename T>
 T VCpu::leftShift(T data, int steps)
 {
     T result = data;
-
     steps &= 0x1F;
+    if (!steps)
+        return data;
 
-    if (steps) {
-        if (steps <= BitSizeOfType<T>::bits) {
-            setCF(result >> (BitSizeOfType<T>::bits - steps) & 1);
-            if (steps == 1)
-                setOF((data >> (BitSizeOfType<T>::bits - 1)) ^ getCF());
-        } else
-            setCF(0); // FIXME: Verify that this is correct behavior.
-        result <<= steps;
+    if (steps <= BitSizeOfType<T>::bits) {
+        setCF(result >> (BitSizeOfType<T>::bits - steps) & 1);
+        if (steps == 1)
+            setOF((data >> (BitSizeOfType<T>::bits - 1)) ^ getCF());
     }
+    result <<= steps;
 
     updateFlags(result, BitSizeOfType<T>::bits);
     return result;

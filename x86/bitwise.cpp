@@ -177,6 +177,8 @@ DWORD cpu_sar(VCpu& cpu, DWORD data, BYTE steps, BYTE bits)
     DWORD mask = 1 << (bits - 1);
 
     steps &= 0x1F;
+    if (!steps)
+        return data;
 
     for (BYTE i = 0; i < steps; ++i) {
         n = result;
@@ -197,6 +199,8 @@ DWORD cpu_rcl(VCpu& cpu, DWORD data, BYTE steps, BYTE bits)
     DWORD mask = allOnes(bits);
 
     steps &= 0x1F;
+    if (!steps)
+        return data;
 
     for (BYTE i = 0; i < steps; ++i) {
         n = result;
@@ -216,6 +220,8 @@ DWORD cpu_rcr(VCpu& cpu, DWORD data, BYTE steps, BYTE bits)
     DWORD n;
 
     steps &= 0x1F;
+    if (!steps)
+        return data;
 
     for (BYTE i = 0; i < steps; ++i) {
         n = result;
