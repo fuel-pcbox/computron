@@ -50,11 +50,17 @@ void VCpu::_INTO()
 
 void VCpu::_IRET()
 {
-    VM_ASSERT(!x32());
-    WORD nip = pop();
-    WORD ncs = pop();
-    jump16(ncs, nip);
-    setFlags(pop());
+    if (o16()) {
+        WORD nip = pop();
+        WORD ncs = pop();
+        jump16(ncs, nip);
+        setFlags(pop());
+    } else {
+        DWORD nip = pop32();
+        WORD ncs = pop32();
+        jump32(ncs, nip);
+        setFlags(pop32());
+    }
 }
 
 void VCpu::jumpToInterruptHandler(int isr, bool requestedByPIC)

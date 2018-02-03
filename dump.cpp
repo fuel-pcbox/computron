@@ -304,6 +304,8 @@ void VCpu::dumpMemory(WORD segment, DWORD offset, int rows)
     BYTE* p = memoryPointer(segment, offset);
     if (!p) {
         vlog(LogCPU, "dumpMemory can't dump %04X:%08X", segment, offset);
+        vlog(LogCPU, "Trying flat dump @ %08X...", offset);
+        dumpFlatMemory(offset);
         return;
     }
 

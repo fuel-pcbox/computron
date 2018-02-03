@@ -44,6 +44,26 @@ void VCpu::_SIDT()
     writeMemory16(currentSegment(), tableAddress, IDTR.limit);
 }
 
+void VCpu::_LLDT_RM16()
+{
+    WORD segment = readModRM16(this->subrmbyte);
+    auto gdtEntry = makeSegmentSelector(segment);
+    LDTR.segment = segment;
+    LDTR.base = gdtEntry.base;
+    LDTR.limit = gdtEntry.limit;
+    vlog(LogAlert, "LLDT { segment: %04X => base:%08X, limit:%08X }", LDTR.segment, LDTR.base, LDTR.limit);
+}
+
+void VCpu::_LTR_RM16()
+{
+    WORD segment = readModRM16(this->subrmbyte);
+    auto gdtEntry = makeSegmentSelector(segment);
+    TR.segment = segment;
+    TR.base = gdtEntry.base;
+    TR.limit = gdtEntry.limit;
+    vlog(LogAlert, "LTR { segment: %04X => base:%08X, limit:%08X }", TR.segment, TR.base, TR.limit);
+}
+
 void VCpu::_LGDT()
 {
     vlog(LogAlert, "Begin LGDT");
@@ -51,7 +71,7 @@ void VCpu::_LGDT()
     DWORD baseMask = o32() ? 0xffffffff : 0x00ffffff;
     GDTR.base = ptr.offset & baseMask;
     GDTR.limit = ptr.segment;
-    vlog(LogAlert, "LGDT { base:%08X, limit: %08X }", GDTR.base, GDTR.limit);
+    vlog(LogAlert, "LGDT { base:%08X, limit:%08X }", GDTR.base, GDTR.limit);
 
     for (unsigned i = 0; i < GDTR.limit; i += 8) {
         dumpSegment(i);
@@ -65,7 +85,7 @@ void VCpu::_LIDT()
     DWORD baseMask = o32() ? 0xffffffff : 0x00ffffff;
     IDTR.base = ptr.offset & baseMask;
     IDTR.limit = ptr.segment;
-    vlog(LogAlert, "LIDT { base:%08X, limit: %08X }", IDTR.base, IDTR.limit);
+    vlog(LogAlert, "LIDT { base:%08X, limit:%08X }", IDTR.base, IDTR.limit);
 }
 
 void VCpu::_LMSW_RM16()
@@ -91,8 +111,17 @@ void VCpu::_SMSW_RM16()
 
 VCpu::SegmentSelector VCpu::makeSegmentSelector(WORD index)
 {
+    if (!getPE()) {
+        SegmentSelector selector;
+        selector.realMode = true;
+        selector.base = (DWORD)index << 4;
+        return selector;
+    }
+
     if (index % 8) {
         vlog(LogCPU, "Segment selector index 0x%04X not divisible by 8.", index);
+        dumpAll();
+        VM_ASSERT(false);
         debugger().enter();
         //vomit_exit(1);
     }
@@ -122,6 +151,7 @@ VCpu::SegmentSelector VCpu::makeSegmentSelector(WORD index)
 
     SegmentSelector selector;
 
+    selector.realMode = false;
     selector.base = (hi & 0xFF000000) | ((hi & 0xFF) << 16) | ((lo >> 16) & 0xFFFF);
     selector.limit = (hi & 0xF0000) | (lo & 0xFFFF);
     selector.accessed = (hi >> 8) & 1;
@@ -130,9 +160,23 @@ VCpu::SegmentSelector VCpu::makeSegmentSelector(WORD index)
     selector.executable = (hi >> 11) & 1;
     selector.DPL = (hi >> 12) & 3; // Privilege (ring) level
     selector.present = (hi >> 14) & 1;
+    selector.type = (hi >> 16) & 0xF;
     selector._32bit = (hi >> 22) & 1;
     selector.granularity = (hi >> 23) & 1; // Limit granularity, 0=1b, 1=4kB
     return selector;
+}
+
+const char* toString(SegmentRegisterIndex segment)
+{
+    switch (segment) {
+    case SegmentRegisterIndex::CS: return "CS";
+    case SegmentRegisterIndex::DS: return "DS";
+    case SegmentRegisterIndex::ES: return "ES";
+    case SegmentRegisterIndex::SS: return "SS";
+    case SegmentRegisterIndex::FS: return "FS";
+    case SegmentRegisterIndex::GS: return "GS";
+    }
+    return nullptr;
 }
 
 void VCpu::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
@@ -140,5 +184,8 @@ void VCpu::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
     ASSERT_VALID_SEGMENT_INDEX(segmentRegisterIndex);
     VCpu::SegmentSelector& selector = m_selector[(int)segmentRegisterIndex];
     selector = makeSegmentSelector(getSegment(segmentRegisterIndex));
+
+    if (getPE())
+        vlog(LogCPU, "%s loaded with { type:%02X, base:%08X, limit:%08X }", toString(segmentRegisterIndex), selector.type, selector.base, selector.limit);
 }
 

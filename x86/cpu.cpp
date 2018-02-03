@@ -198,6 +198,14 @@ void VCpu::decode(BYTE op)
     case 0x0F:
         this->rmbyte = fetchOpcodeByte();
         switch (this->rmbyte) {
+        case 0x00:
+            this->subrmbyte = fetchOpcodeByte();
+            switch (vomit_modRMRegisterPart(this->subrmbyte)) {
+            case 2: _LLDT_RM16(); break;
+            case 3: _LTR_RM16(); break;
+            default: goto fffuuu;
+            }
+            break;
         case 0x01:
             this->subrmbyte = fetchOpcodeByte();
             switch (vomit_modRMRegisterPart(this->subrmbyte)) {
@@ -589,13 +597,13 @@ void VCpu::reset()
     m_a20Enabled = false;
 
     memset(&regs, 0, sizeof(regs));
-    this->CS = 0;
-    this->DS = 0;
-    this->ES = 0;
-    this->SS = 0;
-    this->FS = 0;
-    this->GS = 0;
     this->CR0 = 0;
+    setCS(0);
+    setDS(0);
+    setES(0);
+    setSS(0);
+    setFS(0);
+    setGS(0);
     this->CR1 = 0;
     this->CR2 = 0;
     this->CR3 = 0;
@@ -625,7 +633,6 @@ void VCpu::reset()
     this->LDTR.base = 0;
     this->LDTR.limit = 0;
     this->LDTR.segment = 0;
-    this->LDTR.index = 0;
 
     memset(m_selector, 0, sizeof(m_selector));
 
@@ -839,15 +846,11 @@ void VCpu::jump32(WORD segment, DWORD offset)
 {
     //vlog(LogCPU, "[PE=%u] Far jump to %04X:%08X", getPE(), segment, offset);
     // Jump to specified location.
-    this->CS = segment;
+    setCS(segment);
     this->EIP = offset;
 
     // Point m_codeMemory to CS:0 for fast opcode fetching.
-    m_codeMemory = memoryPointer(segment, 0);
-    //m_codeMemory = m_memory + (segment << 4);
-
-    if (getPE())
-        syncSegmentRegister(SegmentRegisterIndex::CS);
+    m_codeMemory = memoryPointer(SegmentRegisterIndex::CS, 0);
 
     updateSizeModes();
 }
@@ -1320,11 +1323,9 @@ T VCpu::readMemory(WORD segmentIndex, DWORD offset)
 template<typename T>
 T VCpu::readMemory(SegmentRegisterIndex segment, DWORD offset)
 {
-#if 0
     auto& selector = m_selector[(int)segment];
     if (selector.realMode)
         return readMemory<T>(selector.base + offset);
-#endif
     return readMemory<T>(getSegment(segment), offset);
 }
 
@@ -1374,11 +1375,9 @@ void VCpu::writeMemory(WORD segmentIndex, DWORD offset, T value)
 template<typename T>
 void VCpu::writeMemory(SegmentRegisterIndex segment, DWORD offset, T value)
 {
-#if 0
     auto& selector = m_selector[(int)segment];
     if (selector.realMode)
-        return writeMemory<T>(selector.base + offset);
-#endif
+        return writeMemory<T>(selector.base + offset, value);
     return writeMemory<T>(getSegment(segment), offset, value);
 }
 
@@ -1406,58 +1405,50 @@ void VCpu::updateSizeModes()
     auto codeSegment = makeSegmentSelector(CS);
     m_addressSize32 = codeSegment._32bit;
     m_operationSize32 = codeSegment._32bit;
-    vlog(LogCPU, "O:%u A:%u (newCS: %04X)", o16() ? 16 : 32, a16() ? 16 : 32, CS);
+    vlog(LogCPU, "PE=%u X:%u O:%u A:%u (newCS: %04X)", getPE(), x16() ? 16 : 32, o16() ? 16 : 32, a16() ? 16 : 32, CS);
 }
 
 void VCpu::setCS(WORD value)
 {
     this->CS = value;
-    if (getPE())
-        syncSegmentRegister(SegmentRegisterIndex::CS);
+    syncSegmentRegister(SegmentRegisterIndex::CS);
 }
 
 void VCpu::setDS(WORD value)
 {
     this->DS = value;
-    if (getPE())
-        syncSegmentRegister(SegmentRegisterIndex::DS);
+    syncSegmentRegister(SegmentRegisterIndex::DS);
 }
 
 void VCpu::setES(WORD value)
 {
     this->ES = value;
-    if (getPE())
-        syncSegmentRegister(SegmentRegisterIndex::ES);
+    syncSegmentRegister(SegmentRegisterIndex::ES);
 }
 
 void VCpu::setSS(WORD value)
 {
     this->SS = value;
-    if (getPE())
-        syncSegmentRegister(SegmentRegisterIndex::SS);
+    syncSegmentRegister(SegmentRegisterIndex::SS);
 }
 
 void VCpu::setFS(WORD value)
 {
     this->FS = value;
-    if (getPE())
-        syncSegmentRegister(SegmentRegisterIndex::FS);
+    syncSegmentRegister(SegmentRegisterIndex::FS);
 }
 
 void VCpu::setGS(WORD value)
 {
     this->GS = value;
-    if (getPE())
-        syncSegmentRegister(SegmentRegisterIndex::GS);
+    syncSegmentRegister(SegmentRegisterIndex::GS);
 }
 
 BYTE* VCpu::memoryPointer(SegmentRegisterIndex segment, DWORD offset)
 {
-#if 0
     auto& selector = m_selector[(int)segment];
     if (selector.realMode)
-        return memoryPointer(segment.base + offset);
-#endif
+        return memoryPointer(selector.base + offset);
     return memoryPointer(getSegment(segment), offset);
 }
 

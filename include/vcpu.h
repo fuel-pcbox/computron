@@ -149,6 +149,8 @@ public:
     };
 
     struct SegmentSelector {
+        bool realMode { false };
+
         unsigned DPL;
         unsigned count;
         bool present;
@@ -158,6 +160,7 @@ public:
         bool DC;
         bool RW;
         bool accessed;
+        BYTE type;
         DWORD base;
         DWORD limit;
 
@@ -916,6 +919,10 @@ protected:
     void _LGDT();
     void _SIDT();
     void _LIDT();
+    void _LLDT_RM16();
+    void _SLDT_RM16();
+    void _LTR_RM16();
+    void _STR_RM16();
 
     void _PUSHAD();
     void _POPAD();
@@ -1156,11 +1163,9 @@ private:
     } IDTR;
 
     struct {
-        WORD segment;
-        DWORD base;
-        WORD limit;
-        // LDT's index in GDT
-        int index;
+        WORD segment { 0 };
+        DWORD base { 0 };
+        WORD limit { 0 };
     } LDTR;
 
     DWORD CR0, CR1, CR2, CR3, CR4, CR5, CR6, CR7;

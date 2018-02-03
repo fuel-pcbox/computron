@@ -151,27 +151,27 @@ void VCpu::_PUSH_GS()
 
 void VCpu::_POP_DS()
 {
-    DS = pop();
+    setDS(pop());
 }
 
 void VCpu::_POP_ES()
 {
-    ES = pop();
+    setES(pop());
 }
 
 void VCpu::_POP_SS()
 {
-    SS = pop();
+    setSS(pop());
 }
 
 void VCpu::_POP_FS()
 {
-    FS = pop();
+    setFS(pop());
 }
 
 void VCpu::_POP_GS()
 {
-    GS = pop();
+    setGS(pop());
 }
 
 void VCpu::_PUSHFD()

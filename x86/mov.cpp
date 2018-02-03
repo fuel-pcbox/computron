@@ -67,8 +67,7 @@ void VCpu::_MOV_seg_RM16()
     ASSERT_VALID_SEGMENT_INDEX(segmentIndex);
     setSegment(segmentIndex, readModRM16(rm));
 
-    if (getPE())
-        syncSegmentRegister(segmentIndex);
+    syncSegmentRegister(segmentIndex);
 }
 
 void VCpu::_MOV_seg_RM32()
@@ -78,8 +77,7 @@ void VCpu::_MOV_seg_RM32()
     ASSERT_VALID_SEGMENT_INDEX(segmentIndex);
     setSegment(segmentIndex, readModRM32(rm));
 
-    if (getPE())
-        syncSegmentRegister(segmentIndex);
+    syncSegmentRegister(segmentIndex);
 }
 
 void VCpu::_MOV_RM8_reg8()
