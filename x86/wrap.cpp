@@ -80,8 +80,7 @@ T VCpu::rightShift(T data, int steps)
         result >>= steps;
     }
 
-    if (steps == 1)
-        updateFlags(result, BitSizeOfType<T>::bits);
+    updateFlags(result, BitSizeOfType<T>::bits);
     return result;
 }
 
@@ -102,8 +101,7 @@ T VCpu::leftShift(T data, int steps)
         result <<= steps;
     }
 
-    if (steps == 1)
-        updateFlags(result, BitSizeOfType<T>::bits);
+    updateFlags(result, BitSizeOfType<T>::bits);
     return result;
 }
 

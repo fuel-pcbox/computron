@@ -184,11 +184,9 @@ DWORD cpu_sar(VCpu& cpu, DWORD data, BYTE steps, BYTE bits)
         cpu.setCF(n & 1);
     }
 
-    if (steps == 1) {
+    if (steps == 1)
         cpu.setOF(0);
-        cpu.updateFlags(result, bits);
-    }
-
+    cpu.updateFlags(result, bits);
     return result;
 }
 
