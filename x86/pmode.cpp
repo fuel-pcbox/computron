@@ -113,8 +113,8 @@ VCpu::SegmentSelector VCpu::makeSegmentSelector(WORD index)
 {
     if (!getPE()) {
         SegmentSelector selector;
-        selector.realMode = true;
         selector.base = (DWORD)index << 4;
+        selector.limit = 0xFFFFF;
         return selector;
     }
 
@@ -151,7 +151,6 @@ VCpu::SegmentSelector VCpu::makeSegmentSelector(WORD index)
 
     SegmentSelector selector;
 
-    selector.realMode = false;
     selector.base = (hi & 0xFF000000) | ((hi & 0xFF) << 16) | ((lo >> 16) & 0xFFFF);
     selector.limit = (hi & 0xF0000) | (lo & 0xFFFF);
     selector.accessed = (hi >> 8) & 1;

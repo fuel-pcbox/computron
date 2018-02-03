@@ -1324,7 +1324,7 @@ template<typename T>
 T VCpu::readMemory(SegmentRegisterIndex segment, DWORD offset)
 {
     auto& selector = m_selector[(int)segment];
-    if (selector.realMode)
+    if (!getPE())
         return readMemory<T>(selector.base + offset);
     return readMemory<T>(getSegment(segment), offset);
 }
@@ -1376,7 +1376,7 @@ template<typename T>
 void VCpu::writeMemory(SegmentRegisterIndex segment, DWORD offset, T value)
 {
     auto& selector = m_selector[(int)segment];
-    if (selector.realMode)
+    if (!getPE())
         return writeMemory<T>(selector.base + offset, value);
     return writeMemory<T>(getSegment(segment), offset, value);
 }
@@ -1447,7 +1447,7 @@ void VCpu::setGS(WORD value)
 BYTE* VCpu::memoryPointer(SegmentRegisterIndex segment, DWORD offset)
 {
     auto& selector = m_selector[(int)segment];
-    if (selector.realMode)
+    if (!getPE())
         return memoryPointer(selector.base + offset);
     return memoryPointer(getSegment(segment), offset);
 }

@@ -149,8 +149,6 @@ public:
     };
 
     struct SegmentSelector {
-        bool realMode { false };
-
         unsigned DPL;
         unsigned count;
         bool present;
