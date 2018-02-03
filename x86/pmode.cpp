@@ -135,10 +135,10 @@ VCpu::SegmentSelector VCpu::makeSegmentSelector(WORD index)
     return selector;
 }
 
-void VCpu::syncSegmentRegister(SegmentIndex segmentRegisterIndex)
+void VCpu::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
 {
     ASSERT_VALID_SEGMENT_INDEX(segmentRegisterIndex);
-    VCpu::SegmentSelector& selector = m_selector[segmentRegisterIndex];
+    VCpu::SegmentSelector& selector = m_selector[(int)segmentRegisterIndex];
     selector = makeSegmentSelector(getSegment(segmentRegisterIndex));
 }
 

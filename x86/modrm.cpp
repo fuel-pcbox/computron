@@ -28,7 +28,7 @@
 #include "debug.h"
 #include "debugger.h"
 
-#define DEFAULT_TO_SS if (!hasSegmentPrefix()) { segment = getSS(); }
+#define DEFAULT_TO_SS if (!hasSegmentPrefix()) { segment = SegmentRegisterIndex::SS; }
 
 MemoryOrRegisterReference::MemoryOrRegisterReference(VCpu& cpu, int registerIndex)
     : m_cpu(cpu)
@@ -36,14 +36,14 @@ MemoryOrRegisterReference::MemoryOrRegisterReference(VCpu& cpu, int registerInde
 {
 }
 
-MemoryOrRegisterReference::MemoryOrRegisterReference(VCpu& cpu, WORD segment, DWORD offset)
+MemoryOrRegisterReference::MemoryOrRegisterReference(VCpu& cpu, SegmentRegisterIndex segment, DWORD offset)
     : m_cpu(cpu)
     , m_segment(segment)
     , m_offset(offset)
 {
 }
 
-WORD MemoryOrRegisterReference::segment()
+SegmentRegisterIndex MemoryOrRegisterReference::segment()
 {
     VM_ASSERT(!isRegister());
     return m_segment;
@@ -133,7 +133,7 @@ MemoryOrRegisterReference VCpu::resolveModRM16_internal(BYTE rmbyte)
 {
     VM_ASSERT(a16());
 
-    WORD segment = currentSegment();
+    SegmentRegisterIndex segment = currentSegment();
     WORD offset = 0x0000;
 
     switch (rmbyte & 0xC0) {
@@ -184,7 +184,7 @@ MemoryOrRegisterReference VCpu::resolveModRM32_internal(BYTE rmbyte)
 {
     VM_ASSERT(a32());
 
-    WORD segment = currentSegment();
+    SegmentRegisterIndex segment = currentSegment();
     DWORD offset { 0 };
 
     switch (rmbyte & 0xC0) {
@@ -230,7 +230,7 @@ MemoryOrRegisterReference VCpu::resolveModRM32_internal(BYTE rmbyte)
     VM_ASSERT(false);
 }
 
-DWORD VCpu::evaluateSIB(BYTE rm, BYTE sib, WORD& segment, unsigned sizeOfImmediate)
+DWORD VCpu::evaluateSIB(BYTE rm, BYTE sib, SegmentRegisterIndex& segment, unsigned sizeOfImmediate)
 {
     DWORD scale;
     switch (sib & 0xC0) {

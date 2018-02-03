@@ -49,7 +49,7 @@ void VCpu::_MOV_RM16_seg()
     BYTE rm = fetchOpcodeByte();
     int segmentIndex = vomit_modRMRegisterPart(rm);
     ASSERT_VALID_SEGMENT_INDEX(segmentIndex);
-    writeModRM16(rm, getSegment(static_cast<VCpu::SegmentIndex>(segmentIndex)));
+    writeModRM16(rm, getSegment(static_cast<SegmentRegisterIndex>(segmentIndex)));
 }
 
 void VCpu::_MOV_RM32_seg()
@@ -57,13 +57,13 @@ void VCpu::_MOV_RM32_seg()
     BYTE rm = fetchOpcodeByte();
     int segmentIndex = vomit_modRMRegisterPart(rm);
     ASSERT_VALID_SEGMENT_INDEX(segmentIndex);
-    writeModRM32(rm, getSegment(static_cast<VCpu::SegmentIndex>(segmentIndex)));
+    writeModRM32(rm, getSegment(static_cast<SegmentRegisterIndex>(segmentIndex)));
 }
 
 void VCpu::_MOV_seg_RM16()
 {
     BYTE rm = fetchOpcodeByte();
-    VCpu::SegmentIndex segmentIndex = static_cast<VCpu::SegmentIndex>(vomit_modRMRegisterPart(rm));
+    auto segmentIndex = static_cast<SegmentRegisterIndex>(vomit_modRMRegisterPart(rm));
     ASSERT_VALID_SEGMENT_INDEX(segmentIndex);
     setSegment(segmentIndex, readModRM16(rm));
 
@@ -74,7 +74,7 @@ void VCpu::_MOV_seg_RM16()
 void VCpu::_MOV_seg_RM32()
 {
     BYTE rm = fetchOpcodeByte();
-    VCpu::SegmentIndex segmentIndex = static_cast<VCpu::SegmentIndex>(vomit_modRMRegisterPart(rm));
+    auto segmentIndex = static_cast<SegmentRegisterIndex>(vomit_modRMRegisterPart(rm));
     ASSERT_VALID_SEGMENT_INDEX(segmentIndex);
     setSegment(segmentIndex, readModRM32(rm));
 

@@ -49,6 +49,16 @@ struct FarPointer {
     DWORD offset;
 };
 
+enum class SegmentRegisterIndex {
+    ES = 0,
+    CS,
+    SS,
+    DS,
+    FS,
+    GS,
+    None = 0xFF,
+};
+
 enum ValueSize {
     ByteSize,
     WordSize,
@@ -69,7 +79,7 @@ struct WatchedAddress {
 class MemoryOrRegisterReference {
 public:
     MemoryOrRegisterReference(VCpu&, int registerIndex);
-    MemoryOrRegisterReference(VCpu&, WORD segment, DWORD offset);
+    MemoryOrRegisterReference(VCpu&, SegmentRegisterIndex segment, DWORD offset);
 
     template<typename T> T read();
     template<typename T> void write(T);
@@ -83,13 +93,13 @@ public:
     void* memoryPointer();
 
     bool isRegister() { return m_registerIndex != 0xffffffff; }
-    WORD segment();
+    SegmentRegisterIndex segment();
     DWORD offset();
 
 private:
     VCpu& m_cpu;
     unsigned m_registerIndex { 0xffffffff };
-    WORD m_segment { 0 };
+    SegmentRegisterIndex m_segment { SegmentRegisterIndex::None };
     DWORD m_offset { 0 };
     ValueSize m_size { ByteSize };
 };
@@ -138,15 +148,6 @@ public:
         RegisterEDI
     };
 
-    enum SegmentIndex {
-        RegisterES = 0,
-        RegisterCS,
-        RegisterSS,
-        RegisterDS,
-        RegisterFS,
-        RegisterGS
-    };
-
     struct SegmentSelector {
         unsigned DPL;
         unsigned count;
@@ -166,16 +167,15 @@ public:
     void dumpSegment(WORD index);
     SegmentSelector makeSegmentSelector(WORD index);
 
-    WORD currentSegment() const { return *m_currentSegment; }
-    bool hasSegmentPrefix() const { return m_currentSegment == &m_segmentPrefix; }
+    SegmentRegisterIndex currentSegment() const { return m_segmentPrefix == SegmentRegisterIndex::None ? SegmentRegisterIndex::DS : m_segmentPrefix; }
+    bool hasSegmentPrefix() const { return m_segmentPrefix != SegmentRegisterIndex::None; }
 
-    void setSegmentPrefix(WORD segment)
+    void setSegmentPrefix(SegmentRegisterIndex segment)
     {
         m_segmentPrefix = segment;
-        m_currentSegment = &m_segmentPrefix;
     }
 
-    void resetSegmentPrefix() { m_currentSegment = &this->DS; }
+    void resetSegmentPrefix() { m_segmentPrefix = SegmentRegisterIndex::None; }
 
     // Extended memory size in KiB (will be reported by CMOS)
     DWORD extendedMemorySize() const { return m_extendedMemorySize; }
@@ -258,8 +258,8 @@ public:
     void setRegister16(RegisterIndex16 registerIndex, WORD value) { *treg16[registerIndex] = value; }
     void setRegister8(RegisterIndex8 registerIndex, BYTE value) { *treg8[registerIndex] = value; }
 
-    WORD getSegment(SegmentIndex segmentIndex) const { ASSERT_VALID_SEGMENT_INDEX(segmentIndex); return *m_segmentMap[segmentIndex]; }
-    void setSegment(SegmentIndex segmentIndex, WORD value) const { ASSERT_VALID_SEGMENT_INDEX(segmentIndex); *m_segmentMap[segmentIndex] = value; }
+    WORD getSegment(SegmentRegisterIndex segmentIndex) const { ASSERT_VALID_SEGMENT_INDEX(segmentIndex); return *m_segmentMap[static_cast<int>(segmentIndex)]; }
+    void setSegment(SegmentRegisterIndex segmentIndex, WORD value) const { ASSERT_VALID_SEGMENT_INDEX(segmentIndex); *m_segmentMap[static_cast<int>(segmentIndex)] = value; }
 
     DWORD getControlRegister(int registerIndex) const { return *m_controlRegisterMap[registerIndex]; }
     void setControlRegister(int registerIndex, DWORD value) { *m_controlRegisterMap[registerIndex] = value; }
@@ -391,8 +391,9 @@ public:
      */
     BYTE in(WORD port);
 
-    BYTE* memoryPointer(WORD segment, DWORD offset);
     BYTE* memoryPointer(DWORD address);
+    BYTE* memoryPointer(WORD segment, DWORD offset);
+    BYTE* memoryPointer(SegmentRegisterIndex, DWORD offset);
 
     DWORD getEFlags() const;
     WORD getFlags() const;
@@ -429,21 +430,29 @@ public:
     template<typename T> bool validateAddress(WORD segment, DWORD offset, MemoryAccessType);
     template<typename T> T readMemory(DWORD address);
     template<typename T> T readMemory(WORD segment, DWORD address);
+    template<typename T> T readMemory(SegmentRegisterIndex, DWORD address);
     template<typename T> void writeMemory(DWORD address, T data);
     template<typename T> void writeMemory(WORD segment, DWORD address, T data);
+    template<typename T> void writeMemory(SegmentRegisterIndex, DWORD address, T data);
 
     BYTE readMemory8(DWORD address);
     BYTE readMemory8(WORD segment, DWORD offset);
+    BYTE readMemory8(SegmentRegisterIndex, DWORD offset);
     WORD readMemory16(DWORD address);
     WORD readMemory16(WORD segment, DWORD offset);
+    WORD readMemory16(SegmentRegisterIndex, DWORD offset);
     DWORD readMemory32(DWORD address);
     DWORD readMemory32(WORD segment, DWORD offset);
+    DWORD readMemory32(SegmentRegisterIndex, DWORD offset);
     void writeMemory8(DWORD address, BYTE data);
     void writeMemory8(WORD segment, DWORD offset, BYTE data);
+    void writeMemory8(SegmentRegisterIndex, DWORD offset, BYTE data);
     void writeMemory16(DWORD address, WORD data);
     void writeMemory16(WORD segment, DWORD offset, WORD data);
+    void writeMemory16(SegmentRegisterIndex, DWORD offset, WORD data);
     void writeMemory32(DWORD address, DWORD data);
     void writeMemory32(WORD segment, DWORD offset, DWORD data);
+    void writeMemory32(SegmentRegisterIndex, DWORD offset, DWORD data);
 
     BYTE readModRM8(BYTE rmbyte);
     WORD readModRM16(BYTE rmbyte);
@@ -457,7 +466,7 @@ public:
 
     MemoryOrRegisterReference resolveModRM(BYTE rmbyte);
 
-    DWORD evaluateSIB(BYTE rm, BYTE sib, WORD& segment, unsigned sizeOfImmediate);
+    DWORD evaluateSIB(BYTE rm, BYTE sib, SegmentRegisterIndex& segment, unsigned sizeOfImmediate);
 
     enum Mode { RealMode, ProtectedMode };
     Mode mode() const { return m_mode; }
@@ -1053,8 +1062,8 @@ private:
 
     void flushCommandQueue();
 
-    void dumpSelector(const char* segmentRegisterName, SegmentIndex);
-    void syncSegmentRegister(SegmentIndex);
+    void dumpSelector(const char* segmentRegisterName, SegmentRegisterIndex);
+    void syncSegmentRegister(SegmentRegisterIndex);
     SegmentSelector m_selector[6];
 
     // This points to the base of CS for fast opcode fetches.
@@ -1191,8 +1200,7 @@ private:
     WORD m_baseCS;
     DWORD m_baseEIP;
 
-    WORD* m_currentSegment;
-    WORD m_segmentPrefix;
+    SegmentRegisterIndex m_segmentPrefix { SegmentRegisterIndex::None };
 
     DWORD m_baseMemorySize;
     DWORD m_extendedMemorySize;

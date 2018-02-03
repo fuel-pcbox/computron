@@ -106,9 +106,9 @@ void VCpu::dumpTrace()
 }
 #endif
 
-void VCpu::dumpSelector(const char* segmentRegisterName, SegmentIndex segmentIndex)
+void VCpu::dumpSelector(const char* segmentRegisterName, SegmentRegisterIndex segmentIndex)
 {
-    const SegmentSelector& selector = m_selector[segmentIndex];
+    const SegmentSelector& selector = m_selector[static_cast<int>(segmentIndex)];
     vlog(LogDump, "%s: %04X {%08X:%05X}",
         segmentRegisterName,
         getSegment(segmentIndex),
@@ -219,12 +219,12 @@ void VCpu::dumpAll()
         vlog(LogDump, "FS: %04X", getFS());
         vlog(LogDump, "GS: %04X", getGS());
     } else {
-        dumpSelector("CS", RegisterCS);
-        dumpSelector("DS", RegisterDS);
-        dumpSelector("ES", RegisterES);
-        dumpSelector("SS", RegisterSS);
-        dumpSelector("FS", RegisterFS);
-        dumpSelector("GS", RegisterGS);
+        dumpSelector("CS", SegmentRegisterIndex::CS);
+        dumpSelector("DS", SegmentRegisterIndex::DS);
+        dumpSelector("ES", SegmentRegisterIndex::ES);
+        dumpSelector("SS", SegmentRegisterIndex::SS);
+        dumpSelector("FS", SegmentRegisterIndex::FS);
+        dumpSelector("GS", SegmentRegisterIndex::GS);
     }
     vlog(LogDump, "EIP: %08X", getEIP());
 

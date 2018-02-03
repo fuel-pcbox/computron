@@ -572,14 +572,14 @@ VCpu::VCpu(Machine& m)
     this->treg8[RegisterCL] = &this->regs.B.CL;
     this->treg8[RegisterDL] = &this->regs.B.DL;
 
-    m_segmentMap[RegisterCS] = &this->CS;
-    m_segmentMap[RegisterDS] = &this->DS;
-    m_segmentMap[RegisterES] = &this->ES;
-    m_segmentMap[RegisterSS] = &this->SS;
-    m_segmentMap[RegisterFS] = &this->FS;
-    m_segmentMap[RegisterGS] = &this->GS;
-    m_segmentMap[6] = 0;
-    m_segmentMap[7] = 0;
+    m_segmentMap[(int)SegmentRegisterIndex::CS] = &this->CS;
+    m_segmentMap[(int)SegmentRegisterIndex::DS] = &this->DS;
+    m_segmentMap[(int)SegmentRegisterIndex::ES] = &this->ES;
+    m_segmentMap[(int)SegmentRegisterIndex::SS] = &this->SS;
+    m_segmentMap[(int)SegmentRegisterIndex::FS] = &this->FS;
+    m_segmentMap[(int)SegmentRegisterIndex::GS] = &this->GS;
+    m_segmentMap[6] = nullptr;
+    m_segmentMap[7] = nullptr;
 
     reset();
 }
@@ -629,8 +629,7 @@ void VCpu::reset()
 
     memset(m_selector, 0, sizeof(m_selector));
 
-    m_segmentPrefix = 0x0000;
-    m_currentSegment = &this->DS;
+    m_segmentPrefix = SegmentRegisterIndex::None;
 
     if (machine().isForAutotest())
         jump32(machine().settings().entryCS(), machine().settings().entryIP());
@@ -848,7 +847,7 @@ void VCpu::jump32(WORD segment, DWORD offset)
     //m_codeMemory = m_memory + (segment << 4);
 
     if (getPE())
-        syncSegmentRegister(RegisterCS);
+        syncSegmentRegister(SegmentRegisterIndex::CS);
 
     updateSizeModes();
 }
@@ -903,42 +902,42 @@ void VCpu::_XLAT()
 
 void VCpu::_CS()
 {
-    setSegmentPrefix(getCS());
+    setSegmentPrefix(SegmentRegisterIndex::CS);
     decode(fetchOpcodeByte());
     resetSegmentPrefix();
 }
 
 void VCpu::_DS()
 {
-    setSegmentPrefix(getDS());
+    setSegmentPrefix(SegmentRegisterIndex::DS);
     decode(fetchOpcodeByte());
     resetSegmentPrefix();
 }
 
 void VCpu::_ES()
 {
-    setSegmentPrefix(getES());
+    setSegmentPrefix(SegmentRegisterIndex::ES);
     decode(fetchOpcodeByte());
     resetSegmentPrefix();
 }
 
 void VCpu::_SS()
 {
-    setSegmentPrefix(getSS());
+    setSegmentPrefix(SegmentRegisterIndex::SS);
     decode(fetchOpcodeByte());
     resetSegmentPrefix();
 }
 
 void VCpu::_FS()
 {
-    setSegmentPrefix(getFS());
+    setSegmentPrefix(SegmentRegisterIndex::FS);
     decode(fetchOpcodeByte());
     resetSegmentPrefix();
 }
 
 void VCpu::_GS()
 {
-    setSegmentPrefix(getGS());
+    setSegmentPrefix(SegmentRegisterIndex::GS);
     decode(fetchOpcodeByte());
     resetSegmentPrefix();
 }
@@ -1143,7 +1142,7 @@ bool VCpu::x32() const
     if (!getPE())
         return false;
 
-    return m_selector[RegisterCS]._32bit;
+    return m_selector[(int)SegmentRegisterIndex::CS]._32bit;
 }
 
 void VCpu::pushInstructionPointer()
@@ -1318,12 +1317,26 @@ T VCpu::readMemory(WORD segmentIndex, DWORD offset)
     return readMemory<T>(vomit_toFlatAddress(segmentIndex, offset));
 }
 
+template<typename T>
+T VCpu::readMemory(SegmentRegisterIndex segment, DWORD offset)
+{
+#if 0
+    auto& selector = m_selector[(int)segment];
+    if (selector.realMode)
+        return readMemory<T>(selector.base + offset);
+#endif
+    return readMemory<T>(getSegment(segment), offset);
+}
+
 BYTE VCpu::readMemory8(DWORD address) { return readMemory<BYTE>(address); }
 WORD VCpu::readMemory16(DWORD address) { return readMemory<WORD>(address); }
 DWORD VCpu::readMemory32(DWORD address) { return readMemory<DWORD>(address); }
 BYTE VCpu::readMemory8(WORD segmentIndex, DWORD offset) { return readMemory<BYTE>(segmentIndex, offset); }
 WORD VCpu::readMemory16(WORD segmentIndex, DWORD offset) { return readMemory<WORD>(segmentIndex, offset); }
 DWORD VCpu::readMemory32(WORD segmentIndex, DWORD offset) { return readMemory<DWORD>(segmentIndex, offset); }
+BYTE VCpu::readMemory8(SegmentRegisterIndex segment, DWORD offset) { return readMemory<BYTE>(segment, offset); }
+WORD VCpu::readMemory16(SegmentRegisterIndex segment, DWORD offset) { return readMemory<WORD>(segment, offset); }
+DWORD VCpu::readMemory32(SegmentRegisterIndex segment, DWORD offset) { return readMemory<DWORD>(segment, offset); }
 
 template<typename T>
 void VCpu::writeMemory(DWORD address, T value)
@@ -1358,12 +1371,26 @@ void VCpu::writeMemory(WORD segmentIndex, DWORD offset, T value)
     writeMemory(vomit_toFlatAddress(segmentIndex, offset), value);
 }
 
+template<typename T>
+void VCpu::writeMemory(SegmentRegisterIndex segment, DWORD offset, T value)
+{
+#if 0
+    auto& selector = m_selector[(int)segment];
+    if (selector.realMode)
+        return writeMemory<T>(selector.base + offset);
+#endif
+    return writeMemory<T>(getSegment(segment), offset, value);
+}
+
 void VCpu::writeMemory8(DWORD address, BYTE value) { writeMemory(address, value); }
 void VCpu::writeMemory16(DWORD address, WORD value) { writeMemory(address, value); }
 void VCpu::writeMemory32(DWORD address, DWORD value) { writeMemory(address, value); }
 void VCpu::writeMemory8(WORD segment, DWORD offset, BYTE value) { writeMemory(segment, offset, value); }
 void VCpu::writeMemory16(WORD segment, DWORD offset, WORD value) { writeMemory(segment, offset, value); }
 void VCpu::writeMemory32(WORD segment, DWORD offset, DWORD value) { writeMemory(segment, offset, value); }
+void VCpu::writeMemory8(SegmentRegisterIndex segment, DWORD offset, BYTE value) { writeMemory(segment, offset, value); }
+void VCpu::writeMemory16(SegmentRegisterIndex segment, DWORD offset, WORD value) { writeMemory(segment, offset, value); }
+void VCpu::writeMemory32(SegmentRegisterIndex segment, DWORD offset, DWORD value) { writeMemory(segment, offset, value); }
 
 void VCpu::updateSizeModes()
 {
@@ -1375,7 +1402,7 @@ void VCpu::updateSizeModes()
         return;
     }
 
-    //SegmentSelector& codeSegment = m_selector[RegisterCS];
+    //SegmentSelector& codeSegment = m_selector[SegmentRegisterIndex::CS];
     auto codeSegment = makeSegmentSelector(CS);
     m_addressSize32 = codeSegment._32bit;
     m_operationSize32 = codeSegment._32bit;
@@ -1386,42 +1413,52 @@ void VCpu::setCS(WORD value)
 {
     this->CS = value;
     if (getPE())
-        syncSegmentRegister(RegisterCS);
+        syncSegmentRegister(SegmentRegisterIndex::CS);
 }
 
 void VCpu::setDS(WORD value)
 {
     this->DS = value;
     if (getPE())
-        syncSegmentRegister(RegisterDS);
+        syncSegmentRegister(SegmentRegisterIndex::DS);
 }
 
 void VCpu::setES(WORD value)
 {
     this->ES = value;
     if (getPE())
-        syncSegmentRegister(RegisterES);
+        syncSegmentRegister(SegmentRegisterIndex::ES);
 }
 
 void VCpu::setSS(WORD value)
 {
     this->SS = value;
     if (getPE())
-        syncSegmentRegister(RegisterSS);
+        syncSegmentRegister(SegmentRegisterIndex::SS);
 }
 
 void VCpu::setFS(WORD value)
 {
     this->FS = value;
     if (getPE())
-        syncSegmentRegister(RegisterFS);
+        syncSegmentRegister(SegmentRegisterIndex::FS);
 }
 
 void VCpu::setGS(WORD value)
 {
     this->GS = value;
     if (getPE())
-        syncSegmentRegister(RegisterGS);
+        syncSegmentRegister(SegmentRegisterIndex::GS);
+}
+
+BYTE* VCpu::memoryPointer(SegmentRegisterIndex segment, DWORD offset)
+{
+#if 0
+    auto& selector = m_selector[(int)segment];
+    if (selector.realMode)
+        return memoryPointer(segment.base + offset);
+#endif
+    return memoryPointer(getSegment(segment), offset);
 }
 
 BYTE* VCpu::memoryPointer(WORD segmentIndex, DWORD offset)

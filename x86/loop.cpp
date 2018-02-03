@@ -103,12 +103,12 @@ void VCpu::_LOOPNE_imm8()
 void VCpu::handleRepeatOpcode(BYTE opcode, bool shouldEqual)
 {
     switch(opcode) {
-    case 0x26: setSegmentPrefix(getES()); break;
-    case 0x2E: setSegmentPrefix(getCS()); break;
-    case 0x36: setSegmentPrefix(getSS()); break;
-    case 0x3E: setSegmentPrefix(getDS()); break;
-    case 0x64: setSegmentPrefix(getFS()); break;
-    case 0x65: setSegmentPrefix(getGS()); break;
+    case 0x26: setSegmentPrefix(SegmentRegisterIndex::ES); break;
+    case 0x2E: setSegmentPrefix(SegmentRegisterIndex::CS); break;
+    case 0x36: setSegmentPrefix(SegmentRegisterIndex::SS); break;
+    case 0x3E: setSegmentPrefix(SegmentRegisterIndex::DS); break;
+    case 0x64: setSegmentPrefix(SegmentRegisterIndex::FS); break;
+    case 0x65: setSegmentPrefix(SegmentRegisterIndex::GS); break;
 
     case 0x66: {
         m_operationSize32 = !m_operationSize32;
