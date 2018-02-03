@@ -27,34 +27,6 @@
 #include "vcpu.h"
 #include "debug.h"
 
-void VCpu::_wrap_0x0F()
-{
-    BYTE op = fetchOpcodeByte();
-    switch (op) {
-    case 0x01:
-    {
-        this->rmbyte = fetchOpcodeByte();
-        switch (vomit_modRMRegisterPart(this->rmbyte)) {
-        case 0: _SGDT(); return;
-        }
-        (void) readModRM16(this->rmbyte);
-        vlog(LogAlert, "Sliding by 0F 01 /%d\n", vomit_modRMRegisterPart(this->rmbyte));
-        break;
-    }
-    case 0xFF: // UD0
-    case 0xB9: // UD1
-    case 0x0B: // UD2
-        vlog(LogAlert, "Undefined opcode 0F %02X", op);
-        exception(6);
-        break;
-    default:
-        vlog(LogCPU, "_wrap_0x0F passing opcode to VCpu::decodeNext(): 0F %02X", op);
-        setEIP(getEIP() - 2);
-        decodeNext();
-        break;
-    }
-}
-
 void VCpu::_BOUND()
 {
     VM_ASSERT(false);

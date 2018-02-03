@@ -34,6 +34,8 @@
 #include <QtCore/QStringList>
 #include <unistd.h>
 
+//#define SLACKWARE33_DEBUG
+
 inline bool hasA20Bit(DWORD address)
 {
     return address & 0x100000;
@@ -178,6 +180,7 @@ void VCpu::decodeNext()
 
 void VCpu::decode(BYTE op)
 {
+    BYTE subOp = 0;
     this->opcode = op;
     switch (this->opcode) {
     case 0x00: _ADD_RM8_reg8(); break;
@@ -196,19 +199,19 @@ void VCpu::decode(BYTE op)
     case 0x0D: CALL_HANDLER(_OR_AX_imm16, _OR_EAX_imm32); break;
     case 0x0E: _PUSH_CS(); break;
     case 0x0F:
-        this->rmbyte = fetchOpcodeByte();
-        switch (this->rmbyte) {
+        subOp = fetchOpcodeByte();
+        switch (subOp) {
         case 0x00:
-            this->subrmbyte = fetchOpcodeByte();
-            switch (vomit_modRMRegisterPart(this->subrmbyte)) {
+            rmbyte = fetchOpcodeByte();
+            switch (vomit_modRMRegisterPart(rmbyte)) {
             case 2: _LLDT_RM16(); break;
             case 3: _LTR_RM16(); break;
             default: goto fffuuu;
             }
             break;
         case 0x01:
-            this->subrmbyte = fetchOpcodeByte();
-            switch (vomit_modRMRegisterPart(this->subrmbyte)) {
+            rmbyte = fetchOpcodeByte();
+            switch (vomit_modRMRegisterPart(rmbyte)) {
             case 0: _SGDT(); break;
             case 1: _SIDT(); break;
             case 2: _LGDT(); break;
@@ -255,8 +258,8 @@ void VCpu::decode(BYTE op)
         case 0xB6: CALL_HANDLER(_MOVZX_reg16_RM8, _MOVZX_reg32_RM8); break;
         case 0xB7: CALL_HANDLER(_UNSUPP, _MOVZX_reg32_RM16); break;
         case 0xBA:
-            this->subrmbyte = fetchOpcodeByte();
-            switch (vomit_modRMRegisterPart(subrmbyte)) {
+            rmbyte = fetchOpcodeByte();
+            switch (vomit_modRMRegisterPart(rmbyte)) {
             case 4: CALL_HANDLER(_BT_RM16_imm8, _BT_RM32_imm8); break;
             case 5: CALL_HANDLER(_BTS_RM16_imm8, _BTS_RM32_imm8); break;
             case 6: CALL_HANDLER(_BTR_RM16_imm8, _BTR_RM32_imm8); break;
@@ -507,12 +510,12 @@ void VCpu::decode(BYTE op)
     case 0xFE: _wrap_0xFE(); break;
     case 0xFF: _wrap_0xFF(); break;
     default:
-        this->rmbyte = fetchOpcodeByte();
+        rmbyte = fetchOpcodeByte();
 fffuuu:
-        vlog(LogAlert, "FFFFUUUU unsupported opcode %02X /%u or %02X %02X or %02X %02X /%u",
-            this->opcode, vomit_modRMRegisterPart(this->rmbyte),
-            this->opcode, this->rmbyte,
-            this->opcode, this->rmbyte, vomit_modRMRegisterPart(this->subrmbyte)
+        vlog(LogAlert, "FFFFUUUU unsupported opcode %02X %02X or %02X %02X %02X",
+            opcode, vomit_modRMRegisterPart(rmbyte),
+            opcode, rmbyte,
+            opcode, subOp, vomit_modRMRegisterPart(rmbyte)
         );
         dumpRawMemory(codeMemory() - 0x16);
         exception(6);

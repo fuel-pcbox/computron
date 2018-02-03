@@ -890,8 +890,6 @@ protected:
 
     // 80186+ INSTRUCTIONS
 
-    void _wrap_0x0F();
-
     void _BOUND();
     void _ENTER();
     void _LEAVE();
@@ -1188,7 +1186,6 @@ private:
 
     BYTE opcode;
     BYTE rmbyte;
-    BYTE subrmbyte;
 
     State m_state;
 
