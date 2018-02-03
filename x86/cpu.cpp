@@ -1297,9 +1297,14 @@ template<typename T>
 T VCpu::readMemory(DWORD address)
 {
     address &= a20Mask();
+    T value;
     if (addressIsInVGAMemory(address))
-        return machine().vgaMemory().read<T>(address);
-    return *reinterpret_cast<T*>(&m_memory[address]);
+        value = machine().vgaMemory().read<T>(address);
+    else
+        value = *reinterpret_cast<T*>(&m_memory[address]);
+    if (options.memdebug || shouldLogMemoryRead(address))
+        vlog(LogCPU, "%u-bit read [A20=%s] 0x%08X, value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", address, value);
+    return value;
 }
 
 template<typename T>
@@ -1344,6 +1349,9 @@ void VCpu::writeMemory(DWORD address, T value)
 {
     assert(!getPE());
     address &= a20Mask();
+
+    if (options.memdebug || shouldLogMemoryWrite(address))
+        vlog(LogCPU, "%u-bit write [A20=%s] 0x%08X, value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", address, value);
 
     if (addressIsInVGAMemory(address)) {
         machine().vgaMemory().write(address, value);
