@@ -113,6 +113,7 @@ VCpu::SegmentSelector VCpu::makeSegmentSelector(WORD index)
 {
     if (!getPE()) {
         SegmentSelector selector;
+        selector.index = index;
         selector.base = (DWORD)index << 4;
         selector.limit = 0xFFFFF;
         return selector;
@@ -128,8 +129,11 @@ VCpu::SegmentSelector VCpu::makeSegmentSelector(WORD index)
 
     if (index >= this->GDTR.limit) {
         vlog(LogCPU, "Segment selector index 0x%04X >= GDTR.limit (0x%04X).", index, GDTR.limit);
+        dumpAll();
+        VM_ASSERT(false);
         debugger().enter();
         //vomit_exit(1);
+
     }
 
     //vlog(LogAlert, "makeSegmentSelector: GDTR.base{%08X} + index{%04X}", GDTR.base, index);
@@ -151,6 +155,7 @@ VCpu::SegmentSelector VCpu::makeSegmentSelector(WORD index)
 
     SegmentSelector selector;
 
+    selector.index = index;
     selector.base = (hi & 0xFF000000) | ((hi & 0xFF) << 16) | ((lo >> 16) & 0xFFFF);
     selector.limit = (hi & 0xF0000) | (lo & 0xFFFF);
     selector.accessed = (hi >> 8) & 1;

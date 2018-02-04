@@ -1262,39 +1262,50 @@ static const char* toString(VCpu::MemoryAccessType type)
 }
 
 template<typename T>
-bool VCpu::validateAddress(WORD segmentIndex, DWORD offset, MemoryAccessType accessType)
+bool VCpu::validateAddress(const SegmentSelector& selector, DWORD offset, MemoryAccessType accessType)
 {
     VM_ASSERT(getPE());
 
-    SegmentSelector segment = makeSegmentSelector(segmentIndex);
-    if (offset > segment.effectiveLimit()) {
+    if (offset > selector.effectiveLimit()) {
         vlog(LogAlert, "FUG! offset %08X outside limit", offset);
-        dumpSegment(segmentIndex);
+        dumpSegment(selector);
         //dumpAll();
         debugger().enter();
         //GP(0);
         return false;
     }
-    assert(offset <= segment.effectiveLimit());
+    assert(offset <= selector.effectiveLimit());
 
-    DWORD flatAddress = segment.base + offset;
+    DWORD flatAddress = selector.base + offset;
     VM_ASSERT(isA20Enabled() || !hasA20Bit(flatAddress));
 
     if (flatAddress >= m_memorySize) {
         vlog(LogCPU, "OOB %u-bit %s access @ %04x:%08x {base:%08x,limit:%08x,gran:%s} (flat: 0x%08x) [A20=%s]",
              sizeof(T) * 8,
              toString(accessType),
-             segmentIndex,
+             selector.index,
              offset,
-             segment.base,
-             segment.limit,
-             segment.granularity ? "4k" : "1b",
+             selector.base,
+             selector.limit,
+             selector.granularity ? "4k" : "1b",
              flatAddress,
              isA20Enabled() ? "on" : "off"
         );
         return false;
     }
     return true;
+}
+
+template<typename T>
+bool VCpu::validateAddress(SegmentRegisterIndex registerIndex, DWORD offset, MemoryAccessType accessType)
+{
+    return validateAddress<T>(m_selector[(int)registerIndex], offset, accessType);
+}
+
+template<typename T>
+bool VCpu::validateAddress(WORD segmentIndex, DWORD offset, MemoryAccessType accessType)
+{
+    return validateAddress<T>(makeSegmentSelector(segmentIndex), offset, accessType);
 }
 
 template<typename T>
@@ -1312,21 +1323,26 @@ T VCpu::readMemory(DWORD address)
 }
 
 template<typename T>
-T VCpu::readMemory(WORD segmentIndex, DWORD offset)
+T VCpu::readMemory(const SegmentSelector& selector, DWORD offset)
 {
     if (getPE()) {
-        if (!validateAddress<T>(segmentIndex, offset, MemoryAccessType::Read)) {
+        if (!validateAddress<T>(selector, offset, MemoryAccessType::Read)) {
             //VM_ASSERT(false);
             return 0;
         }
-        SegmentSelector segment = makeSegmentSelector(segmentIndex);
-        DWORD flatAddress = segment.base + offset;
+        DWORD flatAddress = selector.base + offset;
         T value = *reinterpret_cast<T*>(&m_memory[flatAddress]);
         if (options.memdebug || shouldLogMemoryRead(flatAddress))
-            vlog(LogCPU, "%u-bit PE read [A20=%s] %04X:%08X (flat: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
+            vlog(LogCPU, "%u-bit PE read [A20=%s] %04X:%08X (flat: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", selector.index, offset, flatAddress, value);
         return value;
     }
-    return readMemory<T>(vomit_toFlatAddress(segmentIndex, offset));
+    return readMemory<T>(vomit_toFlatAddress(selector.index, offset));
+}
+
+template<typename T>
+T VCpu::readMemory(WORD segmentIndex, DWORD offset)
+{
+    return readMemory<T>(makeSegmentSelector(segmentIndex), offset);
 }
 
 template<typename T>
@@ -1335,7 +1351,7 @@ T VCpu::readMemory(SegmentRegisterIndex segment, DWORD offset)
     auto& selector = m_selector[(int)segment];
     if (!getPE())
         return readMemory<T>(selector.base + offset);
-    return readMemory<T>(getSegment(segment), offset);
+    return readMemory<T>(selector, offset);
 }
 
 BYTE VCpu::readMemory8(DWORD address) { return readMemory<BYTE>(address); }

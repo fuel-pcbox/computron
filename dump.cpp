@@ -356,12 +356,10 @@ void VCpu::dumpIVT()
     }
 }
 
-void VCpu::dumpSegment(WORD index)
+void VCpu::dumpSegment(const SegmentSelector& selector)
 {
-    SegmentSelector selector = makeSegmentSelector(index);
-
     vlog(LogCPU, "Segment 0x%04X: { base: 0x%08X, limit: %06X, bits: %u, present: %s, granularity: %s, DPL: %u }",
-        index,
+        selector.index,
         selector.base,
         selector.limit,
         selector._32bit ? 32 : 16,
@@ -369,5 +367,10 @@ void VCpu::dumpSegment(WORD index)
         selector.granularity ? "4K" : "1b",
         selector.DPL
     );
+}
+
+void VCpu::dumpSegment(WORD index)
+{
+    dumpSegment(makeSegmentSelector(index));
 }
 

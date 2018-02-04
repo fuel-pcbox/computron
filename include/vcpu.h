@@ -149,6 +149,7 @@ public:
     };
 
     struct SegmentSelector {
+        unsigned index { 0xFFFFFFFF };
         unsigned DPL;
         unsigned count;
         bool present;
@@ -166,6 +167,7 @@ public:
     };
 
     void dumpSegment(WORD index);
+    void dumpSegment(const SegmentSelector&);
     SegmentSelector makeSegmentSelector(WORD index);
 
     SegmentRegisterIndex currentSegment() const { return m_segmentPrefix == SegmentRegisterIndex::None ? SegmentRegisterIndex::DS : m_segmentPrefix; }
@@ -428,12 +430,16 @@ public:
 
     enum class MemoryAccessType { Read, Write };
 
+    template<typename T> bool validateAddress(const SegmentSelector&, DWORD offset, MemoryAccessType);
+    template<typename T> bool validateAddress(SegmentRegisterIndex, DWORD offset, MemoryAccessType);
     template<typename T> bool validateAddress(WORD segment, DWORD offset, MemoryAccessType);
     template<typename T> T readMemory(DWORD address);
     template<typename T> T readMemory(WORD segment, DWORD address);
+    template<typename T> T readMemory(const SegmentSelector&, DWORD address);
     template<typename T> T readMemory(SegmentRegisterIndex, DWORD address);
     template<typename T> void writeMemory(DWORD address, T data);
     template<typename T> void writeMemory(WORD segment, DWORD address, T data);
+    template<typename T> void writeMemory(const SegmentSelector&, DWORD address, T data);
     template<typename T> void writeMemory(SegmentRegisterIndex, DWORD address, T data);
 
     BYTE readMemory8(DWORD address);
