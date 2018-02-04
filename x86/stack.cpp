@@ -42,10 +42,16 @@ void VCpu::push(WORD value)
 {
     //vlog(LogCPU, "push16: %04X", value);
     if (a16()) {
-        this->regs.W.SP -= 2;
+        if (o16())
+            this->regs.W.SP -= 2;
+        else
+            this->regs.W.SP -= 4;
         writeMemory16(getSS(), this->getSP(), value);
     } else {
-        this->regs.D.ESP -= 2;
+        if (o16())
+            this->regs.D.ESP -= 2;
+        else
+            this->regs.D.ESP -= 4;
         writeMemory16(getSS(), this->getESP(), value);
     }
 }
@@ -69,10 +75,16 @@ WORD VCpu::pop()
     WORD w;
     if (a16()) {
         w = readMemory16(getSS(), this->getSP());
-        this->regs.W.SP += 2;
+        if (o16())
+            this->regs.W.SP += 2;
+        else
+            this->regs.W.SP += 4;
     } else {
         w = readMemory16(getSS(), this->getESP());
-        this->regs.D.ESP += 2;
+        if (o16())
+            this->regs.D.ESP += 2;
+        else
+            this->regs.D.ESP += 4;
     }
     //vlog(LogCPU, "pop16: %08X", w);
     return w;

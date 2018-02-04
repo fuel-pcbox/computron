@@ -842,6 +842,7 @@ void VCpu::jumpAbsolute16(WORD address)
 
 void VCpu::jumpAbsolute32(DWORD address)
 {
+//    vlog(LogCPU, "[PE=%u] Abs jump to %08X", getPE(), address);
     this->EIP = address;
 }
 
@@ -1153,7 +1154,7 @@ bool VCpu::x32() const
 
 void VCpu::pushInstructionPointer()
 {
-    if (x32())
+    if (o32())
         push32(getEIP());
     else
         push(getIP());

@@ -190,7 +190,7 @@ void VCpu::_CALL_RM32()
 
 void VCpu::_RET()
 {
-    if (x32())
+    if (o32())
         jumpAbsolute32(pop32());
     else
         jumpAbsolute16(pop());
@@ -198,7 +198,7 @@ void VCpu::_RET()
 
 void VCpu::_RET_imm16()
 {
-    if (x32()) {
+    if (o32()) {
         WORD imm = fetchOpcodeWord();
         jumpAbsolute32(pop32());
         regs.D.ESP += imm;
@@ -211,7 +211,7 @@ void VCpu::_RET_imm16()
 
 void VCpu::_RETF()
 {
-    if (x32()) {
+    if (o32()) {
         DWORD nip = pop32();
         jump32(pop(), nip);
     } else {
@@ -222,7 +222,7 @@ void VCpu::_RETF()
 
 void VCpu::_RETF_imm16()
 {
-    if (x32()) {
+    if (o32()) {
         DWORD nip = pop32();
         WORD imm = fetchOpcodeWord();
         jump32(pop(), nip);
