@@ -76,10 +76,13 @@ void VCpu::_ENTER()
 
 void VCpu::_LEAVE()
 {
-    assert(o16());
-    assert(a16());
-    setSP(getBP());
-    setBP(pop());
+    if (o16()) {
+        setSP(getBP());
+        setBP(pop());
+    } else {
+        setESP(getEBP());
+        setEBP(pop32());
+    }
 }
 
 void VCpu::_PUSHA()
