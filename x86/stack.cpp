@@ -112,22 +112,22 @@ void VCpu::_POP_reg32(Instruction& insn)
 
 void VCpu::_PUSH_RM16(Instruction& insn)
 {
-    push(insn.location().read16());
+    push(insn.modrm().read16());
 }
 
 void VCpu::_PUSH_RM32(Instruction& insn)
 {
-    push32(insn.location().read32());
+    push32(insn.modrm().read32());
 }
 
 void VCpu::_POP_RM16(Instruction& insn)
 {
-    insn.location().write16(pop());
+    insn.modrm().write16(pop());
 }
 
 void VCpu::_POP_RM32(Instruction& insn)
 {
-    insn.location().write32(pop32());
+    insn.modrm().write32(pop32());
 }
 
 void VCpu::_PUSH_CS(Instruction&)

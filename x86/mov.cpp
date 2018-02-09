@@ -28,69 +28,69 @@
 
 void VCpu::_MOV_RM8_imm8(Instruction& insn)
 {
-    insn.location().write8(insn.imm8());
+    insn.modrm().write8(insn.imm8());
 }
 
 void VCpu::_MOV_RM16_imm16(Instruction& insn)
 {
-    insn.location().write16(insn.imm16());
+    insn.modrm().write16(insn.imm16());
 }
 
 void VCpu::_MOV_RM32_imm32(Instruction& insn)
 {
-    insn.location().write32(insn.imm32());
+    insn.modrm().write32(insn.imm32());
 }
 
 void VCpu::_MOV_RM16_seg(Instruction& insn)
 {
-    insn.location().write16(insn.segreg());
+    insn.modrm().write16(insn.segreg());
 }
 
 void VCpu::_MOV_RM32_seg(Instruction& insn)
 {
-    insn.location().write32(insn.segreg());
+    insn.modrm().write32(insn.segreg());
 }
 
 void VCpu::_MOV_seg_RM16(Instruction& insn)
 {
-    insn.segreg() = insn.location().read16();
+    insn.segreg() = insn.modrm().read16();
     syncSegmentRegister(insn.segmentRegisterIndex());
 }
 
 void VCpu::_MOV_seg_RM32(Instruction& insn)
 {
-    insn.segreg() = insn.location().read32();
+    insn.segreg() = insn.modrm().read32();
     syncSegmentRegister(insn.segmentRegisterIndex());
 }
 
 void VCpu::_MOV_RM8_reg8(Instruction& insn)
 {
-    insn.location().write8(insn.reg8());
+    insn.modrm().write8(insn.reg8());
 }
 
 void VCpu::_MOV_reg8_RM8(Instruction& insn)
 {
-    insn.reg8() = insn.location().read8();
+    insn.reg8() = insn.modrm().read8();
 }
 
 void VCpu::_MOV_RM16_reg16(Instruction& insn)
 {
-    insn.location().write16(insn.reg16());
+    insn.modrm().write16(insn.reg16());
 }
 
 void VCpu::_MOV_RM32_reg32(Instruction& insn)
 {
-    insn.location().write32(insn.reg32());
+    insn.modrm().write32(insn.reg32());
 }
 
 void VCpu::_MOV_reg16_RM16(Instruction& insn)
 {
-    insn.reg16() = insn.location().read16();
+    insn.reg16() = insn.modrm().read16();
 }
 
 void VCpu::_MOV_reg32_RM32(Instruction& insn)
 {
-    insn.reg32() = insn.location().read32();
+    insn.reg32() = insn.modrm().read32();
 }
 
 void VCpu::_MOV_reg32_CR(Instruction& insn)
@@ -341,15 +341,15 @@ void VCpu::_MOV_moff32_EAX(Instruction& insn)
 
 void VCpu::_MOVZX_reg16_RM8(Instruction& insn)
 {
-    insn.reg16() = insn.location().read8();
+    insn.reg16() = insn.modrm().read8();
 }
 
 void VCpu::_MOVZX_reg32_RM8(Instruction& insn)
 {
-    insn.reg32() = insn.location().read8();
+    insn.reg32() = insn.modrm().read8();
 }
 
 void VCpu::_MOVZX_reg32_RM16(Instruction& insn)
 {
-    insn.reg32() = insn.location().read16();
+    insn.reg32() = insn.modrm().read16();
 }

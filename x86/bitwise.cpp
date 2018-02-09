@@ -237,17 +237,17 @@ DWORD cpu_rcr(VCpu& cpu, DWORD data, BYTE steps, BYTE bits)
 
 void VCpu::_NOT_RM8(Instruction& insn)
 {
-    insn.location().write8(~insn.location().read8());
+    insn.modrm().write8(~insn.modrm().read8());
 }
 
 void VCpu::_NOT_RM16(Instruction& insn)
 {
-    insn.location().write16(~insn.location().read16());
+    insn.modrm().write16(~insn.modrm().read16());
 }
 
 void VCpu::_NOT_RM32(Instruction& insn)
 {
-    insn.location().write32(~insn.location().read32());
+    insn.modrm().write32(~insn.modrm().read32());
 }
 
 DEFAULT_RM16_imm8(doBt, _BT_RM16_imm8)

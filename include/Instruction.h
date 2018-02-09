@@ -106,7 +106,7 @@ public:
 
     void execute(VCpu&);
 
-    MemoryOrRegisterReference& location() { VM_ASSERT(hasRM()); return m_location; }
+    MemoryOrRegisterReference& modrm() { VM_ASSERT(hasRM()); return m_modrm; }
 
     bool isValid() const { return m_impl; }
 
@@ -114,7 +114,7 @@ public:
 
     BYTE op() const { return m_op; }
     BYTE subOp() const { return m_subOp; }
-    BYTE rm() const { return m_location.m_rm; }
+    BYTE rm() const { return m_modrm.m_rm; }
     BYTE slash() const { VM_ASSERT(hasRM()); return (rm() >> 3) & 7; }
 
     BYTE imm8() const { VM_ASSERT(m_imm1Bytes == 1); return m_imm1; }
@@ -159,7 +159,7 @@ private:
     unsigned m_imm1Bytes { 0 };
     unsigned m_imm2Bytes { 0 };
 
-    MemoryOrRegisterReference m_location;
+    MemoryOrRegisterReference m_modrm;
 
     InstructionImpl m_impl;
     VCpu* m_cpu { nullptr };

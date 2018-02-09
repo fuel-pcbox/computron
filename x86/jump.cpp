@@ -71,17 +71,17 @@ void VCpu::_JMP_short_imm8(Instruction& insn)
 
 void VCpu::_JMP_RM16(Instruction& insn)
 {
-    jumpAbsolute16(insn.location().read16());
+    jumpAbsolute16(insn.modrm().read16());
 }
 
 void VCpu::_JMP_RM32(Instruction& insn)
 {
-    jumpAbsolute32(insn.location().read32());
+    jumpAbsolute32(insn.modrm().read32());
 }
 
 void VCpu::_JMP_FAR_mem16(Instruction& insn)
 {
-    WORD* ptr = static_cast<WORD*>(insn.location().memoryPointer());
+    WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
     jump16(ptr[1], ptr[0]);
 }
 
@@ -156,7 +156,7 @@ void VCpu::_CALL_imm16_imm32(Instruction& insn)
 
 void VCpu::_CALL_FAR_mem16(Instruction& insn)
 {
-    WORD* ptr = static_cast<WORD*>(insn.location().memoryPointer());
+    WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
     push(getCS());
     pushInstructionPointer();
     jump16(ptr[1], ptr[0]);
@@ -171,13 +171,13 @@ void VCpu::_CALL_FAR_mem32(Instruction&)
 void VCpu::_CALL_RM16(Instruction& insn)
 {
     pushInstructionPointer();
-    jumpAbsolute16(insn.location().read16());
+    jumpAbsolute16(insn.modrm().read16());
 }
 
 void VCpu::_CALL_RM32(Instruction& insn)
 {
     pushInstructionPointer();
-    jumpAbsolute32(insn.location().read32());
+    jumpAbsolute32(insn.modrm().read32());
 }
 
 void VCpu::_RET(Instruction&)

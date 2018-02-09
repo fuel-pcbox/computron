@@ -46,12 +46,12 @@ void VCpu::_SIDT(Instruction&)
 
 void VCpu::_SLDT_RM16(Instruction& insn)
 {
-    insn.location().write16(LDTR.segment);
+    insn.modrm().write16(LDTR.segment);
 }
 
 void VCpu::_LLDT_RM16(Instruction& insn)
 {
-    WORD segment = insn.location().read16();
+    WORD segment = insn.modrm().read16();
     auto gdtEntry = makeSegmentSelector(segment);
     LDTR.segment = segment;
     LDTR.base = gdtEntry.base;
@@ -61,7 +61,7 @@ void VCpu::_LLDT_RM16(Instruction& insn)
 
 void VCpu::_LTR_RM16(Instruction& insn)
 {
-    WORD segment = insn.location().read16();
+    WORD segment = insn.modrm().read16();
     auto gdtEntry = makeSegmentSelector(segment);
     TR.segment = segment;
     TR.base = gdtEntry.base;
@@ -72,7 +72,7 @@ void VCpu::_LTR_RM16(Instruction& insn)
 void VCpu::_LGDT(Instruction& insn)
 {
     vlog(LogAlert, "Begin LGDT");
-    FarPointer ptr = readModRMFarPointerSegmentFirst(insn.location());
+    FarPointer ptr = readModRMFarPointerSegmentFirst(insn.modrm());
     DWORD baseMask = o32() ? 0xffffffff : 0x00ffffff;
     GDTR.base = ptr.offset & baseMask;
     GDTR.limit = ptr.segment;
@@ -86,7 +86,7 @@ void VCpu::_LGDT(Instruction& insn)
 void VCpu::_LIDT(Instruction& insn)
 {
     vlog(LogAlert, "Begin LIDT");
-    FarPointer ptr = readModRMFarPointerSegmentFirst(insn.location());
+    FarPointer ptr = readModRMFarPointerSegmentFirst(insn.modrm());
     DWORD baseMask = o32() ? 0xffffffff : 0x00ffffff;
     IDTR.base = ptr.offset & baseMask;
     IDTR.limit = ptr.segment;
@@ -99,19 +99,19 @@ void VCpu::_LMSW_RM16(Instruction& insn)
         GP(0);
     }
 
-    WORD msw = insn.location().read16();
+    WORD msw = insn.modrm().read16();
     CR0 = (CR0 & 0xFFFFFFF0) | (msw & 0x0F);
     vlog(LogCPU, "LMSW set CR0=%08X, PE=%u", CR0, getPE());
 }
 
 void VCpu::_SMSW_RM16(Instruction& insn)
 {
-    auto& location = insn.location();
+    auto& modrm = insn.modrm();
     vlog(LogCPU, "SMSW get LSW(CR0)=%04X, PE=%u", CR0 & 0xFFFF, getPE());
-    if (o32() && location.isRegister())
-        location.write32(CR0);
+    if (o32() && modrm.isRegister())
+        modrm.write32(CR0);
     else
-        location.write16(CR0 & 0xFFFF);
+        modrm.write16(CR0 & 0xFFFF);
 }
 
 VCpu::SegmentSelector VCpu::makeSegmentSelector(WORD index)

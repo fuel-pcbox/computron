@@ -766,7 +766,7 @@ Instruction::Instruction(InstructionStream& stream)
     m_hasRM = desc->hasRM;
     if (m_hasRM) {
         // Consume ModR/M (may include SIB and displacement.)
-        m_location.decode(stream);
+        m_modrm.decode(stream);
     } else {
         if (opcodeHasRegisterIndex(m_op)) {
             m_registerIndex = m_op & 7;
@@ -807,7 +807,7 @@ Instruction::Instruction(InstructionStream& stream)
 unsigned Instruction::registerIndex() const
 {
     if (m_hasRM)
-        return vomit_modRMRegisterPart(m_location.m_rm);
+        return vomit_modRMRegisterPart(m_modrm.m_rm);
     return m_registerIndex;
 }
 
@@ -841,7 +841,7 @@ void Instruction::execute(VCpu& cpu)
 {
     m_cpu = &cpu;
     if (m_hasRM)
-        m_location.resolve(cpu);
+        m_modrm.resolve(cpu);
     (cpu.*m_impl)(*this);
 }
 

@@ -543,7 +543,7 @@ void VCpu::jumpAbsolute32(DWORD address)
 void VCpu::jump32(WORD segment, DWORD offset)
 {
     //vlog(LogCPU, "[PE=%u] Far jump to %04X:%08X", getPE(), segment, offset);
-    // Jump to specified location.
+    // Jump to specified modrm.
     setCS(segment);
     this->EIP = offset;
 
@@ -655,26 +655,26 @@ void VCpu::_XCHG_EAX_reg32(Instruction& insn)
 
 void VCpu::_XCHG_reg8_RM8(Instruction& insn)
 {
-    auto& location = insn.location();
+    auto& modrm = insn.modrm();
     auto tmp = insn.reg8();
-    insn.reg8() = location.read8();
-    location.write8(tmp);
+    insn.reg8() = modrm.read8();
+    modrm.write8(tmp);
 }
 
 void VCpu::_XCHG_reg16_RM16(Instruction& insn)
 {
-    auto& location = insn.location();
+    auto& modrm = insn.modrm();
     auto tmp = insn.reg16();
-    insn.reg16() = location.read16();
-    location.write16(tmp);
+    insn.reg16() = modrm.read16();
+    modrm.write16(tmp);
 }
 
 void VCpu::_XCHG_reg32_RM32(Instruction& insn)
 {
-    auto& location = insn.location();
+    auto& modrm = insn.modrm();
     auto tmp = insn.reg32();
-    insn.reg32() = location.read32();
-    location.write32(tmp);
+    insn.reg32() = modrm.read32();
+    modrm.write32(tmp);
 }
 
 void VCpu::_DEC_reg16(Instruction& insn)
@@ -735,8 +735,8 @@ void VCpu::_INC_reg32(Instruction& insn)
 
 void VCpu::_INC_RM16(Instruction& insn)
 {
-    auto& location = insn.location();
-    auto value = location.read16();
+    auto& modrm = insn.modrm();
+    auto value = modrm.read16();
     DWORD i = value;
 
     /* Overflow if we'll wrap. */
@@ -745,13 +745,13 @@ void VCpu::_INC_RM16(Instruction& insn)
     ++i;
     adjustFlag32(i, value, 1);
     updateFlags16(i);
-    location.write16(value + 1);
+    modrm.write16(value + 1);
 }
 
 void VCpu::_INC_RM32(Instruction& insn)
 {
-    auto& location = insn.location();
-    auto value = location.read32();
+    auto& modrm = insn.modrm();
+    auto value = modrm.read32();
     QWORD i = value;
 
     /* Overflow if we'll wrap. */
@@ -760,13 +760,13 @@ void VCpu::_INC_RM32(Instruction& insn)
     ++i;
     adjustFlag32(i, value, 1);
     updateFlags32(i);
-    location.write32(value + 1);
+    modrm.write32(value + 1);
 }
 
 void VCpu::_DEC_RM16(Instruction& insn)
 {
-    auto& location = insn.location();
-    auto value = location.read16();
+    auto& modrm = insn.modrm();
+    auto value = modrm.read16();
     DWORD i = value;
 
     /* Overflow if we'll wrap. */
@@ -775,13 +775,13 @@ void VCpu::_DEC_RM16(Instruction& insn)
     --i;
     adjustFlag32(i, value, 1); // XXX: i can be (dword)(-1)...
     updateFlags16(i);
-    location.write16(value - 1);
+    modrm.write16(value - 1);
 }
 
 void VCpu::_DEC_RM32(Instruction& insn)
 {
-    auto& location = insn.location();
-    auto value = location.read32();
+    auto& modrm = insn.modrm();
+    auto value = modrm.read32();
     QWORD i = value;
 
     /* Overflow if we'll wrap. */
@@ -790,37 +790,37 @@ void VCpu::_DEC_RM32(Instruction& insn)
     --i;
     adjustFlag32(i, value, 1); // XXX: i can be (dword)(-1)...
     updateFlags32(i);
-    location.write32(value - 1);
+    modrm.write32(value - 1);
 }
 
 void VCpu::_INC_RM8(Instruction& insn)
 {
-    auto& location = insn.location();
-    auto value = location.read8();
+    auto& modrm = insn.modrm();
+    auto value = modrm.read8();
     WORD i = value;
     setOF(value == 0x7F);
     i++;
     adjustFlag32(i, value, 1);
     updateFlags8(i);
-    location.write8(value + 1);
+    modrm.write8(value + 1);
 }
 
 void VCpu::_DEC_RM8(Instruction& insn)
 {
-    auto& location = insn.location();
-    auto value = location.read8();
+    auto& modrm = insn.modrm();
+    auto value = modrm.read8();
     WORD i = value;
     setOF(value == 0x80);
     i--;
     adjustFlag32(i, value, 1);
     updateFlags8(i);
-    location.write8(value - 1);
+    modrm.write8(value - 1);
 }
 
 void VCpu::_LDS_reg16_mem16(Instruction& insn)
 {
     VM_ASSERT(a16());
-    WORD* ptr = static_cast<WORD*>(insn.location().memoryPointer());
+    WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
     insn.reg16() = vomit_read16FromPointer(ptr);
     setDS(vomit_read16FromPointer(ptr + 1));
 }
@@ -851,7 +851,7 @@ void VCpu::pushInstructionPointer()
 void VCpu::_LES_reg16_mem16(Instruction& insn)
 {
     VM_ASSERT(a16());
-    WORD* ptr = static_cast<WORD*>(insn.location().memoryPointer());
+    WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
     insn.reg16() = vomit_read16FromPointer(ptr);
     setES(vomit_read16FromPointer(ptr + 1));
 }
@@ -866,7 +866,7 @@ void VCpu::_LES_reg32_mem32(Instruction&)
 void VCpu::_LFS_reg16_mem16(Instruction& insn)
 {
     VM_ASSERT(a16());
-    WORD* ptr = static_cast<WORD*>(insn.location().memoryPointer());
+    WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
     insn.reg16() = vomit_read16FromPointer(ptr);
     setFS(vomit_read16FromPointer(ptr + 1));
 }
@@ -881,7 +881,7 @@ void VCpu::_LFS_reg32_mem32(Instruction&)
 void VCpu::_LSS_reg16_mem16(Instruction& insn)
 {
     VM_ASSERT(a16());
-    WORD* ptr = static_cast<WORD*>(insn.location().memoryPointer());
+    WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
     insn.reg16() = vomit_read16FromPointer(ptr);
     setSS(vomit_read16FromPointer(ptr + 1));
 }
@@ -889,7 +889,7 @@ void VCpu::_LSS_reg16_mem16(Instruction& insn)
 void VCpu::_LSS_reg32_mem32(Instruction& insn)
 {
     VM_ASSERT(a32());
-    FarPointer ptr = readModRMFarPointerOffsetFirst(insn.location());
+    FarPointer ptr = readModRMFarPointerOffsetFirst(insn.modrm());
     insn.reg32() = ptr.offset;
     setSS(ptr.segment);
 }
@@ -897,7 +897,7 @@ void VCpu::_LSS_reg32_mem32(Instruction& insn)
 void VCpu::_LGS_reg16_mem16(Instruction& insn)
 {
     VM_ASSERT(a16());
-    WORD* ptr = static_cast<WORD*>(insn.location().memoryPointer());
+    WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
     insn.reg16() = vomit_read16FromPointer(ptr);
     setGS(vomit_read16FromPointer(ptr + 1));
 }
@@ -911,26 +911,26 @@ void VCpu::_LGS_reg32_mem32(Instruction&)
 
 void VCpu::_LEA_reg32_mem32(Instruction& insn)
 {
-    auto& location = insn.location();
-    if (location.isRegister()) {
+    auto& modrm = insn.modrm();
+    if (modrm.isRegister()) {
         vlog(LogAlert, "LEA_reg32_mem32 with register source!");
         exception(6);
         return;
     }
 
-    insn.reg32() = location.offset();
+    insn.reg32() = modrm.offset();
 }
 
 void VCpu::_LEA_reg16_mem16(Instruction& insn)
 {
-    auto& location = insn.location();
-    if (location.isRegister()) {
+    auto& modrm = insn.modrm();
+    if (modrm.isRegister()) {
         vlog(LogAlert, "LEA_reg16_mem16 with register source!");
         exception(6);
         return;
     }
 
-    insn.reg16() = location.offset();
+    insn.reg16() = modrm.offset();
 }
 static const char* toString(VCpu::MemoryAccessType type)
 {

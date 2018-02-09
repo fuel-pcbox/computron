@@ -88,28 +88,28 @@ void MemoryOrRegisterReference::resolve(VCpu& cpu)
     return resolve16();
 }
 
-FarPointer VCpu::readModRMFarPointerSegmentFirst(MemoryOrRegisterReference& location)
+FarPointer VCpu::readModRMFarPointerSegmentFirst(MemoryOrRegisterReference& modrm)
 {
-    VM_ASSERT(!location.isRegister());
+    VM_ASSERT(!modrm.isRegister());
 
     FarPointer ptr;
-    ptr.segment = readMemory16(location.segment(), location.offset());
-    ptr.offset = readMemory32(location.segment(), location.offset() + 2);
+    ptr.segment = readMemory16(modrm.segment(), modrm.offset());
+    ptr.offset = readMemory32(modrm.segment(), modrm.offset() + 2);
 
-    vlog(LogCPU, "Loaded far pointer (segment first) from %04X:%08X [PE=%u], got %04X:%08X", location.segment(), location.offset(), getPE(), ptr.segment, ptr.offset);
+    vlog(LogCPU, "Loaded far pointer (segment first) from %04X:%08X [PE=%u], got %04X:%08X", modrm.segment(), modrm.offset(), getPE(), ptr.segment, ptr.offset);
 
     return ptr;
 }
 
-FarPointer VCpu::readModRMFarPointerOffsetFirst(MemoryOrRegisterReference& location)
+FarPointer VCpu::readModRMFarPointerOffsetFirst(MemoryOrRegisterReference& modrm)
 {
-    VM_ASSERT(!location.isRegister());
+    VM_ASSERT(!modrm.isRegister());
 
     FarPointer ptr;
-    ptr.segment = readMemory16(location.segment(), location.offset() + 4);
-    ptr.offset = readMemory32(location.segment(), location.offset());
+    ptr.segment = readMemory16(modrm.segment(), modrm.offset() + 4);
+    ptr.offset = readMemory32(modrm.segment(), modrm.offset());
 
-    vlog(LogCPU, "Loaded far pointer (offset first) from %04X:%08X [PE=%u], got %04X:%08X", location.segment(), location.offset(), getPE(), ptr.segment, ptr.offset);
+    vlog(LogCPU, "Loaded far pointer (offset first) from %04X:%08X [PE=%u], got %04X:%08X", modrm.segment(), modrm.offset(), getPE(), ptr.segment, ptr.offset);
 
     return ptr;
 }
