@@ -274,10 +274,10 @@ void VCpu::setEFlags(DWORD eflags)
 
     this->RF = (eflags & 0x10000) != 0;
     this->VM = (eflags & 0x20000) != 0;
-    this->AC = (eflags & 0x40000) != 0;
-    this->VIF = (eflags & 0x80000) != 0;
-    this->VIP = (eflags & 0x100000) != 0;
-    this->ID = (eflags & 0x200000) != 0;
+//    this->AC = (eflags & 0x40000) != 0;
+//    this->VIF = (eflags & 0x80000) != 0;
+//    this->VIP = (eflags & 0x100000) != 0;
+//    this->ID = (eflags & 0x200000) != 0;
 }
 
 DWORD VCpu::getEFlags() const
@@ -285,10 +285,10 @@ DWORD VCpu::getEFlags() const
     DWORD eflags = getFlags()
          | (this->RF << 16)
          | (this->VM << 17)
-         | (this->AC << 18)
-         | (this->VIF << 19)
-         | (this->VIP << 20)
-         | (this->ID << 21);
+//         | (this->AC << 18)
+//         | (this->VIF << 19)
+//         | (this->VIP << 20)
+//         | (this->ID << 21);
          ;
     return eflags;
 }
