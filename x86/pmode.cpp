@@ -26,7 +26,7 @@
 #include "vcpu.h"
 #include "debugger.h"
 
-void VCpu::_SGDT()
+void VCpu::_SGDT(Instruction&)
 {
     VM_ASSERT(false);
     // FIXME: I don't think is implemented correctly.
@@ -35,7 +35,7 @@ void VCpu::_SGDT()
     writeMemory16(currentSegment(), tableAddress, GDTR.limit);
 }
 
-void VCpu::_SIDT()
+void VCpu::_SIDT(Instruction&)
 {
     VM_ASSERT(false);
     // FIXME: I don't think is implemented correctly.
@@ -44,9 +44,14 @@ void VCpu::_SIDT()
     writeMemory16(currentSegment(), tableAddress, IDTR.limit);
 }
 
-void VCpu::_LLDT_RM16()
+void VCpu::_SLDT_RM16(Instruction& insn)
 {
-    WORD segment = readModRM16(rmbyte);
+    insn.location().write16(LDTR.segment);
+}
+
+void VCpu::_LLDT_RM16(Instruction& insn)
+{
+    WORD segment = insn.location().read16();
     auto gdtEntry = makeSegmentSelector(segment);
     LDTR.segment = segment;
     LDTR.base = gdtEntry.base;
@@ -54,9 +59,9 @@ void VCpu::_LLDT_RM16()
     vlog(LogAlert, "LLDT { segment: %04X => base:%08X, limit:%08X }", LDTR.segment, LDTR.base, LDTR.limit);
 }
 
-void VCpu::_LTR_RM16()
+void VCpu::_LTR_RM16(Instruction& insn)
 {
-    WORD segment = readModRM16(rmbyte);
+    WORD segment = insn.location().read16();
     auto gdtEntry = makeSegmentSelector(segment);
     TR.segment = segment;
     TR.base = gdtEntry.base;
@@ -64,10 +69,10 @@ void VCpu::_LTR_RM16()
     vlog(LogAlert, "LTR { segment: %04X => base:%08X, limit:%08X }", TR.segment, TR.base, TR.limit);
 }
 
-void VCpu::_LGDT()
+void VCpu::_LGDT(Instruction& insn)
 {
     vlog(LogAlert, "Begin LGDT");
-    FarPointer ptr = readModRMFarPointerSegmentFirst(rmbyte);
+    FarPointer ptr = readModRMFarPointerSegmentFirst(insn.location());
     DWORD baseMask = o32() ? 0xffffffff : 0x00ffffff;
     GDTR.base = ptr.offset & baseMask;
     GDTR.limit = ptr.segment;
@@ -78,30 +83,30 @@ void VCpu::_LGDT()
     }
 }
 
-void VCpu::_LIDT()
+void VCpu::_LIDT(Instruction& insn)
 {
     vlog(LogAlert, "Begin LIDT");
-    FarPointer ptr = readModRMFarPointerSegmentFirst(rmbyte);
+    FarPointer ptr = readModRMFarPointerSegmentFirst(insn.location());
     DWORD baseMask = o32() ? 0xffffffff : 0x00ffffff;
     IDTR.base = ptr.offset & baseMask;
     IDTR.limit = ptr.segment;
     vlog(LogAlert, "LIDT { base:%08X, limit:%08X }", IDTR.base, IDTR.limit);
 }
 
-void VCpu::_LMSW_RM16()
+void VCpu::_LMSW_RM16(Instruction& insn)
 {
     if (getCPL()) {
         GP(0);
     }
 
-    WORD msw = readModRM16(rmbyte);
+    WORD msw = insn.location().read16();
     CR0 = (CR0 & 0xFFFFFFF0) | (msw & 0x0F);
     vlog(LogCPU, "LMSW set CR0=%08X, PE=%u", CR0, getPE());
 }
 
-void VCpu::_SMSW_RM16()
+void VCpu::_SMSW_RM16(Instruction& insn)
 {
-    auto location = resolveModRM(rmbyte);
+    auto& location = insn.location();
     vlog(LogCPU, "SMSW get LSW(CR0)=%04X, PE=%u", CR0 & 0xFFFF, getPE());
     if (o32() && location.isRegister())
         location.write32(CR0);
@@ -179,6 +184,7 @@ const char* toString(SegmentRegisterIndex segment)
     case SegmentRegisterIndex::SS: return "SS";
     case SegmentRegisterIndex::FS: return "FS";
     case SegmentRegisterIndex::GS: return "GS";
+    default: break;
     }
     return nullptr;
 }

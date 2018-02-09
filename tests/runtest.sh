@@ -5,6 +5,11 @@ if [ "$1" = "" ] ; then
 	exit 1
 fi
 
+if type -pa colordiff > /dev/null; then
+    FANCYDIFF=colordiff
+else
+    FANCYDIFF=diff
+fi
 PROGRAM="../vomit --no-gui --no-vlog --run"
 TEST=$1
 EXPECTATION=$(echo $TEST | sed s/.asm/.expected/)
@@ -22,7 +27,7 @@ if [ -e $EXPECTATION ]; then
         echo -ne "\033[32;1mPASS\033[0m: "
     else
         echo -ne "\033[31;1mFAIL\033[0m: "
-        diff -u $EXPECTATION $RESULT | less -R
+        $FANCYDIFF -u $EXPECTATION $RESULT | less -R
     fi
 else
     cat $RESULT > $EXPECTATION

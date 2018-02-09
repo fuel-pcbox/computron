@@ -28,39 +28,39 @@
 #include "debug.h"
 #include "iodevice.h"
 
-void VCpu::_OUT_imm8_AL()
+void VCpu::_OUT_imm8_AL(Instruction& insn)
 {
-    out(fetchOpcodeByte(), regs.B.AL);
+    out(insn.imm8(), regs.B.AL);
 }
 
-void VCpu::_OUT_imm8_AX()
+void VCpu::_OUT_imm8_AX(Instruction& insn)
 {
-    WORD port = fetchOpcodeByte();
+    WORD port = insn.imm8();
     out(port, regs.B.AL);
     out(port + 1, regs.B.AH);
 }
 
-void VCpu::_OUT_imm8_EAX()
+void VCpu::_OUT_imm8_EAX(Instruction& insn)
 {
-    WORD port = fetchOpcodeByte();
+    WORD port = insn.imm8();
     out(port, regs.B.AL);
     out(port + 1, regs.B.AH);
     out(port + 2, vomit_LSB(regs.W.__EAX_high_word));
     out(port + 3, vomit_MSB(regs.W.__EAX_high_word));
 }
 
-void VCpu::_OUT_DX_AL()
+void VCpu::_OUT_DX_AL(Instruction&)
 {
     out(getDX(), regs.B.AL);
 }
 
-void VCpu::_OUT_DX_AX()
+void VCpu::_OUT_DX_AX(Instruction&)
 {
     out(getDX(), regs.B.AL);
     out(getDX() + 1, regs.B.AH);
 }
 
-void VCpu::_OUT_DX_EAX()
+void VCpu::_OUT_DX_EAX(Instruction&)
 {
     out(getDX(), regs.B.AL);
     out(getDX() + 1, regs.B.AH);
@@ -68,7 +68,7 @@ void VCpu::_OUT_DX_EAX()
     out(getDX() + 3, vomit_MSB(regs.W.__EAX_high_word));
 }
 
-void VCpu::_OUTSB()
+void VCpu::_OUTSB(Instruction&)
 {
     BYTE data;
 
@@ -83,7 +83,7 @@ void VCpu::_OUTSB()
     out(getDX(), data);
 }
 
-void VCpu::_OUTSW()
+void VCpu::_OUTSW(Instruction&)
 {
     BYTE lsb;
     BYTE msb;
@@ -102,7 +102,7 @@ void VCpu::_OUTSW()
     out(getDX() + 1, msb);
 }
 
-void VCpu::_OUTSD()
+void VCpu::_OUTSD(Instruction&)
 {
     BYTE b1, b2, b3, b4;
 
@@ -126,21 +126,21 @@ void VCpu::_OUTSD()
     out(getDX() + 3, b4);
 }
 
-void VCpu::_IN_AL_imm8()
+void VCpu::_IN_AL_imm8(Instruction& insn)
 {
-    regs.B.AL = in(fetchOpcodeByte());
+    regs.B.AL = in(insn.imm8());
 }
 
-void VCpu::_IN_AX_imm8()
+void VCpu::_IN_AX_imm8(Instruction& insn)
 {
-    WORD port = fetchOpcodeByte();
+    WORD port = insn.imm8();
     regs.B.AL = in(port);
     regs.B.AH = in(port + 1);
 }
 
-void VCpu::_IN_EAX_imm8()
+void VCpu::_IN_EAX_imm8(Instruction& insn)
 {
-    WORD port = fetchOpcodeByte();
+    WORD port = insn.imm8();
     BYTE b1 = in(port);
     BYTE b2 = in(port + 1);
     BYTE b3 = in(port + 2);
@@ -149,18 +149,18 @@ void VCpu::_IN_EAX_imm8()
     regs.W.__EAX_high_word = vomit_MAKEWORD(b3, b4);
 }
 
-void VCpu::_IN_AL_DX()
+void VCpu::_IN_AL_DX(Instruction&)
 {
     regs.B.AL = in(getDX());
 }
 
-void VCpu::_IN_AX_DX()
+void VCpu::_IN_AX_DX(Instruction&)
 {
     regs.B.AL = in(getDX());
     regs.B.AH = in(getDX() + 1);
 }
 
-void VCpu::_IN_EAX_DX()
+void VCpu::_IN_EAX_DX(Instruction&)
 {
     regs.B.AL = in(getDX());
     regs.B.AH = in(getDX() + 1);

@@ -28,20 +28,7 @@
 #include "debug.h"
 #include "debugger.h"
 
-#define DEFAULT_TO_SS if (!hasSegmentPrefix()) { segment = SegmentRegisterIndex::SS; }
-
-MemoryOrRegisterReference::MemoryOrRegisterReference(VCpu& cpu, int registerIndex)
-    : m_cpu(cpu)
-    , m_registerIndex(registerIndex)
-{
-}
-
-MemoryOrRegisterReference::MemoryOrRegisterReference(VCpu& cpu, SegmentRegisterIndex segment, DWORD offset)
-    : m_cpu(cpu)
-    , m_segment(segment)
-    , m_offset(offset)
-{
-}
+#define DEFAULT_TO_SS if (!m_cpu->hasSegmentPrefix()) { m_segment = SegmentRegisterIndex::SS; }
 
 SegmentRegisterIndex MemoryOrRegisterReference::segment()
 {
@@ -52,58 +39,57 @@ SegmentRegisterIndex MemoryOrRegisterReference::segment()
 DWORD MemoryOrRegisterReference::offset()
 {
     VM_ASSERT(!isRegister());
-    return m_offset;
+    if (m_a32)
+        return m_offset32;
+    else
+        return m_offset16;
 }
 
 void* MemoryOrRegisterReference::memoryPointer()
 {
+    VM_ASSERT(m_cpu);
     VM_ASSERT(!isRegister());
-    return m_cpu.memoryPointer(m_segment, m_offset);
+    return m_cpu->memoryPointer(segment(), offset());
 }
 
 template<typename T>
 T MemoryOrRegisterReference::read()
 {
+    VM_ASSERT(m_cpu);
     if (isRegister())
-        return m_cpu.readRegister<T>(m_registerIndex);
-    return m_cpu.readMemory<T>(m_segment, m_offset);
+        return m_cpu->readRegister<T>(m_registerIndex);
+    return m_cpu->readMemory<T>(segment(), offset());
 }
 
 template<typename T>
 void MemoryOrRegisterReference::write(T data)
 {
+    VM_ASSERT(m_cpu);
     if (isRegister()) {
-        m_cpu.writeRegister<T>(m_registerIndex, data);
+        m_cpu->writeRegister<T>(m_registerIndex, data);
         return;
     }
-    m_cpu.writeMemory<T>(m_segment, m_offset, data);
+    m_cpu->writeMemory<T>(segment(), offset(), data);
 }
 
 BYTE MemoryOrRegisterReference::read8() { return read<BYTE>(); }
 WORD MemoryOrRegisterReference::read16() { return read<WORD>(); }
-DWORD MemoryOrRegisterReference::read32() { return read<DWORD>(); }
+DWORD MemoryOrRegisterReference::read32() { VM_ASSERT(m_cpu->o32()); return read<DWORD>(); }
 void MemoryOrRegisterReference::write8(BYTE data) { return write(data); }
 void MemoryOrRegisterReference::write16(WORD data) { return write(data); }
-void MemoryOrRegisterReference::write32(DWORD data) { return write(data); }
+void MemoryOrRegisterReference::write32(DWORD data) { VM_ASSERT(m_cpu->o32()); return write(data); }
 
-MemoryOrRegisterReference VCpu::resolveModRM(BYTE rmbyte)
+void MemoryOrRegisterReference::resolve(VCpu& cpu)
 {
-    if (a32())
-        return resolveModRM32_internal(rmbyte);
-    return resolveModRM16_internal(rmbyte);
+    m_cpu = &cpu;
+    VM_ASSERT(m_cpu->a32() == m_a32);
+    if (m_a32)
+        return resolve32();
+    return resolve16();
 }
 
-BYTE VCpu::readModRM8(BYTE rmbyte) { return resolveModRM(rmbyte).read8(); }
-WORD VCpu::readModRM16(BYTE rmbyte) { return resolveModRM(rmbyte).read16(); }
-DWORD VCpu::readModRM32(BYTE rmbyte) { return resolveModRM(rmbyte).read32(); }
-
-void VCpu::writeModRM8(BYTE rmbyte, BYTE value) { resolveModRM(rmbyte).write8(value); }
-void VCpu::writeModRM16(BYTE rmbyte, WORD value) { resolveModRM(rmbyte).write16(value); }
-void VCpu::writeModRM32(BYTE rmbyte, DWORD value) { resolveModRM(rmbyte).write32(value); }
-
-FarPointer VCpu::readModRMFarPointerSegmentFirst(BYTE rmbyte)
+FarPointer VCpu::readModRMFarPointerSegmentFirst(MemoryOrRegisterReference& location)
 {
-    auto location = resolveModRM(rmbyte);
     VM_ASSERT(!location.isRegister());
 
     FarPointer ptr;
@@ -115,9 +101,8 @@ FarPointer VCpu::readModRMFarPointerSegmentFirst(BYTE rmbyte)
     return ptr;
 }
 
-FarPointer VCpu::readModRMFarPointerOffsetFirst(BYTE rmbyte)
+FarPointer VCpu::readModRMFarPointerOffsetFirst(MemoryOrRegisterReference& location)
 {
-    auto location = resolveModRM(rmbyte);
     VM_ASSERT(!location.isRegister());
 
     FarPointer ptr;
@@ -129,155 +114,181 @@ FarPointer VCpu::readModRMFarPointerOffsetFirst(BYTE rmbyte)
     return ptr;
 }
 
-MemoryOrRegisterReference VCpu::resolveModRM16_internal(BYTE rmbyte)
+void MemoryOrRegisterReference::decode(InstructionStream& stream)
 {
-    VM_ASSERT(a16());
+    m_a32 = stream.a32();
+    m_rm = stream.readInstruction8();
 
-    SegmentRegisterIndex segment = currentSegment();
-    WORD offset = 0x0000;
-
-    switch (rmbyte & 0xC0) {
-    case 0x00:
-        switch (rmbyte & 0x07) {
-        case 0: offset = getBX() + getSI(); break;
-        case 1: offset = getBX() + getDI(); break;
-        case 2: DEFAULT_TO_SS; offset = getBP() + getSI(); break;
-        case 3: DEFAULT_TO_SS; offset = getBP() + getDI(); break;
-        case 4: offset = getSI(); break;
-        case 5: offset = getDI(); break;
-        case 6: offset = fetchOpcodeWord(); break;
-        default: offset = getBX(); break;
+    if (m_a32) {
+        decode32(stream);
+        switch (m_displacementBytes) {
+        case 0: break;
+        case 1: m_displacement32 = vomit_signExtend<DWORD>(stream.readInstruction8()); break;
+        case 4: m_displacement32 = stream.readInstruction32(); break;
+        default: VM_ASSERT(false); break;
         }
-        return { *this, segment, offset };
-    case 0x40:
-        offset = vomit_signExtend<WORD>(fetchOpcodeByte());
-        switch (rmbyte & 0x07) {
-        case 0: offset += getBX() + getSI(); break;
-        case 1: offset += getBX() + getDI(); break;
-        case 2: DEFAULT_TO_SS; offset += getBP() + getSI(); break;
-        case 3: DEFAULT_TO_SS; offset += getBP() + getDI(); break;
-        case 4: offset += getSI(); break;
-        case 5: offset += getDI(); break;
-        case 6: DEFAULT_TO_SS; offset += getBP(); break;
-        default: offset += getBX(); break;
+    } else {
+        decode16(stream);
+        switch (m_displacementBytes) {
+        case 0: break;
+        case 1: m_displacement16 = vomit_signExtend<WORD>(stream.readInstruction8()); break;
+        case 2: m_displacement16 = stream.readInstruction16(); break;
+        default: VM_ASSERT(false); break;
         }
-        return { *this, segment, offset };
-    case 0x80:
-        offset = fetchOpcodeWord();
-        switch (rmbyte & 0x07) {
-        case 0: offset += getBX() + getSI(); break;
-        case 1: offset += getBX() + getDI(); break;
-        case 2: DEFAULT_TO_SS; offset += getBP() + getSI(); break;
-        case 3: DEFAULT_TO_SS; offset += getBP() + getDI(); break;
-        case 4: offset += getSI(); break;
-        case 5: offset += getDI(); break;
-        case 6: DEFAULT_TO_SS; offset += getBP(); break;
-        default: offset += getBX(); break;
-        }
-        return { *this, segment, offset };
-    default: // 0xC0
-        return { *this, rmbyte & 7 };
     }
 }
 
-MemoryOrRegisterReference VCpu::resolveModRM32_internal(BYTE rmbyte)
+void MemoryOrRegisterReference::decode16(InstructionStream&)
 {
-    VM_ASSERT(a32());
+    VM_ASSERT(!m_a32);
 
-    SegmentRegisterIndex segment = currentSegment();
-    DWORD offset { 0 };
-
-    switch (rmbyte & 0xC0) {
-    case 0x00:
-        switch (rmbyte & 0x07) {
-        case 0: offset = getEAX(); break;
-        case 1: offset = getECX(); break;
-        case 2: offset = getEDX(); break;
-        case 3: offset = getEBX(); break;
-        case 4: offset = evaluateSIB(rmbyte, fetchOpcodeByte(), segment, 0); break;
-        case 5: offset = fetchOpcodeDWord(); break;
-        case 6: offset = getESI(); break;
-        default: offset = getEDI(); break;
-        }
-        return { *this, segment, offset };
+    switch (m_rm & 0xc0) {
+    case 0:
+        if ((m_rm & 0x07) == 6)
+            m_displacementBytes = 2;
+        else
+            VM_ASSERT(m_displacementBytes == 0);
+        break;
     case 0x40:
-        switch (rmbyte & 0x07) {
-        case 0: offset = getEAX() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
-        case 1: offset = getECX() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
-        case 2: offset = getEDX() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
-        case 3: offset = getEBX() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
-        case 4: offset = evaluateSIB(rmbyte, fetchOpcodeByte(), segment, 8); break;
-        case 5: DEFAULT_TO_SS; offset = getEBP() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
-        case 6: offset = getESI() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
-        default: offset = getEDI() + vomit_signExtend<DWORD>(fetchOpcodeByte()); break;
-        }
-        return { *this, segment, offset };
+        m_displacementBytes = 1;
+        break;
     case 0x80:
-        switch (rmbyte & 0x07) {
-        case 0: offset = getEAX() + fetchOpcodeDWord(); break;
-        case 1: offset = getECX() + fetchOpcodeDWord(); break;
-        case 2: offset = getEDX() + fetchOpcodeDWord(); break;
-        case 3: offset = getEBX() + fetchOpcodeDWord(); break;
-        case 4: offset = evaluateSIB(rmbyte, fetchOpcodeByte(), segment, 32); break;
-        case 5: DEFAULT_TO_SS; offset = getEBP() + fetchOpcodeDWord(); break;
-        case 6: offset = getESI() + fetchOpcodeDWord(); break;
-        default: offset = getEDI() + fetchOpcodeDWord(); break;
-        }
-        return { *this, segment, offset };
-    default: // 0xC0
-        return { *this, rmbyte & 7 };
+        m_displacementBytes = 2;
+        break;
+    case 0xc0:
+        m_registerIndex = m_rm & 7;
+        break;
     }
-    VM_ASSERT(false);
 }
 
-DWORD VCpu::evaluateSIB(BYTE rm, BYTE sib, SegmentRegisterIndex& segment, unsigned sizeOfImmediate)
+void MemoryOrRegisterReference::decode32(InstructionStream& stream)
+{
+    VM_ASSERT(m_a32);
+
+    switch (m_rm & 0xc0) {
+    case 0:
+        if ((m_rm & 0x07) == 5)
+            m_displacementBytes = 4;
+        break;
+    case 0x40:
+        m_displacementBytes = 1;
+        break;
+    case 0x80:
+        m_displacementBytes = 4;
+        break;
+    case 0xc0:
+        m_registerIndex = m_rm & 7;
+        return;
+    }
+
+    m_hasSIB = (m_rm & 0x07) == 4;
+    if (m_hasSIB) {
+        m_sib = stream.readInstruction8();
+        if ((m_sib & 0x07) == 5) {
+            switch ((m_rm >> 6) & 0x03) {
+            case 0: VM_ASSERT(!m_displacementBytes || m_displacementBytes == 4); m_displacementBytes = 4; break;
+            case 1: VM_ASSERT(!m_displacementBytes || m_displacementBytes == 1); m_displacementBytes = 1; break;
+            case 2: VM_ASSERT(!m_displacementBytes || m_displacementBytes == 4); m_displacementBytes = 4; break;
+            default: VM_ASSERT(false); break;
+            }
+        }
+    }
+}
+
+void MemoryOrRegisterReference::resolve16()
+{
+    VM_ASSERT(m_cpu);
+    VM_ASSERT(!m_a32);
+    VM_ASSERT(m_cpu->a16());
+
+    m_segment = m_cpu->currentSegment();
+
+    switch (m_rm & 7) {
+    case 0: m_offset16 = m_cpu->getBX() + m_cpu->getSI() + m_displacement16; break;
+    case 1: m_offset16 = m_cpu->getBX() + m_cpu->getDI() + m_displacement16; break;
+    case 2: DEFAULT_TO_SS; m_offset16 = m_cpu->getBP() + m_cpu->getSI() + m_displacement16; break;
+    case 3: DEFAULT_TO_SS; m_offset16 = m_cpu->getBP() + m_cpu->getDI() + m_displacement16; break;
+    case 4: m_offset16 = m_cpu->getSI() + m_displacement16; break;
+    case 5: m_offset16 = m_cpu->getDI() + m_displacement16; break;
+    case 6:
+        if ((m_rm & 0xc0) == 0)
+            m_offset16 = m_displacement16;
+        else {
+            DEFAULT_TO_SS;
+            m_offset16 = m_cpu->getBP() + m_displacement16;
+        }
+        break;
+    default: m_offset16 = m_cpu->getBX() + m_displacement16; break;
+    }
+}
+
+void MemoryOrRegisterReference::resolve32()
+{
+    VM_ASSERT(m_cpu);
+    VM_ASSERT(m_a32);
+    VM_ASSERT(m_cpu->a32());
+
+    m_segment = m_cpu->currentSegment();
+
+    switch (m_rm & 0x07) {
+    case 0: m_offset32 = m_cpu->getEAX() + m_displacement32; break;
+    case 1: m_offset32 = m_cpu->getECX() + m_displacement32; break;
+    case 2: m_offset32 = m_cpu->getEDX() + m_displacement32; break;
+    case 3: m_offset32 = m_cpu->getEBX() + m_displacement32; break;
+    case 4: m_offset32 = evaluateSIB(); break;
+    case 6: m_offset32 = m_cpu->getESI() + m_displacement32; break;
+    case 7: m_offset32 = m_cpu->getEDI(); break;
+    default: // 5
+        if ((m_rm & 0xc0) == 0x00) {
+            m_offset32 = m_displacement32; break;
+        } else {
+            DEFAULT_TO_SS;
+            m_offset32 = m_cpu->getEBP() + m_displacement32; break;
+        }
+        break;
+    }
+}
+
+DWORD MemoryOrRegisterReference::evaluateSIB()
 {
     DWORD scale;
-    switch (sib & 0xC0) {
+    switch (m_sib & 0xC0) {
     case 0x00: scale = 1; break;
     case 0x40: scale = 2; break;
     case 0x80: scale = 4; break;
     case 0xC0: scale = 8; break;
     }
     DWORD index;
-    switch ((sib >> 3) & 0x07) {
-    case 0: index = getEAX(); break;
-    case 1: index = getECX(); break;
-    case 2: index = getEDX(); break;
-    case 3: index = getEBX(); break;
+    switch ((m_sib >> 3) & 0x07) {
+    case 0: index = m_cpu->getEAX(); break;
+    case 1: index = m_cpu->getECX(); break;
+    case 2: index = m_cpu->getEDX(); break;
+    case 3: index = m_cpu->getEBX(); break;
     case 4: index = 0; break;
-    case 5: DEFAULT_TO_SS; index = getEBP(); break;
-    case 6: index = getESI(); break;
-    case 7: index = getEDI(); break;
+    case 5: /* FIXME: DEFAULT_TO_SS here? */ index = m_cpu->getEBP(); break;
+    case 6: index = m_cpu->getESI(); break;
+    case 7: index = m_cpu->getEDI(); break;
     }
     DWORD scaledIndex = index * scale;
 
-    DWORD base = 0;
-    switch (sib & 0x07) {
-    case 0: base = getEAX(); break;
-    case 1: base = getECX(); break;
-    case 2: base = getEDX(); break;
-    case 3: base = getEBX(); break;
-    case 4: DEFAULT_TO_SS; base = getESP(); break;
-    case 6: base = getESI(); break;
-    case 7: base = getEDI(); break;
+    DWORD base = m_displacement32;
+    switch (m_sib & 0x07) {
+    case 0: base = m_cpu->getEAX(); break;
+    case 1: base = m_cpu->getECX(); break;
+    case 2: base = m_cpu->getEDX(); break;
+    case 3: base = m_cpu->getEBX(); break;
+    case 4: DEFAULT_TO_SS; base = m_cpu->getESP(); break;
+    case 6: base = m_cpu->getESI(); break;
+    case 7: base = m_cpu->getEDI(); break;
     default: // 5
-        // FIXME: Uh, what to do if the ModR/M byte signalled a different size of immediate?
-        sizeOfImmediate = 0;
-        switch ((rm >> 6) & 3) {
-        case 0: base = fetchOpcodeDWord(); break;
-        case 1: DEFAULT_TO_SS; base = vomit_signExtend<DWORD>(fetchOpcodeByte()) + getEBP(); break;
-        case 2: DEFAULT_TO_SS; base = fetchOpcodeDWord() + getEBP(); break;
+        switch ((m_rm >> 6) & 3) {
+        case 0: base = m_displacement32; break;
+        case 1:
+        case 2: DEFAULT_TO_SS; base = m_displacement32 + m_cpu->getEBP(); break;
         default: VM_ASSERT(false); break;
         }
         break;
     }
 
-    if (sizeOfImmediate == 8)
-        base = vomit_signExtend<DWORD>(fetchOpcodeByte());
-    else if (sizeOfImmediate == 32)
-        base = fetchOpcodeDWord();
-    //dumpAll();
-    //vlog(LogCPU, "evaluateSIB(): sib=%02X -> %s+%s*%u, scaledIndex:%08X, base:%08X", sib, registerName(baseRegister), registerName(indexRegister), scale, scaledIndex, base);
     return scaledIndex + base;
 }

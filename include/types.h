@@ -37,4 +37,20 @@ typedef int16_t SIGNED_WORD;
 typedef int32_t SIGNED_DWORD;
 typedef int64_t SIGNED_QWORD;
 
+enum class SegmentRegisterIndex {
+    ES = 0,
+    CS,
+    SS,
+    DS,
+    FS,
+    GS,
+    None = 0xFF,
+};
+
+enum ValueSize {
+    ByteSize,
+    WordSize,
+    DWordSize
+};
+
 #endif

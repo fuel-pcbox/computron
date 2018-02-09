@@ -27,171 +27,151 @@
 #define __templates_h__
 
 #define DEFAULT_RM8_reg8(helper, name) \
-        void VCpu::name() { \
-                BYTE rm = fetchOpcodeByte(); \
-                auto location = resolveModRM(rm); \
-                location.write8(helper(location.read8(), *treg8[vomit_modRMRegisterPart(rm)])); \
+    void VCpu::name(Instruction& insn) { \
+        auto& location = insn.location(); \
+        location.write8(helper(location.read8(), insn.reg8())); \
 	}
 
 #define DEFAULT_RM16_reg16(helper, name) \
-        void VCpu::name() { \
-                BYTE rm = fetchOpcodeByte(); \
-                auto location = resolveModRM(rm); \
-                location.write16(helper(location.read16(), *treg16[vomit_modRMRegisterPart(rm)])); \
+    void VCpu::name(Instruction& insn) { \
+        auto& location = insn.location(); \
+        location.write16(helper(location.read16(), insn.reg16())); \
 	}
 
 #define DEFAULT_reg8_RM8(helper, name) \
-        void VCpu::name() { \
-                BYTE rm = fetchOpcodeByte(); \
-                BYTE value = readModRM8(rm); \
-                *treg8[vomit_modRMRegisterPart(rm)] = helper(*treg8[vomit_modRMRegisterPart(rm)], value); \
+    void VCpu::name(Instruction& insn) { \
+        insn.reg8() = helper(insn.reg8(), insn.location().read8()); \
 	}
 
 #define DEFAULT_reg16_RM16(helper, name) \
-        void VCpu::name() { \
-                BYTE rm = fetchOpcodeByte(); \
-                WORD value = readModRM16(rm); \
-                *treg16[vomit_modRMRegisterPart(rm)] = helper(*treg16[vomit_modRMRegisterPart(rm)], value); \
+    void VCpu::name(Instruction& insn) { \
+        insn.reg16() = helper(insn.reg16(), insn.location().read16()); \
 	}
 
 #define DEFAULT_reg32_RM32(helper, name) \
-        void VCpu::name() { \
-                BYTE rm = fetchOpcodeByte(); \
-                DWORD value = readModRM32(rm); \
-                *treg32[vomit_modRMRegisterPart(rm)] = helper(*treg32[vomit_modRMRegisterPart(rm)], value); \
-        }
+    void VCpu::name(Instruction& insn) { \
+        insn.reg32() = helper(insn.reg32(), insn.location().read32()); \
+    }
 
 #define DEFAULT_RM8_imm8(helper, name) \
-        void VCpu::name() { \
-                auto location = resolveModRM(rmbyte); \
-                location.write8(helper(location.read8(), fetchOpcodeByte())); \
+    void VCpu::name(Instruction& insn) { \
+        auto& location = insn.location(); \
+        location.write8(helper(location.read8(), insn.imm8())); \
 	}
 
 #define DEFAULT_RM16_imm16(helper, name) \
-        void VCpu::name() { \
-                auto location = resolveModRM(rmbyte); \
-                location.write16(helper(location.read16(), fetchOpcodeWord())); \
+    void VCpu::name(Instruction& insn) { \
+        auto& location = insn.location(); \
+        location.write16(helper(location.read16(), insn.imm16())); \
 	}
 
 #define DEFAULT_RM32_imm32(helper, name) \
-        void VCpu::name() { \
-                auto location = resolveModRM(rmbyte); \
-                location.write32(helper(location.read32(), fetchOpcodeDWord())); \
+    void VCpu::name(Instruction& insn) { \
+        auto& location = insn.location(); \
+        location.write32(helper(location.read32(), insn.imm32())); \
 	}
 
 #define DEFAULT_RM16_imm8(helper, name) \
-        void VCpu::name() { \
-                auto location = resolveModRM(rmbyte); \
-                location.write16(helper(location.read16(), vomit_signExtend<WORD>(fetchOpcodeByte()))); \
+    void VCpu::name(Instruction& insn) { \
+        auto& location = insn.location(); \
+        location.write16(helper(location.read16(), vomit_signExtend<WORD>(insn.imm8()))); \
 	}
 
 #define DEFAULT_RM32_imm8(helper, name) \
-        void VCpu::name() { \
-                auto location = resolveModRM(rmbyte); \
-                location.write32(helper(location.read32(), vomit_signExtend<DWORD>(fetchOpcodeByte()))); \
-        }
+    void VCpu::name(Instruction& insn) { \
+        auto& location = insn.location(); \
+        location.write32(helper(location.read32(), vomit_signExtend<DWORD>(insn.imm8()))); \
+    }
 
 #define DEFAULT_AL_imm8(helper, name) \
-        void VCpu::name() { \
-                regs.B.AL = helper(getAL(), fetchOpcodeByte()); \
+    void VCpu::name(Instruction& insn) { \
+        regs.B.AL = helper(getAL(), insn.imm8()); \
 	}
 
 #define DEFAULT_AX_imm16(helper, name) \
-        void VCpu::name() { \
-                regs.W.AX = helper(getAX(), fetchOpcodeWord()); \
+    void VCpu::name(Instruction& insn) { \
+        regs.W.AX = helper(getAX(), insn.imm16()); \
 	}
 
 #define DEFAULT_EAX_imm32(helper, name) \
-        void VCpu::name() { \
-                regs.D.EAX = helper(getEAX(), fetchOpcodeDWord()); \
-        }
+    void VCpu::name(Instruction& insn) { \
+        regs.D.EAX = helper(getEAX(), insn.imm32()); \
+    }
 
 #define READONLY_RM8_reg8(helper, name) \
-        void VCpu::name() { \
-                BYTE rm = fetchOpcodeByte(); \
-                helper(readModRM8(rm), *treg8[vomit_modRMRegisterPart(rm)]); \
+    void VCpu::name(Instruction& insn) { \
+        helper(insn.location().read8(), insn.reg8()); \
 	}
 
 #define READONLY_RM16_reg16(helper, name) \
-        void VCpu::name() { \
-                BYTE rm = fetchOpcodeByte(); \
-                helper(readModRM16(rm), *treg16[vomit_modRMRegisterPart(rm)]); \
+    void VCpu::name(Instruction& insn) { \
+        helper(insn.location().read16(), insn.reg16()); \
 	}
 
 #define READONLY_RM32_reg32(helper, name) \
-        void VCpu::name() { \
-                BYTE rm = fetchOpcodeByte(); \
-                helper(readModRM32(rm), *treg32[vomit_modRMRegisterPart(rm)]); \
-        }
+    void VCpu::name(Instruction& insn) { \
+        helper(insn.location().read32(), insn.reg32()); \
+    }
 
 #define READONLY_reg8_RM8(helper, name) \
-        void VCpu::name() { \
-                BYTE rm = fetchOpcodeByte(); \
-                helper(*treg8[vomit_modRMRegisterPart(rm)], readModRM8(rm)); \
+    void VCpu::name(Instruction& insn) { \
+        helper(insn.reg8(), insn.location().read8()); \
 	}
 
 #define READONLY_reg16_RM16(helper, name) \
-        void VCpu::name() { \
-                BYTE rm = fetchOpcodeByte(); \
-                helper(*treg16[vomit_modRMRegisterPart(rm)], readModRM16(rm)); \
-	}
+    void VCpu::name(Instruction& insn) { \
+        helper(insn.reg16(), insn.location().read16()); \
+    }
 
 #define READONLY_reg32_RM32(helper, name) \
-        void VCpu::name() { \
-                BYTE rm = fetchOpcodeByte(); \
-                helper(*treg32[vomit_modRMRegisterPart(rm)], readModRM32(rm)); \
-        }
+    void VCpu::name(Instruction& insn) { \
+        helper(insn.reg32(), insn.location().read32()); \
+    }
 
 #define READONLY_RM8_imm8(helper, name) \
-        void VCpu::name() { \
-                BYTE value = readModRM8(rmbyte); \
-                helper(value, fetchOpcodeByte()); \
+    void VCpu::name(Instruction& insn) { \
+        helper(insn.location().read8(), insn.imm8()); \
 	}
 
 #define READONLY_RM16_imm16( helper, name ) \
-        void VCpu::name() { \
-                WORD value = readModRM16(rmbyte); \
-                helper(value, fetchOpcodeWord()); \
-	}
+    void VCpu::name(Instruction& insn) { \
+        helper(insn.location().read16(), insn.imm16()); \
+    }
 
 #define READONLY_RM32_imm8( helper, name ) \
-    void VCpu::name() { \
-            DWORD value = readModRM32(rmbyte); \
-            helper(value, vomit_signExtend<DWORD>(fetchOpcodeByte())); \
+    void VCpu::name(Instruction& insn) { \
+        helper(insn.location().read32(), vomit_signExtend<DWORD>(insn.imm8())); \
     }
 
 #define READONLY_RM32_imm32( helper, name ) \
-        void VCpu::name() { \
-                DWORD value = readModRM32(rmbyte); \
-                helper(value, fetchOpcodeDWord()); \
+    void VCpu::name(Instruction& insn) { \
+        helper(insn.location().read32(), insn.imm32()); \
 	}
 
 #define READONLY_RM16_imm8(helper, name) \
-        void VCpu::name() { \
-                WORD value = readModRM16(rmbyte); \
-                helper(value, vomit_signExtend<WORD>(fetchOpcodeByte())); \
+    void VCpu::name(Instruction& insn) { \
+        helper(insn.location().read16(), vomit_signExtend<WORD>(insn.imm8())); \
 	}
 
 #define READONLY_AL_imm8(helper, name) \
-        void VCpu::name() { \
-                helper(getAL(), fetchOpcodeByte()); \
+    void VCpu::name(Instruction& insn) { \
+        helper(getAL(), insn.imm8()); \
 	}
 
 #define READONLY_AX_imm16(helper, name) \
-        void VCpu::name() { \
-                helper(getAX(), fetchOpcodeWord()); \
+    void VCpu::name(Instruction& insn) { \
+        helper(getAX(), insn.imm16()); \
 	}
 
 #define READONLY_EAX_imm32(helper, name) \
-        void VCpu::name() { \
-                helper(getEAX(), fetchOpcodeDWord()); \
-        }
+    void VCpu::name(Instruction& insn) { \
+        helper(getEAX(), insn.imm32()); \
+    }
 
 #define DEFAULT_RM32_reg32(helper, name) \
-        void VCpu::name() { \
-                BYTE rm = fetchOpcodeByte(); \
-                auto location = resolveModRM(rm); \
-                location.write32(helper(location.read32(), *treg32[vomit_modRMRegisterPart(rm)])); \
-        }
+    void VCpu::name(Instruction& insn) { \
+        auto& location = insn.location(); \
+        location.write32(helper(location.read32(), insn.reg32())); \
+    }
 
 #endif /* __templates_h__ */

@@ -28,9 +28,9 @@
 
 #include "debugger.h"
 
-void VCpu::_LOOP_imm8()
+void VCpu::_LOOP_imm8(Instruction& insn)
 {
-    SIGNED_BYTE displacement = fetchOpcodeByte();
+    SIGNED_BYTE displacement = insn.imm8();
     if (a32()) {
         --regs.D.ECX;
         if (regs.D.ECX)
@@ -42,9 +42,9 @@ void VCpu::_LOOP_imm8()
     }
 }
 
-void VCpu::_LOOPE_imm8()
+void VCpu::_LOOPE_imm8(Instruction& insn)
 {
-    SIGNED_BYTE displacement = fetchOpcodeByte();
+    SIGNED_BYTE displacement = insn.imm8();
     if (a32()) {
         --regs.D.ECX;
         if (regs.D.ECX && getZF())
@@ -56,9 +56,9 @@ void VCpu::_LOOPE_imm8()
     }
 }
 
-void VCpu::_LOOPNE_imm8()
+void VCpu::_LOOPNE_imm8(Instruction& insn)
 {
-    SIGNED_BYTE displacement = fetchOpcodeByte();
+    SIGNED_BYTE displacement = insn.imm8();
     if (a32()) {
         --regs.D.ECX;
         if (regs.D.ECX && !getZF())
@@ -70,7 +70,7 @@ void VCpu::_LOOPNE_imm8()
     }
 }
 
-#define CALL_HANDLER(handler16, handler32) if (o16()) { handler16(); } else { handler32(); }
+#define CALL_HANDLER(handler16, handler32) if (o16()) { handler16(insn); } else { handler32(insn); }
 
 #define DO_REP_NEW(o16Handler, o32Handler) do { \
     if (a32()) \
@@ -81,16 +81,16 @@ void VCpu::_LOOPNE_imm8()
 
 #define DO_REP(func) do { \
     if (a32()) \
-        for (; regs.D.ECX; --regs.D.ECX) { func(); } \
+        for (; regs.D.ECX; --regs.D.ECX) { func(insn); } \
     else \
-        for (; regs.W.CX; --regs.W.CX) { func(); } \
+        for (; regs.W.CX; --regs.W.CX) { func(insn); } \
     } while(0)
 
 #define DO_REPZ(func) do { \
     if (a32()) \
-        for (setZF(shouldEqual); regs.D.ECX && (getZF() == shouldEqual); --regs.D.ECX) { func(); } \
+        for (setZF(shouldEqual); regs.D.ECX && (getZF() == shouldEqual); --regs.D.ECX) { func(insn); } \
     else \
-        for (setZF(shouldEqual); regs.W.CX && (getZF() == shouldEqual); --regs.W.CX) { func(); } \
+        for (setZF(shouldEqual); regs.W.CX && (getZF() == shouldEqual); --regs.W.CX) { func(insn); } \
     } while (0)
 
 #define DO_REPZ_NEW(o16Handler, o32Handler) do { \
@@ -100,9 +100,9 @@ void VCpu::_LOOPNE_imm8()
         for (setZF(shouldEqual); regs.W.CX && (getZF() == shouldEqual); --regs.W.CX) { CALL_HANDLER(o16Handler, o32Handler); } \
     } while (0)
 
-void VCpu::handleRepeatOpcode(BYTE opcode, bool shouldEqual)
+void VCpu::handleRepeatOpcode(Instruction&& insn, bool shouldEqual)
 {
-    switch(opcode) {
+    switch(insn.op()) {
     case 0x26: setSegmentPrefix(SegmentRegisterIndex::ES); break;
     case 0x2E: setSegmentPrefix(SegmentRegisterIndex::CS); break;
     case 0x36: setSegmentPrefix(SegmentRegisterIndex::SS); break;
@@ -112,16 +112,16 @@ void VCpu::handleRepeatOpcode(BYTE opcode, bool shouldEqual)
 
     case 0x66: {
         m_operationSize32 = !m_operationSize32;
-        BYTE op = fetchOpcodeByte();
-        handleRepeatOpcode(op, shouldEqual);
+        auto newInsn = Instruction::fromStream(*this);
+        handleRepeatOpcode(std::move(newInsn), shouldEqual);
         m_operationSize32 = !m_operationSize32;
         return;
     }
 
     case 0x67: {
         m_addressSize32 = !m_addressSize32;
-        BYTE op = fetchOpcodeByte();
-        handleRepeatOpcode(op, shouldEqual);
+        auto newInsn = Instruction::fromStream(*this);
+        handleRepeatOpcode(std::move(newInsn), shouldEqual);
         m_addressSize32 = !m_addressSize32;
         return;
     }
@@ -143,24 +143,27 @@ void VCpu::handleRepeatOpcode(BYTE opcode, bool shouldEqual)
 
     default:
         debugger().enter();
-        vlog(LogAlert, "SUSPICIOUS: Opcode %02X used with REP* prefix", opcode);
-        decode(opcode);
+        vlog(LogAlert, "SUSPICIOUS: Opcode %02X used with REP* prefix", insn.op());
+        execute(std::move(insn));
         return;
     }
 
     // Recurse if this opcode was a segment prefix.
     // FIXME: Infinite recursion IS possible here.
-    handleRepeatOpcode(fetchOpcodeByte(), shouldEqual);
+    auto newInsn = Instruction::fromStream(*this);
+    handleRepeatOpcode(std::move(newInsn), shouldEqual);
 }
 
-void VCpu::_REP()
+void VCpu::_REP(Instruction&)
 {
-    handleRepeatOpcode(fetchOpcodeByte(), true);
+    auto newInsn = Instruction::fromStream(*this);
+    handleRepeatOpcode(std::move(newInsn), true);
     resetSegmentPrefix();
 }
 
-void VCpu::_REPNE()
+void VCpu::_REPNE(Instruction&)
 {
-    handleRepeatOpcode(fetchOpcodeByte(), false);
+    auto newInsn = Instruction::fromStream(*this);
+    handleRepeatOpcode(std::move(newInsn), false);
     resetSegmentPrefix();
 }

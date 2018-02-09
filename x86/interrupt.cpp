@@ -28,18 +28,17 @@
 #include "debug.h"
 #include "debugger.h"
 
-void VCpu::_INT_imm8()
+void VCpu::_INT_imm8(Instruction& insn)
 {
-    BYTE isr = fetchOpcodeByte();
-    jumpToInterruptHandler(isr);
+    jumpToInterruptHandler(insn.imm8());
 }
 
-void VCpu::_INT3()
+void VCpu::_INT3(Instruction&)
 {
     jumpToInterruptHandler(3);
 }
 
-void VCpu::_INTO()
+void VCpu::_INTO(Instruction&)
 {
     /* XXX: I've never seen this used, so it's probably good to log it. */
     vlog(LogAlert, "INTO used, can you believe it?");
@@ -48,7 +47,7 @@ void VCpu::_INTO()
         jumpToInterruptHandler(4);
 }
 
-void VCpu::_IRET()
+void VCpu::_IRET(Instruction&)
 {
     if (o16()) {
         WORD nip = pop();

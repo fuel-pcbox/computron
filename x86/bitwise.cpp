@@ -81,7 +81,7 @@ READONLY_AL_imm8(doAnd, _TEST_AL_imm8)
 READONLY_AX_imm16(doAnd, _TEST_AX_imm16)
 READONLY_EAX_imm32(doAnd, _TEST_EAX_imm32)
 
-void VCpu::_CBW()
+void VCpu::_CBW(Instruction&)
 {
     if (getAL() & 0x80)
         setAH(0xFF);
@@ -89,7 +89,7 @@ void VCpu::_CBW()
         setAH(0x00);
 }
 
-void VCpu::_CWD()
+void VCpu::_CWD(Instruction&)
 {
     if (getAX() & 0x8000)
         setDX(0xFFFF);
@@ -97,7 +97,7 @@ void VCpu::_CWD()
         setDX(0x0000);
 }
 
-void VCpu::_CWDE()
+void VCpu::_CWDE(Instruction&)
 {
     if (getAX() & 0x8000)
         regs.W.__EAX_high_word = 0xFFFF;
@@ -105,7 +105,7 @@ void VCpu::_CWDE()
         regs.W.__EAX_high_word = 0x0000;
 }
 
-void VCpu::_CDQ()
+void VCpu::_CDQ(Instruction&)
 {
     if (getEAX() & 0x80000000)
         setEDX(0xFFFFFFFF);
@@ -113,7 +113,7 @@ void VCpu::_CDQ()
         setEDX(0x00000000);
 }
 
-void VCpu::_SALC()
+void VCpu::_SALC(Instruction&)
 {
     setAL(getCF() ? 0xFF : 0);
 }
@@ -235,22 +235,19 @@ DWORD cpu_rcr(VCpu& cpu, DWORD data, BYTE steps, BYTE bits)
     return result;
 }
 
-void VCpu::_NOT_RM8()
+void VCpu::_NOT_RM8(Instruction& insn)
 {
-    auto location = resolveModRM(rmbyte);
-    location.write8(~location.read8());
+    insn.location().write8(~insn.location().read8());
 }
 
-void VCpu::_NOT_RM16()
+void VCpu::_NOT_RM16(Instruction& insn)
 {
-    auto location = resolveModRM(rmbyte);
-    location.write16(~location.read16());
+    insn.location().write16(~insn.location().read16());
 }
 
-void VCpu::_NOT_RM32()
+void VCpu::_NOT_RM32(Instruction& insn)
 {
-    auto location = resolveModRM(rmbyte);
-    location.write32(~location.read32());
+    insn.location().write32(~insn.location().read32());
 }
 
 DEFAULT_RM16_imm8(doBt, _BT_RM16_imm8)

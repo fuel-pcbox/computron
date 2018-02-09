@@ -86,17 +86,17 @@ void VCpu::updateFlags(DWORD data, BYTE bits)
     setZF(data == 0);
 }
 
-void VCpu::_STC()
+void VCpu::_STC(Instruction&)
 {
     setCF(1);
 }
 
-void VCpu::_STD()
+void VCpu::_STD(Instruction&)
 {
     setDF(1);
 }
 
-void VCpu::_STI()
+void VCpu::_STI(Instruction&)
 {
     if (!getPE()) {
         setIF(1);
@@ -125,7 +125,7 @@ void VCpu::_STI()
     }
 }
 
-void VCpu::_CLI()
+void VCpu::_CLI(Instruction&)
 {
     if (!getPE()) {
         setIF(0);
@@ -154,27 +154,27 @@ void VCpu::_CLI()
     }
 }
 
-void VCpu::_CLC()
+void VCpu::_CLC(Instruction&)
 {
     setCF(0);
 }
 
-void VCpu::_CLD()
+void VCpu::_CLD(Instruction&)
 {
     setDF(0);
 }
 
-void VCpu::_CMC()
+void VCpu::_CMC(Instruction&)
 {
     setCF(!getCF());
 }
 
-void VCpu::_LAHF()
+void VCpu::_LAHF(Instruction&)
 {
     regs.B.AH = getCF() | (getPF() * 4) | (getAF() * 16) | (getZF() * 64) | (getSF() * 128) | 2;
 }
 
-void VCpu::_SAHF()
+void VCpu::_SAHF(Instruction&)
 {
     setCF(regs.B.AH & 0x01);
     setPF(regs.B.AH & 0x04);

@@ -27,15 +27,19 @@
 #include "vcpu.h"
 #include "debug.h"
 
-void VCpu::_ESCAPE()
+void VCpu::_ESCAPE(Instruction& insn)
 {
-    vlog(LogFPU, "FPU escape via %02X /%u",
-        opcode, vomit_modRMRegisterPart(readMemory8(getBaseCS(), getBaseIP() + 1)));
+    vlog(LogFPU, "FPU escape via %02X %02X (or %02X /%u)",
+        insn.op(), insn.rm(), insn.op(), insn.slash());
+
+    return;
+    // FIXME: Instruction should take care of skipping bytes here!
+    VM_ASSERT(false);
 
     // Even though we don't dispatch to an FPU, we still have to decode the full
     // opcode, or the instruction stream will fall out of sync.
-    BYTE rm = fetchOpcodeByte();
-    (void) readModRM16(rm);
+    //BYTE rm = fetchOpcodeByte();
+    //(void) readModRM16(rm);
 
     // FIXME: If the code below is enabled, MSD.EXE hangs on startup trying to
     //        communicate with the FPU.

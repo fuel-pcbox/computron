@@ -99,112 +99,13 @@ T VCpu::leftShift(T data, int steps)
     return result;
 }
 
-
-void VCpu::_wrap_0x80()
+void VCpu::_wrap_0xC0(Instruction& insn)
 {
-    rmbyte = fetchOpcodeByte();
-    switch(vomit_modRMRegisterPart(rmbyte)) {
-    case 0: _ADD_RM8_imm8(); break;
-    case 1:  _OR_RM8_imm8(); break;
-    case 2: _ADC_RM8_imm8(); break;
-    case 3: _SBB_RM8_imm8(); break;
-    case 4: _AND_RM8_imm8(); break;
-    case 5: _SUB_RM8_imm8(); break;
-    case 6: _XOR_RM8_imm8(); break;
-    case 7: _CMP_RM8_imm8(); break;
-    }
-}
-
-void VCpu::_wrap_0x81_16()
-{
-    rmbyte = fetchOpcodeByte();
-    switch(vomit_modRMRegisterPart(rmbyte)) {
-    case 0: _ADD_RM16_imm16(); break;
-    case 1:  _OR_RM16_imm16(); break;
-    case 2: _ADC_RM16_imm16(); break;
-    case 3: _SBB_RM16_imm16(); break;
-    case 4: _AND_RM16_imm16(); break;
-    case 5: _SUB_RM16_imm16(); break;
-    case 6: _XOR_RM16_imm16(); break;
-    case 7: _CMP_RM16_imm16(); break;
-    }
-}
-
-void VCpu::_wrap_0x81_32()
-{
-    rmbyte = fetchOpcodeByte();
-    switch(vomit_modRMRegisterPart(rmbyte)) {
-    case 0: _ADD_RM32_imm32(); break;
-    case 1:  _OR_RM32_imm32(); break;
-    case 2: _ADC_RM32_imm32(); break;
-    case 3: _SBB_RM32_imm32(); break;
-    case 4: _AND_RM32_imm32(); break;
-    case 5: _SUB_RM32_imm32(); break;
-    case 6: _XOR_RM32_imm32(); break;
-    case 7: _CMP_RM32_imm32(); break;
-    }
-}
-
-void VCpu::_wrap_0x83_16()
-{
-    rmbyte = fetchOpcodeByte();
-    switch(vomit_modRMRegisterPart(rmbyte)) {
-    case 0: _ADD_RM16_imm8(); break;
-    case 1:  _OR_RM16_imm8(); break;
-    case 2: _ADC_RM16_imm8(); break;
-    case 3: _SBB_RM16_imm8(); break;
-    case 4: _AND_RM16_imm8(); break;
-    case 5: _SUB_RM16_imm8(); break;
-    case 6: _XOR_RM16_imm8(); break;
-    case 7: _CMP_RM16_imm8(); break;
-    }
-}
-
-void VCpu::_wrap_0x83_32()
-{
-    rmbyte = fetchOpcodeByte();
-    switch(vomit_modRMRegisterPart(rmbyte)) {
-    case 0: _ADD_RM32_imm8(); break;
-    case 1:  _OR_RM32_imm8(); break;
-    case 2: _ADC_RM32_imm8(); break;
-    case 3: _SBB_RM32_imm8(); break;
-    case 4: _AND_RM32_imm8(); break;
-    case 5: _SUB_RM32_imm8(); break;
-    case 6: _XOR_RM32_imm8(); break;
-    case 7: _CMP_RM32_imm8(); break;
-    }
-}
-
-void VCpu::_wrap_0x8F_16()
-{
-    rmbyte = fetchOpcodeByte();
-    switch(vomit_modRMRegisterPart(rmbyte)) {
-    case 0: _POP_RM16(); break;
-    default:
-        vlog(LogAlert, "[16bit] 8F /%u not wrapped", vomit_modRMRegisterPart(rmbyte));
-        exception(6);
-    }
-}
-
-void VCpu::_wrap_0x8F_32()
-{
-    rmbyte = fetchOpcodeByte();
-    switch(vomit_modRMRegisterPart(rmbyte)) {
-    case 0: _POP_RM32(); break;
-    default:
-        vlog(LogAlert, "[32bit] 8F /%u not wrapped", vomit_modRMRegisterPart(rmbyte));
-        exception(6);
-    }
-}
-
-void VCpu::_wrap_0xC0()
-{
-    BYTE rm = fetchOpcodeByte();
-    auto location = resolveModRM(rm);
+    auto& location = insn.location();
     auto value = location.read8();
-    BYTE imm = fetchOpcodeByte();
+    BYTE imm = insn.imm8();
 
-    switch (vomit_modRMRegisterPart(rm)) {
+    switch (insn.slash()) {
     case 0: location.write8(doRol(value, imm)); break;
     case 1: location.write8(doRor(value, imm)); break;
     case 2: location.write8(cpu_rcl(*this, value, imm, 8)); break;
@@ -219,14 +120,13 @@ void VCpu::_wrap_0xC0()
     }
 }
 
-void VCpu::_wrap_0xC1_16()
+void VCpu::_wrap_0xC1_16(Instruction& insn)
 {
-    BYTE rm = fetchOpcodeByte();
-    auto location = resolveModRM(rm);
+    auto& location = insn.location();
     auto value = location.read16();
-    BYTE imm = fetchOpcodeByte();
+    BYTE imm = insn.imm8();
 
-    switch (vomit_modRMRegisterPart(rm)) {
+    switch (insn.slash()) {
     case 0: location.write16(doRol(value, imm)); break;
     case 1: location.write16(doRor(value, imm)); break;
     case 2: location.write16(cpu_rcl(*this, value, imm, 16)); break;
@@ -241,14 +141,13 @@ void VCpu::_wrap_0xC1_16()
     }
 }
 
-void VCpu::_wrap_0xC1_32()
+void VCpu::_wrap_0xC1_32(Instruction& insn)
 {
-    BYTE rm = fetchOpcodeByte();
-    auto location = resolveModRM(rm);
+    auto& location = insn.location();
     auto value = location.read32();
-    BYTE imm = fetchOpcodeByte();
+    BYTE imm = insn.imm8();
 
-    switch (vomit_modRMRegisterPart(rm)) {
+    switch (insn.slash()) {
     case 0: location.write32(doRol(value, imm)); break;
     case 1: location.write32(doRor(value, imm)); break;
     case 2: location.write32(cpu_rcl(*this, value, imm, 32)); break;
@@ -263,13 +162,12 @@ void VCpu::_wrap_0xC1_32()
     }
 }
 
-void VCpu::_wrap_0xD0()
+void VCpu::_wrap_0xD0(Instruction& insn)
 {
-    BYTE rm = fetchOpcodeByte();
-    auto location = resolveModRM(rm);
+    auto& location = insn.location();
     auto value = location.read8();
 
-    switch (vomit_modRMRegisterPart(rm)) {
+    switch (insn.slash()) {
     case 0: location.write8(doRol(value, 1)); break;
     case 1: location.write8(doRor(value, 1)); break;
     case 2: location.write8(cpu_rcl(*this, value, 1, 8 )); break;
@@ -284,13 +182,12 @@ void VCpu::_wrap_0xD0()
     }
 }
 
-void VCpu::_wrap_0xD1_16()
+void VCpu::_wrap_0xD1_16(Instruction& insn)
 {
-    BYTE rm = fetchOpcodeByte();
-    auto location = resolveModRM(rm);
+    auto& location = insn.location();
     auto value = location.read16();
 
-    switch (vomit_modRMRegisterPart(rm)) {
+    switch (insn.slash()) {
     case 0: location.write16(doRol(value, 1)); break;
     case 1: location.write16(doRor(value, 1)); break;
     case 2: location.write16(cpu_rcl(*this, value, 1, 16)); break;
@@ -305,13 +202,12 @@ void VCpu::_wrap_0xD1_16()
     }
 }
 
-void VCpu::_wrap_0xD1_32()
+void VCpu::_wrap_0xD1_32(Instruction& insn)
 {
-    BYTE rm = fetchOpcodeByte();
-    auto location = resolveModRM(rm);
+    auto& location = insn.location();
     auto value = location.read32();
 
-    switch (vomit_modRMRegisterPart(rm)) {
+    switch (insn.slash()) {
     case 0: location.write32(doRol(value, 1)); break;
     case 1: location.write32(doRor(value, 1)); break;
     case 2: location.write32(cpu_rcl(*this, value, 1, 32)); break;
@@ -326,14 +222,12 @@ void VCpu::_wrap_0xD1_32()
     }
 }
 
-
-void VCpu::_wrap_0xD2()
+void VCpu::_wrap_0xD2(Instruction& insn)
 {
-    BYTE rm = fetchOpcodeByte();
-    auto location = resolveModRM(rm);
+    auto& location = insn.location();
     auto value = location.read8();
 
-    switch (vomit_modRMRegisterPart(rm)) {
+    switch (insn.slash()) {
     case 0: location.write8(doRol(value, regs.B.CL)); break;
     case 1: location.write8(doRor(value, regs.B.CL)); break;
     case 2: location.write8(cpu_rcl(*this, value, regs.B.CL, 8 )); break;
@@ -348,13 +242,12 @@ void VCpu::_wrap_0xD2()
     }
 }
 
-void VCpu::_wrap_0xD3_16()
+void VCpu::_wrap_0xD3_16(Instruction& insn)
 {
-    BYTE rm = fetchOpcodeByte();
-    auto location = resolveModRM(rm);
+    auto& location = insn.location();
     auto value = location.read16();
 
-    switch (vomit_modRMRegisterPart(rm)) {
+    switch (insn.slash()) {
     case 0: location.write16(doRol(value, regs.B.CL)); break;
     case 1: location.write16(doRor(value, regs.B.CL)); break;
     case 2: location.write16(cpu_rcl(*this, value, regs.B.CL, 16)); break;
@@ -369,13 +262,12 @@ void VCpu::_wrap_0xD3_16()
     }
 }
 
-void VCpu::_wrap_0xD3_32()
+void VCpu::_wrap_0xD3_32(Instruction& insn)
 {
-    BYTE rm = fetchOpcodeByte();
-    auto location = resolveModRM(rm);
+    auto& location = insn.location();
     auto value = location.read32();
 
-    switch (vomit_modRMRegisterPart(rm)) {
+    switch (insn.slash()) {
     case 0: location.write32(doRol(value, regs.B.CL)); break;
     case 1: location.write32(doRor(value, regs.B.CL)); break;
     case 2: location.write32(cpu_rcl(*this, value, regs.B.CL, 32)); break;
@@ -387,96 +279,5 @@ void VCpu::_wrap_0xD3_32()
         exception(6);
         break;
     case 7: location.write32(cpu_sar(*this, value, regs.B.CL, 32)); break;
-    }
-}
-
-void VCpu::_wrap_0xF6()
-{
-    rmbyte = fetchOpcodeByte();
-
-    switch (vomit_modRMRegisterPart(rmbyte)) {
-    case 0: _TEST_RM8_imm8(); break;
-    case 1:
-        vlog(LogAlert, "F6 /1 not wrapped");
-        exception(6);
-        break;
-    case 2: _NOT_RM8(); break;
-    case 3: _NEG_RM8(); break;
-    case 4: _MUL_RM8(); break;
-    case 5: _IMUL_RM8(); break;
-    case 6: _DIV_RM8(); break;
-    case 7: _IDIV_RM8(); break;
-    }
-}
-
-void VCpu::_wrap_0xF7_16()
-{
-    rmbyte = fetchOpcodeByte();
-
-    switch (vomit_modRMRegisterPart(rmbyte)) {
-    case 0: _TEST_RM16_imm16(); break;
-    case 2: _NOT_RM16(); break;
-    case 3: _NEG_RM16(); break;
-    case 4: _MUL_RM16(); break;
-    case 5: _IMUL_RM16(); break;
-    case 6: _DIV_RM16(); break;
-    case 7: _IDIV_RM16(); break;
-    default: // 1
-        vlog(LogAlert, "[16bit] F7 /1 not wrapped");
-        exception(6);
-        break;
-    }
-}
-
-void VCpu::_wrap_0xF7_32()
-{
-    rmbyte = fetchOpcodeByte();
-
-    switch (vomit_modRMRegisterPart(rmbyte)) {
-    case 0: _TEST_RM32_imm32(); break;
-    case 4: _MUL_RM32(); break;
-    case 6: _DIV_RM32(); break;
-    case 2: _NOT_RM32(); break;
-    case 3: _NEG_RM32(); break;
-#if 0
-    case 5: _IMUL_RM32(); break;
-#endif
-    case 7: _IDIV_RM32(); break;
-    default: // 1
-        vlog(LogAlert, "[32bit] F7 /%u not wrapped", vomit_modRMRegisterPart(rmbyte));
-        exception(6);
-        break;
-
-    }
-}
-
-void VCpu::_wrap_0xFE()
-{
-    rmbyte = fetchOpcodeByte();
-    switch (vomit_modRMRegisterPart(rmbyte)) {
-    case 0: _INC_RM8(); break;
-    case 1: _DEC_RM8(); break;
-    default:
-        vlog(LogAlert, "FE /%u not wrapped", vomit_modRMRegisterPart(rmbyte));
-        exception(6);
-        break;
-    }
-}
-
-void VCpu::_wrap_0xFF()
-{
-    rmbyte = fetchOpcodeByte();
-    switch (vomit_modRMRegisterPart(rmbyte)) {
-    case 0: CALL_HANDLER(_INC_RM16, _INC_RM32); break;
-    case 1: CALL_HANDLER(_DEC_RM16, _DEC_RM32); break;
-    case 2: CALL_HANDLER(_CALL_RM16, _CALL_RM32); break;
-    case 3: CALL_HANDLER(_CALL_FAR_mem16, _CALL_FAR_mem32); break;
-    case 4: CALL_HANDLER(_JMP_RM16, _JMP_RM32); break;
-    case 5: CALL_HANDLER(_JMP_FAR_mem16, _JMP_FAR_mem32); break;
-    case 6: CALL_HANDLER(_PUSH_RM16, _PUSH_RM32); break;
-    case 7:
-        vlog(LogAlert, "FF /7 not wrapped");
-        exception(6);
-        break;
     }
 }

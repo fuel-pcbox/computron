@@ -27,9 +27,10 @@
 #include "vcpu.h"
 #include "debug.h"
 
-void VCpu::_BOUND()
+void VCpu::_BOUND(Instruction&)
 {
     VM_ASSERT(false);
+#if 0
     BYTE rm = fetchOpcodeByte();
     WORD* ptr = static_cast<WORD*>(resolveModRM(rm).memoryPointer());
     WORD index = getRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)));
@@ -38,28 +39,29 @@ void VCpu::_BOUND()
         /* Raise BR exception */
         exception(5);
     }
+#endif
 }
 
-void VCpu::_PUSH_imm8()
+void VCpu::_PUSH_imm8(Instruction& insn)
 {
     if (o32())
-        push32(vomit_signExtend<DWORD>(fetchOpcodeByte()));
+        push32(vomit_signExtend<DWORD>(insn.imm8()));
     else
-        push(vomit_signExtend<WORD>(fetchOpcodeByte()));
+        push(vomit_signExtend<WORD>(insn.imm8()));
 }
 
-void VCpu::_PUSH_imm16()
+void VCpu::_PUSH_imm16(Instruction& insn)
 {
-    push(fetchOpcodeWord());
+    push(insn.imm16());
 }
 
-void VCpu::_ENTER()
+void VCpu::_ENTER(Instruction& insn)
 {
     assert(o16());
     assert(a16());
 
-    WORD size = fetchOpcodeWord();
-    BYTE nestingLevel = fetchOpcodeByte() & 31;
+    WORD size = insn.imm16_1();
+    BYTE nestingLevel = insn.imm8_2() & 31;
     push(getBP());
     WORD frameTemp = getSP();
     if (nestingLevel > 0) {
@@ -74,7 +76,7 @@ void VCpu::_ENTER()
     setSP(getSP() - size);
 }
 
-void VCpu::_LEAVE()
+void VCpu::_LEAVE(Instruction&)
 {
     if (o16()) {
         setSP(getBP());
@@ -85,7 +87,7 @@ void VCpu::_LEAVE()
     }
 }
 
-void VCpu::_PUSHA()
+void VCpu::_PUSHA(Instruction&)
 {
     WORD oldSP = getSP();
     push(getAX());
@@ -98,7 +100,7 @@ void VCpu::_PUSHA()
     push(getDI());
 }
 
-void VCpu::_PUSHAD()
+void VCpu::_PUSHAD(Instruction&)
 {
     DWORD oldESP = getESP();
     push32(getEAX());
@@ -111,7 +113,7 @@ void VCpu::_PUSHAD()
     push32(getEDI());
 }
 
-void VCpu::_POPA()
+void VCpu::_POPA(Instruction&)
 {
     setDI(pop());
     setSI(pop());
@@ -123,7 +125,7 @@ void VCpu::_POPA()
     setAX(pop());
 }
 
-void VCpu::_POPAD()
+void VCpu::_POPAD(Instruction&)
 {
     setEDI(pop32());
     setESI(pop32());

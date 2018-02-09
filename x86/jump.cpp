@@ -25,87 +25,85 @@
 
 #include "vcpu.h"
 
-void VCpu::_JCXZ_imm8()
+void VCpu::_JCXZ_imm8(Instruction& insn)
 {
-    SIGNED_BYTE imm = fetchOpcodeByte();
-    if (getCX() == 0)
+    SIGNED_BYTE imm = insn.imm8();
+    bool shouldJump;
+    if (a16())
+        shouldJump = getCX() == 0;
+    else
+        shouldJump = getECX() == 0;
+    if (shouldJump)
         jumpRelative8(imm);
 }
 
-void VCpu::_JECXZ_imm8()
+void VCpu::_JMP_imm16(Instruction& insn)
 {
-    SIGNED_BYTE imm = fetchOpcodeByte();
-    if (getECX() == 0)
-        jumpRelative8(imm);
-}
-
-void VCpu::_JMP_imm16()
-{
-    SIGNED_WORD imm = fetchOpcodeWord();
+    SIGNED_WORD imm = insn.imm16();
     jumpRelative16(imm);
 }
 
-void VCpu::_JMP_imm32()
+void VCpu::_JMP_imm32(Instruction& insn)
 {
-    SIGNED_DWORD imm = fetchOpcodeDWord();
+    SIGNED_DWORD imm = insn.imm32();
     jumpRelative32(imm);
 }
 
-void VCpu::_JMP_imm16_imm16()
+void VCpu::_JMP_imm16_imm16(Instruction& insn)
 {
-    WORD newIP = fetchOpcodeWord();
-    WORD newCS = fetchOpcodeWord();
+    WORD newCS = insn.imm16_1();
+    WORD newIP = insn.imm16_2();
     jump16(newCS, newIP);
 }
 
-void VCpu::_JMP_imm16_imm32()
+void VCpu::_JMP_imm16_imm32(Instruction& insn)
 {
-    DWORD newEIP = fetchOpcodeDWord();
-    WORD newCS = fetchOpcodeWord();
+    WORD newCS = insn.imm16_1();
+    DWORD newEIP = insn.imm32_2();
     jump32(newCS, newEIP);
 }
 
-void VCpu::_JMP_short_imm8()
+void VCpu::_JMP_short_imm8(Instruction& insn)
 {
-    SIGNED_BYTE imm = fetchOpcodeByte();
+    SIGNED_BYTE imm = insn.imm8();
     jumpRelative8(imm);
 }
 
-void VCpu::_JMP_RM16()
+void VCpu::_JMP_RM16(Instruction& insn)
 {
-    jumpAbsolute16(readModRM16(rmbyte));
+    jumpAbsolute16(insn.location().read16());
 }
 
-void VCpu::_JMP_RM32()
+void VCpu::_JMP_RM32(Instruction& insn)
 {
-    jumpAbsolute32(readModRM32(rmbyte));
+    jumpAbsolute32(insn.location().read32());
 }
 
-void VCpu::_JMP_FAR_mem16()
+void VCpu::_JMP_FAR_mem16(Instruction& insn)
 {
-    WORD* ptr = static_cast<WORD*>(resolveModRM(rmbyte).memoryPointer());
+    WORD* ptr = static_cast<WORD*>(insn.location().memoryPointer());
     jump16(ptr[1], ptr[0]);
 }
 
-void VCpu::_JMP_FAR_mem32()
+void VCpu::_JMP_FAR_mem32(Instruction&)
 {
     // FIXME: Implement!
     VM_ASSERT(false);
 }
 
 #define DO_JCC_imm(name, condition) \
-void VCpu::_ ## name ## _imm8() { \
-    SIGNED_BYTE imm = fetchOpcodeByte(); \
+void VCpu::_ ## name ## _imm8(Instruction& insn) { \
+    SIGNED_BYTE imm = insn.imm8(); \
     if ((condition)) \
         jumpRelative8(imm); \
 } \
-void VCpu::_ ## name ## _NEAR_imm() { \
+void VCpu::_ ## name ## _NEAR_imm(Instruction& insn) { \
     if (a16()) { \
-        SIGNED_WORD imm = fetchOpcodeWord(); \
+        SIGNED_WORD imm = insn.imm16(); \
         if ((condition)) \
             jumpRelative16(imm); \
     } else { \
-        SIGNED_DWORD imm = fetchOpcodeDWord(); \
+        SIGNED_DWORD imm = insn.imm32(); \
         if ((condition)) \
             jumpRelative32(imm); \
     } \
@@ -128,67 +126,61 @@ DO_JCC_imm(JNL,  !(getSF() ^ getOF()))
 DO_JCC_imm(JNG,  (getSF() ^ getOF()) | getZF())
 DO_JCC_imm(JG,   !((getSF() ^ getOF()) | getZF()))
 
-void VCpu::_CALL_imm16()
+void VCpu::_CALL_imm16(Instruction& insn)
 {
-    SIGNED_WORD imm = fetchOpcodeWord();
+    SIGNED_WORD imm = insn.imm16();
     pushInstructionPointer();
     jumpRelative16(imm);
 }
 
-void VCpu::_CALL_imm32()
+void VCpu::_CALL_imm32(Instruction& insn)
 {
-    SIGNED_DWORD imm = fetchOpcodeDWord();
+    SIGNED_DWORD imm = insn.imm32();
     pushInstructionPointer();
     jumpRelative32(imm);
 }
 
-void VCpu::_CALL_imm16_imm16()
+void VCpu::_CALL_imm16_imm16(Instruction& insn)
 {
-    WORD newip = fetchOpcodeWord();
-    WORD segment = fetchOpcodeWord();
     push(getCS());
     pushInstructionPointer();
-    jump16(segment, newip);
+    jump16(insn.imm16_1(), insn.imm16_2());
 }
 
-void VCpu::_CALL_imm16_imm32()
+void VCpu::_CALL_imm16_imm32(Instruction& insn)
 {
-    DWORD neweip = fetchOpcodeDWord();
-    WORD segment = fetchOpcodeWord();
     push(getCS());
     pushInstructionPointer();
-    jump32(segment, neweip);
+    jump32(insn.imm16_1(), insn.imm32_2());
 }
 
-void VCpu::_CALL_FAR_mem16()
+void VCpu::_CALL_FAR_mem16(Instruction& insn)
 {
-    WORD* ptr = static_cast<WORD*>(resolveModRM(rmbyte).memoryPointer());
+    WORD* ptr = static_cast<WORD*>(insn.location().memoryPointer());
     push(getCS());
     pushInstructionPointer();
     jump16(ptr[1], ptr[0]);
 }
 
-void VCpu::_CALL_FAR_mem32()
+void VCpu::_CALL_FAR_mem32(Instruction&)
 {
     // FIXME: Implement!
     VM_ASSERT(false);
 }
 
-void VCpu::_CALL_RM16()
+void VCpu::_CALL_RM16(Instruction& insn)
 {
-    WORD value = readModRM16(rmbyte);
     pushInstructionPointer();
-    jumpAbsolute16(value);
+    jumpAbsolute16(insn.location().read16());
 }
 
-void VCpu::_CALL_RM32()
+void VCpu::_CALL_RM32(Instruction& insn)
 {
-    DWORD value = readModRM32(rmbyte);
     pushInstructionPointer();
-    jumpAbsolute32(value);
+    jumpAbsolute32(insn.location().read32());
 }
 
-void VCpu::_RET()
+void VCpu::_RET(Instruction&)
 {
     if (o32())
         jumpAbsolute32(pop32());
@@ -196,20 +188,18 @@ void VCpu::_RET()
         jumpAbsolute16(pop());
 }
 
-void VCpu::_RET_imm16()
+void VCpu::_RET_imm16(Instruction& insn)
 {
     if (o32()) {
-        WORD imm = fetchOpcodeWord();
         jumpAbsolute32(pop32());
-        regs.D.ESP += imm;
+        regs.D.ESP += insn.imm16();
     } else {
-        WORD imm = fetchOpcodeWord();
         jumpAbsolute16(pop());
-        regs.W.SP += imm;
+        regs.W.SP += insn.imm16();
     }
 }
 
-void VCpu::_RETF()
+void VCpu::_RETF(Instruction&)
 {
     if (o32()) {
         DWORD nip = pop32();
@@ -220,17 +210,15 @@ void VCpu::_RETF()
     }
 }
 
-void VCpu::_RETF_imm16()
+void VCpu::_RETF_imm16(Instruction& insn)
 {
     if (o32()) {
         DWORD nip = pop32();
-        WORD imm = fetchOpcodeWord();
         jump32(pop(), nip);
-        regs.D.ESP += imm;
+        regs.D.ESP += insn.imm16();
     } else {
         WORD nip = pop();
-        WORD imm = fetchOpcodeWord();
         jump16(pop(), nip);
-        regs.W.SP += imm;
+        regs.W.SP += insn.imm16();
     }
 }

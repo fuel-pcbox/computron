@@ -25,7 +25,7 @@
 
 #include "vcpu.h"
 
-void VCpu::_LODSB()
+void VCpu::_LODSB(Instruction&)
 {
     if (a16()) {
         regs.B.AL = readMemory8(currentSegment(), getSI());
@@ -36,7 +36,7 @@ void VCpu::_LODSB()
     }
 }
 
-void VCpu::_LODSW()
+void VCpu::_LODSW(Instruction&)
 {
     if (a16()) {
         regs.W.AX = readMemory16(currentSegment(), getSI());
@@ -47,7 +47,7 @@ void VCpu::_LODSW()
     }
 }
 
-void VCpu::_LODSD()
+void VCpu::_LODSD(Instruction&)
 {
     if (a16()) {
         regs.D.EAX = readMemory32(currentSegment(), getSI());
@@ -58,7 +58,7 @@ void VCpu::_LODSD()
     }
 }
 
-void VCpu::_STOSB()
+void VCpu::_STOSB(Instruction&)
 {
     if (a16()) {
         writeMemory8(getES(), getDI(), getAL());
@@ -69,7 +69,7 @@ void VCpu::_STOSB()
     }
 }
 
-void VCpu::_STOSW()
+void VCpu::_STOSW(Instruction&)
 {
     if (a16()) {
         writeMemory16(getES(), getDI(), getAX());
@@ -80,7 +80,7 @@ void VCpu::_STOSW()
     }
 }
 
-void VCpu::_STOSD()
+void VCpu::_STOSD(Instruction&)
 {
     if (a16()) {
         writeMemory32(getES(), getDI(), getEAX());
@@ -91,7 +91,7 @@ void VCpu::_STOSD()
     }
 }
 
-void VCpu::_CMPSB()
+void VCpu::_CMPSB(Instruction&)
 {
     BYTE src;
     BYTE dest;
@@ -111,7 +111,7 @@ void VCpu::_CMPSB()
     cmpFlags8(src - dest, src, dest);
 }
 
-void VCpu::_CMPSW()
+void VCpu::_CMPSW(Instruction&)
 {
     WORD src;
     WORD dest;
@@ -131,7 +131,7 @@ void VCpu::_CMPSW()
     cmpFlags16(src - dest, src, dest);
 }
 
-void VCpu::_CMPSD()
+void VCpu::_CMPSD(Instruction&)
 {
     DWORD src;
     DWORD dest;
@@ -151,7 +151,7 @@ void VCpu::_CMPSD()
     cmpFlags32(src - dest, src, dest);
 }
 
-void VCpu::_SCASB()
+void VCpu::_SCASB(Instruction&)
 {
     BYTE dest;
 
@@ -166,7 +166,7 @@ void VCpu::_SCASB()
     cmpFlags8(getAL() - dest, dest, getAL());
 }
 
-void VCpu::_SCASW()
+void VCpu::_SCASW(Instruction&)
 {
     WORD dest;
 
@@ -181,7 +181,7 @@ void VCpu::_SCASW()
     cmpFlags16(getAX() - dest, dest, getAX());
 }
 
-void VCpu::_SCASD()
+void VCpu::_SCASD(Instruction&)
 {
     DWORD dest;
 
@@ -196,7 +196,7 @@ void VCpu::_SCASD()
     cmpFlags32(getEAX() - dest, dest, getEAX());
 }
 
-void VCpu::_MOVSB()
+void VCpu::_MOVSB(Instruction&)
 {
     if (a16()) {
         BYTE tmpb = readMemory8(currentSegment(), getSI());
@@ -211,7 +211,7 @@ void VCpu::_MOVSB()
     }
 }
 
-void VCpu::_MOVSW()
+void VCpu::_MOVSW(Instruction&)
 {
     if (a16()) {
         WORD tmpw = readMemory16(currentSegment(), getSI());
@@ -226,7 +226,7 @@ void VCpu::_MOVSW()
     }
 }
 
-void VCpu::_MOVSD()
+void VCpu::_MOVSD(Instruction&)
 {
     if (a16()) {
         DWORD tmpw = readMemory32(currentSegment(), regs.W.SI);

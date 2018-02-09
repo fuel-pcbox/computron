@@ -180,10 +180,9 @@ READONLY_AL_imm8(doSub, _CMP_AL_imm8)
 READONLY_AX_imm16(doSub, _CMP_AX_imm16)
 READONLY_EAX_imm32(doSub, _CMP_EAX_imm32)
 
-void VCpu::_MUL_RM8()
+void VCpu::_MUL_RM8(Instruction& insn)
 {
-    BYTE value = readModRM8(rmbyte);
-    regs.W.AX = doMul(regs.B.AL, value);
+    regs.W.AX = doMul(regs.B.AL, insn.location().read8());
 
     if (regs.B.AH == 0x00) {
         setCF(0);
@@ -194,10 +193,9 @@ void VCpu::_MUL_RM8()
     }
 }
 
-void VCpu::_MUL_RM16()
+void VCpu::_MUL_RM16(Instruction& insn)
 {
-    WORD value = readModRM16(rmbyte);
-    DWORD result = doMul(regs.W.AX, value);
+    DWORD result = doMul(regs.W.AX, insn.location().read16());
     regs.W.AX = result & 0xFFFF;
     regs.W.DX = (result >> 16) & 0xFFFF;
 
@@ -210,10 +208,9 @@ void VCpu::_MUL_RM16()
     }
 }
 
-void VCpu::_MUL_RM32()
+void VCpu::_MUL_RM32(Instruction& insn)
 {
-    DWORD value = readModRM32(rmbyte);
-    QWORD result = doMul(regs.D.EAX, value);
+    QWORD result = doMul(regs.D.EAX, insn.location().read32());
     setEAX(result & 0xFFFFFFFF);
     setEDX((result >> 32) & 0xFFFFFFFF);
 
@@ -226,9 +223,9 @@ void VCpu::_MUL_RM32()
     }
 }
 
-void VCpu::_IMUL_RM8()
+void VCpu::_IMUL_RM8(Instruction& insn)
 {
-    SIGNED_BYTE value = readModRM8(rmbyte);
+    SIGNED_BYTE value = insn.location().read8();
     SIGNED_WORD result = doImul(static_cast<SIGNED_BYTE>(getAL()), value);
     regs.W.AX = result;
 
@@ -241,26 +238,24 @@ void VCpu::_IMUL_RM8()
     }
 }
 
-void VCpu::_IMUL_reg32_RM32_imm8()
+void VCpu::_IMUL_reg32_RM32_imm8(Instruction&)
 {
     vlog(LogCPU, "Not implemented: IMUL reg32,rm32,imm8");
     vomit_exit(1);
 }
 
-void VCpu::_IMUL_reg32_RM32_imm32()
+void VCpu::_IMUL_reg32_RM32_imm32(Instruction&)
 {
     vlog(LogCPU, "Not implemented: IMUL reg32,rm32,imm32");
     vomit_exit(1);
 }
 
-void VCpu::_IMUL_reg16_RM16_imm16()
+void VCpu::_IMUL_reg16_RM16_imm16(Instruction& insn)
 {
-    BYTE rm = fetchOpcodeByte();
-    SIGNED_WORD imm = fetchOpcodeWord();
-    SIGNED_WORD value = readModRM16(rm);
-    SIGNED_DWORD result = doImul(value, static_cast<SIGNED_WORD>(imm));
+    SIGNED_WORD value = insn.location().read16();
+    SIGNED_DWORD result = doImul(value, static_cast<SIGNED_WORD>(insn.imm16()));
 
-    setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), result);
+    insn.reg16() = result;
 
     if (result > 0x7FFF || result < -0x8000) {
         setCF(1);
@@ -271,14 +266,13 @@ void VCpu::_IMUL_reg16_RM16_imm16()
     }
 }
 
-void VCpu::_IMUL_reg16_RM16()
+void VCpu::_IMUL_reg16_RM16(Instruction& insn)
 {
-    BYTE rm = fetchOpcodeByte();
-    SIGNED_WORD src = readModRM16(rm);
-    SIGNED_WORD dest = getRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)));
+    SIGNED_WORD src = insn.location().read16();
+    SIGNED_WORD dest = insn.reg16();
     SIGNED_DWORD result = doImul(dest, src);
 
-    setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), result);
+    insn.reg16() = result;
 
     if (result > 0x7FFF || result < -0x8000) {
         setCF(1);
@@ -289,14 +283,13 @@ void VCpu::_IMUL_reg16_RM16()
     }
 }
 
-void VCpu::_IMUL_reg32_RM32()
+void VCpu::_IMUL_reg32_RM32(Instruction& insn)
 {
-    BYTE rm = fetchOpcodeByte();
-    SIGNED_DWORD src = readModRM32(rm);
-    SIGNED_DWORD dest = getRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)));
+    SIGNED_DWORD src = insn.location().read32();
+    SIGNED_DWORD dest = insn.reg32();
     SIGNED_QWORD result = doImul(dest, src);
 
-    setRegister32(static_cast<VCpu::RegisterIndex32>(vomit_modRMRegisterPart(rm)), result);
+    insn.reg32() = result;
 
     if (result > 0x7FFFFFFF || result < -0x80000000) {
         setCF(1);
@@ -307,14 +300,12 @@ void VCpu::_IMUL_reg32_RM32()
     }
 }
 
-void VCpu::_IMUL_reg16_RM16_imm8()
+void VCpu::_IMUL_reg16_RM16_imm8(Instruction& insn)
 {
-    BYTE rm = fetchOpcodeByte();
-    SIGNED_BYTE imm = fetchOpcodeByte();
-    SIGNED_WORD value = readModRM16(rm);
-    SIGNED_DWORD result = doImul(value, static_cast<SIGNED_WORD>(imm));
+    SIGNED_WORD value = insn.location().read16();
+    SIGNED_DWORD result = doImul(value, static_cast<SIGNED_WORD>(insn.imm8()));
 
-    setRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)), result);
+    insn.reg16() = result;
 
     if (result > 0x7FFF || result < -0x8000) {
         setCF(1);
@@ -325,9 +316,9 @@ void VCpu::_IMUL_reg16_RM16_imm8()
     }
 }
 
-void VCpu::_IMUL_RM16()
+void VCpu::_IMUL_RM16(Instruction& insn)
 {
-    SIGNED_WORD value = readModRM16(rmbyte);
+    SIGNED_WORD value = insn.location().read16();
     SIGNED_DWORD result = doImul(static_cast<SIGNED_WORD>(getAX()), value);
     regs.W.AX = result;
     regs.W.DX = result >> 16;
@@ -341,9 +332,14 @@ void VCpu::_IMUL_RM16()
     }
 }
 
-void VCpu::_DIV_RM8()
+void VCpu::_IMUL_RM32(Instruction&)
 {
-    BYTE value = readModRM8(rmbyte);
+    VM_ASSERT(false);
+}
+
+void VCpu::_DIV_RM8(Instruction& insn)
+{
+    auto value = insn.location().read8();
     WORD tAX = regs.W.AX;
 
     if (value == 0) {
@@ -356,9 +352,9 @@ void VCpu::_DIV_RM8()
     regs.B.AH = (BYTE)(tAX % value); // Remainder
 }
 
-void VCpu::_DIV_RM16()
+void VCpu::_DIV_RM16(Instruction& insn)
 {
-    WORD value = readModRM16(rmbyte);
+    auto value = insn.location().read16();
     DWORD tDXAX = regs.W.AX + (regs.W.DX << 16);
 
     if (value == 0) {
@@ -371,9 +367,9 @@ void VCpu::_DIV_RM16()
     regs.W.DX = (WORD)(tDXAX % value); // Remainder
 }
 
-void VCpu::_DIV_RM32()
+void VCpu::_DIV_RM32(Instruction& insn)
 {
-    DWORD value = readModRM32(rmbyte);
+    DWORD value = insn.location().read32();
     QWORD tEDXEAX = getEAX() | ((QWORD)getEDX() << 32);
 
     if (value == 0) {
@@ -386,9 +382,9 @@ void VCpu::_DIV_RM32()
     setEDX(tEDXEAX % value); // Remainder
 }
 
-void VCpu::_IDIV_RM8()
+void VCpu::_IDIV_RM8(Instruction& insn)
 {
-    SIGNED_BYTE value = (SIGNED_BYTE)readModRM8(rmbyte);
+    SIGNED_BYTE value = (SIGNED_BYTE)insn.location().read8();
     SIGNED_WORD tAX = (SIGNED_WORD)regs.W.AX;
 
     if (value == 0) {
@@ -401,9 +397,9 @@ void VCpu::_IDIV_RM8()
     regs.B.AH = (SIGNED_BYTE)(tAX % value); // Remainder
 }
 
-void VCpu::_IDIV_RM16()
+void VCpu::_IDIV_RM16(Instruction& insn)
 {
-    SIGNED_WORD value = readModRM16(rmbyte);
+    SIGNED_WORD value = insn.location().read16();
     SIGNED_DWORD tDXAX = (regs.W.AX + (regs.W.DX << 16));
 
     if (value == 0) {
@@ -416,9 +412,9 @@ void VCpu::_IDIV_RM16()
     regs.W.DX = (SIGNED_WORD)(tDXAX % value); // Remainder
 }
 
-void VCpu::_IDIV_RM32()
+void VCpu::_IDIV_RM32(Instruction& insn)
 {
-    SIGNED_DWORD value = readModRM32(rmbyte);
+    SIGNED_DWORD value = insn.location().read32();
     SIGNED_QWORD tEDXEAX = ((QWORD)regs.D.EAX + ((QWORD)regs.D.EDX << 32));
 
     if (value == 0) {
@@ -431,20 +427,20 @@ void VCpu::_IDIV_RM32()
     regs.D.EDX = (SIGNED_DWORD)(tEDXEAX % value); // Remainder
 }
 
-void VCpu::_NEG_RM8()
+void VCpu::_NEG_RM8(Instruction& insn)
 {
-    auto location = resolveModRM(rmbyte);
+    auto& location = insn.location();
     location.write8(doSub((BYTE)0, location.read8()));
 }
 
-void VCpu::_NEG_RM16()
+void VCpu::_NEG_RM16(Instruction& insn)
 {
-    auto location = resolveModRM(rmbyte);
+    auto& location = insn.location();
     location.write16(doSub((WORD)0, location.read16()));
 }
 
-void VCpu::_NEG_RM32()
+void VCpu::_NEG_RM32(Instruction& insn)
 {
-    auto location = resolveModRM(rmbyte);
+    auto& location = insn.location();
     location.write32(doSub((DWORD)0, location.read32()));
 }

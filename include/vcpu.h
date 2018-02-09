@@ -32,14 +32,14 @@
 #include <QtCore/QQueue>
 #include <set>
 #include "OwnPtr.h"
+#include "Instruction.h"
 
 class Debugger;
 class Machine;
 class VCpu;
 class VGAMemory;
 
-#define CALL_HANDLER(handler16, handler32) if (o16()) { handler16(); } else { handler32(); }
-#define CALL_ASIZE_HANDLER(handler16, handler32) if (a16()) { handler16(); } else { handler32(); }
+#define CALL_HANDLER(handler16, handler32) if (o16()) { handler16(insn); } else { handler32(insn); }
 
 struct FarPointer {
     FarPointer() : segment(0), offset(0) { }
@@ -47,22 +47,6 @@ struct FarPointer {
 
     WORD segment;
     DWORD offset;
-};
-
-enum class SegmentRegisterIndex {
-    ES = 0,
-    CS,
-    SS,
-    DS,
-    FS,
-    GS,
-    None = 0xFF,
-};
-
-enum ValueSize {
-    ByteSize,
-    WordSize,
-    DWordSize
 };
 
 struct WatchedAddress {
@@ -76,35 +60,8 @@ struct WatchedAddress {
     QWORD lastSeenValue { neverSeen };
 };
 
-class MemoryOrRegisterReference {
-public:
-    MemoryOrRegisterReference(VCpu&, int registerIndex);
-    MemoryOrRegisterReference(VCpu&, SegmentRegisterIndex segment, DWORD offset);
-
-    template<typename T> T read();
-    template<typename T> void write(T);
-
-    BYTE read8();
-    WORD read16();
-    DWORD read32();
-    void write8(BYTE);
-    void write16(WORD);
-    void write32(DWORD);
-    void* memoryPointer();
-
-    bool isRegister() { return m_registerIndex != 0xffffffff; }
-    SegmentRegisterIndex segment();
-    DWORD offset();
-
-private:
-    VCpu& m_cpu;
-    unsigned m_registerIndex { 0xffffffff };
-    SegmentRegisterIndex m_segment { SegmentRegisterIndex::None };
-    DWORD m_offset { 0 };
-    ValueSize m_size { ByteSize };
-};
-
-class VCpu {
+class VCpu final : public InstructionStream {
+    friend void buildOpcodeTablesIfNeeded();
 public:
     explicit VCpu(Machine&);
     ~VCpu();
@@ -355,11 +312,8 @@ public:
     FarPointer getInterruptVector16(int isr);
     FarPointer getInterruptVector32(int isr);
 
-    // Execute the next instruction at CS:IP (huge switch version)
     void decodeNext();
-
-    // Execute the specified instruction
-    void decode(BYTE op);
+    void execute(Instruction&&);
 
     // Execute the next instruction at CS:IP
     void exec();
@@ -465,15 +419,13 @@ public:
     WORD readModRM16(BYTE rmbyte);
     DWORD readModRM32(BYTE rmbyte);
     void readModRM48(BYTE rmbyte, WORD& segment, DWORD& offset);
-    FarPointer readModRMFarPointerSegmentFirst(BYTE rmbyte);
-    FarPointer readModRMFarPointerOffsetFirst(BYTE rmbyte);
+    FarPointer readModRMFarPointerSegmentFirst(MemoryOrRegisterReference&);
+    FarPointer readModRMFarPointerOffsetFirst(MemoryOrRegisterReference&);
     void writeModRM8(BYTE rmbyte, BYTE value);
     void writeModRM16(BYTE rmbyte, WORD value);
     void writeModRM32(BYTE rmbyte, DWORD value);
 
     MemoryOrRegisterReference resolveModRM(BYTE rmbyte);
-
-    DWORD evaluateSIB(BYTE rm, BYTE sib, SegmentRegisterIndex& segment, unsigned sizeOfImmediate);
 
     enum Mode { RealMode, ProtectedMode };
     Mode mode() const { return m_mode; }
@@ -511,9 +463,9 @@ public:
     bool x32() const;
 
     bool a16() const { return !m_addressSize32; }
-    bool a32() const { return m_addressSize32; }
+    virtual bool a32() const override { return m_addressSize32; }
     bool o16() const { return !m_operationSize32; }
-    bool o32() const { return m_operationSize32; }
+    virtual bool o32() const override { return m_operationSize32; }
 
     void nextSI(int size) { this->regs.W.SI += (getDF() ? -size : size); }
     void nextDI(int size) { this->regs.W.DI += (getDF() ? -size : size); }
@@ -527,510 +479,503 @@ public:
     static const char* registerName(VCpu::RegisterIndex32);
 
 protected:
-    void _CPUID();
+    void _CPUID(Instruction&);
+    void _UNSUPP(Instruction&);
+    void _ESCAPE(Instruction&);
+    void _NOP(Instruction&);
+    void _HLT(Instruction&);
+    void _INT_imm8(Instruction&);
+    void _INT3(Instruction&);
+    void _INTO(Instruction&);
+    void _IRET(Instruction&);
 
-    void _UNSUPP();
-    void _ESCAPE();
+    void _AAA(Instruction&);
+    void _AAM(Instruction&);
+    void _AAD(Instruction&);
+    void _AAS(Instruction&);
 
-    void _NOP();
-    void _HLT();
-    void _INT_imm8();
-    void _INT3();
-    void _INTO();
-    void _IRET();
+    void _DAA(Instruction&);
+    void _DAS(Instruction&);
 
-    void _AAA();
-    void _AAM();
-    void _AAD();
-    void _AAS();
+    void _STC(Instruction&);
+    void _STD(Instruction&);
+    void _STI(Instruction&);
+    void _CLC(Instruction&);
+    void _CLD(Instruction&);
+    void _CLI(Instruction&);
+    void _CMC(Instruction&);
 
-    void _DAA();
-    void _DAS();
+    void _CBW(Instruction&);
+    void _CWD(Instruction&);
+    void _CWDE(Instruction&);
+    void _CDQ(Instruction&);
 
-    void _STC();
-    void _STD();
-    void _STI();
-    void _CLC();
-    void _CLD();
-    void _CLI();
-    void _CMC();
+    void _XLAT(Instruction&);
 
-    void _CBW();
-    void _CWD();
-    void _CWDE();
-    void _CDQ();
+    void _CS(Instruction&);
+    void _DS(Instruction&);
+    void _ES(Instruction&);
+    void _SS(Instruction&);
 
-    void _XLAT();
+    void _SALC(Instruction&);
 
-    void _CS();
-    void _DS();
-    void _ES();
-    void _SS();
+    void _JMP_imm32(Instruction&);
+    void _JMP_imm16(Instruction&);
+    void _JMP_imm16_imm16(Instruction&);
+    void _JMP_short_imm8(Instruction&);
+    void _Jcc_imm8(Instruction&);
+    void _JCXZ_imm8(Instruction&);
 
-    void _SALC();
+    void _JO_imm8(Instruction&);
+    void _JNO_imm8(Instruction&);
+    void _JC_imm8(Instruction&);
+    void _JNC_imm8(Instruction&);
+    void _JZ_imm8(Instruction&);
+    void _JNZ_imm8(Instruction&);
+    void _JNA_imm8(Instruction&);
+    void _JA_imm8(Instruction&);
+    void _JS_imm8(Instruction&);
+    void _JNS_imm8(Instruction&);
+    void _JP_imm8(Instruction&);
+    void _JNP_imm8(Instruction&);
+    void _JL_imm8(Instruction&);
+    void _JNL_imm8(Instruction&);
+    void _JNG_imm8(Instruction&);
+    void _JG_imm8(Instruction&);
 
-    void _JMP_imm32();
-    void _JMP_imm16();
-    void _JMP_imm16_imm16();
-    void _JMP_short_imm8();
-    void _Jcc_imm8();
-    void _JCXZ_imm8();
-    void _JECXZ_imm8();
+    void _JO_NEAR_imm(Instruction&);
+    void _JNO_NEAR_imm(Instruction&);
+    void _JC_NEAR_imm(Instruction&);
+    void _JNC_NEAR_imm(Instruction&);
+    void _JZ_NEAR_imm(Instruction&);
+    void _JNZ_NEAR_imm(Instruction&);
+    void _JNA_NEAR_imm(Instruction&);
+    void _JA_NEAR_imm(Instruction&);
+    void _JS_NEAR_imm(Instruction&);
+    void _JNS_NEAR_imm(Instruction&);
+    void _JP_NEAR_imm(Instruction&);
+    void _JNP_NEAR_imm(Instruction&);
+    void _JL_NEAR_imm(Instruction&);
+    void _JNL_NEAR_imm(Instruction&);
+    void _JNG_NEAR_imm(Instruction&);
+    void _JG_NEAR_imm(Instruction&);
 
-    void _JO_imm8();
-    void _JNO_imm8();
-    void _JC_imm8();
-    void _JNC_imm8();
-    void _JZ_imm8();
-    void _JNZ_imm8();
-    void _JNA_imm8();
-    void _JA_imm8();
-    void _JS_imm8();
-    void _JNS_imm8();
-    void _JP_imm8();
-    void _JNP_imm8();
-    void _JL_imm8();
-    void _JNL_imm8();
-    void _JNG_imm8();
-    void _JG_imm8();
+    void _CALL_imm16(Instruction&);
+    void _CALL_imm32(Instruction&);
+    void _RET(Instruction&);
+    void _RET_imm16(Instruction&);
+    void _RETF(Instruction&);
+    void _RETF_imm16(Instruction&);
 
-    void _JO_NEAR_imm();
-    void _JNO_NEAR_imm();
-    void _JC_NEAR_imm();
-    void _JNC_NEAR_imm();
-    void _JZ_NEAR_imm();
-    void _JNZ_NEAR_imm();
-    void _JNA_NEAR_imm();
-    void _JA_NEAR_imm();
-    void _JS_NEAR_imm();
-    void _JNS_NEAR_imm();
-    void _JP_NEAR_imm();
-    void _JNP_NEAR_imm();
-    void _JL_NEAR_imm();
-    void _JNL_NEAR_imm();
-    void _JNG_NEAR_imm();
-    void _JG_NEAR_imm();
+    void _LOOP_imm8(Instruction&);
+    void _LOOPE_imm8(Instruction&);
+    void _LOOPNE_imm8(Instruction&);
 
-    void _CALL_imm16();
-    void _CALL_imm32();
-    void _RET();
-    void _RET_imm16();
-    void _RETF();
-    void _RETF_imm16();
+    void _REP(Instruction&);
+    void _REPNE(Instruction&);
 
-    void _LOOP_imm8();
-    void _LOOPE_imm8();
-    void _LOOPNE_imm8();
+    void _XCHG_AX_reg16(Instruction&);
+    void _XCHG_EAX_reg32(Instruction&);
+    void _XCHG_reg8_RM8(Instruction&);
+    void _XCHG_reg16_RM16(Instruction&);
+    void _XCHG_reg32_RM32(Instruction&);
 
-    void _REP();
-    void _REPNE();
+    void _CMPSB(Instruction&);
+    void _CMPSW(Instruction&);
+    void _CMPSD(Instruction&);
+    void _LODSB(Instruction&);
+    void _LODSW(Instruction&);
+    void _LODSD(Instruction&);
+    void _SCASB(Instruction&);
+    void _SCASW(Instruction&);
+    void _SCASD(Instruction&);
+    void _STOSB(Instruction&);
+    void _STOSW(Instruction&);
+    void _STOSD(Instruction&);
+    void _MOVSB(Instruction&);
+    void _MOVSW(Instruction&);
+    void _MOVSD(Instruction&);
 
-    void _XCHG_AX_reg16();
-    void _XCHG_EAX_reg32();
-    void _XCHG_reg8_RM8();
-    void _XCHG_reg16_RM16();
-    void _XCHG_reg32_RM32();
+    void _VKILL(Instruction&);
 
-    void _CMPSB();
-    void _CMPSW();
-    void _CMPSD();
-    void _LODSB();
-    void _LODSW();
-    void _LODSD();
-    void _SCASB();
-    void _SCASW();
-    void _SCASD();
-    void _STOSB();
-    void _STOSW();
-    void _STOSD();
-    void _MOVSB();
-    void _MOVSW();
-    void _MOVSD();
+    void _LEA_reg16_mem16(Instruction&);
+    void _LEA_reg32_mem32(Instruction&);
 
-    void _LEA_reg16_mem16();
-    void _LEA_reg32_mem32();
+    void _LDS_reg16_mem16(Instruction&);
+    void _LDS_reg32_mem32(Instruction&);
+    void _LES_reg16_mem16(Instruction&);
+    void _LES_reg32_mem32(Instruction&);
 
-    void _LDS_reg16_mem16();
-    void _LDS_reg32_mem32();
-    void _LES_reg16_mem16();
-    void _LES_reg32_mem32();
+    void _MOV_AL_imm8(Instruction&);
+    void _MOV_BL_imm8(Instruction&);
+    void _MOV_CL_imm8(Instruction&);
+    void _MOV_DL_imm8(Instruction&);
+    void _MOV_AH_imm8(Instruction&);
+    void _MOV_BH_imm8(Instruction&);
+    void _MOV_CH_imm8(Instruction&);
+    void _MOV_DH_imm8(Instruction&);
 
-    void _MOV_AL_imm8();
-    void _MOV_BL_imm8();
-    void _MOV_CL_imm8();
-    void _MOV_DL_imm8();
-    void _MOV_AH_imm8();
-    void _MOV_BH_imm8();
-    void _MOV_CH_imm8();
-    void _MOV_DH_imm8();
+    void _MOV_AX_imm16(Instruction&);
+    void _MOV_BX_imm16(Instruction&);
+    void _MOV_CX_imm16(Instruction&);
+    void _MOV_DX_imm16(Instruction&);
+    void _MOV_BP_imm16(Instruction&);
+    void _MOV_SP_imm16(Instruction&);
+    void _MOV_SI_imm16(Instruction&);
+    void _MOV_DI_imm16(Instruction&);
 
-    void _MOV_AX_imm16();
-    void _MOV_BX_imm16();
-    void _MOV_CX_imm16();
-    void _MOV_DX_imm16();
-    void _MOV_BP_imm16();
-    void _MOV_SP_imm16();
-    void _MOV_SI_imm16();
-    void _MOV_DI_imm16();
+    void _MOV_seg_RM16(Instruction&);
+    void _MOV_RM16_seg(Instruction&);
+    void _MOV_RM32_seg(Instruction&);
+    void _MOV_AL_moff8(Instruction&);
+    void _MOV_AX_moff16(Instruction&);
+    void _MOV_EAX_moff32(Instruction&);
+    void _MOV_moff8_AL(Instruction&);
+    void _MOV_moff16_AX(Instruction&);
+    void _MOV_reg8_RM8(Instruction&);
+    void _MOV_reg16_RM16(Instruction&);
+    void _MOV_RM8_reg8(Instruction&);
+    void _MOV_RM16_reg16(Instruction&);
+    void _MOV_RM8_imm8(Instruction&);
+    void _MOV_RM16_imm16(Instruction&);
+    void _MOV_RM32_imm32(Instruction&);
 
-    void _MOV_seg_RM16();
-    void _MOV_RM16_seg();
-    void _MOV_RM32_seg();
-    void _MOV_AL_moff8();
-    void _MOV_AX_moff16();
-    void _MOV_EAX_moff32();
-    void _MOV_moff8_AL();
-    void _MOV_moff16_AX();
-    void _MOV_reg8_RM8();
-    void _MOV_reg16_RM16();
-    void _MOV_RM8_reg8();
-    void _MOV_RM16_reg16();
-    void _MOV_RM8_imm8();
-    void _MOV_RM16_imm16();
-    void _MOV_RM32_imm32();
+    void _XOR_RM8_reg8(Instruction&);
+    void _XOR_RM16_reg16(Instruction&);
+    void _XOR_reg8_RM8(Instruction&);
+    void _XOR_reg16_RM16(Instruction&);
+    void _XOR_reg32_RM32(Instruction&);
+    void _XOR_RM8_imm8(Instruction&);
+    void _XOR_RM16_imm16(Instruction&);
+    void _XOR_RM16_imm8(Instruction&);
+    void _XOR_AL_imm8(Instruction&);
+    void _XOR_AX_imm16(Instruction&);
+    void _XOR_EAX_imm32(Instruction&);
 
-    void _XOR_RM8_reg8();
-    void _XOR_RM16_reg16();
-    void _XOR_reg8_RM8();
-    void _XOR_reg16_RM16();
-    void _XOR_reg32_RM32();
-    void _XOR_RM8_imm8();
-    void _XOR_RM16_imm16();
-    void _XOR_RM16_imm8();
-    void _XOR_AL_imm8();
-    void _XOR_AX_imm16();
-    void _XOR_EAX_imm32();
+    void _OR_RM8_reg8(Instruction&);
+    void _OR_RM16_reg16(Instruction&);
+    void _OR_RM32_reg32(Instruction&);
+    void _OR_reg8_RM8(Instruction&);
+    void _OR_reg16_RM16(Instruction&);
+    void _OR_reg32_RM32(Instruction&);
+    void _OR_RM8_imm8(Instruction&);
+    void _OR_RM16_imm16(Instruction&);
+    void _OR_RM16_imm8(Instruction&);
+    void _OR_EAX_imm32(Instruction&);
+    void _OR_AX_imm16(Instruction&);
+    void _OR_AL_imm8(Instruction&);
 
-    void _OR_RM8_reg8();
-    void _OR_RM16_reg16();
-    void _OR_RM32_reg32();
-    void _OR_reg8_RM8();
-    void _OR_reg16_RM16();
-    void _OR_reg32_RM32();
-    void _OR_RM8_imm8();
-    void _OR_RM16_imm16();
-    void _OR_RM16_imm8();
-    void _OR_EAX_imm32();
-    void _OR_AX_imm16();
-    void _OR_AL_imm8();
+    void _AND_RM8_reg8(Instruction&);
+    void _AND_RM16_reg16(Instruction&);
+    void _AND_reg8_RM8(Instruction&);
+    void _AND_reg16_RM16(Instruction&);
+    void _AND_RM8_imm8(Instruction&);
+    void _AND_RM16_imm16(Instruction&);
+    void _AND_RM16_imm8(Instruction&);
+    void _AND_AL_imm8(Instruction&);
+    void _AND_AX_imm16(Instruction&);
+    void _AND_EAX_imm32(Instruction&);
 
-    void _AND_RM8_reg8();
-    void _AND_RM16_reg16();
-    void _AND_reg8_RM8();
-    void _AND_reg16_RM16();
-    void _AND_RM8_imm8();
-    void _AND_RM16_imm16();
-    void _AND_RM16_imm8();
-    void _AND_AL_imm8();
-    void _AND_AX_imm16();
-    void _AND_EAX_imm32();
+    void _TEST_RM8_reg8(Instruction&);
+    void _TEST_RM16_reg16(Instruction&);
+    void _TEST_RM32_reg32(Instruction&);
+    void _TEST_AL_imm8(Instruction&);
+    void _TEST_AX_imm16(Instruction&);
+    void _TEST_EAX_imm32(Instruction&);
 
-    void _TEST_RM8_reg8();
-    void _TEST_RM16_reg16();
-    void _TEST_RM32_reg32();
-    void _TEST_AL_imm8();
-    void _TEST_AX_imm16();
-    void _TEST_EAX_imm32();
+    void _PUSH_SP_8086_80186(Instruction&);
+    void _PUSH_CS(Instruction&);
+    void _PUSH_DS(Instruction&);
+    void _PUSH_ES(Instruction&);
+    void _PUSH_SS(Instruction&);
+    void _PUSHF(Instruction&);
 
-    void _PUSH_SP_8086_80186();
-    void _PUSH_CS();
-    void _PUSH_DS();
-    void _PUSH_ES();
-    void _PUSH_SS();
-    void _PUSHF();
+    void _POP_DS(Instruction&);
+    void _POP_ES(Instruction&);
+    void _POP_SS(Instruction&);
+    void _POPF(Instruction&);
 
-    void _POP_DS();
-    void _POP_ES();
-    void _POP_SS();
-    void _POPF();
+    void _LAHF(Instruction&);
+    void _SAHF(Instruction&);
 
-    void _LAHF();
-    void _SAHF();
+    void _OUT_imm8_AL(Instruction&);
+    void _OUT_imm8_AX(Instruction&);
+    void _OUT_imm8_EAX(Instruction&);
+    void _OUT_DX_AL(Instruction&);
+    void _OUT_DX_AX(Instruction&);
+    void _OUT_DX_EAX(Instruction&);
+    void _OUTSB(Instruction&);
+    void _OUTSW(Instruction&);
+    void _OUTSD(Instruction&);
 
-    void _OUT_imm8_AL();
-    void _OUT_imm8_AX();
-    void _OUT_imm8_EAX();
-    void _OUT_DX_AL();
-    void _OUT_DX_AX();
-    void _OUT_DX_EAX();
-    void _OUTSB();
-    void _OUTSW();
-    void _OUTSD();
+    void _IN_AL_imm8(Instruction&);
+    void _IN_AX_imm8(Instruction&);
+    void _IN_EAX_imm8(Instruction&);
+    void _IN_AL_DX(Instruction&);
+    void _IN_AX_DX(Instruction&);
+    void _IN_EAX_DX(Instruction&);
 
-    void _IN_AL_imm8();
-    void _IN_AX_imm8();
-    void _IN_EAX_imm8();
-    void _IN_AL_DX();
-    void _IN_AX_DX();
-    void _IN_EAX_DX();
+    void _ADD_RM8_reg8(Instruction&);
+    void _ADD_RM16_reg16(Instruction&);
+    void _ADD_reg8_RM8(Instruction&);
+    void _ADD_reg16_RM16(Instruction&);
+    void _ADD_AL_imm8(Instruction&);
+    void _ADD_AX_imm16(Instruction&);
+    void _ADD_EAX_imm32(Instruction&);
+    void _ADD_RM8_imm8(Instruction&);
+    void _ADD_RM16_imm16(Instruction&);
+    void _ADD_RM16_imm8(Instruction&);
 
-    void _ADD_RM8_reg8();
-    void _ADD_RM16_reg16();
-    void _ADD_reg8_RM8();
-    void _ADD_reg16_RM16();
-    void _ADD_AL_imm8();
-    void _ADD_AX_imm16();
-    void _ADD_EAX_imm32();
-    void _ADD_RM8_imm8();
-    void _ADD_RM16_imm16();
-    void _ADD_RM16_imm8();
+    void _SUB_RM8_reg8(Instruction&);
+    void _SUB_RM16_reg16(Instruction&);
+    void _SUB_reg8_RM8(Instruction&);
+    void _SUB_reg16_RM16(Instruction&);
+    void _SUB_AL_imm8(Instruction&);
+    void _SUB_AX_imm16(Instruction&);
+    void _SUB_EAX_imm32(Instruction&);
+    void _SUB_RM8_imm8(Instruction&);
+    void _SUB_RM16_imm16(Instruction&);
+    void _SUB_RM16_imm8(Instruction&);
 
-    void _SUB_RM8_reg8();
-    void _SUB_RM16_reg16();
-    void _SUB_reg8_RM8();
-    void _SUB_reg16_RM16();
-    void _SUB_AL_imm8();
-    void _SUB_AX_imm16();
-    void _SUB_EAX_imm32();
-    void _SUB_RM8_imm8();
-    void _SUB_RM16_imm16();
-    void _SUB_RM16_imm8();
+    void _ADC_RM8_reg8(Instruction&);
+    void _ADC_RM16_reg16(Instruction&);
+    void _ADC_reg8_RM8(Instruction&);
+    void _ADC_reg16_RM16(Instruction&);
+    void _ADC_AL_imm8(Instruction&);
+    void _ADC_AX_imm16(Instruction&);
+    void _ADC_EAX_imm32(Instruction&);
+    void _ADC_RM8_imm8(Instruction&);
+    void _ADC_RM16_imm16(Instruction&);
+    void _ADC_RM16_imm8(Instruction&);
 
-    void _ADC_RM8_reg8();
-    void _ADC_RM16_reg16();
-    void _ADC_reg8_RM8();
-    void _ADC_reg16_RM16();
-    void _ADC_AL_imm8();
-    void _ADC_AX_imm16();
-    void _ADC_EAX_imm32();
-    void _ADC_RM8_imm8();
-    void _ADC_RM16_imm16();
-    void _ADC_RM16_imm8();
+    void _SBB_RM8_reg8(Instruction&);
+    void _SBB_RM16_reg16(Instruction&);
+    void _SBB_RM32_reg32(Instruction&);
+    void _SBB_reg8_RM8(Instruction&);
+    void _SBB_reg16_RM16(Instruction&);
+    void _SBB_AL_imm8(Instruction&);
+    void _SBB_AX_imm16(Instruction&);
+    void _SBB_EAX_imm32(Instruction&);
+    void _SBB_RM8_imm8(Instruction&);
+    void _SBB_RM16_imm16(Instruction&);
+    void _SBB_RM16_imm8(Instruction&);
 
-    void _SBB_RM8_reg8();
-    void _SBB_RM16_reg16();
-    void _SBB_RM32_reg32();
-    void _SBB_reg8_RM8();
-    void _SBB_reg16_RM16();
-    void _SBB_AL_imm8();
-    void _SBB_AX_imm16();
-    void _SBB_EAX_imm32();
-    void _SBB_RM8_imm8();
-    void _SBB_RM16_imm16();
-    void _SBB_RM16_imm8();
+    void _CMP_RM8_reg8(Instruction&);
+    void _CMP_RM16_reg16(Instruction&);
+    void _CMP_RM32_reg32(Instruction&);
+    void _CMP_reg8_RM8(Instruction&);
+    void _CMP_reg16_RM16(Instruction&);
+    void _CMP_reg32_RM32(Instruction&);
+    void _CMP_AL_imm8(Instruction&);
+    void _CMP_AX_imm16(Instruction&);
+    void _CMP_EAX_imm32(Instruction&);
+    void _CMP_RM8_imm8(Instruction&);
+    void _CMP_RM16_imm16(Instruction&);
+    void _CMP_RM16_imm8(Instruction&);
 
-    void _CMP_RM8_reg8();
-    void _CMP_RM16_reg16();
-    void _CMP_RM32_reg32();
-    void _CMP_reg8_RM8();
-    void _CMP_reg16_RM16();
-    void _CMP_reg32_RM32();
-    void _CMP_AL_imm8();
-    void _CMP_AX_imm16();
-    void _CMP_EAX_imm32();
-    void _CMP_RM8_imm8();
-    void _CMP_RM16_imm16();
-    void _CMP_RM16_imm8();
+    void _MUL_RM8(Instruction&);
+    void _MUL_RM16(Instruction&);
+    void _MUL_RM32(Instruction&);
+    void _DIV_RM8(Instruction&);
+    void _DIV_RM16(Instruction&);
+    void _DIV_RM32(Instruction&);
+    void _IMUL_RM8(Instruction&);
+    void _IMUL_RM16(Instruction&);
+    void _IMUL_RM32(Instruction&);
+    void _IDIV_RM8(Instruction&);
+    void _IDIV_RM16(Instruction&);
+    void _IDIV_RM32(Instruction&);
 
-    void _MUL_RM8();
-    void _MUL_RM16();
-    void _MUL_RM32();
-    void _DIV_RM8();
-    void _DIV_RM16();
-    void _DIV_RM32();
-    void _IMUL_RM8();
-    void _IMUL_RM16();
-    void _IMUL_RM32();
-    void _IDIV_RM8();
-    void _IDIV_RM16();
-    void _IDIV_RM32();
+    void _TEST_RM8_imm8(Instruction&);
+    void _TEST_RM16_imm16(Instruction&);
+    void _NOT_RM8(Instruction&);
+    void _NOT_RM16(Instruction&);
+    void _NOT_RM32(Instruction&);
+    void _NEG_RM8(Instruction&);
+    void _NEG_RM16(Instruction&);
+    void _NEG_RM32(Instruction&);
 
-    void _TEST_RM8_imm8();
-    void _TEST_RM16_imm16();
-    void _NOT_RM8();
-    void _NOT_RM16();
-    void _NOT_RM32();
-    void _NEG_RM8();
-    void _NEG_RM16();
-    void _NEG_RM32();
+    void _INC_RM8(Instruction&);
+    void _INC_RM16(Instruction&);
+    void _INC_RM32(Instruction&);
+    void _INC_reg16(Instruction&);
+    void _INC_reg32(Instruction&);
+    void _DEC_RM8(Instruction&);
+    void _DEC_RM16(Instruction&);
+    void _DEC_RM32(Instruction&);
+    void _DEC_reg16(Instruction&);
+    void _DEC_reg32(Instruction&);
 
-    void _INC_RM8();
-    void _INC_RM16();
-    void _INC_RM32();
-    void _INC_reg16();
-    void _INC_reg32();
-    void _DEC_RM8();
-    void _DEC_RM16();
-    void _DEC_RM32();
-    void _DEC_reg16();
-    void _DEC_reg32();
+    void _CALL_RM16(Instruction&);
+    void _CALL_RM32(Instruction&);
+    void _CALL_FAR_mem16(Instruction&);
+    void _CALL_FAR_mem32(Instruction&);
+    void _CALL_imm16_imm16(Instruction&);
+    void _CALL_imm16_imm32(Instruction&);
 
-    void _CALL_RM16();
-    void _CALL_RM32();
-    void _CALL_FAR_mem16();
-    void _CALL_FAR_mem32();
-    void _CALL_imm16_imm16();
-    void _CALL_imm16_imm32();
+    void _JMP_RM16(Instruction&);
+    void _JMP_RM32(Instruction&);
+    void _JMP_FAR_mem16(Instruction&);
+    void _JMP_FAR_mem32(Instruction&);
 
-    void _JMP_RM16();
-    void _JMP_RM32();
-    void _JMP_FAR_mem16();
-    void _JMP_FAR_mem32();
+    void _PUSH_RM16(Instruction&);
+    void _PUSH_RM32(Instruction&);
+    void _POP_RM16(Instruction&);
+    void _POP_RM32(Instruction&);
 
-    void _PUSH_RM16();
-    void _PUSH_RM32();
-    void _POP_RM16();
-    void _POP_RM32();
-
-    void _wrap_0x80();
-    void _wrap_0x81_16();
-    void _wrap_0x81_32();
-    void _wrap_0x83_16();
-    void _wrap_0x83_32();
-    void _wrap_0x8F_16();
-    void _wrap_0x8F_32();
-    void _wrap_0xC0();
-    void _wrap_0xC1_16();
-    void _wrap_0xC1_32();
-    void _wrap_0xD0();
-    void _wrap_0xD1_16();
-    void _wrap_0xD1_32();
-    void _wrap_0xD2();
-    void _wrap_0xD3_16();
-    void _wrap_0xD3_32();
-    void _wrap_0xF6();
-    void _wrap_0xF7_16();
-    void _wrap_0xF7_32();
-    void _wrap_0xFE();
-    void _wrap_0xFF();
+    void _wrap_0xC0(Instruction&);
+    void _wrap_0xC1_16(Instruction&);
+    void _wrap_0xC1_32(Instruction&);
+    void _wrap_0xD0(Instruction&);
+    void _wrap_0xD1_16(Instruction&);
+    void _wrap_0xD1_32(Instruction&);
+    void _wrap_0xD2(Instruction&);
+    void _wrap_0xD3_16(Instruction&);
+    void _wrap_0xD3_32(Instruction&);
 
     // 80186+ INSTRUCTIONS
 
-    void _BOUND();
-    void _ENTER();
-    void _LEAVE();
+    void _BOUND(Instruction&);
+    void _ENTER(Instruction&);
+    void _LEAVE(Instruction&);
 
-    void _PUSHA();
-    void _POPA();
-    void _PUSH_imm8();
-    void _PUSH_imm16();
+    void _PUSHA(Instruction&);
+    void _POPA(Instruction&);
+    void _PUSH_imm8(Instruction&);
+    void _PUSH_imm16(Instruction&);
 
-    void _IMUL_reg16_RM16();
-    void _IMUL_reg32_RM32();
-    void _IMUL_reg16_RM16_imm8();
-    void _IMUL_reg32_RM32_imm8();
-    void _IMUL_reg16_RM16_imm16();
-    void _IMUL_reg32_RM32_imm32();
+    void _IMUL_reg16_RM16(Instruction&);
+    void _IMUL_reg32_RM32(Instruction&);
+    void _IMUL_reg16_RM16_imm8(Instruction&);
+    void _IMUL_reg32_RM32_imm8(Instruction&);
+    void _IMUL_reg16_RM16_imm16(Instruction&);
+    void _IMUL_reg32_RM32_imm32(Instruction&);
 
     // 80386+ INSTRUCTIONS
 
-    void _LMSW_RM16();
-    void _SMSW_RM16();
+    void _LMSW_RM16(Instruction&);
+    void _SMSW_RM16(Instruction&);
 
-    void _SGDT();
-    void _LGDT();
-    void _SIDT();
-    void _LIDT();
-    void _LLDT_RM16();
-    void _SLDT_RM16();
-    void _LTR_RM16();
-    void _STR_RM16();
+    void _SGDT(Instruction&);
+    void _LGDT(Instruction&);
+    void _SIDT(Instruction&);
+    void _LIDT(Instruction&);
+    void _LLDT_RM16(Instruction&);
+    void _SLDT_RM16(Instruction&);
+    void _LTR_RM16(Instruction&);
+    void _STR_RM16(Instruction&);
 
-    void _PUSHAD();
-    void _POPAD();
-    void _PUSHFD();
-    void _POPFD();
-    void _PUSH_imm32();
+    void _PUSHAD(Instruction&);
+    void _POPAD(Instruction&);
+    void _PUSHFD(Instruction&);
+    void _POPFD(Instruction&);
+    void _PUSH_imm32(Instruction&);
 
-    void _PUSH_reg16();
-    void _PUSH_reg32();
-    void _POP_reg16();
-    void _POP_reg32();
+    void _PUSH_reg16(Instruction&);
+    void _PUSH_reg32(Instruction&);
+    void _POP_reg16(Instruction&);
+    void _POP_reg32(Instruction&);
 
-    void _TEST_RM32_imm32();
-    void _XOR_RM32_reg32();
-    void _ADD_RM32_reg32();
-    void _ADC_RM32_reg32();
-    void _SUB_RM32_reg32();
+    void _TEST_RM32_imm32(Instruction&);
+    void _XOR_RM32_reg32(Instruction&);
+    void _ADD_RM32_reg32(Instruction&);
+    void _ADC_RM32_reg32(Instruction&);
+    void _SUB_RM32_reg32(Instruction&);
 
-    void _BT_RM16_imm8();
-    void _BT_RM32_imm8();
-    void _BT_RM16_reg16();
-    void _BT_RM32_reg32();
-    void _BTR_RM16_imm8();
-    void _BTR_RM32_imm8();
-    void _BTR_RM16_reg16();
-    void _BTR_RM32_reg32();
-    void _BTC_RM16_imm8();
-    void _BTC_RM32_imm8();
-    void _BTC_RM16_reg16();
-    void _BTC_RM32_reg32();
-    void _BTS_RM16_imm8();
-    void _BTS_RM32_imm8();
-    void _BTS_RM16_reg16();
-    void _BTS_RM32_reg32();
+    void _BT_RM16_imm8(Instruction&);
+    void _BT_RM32_imm8(Instruction&);
+    void _BT_RM16_reg16(Instruction&);
+    void _BT_RM32_reg32(Instruction&);
+    void _BTR_RM16_imm8(Instruction&);
+    void _BTR_RM32_imm8(Instruction&);
+    void _BTR_RM16_reg16(Instruction&);
+    void _BTR_RM32_reg32(Instruction&);
+    void _BTC_RM16_imm8(Instruction&);
+    void _BTC_RM32_imm8(Instruction&);
+    void _BTC_RM16_reg16(Instruction&);
+    void _BTC_RM32_reg32(Instruction&);
+    void _BTS_RM16_imm8(Instruction&);
+    void _BTS_RM32_imm8(Instruction&);
+    void _BTS_RM16_reg16(Instruction&);
+    void _BTS_RM32_reg32(Instruction&);
 
-    void _MOVZX_reg16_RM8();
-    void _MOVZX_reg32_RM8();
-    void _MOVZX_reg32_RM16();
+    void _MOVZX_reg16_RM8(Instruction&);
+    void _MOVZX_reg32_RM8(Instruction&);
+    void _MOVZX_reg32_RM16(Instruction&);
 
-    void _LFS_reg16_mem16();
-    void _LFS_reg32_mem32();
-    void _LGS_reg16_mem16();
-    void _LGS_reg32_mem32();
-    void _LSS_reg16_mem16();
-    void _LSS_reg32_mem32();
+    void _LFS_reg16_mem16(Instruction&);
+    void _LFS_reg32_mem32(Instruction&);
+    void _LGS_reg16_mem16(Instruction&);
+    void _LGS_reg32_mem32(Instruction&);
+    void _LSS_reg16_mem16(Instruction&);
+    void _LSS_reg32_mem32(Instruction&);
 
-    void _PUSH_FS();
-    void _PUSH_GS();
-    void _POP_FS();
-    void _POP_GS();
+    void _PUSH_FS(Instruction&);
+    void _PUSH_GS(Instruction&);
+    void _POP_FS(Instruction&);
+    void _POP_GS(Instruction&);
 
-    void _FS();
-    void _GS();
+    void _FS(Instruction&);
+    void _GS(Instruction&);
 
-    void _MOV_RM32_reg32();
-    void _MOV_reg32_RM32();
-    void _MOV_reg32_CR();
-    void _MOV_CR_reg32();
-    void _MOV_moff32_EAX();
-    void _MOV_EAX_imm32();
-    void _MOV_EBX_imm32();
-    void _MOV_ECX_imm32();
-    void _MOV_EDX_imm32();
-    void _MOV_EBP_imm32();
-    void _MOV_ESP_imm32();
-    void _MOV_ESI_imm32();
-    void _MOV_EDI_imm32();
+    void _MOV_RM32_reg32(Instruction&);
+    void _MOV_reg32_RM32(Instruction&);
+    void _MOV_reg32_CR(Instruction&);
+    void _MOV_CR_reg32(Instruction&);
+    void _MOV_moff32_EAX(Instruction&);
+    void _MOV_EAX_imm32(Instruction&);
+    void _MOV_EBX_imm32(Instruction&);
+    void _MOV_ECX_imm32(Instruction&);
+    void _MOV_EDX_imm32(Instruction&);
+    void _MOV_EBP_imm32(Instruction&);
+    void _MOV_ESP_imm32(Instruction&);
+    void _MOV_ESI_imm32(Instruction&);
+    void _MOV_EDI_imm32(Instruction&);
 
-    void _MOV_seg_RM32();
+    void _MOV_seg_RM32(Instruction&);
 
-    void _JMP_imm16_imm32();
+    void _JMP_imm16_imm32(Instruction&);
 
-    void _ADD_RM32_imm32();
-    void _OR_RM32_imm32();
-    void _ADC_RM32_imm32();
-    void _SBB_RM32_imm32();
-    void _AND_RM32_imm32();
-    void _SUB_RM32_imm32();
-    void _XOR_RM32_imm32();
-    void _CMP_RM32_imm32();
+    void _ADD_RM32_imm32(Instruction&);
+    void _OR_RM32_imm32(Instruction&);
+    void _ADC_RM32_imm32(Instruction&);
+    void _SBB_RM32_imm32(Instruction&);
+    void _AND_RM32_imm32(Instruction&);
+    void _SUB_RM32_imm32(Instruction&);
+    void _XOR_RM32_imm32(Instruction&);
+    void _CMP_RM32_imm32(Instruction&);
 
-    void _ADD_RM32_imm8();
-    void _OR_RM32_imm8();
-    void _ADC_RM32_imm8();
-    void _SBB_RM32_imm8();
-    void _AND_RM32_imm8();
-    void _SUB_RM32_imm8();
-    void _XOR_RM32_imm8();
-    void _CMP_RM32_imm8();
+    void _ADD_RM32_imm8(Instruction&);
+    void _OR_RM32_imm8(Instruction&);
+    void _ADC_RM32_imm8(Instruction&);
+    void _SBB_RM32_imm8(Instruction&);
+    void _AND_RM32_imm8(Instruction&);
+    void _SUB_RM32_imm8(Instruction&);
+    void _XOR_RM32_imm8(Instruction&);
+    void _CMP_RM32_imm8(Instruction&);
 
-    void _ADD_reg32_RM32();
-    void _ADC_reg32_RM32();
-    void _SBB_reg32_RM32();
-    void _AND_reg32_RM32();
-    void _SUB_reg32_RM32();
+    void _ADD_reg32_RM32(Instruction&);
+    void _ADC_reg32_RM32(Instruction&);
+    void _SBB_reg32_RM32(Instruction&);
+    void _AND_reg32_RM32(Instruction&);
+    void _SUB_reg32_RM32(Instruction&);
 
-    void _AND_RM32_reg32();
+    void _AND_RM32_reg32(Instruction&);
 
-    void _UD0();
-    void _AddressSizeOverride();
-    void _OperationSizeOverride();
+    void _UD0(Instruction&);
+    void _AddressSizeOverride(Instruction&);
+    void _OperationSizeOverride(Instruction&);
 
     // REP* helper.
-    void handleRepeatOpcode(BYTE opcode, bool shouldEqual);
+    void handleRepeatOpcode(Instruction&&, bool shouldEqual);
 
 private:
+    friend class Instruction;
+
+    BYTE readInstruction8() override;
+    WORD readInstruction16() override;
+    DWORD readInstruction32() override;
+
     void initWatches();
 
     template<typename T>
@@ -1057,9 +1002,6 @@ private:
     template<typename T> QWORD doSbb(T, T);
     template<typename T> QWORD doMul(T, T);
     template<typename T> SIGNED_QWORD doImul(T, T);
-
-    MemoryOrRegisterReference resolveModRM16_internal(BYTE rmbyte);
-    MemoryOrRegisterReference resolveModRM32_internal(BYTE rmbyte);
 
     void saveBaseAddress()
     {
