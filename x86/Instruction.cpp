@@ -127,6 +127,7 @@ static const unsigned CurrentAddressSize = 0xB33FBABE;
 
 struct InstructionDescriptor {
     InstructionImpl impl { nullptr };
+    bool opcodeHasRegisterIndex { false };
     QString mnemonic;
     InstructionFormat format { InvalidFormat };
     bool hasRM { false };
@@ -154,6 +155,15 @@ static InstructionDescriptor s_table32[256];
 static InstructionDescriptor s_0F_table16[256];
 static InstructionDescriptor s_0F_table32[256];
 
+static bool opcodeHasRegisterIndex(BYTE op)
+{
+    if (op >= 0x40 && op <= 0x5F)
+        return true;
+    if (op >= 0x90 && op <= 0x97)
+        return true;
+    return false;
+}
+
 static void build(InstructionDescriptor* table, BYTE op, const char* mnemonic, InstructionFormat format, InstructionImpl impl)
 {
     InstructionDescriptor& d = table[op];
@@ -165,6 +175,8 @@ static void build(InstructionDescriptor* table, BYTE op, const char* mnemonic, I
 
     if ((format > __BeginFormatsWithRMByte && format < __EndFormatsWithRMByte) || format == MultibyteWithSlash)
         d.hasRM = true;
+    else
+        d.opcodeHasRegisterIndex = opcodeHasRegisterIndex(op);
 
     switch (format) {
     case OP_RM8_imm8:
@@ -762,16 +774,6 @@ void buildOpcodeTablesIfNeeded()
 Instruction Instruction::fromStream(InstructionStream& stream)
 {
     return Instruction(stream);
-}
-
-static bool opcodeHasRegisterIndex(BYTE op)
-{
-    // FIXME: Turn this into a lookup table.
-    if (op >= 0x40 && op <= 0x5F)
-        return true;
-    if (op >= 0x90 && op <= 0x97)
-        return true;
-    return false;
 }
 
 Instruction::Instruction(InstructionStream& stream)
