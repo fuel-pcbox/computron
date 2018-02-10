@@ -273,18 +273,18 @@ DWORD MemoryOrRegisterReference::evaluateSIB()
 
     DWORD base = m_displacement32;
     switch (m_sib & 0x07) {
-    case 0: base = m_cpu->getEAX(); break;
-    case 1: base = m_cpu->getECX(); break;
-    case 2: base = m_cpu->getEDX(); break;
-    case 3: base = m_cpu->getEBX(); break;
-    case 4: DEFAULT_TO_SS; base = m_cpu->getESP(); break;
-    case 6: base = m_cpu->getESI(); break;
-    case 7: base = m_cpu->getEDI(); break;
+    case 0: base += m_cpu->getEAX(); break;
+    case 1: base += m_cpu->getECX(); break;
+    case 2: base += m_cpu->getEDX(); break;
+    case 3: base += m_cpu->getEBX(); break;
+    case 4: DEFAULT_TO_SS; base += m_cpu->getESP(); break;
+    case 6: base += m_cpu->getESI(); break;
+    case 7: base += m_cpu->getEDI(); break;
     default: // 5
         switch ((m_rm >> 6) & 3) {
-        case 0: base = m_displacement32; break;
+        case 0: break;
         case 1:
-        case 2: DEFAULT_TO_SS; base = m_displacement32 + m_cpu->getEBP(); break;
+        case 2: DEFAULT_TO_SS; base += m_cpu->getEBP(); break;
         default: VM_ASSERT(false); break;
         }
         break;
