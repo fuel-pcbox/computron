@@ -485,6 +485,7 @@ void buildOpcodeTablesIfNeeded()
     build(0x98, "CBW",    OP,                  &VCpu::_CBW,      "CWDE", OP,             &VCpu::_CWDE);
     build(0x99, "CWD",    OP,                  &VCpu::_CWD,       "CDQ", OP,             &VCpu::_CDQ);
     build(0x9A, "CALL",   OP_imm16_imm16,      &VCpu::_CALL_imm16_imm16, OP_imm16_imm32, &VCpu::_CALL_imm16_imm32);
+    build(0x9B, "WAIT",   OP,                  &VCpu::_WAIT);
     build(0x9C, "PUSHFW", OP,                  &VCpu::_PUSHF,  "PUSHFD", OP,             &VCpu::_PUSHFD);
     build(0x9D, "POPFW",  OP,                  &VCpu::_POPF,    "POPFD", OP,             &VCpu::_POPFD);
     build(0x9E, "SAHF",   OP,                  &VCpu::_SAHF);
@@ -700,6 +701,8 @@ void buildOpcodeTablesIfNeeded()
     build0FSlash(0xBA, 5, "BTS",   OP_RM16_imm8, &VCpu::_BTS_RM16_imm8, OP_RM32_imm8, &VCpu::_BTS_RM32_imm8);
     build0FSlash(0xBA, 6, "BTR",   OP_RM16_imm8, &VCpu::_BTR_RM16_imm8, OP_RM32_imm8, &VCpu::_BTR_RM32_imm8);
     build0FSlash(0xBA, 7, "BTC",   OP_RM16_imm8, &VCpu::_BTC_RM16_imm8, OP_RM32_imm8, &VCpu::_BTC_RM32_imm8);
+
+    build0F(0x06, "CLTS",  OP,             &VCpu::_CLTS);
 
     build0F(0x20, "MOV",   OP_reg32_CR,    &VCpu::_MOV_reg32_CR);
     build0F(0x22, "MOV",   OP_CR_reg32,    &VCpu::_MOV_CR_reg32);

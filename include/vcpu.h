@@ -488,6 +488,7 @@ protected:
     void _CPUID(Instruction&);
     void _UNSUPP(Instruction&);
     void _ESCAPE(Instruction&);
+    void _WAIT(Instruction&);
     void _NOP(Instruction&);
     void _HLT(Instruction&);
     void _INT_imm8(Instruction&);
@@ -510,6 +511,7 @@ protected:
     void _CLD(Instruction&);
     void _CLI(Instruction&);
     void _CMC(Instruction&);
+    void _CLTS(Instruction&);
 
     void _CBW(Instruction&);
     void _CWD(Instruction&);

@@ -95,6 +95,15 @@ void VCpu::_LIDT(Instruction& insn)
     vlog(LogAlert, "LIDT { base:%08X, limit:%08X }", IDTR.base, IDTR.limit);
 }
 
+void VCpu::_CLTS(Instruction&)
+{
+    if (getCPL() != 0) {
+        GP(0);
+        return;
+    }
+    CR0 &= ~(1 << 3);
+}
+
 void VCpu::_LMSW_RM16(Instruction& insn)
 {
     if (getCPL()) {
