@@ -108,6 +108,7 @@ void VCpu::_LMSW_RM16(Instruction& insn)
 {
     if (getCPL()) {
         GP(0);
+        return;
     }
 
     WORD msw = insn.modrm().read16();
