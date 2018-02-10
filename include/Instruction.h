@@ -141,6 +141,8 @@ public:
     unsigned registerIndex() const;
     SegmentRegisterIndex segmentRegisterIndex() const { return static_cast<SegmentRegisterIndex>(registerIndex()); }
 
+    BYTE cc() const { return m_hasSubOp ? m_subOp & 0xf : m_op & 0xf; }
+
 private:
     explicit Instruction(InstructionStream&);
 

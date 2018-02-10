@@ -91,40 +91,50 @@ void VCpu::_JMP_FAR_mem32(Instruction&)
     VM_ASSERT(false);
 }
 
-#define DO_JCC_imm(name, condition) \
-void VCpu::_ ## name ## _imm8(Instruction& insn) { \
-    SIGNED_BYTE imm = insn.imm8(); \
-    if ((condition)) \
-        jumpRelative8(imm); \
-} \
-void VCpu::_ ## name ## _NEAR_imm(Instruction& insn) { \
-    if (a16()) { \
-        SIGNED_WORD imm = insn.imm16(); \
-        if ((condition)) \
-            jumpRelative16(imm); \
-    } else { \
-        SIGNED_DWORD imm = insn.imm32(); \
-        if ((condition)) \
-            jumpRelative32(imm); \
-    } \
+bool VCpu::evaluateCondition(BYTE cc) const
+{
+    switch (cc) {
+    case 0: return getOF();
+    case 1: return !getOF();
+    case 2: return getCF();
+    case 3: return !getCF();
+    case 4: return getZF();
+    case 5: return !getZF();
+    case 6: return getCF() | getZF();
+    case 7: return !(getCF() | getZF());
+    case 8: return getSF();
+    case 9: return !getSF();
+    case 10: return getPF();
+    case 11: return !getPF();
+    case 12: return getSF() ^ getOF();
+    case 13: return !(getSF() ^ getOF());
+    case 14: return (getSF() ^ getOF()) | getZF();
+    case 15: return !((getSF() ^ getOF()) | getZF());
+    }
+    VM_ASSERT(false);
+    return false;
 }
 
-DO_JCC_imm(JO,   getOF())
-DO_JCC_imm(JNO,  !getOF())
-DO_JCC_imm(JC,   getCF())
-DO_JCC_imm(JNC,  !getCF())
-DO_JCC_imm(JZ,   getZF())
-DO_JCC_imm(JNZ,  !getZF())
-DO_JCC_imm(JNA,  getCF() | getZF())
-DO_JCC_imm(JA,   !(getCF() | getZF()))
-DO_JCC_imm(JS,   getSF())
-DO_JCC_imm(JNS,  !getSF())
-DO_JCC_imm(JP,   getPF())
-DO_JCC_imm(JNP,  !getPF())
-DO_JCC_imm(JL,   getSF() ^ getOF())
-DO_JCC_imm(JNL,  !(getSF() ^ getOF()))
-DO_JCC_imm(JNG,  (getSF() ^ getOF()) | getZF())
-DO_JCC_imm(JG,   !((getSF() ^ getOF()) | getZF()))
+void VCpu::_SETcc_RM8(Instruction& insn)
+{
+    insn.modrm().write8(evaluateCondition(insn.cc()));
+}
+
+void VCpu::_Jcc_imm8(Instruction& insn)
+{
+    if (evaluateCondition(insn.cc()))
+        jumpRelative8(insn.imm8());
+}
+
+void VCpu::_Jcc_NEAR_imm(Instruction& insn)
+{
+    if (!evaluateCondition(insn.cc()))
+        return;
+    if (a16())
+        jumpRelative16(insn.imm16());
+    else
+        jumpRelative32(insn.imm32());
+}
 
 void VCpu::_CALL_imm16(Instruction& insn)
 {

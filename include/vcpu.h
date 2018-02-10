@@ -482,6 +482,8 @@ public:
     static const char* registerName(VCpu::RegisterIndex16);
     static const char* registerName(VCpu::RegisterIndex32);
 
+    bool evaluateCondition(BYTE cc) const;
+
 protected:
     void _CPUID(Instruction&);
     void _UNSUPP(Instruction&);
@@ -527,42 +529,11 @@ protected:
     void _JMP_imm16(Instruction&);
     void _JMP_imm16_imm16(Instruction&);
     void _JMP_short_imm8(Instruction&);
-    void _Jcc_imm8(Instruction&);
     void _JCXZ_imm8(Instruction&);
 
-    void _JO_imm8(Instruction&);
-    void _JNO_imm8(Instruction&);
-    void _JC_imm8(Instruction&);
-    void _JNC_imm8(Instruction&);
-    void _JZ_imm8(Instruction&);
-    void _JNZ_imm8(Instruction&);
-    void _JNA_imm8(Instruction&);
-    void _JA_imm8(Instruction&);
-    void _JS_imm8(Instruction&);
-    void _JNS_imm8(Instruction&);
-    void _JP_imm8(Instruction&);
-    void _JNP_imm8(Instruction&);
-    void _JL_imm8(Instruction&);
-    void _JNL_imm8(Instruction&);
-    void _JNG_imm8(Instruction&);
-    void _JG_imm8(Instruction&);
-
-    void _JO_NEAR_imm(Instruction&);
-    void _JNO_NEAR_imm(Instruction&);
-    void _JC_NEAR_imm(Instruction&);
-    void _JNC_NEAR_imm(Instruction&);
-    void _JZ_NEAR_imm(Instruction&);
-    void _JNZ_NEAR_imm(Instruction&);
-    void _JNA_NEAR_imm(Instruction&);
-    void _JA_NEAR_imm(Instruction&);
-    void _JS_NEAR_imm(Instruction&);
-    void _JNS_NEAR_imm(Instruction&);
-    void _JP_NEAR_imm(Instruction&);
-    void _JNP_NEAR_imm(Instruction&);
-    void _JL_NEAR_imm(Instruction&);
-    void _JNL_NEAR_imm(Instruction&);
-    void _JNG_NEAR_imm(Instruction&);
-    void _JG_NEAR_imm(Instruction&);
+    void _Jcc_imm8(Instruction&);
+    void _Jcc_NEAR_imm(Instruction&);
+    void _SETcc_RM8(Instruction&);
 
     void _CALL_imm16(Instruction&);
     void _CALL_imm32(Instruction&);
