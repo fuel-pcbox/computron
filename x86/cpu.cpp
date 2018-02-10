@@ -33,6 +33,7 @@
 #include "settings.h"
 #include <QtCore/QStringList>
 #include <unistd.h>
+#include "pit.h"
 
 #define CRASH_ON_OPCODE_00_00
 //#define SLACKWARE33_DEBUG
@@ -49,6 +50,9 @@ static bool shouldLogAllMemoryAccesses(DWORD address)
     //if (address >= 0x100000 && address <= 0x100100) return true;
     if (address == 0x070510) return true;
     //if (address >= 0x00004380 && address <= 0x00004480) return true;
+#endif
+#ifdef VOMIT_DETERMINISTIC
+    return true;
 #endif
     return false;
 }
@@ -200,8 +204,10 @@ void VCpu::decodeNext()
 void VCpu::execute(Instruction&& insn)
 {
 #ifdef CRASH_ON_OPCODE_00_00
-    if (insn.op() == 0 && insn.rm() == 0)
+    if (insn.op() == 0 && insn.rm() == 0) {
+        dumpTrace();
         VM_ASSERT(false);
+    }
  #endif
 
     insn.execute(*this);
@@ -502,6 +508,12 @@ void VCpu::mainLoop()
 
         if (getIF() && PIC::hasPendingIRQ())
             PIC::serviceIRQ(*this);
+
+#ifdef VOMIT_DETERMINISTIC
+        if (getIF() && ((cycle() + 1) % 100 == 0)) {
+            machine().pit().raiseIRQ();
+        }
+#endif
     }
 }
 
@@ -532,6 +544,9 @@ void VCpu::jumpAbsolute16(WORD address)
         this->EIP = address;
     else
         this->IP = address;
+#ifdef VOMIT_DETERMINISTIC
+    ++m_cycle;
+#endif
 }
 
 void VCpu::jumpAbsolute32(DWORD address)
@@ -997,8 +1012,12 @@ T VCpu::readMemory(DWORD address)
         value = machine().vgaMemory().read<T>(address);
     else
         value = *reinterpret_cast<T*>(&m_memory[address]);
-    if (options.memdebug || shouldLogMemoryRead(address))
-        vlog(LogCPU, "%u-bit read [A20=%s] 0x%08X, value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", address, value);
+    if (options.memdebug || shouldLogMemoryRead(address)) {
+        if (options.novlog)
+            printf("%04X:%04X: %u-bit read [A20=%s] 0x%08X, value: %08X\n", getBaseCS(), getBaseEIP(), sizeof(T) * 8, isA20Enabled() ? "on" : "off", address, value);
+        else
+            vlog(LogCPU, "%u-bit read [A20=%s] 0x%08X, value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", address, value);
+    }
     return value;
 }
 
@@ -1012,8 +1031,12 @@ T VCpu::readMemory(const SegmentSelector& selector, DWORD offset)
         }
         DWORD flatAddress = selector.base + offset;
         T value = *reinterpret_cast<T*>(&m_memory[flatAddress]);
-        if (options.memdebug || shouldLogMemoryRead(flatAddress))
-            vlog(LogCPU, "%u-bit PE read [A20=%s] %04X:%08X (flat: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", selector.index, offset, flatAddress, value);
+        if (options.memdebug || shouldLogMemoryRead(flatAddress)) {
+            if (options.novlog)
+                printf("%04X:%08X: %u-bit PE read [A20=%s] %04X:%08X (flat: %08X), value: %08X\n", getBaseCS(), getBaseEIP(), sizeof(T) * 8, isA20Enabled() ? "on" : "off", selector.index, offset, flatAddress, value);
+            else
+                vlog(LogCPU, "%u-bit PE read [A20=%s] %04X:%08X (flat: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", selector.index, offset, flatAddress, value);
+        }
         return value;
     }
     return readMemory<T>(vomit_toFlatAddress(selector.index, offset));
@@ -1050,8 +1073,12 @@ void VCpu::writeMemory(DWORD address, T value)
     assert(!getPE());
     address &= a20Mask();
 
-    if (options.memdebug || shouldLogMemoryWrite(address))
-        vlog(LogCPU, "%u-bit write [A20=%s] 0x%08X, value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", address, value);
+    if (options.memdebug || shouldLogMemoryWrite(address)) {
+        if (options.novlog)
+            printf("%04X:%08X: %u-bit write [A20=%s] 0x%08X, value: %08X\n", getBaseCS(), getBaseEIP(), sizeof(T) * 8, isA20Enabled() ? "on" : "off", address, value);
+        else
+            vlog(LogCPU, "%u-bit write [A20=%s] 0x%08X, value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", address, value);
+    }
 
     if (addressIsInVGAMemory(address)) {
         machine().vgaMemory().write(address, value);
@@ -1073,7 +1100,7 @@ void VCpu::writeMemory(WORD segmentIndex, DWORD offset, T value)
         DWORD flatAddress = segment.base + offset;
         assert(!addressIsInVGAMemory(flatAddress));
         if (options.memdebug || shouldLogMemoryWrite(flatAddress))
-            vlog(LogCPU, "8-bit PE write [A20=%s] %04X:%08X (flat: %08X), value: %02X", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
+            vlog(LogCPU, "%u-bit PE write [A20=%s] %04X:%08X (flat: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
         *reinterpret_cast<T*>(&m_memory[flatAddress]) = value;
         return;
     }

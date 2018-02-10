@@ -57,18 +57,34 @@ bool CMOS::in24HourMode() const
     return m_statusRegisterB & 0x02;
 }
 
+static QTime currentTimeForCMOS()
+{
+#ifdef VOMIT_DETERMINISTIC
+    return QTime(1, 2, 3, 4);
+#endif
+    return QTime::currentTime();
+}
+
+static QDate currentDateForCMOS()
+{
+#ifdef VOMIT_DETERMINISTIC
+    return QDate(2018, 2, 9);
+#endif
+    return QDate::currentDate();
+}
+
 BYTE CMOS::in8(WORD)
 {
     BYTE value = 0;
 
     switch (m_registerIndex) {
-    case 0x00: value = QTime::currentTime().second(); break;
-    case 0x02: value = QTime::currentTime().minute(); break;
-    case 0x04: value = QTime::currentTime().hour(); break;
-    case 0x06: value = QDate::currentDate().dayOfWeek(); break;
-    case 0x07: value = QDate::currentDate().day(); break;
-    case 0x08: value = QDate::currentDate().month(); break;
-    case 0x09: value = QDate::currentDate().year() % 100; break;
+    case 0x00: value = currentTimeForCMOS().second(); break;
+    case 0x02: value = currentTimeForCMOS().minute(); break;
+    case 0x04: value = currentTimeForCMOS().hour(); break;
+    case 0x06: value = currentDateForCMOS().dayOfWeek(); break;
+    case 0x07: value = currentDateForCMOS().day(); break;
+    case 0x08: value = currentDateForCMOS().month(); break;
+    case 0x09: value = currentDateForCMOS().year() % 100; break;
     case 0x0B: value = m_statusRegisterB; break;
     case 0x15: value = vomit_LSB(g_cpu->baseMemorySize() / 1024); break;
     case 0x16: value = vomit_MSB(g_cpu->baseMemorySize() / 1024); break;
@@ -76,7 +92,7 @@ BYTE CMOS::in8(WORD)
     case 0x18: value = vomit_MSB(g_cpu->extendedMemorySize() / 1024 - 1024); break;
     case 0x30: value = vomit_LSB(g_cpu->extendedMemorySize() / 1024 - 1024); break;
     case 0x31: value = vomit_MSB(g_cpu->extendedMemorySize() / 1024 - 1024); break;
-    case 0x32: value = QDate::currentDate().year() / 100; break;
+    case 0x32: value = currentDateForCMOS().year() / 100; break;
     default: vlog(LogCMOS, "WARNING: Read unsupported register %02X", m_registerIndex);
     }
 

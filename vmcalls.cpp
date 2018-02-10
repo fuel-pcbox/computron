@@ -100,6 +100,9 @@ void vm_handleE6(VCpu& cpu)
         tick_count = ((t->tm_hour*3600) + (t->tm_min*60) + (t->tm_sec)) * 18.206; // yuck..
         gettimeofday(&timv, NULL);
         tick_count += timv.tv_usec / 54926.9471602768;
+#ifdef VOMIT_DETERMINISTIC
+        tick_count = 0x12345678;
+#endif
         cpu.setCX(tick_count >> 16);
         cpu.setDX(tick_count & 0xFFFF);
         cpu.writeUnmappedMemory16(0x046C, tick_count & 0xFFFF);

@@ -66,6 +66,10 @@ public:
     explicit VCpu(Machine&);
     ~VCpu();
 
+#ifdef VOMIT_DETERMINISTIC
+    QWORD cycle() const { return m_cycle; }
+#endif
+
     void reset();
 
     Machine& machine() const { return m_machine; }
@@ -1185,6 +1189,10 @@ private:
     QMutex m_commandMutex;
 
     bool m_shouldRestoreSizesAfterOverride { false };
+
+#ifdef VOMIT_DETERMINISTIC
+    QWORD m_cycle { 0 };
+#endif
 };
 
 extern VCpu* g_cpu;

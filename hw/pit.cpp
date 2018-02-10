@@ -102,7 +102,9 @@ void PIT::boot()
 
 void PIT::timerEvent(QTimerEvent*)
 {
+#ifndef VOMIT_DETERMINISTIC
     raiseIRQ();
+#endif
 }
 
 BYTE PIT::in8(WORD port)

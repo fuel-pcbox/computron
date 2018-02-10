@@ -6,6 +6,7 @@ INCLUDEPATH += . include disasm/include gui hw
 QMAKE_CXXFLAGS += -std=c++17 -g -O0 -W -Wall -Wimplicit-fallthrough
 DEFINES += VOMIT_DEBUG
 DEFINES += VOMIT_TRACE
+//DEFINES += VOMIT_DETERMINISTIC
 CONFIG += silent
 CONFIG += debug
 QT += widgets
