@@ -118,6 +118,7 @@ enum InstructionFormat {
     OP_reg32,
     OP_imm32,
     OP_imm16_imm8,
+    OP_imm8_imm16,
 
     OP_NEAR_imm,
 };
@@ -200,6 +201,10 @@ static void build(InstructionDescriptor* table, BYTE op, const char* mnemonic, I
     case OP_imm16_imm8:
         d.imm1Bytes = 2;
         d.imm2Bytes = 1;
+        break;
+    case OP_imm8_imm16:
+        d.imm1Bytes = 1;
+        d.imm2Bytes = 2;
         break;
     case OP_imm16_imm16:
         d.imm1Bytes = 2;
@@ -525,7 +530,7 @@ void buildOpcodeTablesIfNeeded()
     build(0xC5, "LDS",    OP_reg16_mem16,      &VCpu::_LDS_reg16_mem16,  OP_reg32_mem32, &VCpu::_LDS_reg32_mem32);
     build(0xC6, "MOV",    OP_RM8_imm8,         &VCpu::_MOV_RM8_imm8);
     build(0xC7, "MOV",    OP_RM16_imm16,       &VCpu::_MOV_RM16_imm16,   OP_RM32_imm32,  &VCpu::_MOV_RM32_imm32);
-    build(0xC8, "ENTER",  OP_imm16_imm8,       &VCpu::_ENTER);
+    build(0xC8, "ENTER",  OP_imm8_imm16,       &VCpu::_ENTER);
     build(0xC9, "LEAVE",  OP,                  &VCpu::_LEAVE);
     build(0xCA, "RETF",   OP_imm16,            &VCpu::_RETF_imm16);
     build(0xCB, "RETF",   OP,                  &VCpu::_RETF);

@@ -60,8 +60,8 @@ void VCpu::_ENTER(Instruction& insn)
     assert(o16());
     assert(a16());
 
-    WORD size = insn.imm16_1();
-    BYTE nestingLevel = insn.imm8_2() & 31;
+    WORD size = insn.imm16_2();
+    BYTE nestingLevel = insn.imm8_1() & 31;
     push(getBP());
     WORD frameTemp = getSP();
     if (nestingLevel > 0) {
