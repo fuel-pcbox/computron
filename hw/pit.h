@@ -47,7 +47,7 @@ private slots:
     void reconfigureTimer();
 
 private:
-    friend class VCpu;
+    friend class CPU;
 
     virtual void timerEvent(QTimerEvent*) override;
 

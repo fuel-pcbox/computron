@@ -27,12 +27,12 @@
 #include "vcpu.h"
 #include "debug.h"
 
-void VCpu::_WAIT(Instruction&)
+void CPU::_WAIT(Instruction&)
 {
     vlog(LogFPU, "FPU wait");
 }
 
-void VCpu::_ESCAPE(Instruction& insn)
+void CPU::_ESCAPE(Instruction& insn)
 {
     vlog(LogFPU, "FPU escape via %02X %02X (or %02X /%u)",
         insn.op(), insn.rm(), insn.op(), insn.slash());

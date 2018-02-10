@@ -81,7 +81,7 @@ READONLY_AL_imm8(doAnd, _TEST_AL_imm8)
 READONLY_AX_imm16(doAnd, _TEST_AX_imm16)
 READONLY_EAX_imm32(doAnd, _TEST_EAX_imm32)
 
-void VCpu::_CBW(Instruction&)
+void CPU::_CBW(Instruction&)
 {
     if (getAL() & 0x80)
         setAH(0xFF);
@@ -89,7 +89,7 @@ void VCpu::_CBW(Instruction&)
         setAH(0x00);
 }
 
-void VCpu::_CWD(Instruction&)
+void CPU::_CWD(Instruction&)
 {
     if (getAX() & 0x8000)
         setDX(0xFFFF);
@@ -97,7 +97,7 @@ void VCpu::_CWD(Instruction&)
         setDX(0x0000);
 }
 
-void VCpu::_CWDE(Instruction&)
+void CPU::_CWDE(Instruction&)
 {
     if (getAX() & 0x8000)
         regs.W.__EAX_high_word = 0xFFFF;
@@ -105,7 +105,7 @@ void VCpu::_CWDE(Instruction&)
         regs.W.__EAX_high_word = 0x0000;
 }
 
-void VCpu::_CDQ(Instruction&)
+void CPU::_CDQ(Instruction&)
 {
     if (getEAX() & 0x80000000)
         setEDX(0xFFFFFFFF);
@@ -113,14 +113,14 @@ void VCpu::_CDQ(Instruction&)
         setEDX(0x00000000);
 }
 
-void VCpu::_SALC(Instruction&)
+void CPU::_SALC(Instruction&)
 {
     setAL(getCF() ? 0xFF : 0);
 }
 
-// FIXME: Move this method into VCpu.
+// FIXME: Move this method into CPU.
 template<typename T>
-inline void updateCpuFlags(VCpu& cpu, T result)
+inline void updateCpuFlags(CPU& cpu, T result)
 {
     if (BitSizeOfType<T>::bits == 8)
         cpu.updateFlags8(result);
@@ -131,7 +131,7 @@ inline void updateCpuFlags(VCpu& cpu, T result)
 }
 
 template <typename T>
-T VCpu::doOr(T dest, T src)
+T CPU::doOr(T dest, T src)
 {
     T result = dest | src;
     updateCpuFlags(*this, result);
@@ -141,7 +141,7 @@ T VCpu::doOr(T dest, T src)
 }
 
 template<typename T>
-T VCpu::doXor(T dest, T src)
+T CPU::doXor(T dest, T src)
 {
     T result = dest ^ src;
     updateCpuFlags(*this, result);
@@ -151,7 +151,7 @@ T VCpu::doXor(T dest, T src)
 }
 
 template<typename T>
-T VCpu::doAnd(T dest, T src)
+T CPU::doAnd(T dest, T src)
 {
     T result = dest & src;
     updateCpuFlags(*this, result);
@@ -170,7 +170,7 @@ inline DWORD allOnes(unsigned bits)
     return 0xFFFFFFFF;
 }
 
-DWORD cpu_sar(VCpu& cpu, DWORD data, BYTE steps, BYTE bits)
+DWORD cpu_sar(CPU& cpu, DWORD data, BYTE steps, BYTE bits)
 {
     DWORD result = data;
     DWORD n;
@@ -192,7 +192,7 @@ DWORD cpu_sar(VCpu& cpu, DWORD data, BYTE steps, BYTE bits)
     return result;
 }
 
-DWORD cpu_rcl(VCpu& cpu, DWORD data, BYTE steps, BYTE bits)
+DWORD cpu_rcl(CPU& cpu, DWORD data, BYTE steps, BYTE bits)
 {
     DWORD result = data;
     DWORD n;
@@ -214,7 +214,7 @@ DWORD cpu_rcl(VCpu& cpu, DWORD data, BYTE steps, BYTE bits)
     return result;
 }
 
-DWORD cpu_rcr(VCpu& cpu, DWORD data, BYTE steps, BYTE bits)
+DWORD cpu_rcr(CPU& cpu, DWORD data, BYTE steps, BYTE bits)
 {
     DWORD result = (DWORD)data;
     DWORD n;
@@ -235,17 +235,17 @@ DWORD cpu_rcr(VCpu& cpu, DWORD data, BYTE steps, BYTE bits)
     return result;
 }
 
-void VCpu::_NOT_RM8(Instruction& insn)
+void CPU::_NOT_RM8(Instruction& insn)
 {
     insn.modrm().write8(~insn.modrm().read8());
 }
 
-void VCpu::_NOT_RM16(Instruction& insn)
+void CPU::_NOT_RM16(Instruction& insn)
 {
     insn.modrm().write16(~insn.modrm().read16());
 }
 
-void VCpu::_NOT_RM32(Instruction& insn)
+void CPU::_NOT_RM32(Instruction& insn)
 {
     insn.modrm().write32(~insn.modrm().read32());
 }
@@ -268,7 +268,7 @@ DEFAULT_RM16_reg16(doBts, _BTS_RM16_reg16)
 DEFAULT_RM32_reg32(doBts, _BTS_RM32_reg32)
 
 template<typename T, typename U>
-T VCpu::doBt(T src, U bitIndex)
+T CPU::doBt(T src, U bitIndex)
 {
     T bitMask = 1 << bitIndex;
     setCF((src & bitMask) != 0);
@@ -276,7 +276,7 @@ T VCpu::doBt(T src, U bitIndex)
 }
 
 template<typename T, typename U>
-T VCpu::doBtr(T dest, U bitIndex)
+T CPU::doBtr(T dest, U bitIndex)
 {
     T bitMask = 1 << bitIndex;
     T result = dest & ~bitMask;
@@ -285,7 +285,7 @@ T VCpu::doBtr(T dest, U bitIndex)
 }
 
 template<typename T, typename U>
-T VCpu::doBts(T dest, U bitIndex)
+T CPU::doBts(T dest, U bitIndex)
 {
     T bitMask = 1 << bitIndex;
     T result = dest | bitMask;
@@ -294,7 +294,7 @@ T VCpu::doBts(T dest, U bitIndex)
 }
 
 template<typename T, typename U>
-T VCpu::doBtc(T dest, U bitIndex)
+T CPU::doBtc(T dest, U bitIndex)
 {
     T bitMask = 1 << bitIndex;
     T result;

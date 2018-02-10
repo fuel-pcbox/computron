@@ -26,17 +26,17 @@
 #ifndef DEBUGGER_H
 #define DEBUGGER_H
 
-class VCpu;
+class CPU;
 class QString;
 class QStringList;
 
 class Debugger
 {
 public:
-    explicit Debugger(VCpu&);
+    explicit Debugger(CPU&);
     ~Debugger();
 
-    VCpu& cpu() { return m_cpu; }
+    CPU& cpu() { return m_cpu; }
 
     void enter();
     void exit();
@@ -46,7 +46,7 @@ public:
     void doConsole();
 
 private:
-    VCpu& m_cpu;
+    CPU& m_cpu;
     bool m_active { false };
 
     void handleCommand(const QString&);

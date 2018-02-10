@@ -28,19 +28,19 @@
 #include "debug.h"
 #include "iodevice.h"
 
-void VCpu::_OUT_imm8_AL(Instruction& insn)
+void CPU::_OUT_imm8_AL(Instruction& insn)
 {
     out(insn.imm8(), regs.B.AL);
 }
 
-void VCpu::_OUT_imm8_AX(Instruction& insn)
+void CPU::_OUT_imm8_AX(Instruction& insn)
 {
     WORD port = insn.imm8();
     out(port, regs.B.AL);
     out(port + 1, regs.B.AH);
 }
 
-void VCpu::_OUT_imm8_EAX(Instruction& insn)
+void CPU::_OUT_imm8_EAX(Instruction& insn)
 {
     WORD port = insn.imm8();
     out(port, regs.B.AL);
@@ -49,18 +49,18 @@ void VCpu::_OUT_imm8_EAX(Instruction& insn)
     out(port + 3, vomit_MSB(regs.W.__EAX_high_word));
 }
 
-void VCpu::_OUT_DX_AL(Instruction&)
+void CPU::_OUT_DX_AL(Instruction&)
 {
     out(getDX(), regs.B.AL);
 }
 
-void VCpu::_OUT_DX_AX(Instruction&)
+void CPU::_OUT_DX_AX(Instruction&)
 {
     out(getDX(), regs.B.AL);
     out(getDX() + 1, regs.B.AH);
 }
 
-void VCpu::_OUT_DX_EAX(Instruction&)
+void CPU::_OUT_DX_EAX(Instruction&)
 {
     out(getDX(), regs.B.AL);
     out(getDX() + 1, regs.B.AH);
@@ -68,7 +68,7 @@ void VCpu::_OUT_DX_EAX(Instruction&)
     out(getDX() + 3, vomit_MSB(regs.W.__EAX_high_word));
 }
 
-void VCpu::_OUTSB(Instruction&)
+void CPU::_OUTSB(Instruction&)
 {
     BYTE data;
 
@@ -83,7 +83,7 @@ void VCpu::_OUTSB(Instruction&)
     out(getDX(), data);
 }
 
-void VCpu::_OUTSW(Instruction&)
+void CPU::_OUTSW(Instruction&)
 {
     BYTE lsb;
     BYTE msb;
@@ -102,7 +102,7 @@ void VCpu::_OUTSW(Instruction&)
     out(getDX() + 1, msb);
 }
 
-void VCpu::_OUTSD(Instruction&)
+void CPU::_OUTSD(Instruction&)
 {
     BYTE b1, b2, b3, b4;
 
@@ -126,19 +126,19 @@ void VCpu::_OUTSD(Instruction&)
     out(getDX() + 3, b4);
 }
 
-void VCpu::_IN_AL_imm8(Instruction& insn)
+void CPU::_IN_AL_imm8(Instruction& insn)
 {
     regs.B.AL = in(insn.imm8());
 }
 
-void VCpu::_IN_AX_imm8(Instruction& insn)
+void CPU::_IN_AX_imm8(Instruction& insn)
 {
     WORD port = insn.imm8();
     regs.B.AL = in(port);
     regs.B.AH = in(port + 1);
 }
 
-void VCpu::_IN_EAX_imm8(Instruction& insn)
+void CPU::_IN_EAX_imm8(Instruction& insn)
 {
     WORD port = insn.imm8();
     BYTE b1 = in(port);
@@ -149,18 +149,18 @@ void VCpu::_IN_EAX_imm8(Instruction& insn)
     regs.W.__EAX_high_word = vomit_MAKEWORD(b3, b4);
 }
 
-void VCpu::_IN_AL_DX(Instruction&)
+void CPU::_IN_AL_DX(Instruction&)
 {
     regs.B.AL = in(getDX());
 }
 
-void VCpu::_IN_AX_DX(Instruction&)
+void CPU::_IN_AX_DX(Instruction&)
 {
     regs.B.AL = in(getDX());
     regs.B.AH = in(getDX() + 1);
 }
 
-void VCpu::_IN_EAX_DX(Instruction&)
+void CPU::_IN_EAX_DX(Instruction&)
 {
     regs.B.AL = in(getDX());
     regs.B.AH = in(getDX() + 1);
@@ -169,12 +169,12 @@ void VCpu::_IN_EAX_DX(Instruction&)
     regs.W.__EAX_high_word = vomit_MAKEWORD(c, d);
 }
 
-void VCpu::out(WORD port, BYTE value)
+void CPU::out(WORD port, BYTE value)
 {
 #ifdef VOMIT_DEBUG
     if (options.iopeek) {
         if (port != 0x00E6 && port != 0x0020 && port != 0x3D4 && port != 0x03d5 && port != 0xe2 && port != 0xe0) {
-            vlog(LogIO, "VCpu::out: %02X --> %04X", value, port);
+            vlog(LogIO, "CPU::out: %02X --> %04X", value, port);
         }
     }
 #endif
@@ -188,7 +188,7 @@ void VCpu::out(WORD port, BYTE value)
         vlog(LogAlert, "Unhandled I/O write to port %04X, data %02X", port, value);
 }
 
-BYTE VCpu::in(WORD port)
+BYTE CPU::in(WORD port)
 {
     BYTE value;
     if (IODevice::readDevices().contains(port)) {
@@ -201,7 +201,7 @@ BYTE VCpu::in(WORD port)
 #ifdef VOMIT_DEBUG
     if (options.iopeek) {
         if (port != 0x00E6 && port != 0x0020 && port != 0x3D4 && port != 0x03D5 && port != 0x3DA) {
-            vlog(LogIO, "VCpu::in: %04X = %02X", port, value);
+            vlog(LogIO, "CPU::in: %04X = %02X", port, value);
         }
     }
 #endif

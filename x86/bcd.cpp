@@ -25,7 +25,7 @@
 
 #include "vcpu.h"
 
-void VCpu::_AAA(Instruction&)
+void CPU::_AAA(Instruction&)
 {
     if (((regs.B.AL & 0x0F)>9) || getAF()) {
         regs.B.AL += 6;
@@ -39,7 +39,7 @@ void VCpu::_AAA(Instruction&)
     regs.B.AL &= 0x0F;
 }
 
-void VCpu::_AAM(Instruction& insn)
+void CPU::_AAM(Instruction& insn)
 {
     if (insn.imm8() == 0) {
         exception(0);
@@ -52,7 +52,7 @@ void VCpu::_AAM(Instruction& insn)
     updateFlags8(regs.B.AL);
 }
 
-void VCpu::_AAD(Instruction& insn)
+void CPU::_AAD(Instruction& insn)
 {
     BYTE tempAL = regs.B.AL;
     BYTE tempAH = regs.B.AH;
@@ -62,7 +62,7 @@ void VCpu::_AAD(Instruction& insn)
     updateFlags8(regs.B.AL);
 }
 
-void VCpu::_AAS(Instruction&)
+void CPU::_AAS(Instruction&)
 {
     if (((regs.B.AL & 0x0F) > 9) || getAF()) {
         regs.B.AL -= 6;
@@ -75,7 +75,7 @@ void VCpu::_AAS(Instruction&)
     }
 }
 
-void VCpu::_DAS(Instruction&)
+void CPU::_DAS(Instruction&)
 {
     bool oldCF = getCF();
     BYTE oldAL = regs.B.AL;
@@ -99,7 +99,7 @@ void VCpu::_DAS(Instruction&)
     }
 }
 
-void VCpu::_DAA(Instruction&)
+void CPU::_DAA(Instruction&)
 {
     bool oldCF = getCF();
     BYTE oldAL = regs.B.AL;

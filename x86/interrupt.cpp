@@ -28,17 +28,17 @@
 #include "debug.h"
 #include "debugger.h"
 
-void VCpu::_INT_imm8(Instruction& insn)
+void CPU::_INT_imm8(Instruction& insn)
 {
     jumpToInterruptHandler(insn.imm8());
 }
 
-void VCpu::_INT3(Instruction&)
+void CPU::_INT3(Instruction&)
 {
     jumpToInterruptHandler(3);
 }
 
-void VCpu::_INTO(Instruction&)
+void CPU::_INTO(Instruction&)
 {
     /* XXX: I've never seen this used, so it's probably good to log it. */
     vlog(LogAlert, "INTO used, can you believe it?");
@@ -47,7 +47,7 @@ void VCpu::_INTO(Instruction&)
         jumpToInterruptHandler(4);
 }
 
-void VCpu::_IRET(Instruction&)
+void CPU::_IRET(Instruction&)
 {
     if (o16()) {
         WORD nip = pop();
@@ -62,7 +62,7 @@ void VCpu::_IRET(Instruction&)
     }
 }
 
-void VCpu::jumpToInterruptHandler(int isr, bool requestedByPIC)
+void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
 {
     VM_ASSERT(!x32());
 #ifdef VOMIT_DEBUG
@@ -101,14 +101,14 @@ void VCpu::jumpToInterruptHandler(int isr, bool requestedByPIC)
     jump32(iv.segment, iv.offset);
 }
 
-FarPointer VCpu::getInterruptVector16(int isr)
+FarPointer CPU::getInterruptVector16(int isr)
 {
     vlog(LogAlert, "getInterruptVector16(%d)", isr);
     vomit_exit(1);
     return { 0, 0 };
 }
 
-FarPointer VCpu::getInterruptVector32(int isr)
+FarPointer CPU::getInterruptVector32(int isr)
 {
     vlog(LogAlert, "getInterruptVector32(%d)", isr);
     return { 0, 0 };

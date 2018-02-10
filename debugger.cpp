@@ -35,7 +35,7 @@
 #include <readline/readline.h>
 #endif
 
-Debugger::Debugger(VCpu& cpu)
+Debugger::Debugger(CPU& cpu)
     : m_cpu(cpu)
 {
 }
@@ -54,7 +54,7 @@ void Debugger::exit()
     m_active = false;
 }
 
-static QString doPrompt(const VCpu& cpu)
+static QString doPrompt(const CPU& cpu)
 {
     static QString brightMagenta("\033[35;1m");
     static QString brightCyan("\033[34;1m");

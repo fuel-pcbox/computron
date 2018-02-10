@@ -44,33 +44,33 @@ static const BYTE parity_table[0x100] = {
     1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1
 };
 
-void VCpu::adjustFlag32(QWORD result, DWORD src, DWORD dest)
+void CPU::adjustFlag32(QWORD result, DWORD src, DWORD dest)
 {
     setAF((((result ^ (src ^ dest)) & 0x10) >> 4) & 1);
 }
 
-void VCpu::updateFlags32(DWORD data)
+void CPU::updateFlags32(DWORD data)
 {
     setPF(parity_table[data & 0xFF]);
     setSF((data & 0x80000000) != 0);
     setZF(data == 0);
 }
 
-void VCpu::updateFlags16(WORD data)
+void CPU::updateFlags16(WORD data)
 {
     setPF(parity_table[data & 0xFF]);
     setSF(data & 0x8000);
     setZF(data == 0);
 }
 
-void VCpu::updateFlags8(BYTE data)
+void CPU::updateFlags8(BYTE data)
 {
     setPF(parity_table[data]);
     setSF(data & 0x80);
     setZF(data == 0);
 }
 
-void VCpu::updateFlags(DWORD data, BYTE bits)
+void CPU::updateFlags(DWORD data, BYTE bits)
 {
     if (bits == 8) {
         data &= 0xFF;
@@ -86,17 +86,17 @@ void VCpu::updateFlags(DWORD data, BYTE bits)
     setZF(data == 0);
 }
 
-void VCpu::_STC(Instruction&)
+void CPU::_STC(Instruction&)
 {
     setCF(1);
 }
 
-void VCpu::_STD(Instruction&)
+void CPU::_STD(Instruction&)
 {
     setDF(1);
 }
 
-void VCpu::_STI(Instruction&)
+void CPU::_STI(Instruction&)
 {
     if (!getPE()) {
         setIF(1);
@@ -125,7 +125,7 @@ void VCpu::_STI(Instruction&)
     }
 }
 
-void VCpu::_CLI(Instruction&)
+void CPU::_CLI(Instruction&)
 {
     if (!getPE()) {
         setIF(0);
@@ -154,27 +154,27 @@ void VCpu::_CLI(Instruction&)
     }
 }
 
-void VCpu::_CLC(Instruction&)
+void CPU::_CLC(Instruction&)
 {
     setCF(0);
 }
 
-void VCpu::_CLD(Instruction&)
+void CPU::_CLD(Instruction&)
 {
     setDF(0);
 }
 
-void VCpu::_CMC(Instruction&)
+void CPU::_CMC(Instruction&)
 {
     setCF(!getCF());
 }
 
-void VCpu::_LAHF(Instruction&)
+void CPU::_LAHF(Instruction&)
 {
     regs.B.AH = getCF() | (getPF() * 4) | (getAF() * 16) | (getZF() * 64) | (getSF() * 128) | 2;
 }
 
-void VCpu::_SAHF(Instruction&)
+void CPU::_SAHF(Instruction&)
 {
     setCF(regs.B.AH & 0x01);
     setPF(regs.B.AH & 0x04);
@@ -183,7 +183,7 @@ void VCpu::_SAHF(Instruction&)
     setSF(regs.B.AH & 0x80);
 }
 
-void VCpu::mathFlags8(WORD result, BYTE dest, BYTE src)
+void CPU::mathFlags8(WORD result, BYTE dest, BYTE src)
 {
     setCF(result & 0xFF00);
     setSF(result & 0x0080);
@@ -192,7 +192,7 @@ void VCpu::mathFlags8(WORD result, BYTE dest, BYTE src)
     adjustFlag32(result, dest, src);
 }
 
-void VCpu::mathFlags16(DWORD result, WORD dest, WORD src)
+void CPU::mathFlags16(DWORD result, WORD dest, WORD src)
 {
     setCF(result & 0xFFFF0000);
     setSF(result & 0x8000);
@@ -201,7 +201,7 @@ void VCpu::mathFlags16(DWORD result, WORD dest, WORD src)
     adjustFlag32(result, dest, src);
 }
 
-void VCpu::mathFlags32(QWORD result, DWORD dest, DWORD src)
+void CPU::mathFlags32(QWORD result, DWORD dest, DWORD src)
 {
     setCF(result & 0xFFFFFFFF00000000ULL);
     setSF(result & 0x80000000);
@@ -210,7 +210,7 @@ void VCpu::mathFlags32(QWORD result, DWORD dest, DWORD src)
     adjustFlag32(result, dest, src);
 }
 
-void VCpu::cmpFlags8(DWORD result, BYTE dest, BYTE src)
+void CPU::cmpFlags8(DWORD result, BYTE dest, BYTE src)
 {
     mathFlags8(result, dest, src);
     setOF(((
@@ -219,7 +219,7 @@ void VCpu::cmpFlags8(DWORD result, BYTE dest, BYTE src)
         )>>(7))&1);
 }
 
-void VCpu::cmpFlags16(DWORD result, WORD dest, WORD src)
+void CPU::cmpFlags16(DWORD result, WORD dest, WORD src)
 {
     mathFlags16(result, dest, src);
     setOF(((
@@ -228,7 +228,7 @@ void VCpu::cmpFlags16(DWORD result, WORD dest, WORD src)
         )>>(15))&1);
 }
 
-void VCpu::cmpFlags32(QWORD result, DWORD dest, DWORD src)
+void CPU::cmpFlags32(QWORD result, DWORD dest, DWORD src)
 {
     mathFlags32(result, dest, src);
     setOF(((
@@ -237,7 +237,7 @@ void VCpu::cmpFlags32(QWORD result, DWORD dest, DWORD src)
         )>>(31))&1);
 }
 
-void VCpu::setFlags(WORD flags)
+void CPU::setFlags(WORD flags)
 {
     setCF(flags & 0x0001);
     setPF(flags & 0x0004);
@@ -252,7 +252,7 @@ void VCpu::setFlags(WORD flags)
     setNT(flags & 0x4000);
 }
 
-WORD VCpu::getFlags() const
+WORD CPU::getFlags() const
 {
     return 0x0002
         | (getCF() << 0)
@@ -268,7 +268,7 @@ WORD VCpu::getFlags() const
         | (getNT() << 14);
 }
 
-void VCpu::setEFlags(DWORD eflags)
+void CPU::setEFlags(DWORD eflags)
 {
     setFlags(eflags & 0xFFFF);
 
@@ -280,7 +280,7 @@ void VCpu::setEFlags(DWORD eflags)
 //    this->ID = (eflags & 0x200000) != 0;
 }
 
-DWORD VCpu::getEFlags() const
+DWORD CPU::getEFlags() const
 {
     DWORD eflags = getFlags()
          | (this->RF << 16)

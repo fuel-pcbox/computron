@@ -26,7 +26,7 @@
 #include "vcpu.h"
 #include "debugger.h"
 
-void VCpu::_SGDT(Instruction& insn)
+void CPU::_SGDT(Instruction& insn)
 {
     auto& modrm = insn.modrm();
     BYTE* ptr = reinterpret_cast<BYTE*>(modrm.memoryPointer());
@@ -36,7 +36,7 @@ void VCpu::_SGDT(Instruction& insn)
     *limitPtr = GDTR.limit;
 }
 
-void VCpu::_SIDT(Instruction& insn)
+void CPU::_SIDT(Instruction& insn)
 {
     auto& modrm = insn.modrm();
     BYTE* ptr = reinterpret_cast<BYTE*>(modrm.memoryPointer());
@@ -46,12 +46,12 @@ void VCpu::_SIDT(Instruction& insn)
     *limitPtr = IDTR.limit;
 }
 
-void VCpu::_SLDT_RM16(Instruction& insn)
+void CPU::_SLDT_RM16(Instruction& insn)
 {
     insn.modrm().write16(LDTR.segment);
 }
 
-void VCpu::_LLDT_RM16(Instruction& insn)
+void CPU::_LLDT_RM16(Instruction& insn)
 {
     WORD segment = insn.modrm().read16();
     auto gdtEntry = makeSegmentSelector(segment);
@@ -61,7 +61,7 @@ void VCpu::_LLDT_RM16(Instruction& insn)
     vlog(LogAlert, "LLDT { segment: %04X => base:%08X, limit:%08X }", LDTR.segment, LDTR.base, LDTR.limit);
 }
 
-void VCpu::_LTR_RM16(Instruction& insn)
+void CPU::_LTR_RM16(Instruction& insn)
 {
     WORD segment = insn.modrm().read16();
     auto gdtEntry = makeSegmentSelector(segment);
@@ -71,7 +71,7 @@ void VCpu::_LTR_RM16(Instruction& insn)
     vlog(LogAlert, "LTR { segment: %04X => base:%08X, limit:%08X }", TR.segment, TR.base, TR.limit);
 }
 
-void VCpu::_LGDT(Instruction& insn)
+void CPU::_LGDT(Instruction& insn)
 {
     vlog(LogAlert, "Begin LGDT");
     FarPointer ptr = readModRMFarPointerSegmentFirst(insn.modrm());
@@ -85,7 +85,7 @@ void VCpu::_LGDT(Instruction& insn)
     }
 }
 
-void VCpu::_LIDT(Instruction& insn)
+void CPU::_LIDT(Instruction& insn)
 {
     vlog(LogAlert, "Begin LIDT");
     FarPointer ptr = readModRMFarPointerSegmentFirst(insn.modrm());
@@ -95,7 +95,7 @@ void VCpu::_LIDT(Instruction& insn)
     vlog(LogAlert, "LIDT { base:%08X, limit:%08X }", IDTR.base, IDTR.limit);
 }
 
-void VCpu::_CLTS(Instruction&)
+void CPU::_CLTS(Instruction&)
 {
     if (getCPL() != 0) {
         GP(0);
@@ -104,7 +104,7 @@ void VCpu::_CLTS(Instruction&)
     CR0 &= ~(1 << 3);
 }
 
-void VCpu::_LMSW_RM16(Instruction& insn)
+void CPU::_LMSW_RM16(Instruction& insn)
 {
     if (getCPL()) {
         GP(0);
@@ -116,7 +116,7 @@ void VCpu::_LMSW_RM16(Instruction& insn)
     vlog(LogCPU, "LMSW set CR0=%08X, PE=%u", CR0, getPE());
 }
 
-void VCpu::_SMSW_RM16(Instruction& insn)
+void CPU::_SMSW_RM16(Instruction& insn)
 {
     auto& modrm = insn.modrm();
     vlog(LogCPU, "SMSW get LSW(CR0)=%04X, PE=%u", CR0 & 0xFFFF, getPE());
@@ -126,7 +126,7 @@ void VCpu::_SMSW_RM16(Instruction& insn)
         modrm.write16(CR0 & 0xFFFF);
 }
 
-VCpu::SegmentSelector VCpu::makeSegmentSelector(WORD index)
+CPU::SegmentSelector CPU::makeSegmentSelector(WORD index)
 {
     if (!getPE()) {
         SegmentSelector selector;
@@ -201,10 +201,10 @@ const char* toString(SegmentRegisterIndex segment)
     return nullptr;
 }
 
-void VCpu::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
+void CPU::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
 {
     ASSERT_VALID_SEGMENT_INDEX(segmentRegisterIndex);
-    VCpu::SegmentSelector& selector = m_selector[(int)segmentRegisterIndex];
+    CPU::SegmentSelector& selector = m_selector[(int)segmentRegisterIndex];
     selector = makeSegmentSelector(getSegment(segmentRegisterIndex));
 
     if (getPE())

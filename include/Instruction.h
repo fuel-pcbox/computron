@@ -29,9 +29,9 @@
 #include "types.h"
 
 class Instruction;
-class VCpu;
+class CPU;
 
-typedef void (VCpu::*InstructionImpl)(Instruction&);
+typedef void (CPU::*InstructionImpl)(Instruction&);
 
 class InstructionStream {
 public:
@@ -66,7 +66,7 @@ public:
 private:
     MemoryOrRegisterReference() { }
 
-    void resolve(VCpu&);
+    void resolve(CPU&);
     void resolve16();
     void resolve32();
 
@@ -96,7 +96,7 @@ private:
 
     bool m_hasSIB { false };
 
-    VCpu* m_cpu { nullptr };
+    CPU* m_cpu { nullptr };
 };
 
 class Instruction {
@@ -104,7 +104,7 @@ public:
     static Instruction fromStream(InstructionStream&);
     ~Instruction() { }
 
-    void execute(VCpu&);
+    void execute(CPU&);
 
     MemoryOrRegisterReference& modrm() { VM_ASSERT(hasRM()); return m_modrm; }
 
@@ -164,7 +164,7 @@ private:
     MemoryOrRegisterReference m_modrm;
 
     InstructionImpl m_impl;
-    VCpu* m_cpu { nullptr };
+    CPU* m_cpu { nullptr };
 };
 
 void buildOpcodeTablesIfNeeded();

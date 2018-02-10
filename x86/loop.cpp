@@ -28,7 +28,7 @@
 
 #include "debugger.h"
 
-void VCpu::_LOOP_imm8(Instruction& insn)
+void CPU::_LOOP_imm8(Instruction& insn)
 {
     SIGNED_BYTE displacement = insn.imm8();
     if (a32()) {
@@ -42,7 +42,7 @@ void VCpu::_LOOP_imm8(Instruction& insn)
     }
 }
 
-void VCpu::_LOOPE_imm8(Instruction& insn)
+void CPU::_LOOPE_imm8(Instruction& insn)
 {
     SIGNED_BYTE displacement = insn.imm8();
     if (a32()) {
@@ -56,7 +56,7 @@ void VCpu::_LOOPE_imm8(Instruction& insn)
     }
 }
 
-void VCpu::_LOOPNE_imm8(Instruction& insn)
+void CPU::_LOOPNE_imm8(Instruction& insn)
 {
     SIGNED_BYTE displacement = insn.imm8();
     if (a32()) {
@@ -100,7 +100,7 @@ void VCpu::_LOOPNE_imm8(Instruction& insn)
         for (setZF(shouldEqual); regs.W.CX && (getZF() == shouldEqual); --regs.W.CX) { CALL_HANDLER(o16Handler, o32Handler); } \
     } while (0)
 
-void VCpu::handleRepeatOpcode(Instruction&& insn, bool shouldEqual)
+void CPU::handleRepeatOpcode(Instruction&& insn, bool shouldEqual)
 {
     switch(insn.op()) {
     case 0x26: setSegmentPrefix(SegmentRegisterIndex::ES); break;
@@ -154,14 +154,14 @@ void VCpu::handleRepeatOpcode(Instruction&& insn, bool shouldEqual)
     handleRepeatOpcode(std::move(newInsn), shouldEqual);
 }
 
-void VCpu::_REP(Instruction&)
+void CPU::_REP(Instruction&)
 {
     auto newInsn = Instruction::fromStream(*this);
     handleRepeatOpcode(std::move(newInsn), true);
     resetSegmentPrefix();
 }
 
-void VCpu::_REPNE(Instruction&)
+void CPU::_REPNE(Instruction&)
 {
     auto newInsn = Instruction::fromStream(*this);
     handleRepeatOpcode(std::move(newInsn), false);

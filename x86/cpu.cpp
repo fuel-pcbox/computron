@@ -78,10 +78,10 @@ static bool shouldLogMemoryRead(DWORD address)
     return false;
 }
 
-VCpu* g_cpu = 0;
+CPU* g_cpu = 0;
 
 template<typename T>
-T VCpu::readRegister(int registerIndex)
+T CPU::readRegister(int registerIndex)
 {
     if (sizeof(T) == 1)
         return *treg8[registerIndex];
@@ -93,7 +93,7 @@ T VCpu::readRegister(int registerIndex)
 }
 
 template<typename T>
-void VCpu::writeRegister(int registerIndex, T value)
+void CPU::writeRegister(int registerIndex, T value)
 {
     if (sizeof(T) == 1)
         *treg8[registerIndex] = value;
@@ -105,20 +105,20 @@ void VCpu::writeRegister(int registerIndex, T value)
         VM_ASSERT(false);
 }
 
-template BYTE VCpu::readRegister<BYTE>(int);
-template WORD VCpu::readRegister<WORD>(int);
-template DWORD VCpu::readRegister<DWORD>(int);
-template void VCpu::writeRegister<BYTE>(int, BYTE);
-template void VCpu::writeRegister<WORD>(int, WORD);
-template void VCpu::writeRegister<DWORD>(int, DWORD);
+template BYTE CPU::readRegister<BYTE>(int);
+template WORD CPU::readRegister<WORD>(int);
+template DWORD CPU::readRegister<DWORD>(int);
+template void CPU::writeRegister<BYTE>(int, BYTE);
+template void CPU::writeRegister<WORD>(int, WORD);
+template void CPU::writeRegister<DWORD>(int, DWORD);
 
-void VCpu::_UD0(Instruction&)
+void CPU::_UD0(Instruction&)
 {
     vlog(LogAlert, "Undefined opcode 0F FF (UD0)");
     exception(6);
 }
 
-void VCpu::_OperationSizeOverride(Instruction&)
+void CPU::_OperationSizeOverride(Instruction&)
 {
     m_shouldRestoreSizesAfterOverride = true;
     bool prevOperationSize = m_operationSize32;
@@ -145,7 +145,7 @@ void VCpu::_OperationSizeOverride(Instruction&)
     }
 }
 
-void VCpu::_AddressSizeOverride(Instruction&)
+void CPU::_AddressSizeOverride(Instruction&)
 {
     m_shouldRestoreSizesAfterOverride = true;
     bool prevAddressSize32 = m_addressSize32;
@@ -172,22 +172,22 @@ void VCpu::_AddressSizeOverride(Instruction&)
     }
 }
 
-BYTE VCpu::readInstruction8()
+BYTE CPU::readInstruction8()
 {
     return fetchOpcodeByte();
 }
 
-WORD VCpu::readInstruction16()
+WORD CPU::readInstruction16()
 {
     return fetchOpcodeWord();
 }
 
-DWORD VCpu::readInstruction32()
+DWORD CPU::readInstruction32()
 {
     return fetchOpcodeDWord();
 }
 
-void VCpu::decodeNext()
+void CPU::decodeNext()
 {
 #ifdef VOMIT_TRACE
     if (m_isForAutotest)
@@ -201,7 +201,7 @@ void VCpu::decodeNext()
         execute(std::move(insn));
 }
 
-void VCpu::execute(Instruction&& insn)
+void CPU::execute(Instruction&& insn)
 {
 #ifdef CRASH_ON_OPCODE_00_00
     if (insn.op() == 0 && insn.rm() == 0) {
@@ -213,14 +213,14 @@ void VCpu::execute(Instruction&& insn)
     insn.execute(*this);
 }
 
-void VCpu::_VKILL(Instruction&)
+void CPU::_VKILL(Instruction&)
 {
     vlog(LogCPU, "0xF1: Secret shutdown command received!");
     //dumpAll();
     vomit_exit(0);
 }
 
-void VCpu::GP(int code)
+void CPU::GP(int code)
 {
     vlog(LogCPU, "#GP(%d) :-(", code);
     exception(13);
@@ -228,7 +228,7 @@ void VCpu::GP(int code)
     //vomit_exit(1);
 }
 
-VCpu::VCpu(Machine& m)
+CPU::CPU(Machine& m)
     : m_machine(m)
     , m_shouldBreakOutOfMainLoop(false)
 {
@@ -297,7 +297,7 @@ VCpu::VCpu(Machine& m)
     reset();
 }
 
-void VCpu::reset()
+void CPU::reset()
 {
     m_a20Enabled = false;
 
@@ -360,22 +360,22 @@ void VCpu::reset()
     initWatches();
 }
 
-VCpu::~VCpu()
+CPU::~CPU()
 {
     delete [] m_memory;
     m_memory = nullptr;
     m_codeMemory = nullptr;
 }
 
-void VCpu::exec()
+void CPU::exec()
 {
     saveBaseAddress();
     decodeNext();
 }
 
-void VCpu::haltedLoop()
+void CPU::haltedLoop()
 {
-    while (state() == VCpu::Halted) {
+    while (state() == CPU::Halted) {
 #ifdef HAVE_USLEEP
         usleep(500);
 #endif
@@ -384,14 +384,14 @@ void VCpu::haltedLoop()
     }
 }
 
-void VCpu::queueCommand(Command command)
+void CPU::queueCommand(Command command)
 {
     QMutexLocker locker(&m_commandMutex);
     m_commandQueue.enqueue(command);
     m_hasCommands = true;
 }
 
-void VCpu::flushCommandQueue()
+void CPU::flushCommandQueue()
 {
 #if 0
     static int xxx = 0;
@@ -425,7 +425,7 @@ void VCpu::flushCommandQueue()
     m_hasCommands = false;
 }
 
-void VCpu::mainLoop()
+void CPU::mainLoop()
 {
     forever {
 
@@ -525,7 +525,7 @@ void VCpu::mainLoop()
     }
 }
 
-void VCpu::jumpRelative8(SIGNED_BYTE displacement)
+void CPU::jumpRelative8(SIGNED_BYTE displacement)
 {
     if (x32())
         this->EIP += displacement;
@@ -533,7 +533,7 @@ void VCpu::jumpRelative8(SIGNED_BYTE displacement)
         this->IP += displacement;
 }
 
-void VCpu::jumpRelative16(SIGNED_WORD displacement)
+void CPU::jumpRelative16(SIGNED_WORD displacement)
 {
     if (x32())
         this->EIP += displacement;
@@ -541,12 +541,12 @@ void VCpu::jumpRelative16(SIGNED_WORD displacement)
         this->IP += displacement;
 }
 
-void VCpu::jumpRelative32(SIGNED_DWORD displacement)
+void CPU::jumpRelative32(SIGNED_DWORD displacement)
 {
     this->EIP += displacement;
 }
 
-void VCpu::jumpAbsolute16(WORD address)
+void CPU::jumpAbsolute16(WORD address)
 {
     if (x32())
         this->EIP = address;
@@ -557,13 +557,13 @@ void VCpu::jumpAbsolute16(WORD address)
 #endif
 }
 
-void VCpu::jumpAbsolute32(DWORD address)
+void CPU::jumpAbsolute32(DWORD address)
 {
 //    vlog(LogCPU, "[PE=%u] Abs jump to %08X", getPE(), address);
     this->EIP = address;
 }
 
-void VCpu::jump32(WORD segment, DWORD offset)
+void CPU::jump32(WORD segment, DWORD offset)
 {
     //vlog(LogCPU, "[PE=%u] Far jump to %04X:%08X", getPE(), segment, offset);
     // Jump to specified modrm.
@@ -576,12 +576,12 @@ void VCpu::jump32(WORD segment, DWORD offset)
     updateSizeModes();
 }
 
-void VCpu::jump16(WORD segment, WORD offset)
+void CPU::jump16(WORD segment, WORD offset)
 {
     jump32(segment, offset);
 }
 
-void VCpu::_UNSUPP(Instruction& insn)
+void CPU::_UNSUPP(Instruction& insn)
 {
     // We've come across an unsupported instruction, log it, then vector to the "illegal instruction" ISR.
     vlog(LogAlert, "Unsupported opcode %02X", insn.op());
@@ -599,13 +599,13 @@ void VCpu::_UNSUPP(Instruction& insn)
     exception(6);
 }
 
-void VCpu::_NOP(Instruction&)
+void CPU::_NOP(Instruction&)
 {
 }
 
-void VCpu::_HLT(Instruction&)
+void CPU::_HLT(Instruction&)
 {
-    setState(VCpu::Halted);
+    setState(CPU::Halted);
 
     if (!getIF()) {
         vlog(LogCPU, "Halted with IF=0");
@@ -616,7 +616,7 @@ void VCpu::_HLT(Instruction&)
     haltedLoop();
 }
 
-void VCpu::_XLAT(Instruction&)
+void CPU::_XLAT(Instruction&)
 {
     if (a32())
         setAL(readMemory8(currentSegment(), getEBX() + getAL()));
@@ -624,59 +624,59 @@ void VCpu::_XLAT(Instruction&)
         setAL(readMemory8(currentSegment(), getBX() + getAL()));
 }
 
-void VCpu::_CS(Instruction&)
+void CPU::_CS(Instruction&)
 {
     setSegmentPrefix(SegmentRegisterIndex::CS);
     decodeNext();
     resetSegmentPrefix();
 }
 
-void VCpu::_DS(Instruction&)
+void CPU::_DS(Instruction&)
 {
     setSegmentPrefix(SegmentRegisterIndex::DS);
     decodeNext();
     resetSegmentPrefix();
 }
 
-void VCpu::_ES(Instruction&)
+void CPU::_ES(Instruction&)
 {
     setSegmentPrefix(SegmentRegisterIndex::ES);
     decodeNext();
     resetSegmentPrefix();
 }
 
-void VCpu::_SS(Instruction&)
+void CPU::_SS(Instruction&)
 {
     setSegmentPrefix(SegmentRegisterIndex::SS);
     decodeNext();
     resetSegmentPrefix();
 }
 
-void VCpu::_FS(Instruction&)
+void CPU::_FS(Instruction&)
 {
     setSegmentPrefix(SegmentRegisterIndex::FS);
     decodeNext();
     resetSegmentPrefix();
 }
 
-void VCpu::_GS(Instruction&)
+void CPU::_GS(Instruction&)
 {
     setSegmentPrefix(SegmentRegisterIndex::GS);
     decodeNext();
     resetSegmentPrefix();
 }
 
-void VCpu::_XCHG_AX_reg16(Instruction& insn)
+void CPU::_XCHG_AX_reg16(Instruction& insn)
 {
     qSwap(insn.reg16(), regs.W.AX);
 }
 
-void VCpu::_XCHG_EAX_reg32(Instruction& insn)
+void CPU::_XCHG_EAX_reg32(Instruction& insn)
 {
     qSwap(insn.reg32(), regs.D.EAX);
 }
 
-void VCpu::_XCHG_reg8_RM8(Instruction& insn)
+void CPU::_XCHG_reg8_RM8(Instruction& insn)
 {
     auto& modrm = insn.modrm();
     auto tmp = insn.reg8();
@@ -684,7 +684,7 @@ void VCpu::_XCHG_reg8_RM8(Instruction& insn)
     modrm.write8(tmp);
 }
 
-void VCpu::_XCHG_reg16_RM16(Instruction& insn)
+void CPU::_XCHG_reg16_RM16(Instruction& insn)
 {
     auto& modrm = insn.modrm();
     auto tmp = insn.reg16();
@@ -692,7 +692,7 @@ void VCpu::_XCHG_reg16_RM16(Instruction& insn)
     modrm.write16(tmp);
 }
 
-void VCpu::_XCHG_reg32_RM32(Instruction& insn)
+void CPU::_XCHG_reg32_RM32(Instruction& insn)
 {
     auto& modrm = insn.modrm();
     auto tmp = insn.reg32();
@@ -700,7 +700,7 @@ void VCpu::_XCHG_reg32_RM32(Instruction& insn)
     modrm.write32(tmp);
 }
 
-void VCpu::_DEC_reg16(Instruction& insn)
+void CPU::_DEC_reg16(Instruction& insn)
 {
     auto& reg = insn.reg16();
     DWORD i = reg;
@@ -714,7 +714,7 @@ void VCpu::_DEC_reg16(Instruction& insn)
     --reg;
 }
 
-void VCpu::_DEC_reg32(Instruction& insn)
+void CPU::_DEC_reg32(Instruction& insn)
 {
     auto& reg = insn.reg32();
     QWORD i = reg;
@@ -728,7 +728,7 @@ void VCpu::_DEC_reg32(Instruction& insn)
     --reg;
 }
 
-void VCpu::_INC_reg16(Instruction& insn)
+void CPU::_INC_reg16(Instruction& insn)
 {
     auto& reg = insn.reg16();
     DWORD i = reg;
@@ -742,7 +742,7 @@ void VCpu::_INC_reg16(Instruction& insn)
     ++reg;
 }
 
-void VCpu::_INC_reg32(Instruction& insn)
+void CPU::_INC_reg32(Instruction& insn)
 {
     auto& reg = insn.reg32();
     QWORD i = reg;
@@ -756,7 +756,7 @@ void VCpu::_INC_reg32(Instruction& insn)
     ++reg;
 }
 
-void VCpu::_INC_RM16(Instruction& insn)
+void CPU::_INC_RM16(Instruction& insn)
 {
     auto& modrm = insn.modrm();
     auto value = modrm.read16();
@@ -771,7 +771,7 @@ void VCpu::_INC_RM16(Instruction& insn)
     modrm.write16(value + 1);
 }
 
-void VCpu::_INC_RM32(Instruction& insn)
+void CPU::_INC_RM32(Instruction& insn)
 {
     auto& modrm = insn.modrm();
     auto value = modrm.read32();
@@ -786,7 +786,7 @@ void VCpu::_INC_RM32(Instruction& insn)
     modrm.write32(value + 1);
 }
 
-void VCpu::_DEC_RM16(Instruction& insn)
+void CPU::_DEC_RM16(Instruction& insn)
 {
     auto& modrm = insn.modrm();
     auto value = modrm.read16();
@@ -801,7 +801,7 @@ void VCpu::_DEC_RM16(Instruction& insn)
     modrm.write16(value - 1);
 }
 
-void VCpu::_DEC_RM32(Instruction& insn)
+void CPU::_DEC_RM32(Instruction& insn)
 {
     auto& modrm = insn.modrm();
     auto value = modrm.read32();
@@ -816,7 +816,7 @@ void VCpu::_DEC_RM32(Instruction& insn)
     modrm.write32(value - 1);
 }
 
-void VCpu::_INC_RM8(Instruction& insn)
+void CPU::_INC_RM8(Instruction& insn)
 {
     auto& modrm = insn.modrm();
     auto value = modrm.read8();
@@ -828,7 +828,7 @@ void VCpu::_INC_RM8(Instruction& insn)
     modrm.write8(value + 1);
 }
 
-void VCpu::_DEC_RM8(Instruction& insn)
+void CPU::_DEC_RM8(Instruction& insn)
 {
     auto& modrm = insn.modrm();
     auto value = modrm.read8();
@@ -840,7 +840,7 @@ void VCpu::_DEC_RM8(Instruction& insn)
     modrm.write8(value - 1);
 }
 
-void VCpu::_LDS_reg16_mem16(Instruction& insn)
+void CPU::_LDS_reg16_mem16(Instruction& insn)
 {
     VM_ASSERT(a16());
     WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
@@ -848,14 +848,14 @@ void VCpu::_LDS_reg16_mem16(Instruction& insn)
     setDS(vomit_read16FromPointer(ptr + 1));
 }
 
-void VCpu::_LDS_reg32_mem32(Instruction&)
+void CPU::_LDS_reg32_mem32(Instruction&)
 {
 #warning FIXME: need readModRM48
     vlog(LogAlert, "LDS reg32 mem32");
     vomit_exit(0);
 }
 
-void VCpu::pushInstructionPointer()
+void CPU::pushInstructionPointer()
 {
     if (o32())
         push32(getEIP());
@@ -863,7 +863,7 @@ void VCpu::pushInstructionPointer()
         push(getIP());
 }
 
-void VCpu::_LES_reg16_mem16(Instruction& insn)
+void CPU::_LES_reg16_mem16(Instruction& insn)
 {
     VM_ASSERT(a16());
     WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
@@ -871,14 +871,14 @@ void VCpu::_LES_reg16_mem16(Instruction& insn)
     setES(vomit_read16FromPointer(ptr + 1));
 }
 
-void VCpu::_LES_reg32_mem32(Instruction&)
+void CPU::_LES_reg32_mem32(Instruction&)
 {
 #warning FIXME: need readModRM48
     vlog(LogAlert, "LES reg32 mem32");
     vomit_exit(0);
 }
 
-void VCpu::_LFS_reg16_mem16(Instruction& insn)
+void CPU::_LFS_reg16_mem16(Instruction& insn)
 {
     VM_ASSERT(a16());
     WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
@@ -886,14 +886,14 @@ void VCpu::_LFS_reg16_mem16(Instruction& insn)
     setFS(vomit_read16FromPointer(ptr + 1));
 }
 
-void VCpu::_LFS_reg32_mem32(Instruction&)
+void CPU::_LFS_reg32_mem32(Instruction&)
 {
 #warning FIXME: need readModRM48
     vlog(LogAlert, "LFS reg32 mem32");
     vomit_exit(0);
 }
 
-void VCpu::_LSS_reg16_mem16(Instruction& insn)
+void CPU::_LSS_reg16_mem16(Instruction& insn)
 {
     VM_ASSERT(a16());
     WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
@@ -901,7 +901,7 @@ void VCpu::_LSS_reg16_mem16(Instruction& insn)
     setSS(vomit_read16FromPointer(ptr + 1));
 }
 
-void VCpu::_LSS_reg32_mem32(Instruction& insn)
+void CPU::_LSS_reg32_mem32(Instruction& insn)
 {
     VM_ASSERT(a32());
     FarPointer ptr = readModRMFarPointerOffsetFirst(insn.modrm());
@@ -909,7 +909,7 @@ void VCpu::_LSS_reg32_mem32(Instruction& insn)
     setSS(ptr.segment);
 }
 
-void VCpu::_LGS_reg16_mem16(Instruction& insn)
+void CPU::_LGS_reg16_mem16(Instruction& insn)
 {
     VM_ASSERT(a16());
     WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
@@ -917,14 +917,14 @@ void VCpu::_LGS_reg16_mem16(Instruction& insn)
     setGS(vomit_read16FromPointer(ptr + 1));
 }
 
-void VCpu::_LGS_reg32_mem32(Instruction&)
+void CPU::_LGS_reg32_mem32(Instruction&)
 {
 #warning FIXME: need readModRM48
     vlog(LogAlert, "LGS reg32 mem32");
     vomit_exit(0);
 }
 
-void VCpu::_LEA_reg32_mem32(Instruction& insn)
+void CPU::_LEA_reg32_mem32(Instruction& insn)
 {
     auto& modrm = insn.modrm();
     if (modrm.isRegister()) {
@@ -936,7 +936,7 @@ void VCpu::_LEA_reg32_mem32(Instruction& insn)
     insn.reg32() = modrm.offset();
 }
 
-void VCpu::_LEA_reg16_mem16(Instruction& insn)
+void CPU::_LEA_reg16_mem16(Instruction& insn)
 {
     auto& modrm = insn.modrm();
     if (modrm.isRegister()) {
@@ -948,7 +948,7 @@ void VCpu::_LEA_reg16_mem16(Instruction& insn)
     insn.reg16() = modrm.offset();
 }
 
-DWORD VCpu::translateAddress(DWORD address)
+DWORD CPU::translateAddress(DWORD address)
 {
     VM_ASSERT(getPG());
 
@@ -959,17 +959,17 @@ DWORD VCpu::translateAddress(DWORD address)
     return address;
 }
 
-static const char* toString(VCpu::MemoryAccessType type)
+static const char* toString(CPU::MemoryAccessType type)
 {
     switch (type) {
-    case VCpu::MemoryAccessType::Read: return "Read";
-    case VCpu::MemoryAccessType::Write: return "Write";
+    case CPU::MemoryAccessType::Read: return "Read";
+    case CPU::MemoryAccessType::Write: return "Write";
     default: return "(wat)";
     }
 }
 
 template<typename T>
-bool VCpu::validateAddress(const SegmentSelector& selector, DWORD offset, MemoryAccessType accessType)
+bool CPU::validateAddress(const SegmentSelector& selector, DWORD offset, MemoryAccessType accessType)
 {
     VM_ASSERT(getPE());
 
@@ -1008,19 +1008,19 @@ bool VCpu::validateAddress(const SegmentSelector& selector, DWORD offset, Memory
 }
 
 template<typename T>
-bool VCpu::validateAddress(SegmentRegisterIndex registerIndex, DWORD offset, MemoryAccessType accessType)
+bool CPU::validateAddress(SegmentRegisterIndex registerIndex, DWORD offset, MemoryAccessType accessType)
 {
     return validateAddress<T>(m_selector[(int)registerIndex], offset, accessType);
 }
 
 template<typename T>
-bool VCpu::validateAddress(WORD segmentIndex, DWORD offset, MemoryAccessType accessType)
+bool CPU::validateAddress(WORD segmentIndex, DWORD offset, MemoryAccessType accessType)
 {
     return validateAddress<T>(makeSegmentSelector(segmentIndex), offset, accessType);
 }
 
 template<typename T>
-T VCpu::readMemory(DWORD address)
+T CPU::readMemory(DWORD address)
 {
     address &= a20Mask();
     if (getPG()) {
@@ -1041,7 +1041,7 @@ T VCpu::readMemory(DWORD address)
 }
 
 template<typename T>
-T VCpu::readMemory(const SegmentSelector& selector, DWORD offset)
+T CPU::readMemory(const SegmentSelector& selector, DWORD offset)
 {
     if (getPE()) {
         if (!validateAddress<T>(selector, offset, MemoryAccessType::Read)) {
@@ -1067,13 +1067,13 @@ T VCpu::readMemory(const SegmentSelector& selector, DWORD offset)
 }
 
 template<typename T>
-T VCpu::readMemory(WORD segmentIndex, DWORD offset)
+T CPU::readMemory(WORD segmentIndex, DWORD offset)
 {
     return readMemory<T>(makeSegmentSelector(segmentIndex), offset);
 }
 
 template<typename T>
-T VCpu::readMemory(SegmentRegisterIndex segment, DWORD offset)
+T CPU::readMemory(SegmentRegisterIndex segment, DWORD offset)
 {
     auto& selector = m_selector[(int)segment];
     if (!getPE())
@@ -1081,26 +1081,26 @@ T VCpu::readMemory(SegmentRegisterIndex segment, DWORD offset)
     return readMemory<T>(selector, offset);
 }
 
-template BYTE VCpu::readMemory<BYTE>(SegmentRegisterIndex, DWORD);
-template WORD VCpu::readMemory<WORD>(SegmentRegisterIndex, DWORD);
-template DWORD VCpu::readMemory<DWORD>(SegmentRegisterIndex, DWORD);
+template BYTE CPU::readMemory<BYTE>(SegmentRegisterIndex, DWORD);
+template WORD CPU::readMemory<WORD>(SegmentRegisterIndex, DWORD);
+template DWORD CPU::readMemory<DWORD>(SegmentRegisterIndex, DWORD);
 
-template void VCpu::writeMemory<BYTE>(SegmentRegisterIndex, DWORD, BYTE);
-template void VCpu::writeMemory<WORD>(SegmentRegisterIndex, DWORD, WORD);
-template void VCpu::writeMemory<DWORD>(SegmentRegisterIndex, DWORD, DWORD);
+template void CPU::writeMemory<BYTE>(SegmentRegisterIndex, DWORD, BYTE);
+template void CPU::writeMemory<WORD>(SegmentRegisterIndex, DWORD, WORD);
+template void CPU::writeMemory<DWORD>(SegmentRegisterIndex, DWORD, DWORD);
 
-BYTE VCpu::readMemory8(DWORD address) { return readMemory<BYTE>(address); }
-WORD VCpu::readMemory16(DWORD address) { return readMemory<WORD>(address); }
-DWORD VCpu::readMemory32(DWORD address) { return readMemory<DWORD>(address); }
-BYTE VCpu::readMemory8(WORD segmentIndex, DWORD offset) { return readMemory<BYTE>(segmentIndex, offset); }
-WORD VCpu::readMemory16(WORD segmentIndex, DWORD offset) { return readMemory<WORD>(segmentIndex, offset); }
-DWORD VCpu::readMemory32(WORD segmentIndex, DWORD offset) { return readMemory<DWORD>(segmentIndex, offset); }
-BYTE VCpu::readMemory8(SegmentRegisterIndex segment, DWORD offset) { return readMemory<BYTE>(segment, offset); }
-WORD VCpu::readMemory16(SegmentRegisterIndex segment, DWORD offset) { return readMemory<WORD>(segment, offset); }
-DWORD VCpu::readMemory32(SegmentRegisterIndex segment, DWORD offset) { return readMemory<DWORD>(segment, offset); }
+BYTE CPU::readMemory8(DWORD address) { return readMemory<BYTE>(address); }
+WORD CPU::readMemory16(DWORD address) { return readMemory<WORD>(address); }
+DWORD CPU::readMemory32(DWORD address) { return readMemory<DWORD>(address); }
+BYTE CPU::readMemory8(WORD segmentIndex, DWORD offset) { return readMemory<BYTE>(segmentIndex, offset); }
+WORD CPU::readMemory16(WORD segmentIndex, DWORD offset) { return readMemory<WORD>(segmentIndex, offset); }
+DWORD CPU::readMemory32(WORD segmentIndex, DWORD offset) { return readMemory<DWORD>(segmentIndex, offset); }
+BYTE CPU::readMemory8(SegmentRegisterIndex segment, DWORD offset) { return readMemory<BYTE>(segment, offset); }
+WORD CPU::readMemory16(SegmentRegisterIndex segment, DWORD offset) { return readMemory<WORD>(segment, offset); }
+DWORD CPU::readMemory32(SegmentRegisterIndex segment, DWORD offset) { return readMemory<DWORD>(segment, offset); }
 
 template<typename T>
-void VCpu::writeMemory(DWORD address, T value)
+void CPU::writeMemory(DWORD address, T value)
 {
     assert(!getPE());
     address &= a20Mask();
@@ -1121,7 +1121,7 @@ void VCpu::writeMemory(DWORD address, T value)
 }
 
 template<typename T>
-void VCpu::writeMemory(WORD segmentIndex, DWORD offset, T value)
+void CPU::writeMemory(WORD segmentIndex, DWORD offset, T value)
 {
     if (getPE()) {
         if (!validateAddress<T>(segmentIndex, offset, MemoryAccessType::Write)) {
@@ -1145,7 +1145,7 @@ void VCpu::writeMemory(WORD segmentIndex, DWORD offset, T value)
 }
 
 template<typename T>
-void VCpu::writeMemory(SegmentRegisterIndex segment, DWORD offset, T value)
+void CPU::writeMemory(SegmentRegisterIndex segment, DWORD offset, T value)
 {
     auto& selector = m_selector[(int)segment];
     if (!getPE())
@@ -1153,17 +1153,17 @@ void VCpu::writeMemory(SegmentRegisterIndex segment, DWORD offset, T value)
     return writeMemory<T>(getSegment(segment), offset, value);
 }
 
-void VCpu::writeMemory8(DWORD address, BYTE value) { writeMemory(address, value); }
-void VCpu::writeMemory16(DWORD address, WORD value) { writeMemory(address, value); }
-void VCpu::writeMemory32(DWORD address, DWORD value) { writeMemory(address, value); }
-void VCpu::writeMemory8(WORD segment, DWORD offset, BYTE value) { writeMemory(segment, offset, value); }
-void VCpu::writeMemory16(WORD segment, DWORD offset, WORD value) { writeMemory(segment, offset, value); }
-void VCpu::writeMemory32(WORD segment, DWORD offset, DWORD value) { writeMemory(segment, offset, value); }
-void VCpu::writeMemory8(SegmentRegisterIndex segment, DWORD offset, BYTE value) { writeMemory(segment, offset, value); }
-void VCpu::writeMemory16(SegmentRegisterIndex segment, DWORD offset, WORD value) { writeMemory(segment, offset, value); }
-void VCpu::writeMemory32(SegmentRegisterIndex segment, DWORD offset, DWORD value) { writeMemory(segment, offset, value); }
+void CPU::writeMemory8(DWORD address, BYTE value) { writeMemory(address, value); }
+void CPU::writeMemory16(DWORD address, WORD value) { writeMemory(address, value); }
+void CPU::writeMemory32(DWORD address, DWORD value) { writeMemory(address, value); }
+void CPU::writeMemory8(WORD segment, DWORD offset, BYTE value) { writeMemory(segment, offset, value); }
+void CPU::writeMemory16(WORD segment, DWORD offset, WORD value) { writeMemory(segment, offset, value); }
+void CPU::writeMemory32(WORD segment, DWORD offset, DWORD value) { writeMemory(segment, offset, value); }
+void CPU::writeMemory8(SegmentRegisterIndex segment, DWORD offset, BYTE value) { writeMemory(segment, offset, value); }
+void CPU::writeMemory16(SegmentRegisterIndex segment, DWORD offset, WORD value) { writeMemory(segment, offset, value); }
+void CPU::writeMemory32(SegmentRegisterIndex segment, DWORD offset, DWORD value) { writeMemory(segment, offset, value); }
 
-void VCpu::updateSizeModes()
+void CPU::updateSizeModes()
 {
     m_shouldRestoreSizesAfterOverride = false;
 
@@ -1180,43 +1180,43 @@ void VCpu::updateSizeModes()
     vlog(LogCPU, "PE=%u X:%u O:%u A:%u (newCS: %04X)", getPE(), x16() ? 16 : 32, o16() ? 16 : 32, a16() ? 16 : 32, CS);
 }
 
-void VCpu::setCS(WORD value)
+void CPU::setCS(WORD value)
 {
     this->CS = value;
     syncSegmentRegister(SegmentRegisterIndex::CS);
 }
 
-void VCpu::setDS(WORD value)
+void CPU::setDS(WORD value)
 {
     this->DS = value;
     syncSegmentRegister(SegmentRegisterIndex::DS);
 }
 
-void VCpu::setES(WORD value)
+void CPU::setES(WORD value)
 {
     this->ES = value;
     syncSegmentRegister(SegmentRegisterIndex::ES);
 }
 
-void VCpu::setSS(WORD value)
+void CPU::setSS(WORD value)
 {
     this->SS = value;
     syncSegmentRegister(SegmentRegisterIndex::SS);
 }
 
-void VCpu::setFS(WORD value)
+void CPU::setFS(WORD value)
 {
     this->FS = value;
     syncSegmentRegister(SegmentRegisterIndex::FS);
 }
 
-void VCpu::setGS(WORD value)
+void CPU::setGS(WORD value)
 {
     this->GS = value;
     syncSegmentRegister(SegmentRegisterIndex::GS);
 }
 
-BYTE* VCpu::memoryPointer(SegmentRegisterIndex segment, DWORD offset)
+BYTE* CPU::memoryPointer(SegmentRegisterIndex segment, DWORD offset)
 {
     auto& selector = m_selector[(int)segment];
     if (!getPE())
@@ -1224,7 +1224,7 @@ BYTE* VCpu::memoryPointer(SegmentRegisterIndex segment, DWORD offset)
     return memoryPointer(getSegment(segment), offset);
 }
 
-BYTE* VCpu::memoryPointer(WORD segmentIndex, DWORD offset)
+BYTE* CPU::memoryPointer(WORD segmentIndex, DWORD offset)
 {
     if (getPE()) {
         if (!validateAddress<BYTE>(segmentIndex, offset, MemoryAccessType::Read)) {
@@ -1243,13 +1243,13 @@ BYTE* VCpu::memoryPointer(WORD segmentIndex, DWORD offset)
     return memoryPointer(vomit_toFlatAddress(segmentIndex, offset));
 }
 
-BYTE* VCpu::memoryPointer(DWORD address)
+BYTE* CPU::memoryPointer(DWORD address)
 {
     address &= a20Mask();
     return &m_memory[address];
 }
 
-BYTE VCpu::fetchOpcodeByte()
+BYTE CPU::fetchOpcodeByte()
 {
     if (x32())
         return m_codeMemory[this->EIP++];
@@ -1262,7 +1262,7 @@ BYTE VCpu::fetchOpcodeByte()
 #endif
 }
 
-WORD VCpu::fetchOpcodeWord()
+WORD CPU::fetchOpcodeWord()
 {
     WORD w;
     if (x32()) {
@@ -1280,7 +1280,7 @@ WORD VCpu::fetchOpcodeWord()
 #endif
 }
 
-DWORD VCpu::fetchOpcodeDWord()
+DWORD CPU::fetchOpcodeDWord()
 {
     DWORD d;
     if (x32()) {
@@ -1298,7 +1298,7 @@ DWORD VCpu::fetchOpcodeDWord()
 #endif
 }
 
-void VCpu::_CPUID(Instruction&)
+void CPU::_CPUID(Instruction&)
 {
     if (getEAX() == 0) {
         // 56 6f 6d 69 74 4d 61 63 68 69 6e 65
@@ -1309,7 +1309,7 @@ void VCpu::_CPUID(Instruction&)
     }
 }
 
-void VCpu::initWatches()
+void CPU::initWatches()
 {
 #ifdef SLACKWARE33_DEBUG
     //m_watches.append(WatchedAddress{ name, address, size, breakOnChange? });

@@ -157,7 +157,7 @@ void PIC::raiseIRQ(Machine& machine, BYTE num)
     updatePendingRequests(machine);
 }
 
-void PIC::serviceIRQ(VCpu& cpu)
+void PIC::serviceIRQ(CPU& cpu)
 {
     QMutexLocker lockerGlobal(&s_mutex);
     Machine& machine = cpu.machine();
@@ -191,5 +191,5 @@ void PIC::serviceIRQ(VCpu& cpu)
     lockerGlobal.unlock();
     updatePendingRequests(machine);
 
-    cpu.setState(VCpu::Alive);
+    cpu.setState(CPU::Alive);
 }

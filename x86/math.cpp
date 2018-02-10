@@ -27,7 +27,7 @@
 #include "templates.h"
 
 template<typename T>
-inline void updateCpuMathFlags(VCpu& cpu, QWORD result, T dest, T src)
+inline void updateCpuMathFlags(CPU& cpu, QWORD result, T dest, T src)
 {
     if (BitSizeOfType<T>::bits == 8)
         cpu.mathFlags8(result, dest, src);
@@ -38,7 +38,7 @@ inline void updateCpuMathFlags(VCpu& cpu, QWORD result, T dest, T src)
 }
 
 template<typename T>
-inline void updateCpuCmpFlags(VCpu& cpu, QWORD result, T dest, T src)
+inline void updateCpuCmpFlags(CPU& cpu, QWORD result, T dest, T src)
 {
     if (BitSizeOfType<T>::bits == 8)
         cpu.cmpFlags8(result, dest, src);
@@ -49,7 +49,7 @@ inline void updateCpuCmpFlags(VCpu& cpu, QWORD result, T dest, T src)
 }
 
 template<typename T>
-QWORD VCpu::doAdd(T dest, T src)
+QWORD CPU::doAdd(T dest, T src)
 {
     QWORD result = (QWORD)dest + (QWORD)src;
     updateCpuMathFlags(*this, result, dest, src);
@@ -61,7 +61,7 @@ QWORD VCpu::doAdd(T dest, T src)
 }
 
 template<typename T>
-QWORD VCpu::doAdc(T dest, T src)
+QWORD CPU::doAdc(T dest, T src)
 {
     QWORD result = (QWORD)dest + (QWORD)src + (QWORD)getCF();
 
@@ -74,7 +74,7 @@ QWORD VCpu::doAdc(T dest, T src)
 }
 
 template<typename T>
-QWORD VCpu::doSub(T dest, T src)
+QWORD CPU::doSub(T dest, T src)
 {
     QWORD result = (QWORD)dest - (QWORD)src;
     updateCpuCmpFlags(*this, result, dest, src);
@@ -82,7 +82,7 @@ QWORD VCpu::doSub(T dest, T src)
 }
 
 template<typename T>
-QWORD VCpu::doSbb(T dest, T src)
+QWORD CPU::doSbb(T dest, T src)
 {
     QWORD result = (QWORD)dest - (QWORD)src - (QWORD)getCF();
     updateCpuCmpFlags(*this, result, dest, src);
@@ -90,7 +90,7 @@ QWORD VCpu::doSbb(T dest, T src)
 }
 
 template<typename T>
-QWORD VCpu::doMul(T acc, T multi)
+QWORD CPU::doMul(T acc, T multi)
 {
     QWORD result = (QWORD)acc * (QWORD)multi;
     updateCpuMathFlags(*this, result, acc, multi);
@@ -98,7 +98,7 @@ QWORD VCpu::doMul(T acc, T multi)
 }
 
 template<typename T>
-SIGNED_QWORD VCpu::doImul(T acc, T multi)
+SIGNED_QWORD CPU::doImul(T acc, T multi)
 {
     // FIXME: This function should protect against T being an unsigned type.
     SIGNED_QWORD result = (SIGNED_QWORD)acc * (SIGNED_QWORD)multi;
@@ -180,7 +180,7 @@ READONLY_AL_imm8(doSub, _CMP_AL_imm8)
 READONLY_AX_imm16(doSub, _CMP_AX_imm16)
 READONLY_EAX_imm32(doSub, _CMP_EAX_imm32)
 
-void VCpu::_MUL_RM8(Instruction& insn)
+void CPU::_MUL_RM8(Instruction& insn)
 {
     regs.W.AX = doMul(regs.B.AL, insn.modrm().read8());
 
@@ -193,7 +193,7 @@ void VCpu::_MUL_RM8(Instruction& insn)
     }
 }
 
-void VCpu::_MUL_RM16(Instruction& insn)
+void CPU::_MUL_RM16(Instruction& insn)
 {
     DWORD result = doMul(regs.W.AX, insn.modrm().read16());
     regs.W.AX = result & 0xFFFF;
@@ -208,7 +208,7 @@ void VCpu::_MUL_RM16(Instruction& insn)
     }
 }
 
-void VCpu::_MUL_RM32(Instruction& insn)
+void CPU::_MUL_RM32(Instruction& insn)
 {
     QWORD result = doMul(regs.D.EAX, insn.modrm().read32());
     setEAX(result & 0xFFFFFFFF);
@@ -223,7 +223,7 @@ void VCpu::_MUL_RM32(Instruction& insn)
     }
 }
 
-void VCpu::_IMUL_RM8(Instruction& insn)
+void CPU::_IMUL_RM8(Instruction& insn)
 {
     SIGNED_BYTE value = insn.modrm().read8();
     SIGNED_WORD result = doImul(static_cast<SIGNED_BYTE>(getAL()), value);
@@ -238,19 +238,19 @@ void VCpu::_IMUL_RM8(Instruction& insn)
     }
 }
 
-void VCpu::_IMUL_reg32_RM32_imm8(Instruction&)
+void CPU::_IMUL_reg32_RM32_imm8(Instruction&)
 {
     vlog(LogCPU, "Not implemented: IMUL reg32,rm32,imm8");
     vomit_exit(1);
 }
 
-void VCpu::_IMUL_reg32_RM32_imm32(Instruction&)
+void CPU::_IMUL_reg32_RM32_imm32(Instruction&)
 {
     vlog(LogCPU, "Not implemented: IMUL reg32,rm32,imm32");
     vomit_exit(1);
 }
 
-void VCpu::_IMUL_reg16_RM16_imm16(Instruction& insn)
+void CPU::_IMUL_reg16_RM16_imm16(Instruction& insn)
 {
     SIGNED_WORD value = insn.modrm().read16();
     SIGNED_DWORD result = doImul(value, static_cast<SIGNED_WORD>(insn.imm16()));
@@ -266,7 +266,7 @@ void VCpu::_IMUL_reg16_RM16_imm16(Instruction& insn)
     }
 }
 
-void VCpu::_IMUL_reg16_RM16(Instruction& insn)
+void CPU::_IMUL_reg16_RM16(Instruction& insn)
 {
     SIGNED_WORD src = insn.modrm().read16();
     SIGNED_WORD dest = insn.reg16();
@@ -283,7 +283,7 @@ void VCpu::_IMUL_reg16_RM16(Instruction& insn)
     }
 }
 
-void VCpu::_IMUL_reg32_RM32(Instruction& insn)
+void CPU::_IMUL_reg32_RM32(Instruction& insn)
 {
     SIGNED_DWORD src = insn.modrm().read32();
     SIGNED_DWORD dest = insn.reg32();
@@ -300,7 +300,7 @@ void VCpu::_IMUL_reg32_RM32(Instruction& insn)
     }
 }
 
-void VCpu::_IMUL_reg16_RM16_imm8(Instruction& insn)
+void CPU::_IMUL_reg16_RM16_imm8(Instruction& insn)
 {
     SIGNED_WORD value = insn.modrm().read16();
     SIGNED_DWORD result = doImul(value, static_cast<SIGNED_WORD>(insn.imm8()));
@@ -316,7 +316,7 @@ void VCpu::_IMUL_reg16_RM16_imm8(Instruction& insn)
     }
 }
 
-void VCpu::_IMUL_RM16(Instruction& insn)
+void CPU::_IMUL_RM16(Instruction& insn)
 {
     SIGNED_WORD value = insn.modrm().read16();
     SIGNED_DWORD result = doImul(static_cast<SIGNED_WORD>(getAX()), value);
@@ -332,12 +332,12 @@ void VCpu::_IMUL_RM16(Instruction& insn)
     }
 }
 
-void VCpu::_IMUL_RM32(Instruction&)
+void CPU::_IMUL_RM32(Instruction&)
 {
     VM_ASSERT(false);
 }
 
-void VCpu::_DIV_RM8(Instruction& insn)
+void CPU::_DIV_RM8(Instruction& insn)
 {
     auto value = insn.modrm().read8();
     WORD tAX = regs.W.AX;
@@ -352,7 +352,7 @@ void VCpu::_DIV_RM8(Instruction& insn)
     regs.B.AH = (BYTE)(tAX % value); // Remainder
 }
 
-void VCpu::_DIV_RM16(Instruction& insn)
+void CPU::_DIV_RM16(Instruction& insn)
 {
     auto value = insn.modrm().read16();
     DWORD tDXAX = regs.W.AX + (regs.W.DX << 16);
@@ -367,7 +367,7 @@ void VCpu::_DIV_RM16(Instruction& insn)
     regs.W.DX = (WORD)(tDXAX % value); // Remainder
 }
 
-void VCpu::_DIV_RM32(Instruction& insn)
+void CPU::_DIV_RM32(Instruction& insn)
 {
     DWORD value = insn.modrm().read32();
     QWORD tEDXEAX = getEAX() | ((QWORD)getEDX() << 32);
@@ -382,7 +382,7 @@ void VCpu::_DIV_RM32(Instruction& insn)
     setEDX(tEDXEAX % value); // Remainder
 }
 
-void VCpu::_IDIV_RM8(Instruction& insn)
+void CPU::_IDIV_RM8(Instruction& insn)
 {
     SIGNED_BYTE value = (SIGNED_BYTE)insn.modrm().read8();
     SIGNED_WORD tAX = (SIGNED_WORD)regs.W.AX;
@@ -397,7 +397,7 @@ void VCpu::_IDIV_RM8(Instruction& insn)
     regs.B.AH = (SIGNED_BYTE)(tAX % value); // Remainder
 }
 
-void VCpu::_IDIV_RM16(Instruction& insn)
+void CPU::_IDIV_RM16(Instruction& insn)
 {
     SIGNED_WORD value = insn.modrm().read16();
     SIGNED_DWORD tDXAX = (regs.W.AX + (regs.W.DX << 16));
@@ -412,7 +412,7 @@ void VCpu::_IDIV_RM16(Instruction& insn)
     regs.W.DX = (SIGNED_WORD)(tDXAX % value); // Remainder
 }
 
-void VCpu::_IDIV_RM32(Instruction& insn)
+void CPU::_IDIV_RM32(Instruction& insn)
 {
     SIGNED_DWORD value = insn.modrm().read32();
     SIGNED_QWORD tEDXEAX = ((QWORD)regs.D.EAX + ((QWORD)regs.D.EDX << 32));
@@ -427,19 +427,19 @@ void VCpu::_IDIV_RM32(Instruction& insn)
     regs.D.EDX = (SIGNED_DWORD)(tEDXEAX % value); // Remainder
 }
 
-void VCpu::_NEG_RM8(Instruction& insn)
+void CPU::_NEG_RM8(Instruction& insn)
 {
     auto& modrm = insn.modrm();
     modrm.write8(doSub((BYTE)0, modrm.read8()));
 }
 
-void VCpu::_NEG_RM16(Instruction& insn)
+void CPU::_NEG_RM16(Instruction& insn)
 {
     auto& modrm = insn.modrm();
     modrm.write16(doSub((WORD)0, modrm.read16()));
 }
 
-void VCpu::_NEG_RM32(Instruction& insn)
+void CPU::_NEG_RM32(Instruction& insn)
 {
     auto& modrm = insn.modrm();
     modrm.write32(doSub((DWORD)0, modrm.read32()));

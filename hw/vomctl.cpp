@@ -90,7 +90,7 @@ BYTE VomCtl::in8(WORD port)
 
 void VomCtl::out8(WORD port, BYTE data)
 {
-    extern void vm_call8(VCpu&, WORD port, BYTE value);
+    extern void vm_call8(CPU&, WORD port, BYTE value);
 
     switch (port) {
     case 0xD6: // VOMCTL_REGISTER

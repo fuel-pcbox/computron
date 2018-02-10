@@ -35,9 +35,9 @@
 
 static void vga_scrollup(BYTE x1, BYTE y1, BYTE x2, BYTE y2, BYTE num, BYTE attr);
 static void vga_scrolldown(BYTE x1, BYTE y1, BYTE x2, BYTE y2, BYTE num, BYTE attr);
-static void vm_handleE6(VCpu& cpu);
+static void vm_handleE6(CPU& cpu);
 
-void vm_call8(VCpu& cpu, WORD port, BYTE data) {
+void vm_call8(CPU& cpu, WORD port, BYTE data) {
     switch (port) {
     case 0xE0:
         vlog(LogAlert, "Interrupt %02X, function %04X requested", cpu.getBL(), cpu.getAX());
@@ -70,7 +70,7 @@ void vm_call8(VCpu& cpu, WORD port, BYTE data) {
     }
 }
 
-void vm_handleE6(VCpu& cpu)
+void vm_handleE6(CPU& cpu)
 {
     extern WORD kbd_hit();
     extern WORD kbd_getc();

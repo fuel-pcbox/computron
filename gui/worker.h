@@ -29,13 +29,13 @@
 #include <QtCore/QThread>
 #include <QtCore/QMutex>
 
-class VCpu;
+class CPU;
 
 class Worker : public QThread
 {
     Q_OBJECT
 public:
-    explicit Worker(VCpu&);
+    explicit Worker(CPU&);
     virtual ~Worker();
 
     void startMachine();
@@ -47,7 +47,7 @@ public slots:
     void shutdown();
 
 private:
-    VCpu& m_cpu;
+    CPU& m_cpu;
     bool m_active;
 };
 

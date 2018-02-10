@@ -27,13 +27,13 @@
 #include "vcpu.h"
 #include "debug.h"
 
-void VCpu::_BOUND(Instruction&)
+void CPU::_BOUND(Instruction&)
 {
     VM_ASSERT(false);
 #if 0
     BYTE rm = fetchOpcodeByte();
     WORD* ptr = static_cast<WORD*>(resolveModRM(rm).memoryPointer());
-    WORD index = getRegister16(static_cast<VCpu::RegisterIndex16>(vomit_modRMRegisterPart(rm)));
+    WORD index = getRegister16(static_cast<CPU::RegisterIndex16>(vomit_modRMRegisterPart(rm)));
 
     if (index < ptr[0] || index > ptr[1]) {
         /* Raise BR exception */
@@ -42,7 +42,7 @@ void VCpu::_BOUND(Instruction&)
 #endif
 }
 
-void VCpu::_PUSH_imm8(Instruction& insn)
+void CPU::_PUSH_imm8(Instruction& insn)
 {
     if (o32())
         push32(vomit_signExtend<DWORD>(insn.imm8()));
@@ -50,12 +50,12 @@ void VCpu::_PUSH_imm8(Instruction& insn)
         push(vomit_signExtend<WORD>(insn.imm8()));
 }
 
-void VCpu::_PUSH_imm16(Instruction& insn)
+void CPU::_PUSH_imm16(Instruction& insn)
 {
     push(insn.imm16());
 }
 
-void VCpu::_ENTER(Instruction& insn)
+void CPU::_ENTER(Instruction& insn)
 {
     assert(o16());
     assert(a16());
@@ -76,7 +76,7 @@ void VCpu::_ENTER(Instruction& insn)
     setSP(getSP() - size);
 }
 
-void VCpu::_LEAVE(Instruction&)
+void CPU::_LEAVE(Instruction&)
 {
     if (o16()) {
         setSP(getBP());
@@ -87,7 +87,7 @@ void VCpu::_LEAVE(Instruction&)
     }
 }
 
-void VCpu::_PUSHA(Instruction&)
+void CPU::_PUSHA(Instruction&)
 {
     WORD oldSP = getSP();
     push(getAX());
@@ -100,7 +100,7 @@ void VCpu::_PUSHA(Instruction&)
     push(getDI());
 }
 
-void VCpu::_PUSHAD(Instruction&)
+void CPU::_PUSHAD(Instruction&)
 {
     DWORD oldESP = getESP();
     push32(getEAX());
@@ -113,7 +113,7 @@ void VCpu::_PUSHAD(Instruction&)
     push32(getEDI());
 }
 
-void VCpu::_POPA(Instruction&)
+void CPU::_POPA(Instruction&)
 {
     setDI(pop());
     setSI(pop());
@@ -125,7 +125,7 @@ void VCpu::_POPA(Instruction&)
     setAX(pop());
 }
 
-void VCpu::_POPAD(Instruction&)
+void CPU::_POPAD(Instruction&)
 {
     setEDI(pop32());
     setESI(pop32());

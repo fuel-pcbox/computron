@@ -41,7 +41,7 @@ class PIC;
 class PIT;
 class PS2;
 class Settings;
-class VCpu;
+class CPU;
 class VGA;
 class VGAMemory;
 class VomCtl;
@@ -59,7 +59,7 @@ public:
     virtual ~Machine();
 
     QString name() const { return m_name; }
-    VCpu& cpu() { return *m_cpu; }
+    CPU& cpu() { return *m_cpu; }
     VGA& vga() { return *m_vga; }
     PIT& pit() { return *m_pit; }
     BusMouse& busMouse() { return *m_busMouse; }
@@ -97,7 +97,7 @@ private:
 
     QString m_name;
     OwnPtr<Settings> m_settings;
-    OwnPtr<VCpu> m_cpu;
+    OwnPtr<CPU> m_cpu;
     OwnPtr<Worker> m_worker;
 
     // Memory mappers

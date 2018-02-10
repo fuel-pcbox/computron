@@ -36,7 +36,7 @@
 
 class Debugger;
 class Machine;
-class VCpu;
+class CPU;
 class VGAMemory;
 
 #define CALL_HANDLER(handler16, handler32) if (o16()) { handler16(insn); } else { handler32(insn); }
@@ -60,11 +60,11 @@ struct WatchedAddress {
     QWORD lastSeenValue { neverSeen };
 };
 
-class VCpu final : public InstructionStream {
+class CPU final : public InstructionStream {
     friend void buildOpcodeTablesIfNeeded();
 public:
-    explicit VCpu(Machine&);
-    ~VCpu();
+    explicit CPU(Machine&);
+    ~CPU();
 
 #ifdef VOMIT_DETERMINISTIC
     QWORD cycle() const { return m_cycle; }
@@ -482,8 +482,8 @@ public:
     enum Command { EnterMainLoop, ExitMainLoop, SoftReboot, HardReboot };
     void queueCommand(Command);
 
-    static const char* registerName(VCpu::RegisterIndex16);
-    static const char* registerName(VCpu::RegisterIndex32);
+    static const char* registerName(CPU::RegisterIndex16);
+    static const char* registerName(CPU::RegisterIndex32);
 
     bool evaluateCondition(BYTE cc) const;
 
@@ -1174,47 +1174,47 @@ private:
 #endif
 };
 
-extern VCpu* g_cpu;
+extern CPU* g_cpu;
 
-DWORD cpu_sar(VCpu&, DWORD, BYTE, BYTE);
-DWORD cpu_rcl(VCpu&, DWORD, BYTE, BYTE);
-DWORD cpu_rcr(VCpu&, DWORD, BYTE, BYTE);
+DWORD cpu_sar(CPU&, DWORD, BYTE, BYTE);
+DWORD cpu_rcl(CPU&, DWORD, BYTE, BYTE);
+DWORD cpu_rcr(CPU&, DWORD, BYTE, BYTE);
 
 // INLINE IMPLEMENTATIONS
 
-BYTE VCpu::readUnmappedMemory8(DWORD address) const
+BYTE CPU::readUnmappedMemory8(DWORD address) const
 {
     return m_memory[address];
 }
 
-WORD VCpu::readUnmappedMemory16(DWORD address) const
+WORD CPU::readUnmappedMemory16(DWORD address) const
 {
     return vomit_read16FromPointer(reinterpret_cast<WORD*>(m_memory + address));
 }
 
-DWORD VCpu::readUnmappedMemory32(DWORD address) const
+DWORD CPU::readUnmappedMemory32(DWORD address) const
 {
     return vomit_read32FromPointer(reinterpret_cast<DWORD*>(m_memory + address));
 }
 
-void VCpu::writeUnmappedMemory8(DWORD address, BYTE value)
+void CPU::writeUnmappedMemory8(DWORD address, BYTE value)
 {
     m_memory[address] = value;
 }
 
-void VCpu::writeUnmappedMemory16(DWORD address, WORD value)
+void CPU::writeUnmappedMemory16(DWORD address, WORD value)
 {
     vomit_write16ToPointer(reinterpret_cast<WORD*>(m_memory + address), value);
 }
 
-BYTE* VCpu::codeMemory() const
+BYTE* CPU::codeMemory() const
 {
     return m_codeMemory;
 }
 
 #include "debug.h"
 
-bool VCpu::evaluate(BYTE conditionCode) const
+bool CPU::evaluate(BYTE conditionCode) const
 {
     VM_ASSERT(conditionCode <= 0xF);
 

@@ -26,7 +26,7 @@
 #include "vcpu.h"
 #include "debug.h"
 
-void VCpu::push32(DWORD value)
+void CPU::push32(DWORD value)
 {
     //vlog(LogCPU, "push32: %08X", value);
     if (a16()) {
@@ -38,7 +38,7 @@ void VCpu::push32(DWORD value)
     }
 }
 
-void VCpu::push(WORD value)
+void CPU::push(WORD value)
 {
     //vlog(LogCPU, "push16: %04X", value);
     if (a16()) {
@@ -56,7 +56,7 @@ void VCpu::push(WORD value)
     }
 }
 
-DWORD VCpu::pop32()
+DWORD CPU::pop32()
 {
     DWORD d;
     if (a16()) {
@@ -70,7 +70,7 @@ DWORD VCpu::pop32()
     return d;
 }
 
-WORD VCpu::pop()
+WORD CPU::pop()
 {
     WORD w;
     if (a16()) {
@@ -90,102 +90,102 @@ WORD VCpu::pop()
     return w;
 }
 
-void VCpu::_PUSH_reg16(Instruction& insn)
+void CPU::_PUSH_reg16(Instruction& insn)
 {
     push(insn.reg16());
 }
 
-void VCpu::_PUSH_reg32(Instruction& insn)
+void CPU::_PUSH_reg32(Instruction& insn)
 {
     push32(insn.reg32());
 }
 
-void VCpu::_POP_reg16(Instruction& insn)
+void CPU::_POP_reg16(Instruction& insn)
 {
     insn.reg16() = pop();
 }
 
-void VCpu::_POP_reg32(Instruction& insn)
+void CPU::_POP_reg32(Instruction& insn)
 {
     insn.reg32() = pop32();
 }
 
-void VCpu::_PUSH_RM16(Instruction& insn)
+void CPU::_PUSH_RM16(Instruction& insn)
 {
     push(insn.modrm().read16());
 }
 
-void VCpu::_PUSH_RM32(Instruction& insn)
+void CPU::_PUSH_RM32(Instruction& insn)
 {
     push32(insn.modrm().read32());
 }
 
-void VCpu::_POP_RM16(Instruction& insn)
+void CPU::_POP_RM16(Instruction& insn)
 {
     insn.modrm().write16(pop());
 }
 
-void VCpu::_POP_RM32(Instruction& insn)
+void CPU::_POP_RM32(Instruction& insn)
 {
     insn.modrm().write32(pop32());
 }
 
-void VCpu::_PUSH_CS(Instruction&)
+void CPU::_PUSH_CS(Instruction&)
 {
     push(getCS());
 }
 
-void VCpu::_PUSH_DS(Instruction&)
+void CPU::_PUSH_DS(Instruction&)
 {
     push(getDS());
 }
 
-void VCpu::_PUSH_ES(Instruction&)
+void CPU::_PUSH_ES(Instruction&)
 {
     push(getES());
 }
 
-void VCpu::_PUSH_SS(Instruction&)
+void CPU::_PUSH_SS(Instruction&)
 {
     push(getSS());
 }
 
-void VCpu::_PUSH_FS(Instruction&)
+void CPU::_PUSH_FS(Instruction&)
 {
     push(getFS());
 }
 
-void VCpu::_PUSH_GS(Instruction&)
+void CPU::_PUSH_GS(Instruction&)
 {
     push(getGS());
 }
 
-void VCpu::_POP_DS(Instruction&)
+void CPU::_POP_DS(Instruction&)
 {
     setDS(pop());
 }
 
-void VCpu::_POP_ES(Instruction&)
+void CPU::_POP_ES(Instruction&)
 {
     setES(pop());
 }
 
-void VCpu::_POP_SS(Instruction&)
+void CPU::_POP_SS(Instruction&)
 {
     setSS(pop());
 }
 
-void VCpu::_POP_FS(Instruction&)
+void CPU::_POP_FS(Instruction&)
 {
     setFS(pop());
 }
 
-void VCpu::_POP_GS(Instruction&)
+void CPU::_POP_GS(Instruction&)
 {
     setGS(pop());
 }
 
-void VCpu::_PUSHFD(Instruction&)
+void CPU::_PUSHFD(Instruction&)
 {
     if (!getPE() || (getPE() && ((!getVM() || (getVM() && getIOPL() == 3)))))
         push32(getEFlags() & 0x00FCFFFF);
@@ -193,12 +193,12 @@ void VCpu::_PUSHFD(Instruction&)
         GP(0);
 }
 
-void VCpu::_PUSH_imm32(Instruction& insn)
+void CPU::_PUSH_imm32(Instruction& insn)
 {
     push32(insn.imm32());
 }
 
-void VCpu::_PUSHF(Instruction&)
+void CPU::_PUSHF(Instruction&)
 {
     if (!getPE() || (getPE() && ((!getVM() || (getVM() && getIOPL() == 3)))))
         push(getFlags());
@@ -206,7 +206,7 @@ void VCpu::_PUSHF(Instruction&)
         GP(0);
 }
 
-void VCpu::_POPF(Instruction&)
+void CPU::_POPF(Instruction&)
 {
     if (!getVM()) {
         if (getCPL() == 0)
@@ -226,7 +226,7 @@ void VCpu::_POPF(Instruction&)
     }
 }
 
-void VCpu::_POPFD(Instruction&)
+void CPU::_POPFD(Instruction&)
 {
     if (!getVM()) {
         if (getCPL() == 0)

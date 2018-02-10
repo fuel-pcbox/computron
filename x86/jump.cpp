@@ -25,7 +25,7 @@
 
 #include "vcpu.h"
 
-void VCpu::_JCXZ_imm8(Instruction& insn)
+void CPU::_JCXZ_imm8(Instruction& insn)
 {
     SIGNED_BYTE imm = insn.imm8();
     bool shouldJump;
@@ -37,61 +37,61 @@ void VCpu::_JCXZ_imm8(Instruction& insn)
         jumpRelative8(imm);
 }
 
-void VCpu::_JMP_imm16(Instruction& insn)
+void CPU::_JMP_imm16(Instruction& insn)
 {
     SIGNED_WORD imm = insn.imm16();
     jumpRelative16(imm);
 }
 
-void VCpu::_JMP_imm32(Instruction& insn)
+void CPU::_JMP_imm32(Instruction& insn)
 {
     SIGNED_DWORD imm = insn.imm32();
     jumpRelative32(imm);
 }
 
-void VCpu::_JMP_imm16_imm16(Instruction& insn)
+void CPU::_JMP_imm16_imm16(Instruction& insn)
 {
     WORD newCS = insn.imm16_1();
     WORD newIP = insn.imm16_2();
     jump16(newCS, newIP);
 }
 
-void VCpu::_JMP_imm16_imm32(Instruction& insn)
+void CPU::_JMP_imm16_imm32(Instruction& insn)
 {
     WORD newCS = insn.imm16_1();
     DWORD newEIP = insn.imm32_2();
     jump32(newCS, newEIP);
 }
 
-void VCpu::_JMP_short_imm8(Instruction& insn)
+void CPU::_JMP_short_imm8(Instruction& insn)
 {
     SIGNED_BYTE imm = insn.imm8();
     jumpRelative8(imm);
 }
 
-void VCpu::_JMP_RM16(Instruction& insn)
+void CPU::_JMP_RM16(Instruction& insn)
 {
     jumpAbsolute16(insn.modrm().read16());
 }
 
-void VCpu::_JMP_RM32(Instruction& insn)
+void CPU::_JMP_RM32(Instruction& insn)
 {
     jumpAbsolute32(insn.modrm().read32());
 }
 
-void VCpu::_JMP_FAR_mem16(Instruction& insn)
+void CPU::_JMP_FAR_mem16(Instruction& insn)
 {
     WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
     jump16(ptr[1], ptr[0]);
 }
 
-void VCpu::_JMP_FAR_mem32(Instruction&)
+void CPU::_JMP_FAR_mem32(Instruction&)
 {
     // FIXME: Implement!
     VM_ASSERT(false);
 }
 
-bool VCpu::evaluateCondition(BYTE cc) const
+bool CPU::evaluateCondition(BYTE cc) const
 {
     switch (cc) {
     case 0: return getOF();
@@ -115,18 +115,18 @@ bool VCpu::evaluateCondition(BYTE cc) const
     return false;
 }
 
-void VCpu::_SETcc_RM8(Instruction& insn)
+void CPU::_SETcc_RM8(Instruction& insn)
 {
     insn.modrm().write8(evaluateCondition(insn.cc()));
 }
 
-void VCpu::_Jcc_imm8(Instruction& insn)
+void CPU::_Jcc_imm8(Instruction& insn)
 {
     if (evaluateCondition(insn.cc()))
         jumpRelative8(insn.imm8());
 }
 
-void VCpu::_Jcc_NEAR_imm(Instruction& insn)
+void CPU::_Jcc_NEAR_imm(Instruction& insn)
 {
     if (!evaluateCondition(insn.cc()))
         return;
@@ -136,35 +136,35 @@ void VCpu::_Jcc_NEAR_imm(Instruction& insn)
         jumpRelative32(insn.imm32());
 }
 
-void VCpu::_CALL_imm16(Instruction& insn)
+void CPU::_CALL_imm16(Instruction& insn)
 {
     SIGNED_WORD imm = insn.imm16();
     pushInstructionPointer();
     jumpRelative16(imm);
 }
 
-void VCpu::_CALL_imm32(Instruction& insn)
+void CPU::_CALL_imm32(Instruction& insn)
 {
     SIGNED_DWORD imm = insn.imm32();
     pushInstructionPointer();
     jumpRelative32(imm);
 }
 
-void VCpu::_CALL_imm16_imm16(Instruction& insn)
+void CPU::_CALL_imm16_imm16(Instruction& insn)
 {
     push(getCS());
     pushInstructionPointer();
     jump16(insn.imm16_1(), insn.imm16_2());
 }
 
-void VCpu::_CALL_imm16_imm32(Instruction& insn)
+void CPU::_CALL_imm16_imm32(Instruction& insn)
 {
     push(getCS());
     pushInstructionPointer();
     jump32(insn.imm16_1(), insn.imm32_2());
 }
 
-void VCpu::_CALL_FAR_mem16(Instruction& insn)
+void CPU::_CALL_FAR_mem16(Instruction& insn)
 {
     WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
     push(getCS());
@@ -172,25 +172,25 @@ void VCpu::_CALL_FAR_mem16(Instruction& insn)
     jump16(ptr[1], ptr[0]);
 }
 
-void VCpu::_CALL_FAR_mem32(Instruction&)
+void CPU::_CALL_FAR_mem32(Instruction&)
 {
     // FIXME: Implement!
     VM_ASSERT(false);
 }
 
-void VCpu::_CALL_RM16(Instruction& insn)
+void CPU::_CALL_RM16(Instruction& insn)
 {
     pushInstructionPointer();
     jumpAbsolute16(insn.modrm().read16());
 }
 
-void VCpu::_CALL_RM32(Instruction& insn)
+void CPU::_CALL_RM32(Instruction& insn)
 {
     pushInstructionPointer();
     jumpAbsolute32(insn.modrm().read32());
 }
 
-void VCpu::_RET(Instruction&)
+void CPU::_RET(Instruction&)
 {
     if (o32())
         jumpAbsolute32(pop32());
@@ -198,7 +198,7 @@ void VCpu::_RET(Instruction&)
         jumpAbsolute16(pop());
 }
 
-void VCpu::_RET_imm16(Instruction& insn)
+void CPU::_RET_imm16(Instruction& insn)
 {
     if (o32()) {
         jumpAbsolute32(pop32());
@@ -209,7 +209,7 @@ void VCpu::_RET_imm16(Instruction& insn)
     }
 }
 
-void VCpu::_RETF(Instruction&)
+void CPU::_RETF(Instruction&)
 {
     if (o32()) {
         DWORD nip = pop32();
@@ -220,7 +220,7 @@ void VCpu::_RETF(Instruction&)
     }
 }
 
-void VCpu::_RETF_imm16(Instruction& insn)
+void CPU::_RETF_imm16(Instruction& insn)
 {
     if (o32()) {
         DWORD nip = pop32();

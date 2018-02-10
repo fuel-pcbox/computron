@@ -29,7 +29,7 @@
 #include "debug.h"
 #include "disasm.h"
 
-int VCpu::dumpDisassembled(WORD segment, DWORD offset)
+int CPU::dumpDisassembled(WORD segment, DWORD offset)
 {
     char disasm[64];
     char buf[512];
@@ -64,7 +64,7 @@ int VCpu::dumpDisassembled(WORD segment, DWORD offset)
 }
 
 #ifdef VOMIT_TRACE
-void VCpu::dumpTrace()
+void CPU::dumpTrace()
 {
 #if 0
     fprintf(stderr,
@@ -106,7 +106,7 @@ void VCpu::dumpTrace()
 }
 #endif
 
-void VCpu::dumpSelector(const char* segmentRegisterName, SegmentRegisterIndex segmentIndex)
+void CPU::dumpSelector(const char* segmentRegisterName, SegmentRegisterIndex segmentIndex)
 {
     const SegmentSelector& selector = m_selector[static_cast<int>(segmentIndex)];
     vlog(LogDump, "%s: %04X {%08X:%05X}",
@@ -117,55 +117,55 @@ void VCpu::dumpSelector(const char* segmentRegisterName, SegmentRegisterIndex se
     );
 }
 
-const char* VCpu::registerName(VCpu::RegisterIndex16 registerIndex)
+const char* CPU::registerName(CPU::RegisterIndex16 registerIndex)
 {
     switch (registerIndex) {
-    case VCpu::RegisterAX:
+    case CPU::RegisterAX:
         return "AX";
-    case VCpu::RegisterBX:
+    case CPU::RegisterBX:
         return "BX";
-    case VCpu::RegisterCX:
+    case CPU::RegisterCX:
         return "CX";
-    case VCpu::RegisterDX:
+    case CPU::RegisterDX:
         return "DX";
-    case VCpu::RegisterBP:
+    case CPU::RegisterBP:
         return "BP";
-    case VCpu::RegisterSP:
+    case CPU::RegisterSP:
         return "SP";
-    case VCpu::RegisterSI:
+    case CPU::RegisterSI:
         return "SI";
-    case VCpu::RegisterDI:
+    case CPU::RegisterDI:
         return "DI";
     }
     VM_ASSERT(false);
     return nullptr;
 }
 
-const char* VCpu::registerName(VCpu::RegisterIndex32 registerIndex)
+const char* CPU::registerName(CPU::RegisterIndex32 registerIndex)
 {
     switch (registerIndex) {
-    case VCpu::RegisterEAX:
+    case CPU::RegisterEAX:
         return "EAX";
-    case VCpu::RegisterEBX:
+    case CPU::RegisterEBX:
         return "EBX";
-    case VCpu::RegisterECX:
+    case CPU::RegisterECX:
         return "ECX";
-    case VCpu::RegisterEDX:
+    case CPU::RegisterEDX:
         return "EDX";
-    case VCpu::RegisterEBP:
+    case CPU::RegisterEBP:
         return "EBP";
-    case VCpu::RegisterESP:
+    case CPU::RegisterESP:
         return "ESP";
-    case VCpu::RegisterESI:
+    case CPU::RegisterESI:
         return "ESI";
-    case VCpu::RegisterEDI:
+    case CPU::RegisterEDI:
         return "EDI";
     }
     VM_ASSERT(false);
     return nullptr;
 }
 
-void VCpu::dumpWatches()
+void CPU::dumpWatches()
 {
     for (WatchedAddress& watch : m_watches) {
         if (watch.size == ByteSize) {
@@ -190,16 +190,16 @@ void VCpu::dumpWatches()
     }
 }
 
-void VCpu::dumpAll()
+void CPU::dumpAll()
 {
     BYTE* csip = codeMemory();
 
-    auto dumpRegister = [this](VCpu::RegisterIndex16 registerIndex)
+    auto dumpRegister = [this](CPU::RegisterIndex16 registerIndex)
     {
         if (getPE())
-            vlog(LogDump, "E%s: %08X", VCpu::registerName(registerIndex), getRegister32(static_cast<VCpu::RegisterIndex32>(registerIndex)));
+            vlog(LogDump, "E%s: %08X", CPU::registerName(registerIndex), getRegister32(static_cast<CPU::RegisterIndex32>(registerIndex)));
         else
-            vlog(LogDump, "%s: %04X", VCpu::registerName(registerIndex), getRegister16(registerIndex));
+            vlog(LogDump, "%s: %04X", CPU::registerName(registerIndex), getRegister16(registerIndex));
     };
 
     dumpRegister(RegisterAX);
@@ -253,7 +253,7 @@ static inline BYTE n(BYTE b)
     return b;
 }
 
-void VCpu::dumpFlatMemory(DWORD address)
+void CPU::dumpFlatMemory(DWORD address)
 {
     address &= 0xFFFFFFF0;
 
@@ -283,7 +283,7 @@ void VCpu::dumpFlatMemory(DWORD address)
     }
 }
 
-void VCpu::dumpRawMemory(BYTE* p)
+void CPU::dumpRawMemory(BYTE* p)
 {
     int rows = 16;
     vlog(LogDump, "Raw dump %p", p);
@@ -297,7 +297,7 @@ void VCpu::dumpRawMemory(BYTE* p)
     }
 }
 
-void VCpu::dumpMemory(WORD segment, DWORD offset, int rows)
+void CPU::dumpMemory(WORD segment, DWORD offset, int rows)
 {
     offset &= 0xFFFFFFF0;
 
@@ -332,17 +332,17 @@ void VCpu::dumpMemory(WORD segment, DWORD offset, int rows)
     }
 }
 
-static inline WORD isrSegment(const VCpu& cpu, BYTE isr)
+static inline WORD isrSegment(const CPU& cpu, BYTE isr)
 {
     return cpu.readUnmappedMemory16(isr * 4) + 2;
 }
 
-static inline WORD isrOffset(const VCpu& cpu, BYTE isr)
+static inline WORD isrOffset(const CPU& cpu, BYTE isr)
 {
     return cpu.readUnmappedMemory16(isr * 4);
 }
 
-void VCpu::dumpIVT()
+void CPU::dumpIVT()
 {
     // XXX: For alignment reasons, we're skipping INT FF
     for (int i = 0; i < 0xFF; i += 4) {
@@ -356,7 +356,7 @@ void VCpu::dumpIVT()
     }
 }
 
-void VCpu::dumpSegment(const SegmentSelector& selector)
+void CPU::dumpSegment(const SegmentSelector& selector)
 {
     vlog(LogCPU, "Segment 0x%04X: { base: 0x%08X, limit: %06X, bits: %u, present: %s, granularity: %s, DPL: %u }",
         selector.index,
@@ -369,7 +369,7 @@ void VCpu::dumpSegment(const SegmentSelector& selector)
     );
 }
 
-void VCpu::dumpSegment(WORD index)
+void CPU::dumpSegment(WORD index)
 {
     dumpSegment(makeSegmentSelector(index));
 }

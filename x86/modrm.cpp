@@ -79,7 +79,7 @@ void MemoryOrRegisterReference::write8(BYTE data) { return write(data); }
 void MemoryOrRegisterReference::write16(WORD data) { return write(data); }
 void MemoryOrRegisterReference::write32(DWORD data) { VM_ASSERT(m_cpu->o32()); return write(data); }
 
-void MemoryOrRegisterReference::resolve(VCpu& cpu)
+void MemoryOrRegisterReference::resolve(CPU& cpu)
 {
     m_cpu = &cpu;
     VM_ASSERT(m_cpu->a32() == m_a32);
@@ -88,7 +88,7 @@ void MemoryOrRegisterReference::resolve(VCpu& cpu)
     return resolve16();
 }
 
-FarPointer VCpu::readModRMFarPointerSegmentFirst(MemoryOrRegisterReference& modrm)
+FarPointer CPU::readModRMFarPointerSegmentFirst(MemoryOrRegisterReference& modrm)
 {
     VM_ASSERT(!modrm.isRegister());
 
@@ -101,7 +101,7 @@ FarPointer VCpu::readModRMFarPointerSegmentFirst(MemoryOrRegisterReference& modr
     return ptr;
 }
 
-FarPointer VCpu::readModRMFarPointerOffsetFirst(MemoryOrRegisterReference& modrm)
+FarPointer CPU::readModRMFarPointerOffsetFirst(MemoryOrRegisterReference& modrm)
 {
     VM_ASSERT(!modrm.isRegister());
 

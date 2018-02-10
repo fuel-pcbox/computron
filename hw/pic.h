@@ -29,7 +29,7 @@
 #include "iodevice.h"
 #include <QtCore/QMutex>
 
-class VCpu;
+class CPU;
 
 class PIC final : public IODevice
 {
@@ -48,7 +48,7 @@ public:
     BYTE getISR() const { return m_isr; }
 
     static bool hasPendingIRQ();
-    static void serviceIRQ(VCpu&);
+    static void serviceIRQ(CPU&);
     static void raiseIRQ(Machine&, BYTE num);
 
 private:

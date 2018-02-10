@@ -28,7 +28,7 @@
 #include "debugger.h"
 
 template<typename T>
-T VCpu::doRol(T data, int steps)
+T CPU::doRol(T data, int steps)
 {
     T result = data;
     steps &= 0x1F;
@@ -45,7 +45,7 @@ T VCpu::doRol(T data, int steps)
 }
 
 template<typename T>
-T VCpu::doRor(T data, int steps)
+T CPU::doRor(T data, int steps)
 {
     T result = data;
     steps &= 0x1F;
@@ -62,7 +62,7 @@ T VCpu::doRor(T data, int steps)
 }
 
 template<typename T>
-T VCpu::rightShift(T data, int steps)
+T CPU::rightShift(T data, int steps)
 {
     T result = data;
     steps &= 0x1F;
@@ -81,7 +81,7 @@ T VCpu::rightShift(T data, int steps)
 }
 
 template<typename T>
-T VCpu::leftShift(T data, int steps)
+T CPU::leftShift(T data, int steps)
 {
     T result = data;
     steps &= 0x1F;
@@ -99,7 +99,7 @@ T VCpu::leftShift(T data, int steps)
     return result;
 }
 
-void VCpu::_wrap_0xC0(Instruction& insn)
+void CPU::_wrap_0xC0(Instruction& insn)
 {
     auto& modrm = insn.modrm();
     auto value = modrm.read8();
@@ -120,7 +120,7 @@ void VCpu::_wrap_0xC0(Instruction& insn)
     }
 }
 
-void VCpu::_wrap_0xC1_16(Instruction& insn)
+void CPU::_wrap_0xC1_16(Instruction& insn)
 {
     auto& modrm = insn.modrm();
     auto value = modrm.read16();
@@ -141,7 +141,7 @@ void VCpu::_wrap_0xC1_16(Instruction& insn)
     }
 }
 
-void VCpu::_wrap_0xC1_32(Instruction& insn)
+void CPU::_wrap_0xC1_32(Instruction& insn)
 {
     auto& modrm = insn.modrm();
     auto value = modrm.read32();
@@ -162,7 +162,7 @@ void VCpu::_wrap_0xC1_32(Instruction& insn)
     }
 }
 
-void VCpu::_wrap_0xD0(Instruction& insn)
+void CPU::_wrap_0xD0(Instruction& insn)
 {
     auto& modrm = insn.modrm();
     auto value = modrm.read8();
@@ -182,7 +182,7 @@ void VCpu::_wrap_0xD0(Instruction& insn)
     }
 }
 
-void VCpu::_wrap_0xD1_16(Instruction& insn)
+void CPU::_wrap_0xD1_16(Instruction& insn)
 {
     auto& modrm = insn.modrm();
     auto value = modrm.read16();
@@ -202,7 +202,7 @@ void VCpu::_wrap_0xD1_16(Instruction& insn)
     }
 }
 
-void VCpu::_wrap_0xD1_32(Instruction& insn)
+void CPU::_wrap_0xD1_32(Instruction& insn)
 {
     auto& modrm = insn.modrm();
     auto value = modrm.read32();
@@ -222,7 +222,7 @@ void VCpu::_wrap_0xD1_32(Instruction& insn)
     }
 }
 
-void VCpu::_wrap_0xD2(Instruction& insn)
+void CPU::_wrap_0xD2(Instruction& insn)
 {
     auto& modrm = insn.modrm();
     auto value = modrm.read8();
@@ -242,7 +242,7 @@ void VCpu::_wrap_0xD2(Instruction& insn)
     }
 }
 
-void VCpu::_wrap_0xD3_16(Instruction& insn)
+void CPU::_wrap_0xD3_16(Instruction& insn)
 {
     auto& modrm = insn.modrm();
     auto value = modrm.read16();
@@ -262,7 +262,7 @@ void VCpu::_wrap_0xD3_16(Instruction& insn)
     }
 }
 
-void VCpu::_wrap_0xD3_32(Instruction& insn)
+void CPU::_wrap_0xD3_32(Instruction& insn)
 {
     auto& modrm = insn.modrm();
     auto value = modrm.read32();

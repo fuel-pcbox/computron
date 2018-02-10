@@ -63,7 +63,7 @@ Machine::Machine(const QString& name, OwnPtr<Settings>&& settings, QObject* pare
     : QObject(parent)
     , m_name(name)
     , m_settings(std::move(settings))
-    , m_cpu(make<VCpu>(*this))
+    , m_cpu(make<CPU>(*this))
 {
     applySettings();
 
