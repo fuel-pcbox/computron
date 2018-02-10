@@ -689,8 +689,8 @@ void buildOpcodeTablesIfNeeded()
     build0FSlash(0x00, 2, "LLDT",  OP_RM16,      &VCpu::_LLDT_RM16);
     build0FSlash(0x00, 3, "LTR",   OP_RM16,      &VCpu::_LTR_RM16);
 
-    build0FSlash(0x01, 0, "SGDT",  OP,           &VCpu::_SGDT);
-    build0FSlash(0x01, 1, "SIDT",  OP,           &VCpu::_SIDT);
+    build0FSlash(0x01, 0, "SGDT",  OP_RM16,      &VCpu::_SGDT);
+    build0FSlash(0x01, 1, "SIDT",  OP_RM16,      &VCpu::_SIDT);
     build0FSlash(0x01, 2, "LGDT",  OP,           &VCpu::_LGDT);
     build0FSlash(0x01, 3, "LIDT",  OP,           &VCpu::_LIDT);
     build0FSlash(0x01, 4, "SMSW",  OP_RM16,      &VCpu::_SMSW_RM16);

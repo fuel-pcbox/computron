@@ -26,22 +26,24 @@
 #include "vcpu.h"
 #include "debugger.h"
 
-void VCpu::_SGDT(Instruction&)
+void VCpu::_SGDT(Instruction& insn)
 {
-    VM_ASSERT(false);
-    // FIXME: I don't think is implemented correctly.
-    WORD tableAddress = fetchOpcodeWord();
-    writeMemory32(currentSegment(), tableAddress + 2, GDTR.base);
-    writeMemory16(currentSegment(), tableAddress, GDTR.limit);
+    auto& modrm = insn.modrm();
+    BYTE* ptr = reinterpret_cast<BYTE*>(modrm.memoryPointer());
+    DWORD* basePtr = reinterpret_cast<DWORD*>(ptr);
+    WORD* limitPtr = reinterpret_cast<WORD*>(ptr + 4);
+    *basePtr = GDTR.base;
+    *limitPtr = GDTR.limit;
 }
 
-void VCpu::_SIDT(Instruction&)
+void VCpu::_SIDT(Instruction& insn)
 {
-    VM_ASSERT(false);
-    // FIXME: I don't think is implemented correctly.
-    WORD tableAddress = fetchOpcodeWord();
-    writeMemory32(currentSegment(), tableAddress + 2, IDTR.base);
-    writeMemory16(currentSegment(), tableAddress, IDTR.limit);
+    auto& modrm = insn.modrm();
+    BYTE* ptr = reinterpret_cast<BYTE*>(modrm.memoryPointer());
+    DWORD* basePtr = reinterpret_cast<DWORD*>(ptr);
+    WORD* limitPtr = reinterpret_cast<WORD*>(ptr + 4);
+    *basePtr = IDTR.base;
+    *limitPtr = IDTR.limit;
 }
 
 void VCpu::_SLDT_RM16(Instruction& insn)
