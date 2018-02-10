@@ -191,6 +191,7 @@ public:
     bool getVIF() const { return this->VIF; }
     bool getVM() const { return this->VM; }
     bool getPE() const { return this->CR0 & 0x01; }
+    bool getPG() const { return this->CR0 & 0x80000000; }
     bool getVME() const { return this->CR4 & 0x01; }
     bool getPVI() const { return this->CR4 & 0x02; }
 
@@ -400,6 +401,8 @@ public:
     template<typename T> void writeMemory(const SegmentSelector&, DWORD address, T data);
     template<typename T> void writeMemory(SegmentRegisterIndex, DWORD address, T data);
 
+    DWORD translateAddress(DWORD);
+
     BYTE readMemory8(DWORD address);
     BYTE readMemory8(WORD segment, DWORD offset);
     BYTE readMemory8(SegmentRegisterIndex, DWORD offset);
@@ -464,7 +467,7 @@ public:
 
     // Current execution mode (16 or 32 bit)
     bool x16() const { return !x32(); }
-    bool x32() const;
+    bool x32() const { return m_selector[(int)SegmentRegisterIndex::CS]._32bit; }
 
     bool a16() const { return !m_addressSize32; }
     virtual bool a32() const override { return m_addressSize32; }
@@ -1158,10 +1161,13 @@ private:
 
     QVector<WatchedAddress> m_watches;
 
-    QQueue<Command> m_commandQueue;
     QMutex m_commandMutex;
+    bool m_hasCommands { false };
+    QQueue<Command> m_commandQueue;
 
     bool m_shouldRestoreSizesAfterOverride { false };
+
+    bool m_isForAutotest { false };
 
 #ifdef VOMIT_DETERMINISTIC
     QWORD m_cycle { 0 };

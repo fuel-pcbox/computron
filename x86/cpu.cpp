@@ -190,7 +190,7 @@ DWORD VCpu::readInstruction32()
 void VCpu::decodeNext()
 {
 #ifdef VOMIT_TRACE
-    if (machine().isForAutotest())
+    if (m_isForAutotest)
         dumpTrace();
 #endif
 
@@ -232,6 +232,8 @@ VCpu::VCpu(Machine& m)
     : m_machine(m)
     , m_shouldBreakOutOfMainLoop(false)
 {
+    m_isForAutotest = machine().isForAutotest();
+
     buildOpcodeTablesIfNeeded();
 
     VM_ASSERT(!g_cpu);
@@ -341,7 +343,7 @@ void VCpu::reset()
 
     m_segmentPrefix = SegmentRegisterIndex::None;
 
-    if (machine().isForAutotest())
+    if (m_isForAutotest)
         jump32(machine().settings().entryCS(), machine().settings().entryIP());
     else
         jump32(0xF000, 0x00000000);
@@ -386,17 +388,21 @@ void VCpu::queueCommand(Command command)
 {
     QMutexLocker locker(&m_commandMutex);
     m_commandQueue.enqueue(command);
+    m_hasCommands = true;
 }
 
 void VCpu::flushCommandQueue()
 {
-    // FIXME: Blocking on the mutex on every pass through here is dumb.
-    //return;
+#if 0
     static int xxx = 0;
     if (++xxx >= 100) {
         usleep(1);
         xxx = 0;
     }
+#endif
+
+    if (!m_hasCommands)
+        return;
 
     QMutexLocker locker(&m_commandMutex);
     while (!m_commandQueue.isEmpty()) {
@@ -415,6 +421,8 @@ void VCpu::flushCommandQueue()
             break;
         }
     }
+
+    m_hasCommands = false;
 }
 
 void VCpu::mainLoop()
@@ -847,14 +855,6 @@ void VCpu::_LDS_reg32_mem32(Instruction&)
     vomit_exit(0);
 }
 
-bool VCpu::x32() const
-{
-    if (!getPE())
-        return false;
-
-    return m_selector[(int)SegmentRegisterIndex::CS]._32bit;
-}
-
 void VCpu::pushInstructionPointer()
 {
     if (o32())
@@ -947,6 +947,18 @@ void VCpu::_LEA_reg16_mem16(Instruction& insn)
 
     insn.reg16() = modrm.offset();
 }
+
+DWORD VCpu::translateAddress(DWORD address)
+{
+    VM_ASSERT(getPG());
+
+    DWORD dir = (address >> 22) & 0x3FF;
+    DWORD page = (address >> 12) & 0x3FF;
+    DWORD offset = address & 0xFFF;
+    vlog(LogCPU, "PG=1 Translating %08X {dir=%03X, page=%03X, offset=%03X}", address, dir, page, offset);
+    return address;
+}
+
 static const char* toString(VCpu::MemoryAccessType type)
 {
     switch (type) {
@@ -972,6 +984,10 @@ bool VCpu::validateAddress(const SegmentSelector& selector, DWORD offset, Memory
     assert(offset <= selector.effectiveLimit());
 
     DWORD flatAddress = selector.base + offset;
+    if (getPG()) {
+        flatAddress = translateAddress(flatAddress);
+    }
+
     VM_ASSERT(isA20Enabled() || !hasA20Bit(flatAddress));
 
     if (flatAddress >= m_memorySize) {
@@ -1007,6 +1023,9 @@ template<typename T>
 T VCpu::readMemory(DWORD address)
 {
     address &= a20Mask();
+    if (getPG()) {
+        address = translateAddress(address);
+    }
     T value;
     if (addressIsInVGAMemory(address))
         value = machine().vgaMemory().read<T>(address);
@@ -1030,6 +1049,11 @@ T VCpu::readMemory(const SegmentSelector& selector, DWORD offset)
             return 0;
         }
         DWORD flatAddress = selector.base + offset;
+
+        if (getPG()) {
+            flatAddress = translateAddress(flatAddress);
+        }
+
         T value = *reinterpret_cast<T*>(&m_memory[flatAddress]);
         if (options.memdebug || shouldLogMemoryRead(flatAddress)) {
             if (options.novlog)
@@ -1056,6 +1080,14 @@ T VCpu::readMemory(SegmentRegisterIndex segment, DWORD offset)
         return readMemory<T>(selector.base + offset);
     return readMemory<T>(selector, offset);
 }
+
+template BYTE VCpu::readMemory<BYTE>(SegmentRegisterIndex, DWORD);
+template WORD VCpu::readMemory<WORD>(SegmentRegisterIndex, DWORD);
+template DWORD VCpu::readMemory<DWORD>(SegmentRegisterIndex, DWORD);
+
+template void VCpu::writeMemory<BYTE>(SegmentRegisterIndex, DWORD, BYTE);
+template void VCpu::writeMemory<WORD>(SegmentRegisterIndex, DWORD, WORD);
+template void VCpu::writeMemory<DWORD>(SegmentRegisterIndex, DWORD, DWORD);
 
 BYTE VCpu::readMemory8(DWORD address) { return readMemory<BYTE>(address); }
 WORD VCpu::readMemory16(DWORD address) { return readMemory<WORD>(address); }
@@ -1098,6 +1130,11 @@ void VCpu::writeMemory(WORD segmentIndex, DWORD offset, T value)
         }
         SegmentSelector segment = makeSegmentSelector(segmentIndex);
         DWORD flatAddress = segment.base + offset;
+
+        if (getPG()) {
+            flatAddress = translateAddress(flatAddress);
+        }
+
         assert(!addressIsInVGAMemory(flatAddress));
         if (options.memdebug || shouldLogMemoryWrite(flatAddress))
             vlog(LogCPU, "%u-bit PE write [A20=%s] %04X:%08X (flat: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
@@ -1196,6 +1233,9 @@ BYTE* VCpu::memoryPointer(WORD segmentIndex, DWORD offset)
         }
         SegmentSelector segment = makeSegmentSelector(segmentIndex);
         DWORD flatAddress = segment.base + offset;
+        if (getPG()) {
+            flatAddress = translateAddress(flatAddress);
+        }
         if (options.memdebug || shouldLogMemoryPointer(flatAddress))
             vlog(LogCPU, "MemoryPointer PE [A20=%s] %04X:%08X (flat: %08X)", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress);
         return &m_memory[flatAddress];
