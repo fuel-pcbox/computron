@@ -40,6 +40,7 @@ public:
     BYTE in8(WORD port) override;
 
 private:
+    BYTE m_statusRegisterA { 0 };
     BYTE m_statusRegisterB { 0 };
     BYTE m_registerIndex { 0 };
 

@@ -45,6 +45,9 @@ void CMOS::reset()
 {
     m_registerIndex = 0;
     m_statusRegisterB = 0x00;
+
+    // FIXME: This thing needs more work, 0x26 is just an initial value.
+    m_statusRegisterA = 0x26;
 }
 
 bool CMOS::inBinaryClockMode() const
@@ -85,6 +88,7 @@ BYTE CMOS::in8(WORD)
     case 0x07: value = currentDateForCMOS().day(); break;
     case 0x08: value = currentDateForCMOS().month(); break;
     case 0x09: value = currentDateForCMOS().year() % 100; break;
+    case 0x0A: value = m_statusRegisterA; break;
     case 0x0B: value = m_statusRegisterB; break;
     case 0x15: value = vomit_LSB(g_cpu->baseMemorySize() / 1024); break;
     case 0x16: value = vomit_MSB(g_cpu->baseMemorySize() / 1024); break;
