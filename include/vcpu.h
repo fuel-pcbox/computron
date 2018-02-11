@@ -111,18 +111,18 @@ public:
 
     struct SegmentSelector {
         unsigned index { 0xFFFFFFFF };
-        unsigned DPL;
-        unsigned count;
-        bool present;
-        bool granularity;
-        bool _32bit;
-        bool executable;
-        bool DC;
-        bool RW;
-        bool accessed;
-        BYTE type;
-        DWORD base;
-        DWORD limit;
+        unsigned DPL { 0 };
+        unsigned count { 0 };
+        bool present { false };
+        bool granularity { false };
+        bool _32bit { false };
+        bool executable { false };
+        bool DC { false };
+        bool RW { false };
+        bool accessed { false };
+        BYTE type { 0 };
+        DWORD base { 0 };
+        DWORD limit { 0 };
 
         DWORD effectiveLimit() const { return granularity ? (limit * 4096) : limit; }
     };
