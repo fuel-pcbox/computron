@@ -948,6 +948,18 @@ void CPU::_LEA_reg16_mem16(Instruction& insn)
     insn.reg16() = modrm.offset();
 }
 
+enum PageTableEntryFlags {
+    Present = 0x01,
+    ReadWrite = 0x02,
+    UserSupervisor = 0x04,
+    Dirty = 0x40,
+};
+
+void CPU::pageFault(DWORD error)
+{
+
+}
+
 DWORD CPU::translateAddress(DWORD address)
 {
     VM_ASSERT(getPG());
@@ -955,8 +967,23 @@ DWORD CPU::translateAddress(DWORD address)
     DWORD dir = (address >> 22) & 0x3FF;
     DWORD page = (address >> 12) & 0x3FF;
     DWORD offset = address & 0xFFF;
-    vlog(LogCPU, "PG=1 Translating %08X {dir=%03X, page=%03X, offset=%03X}", address, dir, page, offset);
-    return address;
+
+    DWORD* PDBR = reinterpret_cast<DWORD*>(&m_memory[getCR3()]);
+    DWORD pageDirectoryEntry = PDBR[dir];
+
+    DWORD* pageTable = reinterpret_cast<DWORD*>(&m_memory[pageDirectoryEntry & 0xfffff000]);
+    DWORD pageTableEntry = pageTable[page];
+
+    if (!(pageDirectoryEntry & PageTableEntryFlags::Present) || !(pageTableEntry & PageTableEntryFlags::Present)) {
+        // FIXME: Implement!!
+        pageFault(0);
+    }
+
+    DWORD translatedAddress = (pageTableEntry & 0xfffff000) | offset;
+
+    vlog(LogCPU, "PG=1 Translating %08X {dir=%03X, page=%03X, offset=%03X} => %08X [%08X + %08X]", address, dir, page, offset, translatedAddress, pageDirectoryEntry, pageTableEntry);
+
+    return translatedAddress;
 }
 
 static const char* toString(CPU::MemoryAccessType type)
@@ -974,7 +1001,8 @@ bool CPU::validateAddress(const SegmentSelector& selector, DWORD offset, MemoryA
     VM_ASSERT(getPE());
 
     if (offset > selector.effectiveLimit()) {
-        vlog(LogAlert, "FUG! offset %08X outside limit", offset);
+        vlog(LogAlert, "FUG! offset %08X outside limit (selector index: %04X)", offset, selector.index);
+        VM_ASSERT(false);
         dumpSegment(selector);
         //dumpAll();
         debugger().enter();

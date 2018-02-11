@@ -159,6 +159,7 @@ public:
     void jumpToInterruptHandler(int isr, bool requestedByPIC = false);
 
     void GP(int code);
+    void pageFault(DWORD error);
 
     void exception(int ec) { this->IP = getBaseIP(); jumpToInterruptHandler(ec); }
 

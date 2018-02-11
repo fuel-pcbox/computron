@@ -208,6 +208,6 @@ void CPU::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
     selector = makeSegmentSelector(getSegment(segmentRegisterIndex));
 
     if (getPE())
-        vlog(LogCPU, "%s loaded with { type:%02X, base:%08X, limit:%08X }", toString(segmentRegisterIndex), selector.type, selector.base, selector.limit);
+        vlog(LogCPU, "%s loaded with %04X { type:%02X, base:%08X, limit:%08X }", toString(segmentRegisterIndex), getSegment(segmentRegisterIndex), selector.type, selector.base, selector.limit);
 }
 
