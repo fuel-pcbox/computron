@@ -1019,7 +1019,7 @@ bool CPU::validateAddress(const SegmentSelector& selector, DWORD offset, MemoryA
     VM_ASSERT(isA20Enabled() || !hasA20Bit(flatAddress));
 
     if (flatAddress >= m_memorySize) {
-        vlog(LogCPU, "OOB %u-bit %s access @ %04x:%08x {base:%08x,limit:%08x,gran:%s} (flat: 0x%08x) [A20=%s]",
+        vlog(LogCPU, "OOB %zu-bit %s access @ %04x:%08x {base:%08x,limit:%08x,gran:%s} (flat: 0x%08x) [A20=%s]",
              sizeof(T) * 8,
              toString(accessType),
              selector.index,
@@ -1061,9 +1061,9 @@ T CPU::readMemory(DWORD address)
         value = *reinterpret_cast<T*>(&m_memory[address]);
     if (options.memdebug || shouldLogMemoryRead(address)) {
         if (options.novlog)
-            printf("%04X:%04X: %u-bit read [A20=%s] 0x%08X, value: %08X\n", getBaseCS(), getBaseEIP(), sizeof(T) * 8, isA20Enabled() ? "on" : "off", address, value);
+            printf("%04X:%04X: %zu-bit read [A20=%s] 0x%08X, value: %08X\n", getBaseCS(), getBaseEIP(), sizeof(T) * 8, isA20Enabled() ? "on" : "off", address, value);
         else
-            vlog(LogCPU, "%u-bit read [A20=%s] 0x%08X, value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", address, value);
+            vlog(LogCPU, "%zu-bit read [A20=%s] 0x%08X, value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", address, value);
     }
     return value;
 }
@@ -1085,9 +1085,9 @@ T CPU::readMemory(const SegmentSelector& selector, DWORD offset)
         T value = *reinterpret_cast<T*>(&m_memory[flatAddress]);
         if (options.memdebug || shouldLogMemoryRead(flatAddress)) {
             if (options.novlog)
-                printf("%04X:%08X: %u-bit PE read [A20=%s] %04X:%08X (flat: %08X), value: %08X\n", getBaseCS(), getBaseEIP(), sizeof(T) * 8, isA20Enabled() ? "on" : "off", selector.index, offset, flatAddress, value);
+                printf("%04X:%08X: %zu-bit PE read [A20=%s] %04X:%08X (flat: %08X), value: %08X\n", getBaseCS(), getBaseEIP(), sizeof(T) * 8, isA20Enabled() ? "on" : "off", selector.index, offset, flatAddress, value);
             else
-                vlog(LogCPU, "%u-bit PE read [A20=%s] %04X:%08X (flat: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", selector.index, offset, flatAddress, value);
+                vlog(LogCPU, "%zu-bit PE read [A20=%s] %04X:%08X (flat: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", selector.index, offset, flatAddress, value);
         }
         return value;
     }
@@ -1135,9 +1135,9 @@ void CPU::writeMemory(DWORD address, T value)
 
     if (options.memdebug || shouldLogMemoryWrite(address)) {
         if (options.novlog)
-            printf("%04X:%08X: %u-bit write [A20=%s] 0x%08X, value: %08X\n", getBaseCS(), getBaseEIP(), sizeof(T) * 8, isA20Enabled() ? "on" : "off", address, value);
+            printf("%04X:%08X: %zu-bit write [A20=%s] 0x%08X, value: %08X\n", getBaseCS(), getBaseEIP(), sizeof(T) * 8, isA20Enabled() ? "on" : "off", address, value);
         else
-            vlog(LogCPU, "%u-bit write [A20=%s] 0x%08X, value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", address, value);
+            vlog(LogCPU, "%zu-bit write [A20=%s] 0x%08X, value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", address, value);
     }
 
     if (addressIsInVGAMemory(address)) {
@@ -1165,7 +1165,7 @@ void CPU::writeMemory(WORD segmentIndex, DWORD offset, T value)
 
         assert(!addressIsInVGAMemory(flatAddress));
         if (options.memdebug || shouldLogMemoryWrite(flatAddress))
-            vlog(LogCPU, "%u-bit PE write [A20=%s] %04X:%08X (flat: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
+            vlog(LogCPU, "%zu-bit PE write [A20=%s] %04X:%08X (flat: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
         *reinterpret_cast<T*>(&m_memory[flatAddress]) = value;
         return;
     }
