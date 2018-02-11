@@ -64,10 +64,26 @@ void CPU::_IRET(Instruction&)
 
 void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
 {
+    FarPointer vector;
+
     if (getPE()) {
-        vlog(LogCPU, "PE=1 Interrupt %02X trapped%s", isr, requestedByPIC ? " (from PIC)" : "");
-        dumpTrace();
-        VM_ASSERT(false);
+        DWORD hi = readMemory32(IDTR.base + (isr * 8) + 4);
+        DWORD lo = readMemory32(IDTR.base + (isr * 8));
+
+        vector.segment = (lo >> 16) & 0xffff;
+        vector.offset = (hi & 0xffff0000) | (lo & 0xffff);
+
+        BYTE type = (hi >> 8) & 0xF;
+
+        vlog(LogCPU, "PE=1 Interrupt %02X trapped%s, type=%01X, %04X:%08X (hi=%08X, lo=%08X)", isr, requestedByPIC ? " (from PIC)" : "", type, vector.segment, vector.offset, hi, lo);
+
+        switch (type) {
+        case 0xe: // 80386 Interrupt Gate
+        case 0xf: // 80386 Trap Gate
+            break;
+        default:
+            VM_ASSERT(false);
+        }
     }
 
 #ifdef VOMIT_DEBUG
@@ -96,14 +112,13 @@ void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
         jump16(segment, offset);
         return;
     }
-    push(getEFlags());
+    push32(getFlags());
     setIF(0);
     setTF(0);
-    push(getCS());
-    push(getEIP());
+    push32(getCS());
+    push32(getEIP());
 
-    FarPointer iv = getInterruptVector32(isr);
-    jump32(iv.segment, iv.offset);
+    jump32(vector.segment, vector.offset);
 }
 
 FarPointer CPU::getInterruptVector16(int isr)
