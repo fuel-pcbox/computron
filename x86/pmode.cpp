@@ -59,6 +59,10 @@ void CPU::_LLDT_RM16(Instruction& insn)
     LDTR.base = gdtEntry.base;
     LDTR.limit = gdtEntry.limit;
     vlog(LogAlert, "LLDT { segment: %04X => base:%08X, limit:%08X }", LDTR.segment, LDTR.base, LDTR.limit);
+
+    for (unsigned i = 0; i < GDTR.limit; i += 8) {
+        dumpSegment(i | 4);
+    }
 }
 
 void CPU::_LTR_RM16(Instruction& insn)
@@ -137,13 +141,9 @@ CPU::SegmentSelector CPU::makeSegmentSelector(WORD index)
         return selector;
     }
 
-    if (index % 8) {
-        vlog(LogCPU, "Segment selector index 0x%04X not divisible by 8.", index);
-        dumpAll();
-        VM_ASSERT(false);
-        debugger().enter();
-        //vomit_exit(1);
-    }
+    bool useGDT = (index & 0x04) == 0;
+    BYTE RPL = (index & 3);
+    index &= 0xfffffff8;
 
     if (index >= this->GDTR.limit) {
         vlog(LogCPU, "Segment selector index 0x%04X >= GDTR.limit (0x%04X).", index, GDTR.limit);
@@ -151,11 +151,12 @@ CPU::SegmentSelector CPU::makeSegmentSelector(WORD index)
         dumpAll();
         debugger().enter();
         //vomit_exit(1);
-
     }
 
-    DWORD hi = readMemory32(this->GDTR.base + index + 4);
-    DWORD lo = readMemory32(this->GDTR.base + index);
+    DWORD descriptorTableBase = useGDT ? GDTR.base : LDTR.base;
+
+    DWORD hi = readMemory32(descriptorTableBase + index + 4);
+    DWORD lo = readMemory32(descriptorTableBase + index);
 
     struct SegDescr{
         uint16_t limit_1;   // limit, bits 0..15
