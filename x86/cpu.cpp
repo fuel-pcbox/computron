@@ -118,11 +118,11 @@ void CPU::_UD0(Instruction&)
     exception(6);
 }
 
-void CPU::_OperationSizeOverride(Instruction&)
+void CPU::_OperandSizeOverride(Instruction&)
 {
     m_shouldRestoreSizesAfterOverride = true;
-    bool prevOperationSize = m_operationSize32;
-    m_operationSize32 = !m_operationSize32;
+    bool prevOperandSize = m_operandSize32;
+    m_operandSize32 = !m_operandSize32;
 
 #ifdef VOMIT_DEBUG_OVERRIDE_OPCODES
     vlog(LogCPU, "Operation size override detected! Opcode: db 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X ",
@@ -140,8 +140,8 @@ void CPU::_OperationSizeOverride(Instruction&)
     decodeNext();
 
     if (m_shouldRestoreSizesAfterOverride) {
-        VM_ASSERT(m_operationSize32 != prevOperationSize);
-        m_operationSize32 = prevOperationSize;
+        VM_ASSERT(m_operandSize32 != prevOperandSize);
+        m_operandSize32 = prevOperandSize;
     }
 }
 
@@ -355,7 +355,7 @@ void CPU::reset()
     m_state = Alive;
 
     m_addressSize32 = false;
-    m_operationSize32 = false;
+    m_operandSize32 = false;
 
     initWatches();
 }
@@ -1202,14 +1202,14 @@ void CPU::updateSizeModes()
 
     if (!getPE()) {
         m_addressSize32 = false;
-        m_operationSize32 = false;
+        m_operandSize32 = false;
         return;
     }
 
     //SegmentSelector& codeSegment = m_selector[SegmentRegisterIndex::CS];
     auto codeSegment = makeSegmentSelector(CS);
     m_addressSize32 = codeSegment._32bit;
-    m_operationSize32 = codeSegment._32bit;
+    m_operandSize32 = codeSegment._32bit;
     vlog(LogCPU, "PE=%u X:%u O:%u A:%u (newCS: %04X)", getPE(), x16() ? 16 : 32, o16() ? 16 : 32, a16() ? 16 : 32, CS);
 }
 

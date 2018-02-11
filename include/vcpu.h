@@ -472,8 +472,8 @@ public:
 
     bool a16() const { return !m_addressSize32; }
     virtual bool a32() const override { return m_addressSize32; }
-    bool o16() const { return !m_operationSize32; }
-    virtual bool o32() const override { return m_operationSize32; }
+    bool o16() const { return !m_operandSize32; }
+    virtual bool o32() const override { return m_operandSize32; }
 
     void nextSI(int size) { this->regs.W.SI += (getDF() ? -size : size); }
     void nextDI(int size) { this->regs.W.DI += (getDF() ? -size : size); }
@@ -945,7 +945,7 @@ protected:
 
     void _UD0(Instruction&);
     void _AddressSizeOverride(Instruction&);
-    void _OperationSizeOverride(Instruction&);
+    void _OperandSizeOverride(Instruction&);
 
     // REP* helper.
     void handleRepeatOpcode(Instruction&&, bool shouldEqual);
@@ -1154,7 +1154,7 @@ private:
     Machine& m_machine;
 
     bool m_addressSize32;
-    bool m_operationSize32;
+    bool m_operandSize32;
 
     bool m_shouldBreakOutOfMainLoop;
     bool m_shouldSoftReboot { false };

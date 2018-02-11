@@ -111,10 +111,10 @@ void CPU::handleRepeatOpcode(Instruction&& insn, bool shouldEqual)
     case 0x65: setSegmentPrefix(SegmentRegisterIndex::GS); break;
 
     case 0x66: {
-        m_operationSize32 = !m_operationSize32;
+        m_operandSize32 = !m_operandSize32;
         auto newInsn = Instruction::fromStream(*this);
         handleRepeatOpcode(std::move(newInsn), shouldEqual);
-        m_operationSize32 = !m_operationSize32;
+        m_operandSize32 = !m_operandSize32;
         return;
     }
 

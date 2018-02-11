@@ -450,7 +450,7 @@ void buildOpcodeTablesIfNeeded()
 
     build(0x64, "FS:",    InstructionPrefix,   &CPU::_FS);
     build(0x65, "GS:",    InstructionPrefix,   &CPU::_GS);
-    build(0x66, "o!",     InstructionPrefix,   &CPU::_OperationSizeOverride);
+    build(0x66, "o!",     InstructionPrefix,   &CPU::_OperandSizeOverride);
     build(0x67, "a!",     InstructionPrefix,   &CPU::_AddressSizeOverride);
 
     build(0x68, "PUSH",   OP_imm16,            &CPU::_PUSH_imm16,      OP_imm32,       &CPU::_PUSH_imm32);
