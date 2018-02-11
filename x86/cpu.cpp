@@ -1149,15 +1149,14 @@ void CPU::writeMemory(DWORD address, T value)
 }
 
 template<typename T>
-void CPU::writeMemory(WORD segmentIndex, DWORD offset, T value)
+void CPU::writeMemory(const SegmentSelector& selector, DWORD offset, T value)
 {
     if (getPE()) {
-        if (!validateAddress<T>(segmentIndex, offset, MemoryAccessType::Write)) {
+        if (!validateAddress<T>(selector, offset, MemoryAccessType::Write)) {
             //VM_ASSERT(false);
             return;
         }
-        SegmentSelector segment = makeSegmentSelector(segmentIndex);
-        DWORD flatAddress = segment.base + offset;
+        DWORD flatAddress = selector.base + offset;
 
         if (getPG()) {
             flatAddress = translateAddress(flatAddress);
@@ -1165,11 +1164,17 @@ void CPU::writeMemory(WORD segmentIndex, DWORD offset, T value)
 
         assert(!addressIsInVGAMemory(flatAddress));
         if (options.memdebug || shouldLogMemoryWrite(flatAddress))
-            vlog(LogCPU, "%zu-bit PE write [A20=%s] %04X:%08X (flat: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress, value);
+            vlog(LogCPU, "%zu-bit PE write [A20=%s] %04X:%08X (flat: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", selector.index, offset, flatAddress, value);
         *reinterpret_cast<T*>(&m_memory[flatAddress]) = value;
         return;
     }
-    writeMemory(vomit_toFlatAddress(segmentIndex, offset), value);
+    writeMemory(vomit_toFlatAddress(selector.index, offset), value);
+}
+
+template<typename T>
+void CPU::writeMemory(WORD segmentIndex, DWORD offset, T value)
+{
+    writeMemory<T>(makeSegmentSelector(segmentIndex), offset, value);
 }
 
 template<typename T>
@@ -1178,7 +1183,7 @@ void CPU::writeMemory(SegmentRegisterIndex segment, DWORD offset, T value)
     auto& selector = m_selector[(int)segment];
     if (!getPE())
         return writeMemory<T>(selector.base + offset, value);
-    return writeMemory<T>(getSegment(segment), offset, value);
+    return writeMemory<T>(selector, offset, value);
 }
 
 void CPU::writeMemory8(DWORD address, BYTE value) { writeMemory(address, value); }

@@ -153,9 +153,6 @@ CPU::SegmentSelector CPU::makeSegmentSelector(WORD index)
 
     }
 
-    //vlog(LogAlert, "makeSegmentSelector: GDTR.base{%08X} + index{%04X}", GDTR.base, index);
-    //dumpAll();
-
     DWORD hi = readMemory32(this->GDTR.base + index + 4);
     DWORD lo = readMemory32(this->GDTR.base + index);
 
@@ -184,6 +181,8 @@ CPU::SegmentSelector CPU::makeSegmentSelector(WORD index)
     selector.type = (hi >> 16) & 0xF;
     selector._32bit = (hi >> 22) & 1;
     selector.granularity = (hi >> 23) & 1; // Limit granularity, 0=1b, 1=4kB
+
+    //vlog(LogCPU, "makeSegmentSelector: GDTR.base{%08X} + index{%04X} => base:%08X, limit:%08X", GDTR.base, index, selector.base, selector.limit);
     return selector;
 }
 
