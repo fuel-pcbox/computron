@@ -146,8 +146,8 @@ CPU::SegmentSelector CPU::makeSegmentSelector(WORD index)
 
     if (index >= this->GDTR.limit) {
         vlog(LogCPU, "Segment selector index 0x%04X >= GDTR.limit (0x%04X).", index, GDTR.limit);
-        dumpAll();
         VM_ASSERT(false);
+        dumpAll();
         debugger().enter();
         //vomit_exit(1);
 

@@ -1254,26 +1254,30 @@ BYTE* CPU::memoryPointer(SegmentRegisterIndex segment, DWORD offset)
     auto& selector = m_selector[(int)segment];
     if (!getPE())
         return memoryPointer(selector.base + offset);
-    return memoryPointer(getSegment(segment), offset);
+    return memoryPointer(selector, offset);
 }
 
-BYTE* CPU::memoryPointer(WORD segmentIndex, DWORD offset)
+BYTE* CPU::memoryPointer(const SegmentSelector& selector, DWORD offset)
 {
     if (getPE()) {
-        if (!validateAddress<BYTE>(segmentIndex, offset, MemoryAccessType::Read)) {
+        if (!validateAddress<BYTE>(selector, offset, MemoryAccessType::Read)) {
             //VM_ASSERT(false);
             return nullptr;
         }
-        SegmentSelector segment = makeSegmentSelector(segmentIndex);
-        DWORD flatAddress = segment.base + offset;
+        DWORD flatAddress = selector.base + offset;
         if (getPG()) {
             flatAddress = translateAddress(flatAddress);
         }
         if (options.memdebug || shouldLogMemoryPointer(flatAddress))
-            vlog(LogCPU, "MemoryPointer PE [A20=%s] %04X:%08X (flat: %08X)", isA20Enabled() ? "on" : "off", segmentIndex, offset, flatAddress);
+            vlog(LogCPU, "MemoryPointer PE [A20=%s] %04X:%08X (flat: %08X)", isA20Enabled() ? "on" : "off", selector.index, offset, flatAddress);
         return &m_memory[flatAddress];
     }
-    return memoryPointer(vomit_toFlatAddress(segmentIndex, offset));
+    return memoryPointer(vomit_toFlatAddress(selector.index, offset));
+}
+
+BYTE* CPU::memoryPointer(WORD segmentIndex, DWORD offset)
+{
+    return memoryPointer(makeSegmentSelector(segmentIndex), offset);
 }
 
 BYTE* CPU::memoryPointer(DWORD address)

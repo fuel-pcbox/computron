@@ -357,6 +357,7 @@ public:
     BYTE* memoryPointer(DWORD address);
     BYTE* memoryPointer(WORD segment, DWORD offset);
     BYTE* memoryPointer(SegmentRegisterIndex, DWORD offset);
+    BYTE* memoryPointer(const SegmentSelector&, DWORD offset);
 
     DWORD getEFlags() const;
     WORD getFlags() const;
