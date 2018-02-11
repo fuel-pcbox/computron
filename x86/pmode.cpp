@@ -133,6 +133,7 @@ CPU::SegmentSelector CPU::makeSegmentSelector(WORD index)
         selector.index = index;
         selector.base = (DWORD)index << 4;
         selector.limit = 0xFFFFF;
+        selector._32bit = false;
         return selector;
     }
 
