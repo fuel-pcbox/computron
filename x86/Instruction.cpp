@@ -335,6 +335,12 @@ static void build(BYTE op, const char* mnemonic16, InstructionFormat format16, v
     build(s_table32, op, mnemonic32, format32, impl32);
 }
 
+static void build0F(BYTE op, const char* mnemonic16, InstructionFormat format16, void (CPU::*impl16)(Instruction&), const char* mnemonic32, InstructionFormat format32, void (CPU::*impl32)(Instruction&))
+{
+    build(s_0F_table16, op, mnemonic16, format16, impl16);
+    build(s_0F_table32, op, mnemonic32, format32, impl32);
+}
+
 static void buildSlash(BYTE op, BYTE slash, const char* mnemonic, InstructionFormat format, void (CPU::*impl)(Instruction&))
 {
     buildSlash(s_table16, op, slash, mnemonic, format, impl);
@@ -764,8 +770,8 @@ void buildOpcodeTablesIfNeeded()
     build0F(0xB2, "LSS",   OP_reg16_mem16, &CPU::_LSS_reg16_mem16, OP_reg32_mem32, &CPU::_LSS_reg32_mem32);
     build0F(0xB4, "LFS",   OP_reg16_mem16, &CPU::_LFS_reg16_mem16, OP_reg32_mem32, &CPU::_LFS_reg32_mem32);
     build0F(0xB5, "LGS",   OP_reg16_mem16, &CPU::_LGS_reg16_mem16, OP_reg32_mem32, &CPU::_LGS_reg32_mem32);
-    build0F(0xB6, "MOV",   OP_reg16_RM8,   &CPU::_MOVZX_reg16_RM8, OP_reg32_RM8,   &CPU::_MOVZX_reg32_RM8);
-    build0F(0xB7, "0xB7",  OP,             &CPU::_UNSUPP,          OP_reg32_RM16,  &CPU::_MOVZX_reg32_RM16);
+    build0F(0xB6, "MOVZX", OP_reg16_RM8,   &CPU::_MOVZX_reg16_RM8, OP_reg32_RM8,   &CPU::_MOVZX_reg32_RM8);
+    build0F(0xB7, "0xB7",  OP,             &CPU::_UNSUPP, "MOVZX", OP_reg32_RM16,  &CPU::_MOVZX_reg32_RM16);
     build0F(0xBB, "BTC",   OP_RM16_reg16,  &CPU::_BTC_RM16_reg16,  OP_RM32_reg32,  &CPU::_BTC_RM32_reg32);
 
     hasBuiltTables = true;
