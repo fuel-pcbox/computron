@@ -64,7 +64,12 @@ void CPU::_IRET(Instruction&)
 
 void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
 {
-    VM_ASSERT(!x32());
+    if (getPE()) {
+        vlog(LogCPU, "PE=1 Interrupt %02X trapped%s", isr, requestedByPIC ? " (from PIC)" : "");
+        dumpTrace();
+        VM_ASSERT(false);
+    }
+
 #ifdef VOMIT_DEBUG
     if (options.trapint)
         vlog(LogCPU, "Interrupt %02X,%02X trapped%s", isr, this->regs.B.AH, requestedByPIC ? " (from PIC)" : "");
