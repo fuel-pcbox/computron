@@ -981,7 +981,9 @@ DWORD CPU::translateAddress(DWORD address)
 
     DWORD translatedAddress = (pageTableEntry & 0xfffff000) | offset;
 
+#ifdef DEBUG_PAGING
     vlog(LogCPU, "PG=1 Translating %08X {dir=%03X, page=%03X, offset=%03X} => %08X [%08X + %08X]", address, dir, page, offset, translatedAddress, pageDirectoryEntry, pageTableEntry);
+#endif
 
     return translatedAddress;
 }
