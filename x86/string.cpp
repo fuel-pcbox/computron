@@ -61,10 +61,10 @@ void CPU::_LODSD(Instruction&)
 void CPU::_STOSB(Instruction&)
 {
     if (a16()) {
-        writeMemory8(getES(), getDI(), getAL());
+        writeMemory8(SegmentRegisterIndex::ES, getDI(), getAL());
         nextDI(1);
     } else {
-        writeMemory8(getES(), getEDI(), getAL());
+        writeMemory8(SegmentRegisterIndex::ES, getEDI(), getAL());
         nextEDI(1);
     }
 }
@@ -72,10 +72,10 @@ void CPU::_STOSB(Instruction&)
 void CPU::_STOSW(Instruction&)
 {
     if (a16()) {
-        writeMemory16(getES(), getDI(), getAX());
+        writeMemory16(SegmentRegisterIndex::ES, getDI(), getAX());
         nextDI(2);
     } else {
-        writeMemory16(getES(), getEDI(), getAX());
+        writeMemory16(SegmentRegisterIndex::ES, getEDI(), getAX());
         nextEDI(2);
     }
 }
@@ -83,10 +83,10 @@ void CPU::_STOSW(Instruction&)
 void CPU::_STOSD(Instruction&)
 {
     if (a16()) {
-        writeMemory32(getES(), getDI(), getEAX());
+        writeMemory32(SegmentRegisterIndex::ES, getDI(), getEAX());
         nextDI(4);
     } else {
-        writeMemory32(getES(), getEDI(), getEAX());
+        writeMemory32(SegmentRegisterIndex::ES, getEDI(), getEAX());
         nextEDI(4);
     }
 }
@@ -98,12 +98,12 @@ void CPU::_CMPSB(Instruction&)
 
     if (a16()) {
         src = readMemory8(currentSegment(), getSI());
-        dest = readMemory8(getES(), getDI());
+        dest = readMemory8(SegmentRegisterIndex::ES, getDI());
         nextSI(1);
         nextDI(1);
     } else {
         src = readMemory8(currentSegment(), getESI());
-        dest = readMemory8(getES(), getEDI());
+        dest = readMemory8(SegmentRegisterIndex::ES, getEDI());
         nextESI(1);
         nextEDI(1);
     }
@@ -118,12 +118,12 @@ void CPU::_CMPSW(Instruction&)
 
     if (a16()) {
         src = readMemory16(currentSegment(), getSI());
-        dest = readMemory16(getES(), getDI());
+        dest = readMemory16(SegmentRegisterIndex::ES, getDI());
         nextSI(2);
         nextDI(2);
     } else {
         src = readMemory16(currentSegment(), getESI());
-        dest = readMemory16(getES(), getEDI());
+        dest = readMemory16(SegmentRegisterIndex::ES, getEDI());
         nextESI(2);
         nextEDI(2);
     }
@@ -138,12 +138,12 @@ void CPU::_CMPSD(Instruction&)
 
     if (a16()) {
         src = readMemory32(currentSegment(), getSI());
-        dest = readMemory32(getES(), getDI());
+        dest = readMemory32(SegmentRegisterIndex::ES, getDI());
         nextSI(4);
         nextDI(4);
     } else {
         src = readMemory32(currentSegment(), getESI());
-        dest = readMemory32(getES(), getEDI());
+        dest = readMemory32(SegmentRegisterIndex::ES, getEDI());
         nextESI(4);
         nextEDI(4);
     }
@@ -156,10 +156,10 @@ void CPU::_SCASB(Instruction&)
     BYTE dest;
 
     if (a16()) {
-        dest = readMemory8(getES(), getDI());
+        dest = readMemory8(SegmentRegisterIndex::ES, getDI());
         nextDI(1);
     } else {
-        dest = readMemory8(getES(), getEDI());
+        dest = readMemory8(SegmentRegisterIndex::ES, getEDI());
         nextEDI(1);
     }
 
@@ -171,10 +171,10 @@ void CPU::_SCASW(Instruction&)
     WORD dest;
 
     if (a16()) {
-        dest = readMemory16(getES(), getDI());
+        dest = readMemory16(SegmentRegisterIndex::ES, getDI());
         nextDI(2);
     } else {
-        dest = readMemory16(getES(), getEDI());
+        dest = readMemory16(SegmentRegisterIndex::ES, getEDI());
         nextEDI(2);
     }
 
@@ -186,10 +186,10 @@ void CPU::_SCASD(Instruction&)
     DWORD dest;
 
     if (a16()) {
-        dest = readMemory32(getES(), getDI());
+        dest = readMemory32(SegmentRegisterIndex::ES, getDI());
         nextDI(4);
     } else {
-        dest = readMemory32(getES(), getEDI());
+        dest = readMemory32(SegmentRegisterIndex::ES, getEDI());
         nextEDI(4);
     }
 
@@ -200,12 +200,12 @@ void CPU::_MOVSB(Instruction&)
 {
     if (a16()) {
         BYTE tmpb = readMemory8(currentSegment(), getSI());
-        writeMemory8(ES, getDI(), tmpb);
+        writeMemory8(SegmentRegisterIndex::ES, getDI(), tmpb);
         nextSI(1);
         nextDI(1);
     } else {
         BYTE tmpb = readMemory8(currentSegment(), getESI());
-        writeMemory8(ES, getEDI(), tmpb);
+        writeMemory8(SegmentRegisterIndex::ES, getEDI(), tmpb);
         nextESI(1);
         nextEDI(1);
     }
@@ -215,12 +215,12 @@ void CPU::_MOVSW(Instruction&)
 {
     if (a16()) {
         WORD tmpw = readMemory16(currentSegment(), getSI());
-        writeMemory16(ES, getDI(), tmpw);
+        writeMemory16(SegmentRegisterIndex::ES, getDI(), tmpw);
         nextSI(2);
         nextDI(2);
     } else {
         WORD tmpw = readMemory16(currentSegment(), getESI());
-        writeMemory16(ES, getEDI(), tmpw);
+        writeMemory16(SegmentRegisterIndex::ES, getEDI(), tmpw);
         nextESI(2);
         nextEDI(2);
     }
@@ -230,12 +230,12 @@ void CPU::_MOVSD(Instruction&)
 {
     if (a16()) {
         DWORD tmpw = readMemory32(currentSegment(), regs.W.SI);
-        writeMemory32(ES, regs.W.DI, tmpw);
+        writeMemory32(SegmentRegisterIndex::ES, regs.W.DI, tmpw);
         nextSI(4);
         nextDI(4);
     } else {
         DWORD tmpw = readMemory32(currentSegment(), regs.D.ESI);
-        writeMemory32(ES, regs.D.EDI, tmpw);
+        writeMemory32(SegmentRegisterIndex::ES, regs.D.EDI, tmpw);
         nextESI(4);
         nextEDI(4);
     }

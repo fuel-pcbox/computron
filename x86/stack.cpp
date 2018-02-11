@@ -31,10 +31,10 @@ void CPU::push32(DWORD value)
     //vlog(LogCPU, "push32: %08X", value);
     if (a16()) {
         this->regs.W.SP -= 4;
-        writeMemory32(getSS(), this->getSP(), value);
+        writeMemory32(SegmentRegisterIndex::SS, this->getSP(), value);
     } else {
         this->regs.D.ESP -= 4;
-        writeMemory32(getSS(), this->getESP(), value);
+        writeMemory32(SegmentRegisterIndex::SS, this->getESP(), value);
     }
 }
 
@@ -46,13 +46,13 @@ void CPU::push(WORD value)
             this->regs.W.SP -= 2;
         else
             this->regs.W.SP -= 4;
-        writeMemory16(getSS(), this->getSP(), value);
+        writeMemory16(SegmentRegisterIndex::SS, this->getSP(), value);
     } else {
         if (o16())
             this->regs.D.ESP -= 2;
         else
             this->regs.D.ESP -= 4;
-        writeMemory16(getSS(), this->getESP(), value);
+        writeMemory16(SegmentRegisterIndex::SS, this->getESP(), value);
     }
 }
 
@@ -60,10 +60,10 @@ DWORD CPU::pop32()
 {
     DWORD d;
     if (a16()) {
-        d = readMemory32(getSS(), this->getSP());
+        d = readMemory32(SegmentRegisterIndex::SS, this->getSP());
         this->regs.W.SP += 4;
     } else {
-        d = readMemory32(getSS(), this->getESP());
+        d = readMemory32(SegmentRegisterIndex::SS, this->getESP());
         this->regs.D.ESP += 4;
     }
     //vlog(LogCPU, "pop32: %08X", d);
@@ -74,13 +74,13 @@ WORD CPU::pop()
 {
     WORD w;
     if (a16()) {
-        w = readMemory16(getSS(), this->getSP());
+        w = readMemory16(SegmentRegisterIndex::SS, this->getSP());
         if (o16())
             this->regs.W.SP += 2;
         else
             this->regs.W.SP += 4;
     } else {
-        w = readMemory16(getSS(), this->getESP());
+        w = readMemory16(SegmentRegisterIndex::SS, this->getESP());
         if (o16())
             this->regs.D.ESP += 2;
         else

@@ -68,7 +68,7 @@ void CPU::_ENTER(Instruction& insn)
         WORD tmpBP = getBP();
         for (WORD i = 1; i < nestingLevel - 1; ++i) {
             tmpBP -= 2;
-            push(readMemory16(getSS(), getBP()));
+            push(readMemory16(SegmentRegisterIndex::SS, getBP()));
         }
         push(frameTemp);
     }
