@@ -353,3 +353,18 @@ void CPU::_MOVZX_reg32_RM16(Instruction& insn)
 {
     insn.reg32() = insn.modrm().read16();
 }
+
+void CPU::_MOVSX_reg16_RM8(Instruction& insn)
+{
+    insn.reg16() = vomit_signExtend<WORD>(insn.modrm().read8());
+}
+
+void CPU::_MOVSX_reg32_RM8(Instruction& insn)
+{
+    insn.reg32() = vomit_signExtend<DWORD>(insn.modrm().read8());
+}
+
+void CPU::_MOVSX_reg32_RM16(Instruction& insn)
+{
+    insn.reg32() = vomit_signExtend<DWORD>(insn.modrm().read16());
+}

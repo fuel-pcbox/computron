@@ -773,6 +773,8 @@ void buildOpcodeTablesIfNeeded()
     build0F(0xB6, "MOVZX", OP_reg16_RM8,   &CPU::_MOVZX_reg16_RM8, OP_reg32_RM8,   &CPU::_MOVZX_reg32_RM8);
     build0F(0xB7, "0xB7",  OP,             &CPU::_UNSUPP, "MOVZX", OP_reg32_RM16,  &CPU::_MOVZX_reg32_RM16);
     build0F(0xBB, "BTC",   OP_RM16_reg16,  &CPU::_BTC_RM16_reg16,  OP_RM32_reg32,  &CPU::_BTC_RM32_reg32);
+    build0F(0xBE, "MOVSX", OP_reg16_RM8,   &CPU::_MOVSX_reg16_RM8, OP_reg32_RM8,   &CPU::_MOVSX_reg32_RM8);
+    build0F(0xBF, "0xBF",  OP,             &CPU::_UNSUPP, "MOVSX", OP_reg32_RM16,  &CPU::_MOVSX_reg32_RM16);
 
     hasBuiltTables = true;
 }

@@ -115,6 +115,19 @@ inline T vomit_signExtend(BYTE value)
         return value | 0xFF00;
     if (BitSizeOfType<T>::bits == 32)
         return value | 0xFFFFFF00;
+    if (BitSizeOfType<T>::bits == 64)
+        return value | 0xFFFFFFFFFFFFFF00;
+}
+
+template<typename T>
+inline T vomit_signExtend(WORD value)
+{
+    if (!(value & 0x8000))
+        return value;
+    if (BitSizeOfType<T>::bits == 32)
+        return value | 0xFFFF0000;
+    if (BitSizeOfType<T>::bits == 64)
+        return value | 0xFFFFFFFFFFFF0000;
 }
 
 inline int vomit_modRMRegisterPart(int rmbyte)

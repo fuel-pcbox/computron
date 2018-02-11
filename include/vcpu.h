@@ -885,6 +885,10 @@ protected:
     void _MOVZX_reg32_RM8(Instruction&);
     void _MOVZX_reg32_RM16(Instruction&);
 
+    void _MOVSX_reg16_RM8(Instruction&);
+    void _MOVSX_reg32_RM8(Instruction&);
+    void _MOVSX_reg32_RM16(Instruction&);
+
     void _LFS_reg16_mem16(Instruction&);
     void _LFS_reg32_mem32(Instruction&);
     void _LGS_reg16_mem16(Instruction&);
