@@ -356,10 +356,22 @@ void CPU::dumpIVT()
     }
 }
 
+static const char* descriptorTypeName(BYTE type)
+{
+    switch (type) {
+    case  9: return "Task (ready)";
+    case 11: return "Task (busy)";
+    default: return "idk";
+    }
+}
+
 void CPU::dumpSegment(const SegmentSelector& selector)
 {
-    vlog(LogCPU, "Segment 0x%04X: { base: 0x%08X, limit: %06X, bits: %u, present: %s, granularity: %s, DPL: %u }",
+    vlog(LogCPU, "%s segment 0x%04X: { type: %12s (%02X), base: 0x%08X, limit: %06X, bits: %u, present: %s, granularity: %s, DPL: %u }",
+        selector.isGlobal ? "Global" : "Local",
         selector.index,
+        descriptorTypeName(selector.type),
+        selector.type,
         selector.base,
         selector.limit,
         selector._32bit ? 32 : 16,

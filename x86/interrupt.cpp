@@ -49,6 +49,17 @@ void CPU::_INTO(Instruction&)
 
 void CPU::_IRET(Instruction&)
 {
+    if (getPE()) {
+        if (getNT()) {
+            VM_ASSERT(!getVM());
+            auto* tss = currentTSS();
+            VM_ASSERT(tss);
+            vlog(LogCPU, "IRET with NT=1 switching tasks. Inner TSS @ %08X -> Outer TSS sel %04X...", TR.base, tss->backlink);
+            taskSwitch(tss->backlink);
+            return;
+        }
+
+    }
     if (o16()) {
         WORD nip = pop();
         WORD ncs = pop();

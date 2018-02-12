@@ -51,16 +51,19 @@ void CPU::_SLDT_RM16(Instruction& insn)
     insn.modrm().write16(LDTR.segment);
 }
 
-void CPU::_LLDT_RM16(Instruction& insn)
+void CPU::setLDT(WORD segment)
 {
-    WORD segment = insn.modrm().read16();
     auto gdtEntry = makeSegmentSelector(segment);
     LDTR.segment = segment;
     LDTR.base = gdtEntry.base;
     LDTR.limit = gdtEntry.limit;
-    vlog(LogAlert, "LLDT { segment: %04X => base:%08X, limit:%08X }", LDTR.segment, LDTR.base, LDTR.limit);
+    vlog(LogAlert, "setLDT { segment: %04X => base:%08X, limit:%08X }", LDTR.segment, LDTR.base, LDTR.limit);
+}
 
-    for (unsigned i = 0; i < GDTR.limit; i += 8) {
+void CPU::_LLDT_RM16(Instruction& insn)
+{
+    setLDT(insn.modrm().read16());
+    for (unsigned i = 0; i < LDTR.limit; i += 8) {
         dumpSegment(i | 4);
     }
 }
@@ -132,18 +135,21 @@ void CPU::_SMSW_RM16(Instruction& insn)
 
 CPU::SegmentSelector CPU::makeSegmentSelector(WORD index)
 {
+    SegmentSelector selector;
+
     if (!getPE()) {
-        SegmentSelector selector;
         selector.index = index;
         selector.base = (DWORD)index << 4;
         selector.limit = 0xFFFFF;
         selector._32bit = false;
+        selector.isGlobal = true;
         return selector;
     }
 
-    bool useGDT = (index & 0x04) == 0;
-    BYTE RPL = (index & 3);
+    selector.isGlobal = (index & 0x04) == 0;
+    selector.RPL = index & 3;
     index &= 0xfffffff8;
+    selector.index = index;
 
     if (index >= this->GDTR.limit) {
         vlog(LogCPU, "Segment selector index 0x%04X >= GDTR.limit (0x%04X).", index, GDTR.limit);
@@ -153,7 +159,7 @@ CPU::SegmentSelector CPU::makeSegmentSelector(WORD index)
         //vomit_exit(1);
     }
 
-    DWORD descriptorTableBase = useGDT ? GDTR.base : LDTR.base;
+    DWORD descriptorTableBase = selector.isGlobal ? GDTR.base : LDTR.base;
 
     DWORD hi = readMemory32(descriptorTableBase + index + 4);
     DWORD lo = readMemory32(descriptorTableBase + index);
@@ -169,9 +175,6 @@ CPU::SegmentSelector CPU::makeSegmentSelector(WORD index)
         uint8_t base_3;     // base, bits 24..31
     };
 
-    SegmentSelector selector;
-
-    selector.index = index;
     selector.base = (hi & 0xFF000000) | ((hi & 0xFF) << 16) | ((lo >> 16) & 0xFFFF);
     selector.limit = (hi & 0xF0000) | (lo & 0xFFFF);
     selector.accessed = (hi >> 8) & 1;
@@ -183,6 +186,11 @@ CPU::SegmentSelector CPU::makeSegmentSelector(WORD index)
     selector.type = (hi >> 16) & 0xF;
     selector._32bit = (hi >> 22) & 1;
     selector.granularity = (hi >> 23) & 1; // Limit granularity, 0=1b, 1=4kB
+
+    if (selector.type == 9 || selector.type == 11) {
+        selector.isTask = true;
+        //VM_ASSERT(false);
+    }
 
     //vlog(LogCPU, "makeSegmentSelector: GDTR.base{%08X} + index{%04X} => base:%08X, limit:%08X", GDTR.base, index, selector.base, selector.limit);
     return selector;
@@ -212,3 +220,42 @@ void CPU::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
         vlog(LogCPU, "%s loaded with %04X { type:%02X, base:%08X, limit:%08X }", toString(segmentRegisterIndex), getSegment(segmentRegisterIndex), selector.type, selector.base, selector.limit);
 }
 
+void CPU::taskSwitch(WORD task)
+{
+    // FIXME: This should mark the outgoing task as non-busy.
+
+    auto selector = makeSegmentSelector(task);
+    TSS& tss = *reinterpret_cast<TSS*>(memoryPointer(selector.base));
+
+    setES(tss.ES);
+    setCS(tss.CS);
+    setDS(tss.DS);
+    setFS(tss.FS);
+    setGS(tss.GS);
+    setSS(tss.SS);
+    EIP = tss.EIP;
+
+    if (getPG())
+        CR3 = tss.CR3;
+
+    setLDT(tss.LDT);
+
+    setEFlags(tss.EFlags);
+    VM_ASSERT(!getNT()); // I think we shouldn't be able to unnest more than once.
+
+    regs.D.EAX = tss.EAX;
+    regs.D.EBX = tss.EBX;
+    regs.D.ECX = tss.ECX;
+    regs.D.EDX = tss.EDX;
+    regs.D.EBP = tss.EBP;
+    regs.D.ESP = tss.ESP;
+    regs.D.ESI = tss.ESI;
+    regs.D.EDI = tss.EDI;
+
+    CR0 |= 0x04; // TS (Task Switched)
+}
+
+TSS* CPU::currentTSS()
+{
+    return reinterpret_cast<TSS*>(memoryPointer(TR.base));
+}

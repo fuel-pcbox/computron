@@ -60,6 +60,26 @@ struct WatchedAddress {
     QWORD lastSeenValue { neverSeen };
 };
 
+struct TSS {
+        WORD backlink, __blh;
+        DWORD esp0;
+        WORD ss0, __ss0h;
+        DWORD esp1;
+        WORD ss1, __ss1h;
+        DWORD esp2;
+        WORD ss2, __ss2h;
+        DWORD CR3, EIP, EFlags;
+        DWORD EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI;
+        WORD ES, __esh;
+        WORD CS, __csh;
+        WORD SS, __ssh;
+        WORD DS, __dsh;
+        WORD FS, __fsh;
+        WORD GS, __gsh;
+        WORD LDT, __ldth;
+        WORD trace, iomapbase;
+} __attribute__ ((packed));
+
 class CPU final : public InstructionStream {
     friend void buildOpcodeTablesIfNeeded();
 public:
@@ -110,6 +130,7 @@ public:
     };
 
     struct SegmentSelector {
+        bool isTask { false };
         unsigned index { 0xFFFFFFFF };
         unsigned DPL { 0 };
         unsigned count { 0 };
@@ -123,6 +144,8 @@ public:
         BYTE type { 0 };
         DWORD base { 0 };
         DWORD limit { 0 };
+        bool isGlobal { false };
+        BYTE RPL { 0 };
 
         DWORD effectiveLimit() const { return granularity ? (limit * 4096) : limit; }
     };
@@ -1003,6 +1026,10 @@ private:
     inline BYTE* codeMemory() const;
 
     void flushCommandQueue();
+
+    void setLDT(WORD segment);
+    void taskSwitch(WORD task);
+    TSS* currentTSS();
 
     void dumpSelector(const char* segmentRegisterName, SegmentRegisterIndex);
     void syncSegmentRegister(SegmentRegisterIndex);

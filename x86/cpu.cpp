@@ -575,12 +575,12 @@ void CPU::jumpAbsolute32(DWORD address)
 void CPU::jump32(WORD segment, DWORD offset)
 {
     //vlog(LogCPU, "[PE=%u] Far jump to %04X:%08X", getPE(), segment, offset);
-    // Jump to specified modrm.
+
+    auto selector = makeSegmentSelector(segment);
+    VM_ASSERT(!selector.isTask);
+
     setCS(segment);
     this->EIP = offset;
-
-    // Point m_codeMemory to CS:0 for fast opcode fetching.
-    m_codeMemory = memoryPointer(SegmentRegisterIndex::CS, 0);
 
     updateSizeModes();
 }
@@ -618,7 +618,7 @@ void CPU::_HLT(Instruction&)
 
     if (!getIF()) {
         vlog(LogCPU, "Halted with IF=0");
-        vomit_exit(0);
+
     } else
         vlog(LogCPU, "Halted");
 
@@ -1012,8 +1012,14 @@ bool CPU::validateAddress(const SegmentSelector& selector, DWORD offset, MemoryA
     VM_ASSERT(getPE());
 
     if (offset > selector.effectiveLimit()) {
-        vlog(LogAlert, "FUG! offset %08X outside limit (selector index: %04X)", offset, selector.index);
-        VM_ASSERT(false);
+        vlog(LogAlert, "FUG! offset %08X outside limit (selector index: %04X, effective limit: %08X [%08X x %s])",
+             offset,
+             selector.index,
+             selector.effectiveLimit(),
+             selector.limit,
+             selector.granularity ? "4K" : "1b"
+             );
+        //VM_ASSERT(false);
         dumpSegment(selector);
         //dumpAll();
         debugger().enter();
@@ -1228,6 +1234,9 @@ void CPU::setCS(WORD value)
 {
     this->CS = value;
     syncSegmentRegister(SegmentRegisterIndex::CS);
+
+    // Point m_codeMemory to CS:0 for fast opcode fetching.
+    m_codeMemory = memoryPointer(SegmentRegisterIndex::CS, 0);
 }
 
 void CPU::setDS(WORD value)
