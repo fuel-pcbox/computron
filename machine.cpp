@@ -106,6 +106,7 @@ Machine::Machine(const QString& name, OwnPtr<Settings>&& settings, QObject* pare
         IODevice::ignorePort(0xCC8F);
         IODevice::ignorePort(0xDC8F);
         IODevice::ignorePort(0xEC8F);
+        IODevice::ignorePort(0xFC8F);
     }
 
     m_busMouse = make<BusMouse>(*this);
