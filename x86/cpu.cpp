@@ -36,7 +36,6 @@
 #include "pit.h"
 
 #define CRASH_ON_OPCODE_00_00
-//#define SLACKWARE33_DEBUG
 
 inline bool hasA20Bit(DWORD address)
 {
@@ -45,12 +44,6 @@ inline bool hasA20Bit(DWORD address)
 
 static bool shouldLogAllMemoryAccesses(DWORD address)
 {
-#ifdef SLACKWARE33_DEBUG
-    //if (address >= 0x100000) return true;
-    //if (address >= 0x100000 && address <= 0x100100) return true;
-    if (address == 0x070510) return true;
-    //if (address >= 0x00004380 && address <= 0x00004480) return true;
-#endif
 #ifdef VOMIT_DETERMINISTIC
     return true;
 #endif
@@ -483,31 +476,6 @@ void CPU::mainLoop()
 
         if (!m_watches.isEmpty())
             dumpWatches();
-
-#ifdef SLACKWARE33_DEBUG
-        if (1 && CS == 0x10 && getBaseEIP() == 0x00001A41) {
-            DWORD src = 0x70510 + getESI();
-            VM_ASSERT(src == getEAX());
-            DWORD dest = getEDX();
-            DWORD n = getEBX();
-            BYTE* m = &m_memory[src];
-            DWORD inflate_dynamic_EBP = 0x0007C8B4;
-            DWORD nlAddr = inflate_dynamic_EBP;
-            nlAddr += 0xfffffaf0;
-            DWORD ndAddr = inflate_dynamic_EBP;
-            ndAddr += 0xfffffaec;
-            vlog(LogCPU, "memcpy(%08X, %08X, %u) { %02X %02X %02X %02X %02X %02X %02X %02X } w=%08X, d=%08X, EBP=%08X, nl=%u, nd=%u",
-                 src, dest, n,
-                 m[0], m[1], m[2], m[3],
-                 m[4], m[5], m[6], m[7],
-                 getESI(),
-                 readMemory32(getEBP() - 8),
-                 getEBP(),
-                 readMemory32(nlAddr),
-                 readMemory32(ndAddr)
-            );
-        }
-#endif
 
         // Fetch & decode AKA execute the next instruction.
         exec();
@@ -1368,21 +1336,4 @@ void CPU::_CPUID(Instruction&)
 
 void CPU::initWatches()
 {
-#ifdef SLACKWARE33_DEBUG
-    //m_watches.append(WatchedAddress{ name, address, size, breakOnChange? });
-    m_watches.append(WatchedAddress{ "inbuf", 0x7050C, DWordSize });
-    m_watches.append(WatchedAddress{ "input_len", 0x437C, DWordSize });
-    m_watches.append(WatchedAddress{ "insize", 0x41A8, DWordSize });
-    //m_watches.append(WatchedAddress{ "inptr", 0x41AC, DWordSize });
-    //m_watches.append(WatchedAddress{ "wp (outcnt)", 0x41B0, DWordSize });
-    m_watches.append(WatchedAddress{ "bk (bb bits)", 0x78528, DWordSize });
-    m_watches.append(WatchedAddress{ "bb (bit buffer)", 0x78524, DWordSize });
-    m_watches.append(WatchedAddress{ "hufts (mem)", 0x7852c, DWordSize });
-    //m_watches.append(WatchedAddress{ "bytes_out", 0x41b4, DWordSize });
-    m_watches.append(WatchedAddress{ "output_ptr", 0x41b8, DWordSize });
-    m_watches.append(WatchedAddress{ "free_mem_ptr", 0x41bc, DWordSize });
-    //m_watches.append(WatchedAddress{ "lbits", 0x4330, DWordSize });
-    //m_watches.append(WatchedAddress{ "dbits", 0x4334, DWordSize });
-    //m_watches.append(WatchedAddress{ "output_buffer", 0x78510, DWordSize });
-#endif
 }
