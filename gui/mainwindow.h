@@ -28,6 +28,7 @@
 
 #include <QtWidgets/QMainWindow>
 #include "OwnPtr.h"
+#include "types.h"
 
 class Machine;
 
@@ -39,6 +40,9 @@ public:
     virtual ~MainWindow();
 
     void addMachine(Machine*);
+
+private slots:
+    void onLedsChanged(int);
 
 private:
     struct Private;

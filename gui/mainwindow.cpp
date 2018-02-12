@@ -27,9 +27,17 @@
 #include "machinewidget.h"
 #include "machine.h"
 #include "screen.h"
+#include "keyboard.h"
+#include <QLabel>
+#include <QStatusBar>
 
 struct MainWindow::Private
 {
+    Keyboard* keyboard;
+    QStatusBar* statusBar;
+    QLabel* scrollLockLabel;
+    QLabel* numLockLabel;
+    QLabel* capsLockLabel;
 };
 
 MainWindow::MainWindow()
@@ -47,4 +55,43 @@ void MainWindow::addMachine(Machine* machine)
     MachineWidget* machineWidget = new MachineWidget(*machine);
     setCentralWidget(machineWidget);
     setFocusProxy(machineWidget);
+
+    d->keyboard = &machine->keyboard();
+
+    d->statusBar = new QStatusBar;
+    setStatusBar(d->statusBar);
+
+    d->scrollLockLabel = new QLabel("SCRL");
+    d->numLockLabel = new QLabel("NUM");
+    d->capsLockLabel = new QLabel("CAPS");
+
+    d->scrollLockLabel->setAutoFillBackground(true);
+    d->numLockLabel->setAutoFillBackground(true);
+    d->capsLockLabel->setAutoFillBackground(true);
+
+    onLedsChanged(0);
+
+    connect(d->keyboard, SIGNAL(ledsChanged(int)), this, SLOT(onLedsChanged(int)), Qt::QueuedConnection);
+
+    d->statusBar->addWidget(new QLabel, 1);
+    d->statusBar->addWidget(d->capsLockLabel);
+    d->statusBar->addWidget(d->numLockLabel);
+    d->statusBar->addWidget(d->scrollLockLabel);
+}
+
+void MainWindow::onLedsChanged(int leds)
+{
+    QPalette paletteForLED[2];
+    paletteForLED[0] = d->scrollLockLabel->palette();
+    paletteForLED[1] = d->scrollLockLabel->palette();
+    paletteForLED[0].setColor(d->scrollLockLabel->backgroundRole(), Qt::gray);
+    paletteForLED[1].setColor(d->scrollLockLabel->backgroundRole(), Qt::green);
+
+    bool scrollLock = leds & Keyboard::LED::ScrollLock;
+    bool numLock = leds & Keyboard::LED::NumLock;
+    bool capsLock = leds & Keyboard::LED::CapsLock;
+
+    d->scrollLockLabel->setPalette(paletteForLED[scrollLock]);
+    d->numLockLabel->setPalette(paletteForLED[numLock]);
+    d->capsLockLabel->setPalette(paletteForLED[capsLock]);
 }

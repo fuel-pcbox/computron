@@ -28,9 +28,16 @@
 
 #include "iodevice.h"
 
-class Keyboard final : public IODevice
+class Keyboard final : public QObject, public IODevice
 {
+    Q_OBJECT
 public:
+    enum LED {
+        ScrollLock = 1,
+        NumLock = 2,
+        CapsLock = 4,
+    };
+
     explicit Keyboard(Machine&);
     virtual ~Keyboard();
 
@@ -40,12 +47,16 @@ public:
 
     void raiseIRQ();
 
+signals:
+    void ledsChanged(int);
+
 private:
     BYTE m_systemControlPortData;
     BYTE m_ram[32];
     BYTE m_command;
     bool m_hasCommand;
     bool m_lastWasCommand;
+    BYTE m_leds { 0 };
 };
 
 #endif

@@ -49,6 +49,7 @@
 #define CMD_NO_COMMAND                0x00
 #define CMD_READ_CCB                  0x20
 #define CMD_WRITE_CCB                 0x60
+#define CMD_SET_LEDS                  0xED
 
 Keyboard::Keyboard(Machine& machine)
     : IODevice("Keyboard", machine)
@@ -73,6 +74,8 @@ void Keyboard::reset()
     m_hasCommand = false;
     m_lastWasCommand = false;
 
+    m_leds = 0;
+
     m_ram[0] |= CCB_SYSTEM_FLAG;
 
     // FIXME: The BIOS should do this, no?
@@ -90,6 +93,9 @@ BYTE Keyboard::in8(WORD port)
             m_hasCommand = false;
             vlog(LogKeyboard, "Reading 8042 RAM [%02] = %02X", ramIndex, m_ram[ramIndex]);
             return m_ram[ramIndex];
+        }
+        if (m_lastWasCommand && m_command == CMD_SET_LEDS) {
+            return 0xFA; // ACK
         }
 
         BYTE key = kbd_pop_raw();
@@ -137,11 +143,26 @@ void Keyboard::out8(WORD port, BYTE data)
     if (port == 0x60) {
         m_lastWasCommand = false;
         if (!m_hasCommand) {
+            if (data == CMD_SET_LEDS) {
+                m_command = data;
+                m_hasCommand = true;
+                m_lastWasCommand = true;
+                return;
+            }
             vlog(LogKeyboard, "Got data (%02X) without command", data);
             return;
         }
 
         m_hasCommand = false;
+
+        if (m_command == CMD_SET_LEDS) {
+            vlog(LogKeyboard, "LEDs set to %02X\n", data);
+            if (m_leds != data) {
+                m_leds = data;
+                emit ledsChanged(m_leds);
+            }
+            return;
+        }
 
         if (m_command == 0xD1) {
             vlog(LogKeyboard, "Write output port: A20=%s", (data & 0x02) ? "on" : "off");
