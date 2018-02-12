@@ -250,7 +250,7 @@ void vm_handleE6(CPU& cpu)
 
 void vga_scrollup(BYTE x1, BYTE y1, BYTE x2, BYTE y2, BYTE num, BYTE attr)
 {
-    BYTE *videoMemory = g_cpu->memoryPointer(0xB800, 0x0000);
+    BYTE *videoMemory = g_cpu->memoryPointer(0xB8000);
 
     // TODO: Scroll graphics when in graphics mode (using text coordinates)
 
@@ -281,7 +281,7 @@ void vga_scrollup(BYTE x1, BYTE y1, BYTE x2, BYTE y2, BYTE num, BYTE attr)
 
 void vga_scrolldown(BYTE x1, BYTE y1, BYTE x2, BYTE y2, BYTE num, BYTE attr)
 {
-    BYTE *videoMemory = g_cpu->memoryPointer(0xB800, 0x0000);
+    BYTE *videoMemory = g_cpu->memoryPointer(0xB8000);
 
     // TODO: Scroll graphics when in graphics mode (using text coordinates)
 

@@ -80,7 +80,7 @@ Screen::Screen(Machine& m)
     init();
     synchronizeFont();
     setTextMode(80, 25);
-    d->videoMemory = machine().cpu().memoryPointer(0xB800, 0x0000);
+    d->videoMemory = machine().cpu().memoryPointer(0xB8000);
 
     m_render04 = QImage(320, 200, QImage::Format_Indexed8);
     m_render0D = QImage(320, 200, QImage::Format_Indexed8);
