@@ -78,12 +78,18 @@ void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
         vlog(LogCPU, "PE=1 Interrupt %02X trapped%s, type=%01X, %04X:%08X (hi=%08X, lo=%08X)", isr, requestedByPIC ? " (from PIC)" : "", type, vector.segment, vector.offset, hi, lo);
 
         switch (type) {
-        case 0xe: // 80386 Interrupt Gate
-        case 0xf: // 80386 Trap Gate
+        case 0x6: // 80286 Interrupt Gate (16-bit)
+        //case 0x7: // 80286 Trap Gate (16-bit)
+        case 0xe: // 80386 Interrupt Gate (32-bit)
+        case 0xf: // 80386 Trap Gate (32-bit)
             break;
         default:
             VM_ASSERT(false);
         }
+    } else {
+        // FIXME: should use PE-safe reads
+        vector.segment = (m_memory[isr * 4 + 3] << 8) | m_memory[isr * 4 + 2];
+        vector.offset = (m_memory[isr * 4 + 1] << 8) | m_memory[isr * 4];
     }
 
 #ifdef VOMIT_DEBUG
@@ -105,11 +111,7 @@ void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
         push(getCS());
         push(getIP());
 
-        // FIXME: should use PE-safe reads
-        WORD segment = (m_memory[isr * 4 + 3] << 8) | m_memory[isr * 4 + 2];
-        WORD offset = (m_memory[isr * 4 + 1] << 8) | m_memory[isr * 4];
-
-        jump16(segment, offset);
+        jump16(vector.segment, vector.offset);
         return;
     }
     push32(getFlags());
