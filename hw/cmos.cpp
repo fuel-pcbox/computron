@@ -116,12 +116,16 @@ BYTE CMOS::in8(WORD)
         }
     }
 
+#ifdef CMOS_DEBUG
     vlog(LogCMOS, "Read register %02X (%02X)", m_registerIndex, value);
+#endif
     return value;
 }
 
 void CMOS::out8(WORD, BYTE data)
 {
+#ifdef CMOS_DEBUG
     vlog(LogCMOS, "Select register %02X", data);
+#endif
     m_registerIndex = data;
 }
