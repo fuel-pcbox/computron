@@ -86,6 +86,26 @@ Machine::Machine(const QString& name, OwnPtr<Settings>&& settings, QObject* pare
         IODevice::ignorePort(0x80); // Linux outb_p() uses this for small delays.
         IODevice::ignorePort(0x330); // MIDI
         IODevice::ignorePort(0x331); // MIDI
+        IODevice::ignorePort(0x334); // SCSI (BusLogic)
+
+        IODevice::ignorePort(0x237);
+        IODevice::ignorePort(0x337);
+
+        IODevice::ignorePort(0x0C8F);
+        IODevice::ignorePort(0x1C8F);
+        IODevice::ignorePort(0x2C8F);
+        IODevice::ignorePort(0x3C8F);
+        IODevice::ignorePort(0x4C8F);
+        IODevice::ignorePort(0x5C8F);
+        IODevice::ignorePort(0x6C8F);
+        IODevice::ignorePort(0x7C8F);
+        IODevice::ignorePort(0x8C8F);
+        IODevice::ignorePort(0x9C8F);
+        IODevice::ignorePort(0xAC8F);
+        IODevice::ignorePort(0xBC8F);
+        IODevice::ignorePort(0xCC8F);
+        IODevice::ignorePort(0xDC8F);
+        IODevice::ignorePort(0xEC8F);
     }
 
     m_busMouse = make<BusMouse>(*this);
