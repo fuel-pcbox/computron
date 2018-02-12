@@ -45,7 +45,7 @@ StateWidget::StateWidget(Machine& m)
     , m_machine(m)
     , d(make<Private>())
 {
-    setFixedSize(200, 400);
+    setFixedSize(220, 400);
     d->ui.setupUi(this);
 
     connect(&d->syncTimer, SIGNAL(timeout()), this, SLOT(sync()));
@@ -96,6 +96,7 @@ void StateWidget::sync()
     DO_LABEL(FS, "%04X");
     DO_LABEL(GS, "%04X");
     DO_LABEL(CR0, "%08X");
+    DO_LABEL(CR3, "%08X");
 
 #define DO_FLAG(name) flagString += QString("<font color='%1'>%2</font> ").arg(cpu.get ## name() ? "black" : "#ccc").arg(# name);
 
@@ -108,6 +109,7 @@ void StateWidget::sync()
     DO_FLAG(CF);
     DO_FLAG(IF);
     DO_FLAG(TF);
+    DO_FLAG(NT);
 
     d->ui.lblFlags->setText(flagString);
 
