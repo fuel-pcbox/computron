@@ -373,6 +373,7 @@ void Screen::paintEvent(QPaintEvent *e)
     //synchronizeFont();
 
     BYTE *v = d->videoMemory;
+    v += machine().vga().startAddress();
 
     int screenColumns = currentColumnCount();
 
