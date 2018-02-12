@@ -230,6 +230,9 @@ public:
     DWORD getControlRegister(int registerIndex) const { return *m_controlRegisterMap[registerIndex]; }
     void setControlRegister(int registerIndex, DWORD value) { *m_controlRegisterMap[registerIndex] = value; }
 
+    DWORD getDebugRegister(int registerIndex) const { return *m_debugRegisterMap[registerIndex]; }
+    void setDebugRegister(int registerIndex, DWORD value) { *m_debugRegisterMap[registerIndex] = value; }
+
     DWORD getEAX() const { return this->regs.D.EAX; }
     DWORD getEBX() const { return this->regs.D.EBX; }
     DWORD getECX() const { return this->regs.D.ECX; }
@@ -908,6 +911,8 @@ protected:
     void _MOV_reg32_RM32(Instruction&);
     void _MOV_reg32_CR(Instruction&);
     void _MOV_CR_reg32(Instruction&);
+    void _MOV_reg32_DR(Instruction&);
+    void _MOV_DR_reg32(Instruction&);
     void _MOV_moff32_EAX(Instruction&);
     void _MOV_EAX_imm32(Instruction&);
     void _MOV_EBX_imm32(Instruction&);
@@ -1150,6 +1155,7 @@ private:
 
     WORD* m_segmentMap[8];
     DWORD* m_controlRegisterMap[8];
+    DWORD* m_debugRegisterMap[8];
 
     // ID-to-Register maps
     DWORD* treg32[8];

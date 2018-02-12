@@ -67,6 +67,8 @@ enum InstructionFormat {
     OP_RM32_CL,
     OP_reg32_CR,
     OP_CR_reg32,
+    OP_reg32_DR,
+    OP_DR_reg32,
     OP_reg16_RM8,
     OP_reg32_RM8,
     OP_reg32_RM16,
@@ -290,6 +292,8 @@ static void build(InstructionDescriptor* table, BYTE op, const char* mnemonic, I
     case OP_reg8_CL:
     case OP_reg32:
     case OP_reg32_RM16:
+    case OP_reg32_DR:
+    case OP_DR_reg32:
         break;
     }
 }
@@ -723,7 +727,9 @@ void buildOpcodeTablesIfNeeded()
     build0F(0x06, "CLTS",  OP,             &CPU::_CLTS);
 
     build0F(0x20, "MOV",   OP_reg32_CR,    &CPU::_MOV_reg32_CR);
+    build0F(0x21, "MOV",   OP_reg32_DR,    &CPU::_MOV_reg32_DR);
     build0F(0x22, "MOV",   OP_CR_reg32,    &CPU::_MOV_CR_reg32);
+    build0F(0x23, "MOV",   OP_DR_reg32,    &CPU::_MOV_DR_reg32);
 
     build0F(0x80, "JO",    OP_NEAR_imm,    &CPU::_Jcc_NEAR_imm);
     build0F(0x81, "JNO",   OP_NEAR_imm,    &CPU::_Jcc_NEAR_imm);

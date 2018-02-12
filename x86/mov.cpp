@@ -171,6 +171,48 @@ void CPU::_MOV_CR_reg32(Instruction& insn)
     vlog(LogCPU, "MOV CR%u <- %08X", crIndex, getControlRegister(crIndex));
 }
 
+void CPU::_MOV_reg32_DR(Instruction& insn)
+{
+    int drIndex = insn.registerIndex();
+    auto registerIndex = static_cast<CPU::RegisterIndex32>(insn.rm() & 7);
+
+    if (getVM()) {
+        GP(0);
+        return;
+    }
+
+    if (getPE()) {
+        if (getCPL() != 0) {
+            GP(0);
+            return;
+        }
+    }
+
+    setRegister32(registerIndex, getDebugRegister(drIndex));
+    vlog(LogCPU, "MOV %s <- DR%u (%08X)", registerName(registerIndex), drIndex, getDebugRegister(drIndex));
+}
+
+void CPU::_MOV_DR_reg32(Instruction& insn)
+{
+    int drIndex = insn.registerIndex();
+    auto registerIndex = static_cast<CPU::RegisterIndex32>(insn.rm() & 7);
+
+    if (getVM()) {
+        GP(0);
+        return;
+    }
+
+    if (getPE()) {
+        if (getCPL() != 0) {
+            GP(0);
+            return;
+        }
+    }
+
+    setDebugRegister(drIndex, getRegister32(registerIndex));
+    vlog(LogCPU, "MOV DR%u <- %08X", drIndex, getDebugRegister(drIndex));
+}
+
 void CPU::_MOV_AL_imm8(Instruction& insn)
 {
     regs.B.AL = insn.imm8();

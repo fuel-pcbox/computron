@@ -258,6 +258,15 @@ CPU::CPU(Machine& m)
     m_controlRegisterMap[6] = &this->CR6;
     m_controlRegisterMap[7] = &this->CR7;
 
+    m_debugRegisterMap[0] = &this->DR0;
+    m_debugRegisterMap[1] = &this->DR1;
+    m_debugRegisterMap[2] = &this->DR2;
+    m_debugRegisterMap[3] = &this->DR3;
+    m_debugRegisterMap[4] = &this->DR4;
+    m_debugRegisterMap[5] = &this->DR5;
+    m_debugRegisterMap[6] = &this->DR6;
+    m_debugRegisterMap[7] = &this->DR7;
+
     this->treg32[RegisterEAX] = &this->regs.D.EAX;
     this->treg32[RegisterEBX] = &this->regs.D.EBX;
     this->treg32[RegisterECX] = &this->regs.D.ECX;
