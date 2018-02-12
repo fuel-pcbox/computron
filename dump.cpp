@@ -229,6 +229,7 @@ void CPU::dumpAll()
     vlog(LogDump, "EIP: %08X", getEIP());
 
     vlog(LogDump, "CR0: %08X", getCR0());
+    vlog(LogDump, "CR3: %08X", getCR3());
 
     vlog(LogDump, "A20: %u", isA20Enabled());
 
