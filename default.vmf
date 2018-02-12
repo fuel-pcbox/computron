@@ -4,6 +4,7 @@ load-file F000:0000 bios/bios.bin
 load-file C000:4000 font.bin
 
 fixed-disk 0 images/c.img 32768
+#fixed-disk 0 images/ye-olde-c.img 32768
 
 keymap keymaps/mbp.vkeymap
 
@@ -24,3 +25,4 @@ floppy-disk 0 1.44M images/slackware-3.3-bare.i
 #floppy-disk 0 1.44M images/netbsd2-1.img
 #floppy-disk 0 1.44M images/xenix-1.img
 #floppy-disk 0 1.44M images/memtest86.img
+#floppy-disk 0 1.44M ../tei/.floppy-image
