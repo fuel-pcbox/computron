@@ -210,7 +210,7 @@ public:
     bool getPF() const { return this->PF; }
     bool getZF() const { return this->ZF; }
     unsigned int getIOPL() const { return this->IOPL; }
-    unsigned int getCPL() const { return this->CPL; }
+    BYTE getCPL() const { return this->CS & 3; }
     bool getNT() const { return this->NT; }
     bool getVIP() const { return this->VIP; }
     bool getVIF() const { return this->VIF; }
@@ -1105,7 +1105,6 @@ private:
     WORD CS, DS, ES, SS, FS, GS;
     bool CF, DF, TF, PF, AF, ZF, SF, IF, OF;
 
-    unsigned int CPL;
     unsigned int IOPL;
     bool NT;
     bool RF;
