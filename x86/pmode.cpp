@@ -154,7 +154,7 @@ CPU::SegmentSelector CPU::makeSegmentSelector(WORD index)
     if (index >= this->GDTR.limit) {
         vlog(LogCPU, "Segment selector index 0x%04X >= GDTR.limit (0x%04X).", index, GDTR.limit);
         VM_ASSERT(false);
-        dumpAll();
+        //dumpAll();
         debugger().enter();
         //vomit_exit(1);
     }
@@ -216,8 +216,10 @@ void CPU::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
     CPU::SegmentSelector& selector = m_selector[(int)segmentRegisterIndex];
     selector = makeSegmentSelector(getSegment(segmentRegisterIndex));
 
-    if (getPE())
-        vlog(LogCPU, "%s loaded with %04X { type:%02X, base:%08X, limit:%08X }", toString(segmentRegisterIndex), getSegment(segmentRegisterIndex), selector.type, selector.base, selector.limit);
+    if (options.pedebug) {
+        if (getPE())
+            vlog(LogCPU, "%s loaded with %04X { type:%02X, base:%08X, limit:%08X }", toString(segmentRegisterIndex), getSegment(segmentRegisterIndex), selector.type, selector.base, selector.limit);
+    }
 }
 
 void CPU::taskSwitch(WORD task)

@@ -210,7 +210,7 @@ void CPU::_MOV_DR_reg32(Instruction& insn)
     }
 
     setDebugRegister(drIndex, getRegister32(registerIndex));
-    vlog(LogCPU, "MOV DR%u <- %08X", drIndex, getDebugRegister(drIndex));
+    //vlog(LogCPU, "MOV DR%u <- %08X", drIndex, getDebugRegister(drIndex));
 }
 
 void CPU::_MOV_AL_imm8(Instruction& insn)

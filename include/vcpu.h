@@ -181,10 +181,11 @@ public:
 
     void jumpToInterruptHandler(int isr, bool requestedByPIC = false);
 
-    void GP(int code);
+    void GP(WORD code);
     void pageFault(DWORD error);
 
-    void exception(int ec) { this->IP = getBaseIP(); jumpToInterruptHandler(ec); }
+    void exception(BYTE num);
+    void exception(BYTE num, WORD error);
 
     void setIF(bool value) { this->IF = value; }
     void setCF(bool value) { this->CF = value; }

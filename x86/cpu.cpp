@@ -213,12 +213,29 @@ void CPU::_VKILL(Instruction&)
     vomit_exit(0);
 }
 
-void CPU::GP(int code)
+void CPU::exception(BYTE num)
 {
-    vlog(LogCPU, "#GP(%d) :-(", code);
-    exception(13);
-    debugger().enter();
-    //vomit_exit(1);
+    setEIP(getBaseEIP());
+    jumpToInterruptHandler(num);
+}
+
+void CPU::exception(BYTE num, WORD error)
+{
+    exception(num);
+    if (o32())
+        push32(error);
+    else
+        push(error);
+}
+
+void CPU::GP(WORD code)
+{
+    WORD selector = code & 0xfff8;
+    bool TI = code & 4;
+    bool I = code & 2;
+    bool EX = code & 1;
+    vlog(LogCPU, "#GP(%04X) selector=%04X, TI=%u, I=%u, EX=%u", code, selector, TI, I, EX);
+    exception(13, code);
 }
 
 CPU::CPU(Machine& m)
@@ -990,8 +1007,8 @@ bool CPU::validateAddress(const SegmentSelector& selector, DWORD offset, MemoryA
         //VM_ASSERT(false);
         dumpSegment(selector);
         //dumpAll();
-        debugger().enter();
-        //GP(0);
+        //debugger().enter();
+        GP(selector.index);
         return false;
     }
     assert(offset <= selector.effectiveLimit());
@@ -1015,6 +1032,7 @@ bool CPU::validateAddress(const SegmentSelector& selector, DWORD offset, MemoryA
              flatAddress,
              isA20Enabled() ? "on" : "off"
         );
+        GP(selector.index);
         return false;
     }
     return true;
@@ -1185,17 +1203,15 @@ void CPU::updateSizeModes()
 {
     m_shouldRestoreSizesAfterOverride = false;
 
-    if (!getPE()) {
-        m_addressSize32 = false;
-        m_operandSize32 = false;
-        return;
-    }
+    bool oldO32 = m_operandSize32;
+    bool oldA32 = m_addressSize32;
 
-    //SegmentSelector& codeSegment = m_selector[SegmentRegisterIndex::CS];
-    auto codeSegment = makeSegmentSelector(CS);
+    auto& codeSegment = m_selector[(int)SegmentRegisterIndex::CS];
     m_addressSize32 = codeSegment._32bit;
     m_operandSize32 = codeSegment._32bit;
-    vlog(LogCPU, "PE=%u X:%u O:%u A:%u (newCS: %04X)", getPE(), x16() ? 16 : 32, o16() ? 16 : 32, a16() ? 16 : 32, CS);
+
+    if (oldO32 != m_operandSize32 || oldA32 != m_addressSize32)
+        vlog(LogCPU, "updateSizeModes PE=%u X:%u O:%u A:%u (newCS: %04X)", getPE(), x16() ? 16 : 32, o16() ? 16 : 32, a16() ? 16 : 32, getCS());
 }
 
 void CPU::setCS(WORD value)

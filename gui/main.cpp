@@ -113,6 +113,8 @@ void parseArguments(const QStringList& arguments)
             options.trapint = true;
         else if (argument == "--memdebug")
             options.memdebug = true;
+        else if (argument == "--pedebug")
+            options.pedebug = true;
         else if (argument == "--vgadebug")
             options.vgadebug = true;
         else if (argument == "--iopeek")
