@@ -133,6 +133,7 @@ void PIT::out8(WORD port, BYTE data)
                 d->timer[0].counter[0].reload = vomit_MAKEWORD(data, vomit_LSB(d->timer[0].counter[0].reload));
                 d->timer[0].gotLSB = true;
             }
+            return;
         }
         vlog(LogTimer, "Unhandled command: 0x%02X", d->timer[0].command);
         return;
