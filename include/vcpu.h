@@ -1013,6 +1013,8 @@ private:
 
     void initWatches();
 
+    void didTouchMemory(DWORD address, unsigned byteCount);
+
     template<typename T>
     T rightShift(T, int steps);
 

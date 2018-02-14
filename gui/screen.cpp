@@ -40,6 +40,7 @@
 #include <QtCore/QMutex>
 #include <QtCore/QQueue>
 #include <QtCore/QDebug>
+#include <QtCore/QTimer>
 
 // FIXME: Remove. This is here because VGA has no way of grabbing at the Screen.
 volatile bool g_screen_in_refresh = false;
@@ -62,6 +63,8 @@ struct Screen::Private
     QQueue<BYTE> rawQueue;
 
     BYTE *videoMemory;
+
+    QTimer refreshTimer;
 };
 
 Screen::Screen(Machine& m)
@@ -100,6 +103,10 @@ Screen::Screen(Machine& m)
 
     setMouseTracking(true);
 
+    d->refreshTimer.setSingleShot(true);
+    d->refreshTimer.setInterval(25);
+    connect(&d->refreshTimer, SIGNAL(timeout()), this, SLOT(refresh()));
+
 #if 0
     // HACK 2000: Type w<ENTER> at boot for Windows ;-)
     d->keyQueue.enqueue(0x1177);
@@ -109,6 +116,18 @@ Screen::Screen(Machine& m)
 
 Screen::~Screen()
 {
+}
+
+void Screen::scheduleRefresh()
+{
+    d->refreshTimer.start();
+}
+
+void Screen::notify()
+{
+    if (d->refreshTimer.isActive())
+        return;
+    QMetaObject::invokeMethod(this, "scheduleRefresh", Qt::QueuedConnection);
 }
 
 void Screen::putCharacter(QPainter &p, int row, int column, BYTE color, BYTE c)

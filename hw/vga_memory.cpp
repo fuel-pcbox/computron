@@ -99,6 +99,8 @@ void VGAMemory::write8(DWORD address, BYTE value)
 {
     VM_ASSERT(addressIsInVGAMemory(address));
 
+    machine().notifyScreen();
+
     BYTE new_val[4];
 
     address -= 0xA0000;

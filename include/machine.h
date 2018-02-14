@@ -77,6 +77,7 @@ public:
     void setWidget(MachineWidget* widget) { m_widget = widget; }
 
     void resetAllIODevices();
+    void notifyScreen();
 
 public slots:
     void start();

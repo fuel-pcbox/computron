@@ -40,6 +40,8 @@ public:
     explicit Screen(Machine&);
     virtual ~Screen();
 
+    void notify();
+
     bool inTextMode() const;
     void setTextMode( int w, int h );
 
@@ -81,6 +83,7 @@ public slots:
 
 private slots:
     void flushKeyBuffer();
+    void scheduleRefresh();
 
 private:
     void paintEvent( QPaintEvent * );

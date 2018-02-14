@@ -216,6 +216,12 @@ bool Machine::isForAutotest()
     return settings().isForAutotest();
 }
 
+void Machine::notifyScreen()
+{
+    if (widget())
+        widget()->screen().notify();
+}
+
 void Machine::forEachIODevice(std::function<void (IODevice &)> function)
 {
     function(*m_pit);

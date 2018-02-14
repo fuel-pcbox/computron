@@ -62,9 +62,8 @@ MachineWidget::MachineWidget(Machine& m)
     paletteWidget->show();
 #endif
 
-    m_machine.setWidget(this);
-
     m_screen = make<Screen>(m);
+    m_machine.setWidget(this);
 
     StateWidget* stateWidget = new StateWidget(m);
 
@@ -117,7 +116,6 @@ MachineWidget::MachineWidget(Machine& m)
     connect(d->startMachine, SIGNAL(triggered(bool)), SLOT(onStartTriggered()));
     connect(d->stopMachine, SIGNAL(triggered(bool)), SLOT(onStopTriggered()));
 
-    QObject::connect(&d->syncTimer, SIGNAL(timeout()), &screen(), SLOT(refresh()));
     QObject::connect(&d->syncTimer, SIGNAL(timeout()), &screen(), SLOT(flushKeyBuffer()));
     d->syncTimer.start(50);
 

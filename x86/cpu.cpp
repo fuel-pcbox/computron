@@ -962,6 +962,18 @@ void CPU::_LEA_reg16_mem16(Instruction& insn)
     insn.reg16() = modrm.offset();
 }
 
+// FIXME: Make VGAMemory into some kind of "memory mapper" thingy and put this kind of logic in there.
+inline void CPU::didTouchMemory(DWORD address, unsigned byteCount)
+{
+    bool shouldNotifyScreen = false;
+    if (addressIsInVGAMemory(address))
+        shouldNotifyScreen = true;
+    else if (address >= 0xB8000 && address < 0xC0000)
+        shouldNotifyScreen = true;
+    if (shouldNotifyScreen)
+        machine().notifyScreen();
+}
+
 enum PageTableEntryFlags {
     Present = 0x01,
     ReadWrite = 0x02,
@@ -1169,6 +1181,7 @@ void CPU::writeMemory(DWORD address, T value)
     }
 
     *reinterpret_cast<T*>(&m_memory[address]) = value;
+    didTouchMemory(address, sizeof(T));
 }
 
 template<typename T>
@@ -1192,6 +1205,7 @@ void CPU::writeMemory(const SegmentSelector& selector, DWORD offset, T value)
             return;
         }
         *reinterpret_cast<T*>(&m_memory[flatAddress]) = value;
+        didTouchMemory(flatAddress, sizeof(T));
         return;
     }
     writeMemory(vomit_toFlatAddress(selector.index, offset), value);
@@ -1297,6 +1311,7 @@ BYTE* CPU::memoryPointer(const SegmentSelector& selector, DWORD offset)
         }
         if (options.memdebug || shouldLogMemoryPointer(flatAddress))
             vlog(LogCPU, "MemoryPointer PE [A20=%s] %04X:%08X (flat: %08X)", isA20Enabled() ? "on" : "off", selector.index, offset, flatAddress);
+        didTouchMemory(flatAddress, sizeof(DWORD));
         return &m_memory[flatAddress];
     }
     return memoryPointer(vomit_toFlatAddress(selector.index, offset));
@@ -1310,6 +1325,7 @@ BYTE* CPU::memoryPointer(WORD segmentIndex, DWORD offset)
 BYTE* CPU::memoryPointer(DWORD address)
 {
     address &= a20Mask();
+    didTouchMemory(address, sizeof(DWORD));
     return &m_memory[address];
 }
 

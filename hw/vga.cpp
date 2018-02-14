@@ -139,6 +139,8 @@ void VGA::reset()
 
 void VGA::out8(WORD port, BYTE data)
 {
+    machine().notifyScreen();
+
     switch (port) {
     case 0x3B4:
     case 0x3D4:
