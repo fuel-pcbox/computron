@@ -37,6 +37,7 @@
 
 #define CRASH_ON_OPCODE_00_00
 //#define DISASSEMBLE_EVERYTHING
+//#define CRASH_ON_GPF
 
 inline bool hasA20Bit(DWORD address)
 {
@@ -239,6 +240,9 @@ void CPU::GP(WORD code)
     bool I = code & 2;
     bool EX = code & 1;
     vlog(LogCPU, "#GP(%04X) selector=%04X, TI=%u, I=%u, EX=%u", code, selector, TI, I, EX);
+#ifdef CRASH_ON_GPF
+    VM_ASSERT(false);
+#endif
     exception(13, code);
 }
 

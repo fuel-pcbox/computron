@@ -104,18 +104,22 @@ void CPU::_LIDT(Instruction& insn)
 
 void CPU::_CLTS(Instruction&)
 {
-    if (getCPL() != 0) {
-        GP(0);
-        return;
+    if (getPE()) {
+        if (getCPL() != 0) {
+            GP(0);
+            return;
+        }
     }
     CR0 &= ~(1 << 3);
 }
 
 void CPU::_LMSW_RM16(Instruction& insn)
 {
-    if (getCPL()) {
-        GP(0);
-        return;
+    if (getPE()) {
+        if (getCPL() != 0) {
+            GP(0);
+            return;
+        }
     }
 
     WORD msw = insn.modrm().read16();

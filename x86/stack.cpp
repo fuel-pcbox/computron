@@ -209,7 +209,7 @@ void CPU::_PUSHF(Instruction&)
 void CPU::_POPF(Instruction&)
 {
     if (!getVM()) {
-        if (getCPL() == 0)
+        if (!getPE() || getCPL() == 0)
             setFlags(pop());
         else {
             bool oldIOPL = getIOPL();
@@ -229,7 +229,7 @@ void CPU::_POPF(Instruction&)
 void CPU::_POPFD(Instruction&)
 {
     if (!getVM()) {
-        if (getCPL() == 0)
+        if (!getPE() || getCPL() == 0)
             setEFlags(pop32());
         else {
             bool oldIOPL = getIOPL();
