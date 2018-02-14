@@ -237,7 +237,7 @@ void MemoryOrRegisterReference::resolve32()
     case 3: m_offset32 = m_cpu->getEBX() + m_displacement32; break;
     case 4: m_offset32 = evaluateSIB(); break;
     case 6: m_offset32 = m_cpu->getESI() + m_displacement32; break;
-    case 7: m_offset32 = m_cpu->getEDI(); break;
+    case 7: m_offset32 = m_cpu->getEDI() + m_displacement32; break;
     default: // 5
         if ((m_rm & 0xc0) == 0x00) {
             m_offset32 = m_displacement32; break;
