@@ -254,10 +254,20 @@ void CPU::_IMUL_reg32_RM32_imm8(Instruction& insn)
     }
 }
 
-void CPU::_IMUL_reg32_RM32_imm32(Instruction&)
+void CPU::_IMUL_reg32_RM32_imm32(Instruction& insn)
 {
-    vlog(LogCPU, "Not implemented: IMUL reg32,rm32,imm32");
-    vomit_exit(1);
+    SIGNED_DWORD value = insn.modrm().read32();
+    SIGNED_QWORD result = doImul(value, static_cast<SIGNED_DWORD>(insn.imm32()));
+
+    insn.reg32() = result;
+
+    if (result > 0x7FFFFFFF || result < -0x80000000) {
+        setCF(1);
+        setOF(1);
+    } else {
+        setCF(0);
+        setOF(0);
+    }
 }
 
 void CPU::_IMUL_reg16_RM16_imm16(Instruction& insn)
