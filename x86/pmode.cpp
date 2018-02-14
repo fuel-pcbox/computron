@@ -26,6 +26,8 @@
 #include "vcpu.h"
 #include "debugger.h"
 
+//#define DEBUG_IVT
+
 void CPU::_SGDT(Instruction& insn)
 {
     auto& modrm = insn.modrm();
@@ -99,12 +101,21 @@ void CPU::_LGDT(Instruction& insn)
 
 void CPU::_LIDT(Instruction& insn)
 {
-    vlog(LogAlert, "Begin LIDT");
     FarPointer ptr = readModRMFarPointerSegmentFirst(insn.modrm());
     DWORD baseMask = o32() ? 0xffffffff : 0x00ffffff;
     IDTR.base = ptr.offset & baseMask;
     IDTR.limit = ptr.segment;
     vlog(LogAlert, "LIDT { base:%08X, limit:%08X }", IDTR.base, IDTR.limit);
+#if DEBUG_IVT
+    for (DWORD isr = 0; isr < (IDTR.limit / 16); ++isr) {
+        FarPointer vector;
+        DWORD hi = readMemory32(IDTR.base + (isr * 8) + 4);
+        DWORD lo = readMemory32(IDTR.base + (isr * 8));
+        vector.segment = (lo >> 16) & 0xffff;
+        vector.offset = (hi & 0xffff0000) | (lo & 0xffff);
+        vlog(LogAlert, "Interrupt vector 0x%02x { 0x%04x:%08x }", isr, vector.segment, vector.offset);
+    }
+#endif
 }
 
 void CPU::_CLTS(Instruction&)
@@ -149,6 +160,7 @@ void CPU::_LAR_reg16_RM16(Instruction& insn)
 
 void CPU::_LAR_reg32_RM32(Instruction& insn)
 {
+
     VM_ASSERT(false);
 }
 
