@@ -57,8 +57,8 @@ void CPU::_PUSH_imm16(Instruction& insn)
 
 void CPU::_ENTER(Instruction& insn)
 {
-    assert(o16());
-    assert(a16());
+    VM_ASSERT(o16());
+    VM_ASSERT(a16());
 
     WORD size = insn.imm16_2();
     BYTE nestingLevel = insn.imm8_1() & 31;

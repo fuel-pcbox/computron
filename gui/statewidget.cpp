@@ -32,12 +32,16 @@
 #include "screen.h"
 #include <QtCore/QCoreApplication>
 #include <QtCore/QTimer>
+#include <QtCore/QTime>
 #include <QtWidgets/QVBoxLayout>
 
 struct StateWidget::Private
 {
     QTimer syncTimer;
     Ui_StateWidget ui;
+
+    QWORD cycleCount { 0 };
+    QTime cycleTimer;
 };
 
 StateWidget::StateWidget(Machine& m)
@@ -49,7 +53,9 @@ StateWidget::StateWidget(Machine& m)
     d->ui.setupUi(this);
 
     connect(&d->syncTimer, SIGNAL(timeout()), this, SLOT(sync()));
-    d->syncTimer.start(200);
+    d->syncTimer.start(300);
+
+    d->cycleTimer.start();
 }
 
 StateWidget::~StateWidget()
@@ -114,4 +120,12 @@ void StateWidget::sync()
     d->ui.lblFlags->setText(flagString);
 
     d->ui.lblSizes->setText(QString("A%1 O%2 X%3").arg(cpu.a16() ? 16 : 32).arg(cpu.o16() ? 16 : 32).arg(cpu.x16() ? 16 : 32));
+
+    auto cpuCycles = cpu.cycle();
+    auto cycles = cpuCycles - d->cycleCount;
+    double elapsed = d->cycleTimer.elapsed() / 1000.0;
+    double ips = cycles / elapsed;
+    d->ui.lblIPS->setText(QString("%1").arg((QWORD)ips));
+    d->cycleCount = cpuCycles;
+    d->cycleTimer.start();
 }

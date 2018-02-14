@@ -123,9 +123,9 @@ FarPointer CPU::readModRMFarPointerOffsetFirst(MemoryOrRegisterReference& modrm)
     return ptr;
 }
 
-void MemoryOrRegisterReference::decode(InstructionStream& stream)
+void MemoryOrRegisterReference::decode(InstructionStream& stream, bool a32)
 {
-    m_a32 = stream.a32();
+    m_a32 = a32;
     m_rm = stream.readInstruction8();
 
     if (m_a32) {

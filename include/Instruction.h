@@ -28,6 +28,7 @@
 #include "debug.h"
 #include "types.h"
 #include "vomit.h"
+#include <QString>
 
 class CPU;
 class Instruction;
@@ -101,7 +102,7 @@ private:
     void resolve16();
     void resolve32();
 
-    void decode(InstructionStream&);
+    void decode(InstructionStream&, bool a32);
     void decode16(InstructionStream&);
     void decode32(InstructionStream&);
 
@@ -139,7 +140,7 @@ public:
 
     MemoryOrRegisterReference& modrm() { VM_ASSERT(hasRM()); return m_modrm; }
 
-    bool isValid() const { return m_impl; }
+    bool isValid() const { return m_descriptor; }
 
     unsigned length() const;
 
@@ -166,7 +167,6 @@ public:
     WORD& segreg();
 
     bool hasRM() const { return m_hasRM; }
-    bool hasSIB() const { return m_hasSIB; }
     bool hasSubOp() const { return m_hasSubOp; }
 
     unsigned registerIndex() const;
@@ -192,7 +192,6 @@ private:
 
     bool m_hasSubOp { false };
     bool m_hasRM { false };
-    bool m_hasSIB { false };
 
     unsigned m_imm1Bytes { 0 };
     unsigned m_imm2Bytes { 0 };
@@ -200,8 +199,6 @@ private:
     MemoryOrRegisterReference m_modrm;
 
     InstructionDescriptor* m_descriptor { nullptr };
-
-    InstructionImpl m_impl;
     CPU* m_cpu { nullptr };
 };
 

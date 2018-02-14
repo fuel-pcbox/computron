@@ -30,6 +30,7 @@
 #include "debug.h"
 #include <QtCore/QMutex>
 #include <QtCore/QQueue>
+#include <QtCore/QVector>
 #include <set>
 #include "OwnPtr.h"
 #include "Instruction.h"

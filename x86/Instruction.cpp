@@ -836,9 +836,9 @@ Instruction::Instruction(InstructionStream& stream)
     m_hasRM = m_descriptor->hasRM;
     if (m_hasRM) {
         // Consume ModR/M (may include SIB and displacement.)
-        m_modrm.decode(stream);
+        m_modrm.decode(stream, m_a32);
     } else {
-        if (opcodeHasRegisterIndex(m_op)) {
+        if (m_descriptor->opcodeHasRegisterIndex) {
             m_registerIndex = m_op & 7;
         }
     }
@@ -849,8 +849,7 @@ Instruction::Instruction(InstructionStream& stream)
         m_descriptor = &m_descriptor->slashes[slash()];
     }
 
-    m_impl = m_descriptor->impl;
-    if (!m_impl) {
+    if (!m_descriptor->impl) {
         if (m_hasSubOp) {
             if (hasSlash)
                 vlog(LogCPU, "Instruction %02X %02X /%u not understood", m_op, m_subOp, slash());
@@ -862,6 +861,8 @@ Instruction::Instruction(InstructionStream& stream)
             else
                 vlog(LogCPU, "Instruction %02X not understood", m_op);
         }
+        m_descriptor = nullptr;
+        return;
     }
 
     m_imm1Bytes = m_descriptor->imm1BytesForAddressSize(m_a32);
@@ -912,7 +913,7 @@ void Instruction::execute(CPU& cpu)
     m_cpu = &cpu;
     if (m_hasRM)
         m_modrm.resolve(cpu);
-    (cpu.*m_impl)(*this);
+    (cpu.*m_descriptor->impl)(*this);
 }
 
 DWORD InstructionStream::readBytes(unsigned count)

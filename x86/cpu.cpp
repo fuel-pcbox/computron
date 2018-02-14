@@ -1031,7 +1031,7 @@ bool CPU::validateAddress(const SegmentSelector& selector, DWORD offset, MemoryA
         GP(selector.index);
         return false;
     }
-    assert(offset <= selector.effectiveLimit());
+    VM_ASSERT(offset <= selector.effectiveLimit());
 
     DWORD flatAddress = selector.base + offset;
     if (getPG()) {
@@ -1153,7 +1153,7 @@ DWORD CPU::readMemory32(SegmentRegisterIndex segment, DWORD offset) { return rea
 template<typename T>
 void CPU::writeMemory(DWORD address, T value)
 {
-    assert(!getPE());
+    VM_ASSERT(!getPE());
     address &= a20Mask();
 
     if (options.memdebug || shouldLogMemoryWrite(address)) {
