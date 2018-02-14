@@ -126,11 +126,11 @@ void PIT::out8(WORD port, BYTE data)
     case 0x40:
         if (d->timer[0].command == 3) {
             if (d->timer[0].gotLSB) {
-                d->timer[0].counter[0].reload = vomit_MAKEWORD(vomit_MSB(d->timer[0].counter[0].reload), data);
+                d->timer[0].counter[0].reload = makeWORD(vomit_MSB(d->timer[0].counter[0].reload), data);
                 d->timer[0].gotLSB = false;
                 reconfigureTimer();
             } else {
-                d->timer[0].counter[0].reload = vomit_MAKEWORD(data, vomit_LSB(d->timer[0].counter[0].reload));
+                d->timer[0].counter[0].reload = makeWORD(data, vomit_LSB(d->timer[0].counter[0].reload));
                 d->timer[0].gotLSB = true;
             }
             return;

@@ -88,7 +88,7 @@ void CPU::_JMP_FAR_mem16(Instruction& insn)
 void CPU::_JMP_FAR_mem32(Instruction& insn)
 {
     WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
-    jump32(ptr[2], vomit_MAKEDWORD(ptr[1], ptr[0]));
+    jump32(ptr[2], makeDWORD(ptr[1], ptr[0]));
 }
 
 ALWAYS_INLINE bool CPU::evaluateCondition(BYTE cc) const

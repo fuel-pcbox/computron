@@ -89,11 +89,11 @@ void IDE::out8(WORD port, BYTE data)
         break;
     case 0x4:
         vlog(LogIDE, "Controller %d cylinder LSB set: %u", controllerIndex, data);
-        controller.cylinderIndex = vomit_MAKEWORD(data, vomit_MSB(controller.cylinderIndex));
+        controller.cylinderIndex = makeWORD(data, vomit_MSB(controller.cylinderIndex));
         break;
     case 0x5:
         vlog(LogIDE, "Controller %d cylinder MSB set: %u", controllerIndex, data);
-        controller.cylinderIndex = vomit_MAKEWORD(vomit_LSB(controller.cylinderIndex), data);
+        controller.cylinderIndex = makeWORD(vomit_LSB(controller.cylinderIndex), data);
         break;
     case 0x6:
         vlog(LogIDE, "Controller %d head index set: %u", controllerIndex, data);

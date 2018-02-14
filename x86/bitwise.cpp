@@ -360,7 +360,7 @@ void CPU::_BSR_reg32_RM32(Instruction& insn)
 
 void CPU::_SHLD_RM16_reg16_imm8(Instruction& insn)
 {
-    DWORD value = vomit_MAKEDWORD(insn.modrm().read16(), insn.reg16());
+    DWORD value = makeDWORD(insn.modrm().read16(), insn.reg16());
     insn.modrm().write16(leftShift(value, insn.imm8()) >> 16);
 }
 
@@ -372,7 +372,7 @@ void CPU::_SHLD_RM32_reg32_imm8(Instruction& insn)
 
 void CPU::_SHLD_RM16_reg16_CL(Instruction& insn)
 {
-    DWORD value = vomit_MAKEDWORD(insn.modrm().read16(), insn.reg16());
+    DWORD value = makeDWORD(insn.modrm().read16(), insn.reg16());
     insn.modrm().write16(leftShift(value, getCL()) >> 16);
 }
 
@@ -384,7 +384,7 @@ void CPU::_SHLD_RM32_reg32_CL(Instruction& insn)
 
 void CPU::_SHRD_RM16_reg16_imm8(Instruction& insn)
 {
-    DWORD value = vomit_MAKEDWORD(insn.reg16(), insn.modrm().read16());
+    DWORD value = makeDWORD(insn.reg16(), insn.modrm().read16());
     insn.modrm().write16(rightShift(value, insn.imm8()));
 }
 
@@ -396,7 +396,7 @@ void CPU::_SHRD_RM32_reg32_imm8(Instruction& insn)
 
 void CPU::_SHRD_RM16_reg16_CL(Instruction& insn)
 {
-    DWORD value = vomit_MAKEDWORD(insn.reg16(), insn.modrm().read16());
+    DWORD value = makeDWORD(insn.reg16(), insn.modrm().read16());
     insn.modrm().write16(rightShift(value, getCL()));
 }
 

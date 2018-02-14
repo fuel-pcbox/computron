@@ -158,12 +158,12 @@ inline WORD vomit_LSB(WORD w)
     return w & 0xFF;
 }
 
-inline WORD vomit_MAKEWORD(BYTE msb, BYTE lsb)
+inline WORD makeWORD(BYTE msb, BYTE lsb)
 {
     return (msb << 8) | lsb;
 }
 
-inline DWORD vomit_MAKEDWORD(WORD msw, WORD lsw)
+inline DWORD makeDWORD(WORD msw, WORD lsw)
 {
     return (msw << 16) | lsw;
 }

@@ -1330,12 +1330,12 @@ WORD SimpleInstructionStream::readInstruction16()
 {
     BYTE lsb = *(m_data++);
     BYTE msb = *(m_data++);
-    return vomit_MAKEWORD(msb, lsb);
+    return makeWORD(msb, lsb);
 }
 
 DWORD SimpleInstructionStream::readInstruction32()
 {
     WORD lsw = readInstruction16();
     WORD msw = readInstruction16();
-    return vomit_MAKEDWORD(msw, lsw);
+    return makeDWORD(msw, lsw);
 }
