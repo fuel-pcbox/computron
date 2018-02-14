@@ -141,6 +141,11 @@ void CPU::handleRepeatOpcode(Instruction&& insn, bool shouldEqual)
     case 0xAE: DO_REPZ(_SCASB); return;
     case 0xAF: DO_REPZ_NEW(_SCASW, _SCASD); return;
 
+    case 0x90:
+        // PAUSE / REP NOP
+        execute(std::move(insn));
+        return;
+
     default:
         debugger().enter();
         vlog(LogAlert, "SUSPICIOUS: Opcode %02X used with REP* prefix", insn.op());

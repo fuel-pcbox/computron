@@ -86,9 +86,7 @@ public:
     explicit CPU(Machine&);
     ~CPU();
 
-#ifdef VOMIT_DETERMINISTIC
     QWORD cycle() const { return m_cycle; }
-#endif
 
     void reset();
 
@@ -547,6 +545,8 @@ protected:
     void _CMC(Instruction&);
     void _CLTS(Instruction&);
 
+    void _WBINVD(Instruction&);
+
     void _CBW(Instruction&);
     void _CWD(Instruction&);
     void _CWDE(Instruction&);
@@ -990,8 +990,9 @@ protected:
     void _SBB_reg32_RM32(Instruction&);
     void _AND_reg32_RM32(Instruction&);
     void _SUB_reg32_RM32(Instruction&);
-
     void _AND_RM32_reg32(Instruction&);
+
+    void _RDTSC(Instruction&);
 
     void _UD0(Instruction&);
     void _AddressSizeOverride(Instruction&);
@@ -1229,9 +1230,7 @@ private:
 
     bool m_isForAutotest { false };
 
-#ifdef VOMIT_DETERMINISTIC
     QWORD m_cycle { 0 };
-#endif
 };
 
 extern CPU* g_cpu;

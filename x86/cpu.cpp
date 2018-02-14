@@ -209,6 +209,22 @@ void CPU::execute(Instruction&& insn)
     vlog(LogCPU, "%s", qPrintable(insn.toString(m_baseEIP, x32())));
 #endif
     insn.execute(*this);
+
+    ++m_cycle;
+}
+
+void CPU::_RDTSC(Instruction&)
+{
+    setEDX(m_cycle >> 32);
+    setEAX(m_cycle);
+}
+
+void CPU::_WBINVD(Instruction&)
+{
+    if (getPE() && getCPL() != 0) {
+        vlog(LogCPU, "WBINVD GP(0)");
+        GP(0);
+    }
 }
 
 void CPU::_VKILL(Instruction&)
@@ -553,9 +569,6 @@ void CPU::jumpAbsolute16(WORD address)
         this->EIP = address;
     else
         this->IP = address;
-#ifdef VOMIT_DETERMINISTIC
-    ++m_cycle;
-#endif
 }
 
 void CPU::jumpAbsolute32(DWORD address)
