@@ -1,8 +1,8 @@
 macx:QMAKE_MAC_SDK = macosx10.9
 TEMPLATE = app
 TARGET = vomit
-DEPENDPATH += . x86 bios disasm gui hw include disasm/include
-INCLUDEPATH += . include disasm/include gui hw
+DEPENDPATH += . x86 bios gui hw include
+INCLUDEPATH += . include gui hw
 QMAKE_CXXFLAGS += -std=c++17 -g -O -W -Wall -Wimplicit-fallthrough
 DEFINES += VOMIT_DEBUG
 DEFINES += VOMIT_TRACE
@@ -55,9 +55,7 @@ HEADERS += gui/machinewidget.h \
            include/templates.h \
            include/vomit.h \
            include/OwnPtr.h \
-           disasm/include/disasm.h \
-           disasm/include/insn-types.h \
-    include/Instruction.h
+           include/Instruction.h
 
 SOURCES += debug.cpp \
            x86/Instruction.cpp \
@@ -84,9 +82,6 @@ SOURCES += debug.cpp \
            x86/string.cpp \
            x86/wrap.cpp \
            bios/floppy.cpp \
-           disasm/disasm.cpp \
-           disasm/disasm_modrm.cpp \
-           disasm/tables.cpp \
            gui/machinewidget.cpp \
            gui/main.cpp \
            gui/mainwindow.cpp \

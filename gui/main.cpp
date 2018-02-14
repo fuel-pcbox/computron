@@ -82,9 +82,6 @@ int main(int argc, char** argv)
     if (options.start_in_debug)
         machine->cpu().debugger().enter();
 
-    extern void vomit_disasm_init_tables();
-    vomit_disasm_init_tables();
-
     QFile::remove("log.txt");
 
     foreach (IODevice *device, IODevice::devices())

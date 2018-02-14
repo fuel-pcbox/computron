@@ -27,40 +27,42 @@
 #include "vomit.h"
 #include "vcpu.h"
 #include "debug.h"
-#include "disasm.h"
 
 int CPU::dumpDisassembled(WORD segment, DWORD offset)
 {
-    char disasm[64];
     char buf[512];
     char* p = buf;
 
-    BYTE* opcode = memoryPointer(segment, offset);
+    BYTE* data = memoryPointer(segment, offset);
 
-    if (!opcode) {
+    if (!data) {
         vlog(LogCPU, "dumpDisassembled can't dump %04X:%08X", segment, offset);
         return 0;
     }
-    int width = insn_width(opcode);
-    disassemble(opcode, offset, disasm, sizeof(disasm));
 
-    p += sprintf(p, "%04X:%08X ", segment, offset);
+    SimpleInstructionStream stream(data, a32(), o32());
+    auto insn = Instruction::fromStream(stream);
 
-    for (int i = 0; i < (width ? width : 7); ++i)
-        p += sprintf(p, "%02X", opcode[i]);
+    if (x32())
+        p += sprintf(p, "0x%04x:0x%08x ", segment, offset);
+    else
+        p += sprintf(p, "0x%04x:0x%04x ", segment, offset);
 
-    for (int i = 0; i < (14-((width?width:7)*2)); ++i)
+    for (unsigned i = 0; i < insn.length(); ++i)
+        p += sprintf(p, "%02x", data[i]);
+
+    for (unsigned i = 0; i < (14-(insn.length()*2)); ++i)
         p += sprintf(p, " ");
 
-    p += sprintf(p, " %s", disasm);
+    p += sprintf(p, " %s", qPrintable(insn.toString(offset, x32())));
 
     vlog(LogDump, buf);
 
     /* Recurse if this is a prefix instruction. */
-    if (*opcode == 0x26 || *opcode == 0x2E || *opcode == 0x36 || *opcode == 0x3E || *opcode == 0xF2 || *opcode == 0xF3)
-        width += dumpDisassembled(segment, offset + width);
+    if (insn.op() == 0x26 || insn.op() == 0x2E || insn.op() == 0x36 || insn.op() == 0x3E || insn.op() == 0xF2 || insn.op() == 0xF3)
+        dumpDisassembled(segment, offset + insn.length());
 
-    return width;
+    return 0;
 }
 
 #ifdef VOMIT_TRACE

@@ -27,6 +27,7 @@
 
 #include "debug.h"
 #include "types.h"
+#include "vomit.h"
 
 class CPU;
 class Instruction;
@@ -44,6 +45,26 @@ public:
     virtual WORD readInstruction16() = 0;
     virtual DWORD readInstruction32() = 0;
     DWORD readBytes(unsigned count);
+};
+
+class SimpleInstructionStream final : public InstructionStream {
+public:
+    SimpleInstructionStream(const BYTE* data, bool a32, bool o32)
+        : m_data(data)
+        , m_a32(a32)
+        , m_o32(o32)
+    { }
+
+    virtual bool a32() const { return m_a32; }
+    virtual bool o32() const { return m_o32; }
+    virtual BYTE readInstruction8() { return *(m_data++); }
+    virtual WORD readInstruction16();
+    virtual DWORD readInstruction32();
+
+private:
+    const BYTE* m_data { nullptr };
+    bool m_a32 { false };
+    bool m_o32 { false };
 };
 
 class MemoryOrRegisterReference {
@@ -120,7 +141,7 @@ public:
 
     bool isValid() const { return m_impl; }
 
-    unsigned length() const { return m_length; }
+    unsigned length() const;
 
     BYTE op() const { return m_op; }
     BYTE subOp() const { return m_subOp; }
@@ -172,8 +193,6 @@ private:
     bool m_hasSubOp { false };
     bool m_hasRM { false };
     bool m_hasSIB { false };
-
-    unsigned m_length { 0 };
 
     unsigned m_imm1Bytes { 0 };
     unsigned m_imm2Bytes { 0 };

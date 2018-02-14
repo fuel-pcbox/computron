@@ -804,6 +804,22 @@ Instruction Instruction::fromStream(InstructionStream& stream)
     return Instruction(stream);
 }
 
+unsigned Instruction::length() const
+{
+    unsigned len = 1;
+    if (m_hasSubOp)
+        ++len;
+    if (m_hasRM) {
+        ++len;
+        if (m_modrm.m_hasSIB)
+            ++len;
+        len += m_modrm.m_displacementBytes;
+    }
+    len += m_imm1Bytes;
+    len += m_imm2Bytes;
+    return len;
+}
+
 Instruction::Instruction(InstructionStream& stream)
 {
     m_a32 = stream.a32();
@@ -1307,4 +1323,18 @@ QString Instruction::toString(DWORD origin, bool x32) const
     case __EndFormatsWithRMByte:
         return QString("(!%1)").arg(mnemonic);
     }
+}
+
+WORD SimpleInstructionStream::readInstruction16()
+{
+    BYTE lsb = *(m_data++);
+    BYTE msb = *(m_data++);
+    return vomit_MAKEWORD(msb, lsb);
+}
+
+DWORD SimpleInstructionStream::readInstruction32()
+{
+    WORD lsw = readInstruction16();
+    WORD msw = readInstruction16();
+    return vomit_MAKEDWORD(msw, lsw);
 }
