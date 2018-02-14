@@ -29,6 +29,8 @@
 #include "types.h"
 #include <string>
 
+#define ALWAYS_INLINE __attribute__ ((always_inline))
+
 #define MAX_FILESIZE	524288		/* 512kB is max "loadfile" size */
 #define MAX_FN_LENGTH	128
 

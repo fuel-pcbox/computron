@@ -433,7 +433,7 @@ void CPU::queueCommand(Command command)
     m_hasCommands = true;
 }
 
-void CPU::flushCommandQueue()
+ALWAYS_INLINE void CPU::flushCommandQueue()
 {
 #if 0
     static int xxx = 0;
@@ -1185,9 +1185,12 @@ void CPU::writeMemory(const SegmentSelector& selector, DWORD offset, T value)
             flatAddress = translateAddress(flatAddress);
         }
 
-        assert(!addressIsInVGAMemory(flatAddress));
         if (options.memdebug || shouldLogMemoryWrite(flatAddress))
             vlog(LogCPU, "%zu-bit PE write [A20=%s] %04X:%08X (flat: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", selector.index, offset, flatAddress, value);
+        if (addressIsInVGAMemory(flatAddress)) {
+            machine().vgaMemory().write(flatAddress, value);
+            return;
+        }
         *reinterpret_cast<T*>(&m_memory[flatAddress]) = value;
         return;
     }
