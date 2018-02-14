@@ -43,7 +43,7 @@ struct MainWindow::Private
 MainWindow::MainWindow()
     : d(make<Private>())
 {
-    setWindowTitle("V O M I T");
+    setWindowTitle("Computron");
 }
 
 MainWindow::~MainWindow()
