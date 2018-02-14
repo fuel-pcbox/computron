@@ -145,8 +145,8 @@ void CPU::_IN_EAX_imm8(Instruction& insn)
     BYTE b2 = in(port + 1);
     BYTE b3 = in(port + 2);
     BYTE b4 = in(port + 3);
-    regs.W.AX = makeWORD(b1, b2);
-    regs.W.__EAX_high_word = makeWORD(b3, b4);
+    regs.W.AX = makeWORD(b2, b1);
+    regs.W.__EAX_high_word = makeWORD(b4, b3);
 }
 
 void CPU::_IN_AL_DX(Instruction&)
@@ -166,7 +166,7 @@ void CPU::_IN_EAX_DX(Instruction&)
     regs.B.AH = in(getDX() + 1);
     BYTE c = in(getDX() + 2);
     BYTE d = in(getDX() + 3);
-    regs.W.__EAX_high_word = makeWORD(c, d);
+    regs.W.__EAX_high_word = makeWORD(d, c);
 }
 
 void CPU::out(WORD port, BYTE value)

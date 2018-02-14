@@ -310,9 +310,9 @@ T VGAMemory::read(DWORD address)
     case 1:
         return read8(address);
     case 2:
-        return makeWORD(read8(address), read8(address + 1));
+        return makeWORD(read8(address + 1), read8(address));
     case 4:
-        return makeDWORD(read<WORD>(address), read<WORD>(address + 2));
+        return makeDWORD(read<WORD>(address + 2), read<WORD>(address));
     }
     // FIXME: This should be a static assert somehow.
     VM_ASSERT(false);
