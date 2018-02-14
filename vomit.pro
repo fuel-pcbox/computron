@@ -3,7 +3,7 @@ TEMPLATE = app
 TARGET = vomit
 DEPENDPATH += . x86 bios disasm gui hw include disasm/include
 INCLUDEPATH += . include disasm/include gui hw
-QMAKE_CXXFLAGS += -std=c++17 -g -O0 -W -Wall -Wimplicit-fallthrough
+QMAKE_CXXFLAGS += -std=c++17 -g -O -W -Wall -Wimplicit-fallthrough
 DEFINES += VOMIT_DEBUG
 DEFINES += VOMIT_TRACE
 //DEFINES += VOMIT_DETERMINISTIC
