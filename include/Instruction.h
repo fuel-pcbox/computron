@@ -69,6 +69,7 @@ private:
 };
 
 class MemoryOrRegisterReference {
+    friend class CPU;
     friend class Instruction;
 public:
     template<typename T> T read();

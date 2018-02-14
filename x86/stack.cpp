@@ -120,14 +120,24 @@ void CPU::_PUSH_RM32(Instruction& insn)
     push32(insn.modrm().read32());
 }
 
+// From the IA-32 manual:
+// "If the ESP register is used as a base register for addressing a destination operand in memory,
+// the POP instruction computes the effective address of the operand after it increments the ESP register."
+
 void CPU::_POP_RM16(Instruction& insn)
 {
-    insn.modrm().write16(pop());
+    // See comment above.
+    auto data = pop();
+    insn.modrm().resolve(*this);
+    insn.modrm().write16(data);
 }
 
 void CPU::_POP_RM32(Instruction& insn)
 {
-    insn.modrm().write32(pop32());
+    // See comment above.
+    auto data = pop32();
+    insn.modrm().resolve(*this);
+    insn.modrm().write32(data);
 }
 
 void CPU::_PUSH_CS(Instruction&)
