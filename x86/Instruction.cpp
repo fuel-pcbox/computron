@@ -728,6 +728,7 @@ void buildOpcodeTablesIfNeeded()
     build0FSlash(0xBA, 6, "BTR",   OP_RM16_imm8, &CPU::_BTR_RM16_imm8, OP_RM32_imm8, &CPU::_BTR_RM32_imm8);
     build0FSlash(0xBA, 7, "BTC",   OP_RM16_imm8, &CPU::_BTC_RM16_imm8, OP_RM32_imm8, &CPU::_BTC_RM32_imm8);
 
+    build0F(0x02, "LAR",   OP_reg16_RM16,  &CPU::_LAR_reg16_RM16,  OP_reg32_RM32,  &CPU::_LAR_reg32_RM32);
     build0F(0x06, "CLTS",  OP,             &CPU::_CLTS);
     build0F(0x09, "WBINVD", OP,            &CPU::_WBINVD);
 

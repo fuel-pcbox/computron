@@ -544,6 +544,8 @@ protected:
     void _CLI(Instruction&);
     void _CMC(Instruction&);
     void _CLTS(Instruction&);
+    void _LAR_reg16_RM16(Instruction&);
+    void _LAR_reg32_RM32(Instruction&);
 
     void _WBINVD(Instruction&);
 

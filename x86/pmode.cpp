@@ -142,6 +142,16 @@ void CPU::_SMSW_RM16(Instruction& insn)
         modrm.write16(CR0 & 0xFFFF);
 }
 
+void CPU::_LAR_reg16_RM16(Instruction& insn)
+{
+    VM_ASSERT(false);
+}
+
+void CPU::_LAR_reg32_RM32(Instruction& insn)
+{
+    VM_ASSERT(false);
+}
+
 CPU::SegmentSelector CPU::makeSegmentSelector(WORD index)
 {
     SegmentSelector selector;
@@ -159,9 +169,9 @@ CPU::SegmentSelector CPU::makeSegmentSelector(WORD index)
     selector.RPL = index & 3;
     index &= 0xfffffff8;
     selector.index = index;
-
-    if (index >= this->GDTR.limit) {
-        vlog(LogCPU, "Segment selector index 0x%04X >= GDTR.limit (0x%04X).", index, GDTR.limit);
+    WORD tableLimit = selector.isGlobal ? GDTR.limit : LDTR.limit;
+    if (index >= tableLimit) {
+        vlog(LogCPU, "Segment selector index 0x%04x >= %s.limit (0x%04x).", index, selector.isGlobal ? "GDTR" : "LDTR", tableLimit);
         VM_ASSERT(false);
         //dumpAll();
         debugger().enter();
