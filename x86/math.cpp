@@ -352,9 +352,20 @@ void CPU::_IMUL_RM16(Instruction& insn)
     }
 }
 
-void CPU::_IMUL_RM32(Instruction&)
+void CPU::_IMUL_RM32(Instruction& insn)
 {
-    VM_ASSERT(false);
+    SIGNED_DWORD value = insn.modrm().read32();
+    SIGNED_QWORD result = doImul(static_cast<SIGNED_DWORD>(getEAX()), value);
+    regs.D.EAX = result;
+    regs.D.EDX = result >> 32;
+
+    if (result > 0x7FFFFFFF || result < -0x80000000) {
+        setCF(1);
+        setOF(1);
+    } else {
+        setCF(0);
+        setOF(0);
+    }
 }
 
 void CPU::_DIV_RM8(Instruction& insn)
