@@ -875,7 +875,6 @@ protected:
     void _SLDT_RM16(Instruction&);
     void _LTR_RM16(Instruction&);
     void _STR_RM16(Instruction&);
-    void _STR_RM32(Instruction&);
 
     void _PUSHAD(Instruction&);
     void _POPAD(Instruction&);
@@ -915,6 +914,15 @@ protected:
     void _BSF_reg32_RM32(Instruction&);
     void _BSR_reg16_RM16(Instruction&);
     void _BSR_reg32_RM32(Instruction&);
+
+    void _SHLD_RM16_reg16_imm8(Instruction&);
+    void _SHLD_RM32_reg32_imm8(Instruction&);
+    void _SHLD_RM16_reg16_CL(Instruction&);
+    void _SHLD_RM32_reg32_CL(Instruction&);
+    void _SHRD_RM16_reg16_imm8(Instruction&);
+    void _SHRD_RM32_reg32_imm8(Instruction&);
+    void _SHRD_RM16_reg16_CL(Instruction&);
+    void _SHRD_RM32_reg32_CL(Instruction&);
 
     void _MOVZX_reg16_RM8(Instruction&);
     void _MOVZX_reg32_RM8(Instruction&);
@@ -1006,6 +1014,9 @@ private:
 
     template<typename T>
     T leftShift(T, int steps);
+
+    template<typename T> T doSHLD(T, T, int steps);
+    template<typename T> T doSHRD(T, T, int steps);
 
     template<typename T> T doRol(T, int steps);
     template<typename T> T doRor(T, int steps);

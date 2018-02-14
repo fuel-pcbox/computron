@@ -166,4 +166,9 @@ inline DWORD vomit_MAKEDWORD(WORD msw, WORD lsw)
     return (msw << 16) | lsw;
 }
 
+inline QWORD makeQWORD(DWORD msw, DWORD lsw)
+{
+    return ((QWORD)msw << 32) | lsw;
+}
+
 #endif

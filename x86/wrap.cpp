@@ -99,6 +99,11 @@ T CPU::leftShift(T data, int steps)
     return result;
 }
 
+template DWORD CPU::leftShift(DWORD, int);
+template DWORD CPU::rightShift(DWORD, int);
+template QWORD CPU::leftShift(QWORD, int);
+template QWORD CPU::rightShift(QWORD, int);
+
 void CPU::_wrap_0xC0(Instruction& insn)
 {
     auto& modrm = insn.modrm();

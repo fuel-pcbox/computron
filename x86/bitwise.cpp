@@ -357,3 +357,51 @@ void CPU::_BSR_reg32_RM32(Instruction& insn)
 {
     insn.reg32() = doBSR(insn.modrm().read32());
 }
+
+void CPU::_SHLD_RM16_reg16_imm8(Instruction& insn)
+{
+    DWORD value = vomit_MAKEDWORD(insn.modrm().read16(), insn.reg16());
+    insn.modrm().write16(leftShift(value, insn.imm8()) >> 16);
+}
+
+void CPU::_SHLD_RM32_reg32_imm8(Instruction& insn)
+{
+    QWORD value = makeQWORD(insn.modrm().read32(), insn.reg32());
+    insn.modrm().write32(leftShift(value, insn.imm8()) >> 32);
+}
+
+void CPU::_SHLD_RM16_reg16_CL(Instruction& insn)
+{
+    DWORD value = vomit_MAKEDWORD(insn.modrm().read16(), insn.reg16());
+    insn.modrm().write16(leftShift(value, getCL()) >> 16);
+}
+
+void CPU::_SHLD_RM32_reg32_CL(Instruction& insn)
+{
+    QWORD value = makeQWORD(insn.modrm().read32(), insn.reg32());
+    insn.modrm().write32(leftShift(value, getCL()) >> 32);
+}
+
+void CPU::_SHRD_RM16_reg16_imm8(Instruction& insn)
+{
+    DWORD value = vomit_MAKEDWORD(insn.reg16(), insn.modrm().read16());
+    insn.modrm().write16(rightShift(value, insn.imm8()));
+}
+
+void CPU::_SHRD_RM32_reg32_imm8(Instruction& insn)
+{
+    QWORD value = makeQWORD(insn.reg32(), insn.modrm().read32());
+    insn.modrm().write32(rightShift(value, insn.imm8()));
+}
+
+void CPU::_SHRD_RM16_reg16_CL(Instruction& insn)
+{
+    DWORD value = vomit_MAKEDWORD(insn.reg16(), insn.modrm().read16());
+    insn.modrm().write16(rightShift(value, getCL()));
+}
+
+void CPU::_SHRD_RM32_reg32_CL(Instruction& insn)
+{
+    QWORD value = makeQWORD(insn.reg32(), insn.modrm().read32());
+    insn.modrm().write32(rightShift(value, getCL()));
+}

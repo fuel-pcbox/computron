@@ -72,6 +72,10 @@ enum InstructionFormat {
     OP_reg16_RM8,
     OP_reg32_RM8,
     OP_reg32_RM16,
+    OP_RM16_reg16_imm8,
+    OP_RM32_reg32_imm8,
+    OP_RM16_reg16_CL,
+    OP_RM32_reg32_CL,
     __EndFormatsWithRMByte,
 
     OP_reg32_imm32,
@@ -194,6 +198,8 @@ static void build(InstructionDescriptor* table, BYTE op, const char* mnemonic, I
     case OP_imm8_AL:
     case OP_imm8_AX:
     case OP_imm8_EAX:
+    case OP_RM16_reg16_imm8:
+    case OP_RM32_reg32_imm8:
         d.imm1Bytes = 1;
         break;
     case OP_reg16_RM16_imm16:
@@ -289,6 +295,8 @@ static void build(InstructionDescriptor* table, BYTE op, const char* mnemonic, I
     case OP_reg32_RM16:
     case OP_reg32_DR:
     case OP_DR_reg32:
+    case OP_RM16_reg16_CL:
+    case OP_RM32_reg32_CL:
         break;
     }
 }
@@ -765,9 +773,13 @@ void buildOpcodeTablesIfNeeded()
     build0F(0xA1, "POP",   OP_FS,          &CPU::_POP_FS);
     build0F(0xA2, "CPUID", OP,             &CPU::_CPUID);
     build0F(0xA3, "BT",    OP_RM16_reg16,  &CPU::_BT_RM16_reg16,   OP_RM32_reg32,  &CPU::_BT_RM32_reg32);
+    build0F(0xA4, "SHLD",  OP_RM16_reg16_imm8,&CPU::_SHLD_RM16_reg16_imm8, OP_RM32_reg32_imm8,  &CPU::_SHLD_RM32_reg32_imm8);
+    build0F(0xA5, "SHLD",  OP_RM16_reg16_CL,&CPU::_SHLD_RM16_reg16_CL, OP_RM32_reg32_CL,  &CPU::_SHLD_RM32_reg32_CL);
     build0F(0xA8, "PUSH",  OP_GS,          &CPU::_PUSH_GS);
     build0F(0xA9, "POP",   OP_GS,          &CPU::_POP_GS);
     build0F(0xAB, "BTS",   OP_RM16_reg16,  &CPU::_BTS_RM16_reg16,  OP_RM32_reg32,  &CPU::_BTS_RM32_reg32);
+    build0F(0xAC, "SHRD",  OP_RM16_reg16_imm8,&CPU::_SHRD_RM16_reg16_imm8, OP_RM32_reg32_imm8,  &CPU::_SHRD_RM32_reg32_imm8);
+    build0F(0xAD, "SHRD",  OP_RM16_reg16_CL,&CPU::_SHRD_RM16_reg16_CL, OP_RM32_reg32_CL,  &CPU::_SHRD_RM32_reg32_CL);
     build0F(0xAF, "IMUL",  OP_reg16_RM16,  &CPU::_IMUL_reg16_RM16, OP_reg32_RM32,  &CPU::_IMUL_reg32_RM32);
     build0F(0xB2, "LSS",   OP_reg16_mem16, &CPU::_LSS_reg16_mem16, OP_reg32_mem32, &CPU::_LSS_reg32_mem32);
     build0F(0xB4, "LFS",   OP_reg16_mem16, &CPU::_LFS_reg16_mem16, OP_reg32_mem32, &CPU::_LFS_reg32_mem32);
@@ -1274,6 +1286,14 @@ QString Instruction::toString(DWORD origin, bool x32) const
         return QString("%1 0x%2").arg(mnemonic).arg(RELIMM32ARGS);
     case OP_NEAR_imm:
         return QString("%1 near 0x%2").arg(mnemonic).arg(RELADDRARGS);
+    case OP_RM16_reg16_imm8:
+        return QString("%1 %2, %3, %4").arg(mnemonic).arg(RM16ARGS).arg(reg16Name()).arg(IMM8ARGS);
+    case OP_RM32_reg32_imm8:
+        return QString("%1 %2, %3, %4").arg(mnemonic).arg(RM32ARGS).arg(reg32Name()).arg(IMM8ARGS);
+    case OP_RM16_reg16_CL:
+        return QString("%1 %2, %3, cl").arg(mnemonic).arg(RM16ARGS).arg(reg16Name());
+    case OP_RM32_reg32_CL:
+        return QString("%1 %2, %3, cl").arg(mnemonic).arg(RM32ARGS).arg(reg32Name());
     case InstructionPrefix:
         return mnemonic;
     case InvalidFormat:
