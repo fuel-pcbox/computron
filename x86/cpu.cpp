@@ -421,7 +421,7 @@ void CPU::haltedLoop()
 #ifdef HAVE_USLEEP
         usleep(500);
 #endif
-        if (PIC::hasPendingIRQ())
+        if (getIF() && PIC::hasPendingIRQ())
             PIC::serviceIRQ(*this);
     }
 }
