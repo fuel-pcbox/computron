@@ -85,10 +85,10 @@ void CPU::_JMP_FAR_mem16(Instruction& insn)
     jump16(ptr[1], ptr[0]);
 }
 
-void CPU::_JMP_FAR_mem32(Instruction&)
+void CPU::_JMP_FAR_mem32(Instruction& insn)
 {
-    // FIXME: Implement!
-    VM_ASSERT(false);
+    WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
+    jump32(ptr[2], vomit_MAKEDWORD(ptr[1], ptr[0]));
 }
 
 bool CPU::evaluateCondition(BYTE cc) const
