@@ -511,8 +511,10 @@ public:
     enum Command { EnterMainLoop, ExitMainLoop, SoftReboot, HardReboot };
     void queueCommand(Command);
 
+    static const char* registerName(CPU::RegisterIndex8);
     static const char* registerName(CPU::RegisterIndex16);
     static const char* registerName(CPU::RegisterIndex32);
+    static const char* registerName(SegmentRegisterIndex);
 
     bool evaluateCondition(BYTE cc) const;
 

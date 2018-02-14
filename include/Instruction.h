@@ -28,8 +28,9 @@
 #include "debug.h"
 #include "types.h"
 
-class Instruction;
 class CPU;
+class Instruction;
+struct InstructionDescriptor;
 
 typedef void (CPU::*InstructionImpl)(Instruction&);
 
@@ -59,12 +60,20 @@ public:
     void write32(DWORD);
     void* memoryPointer();
 
-    bool isRegister() { return m_registerIndex != 0xffffffff; }
+    QString toStringO8() const;
+    QString toStringO16() const;
+    QString toStringO32() const;
+
+    bool isRegister() const { return m_registerIndex != 0xffffffff; }
     SegmentRegisterIndex segment();
     DWORD offset();
 
 private:
     MemoryOrRegisterReference() { }
+
+    QString toString() const;
+    QString toStringA16() const;
+    QString toStringA32() const;
 
     void resolve(CPU&);
     void resolve16();
@@ -143,14 +152,21 @@ public:
 
     BYTE cc() const { return m_hasSubOp ? m_subOp & 0xf : m_op & 0xf; }
 
+    QString toString(DWORD origin, bool x32) const;
+
 private:
     explicit Instruction(InstructionStream&);
+
+    const char* reg8Name() const;
+    const char* reg16Name() const;
+    const char* reg32Name() const;
 
     BYTE m_op { 0 };
     BYTE m_subOp { 0 };
     DWORD m_imm1 { 0 };
     DWORD m_imm2 { 0 };
     BYTE m_registerIndex { 0 };
+    bool m_a32 { false };
 
     bool m_hasSubOp { false };
     bool m_hasRM { false };
@@ -162,6 +178,8 @@ private:
     unsigned m_imm2Bytes { 0 };
 
     MemoryOrRegisterReference m_modrm;
+
+    InstructionDescriptor* m_descriptor { nullptr };
 
     InstructionImpl m_impl;
     CPU* m_cpu { nullptr };

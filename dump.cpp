@@ -117,25 +117,69 @@ void CPU::dumpSelector(const char* segmentRegisterName, SegmentRegisterIndex seg
     );
 }
 
+const char* CPU::registerName(SegmentRegisterIndex index)
+{
+    switch (index) {
+    case SegmentRegisterIndex::CS:
+        return "cs";
+    case SegmentRegisterIndex::DS:
+        return "ds";
+    case SegmentRegisterIndex::ES:
+        return "es";
+    case SegmentRegisterIndex::SS:
+        return "ss";
+    case SegmentRegisterIndex::FS:
+        return "fs";
+    case SegmentRegisterIndex::GS:
+        return "gs";
+    }
+    VM_ASSERT(false);
+    return nullptr;
+}
+
+const char* CPU::registerName(CPU::RegisterIndex8 registerIndex)
+{
+    switch (registerIndex) {
+    case CPU::RegisterAL:
+        return "al";
+    case CPU::RegisterBL:
+        return "bl";
+    case CPU::RegisterCL:
+        return "cl";
+    case CPU::RegisterDL:
+        return "dl";
+    case CPU::RegisterAH:
+        return "ah";
+    case CPU::RegisterBH:
+        return "bh";
+    case CPU::RegisterCH:
+        return "ch";
+    case CPU::RegisterDH:
+        return "dh";
+    }
+    VM_ASSERT(false);
+    return nullptr;
+}
+
 const char* CPU::registerName(CPU::RegisterIndex16 registerIndex)
 {
     switch (registerIndex) {
     case CPU::RegisterAX:
-        return "AX";
+        return "ax";
     case CPU::RegisterBX:
-        return "BX";
+        return "bx";
     case CPU::RegisterCX:
-        return "CX";
+        return "cx";
     case CPU::RegisterDX:
-        return "DX";
+        return "dx";
     case CPU::RegisterBP:
-        return "BP";
+        return "bp";
     case CPU::RegisterSP:
-        return "SP";
+        return "sp";
     case CPU::RegisterSI:
-        return "SI";
+        return "si";
     case CPU::RegisterDI:
-        return "DI";
+        return "di";
     }
     VM_ASSERT(false);
     return nullptr;
@@ -145,21 +189,21 @@ const char* CPU::registerName(CPU::RegisterIndex32 registerIndex)
 {
     switch (registerIndex) {
     case CPU::RegisterEAX:
-        return "EAX";
+        return "eax";
     case CPU::RegisterEBX:
-        return "EBX";
+        return "ebx";
     case CPU::RegisterECX:
-        return "ECX";
+        return "ecx";
     case CPU::RegisterEDX:
-        return "EDX";
+        return "edx";
     case CPU::RegisterEBP:
-        return "EBP";
+        return "ebp";
     case CPU::RegisterESP:
-        return "ESP";
+        return "esp";
     case CPU::RegisterESI:
-        return "ESI";
+        return "esi";
     case CPU::RegisterEDI:
-        return "EDI";
+        return "edi";
     }
     VM_ASSERT(false);
     return nullptr;

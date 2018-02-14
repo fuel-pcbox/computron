@@ -87,6 +87,8 @@ enum InstructionFormat {
     OP,
     OP_reg16,
     OP_imm16,
+    OP_relimm16,
+    OP_relimm32,
     OP_imm8,
     OP_imm16_imm16,
     OP_imm16_imm32,
@@ -110,16 +112,13 @@ enum InstructionFormat {
     OP_DX_AL,
     OP_DX_AX,
     OP_DX_EAX,
-    OP_OP,
     OP_imm8_AL,
     OP_imm8_AX,
     OP_imm8_EAX,
-    OP_relimm16,
     OP_reg8_CL,
 
     OP_reg32,
     OP_imm32,
-    OP_imm16_imm8,
     OP_imm8_imm16,
 
     OP_NEAR_imm,
@@ -130,7 +129,7 @@ static const unsigned CurrentAddressSize = 0xB33FBABE;
 struct InstructionDescriptor {
     InstructionImpl impl { nullptr };
     bool opcodeHasRegisterIndex { false };
-    QString mnemonic;
+    const char* mnemonic { nullptr };
     InstructionFormat format { InvalidFormat };
     bool hasRM { false };
     unsigned imm1Bytes { 0 };
@@ -200,8 +199,8 @@ static void build(InstructionDescriptor* table, BYTE op, const char* mnemonic, I
     case OP_reg16_RM16_imm16:
     case OP_AX_imm16:
     case OP_imm16:
-    case OP_reg16_imm16:
     case OP_relimm16:
+    case OP_reg16_imm16:
     case OP_RM16_imm16:
         d.imm1Bytes = 2;
         break;
@@ -210,11 +209,8 @@ static void build(InstructionDescriptor* table, BYTE op, const char* mnemonic, I
     case OP_reg32_imm32:
     case OP_EAX_imm32:
     case OP_imm32:
+    case OP_relimm32:
         d.imm1Bytes = 4;
-        break;
-    case OP_imm16_imm8:
-        d.imm1Bytes = 2;
-        d.imm2Bytes = 1;
         break;
     case OP_imm8_imm16:
         d.imm1Bytes = 1;
@@ -288,7 +284,6 @@ static void build(InstructionDescriptor* table, BYTE op, const char* mnemonic, I
     case OP_DX_AL:
     case OP_DX_AX:
     case OP_DX_EAX:
-    case OP_OP:
     case OP_reg8_CL:
     case OP_reg32:
     case OP_reg32_RM16:
@@ -578,8 +573,8 @@ void buildOpcodeTablesIfNeeded()
     build(0xE5, "IN",     OP_AX_imm8,          &CPU::_IN_AX_imm8,       OP_EAX_imm8,    &CPU::_IN_EAX_imm8);
     build(0xE6, "OUT",    OP_imm8_AL,          &CPU::_OUT_imm8_AL);
     build(0xE7, "OUT",    OP_imm8_AX,          &CPU::_OUT_imm8_AX,      OP_imm8_EAX,    &CPU::_OUT_imm8_EAX);
-    build(0xE8, "CALL",   OP_imm16,            &CPU::_CALL_imm16,       OP_imm32,       &CPU::_CALL_imm32);
-    build(0xE9, "JMP",    OP_imm16,            &CPU::_JMP_imm16,        OP_imm32,       &CPU::_JMP_imm32);
+    build(0xE8, "CALL",   OP_relimm16,         &CPU::_CALL_imm16,       OP_relimm32,    &CPU::_CALL_imm32);
+    build(0xE9, "JMP",    OP_relimm16,         &CPU::_JMP_imm16,        OP_relimm32,    &CPU::_JMP_imm32);
     build(0xEA, "JMP",    OP_imm16_imm16,      &CPU::_JMP_imm16_imm16,  OP_imm16_imm32, &CPU::_JMP_imm16_imm32);
     build(0xEB, "JMP",    OP_short_imm8,       &CPU::_JMP_short_imm8);
     build(0xEC, "IN",     OP_AL_DX,            &CPU::_IN_AL_DX);
@@ -792,19 +787,18 @@ Instruction Instruction::fromStream(InstructionStream& stream)
 
 Instruction::Instruction(InstructionStream& stream)
 {
-    bool a32 = stream.a32();
+    m_a32 = stream.a32();
     m_op = stream.readInstruction8();
-    InstructionDescriptor* desc;
 
     if (m_op == 0x0F) {
         m_hasSubOp = true;
         m_subOp = stream.readInstruction8();
-        desc = stream.o32() ? &s_0F_table32[m_subOp] : &s_0F_table16[m_subOp];
+        m_descriptor = stream.o32() ? &s_0F_table32[m_subOp] : &s_0F_table16[m_subOp];
     } else {
-        desc = stream.o32() ? &s_table32[m_op] : &s_table16[m_op];
+        m_descriptor = stream.o32() ? &s_table32[m_op] : &s_table16[m_op];
     }
 
-    m_hasRM = desc->hasRM;
+    m_hasRM = m_descriptor->hasRM;
     if (m_hasRM) {
         // Consume ModR/M (may include SIB and displacement.)
         m_modrm.decode(stream);
@@ -814,13 +808,13 @@ Instruction::Instruction(InstructionStream& stream)
         }
     }
 
-    bool hasSlash = desc->format == MultibyteWithSlash;
+    bool hasSlash = m_descriptor->format == MultibyteWithSlash;
 
     if (hasSlash) {
-        desc = &desc->slashes[slash()];
+        m_descriptor = &m_descriptor->slashes[slash()];
     }
 
-    m_impl = desc->impl;
+    m_impl = m_descriptor->impl;
     if (!m_impl) {
         if (m_hasSubOp) {
             if (hasSlash)
@@ -835,8 +829,8 @@ Instruction::Instruction(InstructionStream& stream)
         }
     }
 
-    m_imm1Bytes = desc->imm1BytesForAddressSize(a32);
-    m_imm2Bytes = desc->imm2BytesForAddressSize(a32);
+    m_imm1Bytes = m_descriptor->imm1BytesForAddressSize(m_a32);
+    m_imm2Bytes = m_descriptor->imm2BytesForAddressSize(m_a32);
 
     // Consume immediates if present.
     if (m_imm2Bytes)
@@ -895,4 +889,395 @@ DWORD InstructionStream::readBytes(unsigned count)
     }
     VM_ASSERT(false);
     return 0;
+}
+
+const char* Instruction::reg8Name() const
+{
+    return CPU::registerName(static_cast<CPU::RegisterIndex8>(registerIndex()));
+}
+
+const char* Instruction::reg16Name() const
+{
+    return CPU::registerName(static_cast<CPU::RegisterIndex16>(registerIndex()));
+}
+
+const char* Instruction::reg32Name() const
+{
+    return CPU::registerName(static_cast<CPU::RegisterIndex32>(registerIndex()));
+}
+
+QString MemoryOrRegisterReference::toStringO8() const
+{
+    if (isRegister())
+        return CPU::registerName(static_cast<CPU::RegisterIndex8>(m_registerIndex));
+    return QString("[%1]").arg(toString());
+}
+
+QString MemoryOrRegisterReference::toStringO16() const
+{
+    if (isRegister())
+        return CPU::registerName(static_cast<CPU::RegisterIndex16>(m_registerIndex));
+    return QString("[%1]").arg(toString());
+}
+
+QString MemoryOrRegisterReference::toStringO32() const
+{
+    if (isRegister())
+        return CPU::registerName(static_cast<CPU::RegisterIndex32>(m_registerIndex));
+    return QString("[%1]").arg(toString());
+}
+
+
+QString MemoryOrRegisterReference::toString() const
+{
+    if (m_a32)
+        return toStringA32();
+    return toStringA16();
+}
+
+QString MemoryOrRegisterReference::toStringA16() const
+{
+    QString base;
+    bool hasDisplacement = false;
+
+    switch (m_rm & 7) {
+    case 0: base = "bx+si"; break;
+    case 1: base = "bx+di"; break;
+    case 2: base = "bp+si"; break;
+    case 3: base = "bp+di"; break;
+    case 4: base = "si"; break;
+    case 5: base = "di"; break;
+    case 7: base = "bx"; break;
+    case 6:
+        if ((m_rm & 0xc0) == 0)
+            base.sprintf("0x%04x", m_displacement16);
+        else
+            base = "bp";
+        break;
+    }
+
+    switch (m_rm & 0xc0) {
+    case 0x40:
+    case 0x80:
+        hasDisplacement = true;
+    }
+
+    if (!hasDisplacement)
+        return base;
+
+    QString disp;
+    if ((SIGNED_WORD)m_displacement16 < 0)
+        disp.sprintf("-0x%x", -(SIGNED_WORD)m_displacement16);
+    else
+        disp.sprintf("+0x%x", m_displacement16);
+    return QString("%1%2").arg(base).arg(disp);
+}
+
+static QString sibToString(BYTE rm, BYTE sib)
+{
+    QString scale;
+    QString index;
+    QString base;
+    switch (sib & 0xC0) {
+    case 0x00: ; break;
+    case 0x40: scale = "*2"; break;
+    case 0x80: scale = "*4"; break;
+    case 0xC0: scale = "*8"; break;
+    }
+    switch ((sib >> 3) & 0x07) {
+    case 0: index = "eax"; break;
+    case 1: index = "ecx"; break;
+    case 2: index = "edx"; break;
+    case 3: index = "ebx"; break;
+    case 4: break;
+    case 5: index = "ebp"; break;
+    case 6: index = "esi"; break;
+    case 7: index = "edi"; break;
+    }
+    switch (sib & 0x07) {
+    case 0: base = "eax"; break;
+    case 1: base = "ecx"; break;
+    case 2: base = "edx"; break;
+    case 3: base = "ebx"; break;
+    case 4: base = "esp"; break;
+    case 6: base = "esi"; break;
+    case 7: base = "edi"; break;
+    default: // 5
+        switch ((rm >> 6) & 3) {
+        case 1:
+        case 2: base = "ebp"; break;
+        }
+        break;
+    }
+    if (base.isEmpty())
+        return QString("%1%2").arg(index).arg(scale);
+    return QString("%1+%2%3").arg(base).arg(index).arg(scale);
+}
+
+QString MemoryOrRegisterReference::toStringA32() const
+{
+    if (isRegister())
+        return CPU::registerName(static_cast<CPU::RegisterIndex32>(m_registerIndex));
+
+    bool hasDisplacement = false;
+    switch (m_rm & 0xc0) {
+    case 0x40:
+    case 0x80:
+        hasDisplacement = true;
+    }
+    if (m_hasSIB && (m_sib & 7) == 5)
+        hasDisplacement = true;
+
+    QString base;
+    switch (m_rm & 7) {
+    case 0: base = "eax"; break;
+    case 1: base = "ecx"; break;
+    case 2: base = "edx"; break;
+    case 3: base = "ebx"; break;
+    case 6: base = "esi"; break;
+    case 7: base = "edi"; break;
+    case 5:
+        if ((m_rm & 0xc0) == 0)
+            base.sprintf("0x%08x", m_displacement32);
+        else
+            base = "ebp";
+        break;
+    case 4: base = sibToString(m_rm, m_sib); break;
+    }
+
+    if (!hasDisplacement)
+        return base;
+
+    QString disp;
+    if ((SIGNED_DWORD)m_displacement32 < 0)
+        disp.sprintf("-0x%x", -(SIGNED_DWORD)m_displacement32);
+    else
+        disp.sprintf("+0x%x", m_displacement32);
+    return QString("%1%2").arg(base).arg(disp);
+}
+
+#define IMM8ARGS imm8(), 2, 16, QLatin1Char('0')
+#define IMM8_1ARGS imm8_1(), 2, 16, QLatin1Char('0')
+#define IMM8_2ARGS imm8_2(), 2, 16, QLatin1Char('0')
+#define IMM16ARGS imm16(), 4, 16, QLatin1Char('0')
+#define IMM16_1ARGS imm16_1(), 4, 16, QLatin1Char('0')
+#define IMM16_2ARGS imm16_2(), 4, 16, QLatin1Char('0')
+#define IMM32ARGS imm32(), 8, 16, QLatin1Char('0')
+#define IMM32_1ARGS imm32_1(), 8, 16, QLatin1Char('0')
+#define IMM32_2ARGS imm32_2(), 8, 16, QLatin1Char('0')
+#define ADDRARGS m_a32 ? imm32() : imm16(), m_a32 ? 8 : 4, 16, QLatin1Char('0')
+#define RM8ARGS m_modrm.toStringO8()
+#define RM16ARGS m_modrm.toStringO16()
+#define RM32ARGS m_modrm.toStringO32()
+#define SEGARGS CPU::registerName(segmentRegisterIndex())
+#define CDRARGS registerIndex()
+
+static QString relativeAddress(DWORD origin, bool x32, SIGNED_BYTE imm)
+{
+    QString s;
+    if (x32)
+        return s.sprintf("%08x", origin + imm);
+    WORD w = origin & 0xffff;
+    return s.sprintf("%04x", w + imm);
+}
+
+static QString relativeAddress(DWORD origin, bool x32, SIGNED_DWORD imm)
+{
+    QString s;
+    if (x32)
+        return s.sprintf("%08x", origin + imm);
+    WORD w = origin & 0xffff;
+    SIGNED_WORD si = imm;
+    return s.sprintf("%04x", w + si);
+}
+
+#define RELADDRARGS relativeAddress(origin + (m_a32 ? 5 : 3), x32, SIGNED_DWORD(m_a32 ? imm32() : imm16()))
+#define RELIMM8ARGS relativeAddress(origin + 2, x32, SIGNED_BYTE(imm8()))
+#define RELIMM16ARGS relativeAddress(origin + 3, x32, SIGNED_DWORD(imm16()))
+#define RELIMM32ARGS relativeAddress(origin + 5, x32, SIGNED_DWORD(imm32()))
+
+QString Instruction::toString(DWORD origin, bool x32) const
+{
+    QString mnemonic = QString(m_descriptor->mnemonic).toLower();
+
+    switch (m_descriptor->format) {
+    case OP_RM8_imm8:
+        return QString("%1 %2, 0x%3").arg(mnemonic).arg(RM8ARGS).arg(IMM8ARGS);
+    case OP_RM16_imm8:
+        return QString("%1 %2, 0x%3").arg(mnemonic).arg(RM16ARGS).arg(IMM8ARGS);
+    case OP_RM32_imm8:
+        return QString("%1 %2, 0x%3").arg(mnemonic).arg(RM32ARGS).arg(IMM8ARGS);
+    case OP_reg16_RM16_imm8:
+        return QString("%1 %2, %3, 0x%4").arg(mnemonic).arg(reg16Name()).arg(RM16ARGS).arg(IMM8ARGS);
+    case OP_reg32_RM32_imm8:
+        return QString("%1 %2, %3, 0x%4").arg(mnemonic).arg(reg32Name()).arg(RM32ARGS).arg(IMM8ARGS);
+    case OP_AL_imm8:
+        return QString("%1 al, 0x%2").arg(mnemonic).arg(IMM8ARGS);
+    case OP_imm8:
+        return QString("%1 0x%2").arg(mnemonic).arg(IMM8ARGS);
+    case OP_reg8_imm8:
+        return QString("%1 %2, 0x%3").arg(mnemonic).arg(reg8Name()).arg(IMM8ARGS);
+    case OP_AX_imm8:
+        return QString("%1 ax, 0x%2").arg(mnemonic).arg(IMM8ARGS);
+    case OP_EAX_imm8:
+        return QString("%1 eax, 0x%2").arg(mnemonic).arg(IMM8ARGS);
+    case OP_imm8_AL:
+        return QString("%1 0x%2, al").arg(mnemonic).arg(IMM8ARGS);
+    case OP_imm8_AX:
+        return QString("%1 0x%2, ax").arg(mnemonic).arg(IMM8ARGS);
+    case OP_imm8_EAX:
+        return QString("%1 0x%2, eax").arg(mnemonic).arg(IMM8ARGS);
+    case OP_AX_imm16:
+        return QString("%1 ax, 0x%2").arg(mnemonic).arg(IMM16ARGS);
+    case OP_imm16:
+        return QString("%1 0x%2").arg(mnemonic).arg(IMM16ARGS);
+    case OP_reg16_imm16:
+        return QString("%1 %2, 0x%3").arg(mnemonic).arg(reg16Name()).arg(IMM16ARGS);
+    case OP_reg16_RM16_imm16:
+        return QString("%1 %2, %3, 0x%4").arg(mnemonic).arg(reg16Name()).arg(RM16ARGS).arg(IMM16ARGS);
+    case OP_reg32_RM32_imm32:
+        return QString("%1 %2, %3, 0x%4").arg(mnemonic).arg(reg32Name()).arg(RM32ARGS).arg(IMM32ARGS);
+    case OP_imm32:
+        return QString("%1 0x%2").arg(mnemonic).arg(IMM32ARGS);
+    case OP_EAX_imm32:
+        return QString("%1 eax, 0x%2").arg(mnemonic).arg(IMM32ARGS);
+    case OP_CS:
+        return QString("%1 cs").arg(mnemonic);
+    case OP_DS:
+        return QString("%1 ds").arg(mnemonic);
+    case OP_ES:
+        return QString("%1 es").arg(mnemonic);
+    case OP_SS:
+        return QString("%1 ss").arg(mnemonic);
+    case OP_FS:
+        return QString("%1 fs").arg(mnemonic);
+    case OP_GS:
+        return QString("%1 gs").arg(mnemonic);
+    case OP:
+        return QString("%1").arg(mnemonic);
+    case OP_reg32:
+        return QString("%1 %2").arg(mnemonic).arg(reg32Name());
+    case OP_imm8_imm16:
+        return QString("%1 0x%2, 0x%3").arg(mnemonic).arg(IMM8_1ARGS).arg(IMM16_2ARGS);
+    case OP_moff8_AL:
+        return QString("%1 [0x%2], al").arg(mnemonic).arg(ADDRARGS);
+    case OP_moff16_AX:
+        return QString("%1 [0x%2], ax").arg(mnemonic).arg(ADDRARGS);
+    case OP_moff32_EAX:
+        return QString("%1 [0x%2], eax").arg(mnemonic).arg(ADDRARGS);
+    case OP_AL_moff8:
+        return QString("%1 al, [0x%2]").arg(mnemonic).arg(ADDRARGS);
+    case OP_AX_moff16:
+        return QString("%1 ax, [0x%2]").arg(mnemonic).arg(ADDRARGS);
+    case OP_EAX_moff32:
+        return QString("%1 eax, [0x%2]").arg(mnemonic).arg(ADDRARGS);
+    case OP_imm16_imm16:
+        return QString("%1 0x%2:0x%3").arg(mnemonic).arg(IMM16_1ARGS).arg(IMM16_2ARGS);
+    case OP_imm16_imm32:
+        return QString("%1 0x%2:0x%3").arg(mnemonic).arg(IMM16_1ARGS).arg(IMM32_2ARGS);
+    case OP_reg32_imm32:
+        return QString("%1 %2, 0x%3").arg(mnemonic).arg(reg32Name()).arg(IMM32ARGS);
+    case OP_RM8_1:
+        return QString("%1 %2, 1").arg(mnemonic).arg(RM8ARGS);
+    case OP_RM16_1:
+        return QString("%1 %2, 1").arg(mnemonic).arg(RM16ARGS);
+    case OP_RM32_1:
+        return QString("%1 %2, 1").arg(mnemonic).arg(RM32ARGS);
+    case OP_RM8_CL:
+        return QString("%1 %2, cl").arg(mnemonic).arg(RM8ARGS);
+    case OP_RM16_CL:
+        return QString("%1 %2, cl").arg(mnemonic).arg(RM16ARGS);
+    case OP_RM32_CL:
+        return QString("%1 %2, cl").arg(mnemonic).arg(RM32ARGS);
+    case OP_reg16:
+        return QString("%1 %2").arg(mnemonic).arg(reg16Name());
+    case OP_AX_reg16:
+        return QString("%1 ax, %2").arg(mnemonic).arg(reg16Name());
+    case OP_EAX_reg32:
+        return QString("%1 eax, %2").arg(mnemonic).arg(reg32Name());
+    case OP_3:
+        return QString("%1 3").arg(mnemonic);
+    case OP_AL_DX:
+        return QString("%1 al, dx").arg(mnemonic);
+    case OP_AX_DX:
+        return QString("%1 ax, dx").arg(mnemonic);
+    case OP_EAX_DX:
+        return QString("%1 eax, dx").arg(mnemonic);
+    case OP_DX_AL:
+        return QString("%1 dx, al").arg(mnemonic);
+    case OP_DX_AX:
+        return QString("%1 dx, ax").arg(mnemonic);
+    case OP_DX_EAX:
+        return QString("%1 dx, eax").arg(mnemonic);
+    case OP_reg8_CL:
+        return QString("%1 %2, cl").arg(mnemonic).arg(reg8Name());
+    case OP_RM8:
+        return QString("%1 %2").arg(mnemonic).arg(RM8ARGS);
+    case OP_RM16:
+        return QString("%1 %2").arg(mnemonic).arg(RM16ARGS);
+    case OP_RM32:
+        return QString("%1 %2").arg(mnemonic).arg(RM32ARGS);
+    case OP_RM8_reg8:
+        return QString("%1 %2, %3").arg(mnemonic).arg(RM8ARGS).arg(reg8Name());
+    case OP_RM16_reg16:
+        return QString("%1 %2, %3").arg(mnemonic).arg(RM16ARGS).arg(reg16Name());
+    case OP_RM32_reg32:
+        return QString("%1 %2, %3").arg(mnemonic).arg(RM32ARGS).arg(reg32Name());
+    case OP_reg8_RM8:
+        return QString("%1 %2, %3").arg(mnemonic).arg(reg8Name()).arg(RM8ARGS);
+    case OP_reg16_RM16:
+        return QString("%1 %2, %3").arg(mnemonic).arg(reg16Name()).arg(RM16ARGS);
+    case OP_reg32_RM32:
+        return QString("%1 %2, %3").arg(mnemonic).arg(reg32Name()).arg(RM32ARGS);
+    case OP_reg32_RM16:
+        return QString("%1 %2, %3").arg(mnemonic).arg(reg32Name()).arg(RM16ARGS);
+    case OP_reg16_RM8:
+        return QString("%1 %2, %3").arg(mnemonic).arg(reg16Name()).arg(RM8ARGS);
+    case OP_reg32_RM8:
+        return QString("%1 %2, %3").arg(mnemonic).arg(reg32Name()).arg(RM8ARGS);
+    case OP_RM16_imm16:
+        return QString("%1 %2, %3").arg(mnemonic).arg(reg16Name()).arg(IMM16ARGS);
+    case OP_RM32_imm32:
+        return QString("%1 %2, %3").arg(mnemonic).arg(reg32Name()).arg(IMM32ARGS);
+    case OP_RM16_seg:
+        return QString("%1 %2, %3").arg(mnemonic).arg(RM16ARGS).arg(SEGARGS);
+    case OP_RM32_seg:
+        return QString("%1 %2, %3").arg(mnemonic).arg(RM32ARGS).arg(SEGARGS);
+    case OP_seg_RM16:
+        return QString("%1 %2, %3").arg(mnemonic).arg(SEGARGS).arg(RM16ARGS);
+    case OP_seg_RM32:
+        return QString("%1 %2, %3").arg(mnemonic).arg(SEGARGS).arg(RM32ARGS);
+    case OP_reg16_mem16:
+        return QString("%1 %2, %3").arg(mnemonic).arg(reg16Name()).arg(RM16ARGS);
+    case OP_reg32_mem32:
+        return QString("%1 %2, %3").arg(mnemonic).arg(reg32Name()).arg(RM32ARGS);
+    case OP_FAR_mem16:
+        return QString("%1 far %2").arg(mnemonic).arg(RM16ARGS);
+    case OP_FAR_mem32:
+        return QString("%1 far %2").arg(mnemonic).arg(RM32ARGS);
+    case OP_reg32_CR:
+        return QString("%1 %2, cr%3").arg(mnemonic).arg(CPU::registerName(static_cast<CPU::RegisterIndex32>(rm() & 7))).arg(CDRARGS);
+    case OP_CR_reg32:
+        return QString("%1 %2, cr%3").arg(mnemonic).arg(CDRARGS).arg(CPU::registerName(static_cast<CPU::RegisterIndex32>(rm() & 7)));
+    case OP_reg32_DR:
+        return QString("%1 %2, dr%3").arg(mnemonic).arg(CPU::registerName(static_cast<CPU::RegisterIndex32>(rm() & 7))).arg(CDRARGS);
+    case OP_DR_reg32:
+        return QString("%1 %2, dr%3").arg(mnemonic).arg(CDRARGS).arg(CPU::registerName(static_cast<CPU::RegisterIndex32>(rm() & 7)));
+    case OP_short_imm8:
+        return QString("%1 short 0x%2").arg(mnemonic).arg(RELIMM8ARGS);
+    case OP_relimm16:
+        return QString("%1 0x%2").arg(mnemonic).arg(RELIMM16ARGS);
+    case OP_relimm32:
+        return QString("%1 0x%2").arg(mnemonic).arg(RELIMM32ARGS);
+    case OP_NEAR_imm:
+        return QString("%1 near 0x%2").arg(mnemonic).arg(RELADDRARGS);
+    case InstructionPrefix:
+        return mnemonic;
+    case InvalidFormat:
+    case MultibyteWithSlash:
+    case MultibyteWithSubopcode:
+    case __BeginFormatsWithRMByte:
+    case __EndFormatsWithRMByte:
+        return QString("(!%1)").arg(mnemonic);
+    }
 }

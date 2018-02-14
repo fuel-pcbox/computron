@@ -36,6 +36,7 @@
 #include "pit.h"
 
 #define CRASH_ON_OPCODE_00_00
+//#define DISASSEMBLE_EVERYTHING
 
 inline bool hasA20Bit(DWORD address)
 {
@@ -203,6 +204,9 @@ void CPU::execute(Instruction&& insn)
     }
  #endif
 
+#ifdef DISASSEMBLE_EVERYTHING
+    vlog(LogCPU, "%s", qPrintable(insn.toString(m_baseEIP, x32())));
+#endif
     insn.execute(*this);
 }
 
