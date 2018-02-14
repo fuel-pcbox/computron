@@ -58,6 +58,7 @@ public:
     void write8(BYTE);
     void write16(WORD);
     void write32(DWORD);
+    void writeClearing16(WORD, bool o32);
     void* memoryPointer();
 
     QString toStringO8() const;

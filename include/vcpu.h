@@ -875,6 +875,7 @@ protected:
     void _SLDT_RM16(Instruction&);
     void _LTR_RM16(Instruction&);
     void _STR_RM16(Instruction&);
+    void _STR_RM32(Instruction&);
 
     void _PUSHAD(Instruction&);
     void _POPAD(Instruction&);

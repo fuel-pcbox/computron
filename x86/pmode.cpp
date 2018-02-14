@@ -48,7 +48,12 @@ void CPU::_SIDT(Instruction& insn)
 
 void CPU::_SLDT_RM16(Instruction& insn)
 {
-    insn.modrm().write16(LDTR.segment);
+    insn.modrm().writeClearing16(LDTR.segment, o32());
+}
+
+void CPU::_STR_RM16(Instruction& insn)
+{
+    insn.modrm().writeClearing16(TR.segment, o32());
 }
 
 void CPU::setLDT(WORD segment)

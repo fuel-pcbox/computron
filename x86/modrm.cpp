@@ -79,6 +79,15 @@ void MemoryOrRegisterReference::write8(BYTE data) { return write(data); }
 void MemoryOrRegisterReference::write16(WORD data) { return write(data); }
 void MemoryOrRegisterReference::write32(DWORD data) { VM_ASSERT(m_cpu->o32()); return write(data); }
 
+void MemoryOrRegisterReference::writeClearing16(WORD data, bool o32)
+{
+    if (o32 && isRegister()) {
+        m_cpu->writeRegister<DWORD>(m_registerIndex, data);
+        return;
+    }
+    return write(data);
+}
+
 void MemoryOrRegisterReference::resolve(CPU& cpu)
 {
     m_cpu = &cpu;

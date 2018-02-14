@@ -704,6 +704,7 @@ void buildOpcodeTablesIfNeeded()
 
     // Instructions starting with 0x0F are multi-byte opcodes.
     build0FSlash(0x00, 0, "SLDT",  OP_RM16,      &CPU::_SLDT_RM16);
+    build0FSlash(0x00, 1, "STR",   OP_RM16,      &CPU::_STR_RM16);
     build0FSlash(0x00, 2, "LLDT",  OP_RM16,      &CPU::_LLDT_RM16);
     build0FSlash(0x00, 3, "LTR",   OP_RM16,      &CPU::_LTR_RM16);
 
