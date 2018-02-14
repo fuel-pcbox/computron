@@ -31,7 +31,11 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+//#define LOG_TO_FILE
+
+#ifdef LOG_TO_FILE
 static FILE* s_logfile = 0L;
+#endif
 
 void vlog(VLogChannel channel, const char* format, ...)
 {
@@ -66,6 +70,7 @@ void vlog(VLogChannel channel, const char* format, ...)
         VM_ASSERT(0);
     }
 
+#ifdef LOG_TO_FILE
     if (!s_logfile) {
         s_logfile = fopen("log.txt", "a");
         if (!s_logfile)
@@ -85,6 +90,7 @@ void vlog(VLogChannel channel, const char* format, ...)
     va_start(ap, format);
     vfprintf(s_logfile, format, ap);
     va_end(ap);
+#endif
 
     if (!g_cpu || g_cpu->debugger().isActive() || show_on_stdout) {
         if (prefix)
@@ -101,7 +107,8 @@ void vlog(VLogChannel channel, const char* format, ...)
         puts("");
     }
 
+ #ifdef LOG_TO_FILE
     fputc('\n', s_logfile);
-
     fflush(s_logfile);
+#endif
 }
