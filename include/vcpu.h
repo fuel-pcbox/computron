@@ -910,6 +910,11 @@ protected:
     void _BTS_RM16_reg16(Instruction&);
     void _BTS_RM32_reg32(Instruction&);
 
+    void _BSF_reg16_RM16(Instruction&);
+    void _BSF_reg32_RM32(Instruction&);
+    void _BSR_reg16_RM16(Instruction&);
+    void _BSR_reg32_RM32(Instruction&);
+
     void _MOVZX_reg16_RM8(Instruction&);
     void _MOVZX_reg32_RM8(Instruction&);
     void _MOVZX_reg32_RM16(Instruction&);
@@ -1012,6 +1017,8 @@ private:
     template<typename T, typename U> T doBtr(T, U);
     template<typename T, typename U> T doBtc(T, U);
     template<typename T, typename U> T doBts(T, U);
+    template<typename T> T doBSF(T);
+    template<typename T> T doBSR(T);
 
     template<typename T> QWORD doAdd(T, T);
     template<typename T> QWORD doAdc(T, T);

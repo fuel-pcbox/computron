@@ -305,3 +305,55 @@ T CPU::doBtc(T dest, U bitIndex)
     setCF((dest & bitMask) != 0);
     return result;
 }
+
+template<typename T>
+T CPU::doBSF(T src)
+{
+    if (src == 0) {
+        setZF(0);
+        return 0;
+    }
+    setZF(1);
+    for (int i = 0; i < BitSizeOfType<T>::bits; ++i) {
+        T mask = 1 << i;
+        if (src & mask)
+            return i;
+    }
+    return 0;
+}
+
+template<typename T>
+T CPU::doBSR(T src)
+{
+    if (src == 0) {
+        setZF(0);
+        return 0;
+    }
+    setZF(1);
+    for (int i = BitSizeOfType<T>::bits - 1; i >= 0; --i) {
+        T mask = 1 << i;
+        if (src & mask)
+            return i;
+    }
+    return 0;
+}
+
+void CPU::_BSF_reg16_RM16(Instruction& insn)
+{
+    insn.reg16() = doBSF(insn.modrm().read16());
+}
+
+void CPU::_BSF_reg32_RM32(Instruction& insn)
+{
+    insn.reg32() = doBSF(insn.modrm().read32());
+}
+
+void CPU::_BSR_reg16_RM16(Instruction& insn)
+{
+    insn.reg16() = doBSR(insn.modrm().read16());
+}
+
+void CPU::_BSR_reg32_RM32(Instruction& insn)
+{
+    insn.reg32() = doBSR(insn.modrm().read32());
+}
