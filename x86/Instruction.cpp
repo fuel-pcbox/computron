@@ -562,6 +562,7 @@ void buildOpcodeTablesIfNeeded()
     build(0xCB, "RETF",   OP,                  &CPU::_RETF);
     build(0xCC, "INT3",   OP_3 ,               &CPU::_INT3);
     build(0xCD, "INT",    OP_imm8,             &CPU::_INT_imm8);
+    build(0xCE, "INTO",   OP,                  &CPU::_INTO);
     build(0xCF, "IRET",   OP,                  &CPU::_IRET);
 
     build(0xD4, "AAM",    OP_imm8,             &CPU::_AAM);
