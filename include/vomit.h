@@ -55,6 +55,7 @@ struct VomitOptions {
     bool vgadebug { false };
     bool novlog { false };
     bool pedebug { false };
+    bool vlogcycle { false };
     std::string file_to_run;
 };
 

@@ -96,6 +96,8 @@ void vlog(VLogChannel channel, const char* format, ...)
         if (prefix)
             printf("(\033[33;1m%8s\033[0m) ", prefix);
         if (g_cpu) {
+            if (options.vlogcycle)
+                printf("%20llu ", g_cpu->cycle());
             if (g_cpu->x32())
                 printf("\033[34;1m%04X:%08X\033[0m ", g_cpu->getBaseCS(), g_cpu->getBaseEIP());
             else
