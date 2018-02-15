@@ -592,6 +592,7 @@ void CPU::jump32(WORD segment, DWORD offset)
             vlog(LogCPU, "CallGate to %04x:%08x (count=%u)", callGate.selector(), callGate.offset(), callGate.count());
             setCS(callGate.selector());
             this->EIP = callGate.offset();
+            VM_ASSERT(!callGate.count()); // FIXME: Implement
             return;
         }
 
