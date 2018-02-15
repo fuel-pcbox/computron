@@ -45,8 +45,8 @@ void CPU::_OUT_imm8_EAX(Instruction& insn)
     WORD port = insn.imm8();
     out(port, regs.B.AL);
     out(port + 1, regs.B.AH);
-    out(port + 2, vomit_LSB(regs.W.__EAX_high_word));
-    out(port + 3, vomit_MSB(regs.W.__EAX_high_word));
+    out(port + 2, getLSB(regs.W.__EAX_high_word));
+    out(port + 3, getMSB(regs.W.__EAX_high_word));
 }
 
 void CPU::_OUT_DX_AL(Instruction&)
@@ -64,8 +64,8 @@ void CPU::_OUT_DX_EAX(Instruction&)
 {
     out(getDX(), regs.B.AL);
     out(getDX() + 1, regs.B.AH);
-    out(getDX() + 2, vomit_LSB(regs.W.__EAX_high_word));
-    out(getDX() + 3, vomit_MSB(regs.W.__EAX_high_word));
+    out(getDX() + 2, getLSB(regs.W.__EAX_high_word));
+    out(getDX() + 3, getMSB(regs.W.__EAX_high_word));
 }
 
 void CPU::_OUTSB(Instruction&)

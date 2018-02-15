@@ -74,13 +74,13 @@
 #define DEFAULT_RM16_imm8(helper, name) \
     void CPU::name(Instruction& insn) { \
         auto& modrm = insn.modrm(); \
-        modrm.write16(helper(modrm.read16(), vomit_signExtend<WORD>(insn.imm8()))); \
+        modrm.write16(helper(modrm.read16(), signExtend<WORD>(insn.imm8()))); \
 	}
 
 #define DEFAULT_RM32_imm8(helper, name) \
     void CPU::name(Instruction& insn) { \
         auto& modrm = insn.modrm(); \
-        modrm.write32(helper(modrm.read32(), vomit_signExtend<DWORD>(insn.imm8()))); \
+        modrm.write32(helper(modrm.read32(), signExtend<DWORD>(insn.imm8()))); \
     }
 
 #define DEFAULT_AL_imm8(helper, name) \
@@ -140,7 +140,7 @@
 
 #define READONLY_RM32_imm8( helper, name ) \
     void CPU::name(Instruction& insn) { \
-        helper(insn.modrm().read32(), vomit_signExtend<DWORD>(insn.imm8())); \
+        helper(insn.modrm().read32(), signExtend<DWORD>(insn.imm8())); \
     }
 
 #define READONLY_RM32_imm32( helper, name ) \
@@ -150,7 +150,7 @@
 
 #define READONLY_RM16_imm8(helper, name) \
     void CPU::name(Instruction& insn) { \
-        helper(insn.modrm().read16(), vomit_signExtend<WORD>(insn.imm8())); \
+        helper(insn.modrm().read16(), signExtend<WORD>(insn.imm8())); \
 	}
 
 #define READONLY_AL_imm8(helper, name) \

@@ -231,8 +231,8 @@ public:
     void setRegister16(RegisterIndex16 registerIndex, WORD value) { *treg16[registerIndex] = value; }
     void setRegister8(RegisterIndex8 registerIndex, BYTE value) { *treg8[registerIndex] = value; }
 
-    WORD getSegment(SegmentRegisterIndex segmentIndex) const { ASSERT_VALID_SEGMENT_INDEX(segmentIndex); return *m_segmentMap[static_cast<int>(segmentIndex)]; }
-    void setSegment(SegmentRegisterIndex segmentIndex, WORD value) const { ASSERT_VALID_SEGMENT_INDEX(segmentIndex); *m_segmentMap[static_cast<int>(segmentIndex)] = value; }
+    WORD getSegment(SegmentRegisterIndex segmentIndex) const { return *m_segmentMap[static_cast<int>(segmentIndex)]; }
+    void setSegment(SegmentRegisterIndex segmentIndex, WORD value) const { *m_segmentMap[static_cast<int>(segmentIndex)] = value; }
 
     DWORD getControlRegister(int registerIndex) const { return *m_controlRegisterMap[registerIndex]; }
     void setControlRegister(int registerIndex, DWORD value) { *m_controlRegisterMap[registerIndex] = value; }
@@ -1237,12 +1237,12 @@ BYTE CPU::readUnmappedMemory8(DWORD address) const
 
 WORD CPU::readUnmappedMemory16(DWORD address) const
 {
-    return vomit_read16FromPointer(reinterpret_cast<WORD*>(m_memory + address));
+    return read16FromPointer(reinterpret_cast<WORD*>(m_memory + address));
 }
 
 DWORD CPU::readUnmappedMemory32(DWORD address) const
 {
-    return vomit_read32FromPointer(reinterpret_cast<DWORD*>(m_memory + address));
+    return read32FromPointer(reinterpret_cast<DWORD*>(m_memory + address));
 }
 
 void CPU::writeUnmappedMemory8(DWORD address, BYTE value)
@@ -1252,7 +1252,7 @@ void CPU::writeUnmappedMemory8(DWORD address, BYTE value)
 
 void CPU::writeUnmappedMemory16(DWORD address, WORD value)
 {
-    vomit_write16ToPointer(reinterpret_cast<WORD*>(m_memory + address), value);
+    write16ToPointer(reinterpret_cast<WORD*>(m_memory + address), value);
 }
 
 BYTE* CPU::codeMemory() const

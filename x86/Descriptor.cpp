@@ -51,7 +51,7 @@ Descriptor CPU::getDescriptor(WORD index)
         VM_ASSERT(false);
         //dumpAll();
         debugger().enter();
-        //vomit_exit(1);
+        //hard_exit(1);
     }
 
     DWORD descriptorTableBase = descriptor.m_isGlobal ? GDTR.base : LDTR.base;

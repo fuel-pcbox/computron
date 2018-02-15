@@ -231,7 +231,7 @@ void CPU::_VKILL(Instruction&)
 {
     vlog(LogCPU, "0xF1: Secret shutdown command received!");
     //dumpAll();
-    vomit_exit(0);
+    hard_exit(0);
 }
 
 void CPU::exception(BYTE num)
@@ -276,7 +276,7 @@ CPU::CPU(Machine& m)
     m_memory = new BYTE[m_memorySize];
     if (!m_memory) {
         vlog(LogInit, "Insufficient memory available.");
-        vomit_exit(1);
+        hard_exit(1);
     }
 
     memset(m_memory, 0, 1048576 + 65536);
@@ -494,7 +494,7 @@ void CPU::mainLoop()
 #ifdef VOMIT_DEBUG
 
         if (!m_breakpoints.empty()) {
-            DWORD flatPC = vomit_toFlatAddress(getCS(), getEIP());
+            DWORD flatPC = realModeAddressToPhysicalAddress(getCS(), getEIP());
             for (auto& breakpoint : m_breakpoints) {
                 if (flatPC == breakpoint) {
                     debugger().enter();
@@ -873,15 +873,15 @@ void CPU::_LDS_reg16_mem16(Instruction& insn)
 {
     VM_ASSERT(a16());
     WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
-    insn.reg16() = vomit_read16FromPointer(ptr);
-    setDS(vomit_read16FromPointer(ptr + 1));
+    insn.reg16() = read16FromPointer(ptr);
+    setDS(read16FromPointer(ptr + 1));
 }
 
 void CPU::_LDS_reg32_mem32(Instruction&)
 {
 #warning FIXME: need readModRM48
     vlog(LogAlert, "LDS reg32 mem32");
-    vomit_exit(0);
+    hard_exit(0);
 }
 
 void CPU::pushInstructionPointer()
@@ -896,38 +896,38 @@ void CPU::_LES_reg16_mem16(Instruction& insn)
 {
     VM_ASSERT(a16());
     WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
-    insn.reg16() = vomit_read16FromPointer(ptr);
-    setES(vomit_read16FromPointer(ptr + 1));
+    insn.reg16() = read16FromPointer(ptr);
+    setES(read16FromPointer(ptr + 1));
 }
 
 void CPU::_LES_reg32_mem32(Instruction&)
 {
 #warning FIXME: need readModRM48
     vlog(LogAlert, "LES reg32 mem32");
-    vomit_exit(0);
+    hard_exit(0);
 }
 
 void CPU::_LFS_reg16_mem16(Instruction& insn)
 {
     VM_ASSERT(a16());
     WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
-    insn.reg16() = vomit_read16FromPointer(ptr);
-    setFS(vomit_read16FromPointer(ptr + 1));
+    insn.reg16() = read16FromPointer(ptr);
+    setFS(read16FromPointer(ptr + 1));
 }
 
 void CPU::_LFS_reg32_mem32(Instruction&)
 {
 #warning FIXME: need readModRM48
     vlog(LogAlert, "LFS reg32 mem32");
-    vomit_exit(0);
+    hard_exit(0);
 }
 
 void CPU::_LSS_reg16_mem16(Instruction& insn)
 {
     VM_ASSERT(a16());
     WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
-    insn.reg16() = vomit_read16FromPointer(ptr);
-    setSS(vomit_read16FromPointer(ptr + 1));
+    insn.reg16() = read16FromPointer(ptr);
+    setSS(read16FromPointer(ptr + 1));
 }
 
 void CPU::_LSS_reg32_mem32(Instruction& insn)
@@ -942,15 +942,15 @@ void CPU::_LGS_reg16_mem16(Instruction& insn)
 {
     VM_ASSERT(a16());
     WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
-    insn.reg16() = vomit_read16FromPointer(ptr);
-    setGS(vomit_read16FromPointer(ptr + 1));
+    insn.reg16() = read16FromPointer(ptr);
+    setGS(read16FromPointer(ptr + 1));
 }
 
 void CPU::_LGS_reg32_mem32(Instruction&)
 {
 #warning FIXME: need readModRM48
     vlog(LogAlert, "LGS reg32 mem32");
-    vomit_exit(0);
+    hard_exit(0);
 }
 
 void CPU::_LEA_reg32_mem32(Instruction& insn)
@@ -1060,15 +1060,13 @@ bool CPU::validateAddress(const Descriptor& descriptor, DWORD offset, MemoryAcce
     }
     VM_ASSERT(offset <= descriptor.effectiveLimit());
 
-    DWORD flatAddress = descriptor.base() + offset;
+    DWORD physicalAddress = descriptor.base() + offset;
     if (getPG()) {
-        flatAddress = translateAddress(flatAddress);
+        physicalAddress = translateAddress(physicalAddress);
     }
 
-    VM_ASSERT(isA20Enabled() || !hasA20Bit(flatAddress));
-
-    if (flatAddress >= m_memorySize) {
-        vlog(LogCPU, "OOB %zu-bit %s access @ %04x:%08x {base:%08x,limit:%08x,gran:%s} (flat: 0x%08x) [A20=%s]",
+    if (physicalAddress >= m_memorySize) {
+        vlog(LogCPU, "OOB %zu-bit %s access @ %04x:%08x {base:%08x,limit:%08x,gran:%s} (phys: 0x%08x) [A20=%s]",
              sizeof(T) * 8,
              toString(accessType),
              descriptor.index(),
@@ -1076,7 +1074,7 @@ bool CPU::validateAddress(const Descriptor& descriptor, DWORD offset, MemoryAcce
              descriptor.base(),
              descriptor.limit(),
              descriptor.granularity() ? "4k" : "1b",
-             flatAddress,
+             physicalAddress,
              isA20Enabled() ? "on" : "off"
         );
         GP(descriptor.index());
@@ -1126,22 +1124,22 @@ T CPU::readMemory(const Descriptor& descriptor, DWORD offset)
             //VM_ASSERT(false);
             return 0;
         }
-        DWORD flatAddress = descriptor.base() + offset;
+        DWORD physicalAddress = descriptor.base() + offset;
 
         if (getPG()) {
-            flatAddress = translateAddress(flatAddress);
+            physicalAddress = translateAddress(physicalAddress);
         }
 
-        T value = *reinterpret_cast<T*>(&m_memory[flatAddress]);
-        if (options.memdebug || shouldLogMemoryRead(flatAddress)) {
+        T value = *reinterpret_cast<T*>(&m_memory[physicalAddress]);
+        if (options.memdebug || shouldLogMemoryRead(physicalAddress)) {
             if (options.novlog)
-                printf("%04X:%08X: %zu-bit PE read [A20=%s] %04X:%08X (flat: %08X), value: %08X\n", getBaseCS(), getBaseEIP(), sizeof(T) * 8, isA20Enabled() ? "on" : "off", descriptor.index(), offset, flatAddress, value);
+                printf("%04X:%08X: %zu-bit PE read [A20=%s] %04X:%08X (phys: %08X), value: %08X\n", getBaseCS(), getBaseEIP(), sizeof(T) * 8, isA20Enabled() ? "on" : "off", descriptor.index(), offset, physicalAddress, value);
             else
-                vlog(LogCPU, "%zu-bit PE read [A20=%s] %04X:%08X (flat: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", descriptor.index(), offset, flatAddress, value);
+                vlog(LogCPU, "%zu-bit PE read [A20=%s] %04X:%08X (phys: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", descriptor.index(), offset, physicalAddress, value);
         }
         return value;
     }
-    return readMemory<T>(vomit_toFlatAddress(descriptor.index(), offset));
+    return readMemory<T>(realModeAddressToPhysicalAddress(descriptor.index(), offset));
 }
 
 template<typename T>
@@ -1207,23 +1205,23 @@ void CPU::writeMemory(const Descriptor& descriptor, DWORD offset, T value)
             //VM_ASSERT(false);
             return;
         }
-        DWORD flatAddress = descriptor.base() + offset;
+        DWORD physicalAddress = descriptor.base() + offset;
 
         if (getPG()) {
-            flatAddress = translateAddress(flatAddress);
+            physicalAddress = translateAddress(physicalAddress);
         }
 
-        if (options.memdebug || shouldLogMemoryWrite(flatAddress))
-            vlog(LogCPU, "%zu-bit PE write [A20=%s] %04X:%08X (flat: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", descriptor.index(), offset, flatAddress, value);
-        if (addressIsInVGAMemory(flatAddress)) {
-            machine().vgaMemory().write(flatAddress, value);
+        if (options.memdebug || shouldLogMemoryWrite(physicalAddress))
+            vlog(LogCPU, "%zu-bit PE write [A20=%s] %04X:%08X (phys: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", descriptor.index(), offset, physicalAddress, value);
+        if (addressIsInVGAMemory(physicalAddress)) {
+            machine().vgaMemory().write(physicalAddress, value);
             return;
         }
-        *reinterpret_cast<T*>(&m_memory[flatAddress]) = value;
-        didTouchMemory(flatAddress, sizeof(T));
+        *reinterpret_cast<T*>(&m_memory[physicalAddress]) = value;
+        didTouchMemory(physicalAddress, sizeof(T));
         return;
     }
-    writeMemory(vomit_toFlatAddress(descriptor.index(), offset), value);
+    writeMemory(realModeAddressToPhysicalAddress(descriptor.index(), offset), value);
 }
 
 template<typename T>
@@ -1320,16 +1318,16 @@ BYTE* CPU::memoryPointer(const Descriptor& descriptor, DWORD offset)
             //VM_ASSERT(false);
             return nullptr;
         }
-        DWORD flatAddress = descriptor.base() + offset;
+        DWORD physicalAddress = descriptor.base() + offset;
         if (getPG()) {
-            flatAddress = translateAddress(flatAddress);
+            physicalAddress = translateAddress(physicalAddress);
         }
-        if (options.memdebug || shouldLogMemoryPointer(flatAddress))
-            vlog(LogCPU, "MemoryPointer PE [A20=%s] %04X:%08X (flat: %08X)", isA20Enabled() ? "on" : "off", descriptor.index(), offset, flatAddress);
-        didTouchMemory(flatAddress, sizeof(DWORD));
-        return &m_memory[flatAddress];
+        if (options.memdebug || shouldLogMemoryPointer(physicalAddress))
+            vlog(LogCPU, "MemoryPointer PE [A20=%s] %04X:%08X (phys: %08X)", isA20Enabled() ? "on" : "off", descriptor.index(), offset, physicalAddress);
+        didTouchMemory(physicalAddress, sizeof(DWORD));
+        return &m_memory[physicalAddress];
     }
-    return memoryPointer(vomit_toFlatAddress(descriptor.index(), offset));
+    return memoryPointer(realModeAddressToPhysicalAddress(descriptor.index(), offset));
 }
 
 BYTE* CPU::memoryPointer(WORD segmentIndex, DWORD offset)

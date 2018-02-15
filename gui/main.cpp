@@ -37,7 +37,7 @@
 
 static void parseArguments(const QStringList& arguments);
 
-VomitOptions options;
+RuntimeOptions options;
 
 static void sigint_handler(int)
 {
@@ -45,7 +45,7 @@ static void sigint_handler(int)
     g_cpu->debugger().enter();
 }
 
-void vomit_exit(int exitCode)
+void hard_exit(int exitCode)
 {
     exit(exitCode);
 }
@@ -128,7 +128,7 @@ void parseArguments(const QStringList& arguments)
             ++it;
             if (it == arguments.end()) {
                 fprintf(stderr, "usage: vomit --run [filename]\n");
-                vomit_exit(1);
+                hard_exit(1);
             }
             options.file_to_run = (*it).toStdString();
             continue;
@@ -139,7 +139,7 @@ void parseArguments(const QStringList& arguments)
 #ifndef VOMIT_TRACE
     if (options.trace) {
         fprintf(stderr, "Rebuild with #define VOMIT_TRACE if you want --trace to work.\n");
-        vomit_exit(1);
+        hard_exit(1);
     }
 #endif
 }

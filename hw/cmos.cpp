@@ -90,12 +90,12 @@ BYTE CMOS::in8(WORD)
     case 0x09: value = currentDateForCMOS().year() % 100; break;
     case 0x0A: value = m_statusRegisterA; break;
     case 0x0B: value = m_statusRegisterB; break;
-    case 0x15: value = vomit_LSB(g_cpu->baseMemorySize() / 1024); break;
-    case 0x16: value = vomit_MSB(g_cpu->baseMemorySize() / 1024); break;
-    case 0x17: value = vomit_LSB(g_cpu->extendedMemorySize() / 1024 - 1024); break;
-    case 0x18: value = vomit_MSB(g_cpu->extendedMemorySize() / 1024 - 1024); break;
-    case 0x30: value = vomit_LSB(g_cpu->extendedMemorySize() / 1024 - 1024); break;
-    case 0x31: value = vomit_MSB(g_cpu->extendedMemorySize() / 1024 - 1024); break;
+    case 0x15: value = getLSB(g_cpu->baseMemorySize() / 1024); break;
+    case 0x16: value = getMSB(g_cpu->baseMemorySize() / 1024); break;
+    case 0x17: value = getLSB(g_cpu->extendedMemorySize() / 1024 - 1024); break;
+    case 0x18: value = getMSB(g_cpu->extendedMemorySize() / 1024 - 1024); break;
+    case 0x30: value = getLSB(g_cpu->extendedMemorySize() / 1024 - 1024); break;
+    case 0x31: value = getMSB(g_cpu->extendedMemorySize() / 1024 - 1024); break;
     case 0x32: value = currentDateForCMOS().year() / 100; break;
     default: vlog(LogCMOS, "WARNING: Read unsupported register %02X", m_registerIndex);
     }

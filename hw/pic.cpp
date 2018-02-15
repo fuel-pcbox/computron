@@ -127,7 +127,7 @@ void PIC::out8(WORD port, BYTE data)
 
     vlog(LogPIC, "Write PIC ICW on port %04X (data: %02X)", port, data);
     vlog(LogPIC, "I can't handle that request, better quit!");
-    vomit_exit(1);
+    hard_exit(1);
 }
 
 BYTE PIC::in8(WORD)

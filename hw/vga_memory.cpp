@@ -81,14 +81,14 @@ void VGAMemory::write(DWORD address, T value)
         write8(address, value);
         return;
     case 2:
-        write8(address, vomit_LSB(value));
-        write8(address + 1, vomit_MSB(value));
+        write8(address, getLSB(value));
+        write8(address + 1, getMSB(value));
         return;
     case 4:
-        write8(address + 0, vomit_LSB(vomit_LSW(value)));
-        write8(address + 1, vomit_MSB(vomit_LSW(value)));
-        write8(address + 2, vomit_LSB(vomit_MSW(value)));
-        write8(address + 3, vomit_MSB(vomit_MSW(value)));
+        write8(address + 0, getLSB(getLSW(value)));
+        write8(address + 1, getMSB(getLSW(value)));
+        write8(address + 2, getLSB(getMSW(value)));
+        write8(address + 3, getMSB(getMSW(value)));
         return;
     }
     // FIXME: This should be a static assert somehow.
@@ -128,7 +128,7 @@ void VGAMemory::write8(DWORD address, BYTE value)
             break;
         default:
             vlog(LogVGA, "Gaah, unsupported raster op %d in mode 2 :(\n", DRAWOP);
-            vomit_exit(1);
+            hard_exit(1);
         }
     } else if (WRITE_MODE == 0) {
 
@@ -214,7 +214,7 @@ void VGAMemory::write8(DWORD address, BYTE value)
             break;
         default:
             vlog(LogVGA, "Unsupported raster operation %d", DRAWOP);
-            vomit_exit(0);
+            hard_exit(0);
         }
     } else if(WRITE_MODE == 1) {
         new_val[0] = m_latch[0];
@@ -223,7 +223,7 @@ void VGAMemory::write8(DWORD address, BYTE value)
         new_val[3] = m_latch[3];
     } else {
         vlog(LogVGA, "Unsupported 6845 write mode %d", WRITE_MODE);
-        vomit_exit(1);
+        hard_exit(1);
 
         /* This is just here to make GCC stop worrying about accessing new_val[] uninitialized. */
         return;
@@ -283,7 +283,7 @@ BYTE VGAMemory::read8(DWORD address)
 {
     if (READ_MODE != 0) {
         vlog(LogVGA, "ZOMG! READ_MODE = %u", READ_MODE);
-        vomit_exit(1);
+        hard_exit(1);
     }
 
     // FIXME: We're assuming READ_MODE == 0 from here on, this can't be safe.

@@ -30,24 +30,14 @@
 void CPU::_BOUND(Instruction&)
 {
     VM_ASSERT(false);
-#if 0
-    BYTE rm = fetchOpcodeByte();
-    WORD* ptr = static_cast<WORD*>(resolveModRM(rm).memoryPointer());
-    WORD index = getRegister16(static_cast<CPU::RegisterIndex16>(vomit_modRMRegisterPart(rm)));
-
-    if (index < ptr[0] || index > ptr[1]) {
-        /* Raise BR exception */
-        exception(5);
-    }
-#endif
 }
 
 void CPU::_PUSH_imm8(Instruction& insn)
 {
     if (o32())
-        push32(vomit_signExtend<DWORD>(insn.imm8()));
+        push32(signExtend<DWORD>(insn.imm8()));
     else
-        push(vomit_signExtend<WORD>(insn.imm8()));
+        push(signExtend<WORD>(insn.imm8()));
 }
 
 void CPU::_PUSH_imm16(Instruction& insn)

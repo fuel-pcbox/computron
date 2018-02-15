@@ -142,7 +142,7 @@ void Debugger::handleBreakpoint(const QStringList& arguments)
     }
     WORD segment = arguments.at(1).toUInt(0, 16);
     DWORD offset = arguments.at(2).toUInt(0, 16);
-    DWORD flat = vomit_toFlatAddress(segment, offset);
+    DWORD flat = realModeAddressToPhysicalAddress(segment, offset);
     if (arguments[0] == "add") {
         printf("add breakpoint: %04X:%08X -> @0x%08X\n", segment, offset, flat);
         cpu().breakpoints().insert(flat);
@@ -169,7 +169,7 @@ void Debugger::doConsole()
 
 void Debugger::handleQuit()
 {
-    vomit_exit(0);
+    hard_exit(0);
 }
 
 void Debugger::handleDumpRegisters()

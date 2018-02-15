@@ -49,7 +49,7 @@ void Worker::run()
 void Worker::shutdown()
 {
     stopMachine();
-    vomit_exit(0);
+    hard_exit(0);
 }
 
 void Worker::startMachine()

@@ -23,29 +23,18 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef VOMIT_H
-#define VOMIT_H
+#pragma once
 
 #include "types.h"
 #include <string>
 
 #define ALWAYS_INLINE __attribute__ ((always_inline))
 
-#define MAX_FILESIZE	524288		/* 512kB is max "loadfile" size */
 #define MAX_FN_LENGTH	128
 
-void vomit_exit(int exitCode);
+void hard_exit(int exitCode);
 
-template<typename T> struct BitSizeOfType { static const int bits = sizeof(T) * 8; };
-
-template<typename T> struct SignedTypeMaker { };
-template<> struct SignedTypeMaker<BYTE> { typedef SIGNED_BYTE SignedType; };
-template<> struct SignedTypeMaker<WORD> { typedef SIGNED_WORD SignedType; };
-template<> struct SignedTypeMaker<DWORD> { typedef SIGNED_DWORD SignedType; };
-template<> struct SignedTypeMaker<QWORD> { typedef SIGNED_QWORD SignedType; };
-
-struct VomitOptions {
-    VomitOptions() { }
+struct RuntimeOptions {
     bool trace { false };
     bool disklog { false };
     bool trapint { false };
@@ -59,16 +48,14 @@ struct VomitOptions {
     std::string file_to_run;
 };
 
-extern VomitOptions options;
+extern RuntimeOptions options;
 
-#define ASSERT_VALID_SEGMENT_INDEX(segmentIndex) VM_ASSERT(static_cast<int>(segmentIndex) >= 0 && static_cast<int>(segmentIndex) <= 5)
-
-inline DWORD vomit_toFlatAddress(WORD segment, DWORD offset)
+inline DWORD realModeAddressToPhysicalAddress(WORD segment, DWORD offset)
 {
     return (segment << 4) + offset;
 }
 
-inline void vomit_write16ToPointer(WORD* pointer, WORD value)
+inline void write16ToPointer(WORD* pointer, WORD value)
 {
 #ifdef VOMIT_BIG_ENDIAN
     *pointer = V_BYTESWAP(value);
@@ -77,7 +64,7 @@ inline void vomit_write16ToPointer(WORD* pointer, WORD value)
 #endif
 }
 
-inline DWORD vomit_read32FromPointer(DWORD* pointer)
+inline DWORD read32FromPointer(DWORD* pointer)
 {
 #ifdef VOMIT_BIG_ENDIAN
     return V_BYTESWAP(*pointer);
@@ -86,16 +73,7 @@ inline DWORD vomit_read32FromPointer(DWORD* pointer)
 #endif
 }
 
-inline void vomit_write32ToPointer(DWORD* pointer, DWORD value)
-{
-#ifdef VOMIT_BIG_ENDIAN
-#error IMPLEMENT ME
-#else
-    *pointer = value;
-#endif
-}
-
-inline WORD vomit_read16FromPointer(WORD* pointer)
+inline WORD read16FromPointer(WORD* pointer)
 {
 #ifdef VOMIT_BIG_ENDIAN
     return V_BYTESWAP(*pointer);
@@ -110,68 +88,3 @@ inline void CRASH()
     *p = 0xDEAD;
 }
 
-template<typename T>
-inline T vomit_signExtend(BYTE value)
-{
-    if (!(value & 0x80))
-        return value;
-    if (BitSizeOfType<T>::bits == 16)
-        return value | 0xFF00;
-    if (BitSizeOfType<T>::bits == 32)
-        return value | 0xFFFFFF00;
-    if (BitSizeOfType<T>::bits == 64)
-        return value | 0xFFFFFFFFFFFFFF00;
-}
-
-template<typename T>
-inline T vomit_signExtend(WORD value)
-{
-    if (!(value & 0x8000))
-        return value;
-    if (BitSizeOfType<T>::bits == 32)
-        return value | 0xFFFF0000;
-    if (BitSizeOfType<T>::bits == 64)
-        return value | 0xFFFFFFFFFFFF0000;
-}
-
-inline int vomit_modRMRegisterPart(int rmbyte)
-{
-    return (rmbyte >> 3) & 7;
-}
-
-inline WORD vomit_MSW(DWORD d)
-{
-    return (d >> 16) & 0xFFFF;
-}
-
-inline WORD vomit_LSW(DWORD d)
-{
-    return d & 0xFFFF;
-}
-
-inline WORD vomit_MSB(WORD w)
-{
-    return (w >> 8) & 0xFF;
-}
-
-inline WORD vomit_LSB(WORD w)
-{
-    return w & 0xFF;
-}
-
-inline WORD makeWORD(BYTE msb, BYTE lsb)
-{
-    return (msb << 8) | lsb;
-}
-
-inline DWORD makeDWORD(WORD msw, WORD lsw)
-{
-    return (msw << 16) | lsw;
-}
-
-inline QWORD makeQWORD(DWORD msw, DWORD lsw)
-{
-    return ((QWORD)msw << 32) | lsw;
-}
-
-#endif

@@ -179,7 +179,6 @@ const char* toString(SegmentRegisterIndex segment)
 
 void CPU::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
 {
-    ASSERT_VALID_SEGMENT_INDEX(segmentRegisterIndex);
     auto& descriptor = m_descriptor[(int)segmentRegisterIndex];
     descriptor = getDescriptor(getSegment(segmentRegisterIndex));
 

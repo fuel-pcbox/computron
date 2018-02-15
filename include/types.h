@@ -23,8 +23,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef VOMIT_TYPES_H
-#define VOMIT_TYPES_H
+#pragma once
 
 #include <stdint.h>
 
@@ -53,4 +52,64 @@ enum ValueSize {
     DWordSize
 };
 
-#endif
+template<typename T> struct BitSizeOfType { static const int bits = sizeof(T) * 8; };
+
+template<typename T>
+inline T signExtend(BYTE value)
+{
+    if (!(value & 0x80))
+        return value;
+    if (BitSizeOfType<T>::bits == 16)
+        return value | 0xFF00;
+    if (BitSizeOfType<T>::bits == 32)
+        return value | 0xFFFFFF00;
+    if (BitSizeOfType<T>::bits == 64)
+        return value | 0xFFFFFFFFFFFFFF00;
+}
+
+template<typename T>
+inline T signExtend(WORD value)
+{
+    if (!(value & 0x8000))
+        return value;
+    if (BitSizeOfType<T>::bits == 32)
+        return value | 0xFFFF0000;
+    if (BitSizeOfType<T>::bits == 64)
+        return value | 0xFFFFFFFFFFFF0000;
+}
+
+inline WORD getMSW(DWORD d)
+{
+    return (d >> 16) & 0xFFFF;
+}
+
+inline WORD getLSW(DWORD d)
+{
+    return d & 0xFFFF;
+}
+
+inline BYTE getMSB(WORD w)
+{
+    return (w >> 8) & 0xFF;
+}
+
+inline BYTE getLSB(WORD w)
+{
+    return w & 0xFF;
+}
+
+inline WORD makeWORD(BYTE msb, BYTE lsb)
+{
+    return (msb << 8) | lsb;
+}
+
+inline DWORD makeDWORD(WORD msw, WORD lsw)
+{
+    return (msw << 16) | lsw;
+}
+
+inline QWORD makeQWORD(DWORD msw, DWORD lsw)
+{
+    return ((QWORD)msw << 32) | lsw;
+}
+

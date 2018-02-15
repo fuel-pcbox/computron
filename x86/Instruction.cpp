@@ -879,7 +879,7 @@ Instruction::Instruction(InstructionStream& stream)
 unsigned Instruction::registerIndex() const
 {
     if (m_hasRM)
-        return vomit_modRMRegisterPart(m_modrm.m_rm);
+        return (m_modrm.m_rm >> 3) & 7;
     return m_registerIndex;
 }
 

@@ -65,7 +65,7 @@ void vm_call8(CPU& cpu, WORD port, BYTE data) {
         break;
     default:
         vlog(LogAlert, "vm_call8: Unhandled write, %02X -> %04X", data, port);
-        vomit_exit(0);
+        hard_exit(0);
         break;
     }
 }
@@ -243,7 +243,7 @@ void vm_handleE6(CPU& cpu)
 
     default:
         vlog(LogAlert, "Unknown VM call %04X received!!", cpu.getAX());
-        //vomit_exit(0);
+        //hard_exit(0);
         break;
     }
 }
