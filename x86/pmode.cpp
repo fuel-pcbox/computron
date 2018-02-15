@@ -60,10 +60,10 @@ void CPU::_STR_RM16(Instruction& insn)
 
 void CPU::setLDT(WORD segment)
 {
-    auto gdtEntry = makeSegmentSelector(segment);
+    auto gdtEntry = getDescriptor(segment);
     LDTR.segment = segment;
-    LDTR.base = gdtEntry.base;
-    LDTR.limit = gdtEntry.limit;
+    LDTR.base = gdtEntry.base();
+    LDTR.limit = gdtEntry.limit();
     vlog(LogAlert, "setLDT { segment: %04X => base:%08X, limit:%08X }", LDTR.segment, LDTR.base, LDTR.limit);
 }
 
@@ -78,10 +78,10 @@ void CPU::_LLDT_RM16(Instruction& insn)
 void CPU::_LTR_RM16(Instruction& insn)
 {
     WORD segment = insn.modrm().read16();
-    auto gdtEntry = makeSegmentSelector(segment);
+    auto gdtEntry = getDescriptor(segment);
     TR.segment = segment;
-    TR.base = gdtEntry.base;
-    TR.limit = gdtEntry.limit;
+    TR.base = gdtEntry.base();
+    TR.limit = gdtEntry.limit();
     vlog(LogAlert, "LTR { segment: %04X => base:%08X, limit:%08X }", TR.segment, TR.base, TR.limit);
 }
 
@@ -160,71 +160,7 @@ void CPU::_LAR_reg16_RM16(Instruction& insn)
 
 void CPU::_LAR_reg32_RM32(Instruction& insn)
 {
-
     VM_ASSERT(false);
-}
-
-CPU::SegmentSelector CPU::makeSegmentSelector(WORD index)
-{
-    SegmentSelector selector;
-
-    if (!getPE()) {
-        selector.index = index;
-        selector.base = (DWORD)index << 4;
-        selector.limit = 0xFFFFF;
-        selector._32bit = false;
-        selector.isGlobal = true;
-        return selector;
-    }
-
-    selector.isGlobal = (index & 0x04) == 0;
-    selector.RPL = index & 3;
-    index &= 0xfffffff8;
-    selector.index = index;
-    WORD tableLimit = selector.isGlobal ? GDTR.limit : LDTR.limit;
-    if (index >= tableLimit) {
-        vlog(LogCPU, "Segment selector index 0x%04x >= %s.limit (0x%04x).", index, selector.isGlobal ? "GDTR" : "LDTR", tableLimit);
-        VM_ASSERT(false);
-        //dumpAll();
-        debugger().enter();
-        //vomit_exit(1);
-    }
-
-    DWORD descriptorTableBase = selector.isGlobal ? GDTR.base : LDTR.base;
-
-    DWORD hi = readMemory32(descriptorTableBase + index + 4);
-    DWORD lo = readMemory32(descriptorTableBase + index);
-
-    struct SegDescr{
-        uint16_t limit_1;   // limit, bits 0..15
-        uint16_t base_1;    // base, bits 0..15
-        uint8_t base_2;     // base, bits 16..23
-        uint8_t type_attr;  // type_attr
-        uint8_t lim_attr;
-          //^ bits 0..3: limit, bits 16..19
-          //^ bits 4..7: additional data/code attributes
-        uint8_t base_3;     // base, bits 24..31
-    };
-
-    selector.base = (hi & 0xFF000000) | ((hi & 0xFF) << 16) | ((lo >> 16) & 0xFFFF);
-    selector.limit = (hi & 0xF0000) | (lo & 0xFFFF);
-    selector.accessed = (hi >> 8) & 1;
-    selector.RW = (hi >> 9) & 1; // Read/Write
-    selector.DC = (hi >> 10) & 1; // Direction/Conforming
-    selector.executable = (hi >> 11) & 1;
-    selector.DPL = (hi >> 12) & 3; // Privilege (ring) level
-    selector.present = (hi >> 14) & 1;
-    selector.type = (hi >> 16) & 0xF;
-    selector._32bit = (hi >> 22) & 1;
-    selector.granularity = (hi >> 23) & 1; // Limit granularity, 0=1b, 1=4kB
-
-    if (selector.type == 9 || selector.type == 11) {
-        selector.isTask = true;
-        //VM_ASSERT(false);
-    }
-
-    //vlog(LogCPU, "makeSegmentSelector: GDTR.base{%08X} + index{%04X} => base:%08X, limit:%08X", GDTR.base, index, selector.base, selector.limit);
-    return selector;
 }
 
 const char* toString(SegmentRegisterIndex segment)
@@ -244,12 +180,12 @@ const char* toString(SegmentRegisterIndex segment)
 void CPU::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
 {
     ASSERT_VALID_SEGMENT_INDEX(segmentRegisterIndex);
-    CPU::SegmentSelector& selector = m_selector[(int)segmentRegisterIndex];
-    selector = makeSegmentSelector(getSegment(segmentRegisterIndex));
+    auto& descriptor = m_descriptor[(int)segmentRegisterIndex];
+    descriptor = getDescriptor(getSegment(segmentRegisterIndex));
 
     if (options.pedebug) {
         if (getPE())
-            vlog(LogCPU, "%s loaded with %04X { type:%02X, base:%08X, limit:%08X }", toString(segmentRegisterIndex), getSegment(segmentRegisterIndex), selector.type, selector.base, selector.limit);
+            vlog(LogCPU, "%s loaded with %04X { type:%02X, base:%08X, limit:%08X }", toString(segmentRegisterIndex), getSegment(segmentRegisterIndex), descriptor.type(), descriptor.base(), descriptor.limit());
     }
 }
 
@@ -257,8 +193,8 @@ void CPU::taskSwitch(WORD task)
 {
     // FIXME: This should mark the outgoing task as non-busy.
 
-    auto selector = makeSegmentSelector(task);
-    TSS& tss = *reinterpret_cast<TSS*>(memoryPointer(selector.base));
+    auto descriptor = getDescriptor(task);
+    TSS& tss = *reinterpret_cast<TSS*>(memoryPointer(descriptor.base()));
 
     setES(tss.ES);
     setCS(tss.CS);

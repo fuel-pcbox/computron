@@ -34,6 +34,7 @@
 #include <set>
 #include "OwnPtr.h"
 #include "Instruction.h"
+#include "Descriptor.h"
 
 class Debugger;
 class Machine;
@@ -128,30 +129,13 @@ public:
         RegisterEDI
     };
 
-    struct SegmentSelector {
-        bool isTask { false };
-        unsigned index { 0xFFFFFFFF };
-        unsigned DPL { 0 };
-        unsigned count { 0 };
-        bool present { false };
-        bool granularity { false };
-        bool _32bit { false };
-        bool executable { false };
-        bool DC { false };
-        bool RW { false };
-        bool accessed { false };
-        BYTE type { 0 };
-        DWORD base { 0 };
-        DWORD limit { 0 };
-        bool isGlobal { false };
-        BYTE RPL { 0 };
-
-        DWORD effectiveLimit() const { return granularity ? (limit * 4096) : limit; }
-    };
-
     void dumpSegment(WORD index);
-    void dumpSegment(const SegmentSelector&);
-    SegmentSelector makeSegmentSelector(WORD index);
+    void dumpDescriptor(const Descriptor&);
+    void dumpDescriptor(const SegmentDescriptor&);
+    void dumpDescriptor(const SystemDescriptor&);
+    void dumpDescriptor(const CodeSegmentDescriptor&);
+    void dumpDescriptor(const DataSegmentDescriptor&);
+    Descriptor getDescriptor(WORD selector);
 
     SegmentRegisterIndex currentSegment() const { return m_segmentPrefix == SegmentRegisterIndex::None ? SegmentRegisterIndex::DS : m_segmentPrefix; }
     bool hasSegmentPrefix() const { return m_segmentPrefix != SegmentRegisterIndex::None; }
@@ -383,7 +367,7 @@ public:
     BYTE* memoryPointer(DWORD address);
     BYTE* memoryPointer(WORD segment, DWORD offset);
     BYTE* memoryPointer(SegmentRegisterIndex, DWORD offset);
-    BYTE* memoryPointer(const SegmentSelector&, DWORD offset);
+    BYTE* memoryPointer(const Descriptor&, DWORD offset);
 
     DWORD getEFlags() const;
     WORD getFlags() const;
@@ -417,16 +401,16 @@ public:
 
     enum class MemoryAccessType { Read, Write };
 
-    template<typename T> bool validateAddress(const SegmentSelector&, DWORD offset, MemoryAccessType);
+    template<typename T> bool validateAddress(const Descriptor&, DWORD offset, MemoryAccessType);
     template<typename T> bool validateAddress(SegmentRegisterIndex, DWORD offset, MemoryAccessType);
     template<typename T> bool validateAddress(WORD segment, DWORD offset, MemoryAccessType);
     template<typename T> T readMemory(DWORD address);
     template<typename T> T readMemory(WORD segment, DWORD address);
-    template<typename T> T readMemory(const SegmentSelector&, DWORD address);
+    template<typename T> T readMemory(const Descriptor&, DWORD address);
     template<typename T> T readMemory(SegmentRegisterIndex, DWORD address);
     template<typename T> void writeMemory(DWORD address, T data);
     template<typename T> void writeMemory(WORD segment, DWORD address, T data);
-    template<typename T> void writeMemory(const SegmentSelector&, DWORD address, T data);
+    template<typename T> void writeMemory(const Descriptor&, DWORD address, T data);
     template<typename T> void writeMemory(SegmentRegisterIndex, DWORD address, T data);
 
     DWORD translateAddress(DWORD);
@@ -495,7 +479,7 @@ public:
 
     // Current execution mode (16 or 32 bit)
     bool x16() const { return !x32(); }
-    bool x32() const { return m_selector[(int)SegmentRegisterIndex::CS]._32bit; }
+    bool x32() const { return m_descriptor[(int)SegmentRegisterIndex::CS].D(); }
 
     bool a16() const { return !m_addressSize32; }
     virtual bool a32() const override { return m_addressSize32; }
@@ -1061,7 +1045,7 @@ private:
 
     void dumpSelector(const char* segmentRegisterName, SegmentRegisterIndex);
     void syncSegmentRegister(SegmentRegisterIndex);
-    SegmentSelector m_selector[6];
+    Descriptor m_descriptor[6];
 
     // This points to the base of CS for fast opcode fetches.
     BYTE* m_codeMemory;

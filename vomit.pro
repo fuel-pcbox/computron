@@ -2,8 +2,8 @@ macx:QMAKE_MAC_SDK = macosx10.9
 TEMPLATE = app
 TARGET = vomit
 DEPENDPATH += . x86 bios gui hw include
-INCLUDEPATH += . include gui hw
-QMAKE_CXXFLAGS += -std=c++17 -g -O -W -Wall -Wimplicit-fallthrough
+INCLUDEPATH += . include gui hw x86
+QMAKE_CXXFLAGS += -std=c++17 -g -O0 -W -Wall -Wimplicit-fallthrough
 DEFINES += VOMIT_DEBUG
 DEFINES += VOMIT_TRACE
 //DEFINES += VOMIT_DETERMINISTIC
@@ -55,7 +55,8 @@ HEADERS += gui/machinewidget.h \
            include/templates.h \
            include/vomit.h \
            include/OwnPtr.h \
-           include/Instruction.h
+           include/Instruction.h \
+    x86/Descriptor.h
 
 SOURCES += debug.cpp \
            x86/Instruction.cpp \
@@ -100,4 +101,5 @@ SOURCES += debug.cpp \
            hw/iodevice.cpp \
            hw/vga_memory.cpp \
            hw/cmos.cpp \
-           hw/PS2.cpp
+           hw/PS2.cpp \
+    x86/Descriptor.cpp

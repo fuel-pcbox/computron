@@ -381,7 +381,7 @@ void CPU::reset()
     this->LDTR.limit = 0;
     this->LDTR.segment = 0;
 
-    memset(m_selector, 0, sizeof(m_selector));
+    memset(m_descriptor, 0, sizeof(m_descriptor));
 
     m_segmentPrefix = SegmentRegisterIndex::None;
 
@@ -581,8 +581,22 @@ void CPU::jump32(WORD segment, DWORD offset)
 {
     //vlog(LogCPU, "[PE=%u] Far jump to %04X:%08X", getPE(), segment, offset);
 
-    auto selector = makeSegmentSelector(segment);
-    VM_ASSERT(!selector.isTask);
+    auto descriptor = getDescriptor(segment);
+
+    if (descriptor.isSystemDescriptor()) {
+        auto& sys = descriptor.asSystemDescriptor();
+
+        vlog(LogCPU, "Jump to %04x:%08x hit system descriptor type %s (%x)", segment, offset, sys.typeName(), (unsigned)sys.type());
+        if (sys.isCallGate()) {
+            auto& callGate = sys.asCallGate();
+            vlog(LogCPU, "CallGate to %04x:%08x (count=%u)", callGate.selector(), callGate.offset(), callGate.count());
+            setCS(callGate.selector());
+            this->EIP = callGate.offset();
+            return;
+        }
+
+        VM_ASSERT(false);
+    }
 
     setCS(segment);
     this->EIP = offset;
@@ -1024,28 +1038,28 @@ static const char* toString(CPU::MemoryAccessType type)
 }
 
 template<typename T>
-bool CPU::validateAddress(const SegmentSelector& selector, DWORD offset, MemoryAccessType accessType)
+bool CPU::validateAddress(const Descriptor& descriptor, DWORD offset, MemoryAccessType accessType)
 {
     VM_ASSERT(getPE());
 
-    if (offset > selector.effectiveLimit()) {
+    if (offset > descriptor.effectiveLimit()) {
         vlog(LogAlert, "FUG! offset %08X outside limit (selector index: %04X, effective limit: %08X [%08X x %s])",
              offset,
-             selector.index,
-             selector.effectiveLimit(),
-             selector.limit,
-             selector.granularity ? "4K" : "1b"
+             descriptor.index(),
+             descriptor.effectiveLimit(),
+             descriptor.limit(),
+             descriptor.granularity() ? "4K" : "1b"
              );
         //VM_ASSERT(false);
-        dumpSegment(selector);
+        dumpDescriptor(descriptor);
         //dumpAll();
         //debugger().enter();
-        GP(selector.index);
+        GP(descriptor.index());
         return false;
     }
-    VM_ASSERT(offset <= selector.effectiveLimit());
+    VM_ASSERT(offset <= descriptor.effectiveLimit());
 
-    DWORD flatAddress = selector.base + offset;
+    DWORD flatAddress = descriptor.base() + offset;
     if (getPG()) {
         flatAddress = translateAddress(flatAddress);
     }
@@ -1056,15 +1070,15 @@ bool CPU::validateAddress(const SegmentSelector& selector, DWORD offset, MemoryA
         vlog(LogCPU, "OOB %zu-bit %s access @ %04x:%08x {base:%08x,limit:%08x,gran:%s} (flat: 0x%08x) [A20=%s]",
              sizeof(T) * 8,
              toString(accessType),
-             selector.index,
+             descriptor.index(),
              offset,
-             selector.base,
-             selector.limit,
-             selector.granularity ? "4k" : "1b",
+             descriptor.base(),
+             descriptor.limit(),
+             descriptor.granularity() ? "4k" : "1b",
              flatAddress,
              isA20Enabled() ? "on" : "off"
         );
-        GP(selector.index);
+        GP(descriptor.index());
         return false;
     }
     return true;
@@ -1073,13 +1087,13 @@ bool CPU::validateAddress(const SegmentSelector& selector, DWORD offset, MemoryA
 template<typename T>
 bool CPU::validateAddress(SegmentRegisterIndex registerIndex, DWORD offset, MemoryAccessType accessType)
 {
-    return validateAddress<T>(m_selector[(int)registerIndex], offset, accessType);
+    return validateAddress<T>(m_descriptor[(int)registerIndex], offset, accessType);
 }
 
 template<typename T>
 bool CPU::validateAddress(WORD segmentIndex, DWORD offset, MemoryAccessType accessType)
 {
-    return validateAddress<T>(makeSegmentSelector(segmentIndex), offset, accessType);
+    return validateAddress<T>(getDescriptor(segmentIndex), offset, accessType);
 }
 
 template<typename T>
@@ -1104,14 +1118,14 @@ T CPU::readMemory(DWORD address)
 }
 
 template<typename T>
-T CPU::readMemory(const SegmentSelector& selector, DWORD offset)
+T CPU::readMemory(const Descriptor& descriptor, DWORD offset)
 {
     if (getPE()) {
-        if (!validateAddress<T>(selector, offset, MemoryAccessType::Read)) {
+        if (!validateAddress<T>(descriptor, offset, MemoryAccessType::Read)) {
             //VM_ASSERT(false);
             return 0;
         }
-        DWORD flatAddress = selector.base + offset;
+        DWORD flatAddress = descriptor.base() + offset;
 
         if (getPG()) {
             flatAddress = translateAddress(flatAddress);
@@ -1120,28 +1134,28 @@ T CPU::readMemory(const SegmentSelector& selector, DWORD offset)
         T value = *reinterpret_cast<T*>(&m_memory[flatAddress]);
         if (options.memdebug || shouldLogMemoryRead(flatAddress)) {
             if (options.novlog)
-                printf("%04X:%08X: %zu-bit PE read [A20=%s] %04X:%08X (flat: %08X), value: %08X\n", getBaseCS(), getBaseEIP(), sizeof(T) * 8, isA20Enabled() ? "on" : "off", selector.index, offset, flatAddress, value);
+                printf("%04X:%08X: %zu-bit PE read [A20=%s] %04X:%08X (flat: %08X), value: %08X\n", getBaseCS(), getBaseEIP(), sizeof(T) * 8, isA20Enabled() ? "on" : "off", descriptor.index(), offset, flatAddress, value);
             else
-                vlog(LogCPU, "%zu-bit PE read [A20=%s] %04X:%08X (flat: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", selector.index, offset, flatAddress, value);
+                vlog(LogCPU, "%zu-bit PE read [A20=%s] %04X:%08X (flat: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", descriptor.index(), offset, flatAddress, value);
         }
         return value;
     }
-    return readMemory<T>(vomit_toFlatAddress(selector.index, offset));
+    return readMemory<T>(vomit_toFlatAddress(descriptor.index(), offset));
 }
 
 template<typename T>
 T CPU::readMemory(WORD segmentIndex, DWORD offset)
 {
-    return readMemory<T>(makeSegmentSelector(segmentIndex), offset);
+    return readMemory<T>(getDescriptor(segmentIndex), offset);
 }
 
 template<typename T>
 T CPU::readMemory(SegmentRegisterIndex segment, DWORD offset)
 {
-    auto& selector = m_selector[(int)segment];
+    auto& descriptor = m_descriptor[(int)segment];
     if (!getPE())
-        return readMemory<T>(selector.base + offset);
-    return readMemory<T>(selector, offset);
+        return readMemory<T>(descriptor.base() + offset);
+    return readMemory<T>(descriptor, offset);
 }
 
 template BYTE CPU::readMemory<BYTE>(SegmentRegisterIndex, DWORD);
@@ -1185,21 +1199,21 @@ void CPU::writeMemory(DWORD address, T value)
 }
 
 template<typename T>
-void CPU::writeMemory(const SegmentSelector& selector, DWORD offset, T value)
+void CPU::writeMemory(const Descriptor& descriptor, DWORD offset, T value)
 {
     if (getPE()) {
-        if (!validateAddress<T>(selector, offset, MemoryAccessType::Write)) {
+        if (!validateAddress<T>(descriptor, offset, MemoryAccessType::Write)) {
             //VM_ASSERT(false);
             return;
         }
-        DWORD flatAddress = selector.base + offset;
+        DWORD flatAddress = descriptor.base() + offset;
 
         if (getPG()) {
             flatAddress = translateAddress(flatAddress);
         }
 
         if (options.memdebug || shouldLogMemoryWrite(flatAddress))
-            vlog(LogCPU, "%zu-bit PE write [A20=%s] %04X:%08X (flat: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", selector.index, offset, flatAddress, value);
+            vlog(LogCPU, "%zu-bit PE write [A20=%s] %04X:%08X (flat: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", descriptor.index(), offset, flatAddress, value);
         if (addressIsInVGAMemory(flatAddress)) {
             machine().vgaMemory().write(flatAddress, value);
             return;
@@ -1208,22 +1222,22 @@ void CPU::writeMemory(const SegmentSelector& selector, DWORD offset, T value)
         didTouchMemory(flatAddress, sizeof(T));
         return;
     }
-    writeMemory(vomit_toFlatAddress(selector.index, offset), value);
+    writeMemory(vomit_toFlatAddress(descriptor.index(), offset), value);
 }
 
 template<typename T>
 void CPU::writeMemory(WORD segmentIndex, DWORD offset, T value)
 {
-    writeMemory<T>(makeSegmentSelector(segmentIndex), offset, value);
+    writeMemory<T>(getDescriptor(segmentIndex), offset, value);
 }
 
 template<typename T>
 void CPU::writeMemory(SegmentRegisterIndex segment, DWORD offset, T value)
 {
-    auto& selector = m_selector[(int)segment];
+    auto& descriptor = m_descriptor[(int)segment];
     if (!getPE())
-        return writeMemory<T>(selector.base + offset, value);
-    return writeMemory<T>(selector, offset, value);
+        return writeMemory<T>(descriptor.base() + offset, value);
+    return writeMemory<T>(descriptor, offset, value);
 }
 
 void CPU::writeMemory8(DWORD address, BYTE value) { writeMemory(address, value); }
@@ -1243,9 +1257,9 @@ void CPU::updateSizeModes()
     bool oldO32 = m_operandSize32;
     bool oldA32 = m_addressSize32;
 
-    auto& codeSegment = m_selector[(int)SegmentRegisterIndex::CS];
-    m_addressSize32 = codeSegment._32bit;
-    m_operandSize32 = codeSegment._32bit;
+    auto& csDescriptor = m_descriptor[(int)SegmentRegisterIndex::CS];
+    m_addressSize32 = csDescriptor.D();
+    m_operandSize32 = csDescriptor.D();
 
     if (oldO32 != m_operandSize32 || oldA32 != m_addressSize32)
         vlog(LogCPU, "updateSizeModes PE=%u X:%u O:%u A:%u (newCS: %04X)", getPE(), x16() ? 16 : 32, o16() ? 16 : 32, a16() ? 16 : 32, getCS());
@@ -1292,34 +1306,34 @@ void CPU::setGS(WORD value)
 
 BYTE* CPU::memoryPointer(SegmentRegisterIndex segment, DWORD offset)
 {
-    auto& selector = m_selector[(int)segment];
+    auto& descriptor = m_descriptor[(int)segment];
     if (!getPE())
-        return memoryPointer(selector.base + offset);
-    return memoryPointer(selector, offset);
+        return memoryPointer(descriptor.base() + offset);
+    return memoryPointer(descriptor, offset);
 }
 
-BYTE* CPU::memoryPointer(const SegmentSelector& selector, DWORD offset)
+BYTE* CPU::memoryPointer(const Descriptor& descriptor, DWORD offset)
 {
     if (getPE()) {
-        if (!validateAddress<BYTE>(selector, offset, MemoryAccessType::Read)) {
+        if (!validateAddress<BYTE>(descriptor, offset, MemoryAccessType::Read)) {
             //VM_ASSERT(false);
             return nullptr;
         }
-        DWORD flatAddress = selector.base + offset;
+        DWORD flatAddress = descriptor.base() + offset;
         if (getPG()) {
             flatAddress = translateAddress(flatAddress);
         }
         if (options.memdebug || shouldLogMemoryPointer(flatAddress))
-            vlog(LogCPU, "MemoryPointer PE [A20=%s] %04X:%08X (flat: %08X)", isA20Enabled() ? "on" : "off", selector.index, offset, flatAddress);
+            vlog(LogCPU, "MemoryPointer PE [A20=%s] %04X:%08X (flat: %08X)", isA20Enabled() ? "on" : "off", descriptor.index(), offset, flatAddress);
         didTouchMemory(flatAddress, sizeof(DWORD));
         return &m_memory[flatAddress];
     }
-    return memoryPointer(vomit_toFlatAddress(selector.index, offset));
+    return memoryPointer(vomit_toFlatAddress(descriptor.index(), offset));
 }
 
 BYTE* CPU::memoryPointer(WORD segmentIndex, DWORD offset)
 {
-    return memoryPointer(makeSegmentSelector(segmentIndex), offset);
+    return memoryPointer(getDescriptor(segmentIndex), offset);
 }
 
 BYTE* CPU::memoryPointer(DWORD address)

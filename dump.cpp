@@ -110,12 +110,12 @@ void CPU::dumpTrace()
 
 void CPU::dumpSelector(const char* segmentRegisterName, SegmentRegisterIndex segmentIndex)
 {
-    const SegmentSelector& selector = m_selector[static_cast<int>(segmentIndex)];
+    auto& descriptor = m_descriptor[static_cast<int>(segmentIndex)];
     vlog(LogDump, "%s: %04X {%08X:%05X}",
         segmentRegisterName,
         getSegment(segmentIndex),
-        selector.base,
-        selector.limit
+        descriptor.base(),
+        descriptor.limit()
     );
 }
 
@@ -403,33 +403,73 @@ void CPU::dumpIVT()
     }
 }
 
-static const char* descriptorTypeName(BYTE type)
+void CPU::dumpDescriptor(const Descriptor& descriptor)
 {
-    switch (type) {
-    case  9: return "Task (ready)";
-    case 11: return "Task (busy)";
-    default: return "idk";
-    }
+    if (descriptor.isSegmentDescriptor())
+        dumpDescriptor(descriptor.asSegmentDescriptor());
+    else
+        dumpDescriptor(descriptor.asSystemDescriptor());
 }
 
-void CPU::dumpSegment(const SegmentSelector& selector)
+void CPU::dumpDescriptor(const SegmentDescriptor& descriptor)
 {
-    vlog(LogCPU, "%s segment 0x%04X: { type: %12s (%02X), base: 0x%08X, limit: %06X, bits: %u, present: %s, granularity: %s, DPL: %u }",
-        selector.isGlobal ? "Global" : "Local",
-        selector.index,
-        descriptorTypeName(selector.type),
-        selector.type,
-        selector.base,
-        selector.limit,
-        selector._32bit ? 32 : 16,
-        selector.present ? "yes" : "no",
-        selector.granularity ? "4K" : "1b",
-        selector.DPL
+    if (descriptor.isCode())
+        dumpDescriptor(descriptor.asCodeSegmentDescriptor());
+    else
+        dumpDescriptor(descriptor.asDataSegmentDescriptor());
+}
+
+void CPU::dumpDescriptor(const SystemDescriptor& segment)
+{
+    vlog(LogCPU, "System segment %04x: { type: %s (%02x), base:%08x, limit:%06x, bits:%u, P:%s, G:%s, DPL:%u, A:%s, readable:%s, conforming:%s }",
+        segment.index(),
+        segment.typeName(),
+        (BYTE)segment.type(),
+        segment.base(),
+        segment.limit(),
+        segment.D() ? 32 : 16,
+        segment.present() ? "yes" : "no",
+        segment.granularity() ? "4K" : "1b",
+        segment.DPL()
+    );
+}
+
+void CPU::dumpDescriptor(const CodeSegmentDescriptor& segment)
+{
+    vlog(LogCPU, "%s segment %04x: { type: CODE, base:%08x, limit:%06x, bits:%u, P:%s, G:%s, DPL:%u, A:%s, readable:%s, conforming:%s }",
+        segment.isGlobal() ? "Global" : "Local",
+        segment.index(),
+        segment.base(),
+        segment.limit(),
+        segment.D() ? 32 : 16,
+        segment.present() ? "yes" : "no",
+        segment.granularity() ? "4K" : "1b",
+        segment.DPL(),
+        segment.accessed() ? "yes" : "no",
+        segment.conforming() ? "yes" : "no",
+        segment.readable() ? "yes" : "no"
+    );
+}
+
+void CPU::dumpDescriptor(const DataSegmentDescriptor& segment)
+{
+    vlog(LogCPU, "%s segment %04x: { type: DATA, base:%08x, limit:%06x, bits:%u, P:%s, G:%s, DPL:%u, A:%s, writable:%s, expandDown:%s }",
+        segment.isGlobal() ? "Global" : "Local",
+        segment.index(),
+        segment.base(),
+        segment.limit(),
+        segment.D() ? 32 : 16,
+        segment.present() ? "yes" : "no",
+        segment.granularity() ? "4K" : "1b",
+        segment.DPL(),
+        segment.accessed() ? "yes" : "no",
+        segment.writable() ? "yes" : "no",
+        segment.expandDown() ? "yes" : "no"
     );
 }
 
 void CPU::dumpSegment(WORD index)
 {
-    dumpSegment(makeSegmentSelector(index));
+    dumpDescriptor(getDescriptor(index));
 }
 
