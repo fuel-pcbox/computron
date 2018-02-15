@@ -25,7 +25,7 @@
 
 #include "machine.h"
 #include "settings.h"
-#include "vcpu.h"
+#include "CPU.h"
 #include "vga_memory.h"
 #include "iodevice.h"
 #include "fdc.h"

@@ -24,7 +24,7 @@
  */
 
 #include "Instruction.h"
-#include "vcpu.h"
+#include "CPU.h"
 
 enum InstructionFormat {
     InvalidFormat,

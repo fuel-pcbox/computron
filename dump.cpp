@@ -25,7 +25,7 @@
 
 #include <stdio.h>
 #include "vomit.h"
-#include "vcpu.h"
+#include "CPU.h"
 #include "debug.h"
 
 int CPU::dumpDisassembled(WORD segment, DWORD offset)

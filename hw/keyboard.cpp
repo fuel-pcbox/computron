@@ -24,7 +24,7 @@
  */
 
 #include "vomit.h"
-#include "vcpu.h"
+#include "CPU.h"
 #include "keyboard.h"
 #include "pic.h"
 #include "debug.h"

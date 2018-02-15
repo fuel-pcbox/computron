@@ -47,7 +47,6 @@ HEADERS += gui/machinewidget.h \
            hw/PS2.h \
            include/debugger.h \
            include/types.h \
-           include/vcpu.h \
            include/debug.h \
            include/floppy.h \
            include/machine.h \
@@ -55,22 +54,24 @@ HEADERS += gui/machinewidget.h \
            include/templates.h \
            include/vomit.h \
            include/OwnPtr.h \
-           include/Instruction.h \
-    x86/Descriptor.h
+           x86/CPU.h \
+           x86/Descriptor.h \
+           x86/Instruction.h
 
 SOURCES += debug.cpp \
-           x86/Instruction.cpp \
            debugger.cpp \
            dump.cpp \
-           fpu.cpp \
            machine.cpp \
            settings.cpp \
            vmcalls.cpp \
            x86/186.cpp \
            x86/bcd.cpp \
            x86/bitwise.cpp \
-           x86/cpu.cpp \
+           x86/CPU.cpp \
+           x86/Descriptor.cpp \
            x86/flags.cpp \
+           x86/fpu.cpp \
+           x86/Instruction.cpp \
            x86/interrupt.cpp \
            x86/io.cpp \
            x86/jump.cpp \
@@ -101,5 +102,4 @@ SOURCES += debug.cpp \
            hw/iodevice.cpp \
            hw/vga_memory.cpp \
            hw/cmos.cpp \
-           hw/PS2.cpp \
-    x86/Descriptor.cpp
+           hw/PS2.cpp

@@ -26,7 +26,7 @@
 #include "debugger.h"
 #include "vomit.h"
 #include "debug.h"
-#include "vcpu.h"
+#include "CPU.h"
 #include <QDebug>
 #include <QStringBuilder>
 #include <QStringList>

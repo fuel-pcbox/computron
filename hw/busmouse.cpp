@@ -27,7 +27,7 @@
 
 #include "pic.h"
 #include "vomit.h"
-#include "vcpu.h"
+#include "CPU.h"
 #include "debug.h"
 #include <QtCore/QMutexLocker>
 

@@ -27,7 +27,7 @@
 #include "vomit.h"
 #include "debugger.h"
 #include "machine.h"
-#include "vcpu.h"
+#include "CPU.h"
 #include <stdarg.h>
 #include <stdio.h>
 

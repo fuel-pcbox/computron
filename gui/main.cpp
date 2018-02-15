@@ -28,7 +28,7 @@
 #include <QFile>
 #include "screen.h"
 #include "vomit.h"
-#include "vcpu.h"
+#include "CPU.h"
 #include "debugger.h"
 #include "machine.h"
 #include "iodevice.h"

@@ -27,7 +27,7 @@
 #include "vga.h"
 #include "debug.h"
 #include "machine.h"
-#include "vcpu.h"
+#include "CPU.h"
 #include <string.h>
 #include <QtCore/QMutex>
 #include <QtCore/QMutexLocker>

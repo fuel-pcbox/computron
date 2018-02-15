@@ -24,7 +24,7 @@
  */
 
 #include "vomctl.h"
-#include "vcpu.h"
+#include "CPU.h"
 #include "vomit.h"
 #include "debug.h"
 

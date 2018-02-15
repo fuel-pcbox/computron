@@ -28,7 +28,7 @@
 #include "ui_statewidget.h"
 #include "debug.h"
 #include "machine.h"
-#include "vcpu.h"
+#include "CPU.h"
 #include "screen.h"
 #include <QtCore/QCoreApplication>
 #include <QtCore/QTimer>

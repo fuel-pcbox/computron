@@ -23,7 +23,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "vcpu.h"
+#include "CPU.h"
 #include "debug.h"
 
 void CPU::_MOV_RM8_imm8(Instruction& insn)

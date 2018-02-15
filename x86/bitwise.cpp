@@ -23,7 +23,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "vcpu.h"
+#include "CPU.h"
 #include "templates.h"
 
 DEFAULT_RM8_reg8(doAnd, _AND_RM8_reg8)

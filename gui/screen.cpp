@@ -25,7 +25,7 @@
 
 #include "screen.h"
 #include "vomit.h"
-#include "vcpu.h"
+#include "CPU.h"
 #include "machine.h"
 #include "debug.h"
 #include "vga.h"

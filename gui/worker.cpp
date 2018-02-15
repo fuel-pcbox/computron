@@ -24,7 +24,7 @@
  */
 
 #include "worker.h"
-#include "vcpu.h"
+#include "CPU.h"
 
 Worker::Worker(CPU& cpu)
     : QThread(0)

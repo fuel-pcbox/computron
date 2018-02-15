@@ -24,7 +24,7 @@
  */
 
 #include "Descriptor.h"
-#include "vcpu.h"
+#include "CPU.h"
 #include "debugger.h"
 
 Descriptor CPU::getDescriptor(WORD index)
