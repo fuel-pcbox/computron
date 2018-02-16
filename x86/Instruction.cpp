@@ -1295,11 +1295,11 @@ QString Instruction::toString(DWORD origin, bool x32) const
     case OP_reg32_CR:
         return QString("%1 %2, cr%3").arg(mnemonic).arg(CPU::registerName(static_cast<CPU::RegisterIndex32>(rm() & 7))).arg(CDRARGS);
     case OP_CR_reg32:
-        return QString("%1 %2, cr%3").arg(mnemonic).arg(CDRARGS).arg(CPU::registerName(static_cast<CPU::RegisterIndex32>(rm() & 7)));
+        return QString("%1 cr%2, %3").arg(mnemonic).arg(CDRARGS).arg(CPU::registerName(static_cast<CPU::RegisterIndex32>(rm() & 7)));
     case OP_reg32_DR:
         return QString("%1 %2, dr%3").arg(mnemonic).arg(CPU::registerName(static_cast<CPU::RegisterIndex32>(rm() & 7))).arg(CDRARGS);
     case OP_DR_reg32:
-        return QString("%1 %2, dr%3").arg(mnemonic).arg(CDRARGS).arg(CPU::registerName(static_cast<CPU::RegisterIndex32>(rm() & 7)));
+        return QString("%1 dr%2, %3").arg(mnemonic).arg(CDRARGS).arg(CPU::registerName(static_cast<CPU::RegisterIndex32>(rm() & 7)));
     case OP_short_imm8:
         return QString("%1 short 0x%2").arg(mnemonic).arg(RELIMM8ARGS);
     case OP_relimm16:
