@@ -346,12 +346,6 @@ void CPU::reset()
 
     memset(&regs, 0, sizeof(regs));
     this->CR0 = 0;
-    setCS(0);
-    setDS(0);
-    setES(0);
-    setSS(0);
-    setFS(0);
-    setGS(0);
     this->CR1 = 0;
     this->CR2 = 0;
     this->CR3 = 0;
@@ -398,6 +392,13 @@ void CPU::reset()
 
     m_addressSize32 = false;
     m_operandSize32 = false;
+
+    setCS(0);
+    setDS(0);
+    setES(0);
+    setSS(0);
+    setFS(0);
+    setGS(0);
 
     initWatches();
 }
@@ -587,12 +588,19 @@ void CPU::jump32(WORD segment, DWORD offset)
         auto& sys = descriptor.asSystemDescriptor();
 
         vlog(LogCPU, "Jump to %04x:%08x hit system descriptor type %s (%x)", segment, offset, sys.typeName(), (unsigned)sys.type());
-        if (sys.isCallGate()) {
-            auto& callGate = sys.asCallGate();
-            vlog(LogCPU, "CallGate to %04x:%08x (count=%u)", callGate.selector(), callGate.offset(), callGate.count());
-            setCS(callGate.selector());
-            this->EIP = callGate.offset();
-            VM_ASSERT(!callGate.count()); // FIXME: Implement
+        if (sys.isGate()) {
+            auto& gate = sys.asGate();
+            vlog(LogCPU, "Gate (%s) to %04x:%08x (count=%u)", gate.typeName(), gate.selector(), gate.offset(), gate.parameterCount());
+            setCS(gate.selector());
+            this->EIP = gate.offset();
+            VM_ASSERT(!gate.parameterCount()); // FIXME: Implement
+            return;
+        }
+
+        if (sys.isTSS()) {
+            auto& tssDescriptor = sys.asTSSDescriptor();
+            vlog(LogCPU, "JMP to TSS descriptor (%s) -> %08x", tssDescriptor.typeName(), tssDescriptor.base());
+            taskSwitch(tssDescriptor);
             return;
         }
 
@@ -1039,7 +1047,7 @@ static const char* toString(CPU::MemoryAccessType type)
 }
 
 template<typename T>
-bool CPU::validateAddress(const Descriptor& descriptor, DWORD offset, MemoryAccessType accessType)
+bool CPU::validateAddress(const SegmentDescriptor& descriptor, DWORD offset, MemoryAccessType accessType)
 {
     VM_ASSERT(getPE());
 
@@ -1092,7 +1100,7 @@ bool CPU::validateAddress(SegmentRegisterIndex registerIndex, DWORD offset, Memo
 template<typename T>
 bool CPU::validateAddress(WORD segmentIndex, DWORD offset, MemoryAccessType accessType)
 {
-    return validateAddress<T>(getDescriptor(segmentIndex), offset, accessType);
+    return validateAddress<T>(getSegmentDescriptor(segmentIndex), offset, accessType);
 }
 
 template<typename T>
@@ -1117,7 +1125,7 @@ T CPU::readMemory(DWORD address)
 }
 
 template<typename T>
-T CPU::readMemory(const Descriptor& descriptor, DWORD offset)
+T CPU::readMemory(const SegmentDescriptor& descriptor, DWORD offset)
 {
     if (getPE()) {
         if (!validateAddress<T>(descriptor, offset, MemoryAccessType::Read)) {
@@ -1145,7 +1153,7 @@ T CPU::readMemory(const Descriptor& descriptor, DWORD offset)
 template<typename T>
 T CPU::readMemory(WORD segmentIndex, DWORD offset)
 {
-    return readMemory<T>(getDescriptor(segmentIndex), offset);
+    return readMemory<T>(getSegmentDescriptor(segmentIndex), offset);
 }
 
 template<typename T>
@@ -1198,7 +1206,7 @@ void CPU::writeMemory(DWORD address, T value)
 }
 
 template<typename T>
-void CPU::writeMemory(const Descriptor& descriptor, DWORD offset, T value)
+void CPU::writeMemory(const SegmentDescriptor& descriptor, DWORD offset, T value)
 {
     if (getPE()) {
         if (!validateAddress<T>(descriptor, offset, MemoryAccessType::Write)) {
@@ -1227,7 +1235,7 @@ void CPU::writeMemory(const Descriptor& descriptor, DWORD offset, T value)
 template<typename T>
 void CPU::writeMemory(WORD segmentIndex, DWORD offset, T value)
 {
-    writeMemory<T>(getDescriptor(segmentIndex), offset, value);
+    writeMemory<T>(getSegmentDescriptor(segmentIndex), offset, value);
 }
 
 template<typename T>
@@ -1311,7 +1319,7 @@ BYTE* CPU::memoryPointer(SegmentRegisterIndex segment, DWORD offset)
     return memoryPointer(descriptor, offset);
 }
 
-BYTE* CPU::memoryPointer(const Descriptor& descriptor, DWORD offset)
+BYTE* CPU::memoryPointer(const SegmentDescriptor& descriptor, DWORD offset)
 {
     if (getPE()) {
         if (!validateAddress<BYTE>(descriptor, offset, MemoryAccessType::Read)) {
@@ -1332,11 +1340,14 @@ BYTE* CPU::memoryPointer(const Descriptor& descriptor, DWORD offset)
 
 BYTE* CPU::memoryPointer(WORD segmentIndex, DWORD offset)
 {
-    return memoryPointer(getDescriptor(segmentIndex), offset);
+    return memoryPointer(getSegmentDescriptor(segmentIndex), offset);
 }
 
 BYTE* CPU::memoryPointer(DWORD address)
 {
+    if (getPE() && getPG()) {
+        address = translateAddress(address);
+    }
     address &= a20Mask();
     didTouchMemory(address, sizeof(DWORD));
     return &m_memory[address];

@@ -111,12 +111,8 @@ void CPU::dumpTrace()
 void CPU::dumpSelector(const char* segmentRegisterName, SegmentRegisterIndex segmentIndex)
 {
     auto& descriptor = m_descriptor[static_cast<int>(segmentIndex)];
-    vlog(LogDump, "%s: %04X {%08X:%05X}",
-        segmentRegisterName,
-        getSegment(segmentIndex),
-        descriptor.base(),
-        descriptor.limit()
-    );
+    vlog(LogDump, "%s:", segmentRegisterName);
+    dumpDescriptor(descriptor);
 }
 
 const char* CPU::registerName(SegmentRegisterIndex index)
@@ -419,17 +415,33 @@ void CPU::dumpDescriptor(const SegmentDescriptor& descriptor)
         dumpDescriptor(descriptor.asDataSegmentDescriptor());
 }
 
+void CPU::dumpDescriptor(const Gate& gate)
+{
+    vlog(LogCPU, "System segment %04x: { type: %s (%02x), entry:%04x:%06x, paramCount:%u, bits:%u, P:%s, DPL:%u }",
+        gate.index(),
+        gate.typeName(),
+        (BYTE)gate.type(),
+        gate.selector(),
+        gate.offset(),
+        gate.parameterCount(),
+        gate.D() ? 32 : 16,
+        gate.present() ? "yes" : "no",
+        gate.DPL()
+    );
+}
+
 void CPU::dumpDescriptor(const SystemDescriptor& segment)
 {
-    vlog(LogCPU, "System segment %04x: { type: %s (%02x), base:%08x, limit:%06x, bits:%u, P:%s, G:%s, DPL:%u, A:%s, readable:%s, conforming:%s }",
+    if (segment.isGate()) {
+        dumpDescriptor(segment.asGate());
+        return;
+    }
+    vlog(LogCPU, "System segment %04x: { type: %s (%02x), bits:%u, P:%s, DPL:%u }",
         segment.index(),
         segment.typeName(),
         (BYTE)segment.type(),
-        segment.base(),
-        segment.limit(),
         segment.D() ? 32 : 16,
         segment.present() ? "yes" : "no",
-        segment.granularity() ? "4K" : "1b",
         segment.DPL()
     );
 }

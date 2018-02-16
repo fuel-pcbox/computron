@@ -27,37 +27,68 @@
 #include "CPU.h"
 #include "debugger.h"
 
-Descriptor CPU::getDescriptor(WORD index)
+Descriptor CPU::getDescriptor(WORD selector)
 {
-    Descriptor descriptor;
-
     if (!getPE()) {
-        descriptor.m_index = index;
-        descriptor.m_base = (DWORD)index << 4;
-        descriptor.m_limit = 0xFFFFF;
+        Descriptor descriptor;
+        descriptor.m_index = selector;
+        descriptor.m_segmentBase = (DWORD)selector << 4;
+        descriptor.m_segmentLimit = 0xFFFFF;
         descriptor.m_D = false;
         descriptor.m_DT = true;
         descriptor.m_isGlobal = true;
         return descriptor;
     }
 
-    descriptor.m_isGlobal = (index & 0x04) == 0;
-    descriptor.m_RPL = index & 3;
-    index &= 0xfffffff8;
+    bool isGlobal = (selector & 0x04) == 0;
+    if (isGlobal)
+        return getDescriptor("GDT", GDTR.base, GDTR.limit, selector, true);
+    return getDescriptor("LDT", LDTR.base, LDTR.limit, selector, true);
+}
+
+Gate CPU::getInterruptGate(WORD index)
+{
+    VM_ASSERT(getPE());
+    auto descriptor = getDescriptor("IDT", IDTR.base, IDTR.limit, index, false);
+    if (descriptor.isNull())
+        return Gate();
+    dumpDescriptor(descriptor);
+    return descriptor.asGate();
+}
+
+SegmentDescriptor CPU::getSegmentDescriptor(WORD selector)
+{
+    auto descriptor = getDescriptor(selector);
+    if (descriptor.isNull())
+        return SegmentDescriptor();
+    return descriptor.asSegmentDescriptor();
+}
+
+Descriptor CPU::getDescriptor(const char* tableName, DWORD tableBase, WORD tableLimit, WORD index, bool indexIsSelector)
+{
+    Descriptor descriptor;
+
+    DWORD tableIndex;
+
+    if (indexIsSelector) {
+        descriptor.m_isGlobal = (index & 0x04) == 0;
+        descriptor.m_RPL = index & 3;
+        tableIndex = index & 0xfffffff8;
+    } else {
+        tableIndex = index * 8;
+    }
+
     descriptor.m_index = index;
-    WORD tableLimit = descriptor.m_isGlobal ? GDTR.limit : LDTR.limit;
     if (index >= tableLimit) {
-        vlog(LogCPU, "Segment selector index 0x%04x >= %s.limit (0x%04x).", index, descriptor.m_isGlobal ? "GDTR" : "LDTR", tableLimit);
+        vlog(LogCPU, "Selector 0x%04x >= %s.limit (0x%04x).", index, tableName, tableLimit);
         VM_ASSERT(false);
         //dumpAll();
         debugger().enter();
         //hard_exit(1);
     }
 
-    DWORD descriptorTableBase = descriptor.m_isGlobal ? GDTR.base : LDTR.base;
-
-    DWORD hi = readMemory32(descriptorTableBase + index + 4);
-    DWORD lo = readMemory32(descriptorTableBase + index);
+    DWORD hi = readMemory32(tableBase + tableIndex + 4);
+    DWORD lo = readMemory32(tableBase + tableIndex);
 
     descriptor.m_G = (hi >> 23) & 1; // Limit granularity, 0=1b, 1=4kB
     descriptor.m_D = (hi >> 22) & 1;
@@ -67,18 +98,15 @@ Descriptor CPU::getDescriptor(WORD index)
     descriptor.m_DT = (hi >> 12) & 1;
     descriptor.m_type = (hi >> 8) & 0xF;
 
-    if (descriptor.isSystemDescriptor() && descriptor.asSystemDescriptor().isCallGate()) {
-        descriptor.m_callGateSelector = lo >> 16;
-        descriptor.m_callGateCount = hi & 0xf; // FIXME: verify field size
-        descriptor.m_callGateOffset = (hi & 0xffff0000) | (lo & 0xffff);
+    if (descriptor.isGate()) {
+        descriptor.m_gateSelector = lo >> 16;
+        descriptor.m_gateParameterCount = hi & 0x1f;
+        descriptor.m_gateOffset = (hi & 0xffff0000) | (lo & 0xffff);
     } else {
-        descriptor.m_base = (hi & 0xFF000000) | ((hi & 0xFF) << 16) | ((lo >> 16) & 0xFFFF);
-        descriptor.m_limit = (hi & 0xF0000) | (lo & 0xFFFF);
+        descriptor.m_segmentBase = (hi & 0xFF000000) | ((hi & 0xFF) << 16) | ((lo >> 16) & 0xFFFF);
+        descriptor.m_segmentLimit = (hi & 0xF0000) | (lo & 0xFFFF);
     }
 
-    if (options.pedebug) {
-        vlog(LogCPU, "getDescriptor: GDTR.base{%08x} + index{%04x} => base:%08x, limit:%08x, type:%02x, [hi=%08x, lo=%08x]", GDTR.base, index, descriptor.base(), descriptor.limit(), (unsigned)descriptor.type(), hi, lo);
-    }
     return descriptor;
 }
 
@@ -90,14 +118,14 @@ const char* SystemDescriptor::typeName() const
     case SystemDescriptor::LDT: return "LDT";
     case SystemDescriptor::BusyTSS_16bit: return "BusyTSS_16bit";
     case SystemDescriptor::CallGate_16bit: return "CallGate_16bit";
-    case SystemDescriptor::TaskGate_16bit: return "TaskGate_16bit";
+    case SystemDescriptor::TaskGate: return "TaskGate";
     case SystemDescriptor::InterruptGate_16bit: return "InterruptGate_16bit";
     case SystemDescriptor::TrapGate_16bit: return "TrapGate_16bit";
     case SystemDescriptor::AvailableTSS_32bit: return "AvailableTSS_32bit";
     case SystemDescriptor::BusyTSS_32bit: return "BusyTSS_32bit";
     case SystemDescriptor::CallGate_32bit: return "CallGate_32bit";
     case SystemDescriptor::InterruptGate_32bit: return "InterruptGate_32bit";
-    case SystemDescriptor::TaskGate_32bit: return "TaskGate_32bit";
+    case SystemDescriptor::TrapGate_32bit: return "TrapGate_32bit";
     default: return "(Reserved)";
     }
 }

@@ -60,10 +60,24 @@ void CPU::_STR_RM16(Instruction& insn)
 
 void CPU::setLDT(WORD segment)
 {
-    auto gdtEntry = getDescriptor(segment);
+    auto descriptor = getDescriptor(segment);
+    DWORD base = 0;
+    WORD limit = 0;
+    if (!descriptor.isNull()) {
+        // FIXME: Generate exception?
+        if (descriptor.isLDT()) {
+            VM_ASSERT(descriptor.isLDT());
+            auto& ldtDescriptor = descriptor.asLDTDescriptor();
+            base = ldtDescriptor.base();
+            limit = ldtDescriptor.limit();
+        } else {
+            // FIXME: What do when non-LDT descriptor loaded?
+            dumpDescriptor(descriptor);
+        }
+    }
     LDTR.segment = segment;
-    LDTR.base = gdtEntry.base();
-    LDTR.limit = gdtEntry.limit();
+    LDTR.base = base;
+    LDTR.limit = limit;
     vlog(LogAlert, "setLDT { segment: %04X => base:%08X, limit:%08X }", LDTR.segment, LDTR.base, LDTR.limit);
 }
 
@@ -78,10 +92,13 @@ void CPU::_LLDT_RM16(Instruction& insn)
 void CPU::_LTR_RM16(Instruction& insn)
 {
     WORD segment = insn.modrm().read16();
-    auto gdtEntry = getDescriptor(segment);
+    auto descriptor = getDescriptor(segment);
+    VM_ASSERT(descriptor.isGlobal()); // FIXME: Generate exception?
+    VM_ASSERT(descriptor.isTSS());
+    auto& tssDescriptor = descriptor.asTSSDescriptor();
     TR.segment = segment;
-    TR.base = gdtEntry.base();
-    TR.limit = gdtEntry.limit();
+    TR.base = tssDescriptor.base();
+    TR.limit = tssDescriptor.limit();
     vlog(LogAlert, "LTR { segment: %04X => base:%08X, limit:%08X }", TR.segment, TR.base, TR.limit);
 }
 
@@ -106,14 +123,12 @@ void CPU::_LIDT(Instruction& insn)
     IDTR.base = ptr.offset & baseMask;
     IDTR.limit = ptr.segment;
     vlog(LogAlert, "LIDT { base:%08X, limit:%08X }", IDTR.base, IDTR.limit);
+
 #if DEBUG_IVT
-    for (DWORD isr = 0; isr < (IDTR.limit / 16); ++isr) {
-        FarPointer vector;
-        DWORD hi = readMemory32(IDTR.base + (isr * 8) + 4);
-        DWORD lo = readMemory32(IDTR.base + (isr * 8));
-        vector.segment = (lo >> 16) & 0xffff;
-        vector.offset = (hi & 0xffff0000) | (lo & 0xffff);
-        vlog(LogAlert, "Interrupt vector 0x%02x { 0x%04x:%08x }", isr, vector.segment, vector.offset);
+    if (getPE()) {
+        for (DWORD isr = 0; isr < (IDTR.limit / 16); ++isr) {
+            dumpDescriptor(getInterruptGate(isr));
+        }
     }
 #endif
 }
@@ -179,21 +194,34 @@ const char* toString(SegmentRegisterIndex segment)
 
 void CPU::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
 {
-    auto& descriptor = m_descriptor[(int)segmentRegisterIndex];
-    descriptor = getDescriptor(getSegment(segmentRegisterIndex));
+    auto& descriptorCache = static_cast<Descriptor&>(m_descriptor[(int)segmentRegisterIndex]);
 
+    auto descriptor = getDescriptor(getSegment(segmentRegisterIndex));
+
+    if (descriptor.isSystemDescriptor() && descriptor.type() == 0) {
+        // Null descriptor
+        descriptorCache = descriptor;
+        return;
+    }
+
+    VM_ASSERT(descriptor.isSegmentDescriptor());
+    descriptorCache = descriptor.asSegmentDescriptor();
     if (options.pedebug) {
-        if (getPE())
-            vlog(LogCPU, "%s loaded with %04X { type:%02X, base:%08X, limit:%08X }", toString(segmentRegisterIndex), getSegment(segmentRegisterIndex), descriptor.type(), descriptor.base(), descriptor.limit());
+        if (getPE()) {
+            vlog(LogCPU, "%s loaded with %04X { type:%02X, base:%08X, limit:%08X }",
+                toString(segmentRegisterIndex),
+                getSegment(segmentRegisterIndex),
+                descriptor.asSegmentDescriptor().type(),
+                descriptor.asSegmentDescriptor().base(),
+                descriptor.asSegmentDescriptor().limit()
+            );
+        }
     }
 }
 
-void CPU::taskSwitch(WORD task)
+void CPU::taskSwitch(TSSDescriptor& tssDescriptor)
 {
-    // FIXME: This should mark the outgoing task as non-busy.
-
-    auto descriptor = getDescriptor(task);
-    TSS& tss = *reinterpret_cast<TSS*>(memoryPointer(descriptor.base()));
+    TSS& tss = *reinterpret_cast<TSS*>(memoryPointer(tssDescriptor.base()));
 
     setES(tss.ES);
     setCS(tss.CS);
@@ -221,6 +249,15 @@ void CPU::taskSwitch(WORD task)
     regs.D.EDI = tss.EDI;
 
     CR0 |= 0x04; // TS (Task Switched)
+}
+
+void CPU::taskSwitch(WORD task)
+{
+    // FIXME: This should mark the outgoing task as non-busy.
+    auto descriptor = getDescriptor(task);
+    vlog(LogCPU, "taskSwitch with selector:%04x, type:%1x", task, descriptor.type());
+    auto& tssDescriptor = descriptor.asTSSDescriptor();
+    taskSwitch(tssDescriptor);
 }
 
 TSS* CPU::currentTSS()

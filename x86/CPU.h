@@ -131,11 +131,15 @@ public:
 
     void dumpSegment(WORD index);
     void dumpDescriptor(const Descriptor&);
+    void dumpDescriptor(const Gate&);
     void dumpDescriptor(const SegmentDescriptor&);
     void dumpDescriptor(const SystemDescriptor&);
     void dumpDescriptor(const CodeSegmentDescriptor&);
     void dumpDescriptor(const DataSegmentDescriptor&);
     Descriptor getDescriptor(WORD selector);
+    SegmentDescriptor getSegmentDescriptor(WORD selector);
+    Gate getInterruptGate(WORD index);
+    Descriptor getDescriptor(const char* tableName, DWORD tableBase, WORD tableLimit, WORD index, bool indexIsSelector);
 
     SegmentRegisterIndex currentSegment() const { return m_segmentPrefix == SegmentRegisterIndex::None ? SegmentRegisterIndex::DS : m_segmentPrefix; }
     bool hasSegmentPrefix() const { return m_segmentPrefix != SegmentRegisterIndex::None; }
@@ -367,7 +371,7 @@ public:
     BYTE* memoryPointer(DWORD address);
     BYTE* memoryPointer(WORD segment, DWORD offset);
     BYTE* memoryPointer(SegmentRegisterIndex, DWORD offset);
-    BYTE* memoryPointer(const Descriptor&, DWORD offset);
+    BYTE* memoryPointer(const SegmentDescriptor&, DWORD offset);
 
     DWORD getEFlags() const;
     WORD getFlags() const;
@@ -401,16 +405,16 @@ public:
 
     enum class MemoryAccessType { Read, Write };
 
-    template<typename T> bool validateAddress(const Descriptor&, DWORD offset, MemoryAccessType);
+    template<typename T> bool validateAddress(const SegmentDescriptor&, DWORD offset, MemoryAccessType);
     template<typename T> bool validateAddress(SegmentRegisterIndex, DWORD offset, MemoryAccessType);
     template<typename T> bool validateAddress(WORD segment, DWORD offset, MemoryAccessType);
     template<typename T> T readMemory(DWORD address);
     template<typename T> T readMemory(WORD segment, DWORD address);
-    template<typename T> T readMemory(const Descriptor&, DWORD address);
+    template<typename T> T readMemory(const SegmentDescriptor&, DWORD address);
     template<typename T> T readMemory(SegmentRegisterIndex, DWORD address);
     template<typename T> void writeMemory(DWORD address, T data);
     template<typename T> void writeMemory(WORD segment, DWORD address, T data);
-    template<typename T> void writeMemory(const Descriptor&, DWORD address, T data);
+    template<typename T> void writeMemory(const SegmentDescriptor&, DWORD address, T data);
     template<typename T> void writeMemory(SegmentRegisterIndex, DWORD address, T data);
 
     DWORD translateAddress(DWORD);
@@ -1041,11 +1045,12 @@ private:
 
     void setLDT(WORD segment);
     void taskSwitch(WORD task);
+    void taskSwitch(TSSDescriptor&);
     TSS* currentTSS();
 
     void dumpSelector(const char* segmentRegisterName, SegmentRegisterIndex);
     void syncSegmentRegister(SegmentRegisterIndex);
-    Descriptor m_descriptor[6];
+    SegmentDescriptor m_descriptor[6];
 
     // This points to the base of CS for fast opcode fetches.
     BYTE* m_codeMemory;

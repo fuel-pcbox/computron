@@ -29,13 +29,18 @@
 #include "types.h"
 #include "vomit.h"
 
+class CodeSegmentDescriptor;
+class DataSegmentDescriptor;
+class Gate;
+class LDTDescriptor;
 class SegmentDescriptor;
 class SystemDescriptor;
+class TSSDescriptor;
 
 class Descriptor {
     friend class CPU;
 public:
-    DWORD effectiveLimit() const { return granularity() ? (limit() * 4096) : limit(); }
+    Descriptor() { }
 
     unsigned index() const { return m_index; }
     bool isGlobal() const { return m_isGlobal; }
@@ -46,29 +51,44 @@ public:
 
     unsigned DPL() const { return m_DPL; }
     bool present() const { return m_P; }
-    bool granularity() const { return m_G; }
     bool D() const { return m_D; }
     bool available() const { return m_AVL; }
-    DWORD base() const { return m_base; }
-    WORD limit() const { return m_limit; }
 
     unsigned type() const { return m_type; }
 
+    bool isCode() const;
+    bool isData() const;
+    bool isGate() const;
+    bool isTSS() const;
+    bool isLDT() const;
+    bool isNull() const { return m_DT == 0 && m_type == 0; }
+
     SegmentDescriptor& asSegmentDescriptor();
     SystemDescriptor& asSystemDescriptor();
+    Gate& asGate();
+    TSSDescriptor& asTSSDescriptor();
+    LDTDescriptor& asLDTDescriptor();
+    CodeSegmentDescriptor& asCodeSegmentDescriptor();
+    DataSegmentDescriptor& asDataSegmentDescriptor();
+
     const SegmentDescriptor& asSegmentDescriptor() const;
     const SystemDescriptor& asSystemDescriptor() const;
+    const Gate& asGate() const;
+    const TSSDescriptor& asTSSDescriptor() const;
+    const LDTDescriptor& asLDTDescriptor() const;
+    const CodeSegmentDescriptor& asCodeSegmentDescriptor() const;
+    const DataSegmentDescriptor& asDataSegmentDescriptor() const;
 
 protected:
     union {
         struct {
-            DWORD m_base;
-            DWORD m_limit;
+            DWORD m_segmentBase { 0 };
+            DWORD m_segmentLimit { 0 };
         };
         struct {
-            WORD m_callGateCount;
-            WORD m_callGateSelector;
-            DWORD m_callGateOffset;
+            WORD m_gateParameterCount;
+            WORD m_gateSelector;
+            DWORD m_gateOffset;
         };
     };
     unsigned m_DPL { 0 };
@@ -85,8 +105,6 @@ protected:
     BYTE m_RPL { 0 };
 };
 
-class CallGate;
-
 class SystemDescriptor : public Descriptor {
 public:
     enum Type {
@@ -95,57 +113,94 @@ public:
         LDT = 0x2,
         BusyTSS_16bit = 0x3,
         CallGate_16bit = 0x4,
-        TaskGate_16bit = 0x5,
+        TaskGate = 0x5,
         InterruptGate_16bit = 0x6,
         TrapGate_16bit = 0x7,
         AvailableTSS_32bit = 0x9,
         BusyTSS_32bit = 0xb,
         CallGate_32bit = 0xc,
         InterruptGate_32bit = 0xe,
-        TaskGate_32bit = 0xf,
+        TrapGate_32bit = 0xf,
     };
 
     Type type() const { return static_cast<Type>(m_type); }
     const char* typeName() const;
 
     bool isCallGate() const { return type() == CallGate_16bit || type() == CallGate_32bit; }
-
-    CallGate& asCallGate();
-    const CallGate& asCallGate() const;
+    bool isInterruptGate() const { return type() == InterruptGate_16bit || type() == InterruptGate_32bit; }
+    bool isTrapGate() const { return type() == TrapGate_16bit || type() == TrapGate_32bit; }
+    bool isTaskGate() const { return type() == TaskGate; }
+    bool isGate() const { return isCallGate() || isInterruptGate() || isTrapGate() || isTaskGate(); }
+    bool isTSS() const { return type() == AvailableTSS_16bit || type() == BusyTSS_16bit || type() == AvailableTSS_32bit || type() == BusyTSS_32bit; }
+    bool isLDT() const { return type() == LDT; }
 };
 
-class CallGate : public SystemDescriptor {
+class Gate : public SystemDescriptor {
 public:
-    WORD selector() const { return m_callGateSelector; }
-    DWORD offset() const { return m_callGateOffset; }
-    WORD count() const { return m_callGateCount; }
+    WORD selector() const { return m_gateSelector; }
+    DWORD offset() const { return m_gateOffset; }
+    WORD parameterCount() const { return m_gateParameterCount; }
 };
 
-inline CallGate& SystemDescriptor::asCallGate()
+class TSSDescriptor : public SystemDescriptor {
+public:
+    DWORD base() const { return m_segmentBase; }
+    WORD limit() const { return m_segmentLimit; }
+};
+
+class LDTDescriptor : public SystemDescriptor {
+public:
+    DWORD base() const { return m_segmentBase; }
+    WORD limit() const { return m_segmentLimit; }
+};
+
+inline Gate& Descriptor::asGate()
 {
-    VM_ASSERT(isCallGate());
-    return static_cast<CallGate&>(*this);
+    VM_ASSERT(isGate());
+    return static_cast<Gate&>(*this);
 }
 
-inline const CallGate& SystemDescriptor::asCallGate() const
+inline const Gate& Descriptor::asGate() const
 {
-    VM_ASSERT(isCallGate());
-    return static_cast<const CallGate&>(*this);
+    VM_ASSERT(isGate());
+    return static_cast<const Gate&>(*this);
 }
 
-class CodeSegmentDescriptor;
-class DataSegmentDescriptor;
+inline TSSDescriptor& Descriptor::asTSSDescriptor()
+{
+    VM_ASSERT(isTSS());
+    return static_cast<TSSDescriptor&>(*this);
+}
+
+inline const TSSDescriptor& Descriptor::asTSSDescriptor() const
+{
+    VM_ASSERT(isTSS());
+    return static_cast<const TSSDescriptor&>(*this);
+}
+
+inline LDTDescriptor& Descriptor::asLDTDescriptor()
+{
+    VM_ASSERT(isLDT());
+    return static_cast<LDTDescriptor&>(*this);
+}
+
+inline const LDTDescriptor& Descriptor::asLDTDescriptor() const
+{
+    VM_ASSERT(isLDT());
+    return static_cast<const LDTDescriptor&>(*this);
+}
 
 class SegmentDescriptor : public Descriptor {
 public:
+    DWORD base() const { return m_segmentBase; }
+    WORD limit() const { return m_segmentLimit; }
+
     bool isCode() const { return (m_type & 0x8) != 0; }
     bool isData() const { return (m_type & 0x8) == 0; }
     bool accessed() const { return m_type & 0x1; }
 
-    CodeSegmentDescriptor& asCodeSegmentDescriptor();
-    DataSegmentDescriptor& asDataSegmentDescriptor();
-    const CodeSegmentDescriptor& asCodeSegmentDescriptor() const;
-    const DataSegmentDescriptor& asDataSegmentDescriptor() const;
+    DWORD effectiveLimit() const { return granularity() ? (limit() * 4096) : limit(); }
+    bool granularity() const { return m_G; }
 };
 
 class CodeSegmentDescriptor : public SegmentDescriptor {
@@ -172,13 +227,13 @@ inline SystemDescriptor& Descriptor::asSystemDescriptor()
     return static_cast<SystemDescriptor&>(*this);
 }
 
-inline CodeSegmentDescriptor& SegmentDescriptor::asCodeSegmentDescriptor()
+inline CodeSegmentDescriptor& Descriptor::asCodeSegmentDescriptor()
 {
     VM_ASSERT(isCode());
     return static_cast<CodeSegmentDescriptor&>(*this);
 }
 
-inline DataSegmentDescriptor& SegmentDescriptor::asDataSegmentDescriptor()
+inline DataSegmentDescriptor& Descriptor::asDataSegmentDescriptor()
 {
     VM_ASSERT(isData());
     return static_cast<DataSegmentDescriptor&>(*this);
@@ -196,14 +251,39 @@ inline const SystemDescriptor& Descriptor::asSystemDescriptor() const
     return static_cast<const SystemDescriptor&>(*this);
 }
 
-inline const CodeSegmentDescriptor& SegmentDescriptor::asCodeSegmentDescriptor() const
+inline const CodeSegmentDescriptor& Descriptor::asCodeSegmentDescriptor() const
 {
     VM_ASSERT(isCode());
     return static_cast<const CodeSegmentDescriptor&>(*this);
 }
 
-inline const DataSegmentDescriptor& SegmentDescriptor::asDataSegmentDescriptor() const
+inline const DataSegmentDescriptor& Descriptor::asDataSegmentDescriptor() const
 {
     VM_ASSERT(isData());
     return static_cast<const DataSegmentDescriptor&>(*this);
+}
+
+inline bool Descriptor::isGate() const
+{
+    return isSystemDescriptor() && asSystemDescriptor().isGate();
+}
+
+inline bool Descriptor::isTSS() const
+{
+    return isSystemDescriptor() && asSystemDescriptor().isTSS();
+}
+
+inline bool Descriptor::isLDT() const
+{
+    return isSystemDescriptor() && asSystemDescriptor().isLDT();
+}
+
+inline bool Descriptor::isCode() const
+{
+    return isSegmentDescriptor() && asSegmentDescriptor().isCode();
+}
+
+inline bool Descriptor::isData() const
+{
+    return isSegmentDescriptor() && asSegmentDescriptor().isData();
 }

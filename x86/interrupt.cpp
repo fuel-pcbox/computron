@@ -75,24 +75,24 @@ void CPU::_IRET(Instruction&)
 
 void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
 {
+    bool isTrap = false;
     FarPointer vector;
 
     if (getPE()) {
-        DWORD hi = readMemory32(IDTR.base + (isr * 8) + 4);
-        DWORD lo = readMemory32(IDTR.base + (isr * 8));
+        auto gate = getInterruptGate(isr);
 
-        vector.segment = (lo >> 16) & 0xffff;
-        vector.offset = (hi & 0xffff0000) | (lo & 0xffff);
+        vector.segment = gate.selector();
+        vector.offset = gate.offset();
 
-        BYTE type = (hi >> 8) & 0xF;
+        vlog(LogCPU, "PE=1 Interrupt %02x trapped%s, type: %s (%1x), %04x:%08x", isr, requestedByPIC ? " (from PIC)" : "", gate.typeName(), gate.type(), vector.segment, vector.offset);
 
-        vlog(LogCPU, "PE=1 Interrupt %02X trapped%s, type=%01X, %04X:%08X (hi=%08X, lo=%08X)", isr, requestedByPIC ? " (from PIC)" : "", type, vector.segment, vector.offset, hi, lo);
-
-        switch (type) {
-        case 0x6: // 80286 Interrupt Gate (16-bit)
-        //case 0x7: // 80286 Trap Gate (16-bit)
-        case 0xe: // 80386 Interrupt Gate (32-bit)
+        switch (gate.type()) {
+        case 0x7: // 80286 Trap Gate (16-bit)
         case 0xf: // 80386 Trap Gate (32-bit)
+            isTrap = true;
+            break;
+        case 0x6: // 80286 Interrupt Gate (16-bit)
+        case 0xe: // 80386 Interrupt Gate (32-bit)
             break;
         default:
             VM_ASSERT(false);
@@ -117,7 +117,8 @@ void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
 
     if (o16()) {
         push(getFlags());
-        setIF(0);
+        if (!isTrap)
+            setIF(0);
         setTF(0);
         push(getCS());
         push(getIP());
@@ -126,7 +127,8 @@ void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
         return;
     }
     push32(getFlags());
-    setIF(0);
+    if (!isTrap)
+        setIF(0);
     setTF(0);
     push32(getCS());
     push32(getEIP());
