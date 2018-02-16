@@ -1147,7 +1147,7 @@ T CPU::readMemory(const SegmentDescriptor& descriptor, DWORD offset)
         }
         return value;
     }
-    return readMemory<T>(realModeAddressToPhysicalAddress(descriptor.index(), offset));
+    return readMemory<T>(descriptor.base() + offset);
 }
 
 template<typename T>
@@ -1229,7 +1229,7 @@ void CPU::writeMemory(const SegmentDescriptor& descriptor, DWORD offset, T value
         didTouchMemory(physicalAddress, sizeof(T));
         return;
     }
-    writeMemory(realModeAddressToPhysicalAddress(descriptor.index(), offset), value);
+    writeMemory(descriptor.base() + offset, value);
 }
 
 template<typename T>
@@ -1335,7 +1335,7 @@ BYTE* CPU::memoryPointer(const SegmentDescriptor& descriptor, DWORD offset)
         didTouchMemory(physicalAddress, sizeof(DWORD));
         return &m_memory[physicalAddress];
     }
-    return memoryPointer(realModeAddressToPhysicalAddress(descriptor.index(), offset));
+    return memoryPointer(descriptor.base() + offset);
 }
 
 BYTE* CPU::memoryPointer(WORD segmentIndex, DWORD offset)

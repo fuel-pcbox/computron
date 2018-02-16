@@ -28,15 +28,15 @@
 #include "CPU.h"
 #include "debug.h"
 
-int CPU::dumpDisassembled(WORD segment, DWORD offset)
+int CPU::dumpDisassembled(SegmentDescriptor& descriptor, DWORD offset)
 {
     char buf[512];
     char* p = buf;
 
-    BYTE* data = memoryPointer(segment, offset);
+    BYTE* data = memoryPointer(descriptor, offset);
 
     if (!data) {
-        vlog(LogCPU, "dumpDisassembled can't dump %04X:%08X", segment, offset);
+        vlog(LogCPU, "dumpDisassembled can't dump %04x:%08x", descriptor.index(), offset);
         return 0;
     }
 
@@ -44,9 +44,9 @@ int CPU::dumpDisassembled(WORD segment, DWORD offset)
     auto insn = Instruction::fromStream(stream);
 
     if (x32())
-        p += sprintf(p, "0x%04x:0x%08x ", segment, offset);
+        p += sprintf(p, "0x%04x:0x%08x ", descriptor.index(), offset);
     else
-        p += sprintf(p, "0x%04x:0x%04x ", segment, offset);
+        p += sprintf(p, "0x%04x:0x%04x ", descriptor.index(), offset);
 
     for (unsigned i = 0; i < insn.length(); ++i)
         p += sprintf(p, "%02x", data[i]);
@@ -60,9 +60,15 @@ int CPU::dumpDisassembled(WORD segment, DWORD offset)
 
     /* Recurse if this is a prefix instruction. */
     if (insn.op() == 0x26 || insn.op() == 0x2E || insn.op() == 0x36 || insn.op() == 0x3E || insn.op() == 0xF2 || insn.op() == 0xF3)
-        dumpDisassembled(segment, offset + insn.length());
+        dumpDisassembled(descriptor, offset + insn.length());
 
     return 0;
+}
+
+int CPU::dumpDisassembled(WORD segment, DWORD offset)
+{
+    auto descriptor = getSegmentDescriptor(segment);
+    return dumpDisassembled(descriptor, offset);
 }
 
 #ifdef VOMIT_TRACE
@@ -110,7 +116,7 @@ void CPU::dumpTrace()
 
 void CPU::dumpSelector(const char* segmentRegisterName, SegmentRegisterIndex segmentIndex)
 {
-    auto& descriptor = m_descriptor[static_cast<int>(segmentIndex)];
+    auto& descriptor = cachedDescriptor(segmentIndex);
     vlog(LogDump, "%s:", segmentRegisterName);
     dumpDescriptor(descriptor);
 }
@@ -283,9 +289,9 @@ void CPU::dumpAll()
 
     vlog(LogDump, "  -  (%02X %02X%02X%02X%02X%02X)", csip[0], csip[1], csip[2], csip[3], csip[4], csip[5]);
 
-    dumpDisassembled(getBaseCS(), getBaseEIP());
+    dumpDisassembled(cachedDescriptor(SegmentRegisterIndex::CS), getBaseEIP());
 
-    dumpMemory(getBaseCS(), getBaseEIP(), 4);
+    dumpMemory(cachedDescriptor(SegmentRegisterIndex::CS), getBaseEIP(), 4);
 
 }
 
@@ -340,13 +346,13 @@ void CPU::dumpRawMemory(BYTE* p)
     }
 }
 
-void CPU::dumpMemory(WORD segment, DWORD offset, int rows)
+void CPU::dumpMemory(SegmentDescriptor& descriptor, DWORD offset, int rows)
 {
     offset &= 0xFFFFFFF0;
 
-    BYTE* p = memoryPointer(segment, offset);
+    BYTE* p = memoryPointer(descriptor, offset);
     if (!p) {
-        vlog(LogCPU, "dumpMemory can't dump %04X:%08X", segment, offset);
+        vlog(LogCPU, "dumpMemory can't dump %04X:%08X", descriptor.index(), offset);
         vlog(LogCPU, "Trying flat dump @ %08X...", offset);
         dumpFlatMemory(offset);
         return;
@@ -354,8 +360,8 @@ void CPU::dumpMemory(WORD segment, DWORD offset, int rows)
 
     for (int i = 0; i < rows; ++i) {
         vlog(LogDump,
-            "%04X:%04X   %02X %02X %02X %02X %02X %02X %02X %02X - %02X %02X %02X %02X %02X %02X %02X %02X   %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
-            segment, (offset+i*16),
+            "%04x:%04x   %02X %02X %02X %02X %02X %02X %02X %02X - %02X %02X %02X %02X %02X %02X %02X %02X   %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+            descriptor.index(), (offset+i*16),
             p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7],
             p[8], p[9], p[10], p[11], p[12], p[13], p[14], p[15],
             n(p[0]), n(p[1]), n(p[2]), n(p[3]), n(p[4]), n(p[5]), n(p[6]), n(p[7]),
@@ -364,7 +370,7 @@ void CPU::dumpMemory(WORD segment, DWORD offset, int rows)
         p+=16;
     }
 
-    p = memoryPointer(segment, offset);
+    p = memoryPointer(descriptor, offset);
     for (int i = 0; i < rows; ++i) {
         fprintf(stderr,
             "db 0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X,0x%02X\n",
@@ -373,6 +379,12 @@ void CPU::dumpMemory(WORD segment, DWORD offset, int rows)
         );
         p+=16;
     }
+}
+
+void CPU::dumpMemory(WORD segment, DWORD offset, int rows)
+{
+    auto descriptor = getSegmentDescriptor(segment);
+    return dumpMemory(descriptor, offset, rows);
 }
 
 static inline WORD isrSegment(const CPU& cpu, BYTE isr)

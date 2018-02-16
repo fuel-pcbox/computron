@@ -192,6 +192,8 @@ void Debugger::handleStep()
     cpu().exec();
     cpu().dumpAll();
     cpu().dumpWatches();
+    vlog(LogDump, "Next instruction:");
+    cpu().dumpDisassembled(cpu().cachedDescriptor(SegmentRegisterIndex::CS), cpu().getEIP());
 }
 
 void Debugger::handleContinue()

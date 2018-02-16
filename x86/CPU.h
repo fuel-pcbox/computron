@@ -458,6 +458,8 @@ public:
     State state() const { return m_state; }
     void setState(State s) { m_state = s; }
 
+    SegmentDescriptor& cachedDescriptor(SegmentRegisterIndex index) { return m_descriptor[(int)index]; }
+
     // Dumps registers, flags & stack
     void dumpAll();
 
@@ -469,8 +471,11 @@ public:
     void dumpMemory(WORD segment, DWORD offset, int rows);
     void dumpFlatMemory(DWORD address);
     void dumpRawMemory(BYTE*);
-
     int dumpDisassembled(WORD segment, DWORD offset);
+
+    void dumpMemory(SegmentDescriptor&, DWORD offset, int rows);
+    int dumpDisassembled(SegmentDescriptor&, DWORD offset);
+
 
 #ifdef VOMIT_TRACE
     // Dumps registers (used by --trace)
