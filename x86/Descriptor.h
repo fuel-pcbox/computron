@@ -160,6 +160,8 @@ class TSSDescriptor : public SystemDescriptor {
 public:
     DWORD base() const { return m_segmentBase; }
     WORD limit() const { return m_segmentLimit; }
+
+    bool is32Bit() const { return type() == AvailableTSS_32bit || type() == BusyTSS_32bit; }
 };
 
 class LDTDescriptor : public SystemDescriptor {

@@ -594,6 +594,7 @@ void CPU::jump32(WORD segment, DWORD offset)
             setCS(gate.selector());
             this->EIP = gate.offset();
             VM_ASSERT(!gate.parameterCount()); // FIXME: Implement
+            updateSizeModes();
             return;
         }
 
@@ -601,6 +602,7 @@ void CPU::jump32(WORD segment, DWORD offset)
             auto& tssDescriptor = sys.asTSSDescriptor();
             vlog(LogCPU, "JMP to TSS descriptor (%s) -> %08x", tssDescriptor.typeName(), tssDescriptor.base());
             taskSwitch(tssDescriptor);
+            updateSizeModes();
             return;
         }
 
@@ -1018,6 +1020,7 @@ DWORD CPU::translateAddress(DWORD address)
     DWORD offset = address & 0xFFF;
 
     DWORD* PDBR = reinterpret_cast<DWORD*>(&m_memory[getCR3()]);
+    VM_ASSERT(!(getCR3() & 0x03ff));
     DWORD pageDirectoryEntry = PDBR[dir];
 
     DWORD* pageTable = reinterpret_cast<DWORD*>(&m_memory[pageDirectoryEntry & 0xfffff000]);

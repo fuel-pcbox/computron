@@ -230,34 +230,63 @@ void CPU::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
     }
 }
 
-void CPU::taskSwitch(TSSDescriptor& tssDescriptor)
+void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor)
 {
-    TSS& tss = *reinterpret_cast<TSS*>(memoryPointer(tssDescriptor.base()));
+    VM_ASSERT(incomingTSSDescriptor.is32Bit());
 
-    setES(tss.ES);
-    setCS(tss.CS);
-    setDS(tss.DS);
-    setFS(tss.FS);
-    setGS(tss.GS);
-    setSS(tss.SS);
-    EIP = tss.EIP;
+    TSS& outgoingTSS = *reinterpret_cast<TSS*>(memoryPointer(TR.base));
+
+    outgoingTSS.EAX = getEAX();
+    outgoingTSS.EBX = getEBX();
+    outgoingTSS.ECX = getECX();
+    outgoingTSS.EDX = getEDX();
+    outgoingTSS.EBP = getEBP();
+    outgoingTSS.ESP = getESP();
+    outgoingTSS.ESI = getESI();
+    outgoingTSS.EDI = getEDI();
+    outgoingTSS.EFlags = getEFlags();
+    outgoingTSS.CS = getCS();
+    outgoingTSS.DS = getDS();
+    outgoingTSS.ES = getES();
+    outgoingTSS.FS = getFS();
+    outgoingTSS.GS = getGS();
+    outgoingTSS.SS = getSS();
+    outgoingTSS.LDT = LDTR.segment;
+    outgoingTSS.EIP = EIP;
 
     if (getPG())
-        CR3 = tss.CR3;
+        outgoingTSS.CR3 = getCR3();
 
-    setLDT(tss.LDT);
+    TSS& incomingTSS = *reinterpret_cast<TSS*>(memoryPointer(incomingTSSDescriptor.base()));
 
-    setEFlags(tss.EFlags);
+    setES(incomingTSS.ES);
+    setCS(incomingTSS.CS);
+    setDS(incomingTSS.DS);
+    setFS(incomingTSS.FS);
+    setGS(incomingTSS.GS);
+    setSS(incomingTSS.SS);
+    EIP = incomingTSS.EIP;
+
+    if (getPG())
+        CR3 = incomingTSS.CR3;
+
+    setLDT(incomingTSS.LDT);
+
+    setEFlags(incomingTSS.EFlags);
     VM_ASSERT(!getNT()); // I think we shouldn't be able to unnest more than once.
 
-    regs.D.EAX = tss.EAX;
-    regs.D.EBX = tss.EBX;
-    regs.D.ECX = tss.ECX;
-    regs.D.EDX = tss.EDX;
-    regs.D.EBP = tss.EBP;
-    regs.D.ESP = tss.ESP;
-    regs.D.ESI = tss.ESI;
-    regs.D.EDI = tss.EDI;
+    regs.D.EAX = incomingTSS.EAX;
+    regs.D.EBX = incomingTSS.EBX;
+    regs.D.ECX = incomingTSS.ECX;
+    regs.D.EDX = incomingTSS.EDX;
+    regs.D.EBP = incomingTSS.EBP;
+    regs.D.ESP = incomingTSS.ESP;
+    regs.D.ESI = incomingTSS.ESI;
+    regs.D.EDI = incomingTSS.EDI;
+
+    TR.segment = incomingTSSDescriptor.index();
+    TR.base = incomingTSSDescriptor.base();
+    TR.limit = incomingTSSDescriptor.limit();
 
     CR0 |= 0x04; // TS (Task Switched)
 }
