@@ -270,7 +270,7 @@ safe_putString:
     pop     ds
     ret
 
-vomit_console_write:
+ct_console_write:
     push    ds
     push    cs
     pop     ds
@@ -840,7 +840,7 @@ vga_select_active_display_page:
     mov     [BDA_CURRENT_VIDEO_PAGE], al
 
     mov     si, msg_page_changed
-    call    vomit_console_write
+    call    ct_console_write
 
     pop     si
     pop     bx
@@ -2151,7 +2151,7 @@ iret_with_carry:
 
 ; DATA
 
-    msg_version        db "Vomit Virtual PC - https://github.com/awesomekling/vomit", 0x0d, 0x0a
+    msg_version        db "Computron PC Emulator - https://github.com/awesomekling/computron", 0x0d, 0x0a
                        db "(C) 2003-2018 Andreas Kling <awesomekling@gmail.com>", 0x0d, 0x0a, 0x0d, 0x0a, 0
 
     msg_8086           db "8086", 0

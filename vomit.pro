@@ -1,6 +1,6 @@
 macx:QMAKE_MAC_SDK = macosx10.9
 TEMPLATE = app
-TARGET = vomit
+TARGET = computron
 DEPENDPATH += . x86 bios gui hw include
 INCLUDEPATH += . include gui hw x86
 QMAKE_CXXFLAGS += -std=c++17 -g -O0 -W -Wall -Wimplicit-fallthrough
