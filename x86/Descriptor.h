@@ -40,6 +40,11 @@ class TSSDescriptor;
 class Descriptor {
     friend class CPU;
 public:
+    enum Error {
+        NoError = 0,
+        LimitExceeded = 1,
+    };
+
     Descriptor() { }
 
     unsigned index() const { return m_index; }
@@ -48,6 +53,9 @@ public:
 
     bool isSegmentDescriptor() const { return m_DT; }
     bool isSystemDescriptor() const { return !m_DT; }
+
+    bool isError() const { return m_error != NoError; }
+    Error error() const { return m_error; }
 
     unsigned DPL() const { return m_DPL; }
     bool present() const { return m_P; }
@@ -99,10 +107,16 @@ protected:
     bool m_AVL { false };
     bool m_DT { false };
 
-    // These three are not part of the descriptor, but metadata about the lookup that found this descriptor.
+    // These are not part of the descriptor, but metadata about the lookup that found this descriptor.
     unsigned m_index { 0xFFFFFFFF };
     bool m_isGlobal { false };
     BYTE m_RPL { 0 };
+    Error m_error { NoError };
+};
+
+class ErrorDescriptor : public Descriptor {
+public:
+    explicit ErrorDescriptor(Error error) { m_error = error; }
 };
 
 class SystemDescriptor : public Descriptor {

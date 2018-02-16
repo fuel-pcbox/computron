@@ -196,7 +196,18 @@ void CPU::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
 {
     auto& descriptorCache = static_cast<Descriptor&>(m_descriptor[(int)segmentRegisterIndex]);
 
-    auto descriptor = getDescriptor(getSegment(segmentRegisterIndex));
+    WORD selector = getSegment(segmentRegisterIndex);
+    auto descriptor = getDescriptor(selector);
+
+    if (descriptor.isError()) {
+        vlog(LogCPU, "Error when loading %s with %04x: m_error=%u",
+            toString(segmentRegisterIndex),
+            selector,
+            (unsigned)descriptor.error()
+        );
+        GP(selector);
+        return;
+    }
 
     if (descriptor.isSystemDescriptor() && descriptor.type() == 0) {
         // Null descriptor
@@ -210,7 +221,7 @@ void CPU::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
         if (getPE()) {
             vlog(LogCPU, "%s loaded with %04X { type:%02X, base:%08X, limit:%08X }",
                 toString(segmentRegisterIndex),
-                getSegment(segmentRegisterIndex),
+                selector,
                 descriptor.asSegmentDescriptor().type(),
                 descriptor.asSegmentDescriptor().base(),
                 descriptor.asSegmentDescriptor().limit()

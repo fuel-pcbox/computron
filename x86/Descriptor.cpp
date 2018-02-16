@@ -67,7 +67,6 @@ SegmentDescriptor CPU::getSegmentDescriptor(WORD selector)
 Descriptor CPU::getDescriptor(const char* tableName, DWORD tableBase, WORD tableLimit, WORD index, bool indexIsSelector)
 {
     Descriptor descriptor;
-
     DWORD tableIndex;
 
     if (indexIsSelector) {
@@ -81,10 +80,7 @@ Descriptor CPU::getDescriptor(const char* tableName, DWORD tableBase, WORD table
     descriptor.m_index = index;
     if (index >= tableLimit) {
         vlog(LogCPU, "Selector 0x%04x >= %s.limit (0x%04x).", index, tableName, tableLimit);
-        VM_ASSERT(false);
-        //dumpAll();
-        debugger().enter();
-        //hard_exit(1);
+        return ErrorDescriptor(Descriptor::LimitExceeded);
     }
 
     DWORD hi = readMemory32(tableBase + tableIndex + 4);
