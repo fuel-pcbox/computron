@@ -139,7 +139,7 @@ public:
     Descriptor getDescriptor(WORD selector);
     SegmentDescriptor getSegmentDescriptor(WORD selector);
     Gate getInterruptGate(WORD index);
-    Descriptor getDescriptor(const char* tableName, DWORD tableBase, WORD tableLimit, WORD index, bool indexIsSelector);
+    Descriptor getDescriptor(const char* tableName, DWORD tableBase, DWORD tableLimit, WORD index, bool indexIsSelector);
 
     SegmentRegisterIndex currentSegment() const { return m_segmentPrefix == SegmentRegisterIndex::None ? SegmentRegisterIndex::DS : m_segmentPrefix; }
     bool hasSegmentPrefix() const { return m_segmentPrefix != SegmentRegisterIndex::None; }

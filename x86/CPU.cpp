@@ -1271,8 +1271,10 @@ void CPU::updateSizeModes()
     m_addressSize32 = csDescriptor.D();
     m_operandSize32 = csDescriptor.D();
 
-    if (oldO32 != m_operandSize32 || oldA32 != m_addressSize32)
+    if (oldO32 != m_operandSize32 || oldA32 != m_addressSize32) {
         vlog(LogCPU, "updateSizeModes PE=%u X:%u O:%u A:%u (newCS: %04X)", getPE(), x16() ? 16 : 32, o16() ? 16 : 32, a16() ? 16 : 32, getCS());
+        dumpDescriptor(csDescriptor);
+    }
 }
 
 void CPU::setCS(WORD value)
