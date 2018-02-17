@@ -29,7 +29,7 @@
 
 void CPU::_BOUND(Instruction&)
 {
-    ASSERT(false);
+    ASSERT_NOT_REACHED();
 }
 
 void CPU::_PUSH_imm8(Instruction& insn)

@@ -134,7 +134,7 @@ void MemoryOrRegisterReference::decode(InstructionStream& stream, bool a32)
         case 0: break;
         case 1: m_displacement32 = signExtend<DWORD>(stream.readInstruction8()); break;
         case 4: m_displacement32 = stream.readInstruction32(); break;
-        default: ASSERT(false); break;
+        default: ASSERT_NOT_REACHED(); break;
         }
     } else {
         decode16(stream);
@@ -142,7 +142,7 @@ void MemoryOrRegisterReference::decode(InstructionStream& stream, bool a32)
         case 0: break;
         case 1: m_displacement16 = signExtend<WORD>(stream.readInstruction8()); break;
         case 2: m_displacement16 = stream.readInstruction16(); break;
-        default: ASSERT(false); break;
+        default: ASSERT_NOT_REACHED(); break;
         }
     }
 }
@@ -198,7 +198,7 @@ void MemoryOrRegisterReference::decode32(InstructionStream& stream)
             case 0: ASSERT(!m_displacementBytes || m_displacementBytes == 4); m_displacementBytes = 4; break;
             case 1: ASSERT(!m_displacementBytes || m_displacementBytes == 1); m_displacementBytes = 1; break;
             case 2: ASSERT(!m_displacementBytes || m_displacementBytes == 4); m_displacementBytes = 4; break;
-            default: ASSERT(false); break;
+            default: ASSERT_NOT_REACHED(); break;
             }
         }
     }
@@ -294,7 +294,7 @@ DWORD MemoryOrRegisterReference::evaluateSIB()
         case 0: break;
         case 1:
         case 2: DEFAULT_TO_SS; base += m_cpu->getEBP(); break;
-        default: ASSERT(false); break;
+        default: ASSERT_NOT_REACHED(); break;
         }
         break;
     }

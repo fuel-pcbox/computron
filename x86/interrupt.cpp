@@ -95,7 +95,7 @@ void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
         case 0xe: // 80386 Interrupt Gate (32-bit)
             break;
         default:
-            ASSERT(false);
+            ASSERT_NOT_REACHED();
         }
     } else {
         // FIXME: should use PE-safe reads

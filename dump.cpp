@@ -137,7 +137,7 @@ const char* CPU::registerName(SegmentRegisterIndex index)
     case SegmentRegisterIndex::GS:
         return "gs";
     }
-    ASSERT(false);
+    ASSERT_NOT_REACHED();
     return nullptr;
 }
 
@@ -161,7 +161,7 @@ const char* CPU::registerName(CPU::RegisterIndex8 registerIndex)
     case CPU::RegisterDH:
         return "dh";
     }
-    ASSERT(false);
+    ASSERT_NOT_REACHED();
     return nullptr;
 }
 
@@ -185,7 +185,7 @@ const char* CPU::registerName(CPU::RegisterIndex16 registerIndex)
     case CPU::RegisterDI:
         return "di";
     }
-    ASSERT(false);
+    ASSERT_NOT_REACHED();
     return nullptr;
 }
 
@@ -209,7 +209,7 @@ const char* CPU::registerName(CPU::RegisterIndex32 registerIndex)
     case CPU::RegisterEDI:
         return "edi";
     }
-    ASSERT(false);
+    ASSERT_NOT_REACHED();
     return nullptr;
 }
 

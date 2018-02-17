@@ -39,7 +39,7 @@ void CPU::_ESCAPE(Instruction& insn)
 
     return;
     // FIXME: Instruction should take care of skipping bytes here!
-    ASSERT(false);
+    ASSERT_NOT_REACHED();
 
     // Even though we don't dispatch to an FPU, we still have to decode the full
     // opcode, or the instruction stream will fall out of sync.

@@ -111,7 +111,7 @@ ALWAYS_INLINE bool CPU::evaluateCondition(BYTE cc) const
     case 14: return (getSF() ^ getOF()) | getZF();
     case 15: return !((getSF() ^ getOF()) | getZF());
     }
-    ASSERT(false);
+    ASSERT_NOT_REACHED();
     return false;
 }
 
@@ -175,7 +175,7 @@ void CPU::_CALL_FAR_mem16(Instruction& insn)
 void CPU::_CALL_FAR_mem32(Instruction&)
 {
     // FIXME: Implement!
-    ASSERT(false);
+    ASSERT_NOT_REACHED();
 }
 
 void CPU::_CALL_RM16(Instruction& insn)

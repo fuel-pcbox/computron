@@ -84,7 +84,7 @@ T CPU::readRegister(int registerIndex)
         return *treg16[registerIndex];
     if (sizeof(T) == 4)
         return *treg32[registerIndex];
-    ASSERT(false);
+    ASSERT_NOT_REACHED();
 }
 
 template<typename T>
@@ -97,7 +97,7 @@ void CPU::writeRegister(int registerIndex, T value)
     else if (sizeof(T) == 4)
         *treg32[registerIndex] = value;
     else
-        ASSERT(false);
+        ASSERT_NOT_REACHED();
 }
 
 template BYTE CPU::readRegister<BYTE>(int);
@@ -201,7 +201,7 @@ void CPU::execute(Instruction&& insn)
 #ifdef CRASH_ON_OPCODE_00_00
     if (insn.op() == 0 && insn.rm() == 0) {
         dumpTrace();
-        ASSERT(false);
+        ASSERT_NOT_REACHED();
     }
  #endif
 
@@ -257,7 +257,7 @@ void CPU::GP(WORD code)
     bool EX = code & 1;
     vlog(LogCPU, "#GP(%04X) selector=%04X, TI=%u, I=%u, EX=%u", code, selector, TI, I, EX);
 #ifdef CRASH_ON_GPF
-    ASSERT(false);
+    ASSERT_NOT_REACHED();
 #endif
     exception(13, code);
 }
@@ -607,7 +607,7 @@ void CPU::jump32(WORD segment, DWORD offset)
             return;
         }
 
-        ASSERT(false);
+        ASSERT_NOT_REACHED();
     }
 
     setCS(segment);
@@ -1063,7 +1063,7 @@ bool CPU::validateAddress(const SegmentDescriptor& descriptor, DWORD offset, Mem
              descriptor.limit(),
              descriptor.granularity() ? "4K" : "1b"
              );
-        //ASSERT(false);
+        //ASSERT_NOT_REACHED();
         dumpDescriptor(descriptor);
         //dumpAll();
         //debugger().enter();
@@ -1135,7 +1135,7 @@ T CPU::readMemory(const SegmentDescriptor& descriptor, DWORD offset)
 {
     if (getPE()) {
         if (!validateAddress<T>(descriptor, offset, MemoryAccessType::Read)) {
-            //ASSERT(false);
+            //ASSERT_NOT_REACHED();
             return 0;
         }
         DWORD physicalAddress = descriptor.base() + offset;
@@ -1216,7 +1216,7 @@ void CPU::writeMemory(const SegmentDescriptor& descriptor, DWORD offset, T value
 {
     if (getPE()) {
         if (!validateAddress<T>(descriptor, offset, MemoryAccessType::Write)) {
-            //ASSERT(false);
+            //ASSERT_NOT_REACHED();
             return;
         }
         DWORD physicalAddress = descriptor.base() + offset;
@@ -1331,7 +1331,7 @@ BYTE* CPU::memoryPointer(const SegmentDescriptor& descriptor, DWORD offset)
 {
     if (getPE()) {
         if (!validateAddress<BYTE>(descriptor, offset, MemoryAccessType::Read)) {
-            //ASSERT(false);
+            //ASSERT_NOT_REACHED();
             return nullptr;
         }
         DWORD physicalAddress = descriptor.base() + offset;

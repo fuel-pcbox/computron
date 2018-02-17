@@ -924,7 +924,7 @@ DWORD InstructionStream::readBytes(unsigned count)
     case 2: return readInstruction16();
     case 4: return readInstruction32();
     }
-    ASSERT(false);
+    ASSERT_NOT_REACHED();
     return 0;
 }
 

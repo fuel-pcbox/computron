@@ -92,7 +92,7 @@ void VGAMemory::write(DWORD address, T value)
         return;
     }
     // FIXME: This should be a static assert somehow.
-    ASSERT(false);
+    ASSERT_NOT_REACHED();
 }
 
 void VGAMemory::write8(DWORD address, BYTE value)
@@ -315,7 +315,7 @@ T VGAMemory::read(DWORD address)
         return makeDWORD(read<WORD>(address + 2), read<WORD>(address));
     }
     // FIXME: This should be a static assert somehow.
-    ASSERT(false);
+    ASSERT_NOT_REACHED();
 }
 
 template BYTE VGAMemory::read<BYTE>(DWORD address);

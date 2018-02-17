@@ -67,7 +67,7 @@ void vlog(VLogChannel channel, const char* format, ...)
     case LogFPU: prefix = "fpu"; break;
     case LogTimer: prefix = "timer"; break;
     default:
-        ASSERT(0);
+        ASSERT_NOT_REACHED();
     }
 
 #ifdef LOG_TO_FILE
