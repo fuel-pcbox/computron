@@ -34,7 +34,7 @@
 #define ASSERT(x)
 #endif
 
-#define ASSERT_NOT_REACHED ASSERT(false)
+#define ASSERT_NOT_REACHED() ASSERT(false)
 
 enum VLogChannel {
     LogInit,
