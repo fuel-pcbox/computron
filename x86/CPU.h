@@ -1137,18 +1137,18 @@ private:
 
     struct {
         DWORD base;
-        WORD limit;
+        DWORD limit;
     } GDTR;
 
     struct {
         DWORD base;
-        WORD limit;
+        DWORD limit;
     } IDTR;
 
     struct {
         WORD segment { 0 };
         DWORD base { 0 };
-        WORD limit { 0 };
+        DWORD limit { 0 };
     } LDTR;
 
     DWORD CR0, CR1, CR2, CR3, CR4, CR5, CR6, CR7;
@@ -1168,7 +1168,7 @@ private:
     struct {
         WORD segment;
         DWORD base;
-        WORD limit;
+        DWORD limit;
     } TR;
 
     BYTE opcode;
