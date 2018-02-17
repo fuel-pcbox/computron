@@ -62,7 +62,7 @@ void CPU::setLDT(WORD segment)
 {
     auto descriptor = getDescriptor(segment);
     DWORD base = 0;
-    WORD limit = 0;
+    DWORD limit = 0;
     if (!descriptor.isNull()) {
         // FIXME: Generate exception?
         if (descriptor.isLDT()) {
@@ -170,12 +170,20 @@ void CPU::_SMSW_RM16(Instruction& insn)
 
 void CPU::_LAR_reg16_RM16(Instruction& insn)
 {
-    VM_ASSERT(false);
+    // FIXME: This has various ways it can fail, implement them.
+    WORD selector = insn.modrm().read16() & 0xffff;
+    auto descriptor = getDescriptor(selector);
+    insn.reg16() = descriptor.m_high & 0x00ffff00;
+    setZF(1);
 }
 
 void CPU::_LAR_reg32_RM32(Instruction& insn)
 {
-    VM_ASSERT(false);
+    // FIXME: This has various ways it can fail, implement them.
+    WORD selector = insn.modrm().read32() & 0xffff;
+    auto descriptor = getDescriptor(selector);
+    insn.reg32() = descriptor.m_high & 0x00ffff00;
+    setZF(1);
 }
 
 const char* toString(SegmentRegisterIndex segment)
@@ -214,6 +222,8 @@ void CPU::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
         return;
     }
 
+    if (!descriptor.isSegmentDescriptor())
+        dumpDescriptor(descriptor);
     VM_ASSERT(descriptor.isSegmentDescriptor());
     descriptorCache = descriptor.asSegmentDescriptor();
     if (options.pedebug) {

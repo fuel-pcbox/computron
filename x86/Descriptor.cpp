@@ -103,6 +103,9 @@ Descriptor CPU::getDescriptor(const char* tableName, DWORD tableBase, DWORD tabl
         descriptor.m_segmentLimit = (hi & 0xF0000) | (lo & 0xFFFF);
     }
 
+    descriptor.m_high = hi;
+    descriptor.m_low = lo;
+
     return descriptor;
 }
 

@@ -88,6 +88,8 @@ public:
     const DataSegmentDescriptor& asDataSegmentDescriptor() const;
 
 protected:
+    DWORD m_high { 0 };
+    DWORD m_low { 0 };
     union {
         struct {
             DWORD m_segmentBase { 0 };
