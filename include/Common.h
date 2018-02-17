@@ -26,7 +26,7 @@
 #pragma once
 
 #include "types.h"
-#include <string>
+#include <QString>
 
 #define ALWAYS_INLINE __attribute__ ((always_inline))
 
@@ -45,7 +45,8 @@ struct RuntimeOptions {
     bool novlog { false };
     bool pedebug { false };
     bool vlogcycle { false };
-    std::string file_to_run;
+    QString autotestPath;
+    QString configPath;
 };
 
 extern RuntimeOptions options;

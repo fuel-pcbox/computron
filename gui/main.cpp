@@ -70,8 +70,10 @@ int main(int argc, char** argv)
 
     OwnPtr<Machine> machine;
 
-    if (options.file_to_run.length()) {
-        machine = Machine::createForAutotest(QString::fromStdString(options.file_to_run));
+    if (options.autotestPath.length()) {
+        machine = Machine::createForAutotest(options.autotestPath);
+    } else if (options.configPath.length()) {
+        machine = Machine::createFromFile(options.configPath);
     } else {
         machine = Machine::createFromFile(QLatin1String("default.vmf"));
     }
@@ -124,13 +126,22 @@ void parseArguments(const QStringList& arguments)
             options.start_in_debug = true;
         else if (argument == "--no-vlog")
             options.novlog = true;
+        else if (argument == "--config") {
+            ++it;
+            if (it == arguments.end()) {
+                fprintf(stderr, "usage: computron --config [filename]\n");
+                hard_exit(1);
+            }
+            options.configPath = (*it);
+            continue;
+        }
         else if (argument == "--run") {
             ++it;
             if (it == arguments.end()) {
                 fprintf(stderr, "usage: computron --run [filename]\n");
                 hard_exit(1);
             }
-            options.file_to_run = (*it).toStdString();
+            options.autotestPath = (*it);
             continue;
         }
         ++it;
