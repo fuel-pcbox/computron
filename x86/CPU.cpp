@@ -591,6 +591,7 @@ void CPU::jump32(WORD segment, DWORD offset)
         if (sys.isGate()) {
             auto& gate = sys.asGate();
             vlog(LogCPU, "Gate (%s) to %04x:%08x (count=%u)", gate.typeName(), gate.selector(), gate.offset(), gate.parameterCount());
+            ASSERT(gate.isCallGate());
             setCS(gate.selector());
             this->EIP = gate.offset();
             ASSERT(!gate.parameterCount()); // FIXME: Implement

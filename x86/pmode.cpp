@@ -293,6 +293,8 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor)
     regs.D.ESI = incomingTSS.ESI;
     regs.D.EDI = incomingTSS.EDI;
 
+    incomingTSS.backlink = TR.segment;
+
     TR.segment = incomingTSSDescriptor.index();
     TR.base = incomingTSSDescriptor.base();
     TR.limit = incomingTSSDescriptor.limit();
