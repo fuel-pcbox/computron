@@ -23,7 +23,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "vomit.h"
+#include "Common.h"
 #include "debug.h"
 #include "pic.h"
 #include "pit.h"
@@ -102,7 +102,7 @@ void PIT::boot()
 
 void PIT::timerEvent(QTimerEvent*)
 {
-#ifndef VOMIT_DETERMINISTIC
+#ifndef CT_DETERMINISTIC
     raiseIRQ();
 #endif
 }
@@ -152,7 +152,7 @@ void PIT::out8(WORD port, BYTE data)
 
 void PIT::modeControl(int timerIndex, BYTE data)
 {
-    VM_ASSERT(timerIndex == 0 || timerIndex == 1);
+    ASSERT(timerIndex == 0 || timerIndex == 1);
     TimerInfo& timer = d->timer[timerIndex];
 
     BYTE counterIndex = (data >> 6);
@@ -164,7 +164,7 @@ void PIT::modeControl(int timerIndex, BYTE data)
 
     timer.command = (data >> 4) & 3;
 
-    VM_ASSERT(counterIndex <= 2);
+    ASSERT(counterIndex <= 2);
     CounterInfo& counter = timer.counter[counterIndex];
 
     counter.decrementMode = static_cast<DecrementMode>(data & 1);

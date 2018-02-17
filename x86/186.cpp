@@ -23,13 +23,13 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "vomit.h"
+#include "Common.h"
 #include "CPU.h"
 #include "debug.h"
 
 void CPU::_BOUND(Instruction&)
 {
-    VM_ASSERT(false);
+    ASSERT(false);
 }
 
 void CPU::_PUSH_imm8(Instruction& insn)
@@ -47,8 +47,8 @@ void CPU::_PUSH_imm16(Instruction& insn)
 
 void CPU::_ENTER(Instruction& insn)
 {
-    VM_ASSERT(o16());
-    VM_ASSERT(a16());
+    ASSERT(o16());
+    ASSERT(a16());
 
     WORD size = insn.imm16_2();
     BYTE nestingLevel = insn.imm8_1() & 31;

@@ -26,7 +26,7 @@
 #include "busmouse.h"
 
 #include "pic.h"
-#include "vomit.h"
+#include "Common.h"
 #include "CPU.h"
 #include "debug.h"
 #include <QtCore/QMutexLocker>

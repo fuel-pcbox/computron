@@ -48,7 +48,7 @@ Descriptor CPU::getDescriptor(WORD selector)
 
 Gate CPU::getInterruptGate(WORD index)
 {
-    VM_ASSERT(getPE());
+    ASSERT(getPE());
     auto descriptor = getDescriptor("IDT", IDTR.base, IDTR.limit, index, false);
     if (descriptor.isNull())
         return Gate();

@@ -23,7 +23,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "vomit.h"
+#include "Common.h"
 #include "CPU.h"
 #include "debug.h"
 #include "debugger.h"
@@ -51,9 +51,9 @@ void CPU::_IRET(Instruction&)
 {
     if (getPE()) {
         if (getNT()) {
-            VM_ASSERT(!getVM());
+            ASSERT(!getVM());
             auto* tss = currentTSS();
-            VM_ASSERT(tss);
+            ASSERT(tss);
             vlog(LogCPU, "IRET with NT=1 switching tasks. Inner TSS @ %08X -> Outer TSS sel %04X...", TR.base, tss->backlink);
             taskSwitch(tss->backlink);
             return;
@@ -95,7 +95,7 @@ void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
         case 0xe: // 80386 Interrupt Gate (32-bit)
             break;
         default:
-            VM_ASSERT(false);
+            ASSERT(false);
         }
     } else {
         // FIXME: should use PE-safe reads
@@ -103,7 +103,7 @@ void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
         vector.offset = (m_memory[isr * 4 + 1] << 8) | m_memory[isr * 4];
     }
 
-#ifdef VOMIT_DEBUG
+#ifdef CT_DEBUG
     if (options.trapint)
         vlog(LogCPU, "Interrupt %02X,%02X trapped%s", isr, this->regs.B.AH, requestedByPIC ? " (from PIC)" : "");
 

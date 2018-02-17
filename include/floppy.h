@@ -26,7 +26,7 @@
 #ifndef __floppy_h__
 #define __floppy_h__
 
-#include "vomit.h"
+#include "Common.h"
 
 #define FD_NO_ERROR             0x00
 #define FD_BAD_COMMAND          0x01

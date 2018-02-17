@@ -23,7 +23,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "vomit.h"
+#include "Common.h"
 #include "CPU.h"
 #include "debug.h"
 #include "debugger.h"
@@ -32,13 +32,13 @@
 
 SegmentRegisterIndex MemoryOrRegisterReference::segment()
 {
-    VM_ASSERT(!isRegister());
+    ASSERT(!isRegister());
     return m_segment;
 }
 
 DWORD MemoryOrRegisterReference::offset()
 {
-    VM_ASSERT(!isRegister());
+    ASSERT(!isRegister());
     if (m_a32)
         return m_offset32;
     else
@@ -47,15 +47,15 @@ DWORD MemoryOrRegisterReference::offset()
 
 void* MemoryOrRegisterReference::memoryPointer()
 {
-    VM_ASSERT(m_cpu);
-    VM_ASSERT(!isRegister());
+    ASSERT(m_cpu);
+    ASSERT(!isRegister());
     return m_cpu->memoryPointer(segment(), offset());
 }
 
 template<typename T>
 T MemoryOrRegisterReference::read()
 {
-    VM_ASSERT(m_cpu);
+    ASSERT(m_cpu);
     if (isRegister())
         return m_cpu->readRegister<T>(m_registerIndex);
     return m_cpu->readMemory<T>(segment(), offset());
@@ -64,7 +64,7 @@ T MemoryOrRegisterReference::read()
 template<typename T>
 void MemoryOrRegisterReference::write(T data)
 {
-    VM_ASSERT(m_cpu);
+    ASSERT(m_cpu);
     if (isRegister()) {
         m_cpu->writeRegister<T>(m_registerIndex, data);
         return;
@@ -74,10 +74,10 @@ void MemoryOrRegisterReference::write(T data)
 
 BYTE MemoryOrRegisterReference::read8() { return read<BYTE>(); }
 WORD MemoryOrRegisterReference::read16() { return read<WORD>(); }
-DWORD MemoryOrRegisterReference::read32() { VM_ASSERT(m_cpu->o32()); return read<DWORD>(); }
+DWORD MemoryOrRegisterReference::read32() { ASSERT(m_cpu->o32()); return read<DWORD>(); }
 void MemoryOrRegisterReference::write8(BYTE data) { return write(data); }
 void MemoryOrRegisterReference::write16(WORD data) { return write(data); }
-void MemoryOrRegisterReference::write32(DWORD data) { VM_ASSERT(m_cpu->o32()); return write(data); }
+void MemoryOrRegisterReference::write32(DWORD data) { ASSERT(m_cpu->o32()); return write(data); }
 
 void MemoryOrRegisterReference::writeClearing16(WORD data, bool o32)
 {
@@ -91,7 +91,7 @@ void MemoryOrRegisterReference::writeClearing16(WORD data, bool o32)
 void MemoryOrRegisterReference::resolve(CPU& cpu)
 {
     m_cpu = &cpu;
-    VM_ASSERT(m_cpu->a32() == m_a32);
+    ASSERT(m_cpu->a32() == m_a32);
     if (m_a32)
         return resolve32();
     return resolve16();
@@ -99,7 +99,7 @@ void MemoryOrRegisterReference::resolve(CPU& cpu)
 
 FarPointer CPU::readModRMFarPointerSegmentFirst(MemoryOrRegisterReference& modrm)
 {
-    VM_ASSERT(!modrm.isRegister());
+    ASSERT(!modrm.isRegister());
 
     FarPointer ptr;
     ptr.segment = readMemory16(modrm.segment(), modrm.offset());
@@ -112,7 +112,7 @@ FarPointer CPU::readModRMFarPointerSegmentFirst(MemoryOrRegisterReference& modrm
 
 FarPointer CPU::readModRMFarPointerOffsetFirst(MemoryOrRegisterReference& modrm)
 {
-    VM_ASSERT(!modrm.isRegister());
+    ASSERT(!modrm.isRegister());
 
     FarPointer ptr;
     ptr.segment = readMemory16(modrm.segment(), modrm.offset() + 4);
@@ -134,7 +134,7 @@ void MemoryOrRegisterReference::decode(InstructionStream& stream, bool a32)
         case 0: break;
         case 1: m_displacement32 = signExtend<DWORD>(stream.readInstruction8()); break;
         case 4: m_displacement32 = stream.readInstruction32(); break;
-        default: VM_ASSERT(false); break;
+        default: ASSERT(false); break;
         }
     } else {
         decode16(stream);
@@ -142,21 +142,21 @@ void MemoryOrRegisterReference::decode(InstructionStream& stream, bool a32)
         case 0: break;
         case 1: m_displacement16 = signExtend<WORD>(stream.readInstruction8()); break;
         case 2: m_displacement16 = stream.readInstruction16(); break;
-        default: VM_ASSERT(false); break;
+        default: ASSERT(false); break;
         }
     }
 }
 
 void MemoryOrRegisterReference::decode16(InstructionStream&)
 {
-    VM_ASSERT(!m_a32);
+    ASSERT(!m_a32);
 
     switch (m_rm & 0xc0) {
     case 0:
         if ((m_rm & 0x07) == 6)
             m_displacementBytes = 2;
         else
-            VM_ASSERT(m_displacementBytes == 0);
+            ASSERT(m_displacementBytes == 0);
         break;
     case 0x40:
         m_displacementBytes = 1;
@@ -172,7 +172,7 @@ void MemoryOrRegisterReference::decode16(InstructionStream&)
 
 void MemoryOrRegisterReference::decode32(InstructionStream& stream)
 {
-    VM_ASSERT(m_a32);
+    ASSERT(m_a32);
 
     switch (m_rm & 0xc0) {
     case 0:
@@ -195,10 +195,10 @@ void MemoryOrRegisterReference::decode32(InstructionStream& stream)
         m_sib = stream.readInstruction8();
         if ((m_sib & 0x07) == 5) {
             switch ((m_rm >> 6) & 0x03) {
-            case 0: VM_ASSERT(!m_displacementBytes || m_displacementBytes == 4); m_displacementBytes = 4; break;
-            case 1: VM_ASSERT(!m_displacementBytes || m_displacementBytes == 1); m_displacementBytes = 1; break;
-            case 2: VM_ASSERT(!m_displacementBytes || m_displacementBytes == 4); m_displacementBytes = 4; break;
-            default: VM_ASSERT(false); break;
+            case 0: ASSERT(!m_displacementBytes || m_displacementBytes == 4); m_displacementBytes = 4; break;
+            case 1: ASSERT(!m_displacementBytes || m_displacementBytes == 1); m_displacementBytes = 1; break;
+            case 2: ASSERT(!m_displacementBytes || m_displacementBytes == 4); m_displacementBytes = 4; break;
+            default: ASSERT(false); break;
             }
         }
     }
@@ -206,9 +206,9 @@ void MemoryOrRegisterReference::decode32(InstructionStream& stream)
 
 void MemoryOrRegisterReference::resolve16()
 {
-    VM_ASSERT(m_cpu);
-    VM_ASSERT(!m_a32);
-    VM_ASSERT(m_cpu->a16());
+    ASSERT(m_cpu);
+    ASSERT(!m_a32);
+    ASSERT(m_cpu->a16());
 
     m_segment = m_cpu->currentSegment();
 
@@ -233,9 +233,9 @@ void MemoryOrRegisterReference::resolve16()
 
 void MemoryOrRegisterReference::resolve32()
 {
-    VM_ASSERT(m_cpu);
-    VM_ASSERT(m_a32);
-    VM_ASSERT(m_cpu->a32());
+    ASSERT(m_cpu);
+    ASSERT(m_a32);
+    ASSERT(m_cpu->a32());
 
     m_segment = m_cpu->currentSegment();
 
@@ -294,7 +294,7 @@ DWORD MemoryOrRegisterReference::evaluateSIB()
         case 0: break;
         case 1:
         case 2: DEFAULT_TO_SS; base += m_cpu->getEBP(); break;
-        default: VM_ASSERT(false); break;
+        default: ASSERT(false); break;
         }
         break;
     }

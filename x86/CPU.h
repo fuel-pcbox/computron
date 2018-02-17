@@ -26,7 +26,7 @@
 #ifndef VCPU_H
 #define VCPU_H
 
-#include "vomit.h"
+#include "Common.h"
 #include "debug.h"
 #include <QtCore/QMutex>
 #include <QtCore/QQueue>
@@ -477,7 +477,7 @@ public:
     int dumpDisassembled(SegmentDescriptor&, DWORD offset);
 
 
-#ifdef VOMIT_TRACE
+#ifdef CT_TRACE
     // Dumps registers (used by --trace)
     void dumpTrace();
 #endif
@@ -1066,7 +1066,7 @@ private:
             DWORD EBP, ESP, ESI, EDI;
             DWORD EIP;
         } D;
-#ifdef VOMIT_BIG_ENDIAN
+#ifdef CT_BIG_ENDIAN
         struct {
             WORD __EAX_high_word, AX;
             WORD __EBX_high_word, BX;
@@ -1156,7 +1156,7 @@ private:
 
     union {
         struct {
-#ifdef VOMIT_BIG_ENDIAN
+#ifdef CT_BIG_ENDIAN
             WORD __EIP_high_word, IP;
 #else
             WORD IP, __EIP_high_word;
@@ -1178,7 +1178,7 @@ private:
 
     Mode m_mode;
 
-#ifdef VOMIT_DEBUG
+#ifdef CT_DEBUG
     bool m_inDebugger;
     bool m_debugOneStep;
 #endif
@@ -1274,7 +1274,7 @@ BYTE* CPU::codeMemory() const
 
 bool CPU::evaluate(BYTE conditionCode) const
 {
-    VM_ASSERT(conditionCode <= 0xF);
+    ASSERT(conditionCode <= 0xF);
 
     switch (conditionCode) {
     case  0: return this->OF;                            // O

@@ -57,7 +57,7 @@ inline DWORD realModeAddressToPhysicalAddress(WORD segment, DWORD offset)
 
 inline void write16ToPointer(WORD* pointer, WORD value)
 {
-#ifdef VOMIT_BIG_ENDIAN
+#ifdef CT_BIG_ENDIAN
     *pointer = V_BYTESWAP(value);
 #else
     *pointer = value;
@@ -66,7 +66,7 @@ inline void write16ToPointer(WORD* pointer, WORD value)
 
 inline DWORD read32FromPointer(DWORD* pointer)
 {
-#ifdef VOMIT_BIG_ENDIAN
+#ifdef CT_BIG_ENDIAN
     return V_BYTESWAP(*pointer);
 #else
     return *pointer;
@@ -75,7 +75,7 @@ inline DWORD read32FromPointer(DWORD* pointer)
 
 inline WORD read16FromPointer(WORD* pointer)
 {
-#ifdef VOMIT_BIG_ENDIAN
+#ifdef CT_BIG_ENDIAN
     return V_BYTESWAP(*pointer);
 #else
     return *pointer;

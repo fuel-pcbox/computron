@@ -26,7 +26,7 @@
 #include "vga_memory.h"
 #include "machine.h"
 #include "screen.h"
-#include "vomit.h"
+#include "Common.h"
 #include "vga.h"
 #include "debug.h"
 #include <QtGui/QImage>
@@ -92,12 +92,12 @@ void VGAMemory::write(DWORD address, T value)
         return;
     }
     // FIXME: This should be a static assert somehow.
-    VM_ASSERT(false);
+    ASSERT(false);
 }
 
 void VGAMemory::write8(DWORD address, BYTE value)
 {
-    VM_ASSERT(addressIsInVGAMemory(address));
+    ASSERT(addressIsInVGAMemory(address));
 
     machine().notifyScreen();
 
@@ -288,7 +288,7 @@ BYTE VGAMemory::read8(DWORD address)
 
     // FIXME: We're assuming READ_MODE == 0 from here on, this can't be safe.
 
-    VM_ASSERT(addressIsInVGAMemory(address));
+    ASSERT(addressIsInVGAMemory(address));
 
     address -= 0xA0000;
 
@@ -315,7 +315,7 @@ T VGAMemory::read(DWORD address)
         return makeDWORD(read<WORD>(address + 2), read<WORD>(address));
     }
     // FIXME: This should be a static assert somehow.
-    VM_ASSERT(false);
+    ASSERT(false);
 }
 
 template BYTE VGAMemory::read<BYTE>(DWORD address);
@@ -327,7 +327,7 @@ template void VGAMemory::write<DWORD>(DWORD address, DWORD value);
 
 BYTE *VGAMemory::plane(int index) const
 {
-    VM_ASSERT(index >= 0 && index <= 3);
+    ASSERT(index >= 0 && index <= 3);
     return m_plane[index];
 }
 
@@ -336,7 +336,7 @@ const QImage* VGAMemory::modeImage(BYTE mode) const
     if (mode == 0x12)
         return &m_screen12;
 
-#ifdef VOMIT_DEBUG
+#ifdef CT_DEBUG
     vlog(LogAlert, "Screen image for unknown mode 0x%02X requested. Crashing!", mode);
 #endif
     return 0;

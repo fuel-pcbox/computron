@@ -26,12 +26,12 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
-#ifdef VOMIT_DEBUG
+#ifdef CT_DEBUG
 #include <QtCore/qdebug.h>
 #include <assert.h>
-#define VM_ASSERT assert
+#define ASSERT assert
 #else
-#define VM_ASSERT(x)
+#define ASSERT(x)
 #endif
 
 enum VLogChannel {

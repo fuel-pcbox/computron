@@ -172,7 +172,7 @@ static bool opcodeHasRegisterIndex(BYTE op)
 static void build(InstructionDescriptor* table, BYTE op, const char* mnemonic, InstructionFormat format, InstructionImpl impl)
 {
     InstructionDescriptor& d = table[op];
-    VM_ASSERT(!d.impl);
+    ASSERT(!d.impl);
 
     d.mnemonic = mnemonic;
     d.format = format;
@@ -885,27 +885,27 @@ unsigned Instruction::registerIndex() const
 
 BYTE& Instruction::reg8()
 {
-    VM_ASSERT(m_cpu);
+    ASSERT(m_cpu);
     return *m_cpu->treg8[registerIndex()];
 }
 
 WORD& Instruction::reg16()
 {
-    VM_ASSERT(m_cpu);
-    VM_ASSERT(m_cpu->o16());
+    ASSERT(m_cpu);
+    ASSERT(m_cpu->o16());
     return *m_cpu->treg16[registerIndex()];
 }
 
 WORD& Instruction::segreg()
 {
-    VM_ASSERT(m_cpu);
+    ASSERT(m_cpu);
     return *m_cpu->m_segmentMap[registerIndex()];
 }
 
 DWORD& Instruction::reg32()
 {
-    VM_ASSERT(m_cpu);
-    VM_ASSERT(m_cpu->o32());
+    ASSERT(m_cpu);
+    ASSERT(m_cpu->o32());
     return *m_cpu->treg32[registerIndex()];
 }
 
@@ -924,7 +924,7 @@ DWORD InstructionStream::readBytes(unsigned count)
     case 2: return readInstruction16();
     case 4: return readInstruction32();
     }
-    VM_ASSERT(false);
+    ASSERT(false);
     return 0;
 }
 

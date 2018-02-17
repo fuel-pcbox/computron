@@ -23,7 +23,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "vomit.h"
+#include "Common.h"
 #include "CPU.h"
 #include "floppy.h"
 #include "vga.h"
@@ -100,7 +100,7 @@ void vm_handleE6(CPU& cpu)
         tick_count = ((t->tm_hour*3600) + (t->tm_min*60) + (t->tm_sec)) * 18.206; // yuck..
         gettimeofday(&timv, NULL);
         tick_count += timv.tv_usec / 54926.9471602768;
-#ifdef VOMIT_DETERMINISTIC
+#ifdef CT_DETERMINISTIC
         tick_count = 0x12345678;
 #endif
         cpu.setCX(tick_count >> 16);

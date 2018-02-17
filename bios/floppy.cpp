@@ -23,7 +23,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "vomit.h"
+#include "Common.h"
 #include "CPU.h"
 #include "floppy.h"
 #include "debug.h"
@@ -32,7 +32,7 @@ char drv_imgfile[4][MAX_FN_LENGTH];
 BYTE drv_status[4], drv_type[4];
 DWORD drv_spt[4], drv_heads[4], drv_sectors[4], drv_sectsize[4];
 
-void vomit_set_drive_image(int drive_id, const char* filename)
+void ct_set_drive_image(int drive_id, const char* filename)
 {
     strcpy(drv_imgfile[drive_id], filename);
     vlog(LogDisk, "Drive %u image changed to %s", drive_id, filename);

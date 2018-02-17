@@ -23,7 +23,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "vomit.h"
+#include "Common.h"
 #include "CPU.h"
 #include "debug.h"
 
@@ -39,7 +39,7 @@ void CPU::_ESCAPE(Instruction& insn)
 
     return;
     // FIXME: Instruction should take care of skipping bytes here!
-    VM_ASSERT(false);
+    ASSERT(false);
 
     // Even though we don't dispatch to an FPU, we still have to decode the full
     // opcode, or the instruction stream will fall out of sync.

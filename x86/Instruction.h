@@ -27,7 +27,7 @@
 
 #include "debug.h"
 #include "types.h"
-#include "vomit.h"
+#include "Common.h"
 #include <QString>
 
 class CPU;
@@ -139,7 +139,7 @@ public:
 
     void execute(CPU&);
 
-    MemoryOrRegisterReference& modrm() { VM_ASSERT(hasRM()); return m_modrm; }
+    MemoryOrRegisterReference& modrm() { ASSERT(hasRM()); return m_modrm; }
 
     bool isValid() const { return m_descriptor; }
 
@@ -148,18 +148,18 @@ public:
     BYTE op() const { return m_op; }
     BYTE subOp() const { return m_subOp; }
     BYTE rm() const { return m_modrm.m_rm; }
-    BYTE slash() const { VM_ASSERT(hasRM()); return (rm() >> 3) & 7; }
+    BYTE slash() const { ASSERT(hasRM()); return (rm() >> 3) & 7; }
 
-    BYTE imm8() const { VM_ASSERT(m_imm1Bytes == 1); return m_imm1; }
-    WORD imm16() const { VM_ASSERT(m_imm1Bytes == 2); return m_imm1; }
-    DWORD imm32() const { VM_ASSERT(m_imm1Bytes == 4); return m_imm1; }
+    BYTE imm8() const { ASSERT(m_imm1Bytes == 1); return m_imm1; }
+    WORD imm16() const { ASSERT(m_imm1Bytes == 2); return m_imm1; }
+    DWORD imm32() const { ASSERT(m_imm1Bytes == 4); return m_imm1; }
 
     BYTE imm8_1() const { return imm8(); }
-    BYTE imm8_2() const { VM_ASSERT(m_imm2Bytes == 1); return m_imm2; }
+    BYTE imm8_2() const { ASSERT(m_imm2Bytes == 1); return m_imm2; }
     WORD imm16_1() const { return imm16(); }
-    WORD imm16_2() const { VM_ASSERT(m_imm2Bytes == 2); return m_imm2; }
+    WORD imm16_2() const { ASSERT(m_imm2Bytes == 2); return m_imm2; }
     DWORD imm32_1() const { return imm32(); }
-    DWORD imm32_2() const { VM_ASSERT(m_imm2Bytes == 4); return m_imm2; }
+    DWORD imm32_2() const { ASSERT(m_imm2Bytes == 4); return m_imm2; }
 
     // These functions assume that the Instruction is bound to a CPU.
     BYTE& reg8();

@@ -24,7 +24,7 @@
  */
 
 #include "screen.h"
-#include "vomit.h"
+#include "Common.h"
 #include "CPU.h"
 #include "machine.h"
 #include "debug.h"

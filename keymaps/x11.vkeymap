@@ -1,4 +1,4 @@
-# This was the Vomit keymap on X11 before the format changed.
+# This was the Computron keymap on X11 before the format changed.
 # I've left it here in case I should need it in the future.
 
 #define K_A 0x26

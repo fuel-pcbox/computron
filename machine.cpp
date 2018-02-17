@@ -72,7 +72,7 @@ Machine::Machine(const QString& name, OwnPtr<Settings>&& settings, QObject* pare
     // FIXME: Move this somewhere else.
     static const BYTE bootCode[] = { 0xEA, 0x00, 0x00, 0x00, 0xF0 };
     BYTE* entryPoint = cpu().memoryPointer(0xF000, 0xFFF0);
-    VM_ASSERT(entryPoint);
+    ASSERT(entryPoint);
     memcpy(entryPoint, bootCode, sizeof(bootCode));
 
     if (!m_settings->isForAutotest()) {
@@ -175,7 +175,7 @@ bool Machine::loadFile(DWORD address, const QString& fileName)
     vlog(LogConfig, "Loading %s at 0x%08X", qPrintable(fileName), address);
 
     BYTE* memoryPointer = cpu().memoryPointer(address);
-    VM_ASSERT(memoryPointer);
+    ASSERT(memoryPointer);
 
     // FIXME: Don't overrun the CPU's memory buffer.
     memcpy(memoryPointer, fileContents.constData(), fileContents.size());

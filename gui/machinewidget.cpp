@@ -37,7 +37,7 @@
 #include <QtWidgets/QToolBar>
 #include <QtWidgets/QVBoxLayout>
 
-extern void vomit_set_drive_image(int driveIndex, const char* fileName);
+extern void ct_set_drive_image(int driveIndex, const char* fileName);
 
 struct MachineWidget::Private
 {
@@ -131,7 +131,7 @@ void MachineWidget::onFloppyATriggered()
     QString fileName = QFileDialog::getOpenFileName(this, tr("Choose floppy A image"));
     if (fileName.isNull())
         return;
-    vomit_set_drive_image(0, qPrintable(fileName));
+    ct_set_drive_image(0, qPrintable(fileName));
 }
 
 void MachineWidget::onFloppyBTriggered()
@@ -139,7 +139,7 @@ void MachineWidget::onFloppyBTriggered()
     QString fileName = QFileDialog::getOpenFileName(this, tr("Choose floppy B image"));
     if (fileName.isNull())
         return;
-    vomit_set_drive_image(1, qPrintable(fileName));
+    ct_set_drive_image(1, qPrintable(fileName));
 }
 
 void MachineWidget::onPauseTriggered()

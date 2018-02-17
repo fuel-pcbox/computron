@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "vomit.h"
+#include "Common.h"
 #include "floppy.h"
 #include "debug.h"
 #include "settings.h"
@@ -56,7 +56,7 @@ static FloppyType gFloppyTypes[] =
 
 static bool parseAddress(const QString& string, DWORD* address)
 {
-    VM_ASSERT(address);
+    ASSERT(address);
 
     QStringList parts = string.split(QLatin1Char(':'), QString::SkipEmptyParts);
     if (parts.count() != 2)

@@ -27,7 +27,7 @@
 #define __cmos_h__
 
 #include "iodevice.h"
-#include "vomit.h"
+#include "Common.h"
 
 class CMOS final : public IODevice
 {

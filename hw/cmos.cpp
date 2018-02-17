@@ -62,7 +62,7 @@ bool CMOS::in24HourMode() const
 
 static QTime currentTimeForCMOS()
 {
-#ifdef VOMIT_DETERMINISTIC
+#ifdef CT_DETERMINISTIC
     return QTime(1, 2, 3, 4);
 #endif
     return QTime::currentTime();
@@ -70,7 +70,7 @@ static QTime currentTimeForCMOS()
 
 static QDate currentDateForCMOS()
 {
-#ifdef VOMIT_DETERMINISTIC
+#ifdef CT_DETERMINISTIC
     return QDate(2018, 2, 9);
 #endif
     return QDate::currentDate();

@@ -27,7 +27,7 @@
 
 #include "debug.h"
 #include "types.h"
-#include "vomit.h"
+#include "Common.h"
 
 class CodeSegmentDescriptor;
 class DataSegmentDescriptor;
@@ -174,37 +174,37 @@ public:
 
 inline Gate& Descriptor::asGate()
 {
-    VM_ASSERT(isGate());
+    ASSERT(isGate());
     return static_cast<Gate&>(*this);
 }
 
 inline const Gate& Descriptor::asGate() const
 {
-    VM_ASSERT(isGate());
+    ASSERT(isGate());
     return static_cast<const Gate&>(*this);
 }
 
 inline TSSDescriptor& Descriptor::asTSSDescriptor()
 {
-    VM_ASSERT(isTSS());
+    ASSERT(isTSS());
     return static_cast<TSSDescriptor&>(*this);
 }
 
 inline const TSSDescriptor& Descriptor::asTSSDescriptor() const
 {
-    VM_ASSERT(isTSS());
+    ASSERT(isTSS());
     return static_cast<const TSSDescriptor&>(*this);
 }
 
 inline LDTDescriptor& Descriptor::asLDTDescriptor()
 {
-    VM_ASSERT(isLDT());
+    ASSERT(isLDT());
     return static_cast<LDTDescriptor&>(*this);
 }
 
 inline const LDTDescriptor& Descriptor::asLDTDescriptor() const
 {
-    VM_ASSERT(isLDT());
+    ASSERT(isLDT());
     return static_cast<const LDTDescriptor&>(*this);
 }
 
@@ -235,49 +235,49 @@ public:
 
 inline SegmentDescriptor& Descriptor::asSegmentDescriptor()
 {
-    VM_ASSERT(isSegmentDescriptor());
+    ASSERT(isSegmentDescriptor());
     return static_cast<SegmentDescriptor&>(*this);
 }
 
 inline SystemDescriptor& Descriptor::asSystemDescriptor()
 {
-    VM_ASSERT(isSystemDescriptor());
+    ASSERT(isSystemDescriptor());
     return static_cast<SystemDescriptor&>(*this);
 }
 
 inline CodeSegmentDescriptor& Descriptor::asCodeSegmentDescriptor()
 {
-    VM_ASSERT(isCode());
+    ASSERT(isCode());
     return static_cast<CodeSegmentDescriptor&>(*this);
 }
 
 inline DataSegmentDescriptor& Descriptor::asDataSegmentDescriptor()
 {
-    VM_ASSERT(isData());
+    ASSERT(isData());
     return static_cast<DataSegmentDescriptor&>(*this);
 }
 
 inline const SegmentDescriptor& Descriptor::asSegmentDescriptor() const
 {
-    VM_ASSERT(isSegmentDescriptor());
+    ASSERT(isSegmentDescriptor());
     return static_cast<const SegmentDescriptor&>(*this);
 }
 
 inline const SystemDescriptor& Descriptor::asSystemDescriptor() const
 {
-    VM_ASSERT(isSystemDescriptor());
+    ASSERT(isSystemDescriptor());
     return static_cast<const SystemDescriptor&>(*this);
 }
 
 inline const CodeSegmentDescriptor& Descriptor::asCodeSegmentDescriptor() const
 {
-    VM_ASSERT(isCode());
+    ASSERT(isCode());
     return static_cast<const CodeSegmentDescriptor&>(*this);
 }
 
 inline const DataSegmentDescriptor& Descriptor::asDataSegmentDescriptor() const
 {
-    VM_ASSERT(isData());
+    ASSERT(isData());
     return static_cast<const DataSegmentDescriptor&>(*this);
 }
 

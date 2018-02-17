@@ -25,7 +25,7 @@
 
 #include "vomctl.h"
 #include "CPU.h"
-#include "vomit.h"
+#include "Common.h"
 #include "debug.h"
 
 struct VomCtl::Private

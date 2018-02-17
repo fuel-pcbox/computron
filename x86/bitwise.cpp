@@ -166,7 +166,7 @@ inline DWORD allOnes(unsigned bits)
         return 0xFF;
     if (bits == 16)
         return 0xFFFF;
-    VM_ASSERT(bits == 32);
+    ASSERT(bits == 32);
     return 0xFFFFFFFF;
 }
 

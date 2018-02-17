@@ -27,7 +27,7 @@
 #include <QtWidgets/QApplication>
 #include <QFile>
 #include "screen.h"
-#include "vomit.h"
+#include "Common.h"
 #include "CPU.h"
 #include "debugger.h"
 #include "machine.h"
@@ -41,7 +41,7 @@ RuntimeOptions options;
 
 static void sigint_handler(int)
 {
-    VM_ASSERT(g_cpu);
+    ASSERT(g_cpu);
     g_cpu->debugger().enter();
 }
 
@@ -127,7 +127,7 @@ void parseArguments(const QStringList& arguments)
         else if (argument == "--run") {
             ++it;
             if (it == arguments.end()) {
-                fprintf(stderr, "usage: vomit --run [filename]\n");
+                fprintf(stderr, "usage: computron --run [filename]\n");
                 hard_exit(1);
             }
             options.file_to_run = (*it).toStdString();
@@ -136,9 +136,9 @@ void parseArguments(const QStringList& arguments)
         ++it;
     }
 
-#ifndef VOMIT_TRACE
+#ifndef CT_TRACE
     if (options.trace) {
-        fprintf(stderr, "Rebuild with #define VOMIT_TRACE if you want --trace to work.\n");
+        fprintf(stderr, "Rebuild with #define CT_TRACE if you want --trace to work.\n");
         hard_exit(1);
     }
 #endif

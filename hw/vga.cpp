@@ -23,7 +23,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "vomit.h"
+#include "Common.h"
 #include "vga.h"
 #include "debug.h"
 #include "machine.h"
@@ -337,26 +337,26 @@ BYTE VGA::in8(WORD port)
 
 BYTE VGA::readRegister(BYTE index)
 {
-    VM_ASSERT(index < 0x12);
+    ASSERT(index < 0x12);
     return d->ioRegister[index];
 }
 
 BYTE VGA::readRegister2(BYTE index)
 {
     // FIXME: Check if 12 is the correct limit here.
-    VM_ASSERT(index < 0x12);
+    ASSERT(index < 0x12);
     return d->ioRegister2[index];
 }
 
 BYTE VGA::readSequencer(BYTE index)
 {
-    VM_ASSERT(index < 0x4);
+    ASSERT(index < 0x4);
     return d->ioSequencer[index];
 }
 
 void VGA::writeRegister(BYTE index, BYTE value)
 {
-    VM_ASSERT(index < 0x12);
+    ASSERT(index < 0x12);
     d->ioRegister[index] = value;
 }
 

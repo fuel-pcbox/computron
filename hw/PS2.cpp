@@ -24,7 +24,7 @@
  */
 
 #include "PS2.h"
-#include "vomit.h"
+#include "Common.h"
 #include "CPU.h"
 
 static const WORD SystemControlPortA = 0x92;

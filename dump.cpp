@@ -24,7 +24,7 @@
  */
 
 #include <stdio.h>
-#include "vomit.h"
+#include "Common.h"
 #include "CPU.h"
 #include "debug.h"
 
@@ -71,7 +71,7 @@ int CPU::dumpDisassembled(WORD segment, DWORD offset)
     return dumpDisassembled(descriptor, offset);
 }
 
-#ifdef VOMIT_TRACE
+#ifdef CT_TRACE
 void CPU::dumpTrace()
 {
 #if 0
@@ -137,7 +137,7 @@ const char* CPU::registerName(SegmentRegisterIndex index)
     case SegmentRegisterIndex::GS:
         return "gs";
     }
-    VM_ASSERT(false);
+    ASSERT(false);
     return nullptr;
 }
 
@@ -161,7 +161,7 @@ const char* CPU::registerName(CPU::RegisterIndex8 registerIndex)
     case CPU::RegisterDH:
         return "dh";
     }
-    VM_ASSERT(false);
+    ASSERT(false);
     return nullptr;
 }
 
@@ -185,7 +185,7 @@ const char* CPU::registerName(CPU::RegisterIndex16 registerIndex)
     case CPU::RegisterDI:
         return "di";
     }
-    VM_ASSERT(false);
+    ASSERT(false);
     return nullptr;
 }
 
@@ -209,7 +209,7 @@ const char* CPU::registerName(CPU::RegisterIndex32 registerIndex)
     case CPU::RegisterEDI:
         return "edi";
     }
-    VM_ASSERT(false);
+    ASSERT(false);
     return nullptr;
 }
 

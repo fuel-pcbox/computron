@@ -25,7 +25,7 @@
 
 #include "CPU.h"
 #include "machine.h"
-#include "vomit.h"
+#include "Common.h"
 #include "debug.h"
 #include "debugger.h"
 #include "vga_memory.h"
@@ -46,7 +46,7 @@ inline bool hasA20Bit(DWORD address)
 
 static bool shouldLogAllMemoryAccesses(DWORD address)
 {
-#ifdef VOMIT_DETERMINISTIC
+#ifdef CT_DETERMINISTIC
     return true;
 #endif
     return false;
@@ -84,7 +84,7 @@ T CPU::readRegister(int registerIndex)
         return *treg16[registerIndex];
     if (sizeof(T) == 4)
         return *treg32[registerIndex];
-    VM_ASSERT(false);
+    ASSERT(false);
 }
 
 template<typename T>
@@ -97,7 +97,7 @@ void CPU::writeRegister(int registerIndex, T value)
     else if (sizeof(T) == 4)
         *treg32[registerIndex] = value;
     else
-        VM_ASSERT(false);
+        ASSERT(false);
 }
 
 template BYTE CPU::readRegister<BYTE>(int);
@@ -119,7 +119,7 @@ void CPU::_OperandSizeOverride(Instruction&)
     bool prevOperandSize = m_operandSize32;
     m_operandSize32 = !m_operandSize32;
 
-#ifdef VOMIT_DEBUG_OVERRIDE_OPCODES
+#ifdef CT_DEBUG_OVERRIDE_OPCODES
     vlog(LogCPU, "Operation size override detected! Opcode: db 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X ",
          readMemory8(getCS(), getEIP() - 1),
          readMemory8(getCS(), getEIP()),
@@ -135,7 +135,7 @@ void CPU::_OperandSizeOverride(Instruction&)
     decodeNext();
 
     if (m_shouldRestoreSizesAfterOverride) {
-        VM_ASSERT(m_operandSize32 != prevOperandSize);
+        ASSERT(m_operandSize32 != prevOperandSize);
         m_operandSize32 = prevOperandSize;
     }
 }
@@ -146,7 +146,7 @@ void CPU::_AddressSizeOverride(Instruction&)
     bool prevAddressSize32 = m_addressSize32;
     m_addressSize32 = !m_addressSize32;
 
-#ifdef VOMIT_DEBUG_OVERRIDE_OPCODES
+#ifdef CT_DEBUG_OVERRIDE_OPCODES
     vlog(LogCPU, "Address size override detected! Opcode: db 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X ",
          readMemory8(getCS(), getEIP() - 1),
          readMemory8(getCS(), getEIP()),
@@ -162,7 +162,7 @@ void CPU::_AddressSizeOverride(Instruction&)
     decodeNext();
 
     if (m_shouldRestoreSizesAfterOverride) {
-        VM_ASSERT(m_addressSize32 != prevAddressSize32);
+        ASSERT(m_addressSize32 != prevAddressSize32);
         m_addressSize32 = prevAddressSize32;
     }
 }
@@ -184,7 +184,7 @@ DWORD CPU::readInstruction32()
 
 void CPU::decodeNext()
 {
-#ifdef VOMIT_TRACE
+#ifdef CT_TRACE
     if (m_isForAutotest)
         dumpTrace();
 #endif
@@ -201,7 +201,7 @@ void CPU::execute(Instruction&& insn)
 #ifdef CRASH_ON_OPCODE_00_00
     if (insn.op() == 0 && insn.rm() == 0) {
         dumpTrace();
-        VM_ASSERT(false);
+        ASSERT(false);
     }
  #endif
 
@@ -257,7 +257,7 @@ void CPU::GP(WORD code)
     bool EX = code & 1;
     vlog(LogCPU, "#GP(%04X) selector=%04X, TI=%u, I=%u, EX=%u", code, selector, TI, I, EX);
 #ifdef CRASH_ON_GPF
-    VM_ASSERT(false);
+    ASSERT(false);
 #endif
     exception(13, code);
 }
@@ -270,7 +270,7 @@ CPU::CPU(Machine& m)
 
     buildOpcodeTablesIfNeeded();
 
-    VM_ASSERT(!g_cpu);
+    ASSERT(!g_cpu);
     g_cpu = this;
 
     m_memory = new BYTE[m_memorySize];
@@ -492,7 +492,7 @@ void CPU::mainLoop()
             continue;
         }
 
-#ifdef VOMIT_DEBUG
+#ifdef CT_DEBUG
 
         if (!m_breakpoints.empty()) {
             DWORD flatPC = realModeAddressToPhysicalAddress(getCS(), getEIP());
@@ -510,7 +510,7 @@ void CPU::mainLoop()
         }
 #endif
 
-#ifdef VOMIT_TRACE
+#ifdef CT_TRACE
         if (options.trace)
             dumpTrace();
 #endif
@@ -535,7 +535,7 @@ void CPU::mainLoop()
         if (getIF() && PIC::hasPendingIRQ())
             PIC::serviceIRQ(*this);
 
-#ifdef VOMIT_DETERMINISTIC
+#ifdef CT_DETERMINISTIC
         if (getIF() && ((cycle() + 1) % 100 == 0)) {
             machine().pit().raiseIRQ();
         }
@@ -593,7 +593,7 @@ void CPU::jump32(WORD segment, DWORD offset)
             vlog(LogCPU, "Gate (%s) to %04x:%08x (count=%u)", gate.typeName(), gate.selector(), gate.offset(), gate.parameterCount());
             setCS(gate.selector());
             this->EIP = gate.offset();
-            VM_ASSERT(!gate.parameterCount()); // FIXME: Implement
+            ASSERT(!gate.parameterCount()); // FIXME: Implement
             updateSizeModes();
             return;
         }
@@ -606,7 +606,7 @@ void CPU::jump32(WORD segment, DWORD offset)
             return;
         }
 
-        VM_ASSERT(false);
+        ASSERT(false);
     }
 
     setCS(segment);
@@ -881,7 +881,7 @@ void CPU::_DEC_RM8(Instruction& insn)
 
 void CPU::_LDS_reg16_mem16(Instruction& insn)
 {
-    VM_ASSERT(a16());
+    ASSERT(a16());
     WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
     insn.reg16() = read16FromPointer(ptr);
     setDS(read16FromPointer(ptr + 1));
@@ -904,7 +904,7 @@ void CPU::pushInstructionPointer()
 
 void CPU::_LES_reg16_mem16(Instruction& insn)
 {
-    VM_ASSERT(a16());
+    ASSERT(a16());
     WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
     insn.reg16() = read16FromPointer(ptr);
     setES(read16FromPointer(ptr + 1));
@@ -919,7 +919,7 @@ void CPU::_LES_reg32_mem32(Instruction&)
 
 void CPU::_LFS_reg16_mem16(Instruction& insn)
 {
-    VM_ASSERT(a16());
+    ASSERT(a16());
     WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
     insn.reg16() = read16FromPointer(ptr);
     setFS(read16FromPointer(ptr + 1));
@@ -934,7 +934,7 @@ void CPU::_LFS_reg32_mem32(Instruction&)
 
 void CPU::_LSS_reg16_mem16(Instruction& insn)
 {
-    VM_ASSERT(a16());
+    ASSERT(a16());
     WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
     insn.reg16() = read16FromPointer(ptr);
     setSS(read16FromPointer(ptr + 1));
@@ -942,7 +942,7 @@ void CPU::_LSS_reg16_mem16(Instruction& insn)
 
 void CPU::_LSS_reg32_mem32(Instruction& insn)
 {
-    VM_ASSERT(a32());
+    ASSERT(a32());
     FarPointer ptr = readModRMFarPointerOffsetFirst(insn.modrm());
     insn.reg32() = ptr.offset;
     setSS(ptr.segment);
@@ -950,7 +950,7 @@ void CPU::_LSS_reg32_mem32(Instruction& insn)
 
 void CPU::_LGS_reg16_mem16(Instruction& insn)
 {
-    VM_ASSERT(a16());
+    ASSERT(a16());
     WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
     insn.reg16() = read16FromPointer(ptr);
     setGS(read16FromPointer(ptr + 1));
@@ -1013,14 +1013,14 @@ void CPU::pageFault(DWORD error)
 
 DWORD CPU::translateAddress(DWORD address)
 {
-    VM_ASSERT(getPG());
+    ASSERT(getPG());
 
     DWORD dir = (address >> 22) & 0x3FF;
     DWORD page = (address >> 12) & 0x3FF;
     DWORD offset = address & 0xFFF;
 
     DWORD* PDBR = reinterpret_cast<DWORD*>(&m_memory[getCR3()]);
-    VM_ASSERT(!(getCR3() & 0x03ff));
+    ASSERT(!(getCR3() & 0x03ff));
     DWORD pageDirectoryEntry = PDBR[dir];
 
     DWORD* pageTable = reinterpret_cast<DWORD*>(&m_memory[pageDirectoryEntry & 0xfffff000]);
@@ -1052,7 +1052,7 @@ static const char* toString(CPU::MemoryAccessType type)
 template<typename T>
 bool CPU::validateAddress(const SegmentDescriptor& descriptor, DWORD offset, MemoryAccessType accessType)
 {
-    VM_ASSERT(getPE());
+    ASSERT(getPE());
 
     if (offset > descriptor.effectiveLimit()) {
         vlog(LogAlert, "FUG! offset %08X outside limit (selector index: %04X, effective limit: %08X [%08X x %s])",
@@ -1062,14 +1062,14 @@ bool CPU::validateAddress(const SegmentDescriptor& descriptor, DWORD offset, Mem
              descriptor.limit(),
              descriptor.granularity() ? "4K" : "1b"
              );
-        //VM_ASSERT(false);
+        //ASSERT(false);
         dumpDescriptor(descriptor);
         //dumpAll();
         //debugger().enter();
         GP(descriptor.index());
         return false;
     }
-    VM_ASSERT(offset <= descriptor.effectiveLimit());
+    ASSERT(offset <= descriptor.effectiveLimit());
 
     DWORD physicalAddress = descriptor.base() + offset;
     if (getPG()) {
@@ -1134,7 +1134,7 @@ T CPU::readMemory(const SegmentDescriptor& descriptor, DWORD offset)
 {
     if (getPE()) {
         if (!validateAddress<T>(descriptor, offset, MemoryAccessType::Read)) {
-            //VM_ASSERT(false);
+            //ASSERT(false);
             return 0;
         }
         DWORD physicalAddress = descriptor.base() + offset;
@@ -1191,7 +1191,7 @@ DWORD CPU::readMemory32(SegmentRegisterIndex segment, DWORD offset) { return rea
 template<typename T>
 void CPU::writeMemory(DWORD address, T value)
 {
-    VM_ASSERT(!getPE());
+    ASSERT(!getPE());
     address &= a20Mask();
 
     if (options.memdebug || shouldLogMemoryWrite(address)) {
@@ -1215,7 +1215,7 @@ void CPU::writeMemory(const SegmentDescriptor& descriptor, DWORD offset, T value
 {
     if (getPE()) {
         if (!validateAddress<T>(descriptor, offset, MemoryAccessType::Write)) {
-            //VM_ASSERT(false);
+            //ASSERT(false);
             return;
         }
         DWORD physicalAddress = descriptor.base() + offset;
@@ -1330,7 +1330,7 @@ BYTE* CPU::memoryPointer(const SegmentDescriptor& descriptor, DWORD offset)
 {
     if (getPE()) {
         if (!validateAddress<BYTE>(descriptor, offset, MemoryAccessType::Read)) {
-            //VM_ASSERT(false);
+            //ASSERT(false);
             return nullptr;
         }
         DWORD physicalAddress = descriptor.base() + offset;

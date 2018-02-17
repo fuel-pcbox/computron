@@ -24,7 +24,7 @@
  */
 
 #include "debugger.h"
-#include "vomit.h"
+#include "Common.h"
 #include "debug.h"
 #include "CPU.h"
 #include <QDebug>
@@ -67,7 +67,7 @@ static QString doPrompt(const CPU& cpu)
     else
         s.sprintf("%04X:%04X", cpu.getCS(), cpu.getIP());
 
-    QString prompt = brightMagenta % QLatin1Literal("VOMIT ") % brightCyan % s % defaultColor % QLatin1Literal("> ");
+    QString prompt = brightMagenta % QLatin1Literal("CT ") % brightCyan % s % defaultColor % QLatin1Literal("> ");
 
 #ifdef HAVE_READLINE
     char* line = readline(prompt.toLatin1().constData());
@@ -155,7 +155,7 @@ void Debugger::handleBreakpoint(const QStringList& arguments)
 
 void Debugger::doConsole()
 {
-    VM_ASSERT(isActive());
+    ASSERT(isActive());
 
     printf("\n");
     cpu().dumpAll();

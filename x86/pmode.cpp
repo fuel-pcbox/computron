@@ -66,7 +66,7 @@ void CPU::setLDT(WORD segment)
     if (!descriptor.isNull()) {
         // FIXME: Generate exception?
         if (descriptor.isLDT()) {
-            VM_ASSERT(descriptor.isLDT());
+            ASSERT(descriptor.isLDT());
             auto& ldtDescriptor = descriptor.asLDTDescriptor();
             base = ldtDescriptor.base();
             limit = ldtDescriptor.limit();
@@ -93,8 +93,8 @@ void CPU::_LTR_RM16(Instruction& insn)
 {
     WORD segment = insn.modrm().read16();
     auto descriptor = getDescriptor(segment);
-    VM_ASSERT(descriptor.isGlobal()); // FIXME: Generate exception?
-    VM_ASSERT(descriptor.isTSS());
+    ASSERT(descriptor.isGlobal()); // FIXME: Generate exception?
+    ASSERT(descriptor.isTSS());
     auto& tssDescriptor = descriptor.asTSSDescriptor();
     TR.segment = segment;
     TR.base = tssDescriptor.base();
@@ -224,7 +224,7 @@ void CPU::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
 
     if (!descriptor.isSegmentDescriptor())
         dumpDescriptor(descriptor);
-    VM_ASSERT(descriptor.isSegmentDescriptor());
+    ASSERT(descriptor.isSegmentDescriptor());
     descriptorCache = descriptor.asSegmentDescriptor();
     if (options.pedebug) {
         if (getPE()) {
@@ -241,7 +241,7 @@ void CPU::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
 
 void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor)
 {
-    VM_ASSERT(incomingTSSDescriptor.is32Bit());
+    ASSERT(incomingTSSDescriptor.is32Bit());
 
     TSS& outgoingTSS = *reinterpret_cast<TSS*>(memoryPointer(TR.base));
 
@@ -282,7 +282,7 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor)
     setLDT(incomingTSS.LDT);
 
     setEFlags(incomingTSS.EFlags);
-    VM_ASSERT(!getNT()); // I think we shouldn't be able to unnest more than once.
+    ASSERT(!getNT()); // I think we shouldn't be able to unnest more than once.
 
     regs.D.EAX = incomingTSS.EAX;
     regs.D.EBX = incomingTSS.EBX;

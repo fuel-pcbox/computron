@@ -23,7 +23,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "vomit.h"
+#include "Common.h"
 #include "CPU.h"
 #include "debug.h"
 #include "iodevice.h"
@@ -171,7 +171,7 @@ void CPU::_IN_EAX_DX(Instruction&)
 
 void CPU::out(WORD port, BYTE value)
 {
-#ifdef VOMIT_DEBUG
+#ifdef CT_DEBUG
     if (options.iopeek) {
         if (port != 0x00E6 && port != 0x0020 && port != 0x3D4 && port != 0x03d5 && port != 0xe2 && port != 0xe0) {
             vlog(LogIO, "CPU::out: %02X --> %04X", value, port);
@@ -198,7 +198,7 @@ BYTE CPU::in(WORD port)
             vlog(LogAlert, "Unhandled I/O read from port %04X", port);
         value = IODevice::JunkValue;
     }
-#ifdef VOMIT_DEBUG
+#ifdef CT_DEBUG
     if (options.iopeek) {
         if (port != 0x00E6 && port != 0x0020 && port != 0x3D4 && port != 0x03D5 && port != 0x3DA) {
             vlog(LogIO, "CPU::in: %04X = %02X", port, value);

@@ -24,7 +24,7 @@
  */
 
 #include "debug.h"
-#include "vomit.h"
+#include "Common.h"
 #include "debugger.h"
 #include "machine.h"
 #include "CPU.h"
@@ -67,7 +67,7 @@ void vlog(VLogChannel channel, const char* format, ...)
     case LogFPU: prefix = "fpu"; break;
     case LogTimer: prefix = "timer"; break;
     default:
-        VM_ASSERT(0);
+        ASSERT(0);
     }
 
 #ifdef LOG_TO_FILE
