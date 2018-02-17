@@ -24,7 +24,7 @@ RCC_DIR = .rcc
 MOC_DIR = .moc
 UI_DIR = .ui
 
-RESOURCES = vomit.qrc
+RESOURCES = computron.qrc
 
 FORMS += gui/statewidget.ui
 

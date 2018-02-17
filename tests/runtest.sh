@@ -10,7 +10,7 @@ if type -pa colordiff > /dev/null; then
 else
     FANCYDIFF=diff
 fi
-PROGRAM="../vomit --no-gui --no-vlog --run"
+PROGRAM="../computron --no-gui --no-vlog --run"
 TEST=$1
 EXPECTATION=$(echo $TEST | sed s/.asm/.expected/)
 COMPILED=tmp.bin
