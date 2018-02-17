@@ -159,7 +159,7 @@ public:
 class TSSDescriptor : public SystemDescriptor {
 public:
     DWORD base() const { return m_segmentBase; }
-    WORD limit() const { return m_segmentLimit; }
+    DWORD limit() const { return m_segmentLimit; }
 
     bool is32Bit() const { return type() == AvailableTSS_32bit || type() == BusyTSS_32bit; }
 };
@@ -167,7 +167,7 @@ public:
 class LDTDescriptor : public SystemDescriptor {
 public:
     DWORD base() const { return m_segmentBase; }
-    WORD limit() const { return m_segmentLimit; }
+    DWORD limit() const { return m_segmentLimit; }
 };
 
 inline Gate& Descriptor::asGate()
@@ -209,7 +209,7 @@ inline const LDTDescriptor& Descriptor::asLDTDescriptor() const
 class SegmentDescriptor : public Descriptor {
 public:
     DWORD base() const { return m_segmentBase; }
-    WORD limit() const { return m_segmentLimit; }
+    DWORD limit() const { return m_segmentLimit; }
 
     bool isCode() const { return (m_type & 0x8) != 0; }
     bool isData() const { return (m_type & 0x8) == 0; }

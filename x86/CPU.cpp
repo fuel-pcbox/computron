@@ -1077,7 +1077,7 @@ bool CPU::validateAddress(const SegmentDescriptor& descriptor, DWORD offset, Mem
     }
 
     if (physicalAddress >= m_memorySize) {
-        vlog(LogCPU, "OOB %zu-bit %s access @ %04x:%08x {base:%08x,limit:%08x,gran:%s} (phys: 0x%08x) [A20=%s]",
+        vlog(LogCPU, "OOB %zu-bit %s access @ %04x:%08x {base:%08x,limit:%08x,gran:%s} (phys: 0x%08x) [A20=%s] [PG=%u]",
              sizeof(T) * 8,
              toString(accessType),
              descriptor.index(),
@@ -1086,8 +1086,10 @@ bool CPU::validateAddress(const SegmentDescriptor& descriptor, DWORD offset, Mem
              descriptor.limit(),
              descriptor.granularity() ? "4k" : "1b",
              physicalAddress,
-             isA20Enabled() ? "on" : "off"
+             isA20Enabled() ? "on" : "off",
+             getPG()
         );
+        dumpDescriptor(descriptor);
         GP(descriptor.index());
         return false;
     }

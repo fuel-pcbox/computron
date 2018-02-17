@@ -209,8 +209,7 @@ void CPU::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
         return;
     }
 
-    if (descriptor.isSystemDescriptor() && descriptor.type() == 0) {
-        // Null descriptor
+    if (descriptor.isNull()) {
         descriptorCache = descriptor;
         return;
     }
