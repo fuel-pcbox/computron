@@ -56,6 +56,7 @@ public:
     WORD nextKey();
     WORD peekKey();
     BYTE popKeyData();
+    bool hasRawKey();
 
     void setScreenSize( int width, int height );
 

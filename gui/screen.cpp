@@ -763,6 +763,11 @@ void Screen::keyPressEvent(QKeyEvent* event)
 
     WORD scancode = scanCodeFromKeyEvent(event);
 
+    if (!machine().keyboard().isEnabled()) {
+        vlog(LogScreen, "KeyPress event while keyboard disabled");
+        return;
+    }
+
     //qDebug() << "KeyPress:" << nativeKeyFromKeyEvent(event) << "mapped to" << keyName << "modifiers" << event->modifiers() << "scancode:" << scancode;
 
     if (keyName == "F11")
@@ -787,6 +792,11 @@ void Screen::keyPressEvent(QKeyEvent* event)
 
 void Screen::keyReleaseEvent(QKeyEvent* event)
 {
+    if (!machine().keyboard().isEnabled()) {
+        vlog(LogScreen, "KeyRelease event while keyboard disabled");
+        return;
+    }
+
     QMutexLocker l(&d->keyQueueLock);
     QString keyName = keyNameFromKeyEvent(event);
 
@@ -830,12 +840,25 @@ BYTE Screen::popKeyData()
     return key;
 }
 
+bool Screen::hasRawKey()
+{
+    QMutexLocker l(&d->keyQueueLock);
+    return !d->rawQueue.isEmpty();
+}
+
 void Screen::flushKeyBuffer()
 {
     QMutexLocker l(&d->keyQueueLock);
 
     if (!d->rawQueue.isEmpty() && machine().cpu().getIF())
         machine().keyboard().raiseIRQ();
+}
+
+bool kbd_has_data()
+{
+    if (!s_self)
+        return false;
+    return s_self->hasRawKey();
 }
 
 WORD kbd_getc()

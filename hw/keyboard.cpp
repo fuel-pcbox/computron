@@ -50,6 +50,10 @@
 #define CMD_READ_CCB                  0x20
 #define CMD_WRITE_CCB                 0x60
 #define CMD_SET_LEDS                  0xED
+#define CMD_DISABLE_KBD               0xAD
+#define CMD_ENABLE_KBD                0xAE
+
+extern bool kbd_has_data();
 
 Keyboard::Keyboard(Machine& machine)
     : IODevice("Keyboard", machine)
@@ -99,16 +103,19 @@ BYTE Keyboard::in8(WORD port)
         }
 
         BYTE key = kbd_pop_raw();
-        //vlog(LogKeyboard, "keyboard_data = %02X", key);
+        vlog(LogKeyboard, "keyboard_data = %02X", key);
         return key;
     }
 
     if (port == 0x64) {
-        // Keyboard not locked, POST completed successfully.
-        BYTE status = ATKBD_UNLOCKED | (m_ram[0] & ATKBD_SYSTEM_FLAG);
+        // POST completed successfully.
+        BYTE status = (m_ram[0] & ATKBD_SYSTEM_FLAG);
         status |= m_lastWasCommand ? ATKBD_CMD_DATA : 0;
-        //status |= m_hasCommand ? ATKBD_OUTPUT_STATUS : 0;
-        // vlog(LogKeyboard, "Keyboard status queried (%02X)", status);
+        if (kbd_has_data())
+            status |= ATKBD_OUTPUT_STATUS;
+        if (isEnabled())
+            status |= ATKBD_UNLOCKED;
+        //vlog(LogKeyboard, "Keyboard status queried (%02X)", status);
         return status;
     }
 
@@ -133,6 +140,14 @@ void Keyboard::out8(WORD port, BYTE data)
     }
 
     if (port == 0x64) {
+        if (data == CMD_ENABLE_KBD) {
+            m_enabled = true;
+            return;
+        }
+        if (data == CMD_DISABLE_KBD) {
+            m_enabled = false;
+            return;
+        }
         vlog(LogKeyboard, "Keyboard command <- %02X", data);
         m_command = data;
         m_hasCommand = true;

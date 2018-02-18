@@ -45,6 +45,8 @@ public:
     virtual BYTE in8(WORD port) override;
     virtual void out8(WORD port, BYTE data) override;
 
+    bool isEnabled() const { return m_enabled; }
+
     void raiseIRQ();
 
 signals:
@@ -57,6 +59,7 @@ private:
     bool m_hasCommand;
     bool m_lastWasCommand;
     BYTE m_leds { 0 };
+    bool m_enabled { true };
 };
 
 #endif
