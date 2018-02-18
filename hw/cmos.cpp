@@ -26,6 +26,7 @@
 #include "cmos.h"
 #include "debug.h"
 #include "CPU.h"
+#include "machine.h"
 #include <QtCore/QDate>
 #include <QtCore/QTime>
 
@@ -43,21 +44,32 @@ CMOS::~CMOS()
 
 void CMOS::reset()
 {
+    auto& cpu = machine().cpu();
+
+    memset(m_ram, 0, sizeof(m_ram));
     m_registerIndex = 0;
-    m_statusRegisterB = 0x00;
 
     // FIXME: This thing needs more work, 0x26 is just an initial value.
-    m_statusRegisterA = 0x26;
+    m_ram[StatusRegisterA] = 0x26;
+
+    m_ram[StatusRegisterB] = 0x02;
+
+    m_ram[BaseMemoryInKilobytesLSB] = getLSB(cpu.baseMemorySize() / 1024);
+    m_ram[BaseMemoryInKilobytesMSB] = getMSB(cpu.baseMemorySize() / 1024);
+    m_ram[ExtendedMemoryInKilobytesLSB] = getLSB(cpu.extendedMemorySize() / 1024 - 1024);
+    m_ram[ExtendedMemoryInKilobytesMSB] = getMSB(cpu.extendedMemorySize() / 1024 - 1024);
+    m_ram[ExtendedMemoryInKilobytesAltLSB] = getLSB(cpu.extendedMemorySize() / 1024 - 1024);
+    m_ram[ExtendedMemoryInKilobytesAltMSB] = getMSB(cpu.extendedMemorySize() / 1024 - 1024);
 }
 
 bool CMOS::inBinaryClockMode() const
 {
-    return m_statusRegisterB & 0x04;
+    return m_ram[StatusRegisterB] & 0x04;
 }
 
 bool CMOS::in24HourMode() const
 {
-    return m_statusRegisterB & 0x02;
+    return m_ram[StatusRegisterB] & 0x02;
 }
 
 static QTime currentTimeForCMOS()
@@ -76,45 +88,36 @@ static QDate currentDateForCMOS()
     return QDate::currentDate();
 }
 
+BYTE CMOS::toCurrentClockFormat(BYTE value) const
+{
+    if (!inBinaryClockMode())
+        return value;
+    return (value / 10 << 4) | (value - (value / 10) * 10);
+}
+
+void CMOS::updateClock()
+{
+    // FIXME: Support 12-hour clock mode for RTCHour!
+    ASSERT(in24HourMode());
+
+    auto nowTime = currentTimeForCMOS();
+    auto nowDate = currentDateForCMOS();
+    m_ram[RTCSecond] = toCurrentClockFormat(nowTime.second());
+    m_ram[RTCMinute] = toCurrentClockFormat(nowTime.minute());
+    m_ram[RTCHour] = toCurrentClockFormat(nowTime.hour());
+    m_ram[RTCDayOfWeek] = toCurrentClockFormat(nowDate.dayOfWeek());
+    m_ram[RTCDay] = toCurrentClockFormat(nowDate.day());
+    m_ram[RTCMonth] = toCurrentClockFormat(nowDate.month());
+    m_ram[RTCYear] = toCurrentClockFormat(nowDate.year() % 100);
+    m_ram[RTCCentury] = toCurrentClockFormat(nowDate.year() / 100);
+    m_ram[RTCCenturyPS2] = toCurrentClockFormat(nowDate.year() / 100);
+}
+
 BYTE CMOS::in8(WORD)
 {
-    BYTE value = 0;
+    updateClock();
 
-    switch (m_registerIndex) {
-    case 0x00: value = currentTimeForCMOS().second(); break;
-    case 0x02: value = currentTimeForCMOS().minute(); break;
-    case 0x04: value = currentTimeForCMOS().hour(); break;
-    case 0x06: value = currentDateForCMOS().dayOfWeek(); break;
-    case 0x07: value = currentDateForCMOS().day(); break;
-    case 0x08: value = currentDateForCMOS().month(); break;
-    case 0x09: value = currentDateForCMOS().year() % 100; break;
-    case 0x0A: value = m_statusRegisterA; break;
-    case 0x0B: value = m_statusRegisterB; break;
-    case 0x15: value = getLSB(g_cpu->baseMemorySize() / 1024); break;
-    case 0x16: value = getMSB(g_cpu->baseMemorySize() / 1024); break;
-    case 0x17: value = getLSB(g_cpu->extendedMemorySize() / 1024 - 1024); break;
-    case 0x18: value = getMSB(g_cpu->extendedMemorySize() / 1024 - 1024); break;
-    case 0x30: value = getLSB(g_cpu->extendedMemorySize() / 1024 - 1024); break;
-    case 0x31: value = getMSB(g_cpu->extendedMemorySize() / 1024 - 1024); break;
-    case 0x32: value = currentDateForCMOS().year() / 100; break;
-    default: vlog(LogCMOS, "WARNING: Read unsupported register %02X", m_registerIndex);
-    }
-
-    if (!inBinaryClockMode()) {
-        switch (m_registerIndex) {
-        case 0x00:
-        case 0x02:
-        case 0x04:
-        case 0x06:
-        case 0x07:
-        case 0x08:
-        case 0x09:
-        case 0x32:
-            BYTE bcd = (value / 10 << 4) | (value - (value / 10) * 10);;
-            value = bcd;
-            break;
-        }
-    }
+    BYTE value = m_ram[m_registerIndex];
 
 #ifdef CMOS_DEBUG
     vlog(LogCMOS, "Read register %02X (%02X)", m_registerIndex, value);
@@ -128,4 +131,16 @@ void CMOS::out8(WORD, BYTE data)
     vlog(LogCMOS, "Select register %02X", data);
 #endif
     m_registerIndex = data;
+}
+
+void CMOS::set(RegisterIndex index, BYTE data)
+{
+    ASSERT((size_t)index < sizeof(m_ram));
+    m_ram[index] = data;
+}
+
+BYTE CMOS::get(RegisterIndex index) const
+{
+    ASSERT((size_t)index < sizeof(m_ram));
+    return m_ram[index];
 }

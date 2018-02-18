@@ -32,6 +32,27 @@
 class CMOS final : public IODevice
 {
 public:
+    enum RegisterIndex {
+        StatusRegisterA = 0x0a,
+        StatusRegisterB = 0x0b,
+        FloppyDriveTypes = 0x10,
+        BaseMemoryInKilobytesLSB = 0x15,
+        BaseMemoryInKilobytesMSB = 0x16,
+        ExtendedMemoryInKilobytesLSB = 0x17,
+        ExtendedMemoryInKilobytesMSB = 0x18,
+        ExtendedMemoryInKilobytesAltLSB = 0x30,
+        ExtendedMemoryInKilobytesAltMSB = 0x31,
+        RTCSecond = 0x00,
+        RTCMinute = 0x02,
+        RTCHour = 0x04,
+        RTCDayOfWeek = 0x06,
+        RTCDay = 0x07,
+        RTCMonth = 0x08,
+        RTCYear = 0x09,
+        RTCCentury = 0x32,
+        RTCCenturyPS2 = 0x37,
+    };
+
     explicit CMOS(Machine&);
     ~CMOS();
 
@@ -39,13 +60,18 @@ public:
     void out8(WORD port, BYTE data) override;
     BYTE in8(WORD port) override;
 
+    void updateClock();
+
+    void set(RegisterIndex, BYTE);
+    BYTE get(RegisterIndex) const;
+
 private:
-    BYTE m_statusRegisterA { 0 };
-    BYTE m_statusRegisterB { 0 };
     BYTE m_registerIndex { 0 };
+    BYTE m_ram[80];
 
     bool inBinaryClockMode() const;
     bool in24HourMode() const;
+    BYTE toCurrentClockFormat(BYTE) const;
 };
 
 #endif
