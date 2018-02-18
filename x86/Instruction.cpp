@@ -787,6 +787,7 @@ void buildOpcodeTablesIfNeeded()
     build0F(0xAD, "SHRD",  OP_RM16_reg16_CL,&CPU::_SHRD_RM16_reg16_CL, OP_RM32_reg32_CL,  &CPU::_SHRD_RM32_reg32_CL);
     build0F(0xAF, "IMUL",  OP_reg16_RM16,  &CPU::_IMUL_reg16_RM16, OP_reg32_RM32,  &CPU::_IMUL_reg32_RM32);
     build0F(0xB2, "LSS",   OP_reg16_mem16, &CPU::_LSS_reg16_mem16, OP_reg32_mem32, &CPU::_LSS_reg32_mem32);
+    build0F(0xB3, "BTR",   OP_RM16_reg16,  &CPU::_BTR_RM16_reg16,  OP_RM32_reg32,  &CPU::_BTR_RM32_reg32);
     build0F(0xB4, "LFS",   OP_reg16_mem16, &CPU::_LFS_reg16_mem16, OP_reg32_mem32, &CPU::_LFS_reg32_mem32);
     build0F(0xB5, "LGS",   OP_reg16_mem16, &CPU::_LGS_reg16_mem16, OP_reg32_mem32, &CPU::_LGS_reg32_mem32);
     build0F(0xB6, "MOVZX", OP_reg16_RM8,   &CPU::_MOVZX_reg16_RM8, OP_reg32_RM8,   &CPU::_MOVZX_reg32_RM8);
