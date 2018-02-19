@@ -34,11 +34,13 @@ class Machine;
 class IODevice
 {
 public:
-    IODevice(const char* name, Machine&);
+    IODevice(const char* name, Machine&, int irq = -1);
     virtual ~IODevice();
 
     const char* name() const;
     Machine& machine() const { return m_machine; }
+
+    void raiseIRQ();
 
     virtual void reset() = 0;
 
@@ -66,7 +68,8 @@ protected:
 
 private:
     Machine& m_machine;
-    const char* m_name;
+    const char* m_name { nullptr };
+    int m_irq { 0 };
     QList<WORD> m_ports;
 
     static QSet<WORD> s_ignorePorts;

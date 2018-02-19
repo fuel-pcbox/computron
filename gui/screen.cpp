@@ -787,7 +787,7 @@ void Screen::keyPressEvent(QKeyEvent* event)
 
     d->rawQueue.enqueue(makeCode[keyName]);
 
-    machine().keyboard().raiseIRQ();
+    machine().keyboard().didEnqueueData();
 }
 
 void Screen::keyReleaseEvent(QKeyEvent* event)
@@ -804,7 +804,7 @@ void Screen::keyReleaseEvent(QKeyEvent* event)
         d->rawQueue.enqueue(0xE0);
 
     d->rawQueue.enqueue(breakCode[keyName]);
-    machine().keyboard().raiseIRQ();
+    machine().keyboard().didEnqueueData();
     event->ignore();
 }
 
@@ -851,7 +851,7 @@ void Screen::flushKeyBuffer()
     QMutexLocker l(&d->keyQueueLock);
 
     if (!d->rawQueue.isEmpty() && machine().cpu().getIF())
-        machine().keyboard().raiseIRQ();
+        machine().keyboard().didEnqueueData();
 }
 
 bool kbd_has_data()

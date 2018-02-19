@@ -53,7 +53,7 @@ struct PIT::Private
 
 PIT::PIT(Machine& machine)
     : QObject(nullptr)
-    , IODevice("PIT", machine)
+    , IODevice("PIT", machine, 0)
     , d(make<Private>())
 {
     listen(0x40, IODevice::ReadWrite);
@@ -180,9 +180,4 @@ void PIT::modeControl(int timerIndex, BYTE data)
 
     if (counterIndex == 0)
         reconfigureTimer();
-}
-
-void PIT::raiseIRQ()
-{
-    PIC::raiseIRQ(machine(), 0);
 }

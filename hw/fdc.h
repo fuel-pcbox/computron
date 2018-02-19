@@ -40,8 +40,9 @@ public:
     virtual void out8(WORD port, BYTE data) override;
 
 private:
+    void generateFDCInterrupt();
+
     void executeCommand();
-    void raiseIRQ();
 
     struct Private;
     OwnPtr<Private> d;

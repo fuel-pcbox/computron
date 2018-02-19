@@ -47,7 +47,7 @@ public:
 
     bool isEnabled() const { return m_enabled; }
 
-    void raiseIRQ();
+    void didEnqueueData();
 
 signals:
     void ledsChanged(int);

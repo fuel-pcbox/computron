@@ -51,7 +51,6 @@ private:
 
     virtual void timerEvent(QTimerEvent*) override;
 
-    void raiseIRQ();
     void modeControl(int timerIndex, BYTE data);
 
     struct Private;

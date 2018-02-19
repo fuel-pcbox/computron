@@ -32,7 +32,7 @@
 #include <QtCore/QMutexLocker>
 
 BusMouse::BusMouse(Machine& machine)
-    : IODevice("BusMouse", machine)
+    : IODevice("BusMouse", machine, 5)
 {
     listen(0x23c, IODevice::ReadWrite);
     listen(0x23d, IODevice::ReadOnly);
@@ -100,7 +100,7 @@ void BusMouse::moveEvent(WORD x, WORD y)
     //vlog(LogMouse, "BusMouse::moveEvent(): dX = %d, dY = %d", m_deltaX, m_deltaY);
 
     if (m_interrupts)
-        PIC::raiseIRQ(machine(), 5);
+        raiseIRQ();
 }
 
 void BusMouse::buttonPressEvent(WORD x, WORD y, Button button)
@@ -122,7 +122,7 @@ void BusMouse::buttonPressEvent(WORD x, WORD y, Button button)
     m_deltaY = 0;
 
     if (m_interrupts)
-        PIC::raiseIRQ(machine(), 5);
+        raiseIRQ();
 }
 
 void BusMouse::buttonReleaseEvent(WORD x, WORD y, Button button)
@@ -144,7 +144,7 @@ void BusMouse::buttonReleaseEvent(WORD x, WORD y, Button button)
     m_deltaY = 0;
 
     if (m_interrupts)
-        PIC::raiseIRQ(machine(), 5);
+        raiseIRQ();
 }
 
 BYTE BusMouse::in8(WORD port)

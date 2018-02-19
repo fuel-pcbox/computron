@@ -56,7 +56,7 @@
 extern bool kbd_has_data();
 
 Keyboard::Keyboard(Machine& machine)
-    : IODevice("Keyboard", machine)
+    : IODevice("Keyboard", machine, 1)
 {
     listen(0x60, IODevice::ReadWrite);
     listen(0x61, IODevice::ReadWrite);
@@ -211,8 +211,8 @@ void Keyboard::out8(WORD port, BYTE data)
     IODevice::out8(port, data);
 }
 
-void Keyboard::raiseIRQ()
+void Keyboard::didEnqueueData()
 {
     if (m_ram[0] & CCB_KEYBOARD_INTERRUPT_ENABLE)
-        PIC::raiseIRQ(machine(), 1);
+        raiseIRQ();
 }

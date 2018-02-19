@@ -25,6 +25,7 @@
 
 #include "iodevice.h"
 #include "debug.h"
+#include "pic.h"
 #include <QList>
 
 QSet<WORD> IODevice::s_ignorePorts;
@@ -47,9 +48,10 @@ QHash<WORD, IODevice*>& IODevice::writeDevices()
     return s_writeDevices;
 }
 
-IODevice::IODevice(const char* name, Machine& machine)
+IODevice::IODevice(const char* name, Machine& machine, int irq)
     : m_machine(machine)
     , m_name(name)
+    , m_irq(irq)
 {
     devices().append(this);
 }
@@ -99,4 +101,11 @@ void IODevice::ignorePort(WORD port)
 bool IODevice::shouldIgnorePort(WORD port)
 {
     return s_ignorePorts.contains(port);
+}
+
+void IODevice::raiseIRQ()
+{
+    ASSERT(m_irq != -1);
+    ASSERT(m_irq < 256);
+    PIC::raiseIRQ(machine(), m_irq);
 }

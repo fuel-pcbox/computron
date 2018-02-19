@@ -66,7 +66,7 @@ struct FDC::Private
 };
 
 FDC::FDC(Machine& machine)
-    : IODevice("FDC", machine)
+    : IODevice("FDC", machine, 6)
     , d(make<Private>())
 {
     listen(0x3F0, IODevice::ReadOnly);
@@ -187,7 +187,7 @@ void FDC::out8(WORD port, BYTE data)
         //    vlog(LogFDC, "Invalid state: Current drive (%u) has motor off.", d->driveIndex);
 
         if (d->enabled != old_fdc_enabled)
-            raiseIRQ();
+            generateFDCInterrupt();
 
         break;
     }
@@ -235,10 +235,10 @@ void FDC::executeCommand()
     }
 }
 
-void FDC::raiseIRQ()
+void FDC::generateFDCInterrupt()
 {
     d->statusRegister[0] = d->driveIndex;
     d->statusRegister[0] |= d->currentDrive().head * 0x02;
     d->statusRegister[0] |= 0x20;
-    PIC::raiseIRQ(machine(), 6);
+    raiseIRQ();
 }
