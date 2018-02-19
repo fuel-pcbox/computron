@@ -29,6 +29,8 @@
 #include "pic.h"
 #include "debug.h"
 
+#define FDC_DEBUG
+
 #define DATA_REGISTER_READY 0x80
 #define DATA_FROM_FDC_TO_CPU 0x40
 #define DATA_FROM_CPU_TO_FDC 0x00
@@ -100,24 +102,22 @@ void FDC::reset()
 
 BYTE FDC::in8(WORD port)
 {
+    BYTE data = 0;
     switch (port) {
     case 0x3F0: {
-        BYTE data = 0x00;
         if (drv_status[1] != 0) {
             /* Second drive installed */
             data |= 0x40;
         }
         vlog(LogFDC, "Read status register A: %02X", data);
-        return data;
+        break;
     }
     case 0x3F1:
         vlog(LogFDC, "Read status register B: (FIXME)");
         // FIXME: What should this register contain?
-        return 0;
+        break;
 
     case 0x3F4: {
-        BYTE status = 0;
-
         // 0x80 - MRQ  - main request (1: data register ready, 0: data register not ready)
         // 0x40 - DIO  - data input/output (1: controller ? cpu, 0: cpu ? controller)
         // 0x20 - NDMA - non-DMA mode (1: controller not in DMA mode, 0: controller in DMA mode)
@@ -127,15 +127,14 @@ BYTE FDC::in8(WORD port)
         // 0x02 - ACTB ..
         // 0x01 - ACTA - drive X in positioning mode
 
-        status |= 0x80; // MRQ = 1
-        status |= d->dataDirection;
+        data |= 0x80; // MRQ = 1
+        data |= d->dataDirection;
 
         if (!d->usingDMA)
-            status |= 0x20;
+            data |= 0x20;
 
-        vlog(LogFDC, "Read main status register: %02X (direction: %s)", status, (d->dataDirection == DATA_FROM_CPU_TO_FDC) ? "to FDC" : "from FDC");
-
-        return status;
+        vlog(LogFDC, "Read main status register: %02X (direction: %s)", data, (d->dataDirection == DATA_FROM_CPU_TO_FDC) ? "to FDC" : "from FDC");
+        break;
     }
 
     case 0x3F5: {
@@ -144,19 +143,27 @@ BYTE FDC::in8(WORD port)
             return IODevice::JunkValue;
         }
 
-        BYTE value = d->commandResult.takeFirst();
-        vlog(LogFDC, "Read command result byte %02X", value);
+        data = d->commandResult.takeFirst();
+        vlog(LogFDC, "Read command result byte %02X", data);
 
-        return value;
+        break;
     }
 
     default:
-        return IODevice::in8(port);
+        ASSERT_NOT_REACHED();
+        IODevice::in8(port);
     }
+#ifdef FDC_DEBUG
+    vlog(LogFDC, " in8 %03x = %02x", port, data);
+#endif
+    return data;
 }
 
 void FDC::out8(WORD port, BYTE data)
 {
+#ifdef FDC_DEBUG
+    vlog(LogFDC, "out8 %03x, %02x", port, data);
+#endif
     switch (port) {
     case 0x3F2: {
         bool old_fdc_enabled = d->enabled;
@@ -176,8 +183,8 @@ void FDC::out8(WORD port, BYTE data)
 
         vlog(LogFDC, "  Motors:        %u %u", d->drive[0].motor, d->drive[1].motor);
 
-        if (!d->currentDrive().motor)
-            vlog(LogFDC, "Invalid state: Current drive (%u) has motor off.", d->driveIndex);
+        //if (!d->currentDrive().motor)
+        //    vlog(LogFDC, "Invalid state: Current drive (%u) has motor off.", d->driveIndex);
 
         if (d->enabled != old_fdc_enabled)
             raiseIRQ();
