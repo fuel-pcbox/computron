@@ -124,6 +124,18 @@ void Debugger::handleCommand(const QString& rawCommand)
     if (lowerCommand == "b")
         return handleBreakpoint(arguments);
 
+    if (lowerCommand == "sti") {
+        vlog(LogDump, "IF <- 1");
+        cpu().setIF(1);
+        return;
+    }
+
+    if (lowerCommand == "cli") {
+        vlog(LogDump, "IF <- 0");
+        cpu().setIF(0);
+        return;
+    }
+
     printf("Unknown command: %s\n", command.toUtf8().constData());
 }
 
