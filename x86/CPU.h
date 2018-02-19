@@ -405,6 +405,7 @@ public:
 
     enum class MemoryAccessType { Read, Write };
 
+    template<typename T> bool validatePhysicalAddress(DWORD, MemoryAccessType);
     template<typename T> bool validateAddress(const SegmentDescriptor&, DWORD offset, MemoryAccessType);
     template<typename T> bool validateAddress(SegmentRegisterIndex, DWORD offset, MemoryAccessType);
     template<typename T> bool validateAddress(WORD segment, DWORD offset, MemoryAccessType);

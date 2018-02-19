@@ -379,6 +379,13 @@ void CPU::reset()
 
     m_segmentPrefix = SegmentRegisterIndex::None;
 
+    setCS(0);
+    setDS(0);
+    setES(0);
+    setSS(0);
+    setFS(0);
+    setGS(0);
+
     if (m_isForAutotest)
         jump32(machine().settings().entryCS(), machine().settings().entryIP());
     else
@@ -392,13 +399,6 @@ void CPU::reset()
 
     m_addressSize32 = false;
     m_operandSize32 = false;
-
-    setCS(0);
-    setDS(0);
-    setES(0);
-    setSS(0);
-    setFS(0);
-    setGS(0);
 
     initWatches();
 }
@@ -1076,24 +1076,6 @@ bool CPU::validateAddress(const SegmentDescriptor& descriptor, DWORD offset, Mem
     if (getPG()) {
         physicalAddress = translateAddress(physicalAddress);
     }
-
-    if (physicalAddress >= m_memorySize) {
-        vlog(LogCPU, "OOB %zu-bit %s access @ %04x:%08x {base:%08x,limit:%08x,gran:%s} (phys: 0x%08x) [A20=%s] [PG=%u]",
-             sizeof(T) * 8,
-             toString(accessType),
-             descriptor.index(),
-             offset,
-             descriptor.base(),
-             descriptor.limit(),
-             descriptor.granularity() ? "4k" : "1b",
-             physicalAddress,
-             isA20Enabled() ? "on" : "off",
-             getPG()
-        );
-        dumpDescriptor(descriptor);
-        GP(descriptor.index());
-        return false;
-    }
     return true;
 }
 
@@ -1110,12 +1092,31 @@ bool CPU::validateAddress(WORD segmentIndex, DWORD offset, MemoryAccessType acce
 }
 
 template<typename T>
+bool CPU::validatePhysicalAddress(DWORD address, MemoryAccessType accessType)
+{
+    if (address < m_memorySize)
+        return true;
+    if (options.memdebug) {
+        vlog(LogCPU, "OOB %zu-bit %s access @ physical %08x [A20=%s] [PG=%u]",
+            sizeof(T) * 8,
+            toString(accessType),
+            address,
+            isA20Enabled() ? "on" : "off",
+            getPG()
+        );
+    }
+    return false;
+}
+
+template<typename T>
 T CPU::readMemory(DWORD address)
 {
     address &= a20Mask();
     if (getPG()) {
         address = translateAddress(address);
     }
+    if (!validatePhysicalAddress<T>(address, MemoryAccessType::Read))
+        return 0;
     T value;
     if (addressIsInVGAMemory(address))
         value = machine().vgaMemory().read<T>(address);
@@ -1143,6 +1144,9 @@ T CPU::readMemory(const SegmentDescriptor& descriptor, DWORD offset)
         if (getPG()) {
             physicalAddress = translateAddress(physicalAddress);
         }
+
+        if (!validatePhysicalAddress<T>(physicalAddress, MemoryAccessType::Read))
+            return 0;
 
         T value = *reinterpret_cast<T*>(&m_memory[physicalAddress]);
         if (options.memdebug || shouldLogMemoryRead(physicalAddress)) {
@@ -1224,6 +1228,9 @@ void CPU::writeMemory(const SegmentDescriptor& descriptor, DWORD offset, T value
         if (getPG()) {
             physicalAddress = translateAddress(physicalAddress);
         }
+
+        if (!validatePhysicalAddress<T>(physicalAddress, MemoryAccessType::Write))
+            return;
 
         if (options.memdebug || shouldLogMemoryWrite(physicalAddress))
             vlog(LogCPU, "%zu-bit PE write [A20=%s] %04X:%08X (phys: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", descriptor.index(), offset, physicalAddress, value);
