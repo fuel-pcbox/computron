@@ -29,7 +29,7 @@
 void CPU::push32(DWORD value)
 {
     //vlog(LogCPU, "push32: %08X", value);
-    if (a16()) {
+    if (s16()) {
         this->regs.W.SP -= 4;
         writeMemory32(SegmentRegisterIndex::SS, this->getSP(), value);
     } else {
@@ -38,20 +38,14 @@ void CPU::push32(DWORD value)
     }
 }
 
-void CPU::push(WORD value)
+void CPU::push16(WORD value)
 {
     //vlog(LogCPU, "push16: %04X", value);
-    if (a16()) {
-        if (o16())
-            this->regs.W.SP -= 2;
-        else
-            this->regs.W.SP -= 4;
+    if (s16()) {
+        this->regs.W.SP -= 2;
         writeMemory16(SegmentRegisterIndex::SS, this->getSP(), value);
     } else {
-        if (o16())
-            this->regs.D.ESP -= 2;
-        else
-            this->regs.D.ESP -= 4;
+        this->regs.D.ESP -= 2;
         writeMemory16(SegmentRegisterIndex::SS, this->getESP(), value);
     }
 }
@@ -59,7 +53,7 @@ void CPU::push(WORD value)
 DWORD CPU::pop32()
 {
     DWORD d;
-    if (a16()) {
+    if (s16()) {
         d = readMemory32(SegmentRegisterIndex::SS, this->getSP());
         this->regs.W.SP += 4;
     } else {
@@ -70,21 +64,15 @@ DWORD CPU::pop32()
     return d;
 }
 
-WORD CPU::pop()
+WORD CPU::pop16()
 {
     WORD w;
-    if (a16()) {
+    if (s16()) {
         w = readMemory16(SegmentRegisterIndex::SS, this->getSP());
-        if (o16())
-            this->regs.W.SP += 2;
-        else
-            this->regs.W.SP += 4;
+        this->regs.W.SP += 2;
     } else {
         w = readMemory16(SegmentRegisterIndex::SS, this->getESP());
-        if (o16())
-            this->regs.D.ESP += 2;
-        else
-            this->regs.D.ESP += 4;
+        this->regs.D.ESP += 2;
     }
     //vlog(LogCPU, "pop16: %08X", w);
     return w;
@@ -92,7 +80,7 @@ WORD CPU::pop()
 
 void CPU::_PUSH_reg16(Instruction& insn)
 {
-    push(insn.reg16());
+    push16(insn.reg16());
 }
 
 void CPU::_PUSH_reg32(Instruction& insn)
@@ -102,7 +90,7 @@ void CPU::_PUSH_reg32(Instruction& insn)
 
 void CPU::_POP_reg16(Instruction& insn)
 {
-    insn.reg16() = pop();
+    insn.reg16() = pop16();
 }
 
 void CPU::_POP_reg32(Instruction& insn)
@@ -112,7 +100,7 @@ void CPU::_POP_reg32(Instruction& insn)
 
 void CPU::_PUSH_RM16(Instruction& insn)
 {
-    push(insn.modrm().read16());
+    push16(insn.modrm().read16());
 }
 
 void CPU::_PUSH_RM32(Instruction& insn)
@@ -127,7 +115,7 @@ void CPU::_PUSH_RM32(Instruction& insn)
 void CPU::_POP_RM16(Instruction& insn)
 {
     // See comment above.
-    auto data = pop();
+    auto data = pop16();
     insn.modrm().resolve(*this);
     insn.modrm().write16(data);
 }
@@ -142,57 +130,90 @@ void CPU::_POP_RM32(Instruction& insn)
 
 void CPU::_PUSH_CS(Instruction&)
 {
-    push(getCS());
+    if (o16())
+        push16(getCS());
+    else
+        push32(getCS());
 }
 
 void CPU::_PUSH_DS(Instruction&)
 {
-    push(getDS());
+    if (o16())
+        push16(getDS());
+    else
+        push32(getDS());
 }
 
 void CPU::_PUSH_ES(Instruction&)
 {
-    push(getES());
+    if (o16())
+        push16(getES());
+    else
+        push32(getES());
 }
 
 void CPU::_PUSH_SS(Instruction&)
 {
-    push(getSS());
+    if (o16())
+        push16(getSS());
+    else
+        push32(getSS());
 }
 
 void CPU::_PUSH_FS(Instruction&)
 {
-    push(getFS());
+    if (o16())
+        push16(getFS());
+    else
+        push32(getFS());
 }
 
 void CPU::_PUSH_GS(Instruction&)
 {
-    push(getGS());
+    if (o16())
+        push16(getGS());
+    else
+        push32(getGS());
 }
 
 void CPU::_POP_DS(Instruction&)
 {
-    setDS(pop());
+    if (o16())
+        setDS(pop16());
+    else
+        setDS(pop32());
 }
 
 void CPU::_POP_ES(Instruction&)
 {
-    setES(pop());
+    if (o16())
+        setES(pop16());
+    else
+        setES(pop32());
 }
 
 void CPU::_POP_SS(Instruction&)
 {
-    setSS(pop());
+    if (o16())
+        setSS(pop16());
+    else
+        setSS(pop32());
 }
 
 void CPU::_POP_FS(Instruction&)
 {
-    setFS(pop());
+    if (o16())
+        setFS(pop16());
+    else
+        setFS(pop32());
 }
 
 void CPU::_POP_GS(Instruction&)
 {
-    setGS(pop());
+    if (o16())
+        setGS(pop16());
+    else
+        setGS(pop32());
 }
 
 void CPU::_PUSHFD(Instruction&)
@@ -211,7 +232,7 @@ void CPU::_PUSH_imm32(Instruction& insn)
 void CPU::_PUSHF(Instruction&)
 {
     if (!getPE() || (getPE() && ((!getVM() || (getVM() && getIOPL() == 3)))))
-        push(getFlags());
+        push16(getFlags());
     else
         GP(0);
 }
@@ -220,16 +241,16 @@ void CPU::_POPF(Instruction&)
 {
     if (!getVM()) {
         if (!getPE() || getCPL() == 0)
-            setFlags(pop());
+            setFlags(pop16());
         else {
             bool oldIOPL = getIOPL();
-            setFlags(pop());
+            setFlags(pop16());
             setIOPL(oldIOPL);
         }
     } else {
         if (getIOPL() == 3) {
             bool oldIOPL = getIOPL();
-            setFlags(pop());
+            setFlags(pop16());
             setIOPL(oldIOPL);
         } else
             GP(0);

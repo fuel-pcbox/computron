@@ -152,14 +152,14 @@ void CPU::_CALL_imm32(Instruction& insn)
 
 void CPU::_CALL_imm16_imm16(Instruction& insn)
 {
-    push(getCS());
+    push16(getCS());
     pushInstructionPointer();
     jump16(insn.imm16_1(), insn.imm16_2());
 }
 
 void CPU::_CALL_imm16_imm32(Instruction& insn)
 {
-    push(getCS());
+    push16(getCS());
     pushInstructionPointer();
     jump32(insn.imm16_1(), insn.imm32_2());
 }
@@ -167,7 +167,7 @@ void CPU::_CALL_imm16_imm32(Instruction& insn)
 void CPU::_CALL_FAR_mem16(Instruction& insn)
 {
     WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
-    push(getCS());
+    push16(getCS());
     pushInstructionPointer();
     jump16(ptr[1], ptr[0]);
 }
@@ -195,7 +195,7 @@ void CPU::_RET(Instruction&)
     if (o32())
         jumpAbsolute32(pop32());
     else
-        jumpAbsolute16(pop());
+        jumpAbsolute16(pop16());
 }
 
 void CPU::_RET_imm16(Instruction& insn)
@@ -204,7 +204,7 @@ void CPU::_RET_imm16(Instruction& insn)
         jumpAbsolute32(pop32());
         regs.D.ESP += insn.imm16();
     } else {
-        jumpAbsolute16(pop());
+        jumpAbsolute16(pop16());
         regs.W.SP += insn.imm16();
     }
 }
@@ -213,10 +213,10 @@ void CPU::_RETF(Instruction&)
 {
     if (o32()) {
         DWORD nip = pop32();
-        jump32(pop(), nip);
+        jump32(pop16(), nip);
     } else {
-        WORD nip = pop();
-        jump16(pop(), nip);
+        WORD nip = pop16();
+        jump16(pop16(), nip);
     }
 }
 
@@ -224,11 +224,11 @@ void CPU::_RETF_imm16(Instruction& insn)
 {
     if (o32()) {
         DWORD nip = pop32();
-        jump32(pop(), nip);
+        jump32(pop16(), nip);
         regs.D.ESP += insn.imm16();
     } else {
-        WORD nip = pop();
-        jump16(pop(), nip);
+        WORD nip = pop16();
+        jump16(pop16(), nip);
         regs.W.SP += insn.imm16();
     }
 }

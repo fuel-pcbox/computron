@@ -61,10 +61,10 @@ void CPU::_IRET(Instruction&)
 
     }
     if (o16()) {
-        WORD nip = pop();
-        WORD ncs = pop();
+        WORD nip = pop16();
+        WORD ncs = pop16();
         jump16(ncs, nip);
-        setFlags(pop());
+        setFlags(pop16());
     } else {
         DWORD nip = pop32();
         WORD ncs = pop32();
@@ -116,12 +116,12 @@ void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
 #endif
 
     if (o16()) {
-        push(getFlags());
+        push16(getFlags());
         if (!isTrap)
             setIF(0);
         setTF(0);
-        push(getCS());
-        push(getIP());
+        push16(getCS());
+        push16(getIP());
 
         jump16(vector.segment, vector.offset);
         return;

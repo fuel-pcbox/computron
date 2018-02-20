@@ -237,6 +237,15 @@ void CPU::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
             );
         }
     }
+
+    switch (segmentRegisterIndex) {
+    case SegmentRegisterIndex::CS:
+        updateDefaultSizes();
+        break;
+    case SegmentRegisterIndex::SS:
+        updateStackSize();
+        break;
+    }
 }
 
 void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor)

@@ -353,8 +353,8 @@ public:
     void push32(DWORD value);
     DWORD pop32();
 
-    void push(WORD value);
-    WORD pop();
+    void push16(WORD value);
+    WORD pop16();
 
     Debugger& debugger() { return *m_debugger; }
 
@@ -485,8 +485,6 @@ public:
 
     QVector<WatchedAddress>& watches() { return m_watches; }
 
-    void updateSizeModes();
-
     // Current execution mode (16 or 32 bit)
     bool x16() const { return !x32(); }
     bool x32() const { return m_descriptor[(int)SegmentRegisterIndex::CS].D(); }
@@ -495,6 +493,9 @@ public:
     virtual bool a32() const override { return m_addressSize32; }
     bool o16() const { return !m_operandSize32; }
     virtual bool o32() const override { return m_operandSize32; }
+
+    bool s16() const { return !m_stackSize32; }
+    bool s32() const { return m_stackSize32; }
 
     void nextSI(int size) { this->regs.W.SI += (getDF() ? -size : size); }
     void nextDI(int size) { this->regs.W.DI += (getDF() ? -size : size); }
@@ -1007,6 +1008,9 @@ private:
 
     void initWatches();
 
+    void updateDefaultSizes();
+    void updateStackSize();
+
     void didTouchMemory(DWORD address, unsigned byteCount);
 
     template<typename T>
@@ -1215,6 +1219,8 @@ private:
 
     bool m_addressSize32;
     bool m_operandSize32;
+
+    bool m_stackSize32 { false };
 
     bool m_shouldBreakOutOfMainLoop;
     bool m_shouldSoftReboot { false };

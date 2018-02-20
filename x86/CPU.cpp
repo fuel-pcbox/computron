@@ -246,7 +246,7 @@ void CPU::exception(BYTE num, WORD error)
     if (o32())
         push32(error);
     else
-        push(error);
+        push16(error);
 }
 
 void CPU::GP(WORD code)
@@ -595,7 +595,6 @@ void CPU::jump32(WORD segment, DWORD offset)
             setCS(gate.selector());
             this->EIP = gate.offset();
             ASSERT(!gate.parameterCount()); // FIXME: Implement
-            updateSizeModes();
             return;
         }
 
@@ -603,7 +602,6 @@ void CPU::jump32(WORD segment, DWORD offset)
             auto& tssDescriptor = sys.asTSSDescriptor();
             vlog(LogCPU, "JMP to TSS descriptor (%s) -> %08x", tssDescriptor.typeName(), tssDescriptor.base());
             taskSwitch(tssDescriptor);
-            updateSizeModes();
             return;
         }
 
@@ -612,8 +610,6 @@ void CPU::jump32(WORD segment, DWORD offset)
 
     setCS(segment);
     this->EIP = offset;
-
-    updateSizeModes();
 }
 
 void CPU::jump16(WORD segment, WORD offset)
@@ -900,7 +896,7 @@ void CPU::pushInstructionPointer()
     if (o32())
         push32(getEIP());
     else
-        push(getIP());
+        push16(getIP());
 }
 
 void CPU::_LES_reg16_mem16(Instruction& insn)
@@ -1272,7 +1268,7 @@ void CPU::writeMemory8(SegmentRegisterIndex segment, DWORD offset, BYTE value) {
 void CPU::writeMemory16(SegmentRegisterIndex segment, DWORD offset, WORD value) { writeMemory(segment, offset, value); }
 void CPU::writeMemory32(SegmentRegisterIndex segment, DWORD offset, DWORD value) { writeMemory(segment, offset, value); }
 
-void CPU::updateSizeModes()
+void CPU::updateDefaultSizes()
 {
     m_shouldRestoreSizesAfterOverride = false;
 
@@ -1284,9 +1280,18 @@ void CPU::updateSizeModes()
     m_operandSize32 = csDescriptor.D();
 
     if (oldO32 != m_operandSize32 || oldA32 != m_addressSize32) {
-        vlog(LogCPU, "updateSizeModes PE=%u X:%u O:%u A:%u (newCS: %04X)", getPE(), x16() ? 16 : 32, o16() ? 16 : 32, a16() ? 16 : 32, getCS());
+        vlog(LogCPU, "updateDefaultSizes PE=%u X:%u O:%u A:%u (newCS: %04X)", getPE(), x16() ? 16 : 32, o16() ? 16 : 32, a16() ? 16 : 32, getCS());
         dumpDescriptor(csDescriptor);
     }
+}
+
+void CPU::updateStackSize()
+{
+    auto& ssDescriptor = m_descriptor[(int)SegmentRegisterIndex::SS];
+    dumpDescriptor(ssDescriptor);
+
+    vlog(LogCPU, "updateStackSize PE=%u S:%u (newSS: %04x)", getPE(), s16() ? 16 : 32, getSS());
+    m_stackSize32 = ssDescriptor.D();
 }
 
 void CPU::setCS(WORD value)

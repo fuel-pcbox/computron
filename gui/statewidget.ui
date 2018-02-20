@@ -2037,11 +2037,11 @@
    <property name="font">
     <font>
      <family>Menlo</family>
-     <pointsize>10</pointsize>
+     <pointsize>8</pointsize>
     </font>
    </property>
    <property name="text">
-    <string>a16o16x16</string>
+    <string>a16o16x16s16</string>
    </property>
   </widget>
   <widget class="QLabel" name="lblCR3">

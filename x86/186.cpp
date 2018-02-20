@@ -37,12 +37,12 @@ void CPU::_PUSH_imm8(Instruction& insn)
     if (o32())
         push32(signExtend<DWORD>(insn.imm8()));
     else
-        push(signExtend<WORD>(insn.imm8()));
+        push16(signExtend<WORD>(insn.imm8()));
 }
 
 void CPU::_PUSH_imm16(Instruction& insn)
 {
-    push(insn.imm16());
+    push16(insn.imm16());
 }
 
 void CPU::_ENTER(Instruction& insn)
@@ -52,15 +52,15 @@ void CPU::_ENTER(Instruction& insn)
 
     WORD size = insn.imm16_2();
     BYTE nestingLevel = insn.imm8_1() & 31;
-    push(getBP());
+    push16(getBP());
     WORD frameTemp = getSP();
     if (nestingLevel > 0) {
         WORD tmpBP = getBP();
         for (WORD i = 1; i < nestingLevel - 1; ++i) {
             tmpBP -= 2;
-            push(readMemory16(SegmentRegisterIndex::SS, getBP()));
+            push16(readMemory16(SegmentRegisterIndex::SS, getBP()));
         }
-        push(frameTemp);
+        push16(frameTemp);
     }
     setBP(frameTemp);
     setSP(getSP() - size);
@@ -70,7 +70,7 @@ void CPU::_LEAVE(Instruction&)
 {
     if (o16()) {
         setSP(getBP());
-        setBP(pop());
+        setBP(pop16());
     } else {
         setESP(getEBP());
         setEBP(pop32());
@@ -80,14 +80,14 @@ void CPU::_LEAVE(Instruction&)
 void CPU::_PUSHA(Instruction&)
 {
     WORD oldSP = getSP();
-    push(getAX());
-    push(getCX());
-    push(getDX());
-    push(getBX());
-    push(oldSP);
-    push(getBP());
-    push(getSI());
-    push(getDI());
+    push16(getAX());
+    push16(getCX());
+    push16(getDX());
+    push16(getBX());
+    push16(oldSP);
+    push16(getBP());
+    push16(getSI());
+    push16(getDI());
 }
 
 void CPU::_PUSHAD(Instruction&)
@@ -105,14 +105,14 @@ void CPU::_PUSHAD(Instruction&)
 
 void CPU::_POPA(Instruction&)
 {
-    setDI(pop());
-    setSI(pop());
-    setBP(pop());
-    (void) pop();
-    setBX(pop());
-    setDX(pop());
-    setCX(pop());
-    setAX(pop());
+    setDI(pop16());
+    setSI(pop16());
+    setBP(pop16());
+    (void) pop16();
+    setBX(pop16());
+    setDX(pop16());
+    setCX(pop16());
+    setAX(pop16());
 }
 
 void CPU::_POPAD(Instruction&)

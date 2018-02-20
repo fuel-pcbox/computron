@@ -119,7 +119,7 @@ void StateWidget::sync()
 
     d->ui.lblFlags->setText(flagString);
 
-    d->ui.lblSizes->setText(QString("a%1o%2x%3").arg(cpu.a16() ? 16 : 32).arg(cpu.o16() ? 16 : 32).arg(cpu.x16() ? 16 : 32));
+    d->ui.lblSizes->setText(QString("a%1o%2x%3s%4").arg(cpu.a16() ? 16 : 32).arg(cpu.o16() ? 16 : 32).arg(cpu.x16() ? 16 : 32).arg(cpu.s16() ? 16 : 32));
 
     auto cpuCycles = cpu.cycle();
     auto cycles = cpuCycles - d->cycleCount;
