@@ -91,6 +91,8 @@ Machine::Machine(const QString& name, OwnPtr<Settings>&& settings, QObject* pare
         IODevice::ignorePort(0x237);
         IODevice::ignorePort(0x337);
 
+        IODevice::ignorePort(0x322);
+
         IODevice::ignorePort(0x0C8F);
         IODevice::ignorePort(0x1C8F);
         IODevice::ignorePort(0x2C8F);
