@@ -1010,6 +1010,7 @@ private:
 
     void updateDefaultSizes();
     void updateStackSize();
+    void updateCodeSegmentCache();
 
     void didTouchMemory(DWORD address, unsigned byteCount);
 

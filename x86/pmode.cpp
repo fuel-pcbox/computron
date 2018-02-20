@@ -241,6 +241,7 @@ void CPU::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
     switch (segmentRegisterIndex) {
     case SegmentRegisterIndex::CS:
         updateDefaultSizes();
+        updateCodeSegmentCache();
         break;
     case SegmentRegisterIndex::SS:
         updateStackSize();
@@ -277,6 +278,9 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor)
 
     TSS& incomingTSS = *reinterpret_cast<TSS*>(memoryPointer(incomingTSSDescriptor.base()));
 
+    if (getPG())
+        CR3 = incomingTSS.CR3;
+
     setES(incomingTSS.ES);
     setCS(incomingTSS.CS);
     setDS(incomingTSS.DS);
@@ -284,9 +288,6 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor)
     setGS(incomingTSS.GS);
     setSS(incomingTSS.SS);
     EIP = incomingTSS.EIP;
-
-    if (getPG())
-        CR3 = incomingTSS.CR3;
 
     setLDT(incomingTSS.LDT);
 

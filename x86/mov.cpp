@@ -168,6 +168,9 @@ void CPU::_MOV_CR_reg32(Instruction& insn)
 
     setControlRegister(crIndex, getRegister32(static_cast<CPU::RegisterIndex32>(insn.rm() & 7)));
 
+    if (crIndex == 0 || crIndex == 3)
+        updateCodeSegmentCache();
+
     vlog(LogCPU, "MOV CR%u <- %08X", crIndex, getControlRegister(crIndex));
 }
 

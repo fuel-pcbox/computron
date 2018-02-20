@@ -1287,20 +1287,27 @@ void CPU::updateDefaultSizes()
 
 void CPU::updateStackSize()
 {
+    bool oldS32 = m_stackSize32;
+
     auto& ssDescriptor = m_descriptor[(int)SegmentRegisterIndex::SS];
     dumpDescriptor(ssDescriptor);
 
-    vlog(LogCPU, "updateStackSize PE=%u S:%u (newSS: %04x)", getPE(), s16() ? 16 : 32, getSS());
     m_stackSize32 = ssDescriptor.D();
+
+    if (oldS32 != m_stackSize32)
+        vlog(LogCPU, "updateStackSize PE=%u S:%u (newSS: %04x)", getPE(), s16() ? 16 : 32, getSS());
+}
+
+void CPU::updateCodeSegmentCache()
+{
+    // Point m_codeMemory to CS:0 for fast opcode fetching.
+    m_codeMemory = memoryPointer(SegmentRegisterIndex::CS, 0);
 }
 
 void CPU::setCS(WORD value)
 {
     this->CS = value;
     syncSegmentRegister(SegmentRegisterIndex::CS);
-
-    // Point m_codeMemory to CS:0 for fast opcode fetching.
-    m_codeMemory = memoryPointer(SegmentRegisterIndex::CS, 0);
 }
 
 void CPU::setDS(WORD value)
