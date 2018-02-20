@@ -40,9 +40,11 @@ public:
     virtual void out8(WORD port, BYTE data) override;
 
 private:
-    void generateFDCInterrupt();
+    void generateFDCInterrupt(bool seekCompleted = false);
+    void updateStatus(bool seekCompleted = false);
 
     void executeCommand();
+    void executeReadDataCommand();
 
     struct Private;
     OwnPtr<Private> d;

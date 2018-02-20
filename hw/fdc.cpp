@@ -29,23 +29,37 @@
 #include "pic.h"
 #include "debug.h"
 
+#define FDC_NEC765
 #define FDC_DEBUG
 
 #define DATA_REGISTER_READY 0x80
 #define DATA_FROM_FDC_TO_CPU 0x40
 #define DATA_FROM_CPU_TO_FDC 0x00
 
+enum FDCCommand {
+    SenseInterruptStatus = 0x08,
+    SpecifyStepAndHeadLoad = 0x03,
+    SeekToTrack = 0x0f,
+    Recalibrate = 0x07,
+    GetVersion = 0x10,
+};
+
 struct FDCDrive
 {
-    bool motor;
-    BYTE cylinder;
-    BYTE head;
+    FDCDrive() { }
 
-    FDCDrive()
-        : motor(false)
-        , cylinder(0)
-        , head(0)
-    { }
+    bool motor { false };
+    BYTE cylinder { 0 };
+    BYTE head { 0 };
+    BYTE sector { 0 };
+    BYTE stepRateTime { 0 };
+    BYTE headLoadTime { 0 };
+    BYTE headUnloadTime { 0 };
+    bool nonDMA { 0 };
+    BYTE bytesPerSector { 0 };
+    BYTE endOfTrack { 0 };
+    BYTE gap3Length { 0 };
+    BYTE dataLength { 0 };
 };
 
 struct FDC::Private
@@ -57,7 +71,7 @@ struct FDC::Private
     BYTE dataDirection;
     BYTE currentStatusRegister;
     BYTE statusRegister[4];
-    BYTE command[8];
+    BYTE command[9];
     BYTE commandSize;
     BYTE commandIndex;
     QList<BYTE> commandResult;
@@ -74,6 +88,7 @@ FDC::FDC(Machine& machine)
     listen(0x3F2, IODevice::WriteOnly);
     listen(0x3F4, IODevice::ReadOnly);
     listen(0x3F5, IODevice::ReadWrite);
+    listen(0x3F7, IODevice::ReadOnly);
 
     reset();
 }
@@ -128,10 +143,14 @@ BYTE FDC::in8(WORD port)
         // 0x01 - ACTA - drive X in positioning mode
 
         data |= 0x80; // MRQ = 1
+
         data |= d->dataDirection;
 
         if (!d->usingDMA)
             data |= 0x20;
+
+        if (!d->commandResult.isEmpty() || d->commandSize != 0)
+            data |= 0x10;
 
         vlog(LogFDC, "Read main status register: %02X (direction: %s)", data, (d->dataDirection == DATA_FROM_CPU_TO_FDC) ? "to FDC" : "from FDC");
         break;
@@ -146,6 +165,15 @@ BYTE FDC::in8(WORD port)
         data = d->commandResult.takeFirst();
         vlog(LogFDC, "Read command result byte %02X", data);
 
+        if (d->commandResult.isEmpty()) {
+            d->dataDirection = DATA_FROM_CPU_TO_FDC;
+        }
+
+        break;
+
+    case 0x3F7:
+        data = 0;
+        vlog(LogFDC, "Read DIR = %02X", data);
         break;
     }
 
@@ -157,6 +185,11 @@ BYTE FDC::in8(WORD port)
     vlog(LogFDC, " in8 %03x = %02x", port, data);
 #endif
     return data;
+}
+
+static bool isReadDataCommand(BYTE b)
+{
+    return (b & 0x1f) == 0x06;
 }
 
 void FDC::out8(WORD port, BYTE data)
@@ -197,10 +230,22 @@ void FDC::out8(WORD port, BYTE data)
 
         if (d->commandIndex == 0) {
             // Determine the command length
-            switch (data) {
-            case 0x08:
-                d->commandSize = 0;
-                break;
+            if (isReadDataCommand(data)) {
+                d->commandSize = 9;
+            } else {
+                switch (data) {
+                case GetVersion:
+                case SenseInterruptStatus:
+                    d->commandSize = 1;
+                    break;
+                case Recalibrate:
+                    d->commandSize = 2;
+                    break;
+                case SeekToTrack:
+                case SpecifyStepAndHeadLoad:
+                    d->commandSize = 3;
+                    break;
+                }
             }
         }
 
@@ -209,6 +254,7 @@ void FDC::out8(WORD port, BYTE data)
         if (d->commandIndex >= d->commandSize) {
             executeCommand();
             d->commandIndex = 0;
+            d->dataDirection = !d->commandResult.isEmpty() ? DATA_FROM_FDC_TO_CPU : DATA_FROM_CPU_TO_FDC;
         }
         break;
     }
@@ -218,27 +264,96 @@ void FDC::out8(WORD port, BYTE data)
     }
 }
 
+void FDC::executeReadDataCommand()
+{
+    d->driveIndex = d->command[1] & 3;
+    d->currentDrive().head = (d->command[1] >> 2) & 1;
+    d->currentDrive().cylinder = d->command[2];
+    d->currentDrive().head = d->command[3];
+    d->currentDrive().sector = d->command[4];
+    d->currentDrive().bytesPerSector = d->command[5];
+    d->currentDrive().endOfTrack = d->command[6];
+    d->currentDrive().gap3Length = d->command[7];
+    d->currentDrive().dataLength = d->command[8];
+    vlog(LogFDC, "ReadData { drive:%u, C:%u H:%u, S:%u / bpS:%u, EOT:%u, g3l:%u, dl:%u }",
+        d->driveIndex,
+        d->currentDrive().cylinder,
+        d->currentDrive().head,
+        d->currentDrive().sector,
+        128 << d->currentDrive().bytesPerSector,
+        d->currentDrive().endOfTrack,
+        d->currentDrive().gap3Length,
+        d->currentDrive().dataLength
+    );
+}
+
 void FDC::executeCommand()
 {
     vlog(LogFDC, "Executing command %02X", d->command[0]);
+    d->commandResult.clear();
+
+    if (isReadDataCommand(d->command[0]))
+        return executeReadDataCommand();
 
     switch (d->command[0]) {
-    case 0x08: // Sense Interrupt Status
-        vlog(LogFDC, "Sense interrupt");
-        d->dataDirection = DATA_FROM_FDC_TO_CPU;
-        d->commandResult.clear();
+    case SpecifyStepAndHeadLoad:
+        d->currentDrive().stepRateTime = (d->command[1] >> 4) & 0xf;
+        d->currentDrive().headUnloadTime = d->command[1] & 0xf;
+        d->currentDrive().headLoadTime = (d->command[2] >> 1) & 0x7f;
+        d->currentDrive().nonDMA = d->command[2] & 1;
+        vlog(LogFDC, "SpecifyStepAndHeadLoad { SRT:%1x, HUT:%1x, HLT:%1x, ND:%1x }",
+            d->currentDrive().stepRateTime,
+            d->currentDrive().headUnloadTime,
+            d->currentDrive().headLoadTime,
+            d->currentDrive().nonDMA);
+        break;
+    case SenseInterruptStatus:
+        vlog(LogFDC, "SenseInterruptStatus");
         d->commandResult.append(d->statusRegister[0]);
         d->commandResult.append(d->currentDrive().cylinder);
         break;
+    case Recalibrate:
+        d->driveIndex = d->command[1] & 3;
+        generateFDCInterrupt();
+        vlog(LogFDC, "Recalibrate { drive:%u }", d->driveIndex);
+        break;
+    case SeekToTrack:
+        d->driveIndex = d->command[1] & 3;
+        d->currentDrive().head = (d->command[1] >> 2) & 1;
+        d->currentDrive().cylinder = d->command[2];
+        generateFDCInterrupt(true);
+        vlog(LogFDC, "SeekToTrack { drive:%u, C:%u, H:%u }",
+            d->driveIndex,
+            d->currentDrive().cylinder,
+            d->currentDrive().head);
+        break;
+    case GetVersion:
+        vlog(LogFDC, "Get version");
+#ifdef FDC_NEC765
+        d->commandResult.append(0x80);
+#else
+        updateStatus();
+        d->commandResult.append(d->statusRegister[0]);
+#endif
+        break;
     default:
         vlog(LogFDC, "Unknown command! %02X", d->command[0]);
+        break;
     }
 }
 
-void FDC::generateFDCInterrupt()
+void FDC::updateStatus(bool seekCompleted)
 {
     d->statusRegister[0] = d->driveIndex;
     d->statusRegister[0] |= d->currentDrive().head * 0x02;
-    d->statusRegister[0] |= 0x20;
+
+    if (seekCompleted)
+        d->statusRegister[0] |= 0x20;
+}
+
+void FDC::generateFDCInterrupt(bool seekCompleted)
+{
+    updateStatus(seekCompleted);
+    vlog(LogFDC, "Raise IRQ%s", seekCompleted ? " (seek completed)" : "");
     raiseIRQ();
 }
