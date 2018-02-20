@@ -78,20 +78,12 @@ bool CMOS::in24HourMode() const
     return m_ram[StatusRegisterB] & 0x02;
 }
 
-static QTime currentTimeForCMOS()
+static QDateTime currentDateTimeForCMOS()
 {
 #ifdef CT_DETERMINISTIC
-    return QTime(1, 2, 3, 4);
+    return QDateTime(QDate(2018, 2, 9), QTime(1, 2, 3, 4));
 #endif
-    return QTime::currentTime();
-}
-
-static QDate currentDateForCMOS()
-{
-#ifdef CT_DETERMINISTIC
-    return QDate(2018, 2, 9);
-#endif
-    return QDate::currentDate();
+    return QDateTime::currentDateTime();
 }
 
 BYTE CMOS::toCurrentClockFormat(BYTE value) const
@@ -106,17 +98,16 @@ void CMOS::updateClock()
     // FIXME: Support 12-hour clock mode for RTCHour!
     ASSERT(in24HourMode());
 
-    auto nowTime = currentTimeForCMOS();
-    auto nowDate = currentDateForCMOS();
-    m_ram[RTCSecond] = toCurrentClockFormat(nowTime.second());
-    m_ram[RTCMinute] = toCurrentClockFormat(nowTime.minute());
-    m_ram[RTCHour] = toCurrentClockFormat(nowTime.hour());
-    m_ram[RTCDayOfWeek] = toCurrentClockFormat(nowDate.dayOfWeek());
-    m_ram[RTCDay] = toCurrentClockFormat(nowDate.day());
-    m_ram[RTCMonth] = toCurrentClockFormat(nowDate.month());
-    m_ram[RTCYear] = toCurrentClockFormat(nowDate.year() % 100);
-    m_ram[RTCCentury] = toCurrentClockFormat(nowDate.year() / 100);
-    m_ram[RTCCenturyPS2] = toCurrentClockFormat(nowDate.year() / 100);
+    auto now = currentDateTimeForCMOS();
+    m_ram[RTCSecond] = toCurrentClockFormat(now.time().second());
+    m_ram[RTCMinute] = toCurrentClockFormat(now.time().minute());
+    m_ram[RTCHour] = toCurrentClockFormat(now.time().hour());
+    m_ram[RTCDayOfWeek] = toCurrentClockFormat(now.date().dayOfWeek());
+    m_ram[RTCDay] = toCurrentClockFormat(now.date().day());
+    m_ram[RTCMonth] = toCurrentClockFormat(now.date().month());
+    m_ram[RTCYear] = toCurrentClockFormat(now.date().year() % 100);
+    m_ram[RTCCentury] = toCurrentClockFormat(now.date().year() / 100);
+    m_ram[RTCCenturyPS2] = toCurrentClockFormat(now.date().year() / 100);
 }
 
 BYTE CMOS::in8(WORD)
