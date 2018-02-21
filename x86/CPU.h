@@ -544,6 +544,8 @@ protected:
     void _CLTS(Instruction&);
     void _LAR_reg16_RM16(Instruction&);
     void _LAR_reg32_RM32(Instruction&);
+    void _VERR_RM16(Instruction&);
+    void _VERW_RM16(Instruction&);
 
     void _WBINVD(Instruction&);
 

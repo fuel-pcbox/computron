@@ -371,3 +371,36 @@ TSS* CPU::currentTSS()
 {
     return reinterpret_cast<TSS*>(memoryPointer(TR.base));
 }
+
+void CPU::_VERR_RM16(Instruction& insn)
+{
+    if (!getPE()) {
+        exception(6); // #UD
+        return;
+    }
+    WORD selector = insn.modrm().read16();
+    auto descriptor = getDescriptor(selector);
+    if (descriptor.isError() || descriptor.isSystemDescriptor()) {
+        setZF(0);
+        return;
+    }
+    WORD RPL = selector & 3;
+
+    bool isConformingCode = descriptor.isCode() && descriptor.asCodeSegmentDescriptor().conforming();
+    if (!isConformingCode && (getCPL() > descriptor.DPL() || RPL > descriptor.DPL())) {
+        setZF(0);
+        return;
+    }
+
+    if (descriptor.isCode()) {
+        setZF(descriptor.asCodeSegmentDescriptor().readable());
+    } else {
+        // FIXME: How do I know if a data segment is "readable"? Are they always?
+        setZF(1);
+    }
+}
+
+void CPU::_VERW_RM16(Instruction&)
+{
+    ASSERT_NOT_REACHED();
+}
