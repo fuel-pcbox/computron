@@ -654,11 +654,15 @@ void CPU::_NOP(Instruction&)
 
 void CPU::_HLT(Instruction&)
 {
+    if (getCPL() != 0) {
+        GP(0);
+        return;
+    }
+
     setState(CPU::Halted);
 
     if (!getIF()) {
         vlog(LogCPU, "Halted with IF=0");
-
     } else
         vlog(LogCPU, "Halted");
 
