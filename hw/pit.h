@@ -43,15 +43,16 @@ public:
 
     void boot();
 
-private slots:
-    void reconfigureTimer();
-
 private:
     friend class CPU;
 
     virtual void timerEvent(QTimerEvent*) override;
 
+    BYTE readCounter(BYTE index);
+    void writeCounter(BYTE index, BYTE data);
+
     void modeControl(int timerIndex, BYTE data);
+    void reconfigureTimer(BYTE index);
 
     struct Private;
     OwnPtr<Private> d;
