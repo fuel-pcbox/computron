@@ -53,14 +53,14 @@ void CPU::_JMP_imm16_imm16(Instruction& insn)
 {
     WORD newCS = insn.imm16_1();
     WORD newIP = insn.imm16_2();
-    jump16(newCS, newIP);
+    jump16(newCS, newIP, JumpType::JMP);
 }
 
 void CPU::_JMP_imm16_imm32(Instruction& insn)
 {
     WORD newCS = insn.imm16_1();
     DWORD newEIP = insn.imm32_2();
-    jump32(newCS, newEIP);
+    jump32(newCS, newEIP, JumpType::JMP);
 }
 
 void CPU::_JMP_short_imm8(Instruction& insn)
@@ -82,13 +82,13 @@ void CPU::_JMP_RM32(Instruction& insn)
 void CPU::_JMP_FAR_mem16(Instruction& insn)
 {
     WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
-    jump16(ptr[1], ptr[0]);
+    jump16(ptr[1], ptr[0], JumpType::JMP);
 }
 
 void CPU::_JMP_FAR_mem32(Instruction& insn)
 {
     WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
-    jump32(ptr[2], makeDWORD(ptr[1], ptr[0]));
+    jump32(ptr[2], makeDWORD(ptr[1], ptr[0]), JumpType::JMP);
 }
 
 ALWAYS_INLINE bool CPU::evaluateCondition(BYTE cc) const
@@ -154,14 +154,14 @@ void CPU::_CALL_imm16_imm16(Instruction& insn)
 {
     push16(getCS());
     pushInstructionPointer();
-    jump16(insn.imm16_1(), insn.imm16_2());
+    jump16(insn.imm16_1(), insn.imm16_2(), JumpType::CALL);
 }
 
 void CPU::_CALL_imm16_imm32(Instruction& insn)
 {
     push16(getCS());
     pushInstructionPointer();
-    jump32(insn.imm16_1(), insn.imm32_2());
+    jump32(insn.imm16_1(), insn.imm32_2(), JumpType::CALL);
 }
 
 void CPU::_CALL_FAR_mem16(Instruction& insn)
@@ -169,7 +169,7 @@ void CPU::_CALL_FAR_mem16(Instruction& insn)
     WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
     push16(getCS());
     pushInstructionPointer();
-    jump16(ptr[1], ptr[0]);
+    jump16(ptr[1], ptr[0], JumpType::CALL);
 }
 
 void CPU::_CALL_FAR_mem32(Instruction&)
@@ -213,10 +213,10 @@ void CPU::_RETF(Instruction&)
 {
     if (o32()) {
         DWORD nip = pop32();
-        jump32(pop16(), nip);
+        jump32(pop16(), nip, JumpType::RETF);
     } else {
         WORD nip = pop16();
-        jump16(pop16(), nip);
+        jump16(pop16(), nip, JumpType::RETF);
     }
 }
 
@@ -224,11 +224,11 @@ void CPU::_RETF_imm16(Instruction& insn)
 {
     if (o32()) {
         DWORD nip = pop32();
-        jump32(pop16(), nip);
+        jump32(pop16(), nip, JumpType::RETF);
         regs.D.ESP += insn.imm16();
     } else {
         WORD nip = pop16();
-        jump16(pop16(), nip);
+        jump16(pop16(), nip, JumpType::RETF);
         regs.W.SP += insn.imm16();
     }
 }

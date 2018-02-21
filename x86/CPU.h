@@ -62,6 +62,8 @@ struct WatchedAddress {
     QWORD lastSeenValue { neverSeen };
 };
 
+enum class JumpType { Internal, IRET, RETF, INT, CALL, JMP };
+
 struct TSS {
         WORD backlink, __blh;
         DWORD esp0;
@@ -321,8 +323,8 @@ public:
     WORD getBaseIP() const { return m_baseEIP & 0xFFFF; }
     DWORD getBaseEIP() const { return m_baseEIP; }
 
-    void jump32(WORD segment, DWORD offset);
-    void jump16(WORD segment, WORD offset);
+    void jump32(WORD segment, DWORD offset, JumpType);
+    void jump16(WORD segment, WORD offset, JumpType);
     void jumpRelative8(SIGNED_BYTE displacement);
     void jumpRelative16(SIGNED_WORD displacement);
     void jumpRelative32(SIGNED_DWORD displacement);
@@ -1055,9 +1057,11 @@ private:
     void flushCommandQueue();
 
     void setLDT(WORD segment);
-    void taskSwitch(WORD task);
-    void taskSwitch(TSSDescriptor&);
+    void taskSwitch(WORD task, JumpType);
+    void taskSwitch(TSSDescriptor&, JumpType);
     TSS* currentTSS();
+
+    void writeToGDT(Descriptor&);
 
     void dumpSelector(const char* segmentRegisterName, SegmentRegisterIndex);
     void syncSegmentRegister(SegmentRegisterIndex);

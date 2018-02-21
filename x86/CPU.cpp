@@ -387,9 +387,9 @@ void CPU::reset()
     setGS(0);
 
     if (m_isForAutotest)
-        jump32(machine().settings().entryCS(), machine().settings().entryIP());
+        jump32(machine().settings().entryCS(), machine().settings().entryIP(), JumpType::Internal);
     else
-        jump32(0xF000, 0x00000000);
+        jump32(0xF000, 0x00000000, JumpType::Internal);
 
     setFlags(0x0200);
 
@@ -480,7 +480,7 @@ void CPU::mainLoop()
         if (m_shouldSoftReboot) {
             setA20Enabled(false);
             setControlRegister(0, 0);
-            jump32(0xF000, 0x0);
+            jump32(0xF000, 0x0, JumpType::Internal);
             m_shouldSoftReboot = false;
             continue;
         }
@@ -578,7 +578,19 @@ void CPU::jumpAbsolute32(DWORD address)
     this->EIP = address;
 }
 
-void CPU::jump32(WORD segment, DWORD offset)
+static const char* toString(JumpType type)
+{
+    switch (type) {
+    case JumpType::CALL: return "CALL";
+    case JumpType::RETF: return "RETF";
+    case JumpType::IRET: return "IRET";
+    case JumpType::INT: return "INT";
+    case JumpType::JMP: return "JMP";
+    case JumpType::Internal: return "Internal";
+    }
+}
+
+void CPU::jump32(WORD segment, DWORD offset, JumpType type)
 {
     //vlog(LogCPU, "[PE=%u] Far jump to %04X:%08X", getPE(), segment, offset);
 
@@ -588,6 +600,7 @@ void CPU::jump32(WORD segment, DWORD offset)
         auto& sys = descriptor.asSystemDescriptor();
 
         vlog(LogCPU, "Jump to %04x:%08x hit system descriptor type %s (%x)", segment, offset, sys.typeName(), (unsigned)sys.type());
+        dumpDescriptor(descriptor);
         if (sys.isGate()) {
             auto& gate = sys.asGate();
             vlog(LogCPU, "Gate (%s) to %04x:%08x (count=%u)", gate.typeName(), gate.selector(), gate.offset(), gate.parameterCount());
@@ -600,8 +613,8 @@ void CPU::jump32(WORD segment, DWORD offset)
 
         if (sys.isTSS()) {
             auto& tssDescriptor = sys.asTSSDescriptor();
-            vlog(LogCPU, "JMP to TSS descriptor (%s) -> %08x", tssDescriptor.typeName(), tssDescriptor.base());
-            taskSwitch(tssDescriptor);
+            vlog(LogCPU, "%s to TSS descriptor (%s) -> %08x", toString(type), tssDescriptor.typeName(), tssDescriptor.base());
+            taskSwitch(tssDescriptor, type);
             return;
         }
 
@@ -612,9 +625,9 @@ void CPU::jump32(WORD segment, DWORD offset)
     this->EIP = offset;
 }
 
-void CPU::jump16(WORD segment, WORD offset)
+void CPU::jump16(WORD segment, WORD offset, JumpType type)
 {
-    jump32(segment, offset);
+    jump32(segment, offset, type);
 }
 
 void CPU::_UNSUPP(Instruction& insn)
@@ -1194,9 +1207,10 @@ DWORD CPU::readMemory32(SegmentRegisterIndex segment, DWORD offset) { return rea
 template<typename T>
 void CPU::writeMemory(DWORD address, T value)
 {
-    ASSERT(!getPE());
     address &= a20Mask();
-
+    if (getPG()) {
+        address = translateAddress(address);
+    }
     if (options.memdebug || shouldLogMemoryWrite(address)) {
         if (options.novlog)
             printf("%04X:%08X: %zu-bit write [A20=%s] 0x%08X, value: %08X\n", getBaseCS(), getBaseEIP(), sizeof(T) * 8, isA20Enabled() ? "on" : "off", address, value);
@@ -1290,12 +1304,13 @@ void CPU::updateStackSize()
     bool oldS32 = m_stackSize32;
 
     auto& ssDescriptor = m_descriptor[(int)SegmentRegisterIndex::SS];
-    dumpDescriptor(ssDescriptor);
-
     m_stackSize32 = ssDescriptor.D();
+    ASSERT(ssDescriptor.asDataSegmentDescriptor().expandDown());
 
-    if (oldS32 != m_stackSize32)
+    if (oldS32 != m_stackSize32) {
         vlog(LogCPU, "updateStackSize PE=%u S:%u (newSS: %04x)", getPE(), s16() ? 16 : 32, getSS());
+        dumpDescriptor(ssDescriptor);
+    }
 }
 
 void CPU::updateCodeSegmentCache()

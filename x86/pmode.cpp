@@ -225,6 +225,12 @@ void CPU::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
     if (!descriptor.isSegmentDescriptor())
         dumpDescriptor(descriptor);
     ASSERT(descriptor.isSegmentDescriptor());
+
+    if (!getPE() || segmentRegisterIndex == SegmentRegisterIndex::SS) {
+        // HACK: In PE=0 mode, mark SS descriptors as "expand down"
+        descriptor.m_type |= 0x4;
+    }
+
     descriptorCache = descriptor.asSegmentDescriptor();
     if (options.pedebug) {
         if (getPE()) {
@@ -249,9 +255,12 @@ void CPU::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
     }
 }
 
-void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor)
+void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
 {
     ASSERT(incomingTSSDescriptor.is32Bit());
+    //ASSERT(incomingTSSDescriptor.isAvailable());
+
+    TSSDescriptor outgoingTSSDescriptor = getDescriptor(TR.segment).asTSSDescriptor();
 
     TSS& outgoingTSS = *reinterpret_cast<TSS*>(memoryPointer(TR.base));
 
@@ -263,7 +272,20 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor)
     outgoingTSS.ESP = getESP();
     outgoingTSS.ESI = getESI();
     outgoingTSS.EDI = getEDI();
+
+    if (source == JumpType::JMP || source == JumpType::IRET) {
+        outgoingTSSDescriptor.setAvailable();
+        writeToGDT(outgoingTSSDescriptor);
+    }
+
+    DWORD outgoingEFlags = getEFlags();
+
+    if (incomingTSSDescriptor.isBusy()) {
+        outgoingEFlags &= ~(1 << 14); // Clear NT flag in outgoing task.
+    }
+
     outgoingTSS.EFlags = getEFlags();
+
     outgoingTSS.CS = getCS();
     outgoingTSS.DS = getDS();
     outgoingTSS.ES = getES();
@@ -281,44 +303,62 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor)
     if (getPG())
         CR3 = incomingTSS.CR3;
 
+    setLDT(incomingTSS.LDT);
+
     setES(incomingTSS.ES);
     setCS(incomingTSS.CS);
     setDS(incomingTSS.DS);
     setFS(incomingTSS.FS);
     setGS(incomingTSS.GS);
     setSS(incomingTSS.SS);
-    EIP = incomingTSS.EIP;
+    setEIP(incomingTSS.EIP);
 
-    setLDT(incomingTSS.LDT);
+    DWORD incomingEFlags = incomingTSS.EFlags;
+    if (source == JumpType::CALL || source == JumpType::INT) {
+        incomingEFlags |= (1 << 14);  // Set NT in incoming task.
+    }
+    setEFlags(incomingEFlags);
 
-    setEFlags(incomingTSS.EFlags);
-    ASSERT(!getNT()); // I think we shouldn't be able to unnest more than once.
+    setEAX(incomingTSS.EAX);
+    setEBX(incomingTSS.EBX);
+    setECX(incomingTSS.ECX);
+    setEDX(incomingTSS.EDX);
+    setEBP(incomingTSS.EBP);
+    setESP(incomingTSS.ESP);
+    setESI(incomingTSS.ESI);
+    setEDI(incomingTSS.EDI);
 
-    regs.D.EAX = incomingTSS.EAX;
-    regs.D.EBX = incomingTSS.EBX;
-    regs.D.ECX = incomingTSS.ECX;
-    regs.D.EDX = incomingTSS.EDX;
-    regs.D.EBP = incomingTSS.EBP;
-    regs.D.ESP = incomingTSS.ESP;
-    regs.D.ESI = incomingTSS.ESI;
-    regs.D.EDI = incomingTSS.EDI;
-
-    incomingTSS.backlink = TR.segment;
+    //ASSERT(incomingTSS.backlink != TR.segment);
+    if (source == JumpType::CALL || source == JumpType::INT) {
+        incomingTSS.backlink = TR.segment;
+    }
 
     TR.segment = incomingTSSDescriptor.index();
     TR.base = incomingTSSDescriptor.base();
     TR.limit = incomingTSSDescriptor.limit();
 
+    if (source != JumpType::IRET) {
+        incomingTSSDescriptor.setBusy();
+        writeToGDT(incomingTSSDescriptor);
+    }
+
+#if 0
+    vlog(LogCPU, "Incoming:");
+    dumpDescriptor(getDescriptor(incomingTSSDescriptor.index()));
+    vlog(LogCPU, "Outgoing:");
+    dumpDescriptor(getDescriptor(outgoingTSSDescriptor.index()));
+#endif
+
     CR0 |= 0x04; // TS (Task Switched)
 }
 
-void CPU::taskSwitch(WORD task)
+void CPU::taskSwitch(WORD task, JumpType source)
 {
     // FIXME: This should mark the outgoing task as non-busy.
     auto descriptor = getDescriptor(task);
     vlog(LogCPU, "taskSwitch with selector:%04x, type:%1x", task, descriptor.type());
     auto& tssDescriptor = descriptor.asTSSDescriptor();
-    taskSwitch(tssDescriptor);
+    taskSwitch(tssDescriptor, source);
 }
 
 TSS* CPU::currentTSS()

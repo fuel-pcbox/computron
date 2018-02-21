@@ -163,6 +163,12 @@ public:
     DWORD base() const { return m_segmentBase; }
     DWORD limit() const { return m_segmentLimit; }
 
+    void setBusy();
+    void setAvailable();
+
+    bool isAvailable() const { return type() == AvailableTSS_16bit || type() == AvailableTSS_32bit; }
+    bool isBusy() const { return type() == BusyTSS_16bit || type() == BusyTSS_32bit; }
+
     bool is32Bit() const { return type() == AvailableTSS_32bit || type() == BusyTSS_32bit; }
 };
 

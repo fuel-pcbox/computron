@@ -128,3 +128,22 @@ const char* SystemDescriptor::typeName() const
     default: return "(Reserved)";
     }
 }
+
+void TSSDescriptor::setBusy()
+{
+    m_type |= 2;
+    m_high |= 0x200;
+}
+
+void TSSDescriptor::setAvailable()
+{
+    m_type &= ~2;
+    m_high &= ~0x200;
+}
+
+void CPU::writeToGDT(Descriptor& descriptor)
+{
+    ASSERT(descriptor.isGlobal());
+    writeMemory32(GDTR.base + descriptor.index() + 4, descriptor.m_high);
+    writeMemory32(GDTR.base + descriptor.index(), descriptor.m_low);
+}

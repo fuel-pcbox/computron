@@ -55,7 +55,7 @@ void CPU::_IRET(Instruction&)
             auto* tss = currentTSS();
             ASSERT(tss);
             vlog(LogCPU, "IRET with NT=1 switching tasks. Inner TSS @ %08X -> Outer TSS sel %04X...", TR.base, tss->backlink);
-            taskSwitch(tss->backlink);
+            taskSwitch(tss->backlink, JumpType::IRET);
             return;
         }
 
@@ -63,12 +63,12 @@ void CPU::_IRET(Instruction&)
     if (o16()) {
         WORD nip = pop16();
         WORD ncs = pop16();
-        jump16(ncs, nip);
+        jump16(ncs, nip, JumpType::IRET);
         setFlags(pop16());
     } else {
         DWORD nip = pop32();
         WORD ncs = pop32();
-        jump32(ncs, nip);
+        jump32(ncs, nip, JumpType::IRET);
         setFlags(pop32());
     }
 }
@@ -123,7 +123,7 @@ void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
         push16(getCS());
         push16(getIP());
 
-        jump16(vector.segment, vector.offset);
+        jump16(vector.segment, vector.offset, JumpType::INT);
         return;
     }
     push32(getEFlags());
@@ -133,7 +133,7 @@ void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
     push32(getCS());
     push32(getEIP());
 
-    jump32(vector.segment, vector.offset);
+    jump32(vector.segment, vector.offset, JumpType::INT);
 }
 
 FarPointer CPU::getInterruptVector16(int isr)
