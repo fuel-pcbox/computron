@@ -350,6 +350,12 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
 #endif
 
     CR0 |= 0x04; // TS (Task Switched)
+
+    if (getEIP() > cachedDescriptor(SegmentRegisterIndex::CS).effectiveLimit()) {
+        vlog(LogCPU, "Task switch to EIP:%08x outside CS:%04x limit");
+        dumpDescriptor(cachedDescriptor(SegmentRegisterIndex::CS));
+        GP(0);
+    }
 }
 
 void CPU::taskSwitch(WORD task, JumpType source)
