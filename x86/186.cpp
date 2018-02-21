@@ -49,6 +49,7 @@ void CPU::_ENTER(Instruction& insn)
 {
     ASSERT(o16());
     ASSERT(a16());
+    ASSERT(s16());
 
     WORD size = insn.imm16_2();
     BYTE nestingLevel = insn.imm8_1() & 31;
@@ -68,11 +69,15 @@ void CPU::_ENTER(Instruction& insn)
 
 void CPU::_LEAVE(Instruction&)
 {
-    if (o16()) {
+    if (s16()) {
         setSP(getBP());
-        setBP(pop16());
     } else {
         setESP(getEBP());
+    }
+
+    if (o16()) {
+        setBP(pop16());
+    } else {
         setEBP(pop32());
     }
 }
