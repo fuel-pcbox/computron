@@ -908,14 +908,6 @@ void CPU::_LDS_reg32_mem32(Instruction&)
     hard_exit(0);
 }
 
-void CPU::pushInstructionPointer()
-{
-    if (o32())
-        push32(getEIP());
-    else
-        push16(getIP());
-}
-
 void CPU::_LES_reg16_mem16(Instruction& insn)
 {
     ASSERT(a16());

@@ -27,26 +27,23 @@
 
 void CPU::_JCXZ_imm8(Instruction& insn)
 {
-    SIGNED_BYTE imm = insn.imm8();
     bool shouldJump;
     if (a16())
         shouldJump = getCX() == 0;
     else
         shouldJump = getECX() == 0;
     if (shouldJump)
-        jumpRelative8(imm);
+        jumpRelative8(insn.imm8());
 }
 
 void CPU::_JMP_imm16(Instruction& insn)
 {
-    SIGNED_WORD imm = insn.imm16();
-    jumpRelative16(imm);
+    jumpRelative16(insn.imm16());
 }
 
 void CPU::_JMP_imm32(Instruction& insn)
 {
-    SIGNED_DWORD imm = insn.imm32();
-    jumpRelative32(imm);
+    jumpRelative32(insn.imm32());
 }
 
 void CPU::_JMP_imm16_imm16(Instruction& insn)
@@ -65,8 +62,7 @@ void CPU::_JMP_imm16_imm32(Instruction& insn)
 
 void CPU::_JMP_short_imm8(Instruction& insn)
 {
-    SIGNED_BYTE imm = insn.imm8();
-    jumpRelative8(imm);
+    jumpRelative8(insn.imm8());
 }
 
 void CPU::_JMP_RM16(Instruction& insn)
@@ -138,29 +134,27 @@ void CPU::_Jcc_NEAR_imm(Instruction& insn)
 
 void CPU::_CALL_imm16(Instruction& insn)
 {
-    SIGNED_WORD imm = insn.imm16();
-    pushInstructionPointer();
-    jumpRelative16(imm);
+    push16(getIP());
+    jumpRelative16(insn.imm16());
 }
 
 void CPU::_CALL_imm32(Instruction& insn)
 {
-    SIGNED_DWORD imm = insn.imm32();
-    pushInstructionPointer();
-    jumpRelative32(imm);
+    push32(getEIP());
+    jumpRelative32(insn.imm32());
 }
 
 void CPU::_CALL_imm16_imm16(Instruction& insn)
 {
     push16(getCS());
-    pushInstructionPointer();
+    push16(getIP());
     jump16(insn.imm16_1(), insn.imm16_2(), JumpType::CALL);
 }
 
 void CPU::_CALL_imm16_imm32(Instruction& insn)
 {
-    push16(getCS());
-    pushInstructionPointer();
+    push32(getCS());
+    push32(getEIP());
     jump32(insn.imm16_1(), insn.imm32_2(), JumpType::CALL);
 }
 
@@ -168,7 +162,7 @@ void CPU::_CALL_FAR_mem16(Instruction& insn)
 {
     WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
     push16(getCS());
-    pushInstructionPointer();
+    push16(getIP());
     jump16(ptr[1], ptr[0], JumpType::CALL);
 }
 
@@ -180,13 +174,13 @@ void CPU::_CALL_FAR_mem32(Instruction&)
 
 void CPU::_CALL_RM16(Instruction& insn)
 {
-    pushInstructionPointer();
+    push16(getIP());
     jumpAbsolute16(insn.modrm().read16());
 }
 
 void CPU::_CALL_RM32(Instruction& insn)
 {
-    pushInstructionPointer();
+    push32(getEIP());
     jumpAbsolute32(insn.modrm().read32());
 }
 
@@ -200,23 +194,26 @@ void CPU::_RET(Instruction&)
 
 void CPU::_RET_imm16(Instruction& insn)
 {
-    if (o32()) {
+    if (o32())
         jumpAbsolute32(pop32());
-        regs.D.ESP += insn.imm16();
-    } else {
+    else
         jumpAbsolute16(pop16());
+    if (s32())
+        regs.D.ESP += insn.imm16();
+    else
         regs.W.SP += insn.imm16();
-    }
 }
 
 void CPU::_RETF(Instruction&)
 {
     if (o32()) {
         DWORD nip = pop32();
-        jump32(pop16(), nip, JumpType::RETF);
+        WORD ncs = pop32();
+        jump32(ncs, nip, JumpType::RETF);
     } else {
         WORD nip = pop16();
-        jump16(pop16(), nip, JumpType::RETF);
+        WORD ncs = pop16();
+        jump16(ncs, nip, JumpType::RETF);
     }
 }
 
@@ -224,11 +221,15 @@ void CPU::_RETF_imm16(Instruction& insn)
 {
     if (o32()) {
         DWORD nip = pop32();
-        jump32(pop16(), nip, JumpType::RETF);
-        regs.D.ESP += insn.imm16();
+        WORD ncs = pop32();
+        jump32(ncs, nip, JumpType::RETF);
     } else {
         WORD nip = pop16();
-        jump16(pop16(), nip, JumpType::RETF);
+        WORD ncs = pop16();
+        jump16(ncs, nip, JumpType::RETF);
+    }
+    if (s32())
+        regs.D.ESP += insn.imm16();
+    else
         regs.W.SP += insn.imm16();
     }
-}

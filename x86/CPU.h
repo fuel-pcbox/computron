@@ -350,8 +350,6 @@ public:
     WORD fetchOpcodeWord();
     DWORD fetchOpcodeDWord();
 
-    void pushInstructionPointer();
-
     void push32(DWORD value);
     DWORD pop32();
 
