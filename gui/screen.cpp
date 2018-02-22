@@ -755,6 +755,12 @@ QString Screen::keyNameFromKeyEvent(const QKeyEvent* event) const
 
 void Screen::keyPressEvent(QKeyEvent* event)
 {
+    // FIXME: Respect "typematic" mode of keyboard.
+    if (event->isAutoRepeat()) {
+        vlog(LogScreen, "Ignoring auto-repeat KeyPress");
+        return;
+    }
+
     QString keyName = keyNameFromKeyEvent(event);
 
     if (keyName.isEmpty()) {
@@ -798,6 +804,12 @@ void Screen::keyPressEvent(QKeyEvent* event)
 
 void Screen::keyReleaseEvent(QKeyEvent* event)
 {
+    // FIXME: Respect "typematic" mode of keyboard.
+    if (event->isAutoRepeat()) {
+        vlog(LogScreen, "Ignoring auto-repeat KeyRelease");
+        return;
+    }
+
     if (!machine().keyboard().isEnabled()) {
         vlog(LogScreen, "KeyRelease event while keyboard disabled");
         return;
