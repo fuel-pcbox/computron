@@ -477,6 +477,7 @@ public:
     void dumpMemory(SegmentDescriptor&, DWORD offset, int rows);
     int dumpDisassembled(SegmentDescriptor&, DWORD offset);
 
+    void dumpTSS(TSS&);
 
 #ifdef CT_TRACE
     // Dumps registers (used by --trace)

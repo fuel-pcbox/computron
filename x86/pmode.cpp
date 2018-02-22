@@ -27,6 +27,7 @@
 #include "debugger.h"
 
 //#define DEBUG_IVT
+//#define DEBUG_TASK_SWITCH
 
 void CPU::_SGDT(Instruction& insn)
 {
@@ -300,6 +301,13 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
 
     TSS& incomingTSS = *reinterpret_cast<TSS*>(memoryPointer(incomingTSSDescriptor.base()));
 
+#ifdef DEBUG_TASK_SWITCH
+    vlog(LogCPU, "Outgoing TSS:");
+    dumpTSS(outgoingTSS);
+    vlog(LogCPU, "Incoming TSS:");
+    dumpTSS(incomingTSS);
+#endif
+
     if (getPG())
         CR3 = incomingTSS.CR3;
 
@@ -356,6 +364,15 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
         dumpDescriptor(cachedDescriptor(SegmentRegisterIndex::CS));
         GP(0);
     }
+}
+
+void CPU::dumpTSS(TSS& tss)
+{
+    vlog(LogCPU, "eax=%08x ebx=%08x ecx=%08x edx=%08x", tss.EAX, tss.EBX, tss.ECX, tss.EDX);
+    vlog(LogCPU, "esi=%08x edi=%08x ebp=%08x esp=%08x", tss.ESI, tss.EDI, tss.EBP, tss.ESP);
+    vlog(LogCPU, "ldt=%04x backlink=%04x cr3=%08x", tss.LDT, tss.backlink, tss.CR3);
+    vlog(LogCPU, "ds=%04x ss=%04x es=%04x fs=%04x gs=%04x", tss.DS, tss.SS, tss.ES, tss.FS, tss.GS);
+    vlog(LogCPU, "cs=%04x eip=%08x eflags=%08x", tss.CS, tss.EIP, tss.EFlags);
 }
 
 void CPU::taskSwitch(WORD task, JumpType source)
