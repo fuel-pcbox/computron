@@ -6,5 +6,6 @@
         <file>icons/toolbar-stop.svg</file>
         <file>icons/toolbar-floppy.svg</file>
         <file>gui/statewidget.ui</file>
+        <file>icons/computron.ico</file>
     </qresource>
 </RCC>

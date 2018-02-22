@@ -61,8 +61,10 @@ int main(int argc, char** argv)
         }
     }
 
-    if (!app)
+    if (!app) {
         app = make<QApplication>(argc, argv);
+        QApplication::setWindowIcon(QIcon(":/icons/computron.ico"));
+    }
 
     parseArguments(app->arguments());
 
