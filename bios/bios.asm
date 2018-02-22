@@ -830,23 +830,45 @@ vga_character_generator_routine:
 
 vga_select_active_display_page:
 
+    pusha
     push    ds
-    push    bx
-    push    si
 
     xor     bx, bx
     mov     ds, bx
 
     mov     [BDA_CURRENT_VIDEO_PAGE], al
 
+    cmp     [BDA_CURRENT_VIDEO_MODE], byte 0x0d
+    je      .updateStartAddressForMode0D
+
     mov     si, msg_page_changed
     call    ct_console_write
+    jmp     .end
 
-    pop     si
-    pop     bx
-    pop     ds
+.updateStartAddressForMode0D:
+    xor     ah, ah
+    shl     ax, 13
+    mov     bx, ax
+
+    mov     dx, 0x3d4
+    mov     al, 0x0d
+    out     dx, al
+    inc     dx
+    mov     al, bl
+    out     dx, al
+
+    dec     dx
+    mov     al, 0x0c
+    out     dx, al
+    inc     dx
+    mov     al, bh
+    out     dx, al
+
+    jmp     .end
 
 .end:
+    pop     ds
+    popa
     iret
 
 ; Interrupt 10, 10

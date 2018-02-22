@@ -303,6 +303,12 @@ void Screen::renderMode0D(QImage &target)
     const BYTE *p2 = machine().vgaMemory().plane(2);
     const BYTE *p3 = machine().vgaMemory().plane(3);
 
+    WORD startAddress = machine().vga().startAddress();
+    p0 += startAddress;
+    p1 += startAddress;
+    p2 += startAddress;
+    p3 += startAddress;
+
     int offset = 0;
 
     for (int y = 0; y < 200; ++y) {
