@@ -31,7 +31,7 @@
 #include <QElapsedTimer>
 #include <QThread>
 
-#define PIT_DEBUG
+//#define PIT_DEBUG
 
 static const double baseFrequency = 1193.1816666; // 1.193182 MHz
 
@@ -275,7 +275,7 @@ void PIT::modeControl(int timerIndex, BYTE data)
         break;
     }
 
-#if 1
+#ifdef PIT_DEBUG
     vlog(LogTimer, "Setting mode for counter %u { dec: %s, mode: %u, fmt: %02x }",
         counterIndex,
         (counter.decrementMode == DecrementBCD) ? "BCD" : "binary",
