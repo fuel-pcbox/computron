@@ -117,7 +117,7 @@ MachineWidget::MachineWidget(Machine& m)
     connect(d->stopMachine, SIGNAL(triggered(bool)), SLOT(onStopTriggered()));
 
     QObject::connect(&d->syncTimer, SIGNAL(timeout()), &screen(), SLOT(flushKeyBuffer()));
-    d->syncTimer.start(50);
+    d->syncTimer.start(10);
 
     QObject::connect(qApp, SIGNAL(aboutToQuit()), &machine(), SLOT(stop()));
 }

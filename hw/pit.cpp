@@ -127,7 +127,7 @@ void PIT::reconfigureTimer(BYTE index)
 
 void PIT::boot()
 {
-    d->timerId = startTimer(10);
+    d->timerId = startTimer(5);
 
     // FIXME: This should be done by the BIOS instead.
     reconfigureTimer(0);
