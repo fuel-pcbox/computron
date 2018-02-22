@@ -56,7 +56,7 @@ public:
 
     QList<WORD> ports() const;
 
-    enum { JunkValue = 0xAA };
+    enum { JunkValue = 0xff };
 
 protected:
     enum ListenMask {
