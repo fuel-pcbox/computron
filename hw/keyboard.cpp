@@ -29,6 +29,8 @@
 #include "pic.h"
 #include "debug.h"
 
+//#define KBD_DEBUG
+
 #define ATKBD_PARITY_ERROR  0x80
 #define ATKBD_TIMEOUT       0x40
 #define ATKBD_BUFFER_FULL   0x20
@@ -90,24 +92,24 @@ void Keyboard::reset()
 BYTE Keyboard::in8(WORD port)
 {
     extern BYTE kbd_pop_raw();
+    BYTE data = 0;
 
     if (port == 0x60) {
         if (m_hasCommand && m_command <= 0x3F) {
             BYTE ramIndex = m_command & 0x3F;
             m_hasCommand = false;
             vlog(LogKeyboard, "Reading 8042 RAM [%02] = %02X", ramIndex, m_ram[ramIndex]);
-            return m_ram[ramIndex];
+            data = m_ram[ramIndex];
+        } else if (m_lastWasCommand && m_command == CMD_SET_LEDS) {
+            data = 0xFA; // ACK
+            m_lastWasCommand = false;
+            m_command = 0;
+        } else {
+            BYTE key = kbd_pop_raw();
+            vlog(LogKeyboard, "keyboard_data = %02X", key);
+            data = key;
         }
-        if (m_lastWasCommand && m_command == CMD_SET_LEDS) {
-            return 0xFA; // ACK
-        }
-
-        BYTE key = kbd_pop_raw();
-        vlog(LogKeyboard, "keyboard_data = %02X", key);
-        return key;
-    }
-
-    if (port == 0x64) {
+    } else if (port == 0x64) {
         // POST completed successfully.
         BYTE status = (m_ram[0] & ATKBD_SYSTEM_FLAG);
         status |= m_lastWasCommand ? ATKBD_CMD_DATA : 0;
@@ -116,23 +118,28 @@ BYTE Keyboard::in8(WORD port)
         if (isEnabled())
             status |= ATKBD_UNLOCKED;
         //vlog(LogKeyboard, "Keyboard status queried (%02X)", status);
-        return status;
-    }
-
-    if (port == 0x61) {
+        data = status;
+    } else if (port == 0x61) {
         // HACK: This should be implemented properly in the 8254 emulation.
         if (m_systemControlPortData & 0x10)
             m_systemControlPortData &= ~0x10;
         else
             m_systemControlPortData |= 0x10;
-        return m_systemControlPortData;
+        data = m_systemControlPortData;
     }
 
-    return IODevice::in8(port);
+#ifdef KBD_DEBUG
+    vlog(LogKeyboard, " in8 %03x = %02x", port, data);
+#endif
+    return data;
 }
 
 void Keyboard::out8(WORD port, BYTE data)
 {
+#ifdef KBD_DEBUG
+    vlog(LogKeyboard, "out8 %03x, %02x", port, data);
+#endif
+
     if (port == 0x61) {
         //vlog(LogKeyboard, "System control port <- %02X", data);
         m_systemControlPortData = data;
