@@ -599,7 +599,7 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type)
     if (descriptor.isSystemDescriptor()) {
         auto& sys = descriptor.asSystemDescriptor();
 
-        vlog(LogCPU, "Jump to %04x:%08x hit system descriptor type %s (%x)", segment, offset, sys.typeName(), (unsigned)sys.type());
+        vlog(LogCPU, "%s to %04x:%08x hit system descriptor type %s (%x)", toString(type), segment, offset, sys.typeName(), (unsigned)sys.type());
         dumpDescriptor(descriptor);
         if (sys.isGate()) {
             auto& gate = sys.asGate();
