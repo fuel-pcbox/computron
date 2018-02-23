@@ -168,6 +168,7 @@ public:
     void setZF(bool value) { this->ZF = value; }
     void setVIF(bool value) { this->VIF = value; }
     void setNT(bool value) { this->NT = value; }
+    void setRF(bool value) { this->RF = value; }
     void setIOPL(unsigned int value) { this->IOPL = value; }
 
     bool getIF() const { return this->IF; }

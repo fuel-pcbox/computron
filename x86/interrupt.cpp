@@ -133,19 +133,21 @@ void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
     }
 #endif
 
-    if (o16()) {
+    if (o16())
         push16(getFlags());
-        if (!isTrap)
-            setIF(0);
-        setTF(0);
-        jump16(vector.segment, vector.offset, JumpType::INT);
-        return;
-    }
-    push32(getEFlags());
+    else
+        push32(getEFlags());
+
     if (!isTrap)
         setIF(0);
     setTF(0);
-    jump32(vector.segment, vector.offset, JumpType::INT);
+    setRF(0);
+    setNT(0);
+
+    if (o16())
+        jump16(vector.segment, vector.offset, JumpType::INT);
+    else
+        jump32(vector.segment, vector.offset, JumpType::INT);
 }
 
 FarPointer CPU::getInterruptVector16(int isr)
