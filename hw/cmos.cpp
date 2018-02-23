@@ -115,19 +115,24 @@ BYTE CMOS::in8(WORD)
     updateClock();
 
     BYTE value = m_ram[m_registerIndex];
-
 #ifdef CMOS_DEBUG
-    vlog(LogCMOS, "Read register %02X (%02X)", m_registerIndex, value);
+    vlog(LogCMOS, "Read register %02x (%02x)", m_registerIndex, value);
 #endif
     return value;
 }
 
-void CMOS::out8(WORD, BYTE data)
+void CMOS::out8(WORD port, BYTE data)
 {
+    if (port == 0x70) {
+        m_registerIndex = data & 0x7f;
 #ifdef CMOS_DEBUG
-    vlog(LogCMOS, "Select register %02X", data);
+        vlog(LogCMOS, "Select register %02x", m_registerIndex);
 #endif
-    m_registerIndex = data;
+        return;
+    }
+
+    vlog(LogCMOS, "Write register %02x <- %02x", m_registerIndex, data);
+    m_ram[m_registerIndex] = data;
 }
 
 void CMOS::set(RegisterIndex index, BYTE data)
