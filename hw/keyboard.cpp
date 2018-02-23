@@ -106,7 +106,9 @@ BYTE Keyboard::in8(WORD port)
             m_command = 0;
         } else {
             BYTE key = kbd_pop_raw();
+#ifdef KBD_DEBUG
             vlog(LogKeyboard, "keyboard_data = %02X", key);
+#endif
             data = key;
         }
     } else if (port == 0x64) {

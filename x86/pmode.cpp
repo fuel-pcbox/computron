@@ -26,8 +26,9 @@
 #include "CPU.h"
 #include "debugger.h"
 
+//#define DEBUG_GDT
+//#define DEBUG_LDT
 //#define DEBUG_IVT
-//#define DEBUG_TASK_SWITCH
 
 void CPU::_SGDT(Instruction& insn)
 {
@@ -52,11 +53,6 @@ void CPU::_SIDT(Instruction& insn)
 void CPU::_SLDT_RM16(Instruction& insn)
 {
     insn.modrm().writeClearing16(LDTR.segment, o32());
-}
-
-void CPU::_STR_RM16(Instruction& insn)
-{
-    insn.modrm().writeClearing16(TR.segment, o32());
 }
 
 void CPU::setLDT(WORD segment)
@@ -85,22 +81,12 @@ void CPU::setLDT(WORD segment)
 void CPU::_LLDT_RM16(Instruction& insn)
 {
     setLDT(insn.modrm().read16());
+
+#ifdef DEBUG_LDT
     for (unsigned i = 0; i < LDTR.limit; i += 8) {
         dumpSegment(i | 4);
     }
-}
-
-void CPU::_LTR_RM16(Instruction& insn)
-{
-    WORD segment = insn.modrm().read16();
-    auto descriptor = getDescriptor(segment);
-    ASSERT(descriptor.isGlobal()); // FIXME: Generate exception?
-    ASSERT(descriptor.isTSS());
-    auto& tssDescriptor = descriptor.asTSSDescriptor();
-    TR.segment = segment;
-    TR.base = tssDescriptor.base();
-    TR.limit = tssDescriptor.limit();
-    vlog(LogAlert, "LTR { segment: %04X => base:%08X, limit:%08X }", TR.segment, TR.base, TR.limit);
+#endif
 }
 
 void CPU::_LGDT(Instruction& insn)
@@ -112,9 +98,11 @@ void CPU::_LGDT(Instruction& insn)
     GDTR.limit = ptr.segment;
     vlog(LogAlert, "LGDT { base:%08X, limit:%08X }", GDTR.base, GDTR.limit);
 
+#ifdef DEBUG_GDT
     for (unsigned i = 0; i < GDTR.limit; i += 8) {
         dumpSegment(i);
     }
+#endif
 }
 
 void CPU::_LIDT(Instruction& insn)
@@ -187,6 +175,18 @@ void CPU::_LAR_reg32_RM32(Instruction& insn)
     setZF(1);
 }
 
+void CPU::_LSL_reg16_RM16(Instruction& insn)
+{
+    WORD selector = insn.modrm().read16() & 0xffff;
+    auto descriptor = getDescriptor(selector);
+    insn.reg16() = descriptor.asSegmentDescriptor().effectiveLimit();
+}
+
+void CPU::_LSL_reg32_RM32(Instruction&)
+{
+    ASSERT_NOT_REACHED();
+}
+
 const char* toString(SegmentRegisterIndex segment)
 {
     switch (segment) {
@@ -254,139 +254,6 @@ void CPU::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
         updateStackSize();
         break;
     }
-}
-
-void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
-{
-    ASSERT(incomingTSSDescriptor.is32Bit());
-    //ASSERT(incomingTSSDescriptor.isAvailable());
-
-    TSSDescriptor outgoingTSSDescriptor = getDescriptor(TR.segment).asTSSDescriptor();
-
-    TSS& outgoingTSS = *reinterpret_cast<TSS*>(memoryPointer(TR.base));
-
-    outgoingTSS.EAX = getEAX();
-    outgoingTSS.EBX = getEBX();
-    outgoingTSS.ECX = getECX();
-    outgoingTSS.EDX = getEDX();
-    outgoingTSS.EBP = getEBP();
-    outgoingTSS.ESP = getESP();
-    outgoingTSS.ESI = getESI();
-    outgoingTSS.EDI = getEDI();
-
-    if (source == JumpType::JMP || source == JumpType::IRET) {
-        outgoingTSSDescriptor.setAvailable();
-        writeToGDT(outgoingTSSDescriptor);
-    }
-
-    DWORD outgoingEFlags = getEFlags();
-
-    if (incomingTSSDescriptor.isBusy()) {
-        outgoingEFlags &= ~(1 << 14); // Clear NT flag in outgoing task.
-    }
-
-    outgoingTSS.EFlags = getEFlags();
-
-    outgoingTSS.CS = getCS();
-    outgoingTSS.DS = getDS();
-    outgoingTSS.ES = getES();
-    outgoingTSS.FS = getFS();
-    outgoingTSS.GS = getGS();
-    outgoingTSS.SS = getSS();
-    outgoingTSS.LDT = LDTR.segment;
-    outgoingTSS.EIP = EIP;
-
-    if (getPG())
-        outgoingTSS.CR3 = getCR3();
-
-    TSS& incomingTSS = *reinterpret_cast<TSS*>(memoryPointer(incomingTSSDescriptor.base()));
-
-#ifdef DEBUG_TASK_SWITCH
-    vlog(LogCPU, "Outgoing TSS:");
-    dumpTSS(outgoingTSS);
-    vlog(LogCPU, "Incoming TSS:");
-    dumpTSS(incomingTSS);
-#endif
-
-    if (getPG())
-        CR3 = incomingTSS.CR3;
-
-    setLDT(incomingTSS.LDT);
-
-    setES(incomingTSS.ES);
-    setCS(incomingTSS.CS);
-    setDS(incomingTSS.DS);
-    setFS(incomingTSS.FS);
-    setGS(incomingTSS.GS);
-    setSS(incomingTSS.SS);
-    setEIP(incomingTSS.EIP);
-
-    DWORD incomingEFlags = incomingTSS.EFlags;
-    if (source == JumpType::CALL || source == JumpType::INT) {
-        incomingEFlags |= (1 << 14);  // Set NT in incoming task.
-    }
-    setEFlags(incomingEFlags);
-
-    setEAX(incomingTSS.EAX);
-    setEBX(incomingTSS.EBX);
-    setECX(incomingTSS.ECX);
-    setEDX(incomingTSS.EDX);
-    setEBP(incomingTSS.EBP);
-    setESP(incomingTSS.ESP);
-    setESI(incomingTSS.ESI);
-    setEDI(incomingTSS.EDI);
-
-    //ASSERT(incomingTSS.backlink != TR.segment);
-    if (source == JumpType::CALL || source == JumpType::INT) {
-        incomingTSS.backlink = TR.segment;
-    }
-
-    TR.segment = incomingTSSDescriptor.index();
-    TR.base = incomingTSSDescriptor.base();
-    TR.limit = incomingTSSDescriptor.limit();
-
-    if (source != JumpType::IRET) {
-        incomingTSSDescriptor.setBusy();
-        writeToGDT(incomingTSSDescriptor);
-    }
-
-#if 0
-    vlog(LogCPU, "Incoming:");
-    dumpDescriptor(getDescriptor(incomingTSSDescriptor.index()));
-    vlog(LogCPU, "Outgoing:");
-    dumpDescriptor(getDescriptor(outgoingTSSDescriptor.index()));
-#endif
-
-    CR0 |= 0x04; // TS (Task Switched)
-
-    if (getEIP() > cachedDescriptor(SegmentRegisterIndex::CS).effectiveLimit()) {
-        vlog(LogCPU, "Task switch to EIP:%08x outside CS:%04x limit");
-        dumpDescriptor(cachedDescriptor(SegmentRegisterIndex::CS));
-        GP(0);
-    }
-}
-
-void CPU::dumpTSS(TSS& tss)
-{
-    vlog(LogCPU, "eax=%08x ebx=%08x ecx=%08x edx=%08x", tss.EAX, tss.EBX, tss.ECX, tss.EDX);
-    vlog(LogCPU, "esi=%08x edi=%08x ebp=%08x esp=%08x", tss.ESI, tss.EDI, tss.EBP, tss.ESP);
-    vlog(LogCPU, "ldt=%04x backlink=%04x cr3=%08x", tss.LDT, tss.backlink, tss.CR3);
-    vlog(LogCPU, "ds=%04x ss=%04x es=%04x fs=%04x gs=%04x", tss.DS, tss.SS, tss.ES, tss.FS, tss.GS);
-    vlog(LogCPU, "cs=%04x eip=%08x eflags=%08x", tss.CS, tss.EIP, tss.EFlags);
-}
-
-void CPU::taskSwitch(WORD task, JumpType source)
-{
-    // FIXME: This should mark the outgoing task as non-busy.
-    auto descriptor = getDescriptor(task);
-    vlog(LogCPU, "taskSwitch with selector:%04x, type:%1x", task, descriptor.type());
-    auto& tssDescriptor = descriptor.asTSSDescriptor();
-    taskSwitch(tssDescriptor, source);
-}
-
-TSS* CPU::currentTSS()
-{
-    return reinterpret_cast<TSS*>(memoryPointer(TR.base));
 }
 
 void CPU::_VERR_RM16(Instruction& insn)

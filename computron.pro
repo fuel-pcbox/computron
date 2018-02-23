@@ -56,7 +56,8 @@ HEADERS += gui/machinewidget.h \
            include/OwnPtr.h \
            x86/CPU.h \
            x86/Descriptor.h \
-           x86/Instruction.h
+           x86/Instruction.h \
+           x86/Tasking.h
 
 SOURCES += debug.cpp \
            debugger.cpp \
@@ -82,6 +83,7 @@ SOURCES += debug.cpp \
            x86/pmode.cpp \
            x86/stack.cpp \
            x86/string.cpp \
+           x86/Tasking.cpp \
            x86/wrap.cpp \
            bios/floppy.cpp \
            gui/machinewidget.cpp \

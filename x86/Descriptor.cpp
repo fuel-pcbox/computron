@@ -34,6 +34,7 @@ Descriptor CPU::getDescriptor(WORD selector)
         descriptor.m_index = selector;
         descriptor.m_segmentBase = (DWORD)selector << 4;
         descriptor.m_segmentLimit = 0xFFFFF;
+        descriptor.m_RPL = 0;
         descriptor.m_D = false;
         descriptor.m_DT = true;
         descriptor.m_isGlobal = true;

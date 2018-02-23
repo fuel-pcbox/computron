@@ -27,6 +27,7 @@
 #include "CPU.h"
 #include "debug.h"
 #include "debugger.h"
+#include "Tasking.h"
 
 void CPU::_INT_imm8(Instruction& insn)
 {
@@ -52,24 +53,41 @@ void CPU::_IRET(Instruction&)
     if (getPE()) {
         if (getNT()) {
             ASSERT(!getVM());
-            auto* tss = currentTSS();
-            ASSERT(tss);
-            vlog(LogCPU, "IRET with NT=1 switching tasks. Inner TSS @ %08X -> Outer TSS sel %04X...", TR.base, tss->backlink);
-            taskSwitch(tss->backlink, JumpType::IRET);
+            auto tss = currentTSS();
+            vlog(LogCPU, "IRET with NT=1 switching tasks. Inner TSS @ %08X -> Outer TSS sel %04X...", TR.base, tss.getBacklink());
+            taskSwitch(tss.getBacklink(), JumpType::IRET);
             return;
         }
-
     }
     if (o16()) {
         WORD nip = pop16();
         WORD ncs = pop16();
+        WORD flags = pop16();
+        bool isReturnToOuterPrivilegeLevel = isReturnToOuterPrivilegeLevel = (getPE() && (ncs & 3) > getCPL());
         jump16(ncs, nip, JumpType::IRET);
-        setFlags(pop16());
+        setFlags(flags);
+        if (isReturnToOuterPrivilegeLevel) {
+            vlog(LogCPU, "IRET hax");
+            WORD nsp = pop16();
+            WORD nss = pop16();
+            vlog(LogCPU, "SS:ESP %04x:%08x -> %04x:%08x", getSS(), getSP(), nss, nsp);
+            setESP(nsp);
+            setSS(nss);
+        }
     } else {
         DWORD nip = pop32();
         WORD ncs = pop32();
+        DWORD flags = pop32();
+        bool isReturnToOuterPrivilegeLevel = isReturnToOuterPrivilegeLevel = (getPE() && (ncs & 3) > getCPL());
         jump32(ncs, nip, JumpType::IRET);
-        setFlags(pop32());
+        setFlags(flags);
+        if (isReturnToOuterPrivilegeLevel) {
+            vlog(LogCPU, "IRETD hax");
+            DWORD nsp = pop32();
+            WORD nss = pop32();
+            setESP(nsp);
+            setSS(nss);
+        }
     }
 }
 
@@ -120,9 +138,6 @@ void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
         if (!isTrap)
             setIF(0);
         setTF(0);
-        push16(getCS());
-        push16(getIP());
-
         jump16(vector.segment, vector.offset, JumpType::INT);
         return;
     }
@@ -130,9 +145,6 @@ void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
     if (!isTrap)
         setIF(0);
     setTF(0);
-    push32(getCS());
-    push32(getEIP());
-
     jump32(vector.segment, vector.offset, JumpType::INT);
 }
 

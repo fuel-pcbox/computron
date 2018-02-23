@@ -98,12 +98,20 @@ WORD CounterInfo::value()
     int currentValue = startValue - ticks;
     if (currentValue >= reload) {
         vlog(LogTimer, "Current value{%d} >= reload{%d}", currentValue, reload);
-        currentValue %= reload;
+        if (reload == 0)
+            currentValue = 0;
+        else
+            currentValue %= reload;
     } else if (currentValue < 0) {
-        currentValue = currentValue % reload + reload;
+        if (reload == 0)
+            currentValue = 0;
+        else
+            currentValue = currentValue % reload + reload;
     }
 
+#ifdef PIT_DEBUG
     vlog(LogTimer, "nsec elapsed: %g, ticks: %g, value: %u", nsec, ticks, currentValue);
+#endif
     return currentValue;
 }
 
@@ -216,7 +224,6 @@ BYTE PIT::in8(WORD port)
         break;
     }
 
-    //vlog(LogTimer, "Unhandled read from port 0x%02X", port);
 #ifdef PIT_DEBUG
     vlog(LogTimer, " in8 %03x = %02x", port, data);
 #endif

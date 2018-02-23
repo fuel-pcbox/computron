@@ -39,6 +39,7 @@
 class Debugger;
 class Machine;
 class CPU;
+class TSS;
 class VGAMemory;
 
 #define CALL_HANDLER(handler16, handler32) if (o16()) { handler16(insn); } else { handler32(insn); }
@@ -63,26 +64,6 @@ struct WatchedAddress {
 };
 
 enum class JumpType { Internal, IRET, RETF, INT, CALL, JMP };
-
-struct TSS {
-        WORD backlink, __blh;
-        DWORD esp0;
-        WORD ss0, __ss0h;
-        DWORD esp1;
-        WORD ss1, __ss1h;
-        DWORD esp2;
-        WORD ss2, __ss2h;
-        DWORD CR3, EIP, EFlags;
-        DWORD EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI;
-        WORD ES, __esh;
-        WORD CS, __csh;
-        WORD SS, __ssh;
-        WORD DS, __dsh;
-        WORD FS, __fsh;
-        WORD GS, __gsh;
-        WORD LDT, __ldth;
-        WORD trace, iomapbase;
-} __attribute__ ((packed));
 
 class CPU final : public InstructionStream {
     friend void buildOpcodeTablesIfNeeded();
@@ -198,8 +179,12 @@ public:
     bool getOF() const { return this->OF; }
     bool getPF() const { return this->PF; }
     bool getZF() const { return this->ZF; }
-    unsigned int getIOPL() const { return this->IOPL; }
-    BYTE getCPL() const { return this->CS & 3; }
+
+    // FIXME: This is clearly not right.
+    //unsigned int getIOPL() const { return this->IOPL; }
+    unsigned int getIOPL() const { return getCPL(); }
+
+    BYTE getCPL() const { return m_descriptor[(int)SegmentRegisterIndex::CS].RPL(); }
     bool getNT() const { return this->NT; }
     bool getVIP() const { return this->VIP; }
     bool getVIF() const { return this->VIF; }
@@ -477,7 +462,7 @@ public:
     void dumpMemory(SegmentDescriptor&, DWORD offset, int rows);
     int dumpDisassembled(SegmentDescriptor&, DWORD offset);
 
-    void dumpTSS(TSS&);
+    void dumpTSS(const TSS&);
 
 #ifdef CT_TRACE
     // Dumps registers (used by --trace)
@@ -543,6 +528,8 @@ protected:
     void _CLTS(Instruction&);
     void _LAR_reg16_RM16(Instruction&);
     void _LAR_reg32_RM32(Instruction&);
+    void _LSL_reg16_RM16(Instruction&);
+    void _LSL_reg32_RM32(Instruction&);
     void _VERR_RM16(Instruction&);
     void _VERW_RM16(Instruction&);
 
@@ -999,6 +986,8 @@ protected:
     void _AddressSizeOverride(Instruction&);
     void _OperandSizeOverride(Instruction&);
 
+    void _LOCK(Instruction&);
+
     // REP* helper.
     void handleRepeatOpcode(Instruction&&, bool shouldEqual);
 
@@ -1060,7 +1049,7 @@ private:
     void setLDT(WORD segment);
     void taskSwitch(WORD task, JumpType);
     void taskSwitch(TSSDescriptor&, JumpType);
-    TSS* currentTSS();
+    TSS currentTSS();
 
     void writeToGDT(Descriptor&);
 
@@ -1177,9 +1166,10 @@ private:
     };
 
     struct {
-        WORD segment;
-        DWORD base;
-        DWORD limit;
+        WORD segment { 0 };
+        DWORD base { 0 };
+        DWORD limit { 0 };
+        bool is32Bit { false };
     } TR;
 
     BYTE opcode;

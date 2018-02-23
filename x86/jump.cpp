@@ -146,23 +146,17 @@ void CPU::_CALL_imm32(Instruction& insn)
 
 void CPU::_CALL_imm16_imm16(Instruction& insn)
 {
-    push16(getCS());
-    push16(getIP());
     jump16(insn.imm16_1(), insn.imm16_2(), JumpType::CALL);
 }
 
 void CPU::_CALL_imm16_imm32(Instruction& insn)
 {
-    push32(getCS());
-    push32(getEIP());
     jump32(insn.imm16_1(), insn.imm32_2(), JumpType::CALL);
 }
 
 void CPU::_CALL_FAR_mem16(Instruction& insn)
 {
     WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
-    push16(getCS());
-    push16(getIP());
     jump16(ptr[1], ptr[0], JumpType::CALL);
 }
 

@@ -34,6 +34,7 @@
 #include <QtCore/QStringList>
 #include <unistd.h>
 #include "pit.h"
+#include "Tasking.h"
 
 #define CRASH_ON_OPCODE_00_00
 //#define DISASSEMBLE_EVERYTHING
@@ -374,6 +375,10 @@ void CPU::reset()
     this->LDTR.base = 0;
     this->LDTR.limit = 0;
     this->LDTR.segment = 0;
+    this->TR.segment = 0;
+    this->TR.limit = 0;
+    this->TR.base = 0;
+    this->TR.is32Bit = false;
 
     memset(m_descriptor, 0, sizeof(m_descriptor));
 
@@ -592,7 +597,11 @@ static const char* toString(JumpType type)
 
 void CPU::jump32(WORD segment, DWORD offset, JumpType type)
 {
-    //vlog(LogCPU, "[PE=%u] Far jump to %04X:%08X", getPE(), segment, offset);
+    WORD originalCPL = getCPL();
+    WORD originalCS = getCS();
+    DWORD originalEIP = getEIP();
+
+    //vlog(LogCPU, "[PE=%u, PG=%u] %s to %04X:%08X", getPE(), getPG(), toString(type), segment, offset);
 
     auto descriptor = getDescriptor(segment);
 
@@ -606,23 +615,56 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type)
             vlog(LogCPU, "Gate (%s) to %04x:%08x (count=%u)", gate.typeName(), gate.selector(), gate.offset(), gate.parameterCount());
             ASSERT(gate.isCallGate());
             setCS(gate.selector());
-            this->EIP = gate.offset();
+            setEIP(gate.offset());
             ASSERT(!gate.parameterCount()); // FIXME: Implement
-            return;
-        }
-
-        if (sys.isTSS()) {
+            //dumpDescriptor(getDescriptor(TR.segment));
+        } else if (sys.isTSS()) {
             auto& tssDescriptor = sys.asTSSDescriptor();
+            vlog(LogCPU, "CS is this:");
+            dumpDescriptor(cachedDescriptor(SegmentRegisterIndex::CS));
             vlog(LogCPU, "%s to TSS descriptor (%s) -> %08x", toString(type), tssDescriptor.typeName(), tssDescriptor.base());
-            taskSwitch(tssDescriptor, type);
-            return;
-        }
 
-        ASSERT_NOT_REACHED();
+            taskSwitch(tssDescriptor, type);
+        } else {
+            ASSERT_NOT_REACHED();
+        }
+    } else { // it's a segment descriptor
+        //ASSERT(descriptor.isCode());
+        setCS(segment);
+        setEIP(offset);
     }
 
-    setCS(segment);
-    this->EIP = offset;
+    if (type == JumpType::CALL || type == JumpType::INT) {
+    if (getPE() && originalCPL > getCPL()) {
+        vlog(LogCPU, "%s escalating privilege from ring%u to ring%u", toString(type), originalCPL, getCPL(), descriptor);
+        WORD oldSS = getSS();
+        DWORD oldESP = getESP();
+        auto tss = currentTSS();
+        setSS(tss.getRingSS(getCPL()));
+        setESP(tss.getRingESP(getCPL()));
+        vlog(LogCPU, "SS:ESP %04x:%08x -> %04x:%08x", oldSS, oldESP, getSS(), getESP());
+        if (o16()) {
+            push16(oldSS);
+            push16(oldESP);
+        } else {
+            push32(oldSS);
+            push32(oldESP);
+        }
+    } else if (getPE() && originalCPL < getCPL()) {
+        vlog(LogCPU, "%s lowering privilege from ring%u to ring%u", toString(type), originalCPL, getCPL(), descriptor);
+        //ASSERT_NOT_REACHED();
+    }
+    }
+
+    if (type == JumpType::CALL || type == JumpType::INT) {
+        if (o16()) {
+            push16(originalCS);
+            push16(originalEIP);
+        } else {
+            push32(originalCS);
+            push32(originalEIP);
+        }
+    }
 }
 
 void CPU::jump16(WORD segment, WORD offset, JumpType type)
@@ -1451,6 +1493,10 @@ void CPU::_CPUID(Instruction&)
         setECX(0x68696e65);
         return;
     }
+}
+
+void CPU::_LOCK(Instruction&)
+{
 }
 
 void CPU::initWatches()

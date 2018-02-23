@@ -166,6 +166,8 @@ static bool opcodeHasRegisterIndex(BYTE op)
         return true;
     if (op >= 0x90 && op <= 0x97)
         return true;
+    if (op >= 0xB0 && op <= 0xBF)
+        return true;
     return false;
 }
 
@@ -591,7 +593,7 @@ void buildOpcodeTablesIfNeeded()
     build(0xEE, "OUT",    OP_DX_AL,            &CPU::_OUT_DX_AL);
     build(0xEF, "OUT",    OP_DX_AX,            &CPU::_OUT_DX_AX,        OP_DX_EAX,      &CPU::_OUT_DX_EAX);
 
-    // F0 = LOCK
+    build(0xF0, "LOCK:",   InstructionPrefix,   &CPU::_LOCK);
 
     build(0xF1, "VKILL",  OP,                  &CPU::_VKILL);
 
@@ -732,6 +734,7 @@ void buildOpcodeTablesIfNeeded()
     build0FSlash(0xBA, 7, "BTC",   OP_RM16_imm8, &CPU::_BTC_RM16_imm8, OP_RM32_imm8, &CPU::_BTC_RM32_imm8);
 
     build0F(0x02, "LAR",   OP_reg16_RM16,  &CPU::_LAR_reg16_RM16,  OP_reg32_RM32,  &CPU::_LAR_reg32_RM32);
+    build0F(0x03, "LSL",   OP_reg16_RM16,  &CPU::_LSL_reg16_RM16,  OP_reg32_RM32,  &CPU::_LSL_reg32_RM32);
     build0F(0x06, "CLTS",  OP,             &CPU::_CLTS);
     build0F(0x09, "WBINVD", OP,            &CPU::_WBINVD);
 
@@ -1276,9 +1279,9 @@ QString Instruction::toString(DWORD origin, bool x32) const
     case OP_reg32_RM8:
         return QString("%1 %2, %3").arg(mnemonic).arg(reg32Name()).arg(RM8ARGS);
     case OP_RM16_imm16:
-        return QString("%1 %2, %3").arg(mnemonic).arg(reg16Name()).arg(IMM16ARGS);
+        return QString("%1 %2, 0x%3").arg(mnemonic).arg(reg16Name()).arg(IMM16ARGS);
     case OP_RM32_imm32:
-        return QString("%1 %2, %3").arg(mnemonic).arg(reg32Name()).arg(IMM32ARGS);
+        return QString("%1 %2, 0x%3").arg(mnemonic).arg(reg32Name()).arg(IMM32ARGS);
     case OP_RM16_seg:
         return QString("%1 %2, %3").arg(mnemonic).arg(RM16ARGS).arg(SEGARGS);
     case OP_RM32_seg:
@@ -1312,9 +1315,9 @@ QString Instruction::toString(DWORD origin, bool x32) const
     case OP_NEAR_imm:
         return QString("%1 near 0x%2").arg(mnemonic).arg(RELADDRARGS);
     case OP_RM16_reg16_imm8:
-        return QString("%1 %2, %3, %4").arg(mnemonic).arg(RM16ARGS).arg(reg16Name()).arg(IMM8ARGS);
+        return QString("%1 %2, %3, 0x%4").arg(mnemonic).arg(RM16ARGS).arg(reg16Name()).arg(IMM8ARGS);
     case OP_RM32_reg32_imm8:
-        return QString("%1 %2, %3, %4").arg(mnemonic).arg(RM32ARGS).arg(reg32Name()).arg(IMM8ARGS);
+        return QString("%1 %2, %3, 0x%4").arg(mnemonic).arg(RM32ARGS).arg(reg32Name()).arg(IMM8ARGS);
     case OP_RM16_reg16_CL:
         return QString("%1 %2, %3, cl").arg(mnemonic).arg(RM16ARGS).arg(reg16Name());
     case OP_RM32_reg32_CL:
