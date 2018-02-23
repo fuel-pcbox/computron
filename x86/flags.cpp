@@ -264,7 +264,7 @@ WORD CPU::getFlags() const
         | (getIF() << 9)
         | (getDF() << 10)
         | (getOF() << 11)
-        | (getIOPL() << 13)
+        | (getIOPL() << 12)
         | (getNT() << 14);
 }
 

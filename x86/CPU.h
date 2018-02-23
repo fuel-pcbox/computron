@@ -180,9 +180,7 @@ public:
     bool getPF() const { return this->PF; }
     bool getZF() const { return this->ZF; }
 
-    // FIXME: This is clearly not right.
-    //unsigned int getIOPL() const { return this->IOPL; }
-    unsigned int getIOPL() const { return getCPL(); }
+    unsigned int getIOPL() const { return this->IOPL; }
 
     BYTE getCPL() const { return m_descriptor[(int)SegmentRegisterIndex::CS].RPL(); }
     bool getNT() const { return this->NT; }
