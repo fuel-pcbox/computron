@@ -1487,10 +1487,9 @@ DWORD CPU::fetchOpcodeDWord()
 void CPU::_CPUID(Instruction&)
 {
     if (getEAX() == 0) {
-        // 56 6f 6d 69 74 4d 61 63 68 69 6e 65
-        setEBX(0x566f6d69);
-        setEDX(0x744d6163);
-        setECX(0x68696e65);
+        setEBX(0x706d6f43);
+        setEDX(0x6f727475);
+        setECX(0x3638586e);
         return;
     }
 }
