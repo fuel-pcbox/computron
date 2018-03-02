@@ -94,9 +94,9 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
     TSS incomingTSS(*this, incomingTSSDescriptor.base(), incomingTSSDescriptor.is32Bit());
 
 #ifdef DEBUG_TASK_SWITCH
-    vlog(LogCPU, "Outgoing TSS:");
+    vlog(LogCPU, "Outgoing TSS @ %08x:", outgoingTSSDescriptor.base());
     dumpTSS(outgoingTSS);
-    vlog(LogCPU, "Incoming TSS:");
+    vlog(LogCPU, "Incoming TSS @ %08x:", incomingTSSDescriptor.base());
     dumpTSS(incomingTSS);
 #endif
 
@@ -142,13 +142,6 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
         incomingTSSDescriptor.setBusy();
         writeToGDT(incomingTSSDescriptor);
     }
-
-#if 0
-    vlog(LogCPU, "Incoming:");
-    dumpDescriptor(getDescriptor(incomingTSSDescriptor.index()));
-    vlog(LogCPU, "Outgoing:");
-    dumpDescriptor(getDescriptor(outgoingTSSDescriptor.index()));
-#endif
 
     CR0 |= 0x04; // TS (Task Switched)
 
