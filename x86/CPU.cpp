@@ -47,6 +47,7 @@ inline bool hasA20Bit(DWORD address)
 
 static bool shouldLogAllMemoryAccesses(DWORD address)
 {
+    UNUSED_PARAM(address);
 #ifdef CT_DETERMINISTIC
     return true;
 #endif
@@ -592,6 +593,9 @@ static const char* toString(JumpType type)
     case JumpType::INT: return "INT";
     case JumpType::JMP: return "JMP";
     case JumpType::Internal: return "Internal";
+    default:
+        ASSERT_NOT_REACHED();
+        return nullptr;
     }
 }
 
@@ -1036,7 +1040,7 @@ void CPU::_LEA_reg16_mem16(Instruction& insn)
 }
 
 // FIXME: Make VGAMemory into some kind of "memory mapper" thingy and put this kind of logic in there.
-inline void CPU::didTouchMemory(DWORD address, unsigned byteCount)
+inline void CPU::didTouchMemory(DWORD address)
 {
     bool shouldNotifyScreen = false;
     if (addressIsInVGAMemory(address))
@@ -1056,7 +1060,8 @@ enum PageTableEntryFlags {
 
 void CPU::pageFault(DWORD error)
 {
-
+    UNUSED_PARAM(error);
+    ASSERT_NOT_REACHED();
 }
 
 DWORD CPU::translateAddress(DWORD address)
@@ -1105,7 +1110,8 @@ bool CPU::validateAddress(const SegmentDescriptor& descriptor, DWORD offset, Mem
     DWORD offsetForLimitChecking = descriptor.granularity() ? (offset & 0xfffff000) : offset;
 
     if (offsetForLimitChecking > descriptor.effectiveLimit()) {
-        vlog(LogAlert, "FUG! offset %08X outside limit (selector index: %04X, effective limit: %08X [%08X x %s])",
+        vlog(LogAlert, "FUG! %s offset %08X outside limit (selector index: %04X, effective limit: %08X [%08X x %s])",
+             toString(accessType),
              offset,
              descriptor.index(),
              descriptor.effectiveLimit(),
@@ -1262,7 +1268,7 @@ void CPU::writeMemory(DWORD address, T value)
     }
 
     *reinterpret_cast<T*>(&m_memory[address]) = value;
-    didTouchMemory(address, sizeof(T));
+    didTouchMemory(address);
 }
 
 template<typename T>
@@ -1289,7 +1295,7 @@ void CPU::writeMemory(const SegmentDescriptor& descriptor, DWORD offset, T value
             return;
         }
         *reinterpret_cast<T*>(&m_memory[physicalAddress]) = value;
-        didTouchMemory(physicalAddress, sizeof(T));
+        didTouchMemory(physicalAddress);
         return;
     }
     writeMemory(descriptor.base() + offset, value);
@@ -1414,7 +1420,7 @@ BYTE* CPU::memoryPointer(const SegmentDescriptor& descriptor, DWORD offset)
         }
         if (options.memdebug || shouldLogMemoryPointer(physicalAddress))
             vlog(LogCPU, "MemoryPointer PE [A20=%s] %04X:%08X (phys: %08X)", isA20Enabled() ? "on" : "off", descriptor.index(), offset, physicalAddress);
-        didTouchMemory(physicalAddress, sizeof(DWORD));
+        didTouchMemory(physicalAddress);
         return &m_memory[physicalAddress];
     }
     return memoryPointer(descriptor.base() + offset);
@@ -1431,7 +1437,7 @@ BYTE* CPU::memoryPointer(DWORD address)
         address = translateAddress(address);
     }
     address &= a20Mask();
-    didTouchMemory(address, sizeof(DWORD));
+    didTouchMemory(address);
     return &m_memory[address];
 }
 

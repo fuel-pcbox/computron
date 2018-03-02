@@ -253,6 +253,8 @@ void CPU::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
     case SegmentRegisterIndex::SS:
         updateStackSize();
         break;
+    default:
+        break;
     }
 }
 

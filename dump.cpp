@@ -136,9 +136,10 @@ const char* CPU::registerName(SegmentRegisterIndex index)
         return "fs";
     case SegmentRegisterIndex::GS:
         return "gs";
+    default:
+        ASSERT_NOT_REACHED();
+        return nullptr;
     }
-    ASSERT_NOT_REACHED();
-    return nullptr;
 }
 
 const char* CPU::registerName(CPU::RegisterIndex8 registerIndex)

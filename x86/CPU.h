@@ -1001,7 +1001,7 @@ private:
     void updateStackSize();
     void updateCodeSegmentCache();
 
-    void didTouchMemory(DWORD address, unsigned byteCount);
+    void didTouchMemory(DWORD address);
 
     template<typename T>
     T rightShift(T, int steps);

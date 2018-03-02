@@ -63,7 +63,7 @@ void CPU::_IRET(Instruction&)
         WORD nip = pop16();
         WORD ncs = pop16();
         WORD flags = pop16();
-        bool isReturnToOuterPrivilegeLevel = isReturnToOuterPrivilegeLevel = (getPE() && (ncs & 3) > getCPL());
+        bool isReturnToOuterPrivilegeLevel = (getPE() && (ncs & 3) > getCPL());
         jump16(ncs, nip, JumpType::IRET);
         setFlags(flags);
         if (isReturnToOuterPrivilegeLevel) {
@@ -78,7 +78,7 @@ void CPU::_IRET(Instruction&)
         DWORD nip = pop32();
         WORD ncs = pop32();
         DWORD flags = pop32();
-        bool isReturnToOuterPrivilegeLevel = isReturnToOuterPrivilegeLevel = (getPE() && (ncs & 3) > getCPL());
+        bool isReturnToOuterPrivilegeLevel = (getPE() && (ncs & 3) > getCPL());
         jump32(ncs, nip, JumpType::IRET);
         setFlags(flags);
         if (isReturnToOuterPrivilegeLevel) {

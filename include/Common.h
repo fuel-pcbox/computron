@@ -29,6 +29,7 @@
 #include <QString>
 
 #define ALWAYS_INLINE __attribute__ ((always_inline))
+#define UNUSED_PARAM(x) (void)(x)
 
 #define MAX_FN_LENGTH	128
 

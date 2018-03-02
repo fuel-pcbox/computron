@@ -1331,6 +1331,8 @@ QString Instruction::toString(DWORD origin, bool x32) const
     case __EndFormatsWithRMByte:
         return QString("(!%1)").arg(mnemonic);
     }
+    ASSERT_NOT_REACHED();
+    return QString();
 }
 
 WORD SimpleInstructionStream::readInstruction16()
