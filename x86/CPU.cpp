@@ -990,11 +990,12 @@ void CPU::_LDS_reg16_mem16(Instruction& insn)
     setDS(read16FromPointer(ptr + 1));
 }
 
-void CPU::_LDS_reg32_mem32(Instruction&)
+void CPU::_LDS_reg32_mem32(Instruction& insn)
 {
-#warning FIXME: need readModRM48
-    vlog(LogAlert, "LDS reg32 mem32");
-    hard_exit(0);
+    ASSERT(a32());
+    FarPointer ptr = readModRMFarPointerOffsetFirst(insn.modrm());
+    insn.reg32() = ptr.offset;
+    setDS(ptr.segment);
 }
 
 void CPU::_LES_reg16_mem16(Instruction& insn)
@@ -1005,11 +1006,12 @@ void CPU::_LES_reg16_mem16(Instruction& insn)
     setES(read16FromPointer(ptr + 1));
 }
 
-void CPU::_LES_reg32_mem32(Instruction&)
+void CPU::_LES_reg32_mem32(Instruction& insn)
 {
-#warning FIXME: need readModRM48
-    vlog(LogAlert, "LES reg32 mem32");
-    hard_exit(0);
+    ASSERT(a32());
+    FarPointer ptr = readModRMFarPointerOffsetFirst(insn.modrm());
+    insn.reg32() = ptr.offset;
+    setES(ptr.segment);
 }
 
 void CPU::_LFS_reg16_mem16(Instruction& insn)
@@ -1020,11 +1022,12 @@ void CPU::_LFS_reg16_mem16(Instruction& insn)
     setFS(read16FromPointer(ptr + 1));
 }
 
-void CPU::_LFS_reg32_mem32(Instruction&)
+void CPU::_LFS_reg32_mem32(Instruction& insn)
 {
-#warning FIXME: need readModRM48
-    vlog(LogAlert, "LFS reg32 mem32");
-    hard_exit(0);
+    ASSERT(a32());
+    FarPointer ptr = readModRMFarPointerOffsetFirst(insn.modrm());
+    insn.reg32() = ptr.offset;
+    setFS(ptr.segment);
 }
 
 void CPU::_LSS_reg16_mem16(Instruction& insn)
@@ -1051,11 +1054,12 @@ void CPU::_LGS_reg16_mem16(Instruction& insn)
     setGS(read16FromPointer(ptr + 1));
 }
 
-void CPU::_LGS_reg32_mem32(Instruction&)
+void CPU::_LGS_reg32_mem32(Instruction& insn)
 {
-#warning FIXME: need readModRM48
-    vlog(LogAlert, "LGS reg32 mem32");
-    hard_exit(0);
+    ASSERT(a32());
+    FarPointer ptr = readModRMFarPointerOffsetFirst(insn.modrm());
+    insn.reg32() = ptr.offset;
+    setGS(ptr.segment);
 }
 
 void CPU::_LEA_reg32_mem32(Instruction& insn)
