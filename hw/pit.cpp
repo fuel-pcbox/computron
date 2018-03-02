@@ -53,13 +53,9 @@ struct CounterInfo {
     void rollOver(PIT&);
 };
 
-struct TimerInfo {
-    CounterInfo counter[3];
-};
-
 struct PIT::Private
 {
-    TimerInfo timer[2];
+    CounterInfo counter[3];
     int frequency { 0 };
     int timerId { -1 };
 };
@@ -85,9 +81,9 @@ PIT::~PIT()
 void PIT::reset()
 {
     d->frequency = 0;
-
-    d->timer[0] = TimerInfo();
-    d->timer[1] = TimerInfo();
+    d->counter[0] = CounterInfo();
+    d->counter[1] = CounterInfo();
+    d->counter[2] = CounterInfo();
 }
 
 WORD CounterInfo::value()
@@ -129,7 +125,7 @@ void CounterInfo::check(PIT& pit)
 
 void PIT::reconfigureTimer(BYTE index)
 {
-    auto& counter = d->timer[index].counter[index];
+    auto& counter = d->counter[index];
     counter.qtimer.start();
 }
 
@@ -146,15 +142,15 @@ void PIT::boot()
 void PIT::timerEvent(QTimerEvent*)
 {
 #ifndef CT_DETERMINISTIC
-    d->timer[0].counter[0].check(*this);
-    d->timer[0].counter[1].check(*this);
-    d->timer[0].counter[2].check(*this);
+    d->counter[0].check(*this);
+    d->counter[1].check(*this);
+    d->counter[2].check(*this);
 #endif
 }
 
 BYTE PIT::readCounter(BYTE index)
 {
-    auto& counter = d->timer[0].counter[index];
+    auto& counter = d->counter[index];
     BYTE data = 0;
     switch (counter.accessState) {
     case ReadLatchedLSB:
@@ -185,7 +181,7 @@ BYTE PIT::readCounter(BYTE index)
 
 void PIT::writeCounter(BYTE index, BYTE data)
 {
-    auto& counter = d->timer[0].counter[index];
+    auto& counter = d->counter[index];
     switch (counter.accessState) {
     case ReadLatchedLSB:
     case ReadLatchedMSB:
@@ -250,7 +246,6 @@ void PIT::out8(WORD port, BYTE data)
 void PIT::modeControl(int timerIndex, BYTE data)
 {
     ASSERT(timerIndex == 0 || timerIndex == 1);
-    TimerInfo& timer = d->timer[timerIndex];
 
     BYTE counterIndex = (data >> 6);
 
@@ -260,7 +255,7 @@ void PIT::modeControl(int timerIndex, BYTE data)
     }
 
     ASSERT(counterIndex <= 2);
-    CounterInfo& counter = timer.counter[counterIndex];
+    CounterInfo& counter = d->counter[counterIndex];
 
     counter.decrementMode = static_cast<DecrementMode>(data & 1);
     counter.mode = (data >> 1) & 7;
