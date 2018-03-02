@@ -5,3 +5,4 @@ computron
 Makefile
 *.pro.user
 log.txt
+setups/*
