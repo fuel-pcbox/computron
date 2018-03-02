@@ -437,10 +437,6 @@ public:
 
     MemoryOrRegisterReference resolveModRM(BYTE rmbyte);
 
-    enum Mode { RealMode, ProtectedMode };
-    Mode mode() const { return m_mode; }
-    void setMode(Mode m) { m_mode = m; }
-
     enum State { Dead, Alive, Halted };
     State state() const { return m_state; }
     void setState(State s) { m_state = s; }
@@ -1172,30 +1168,20 @@ private:
         bool is32Bit { false };
     } TR;
 
-    BYTE opcode;
-    BYTE rmbyte;
-
-    State m_state;
-
-    Mode m_mode;
-
-#ifdef CT_DEBUG
-    bool m_inDebugger;
-    bool m_debugOneStep;
-#endif
+    State m_state { Dead };
 
     // Actual CS:EIP (when we started fetching the instruction)
-    WORD m_baseCS;
-    DWORD m_baseEIP;
+    WORD m_baseCS { 0 };
+    DWORD m_baseEIP { 0 };
 
     SegmentRegisterIndex m_segmentPrefix { SegmentRegisterIndex::None };
 
-    DWORD m_baseMemorySize;
-    DWORD m_extendedMemorySize;
+    DWORD m_baseMemorySize { 0 };
+    DWORD m_extendedMemorySize { 0 };
 
     std::set<DWORD> m_breakpoints;
 
-    bool m_a20Enabled;
+    bool m_a20Enabled { false };
 
     OwnPtr<Debugger> m_debugger;
 
@@ -1213,12 +1199,12 @@ private:
 
     Machine& m_machine;
 
-    bool m_addressSize32;
-    bool m_operandSize32;
+    bool m_addressSize32 { false };
+    bool m_operandSize32 { false };
 
     bool m_stackSize32 { false };
 
-    bool m_shouldBreakOutOfMainLoop;
+    bool m_shouldBreakOutOfMainLoop { false };
     bool m_shouldSoftReboot { false };
     bool m_shouldHardReboot { false };
 
