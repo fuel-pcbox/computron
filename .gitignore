@@ -6,3 +6,6 @@ Makefile
 *.pro.user
 log.txt
 setups/*
+*.orig
+*.rej
+callgrind.*
