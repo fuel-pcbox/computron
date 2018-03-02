@@ -590,7 +590,11 @@ bool Screen::loadKeymap(const QString& filename)
             continue;
 
         bool ok;
-        BYTE nativeKey = pieces[1].toUInt(&ok);
+        BYTE nativeKey;
+        if (pieces[1].startsWith("0x"))
+            nativeKey = pieces[1].toUInt(&ok, 16);
+        else
+            nativeKey = pieces[1].toUInt(&ok);
         if (!ok) {
             printf("Invalid keymap line: '%s'\n", rawLine.data());
             continue;
@@ -695,6 +699,8 @@ bool Screen::loadKeymap(const QString& filename)
 
     addKey("Equals", 0x0D3D, 0x0D2B, 0, 0x8300);
 
+    addKey("Backtick", 0x2960, 0x297E, 0, 0);
+
     return true;
 }
 
@@ -731,7 +737,11 @@ WORD Screen::scanCodeFromKeyEvent(const QKeyEvent* event) const
 static int nativeKeyFromKeyEvent(const QKeyEvent* event)
 {
     Q_ASSERT(event);
+#if defined(Q_OS_MAC)
     return event->nativeVirtualKey();
+#else
+    return event->nativeScanCode();
+#endif
 }
 
 QString Screen::keyNameFromKeyEvent(const QKeyEvent* event) const
