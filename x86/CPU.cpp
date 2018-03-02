@@ -428,6 +428,11 @@ void CPU::haltedLoop()
 #ifdef HAVE_USLEEP
         usleep(100);
 #endif
+        flushCommandQueue();
+        if (m_shouldHardReboot) {
+            hardReboot();
+            return;
+        }
         if (getIF() && PIC::hasPendingIRQ())
             PIC::serviceIRQ(*this);
     }
@@ -474,6 +479,13 @@ void CPU::flushCommandQueue()
     m_hasCommands = false;
 }
 
+void CPU::hardReboot()
+{
+    machine().resetAllIODevices();
+    reset();
+    m_shouldHardReboot = false;
+}
+
 void CPU::mainLoop()
 {
     forever {
@@ -492,9 +504,7 @@ void CPU::mainLoop()
         }
 
         if (m_shouldHardReboot) {
-            machine().resetAllIODevices();
-            reset();
-            m_shouldHardReboot = false;
+            hardReboot();
             continue;
         }
 
@@ -639,24 +649,26 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type)
     }
 
     if (type == JumpType::CALL || type == JumpType::INT) {
-    if (getPE() && originalCPL > getCPL()) {
-        vlog(LogCPU, "%s escalating privilege from ring%u to ring%u", toString(type), originalCPL, getCPL(), descriptor);
+    if (getPE() && descriptor.DPL() < originalCPL) {
+        vlog(LogCPU, "%s escalating privilege from ring%u to ring%u", toString(type), originalCPL, descriptor.DPL(), descriptor);
         WORD oldSS = getSS();
         DWORD oldESP = getESP();
         auto tss = currentTSS();
         setSS(tss.getRingSS(getCPL()));
         setESP(tss.getRingESP(getCPL()));
-        vlog(LogCPU, "SS:ESP %04x:%08x -> %04x:%08x", oldSS, oldESP, getSS(), getESP());
         if (o16()) {
             push16(oldSS);
             push16(oldESP);
+            vlog(LogCPU, "%s to inner ring, ss:sp %04x:%04x -> %04x:%04x", toString(type), oldSS, oldESP, getSS(), getSP());
         } else {
             push32(oldSS);
             push32(oldESP);
+            vlog(LogCPU, "%s to inner ring, ss:esp %04x:%08x -> %04x:%08x", toString(type), oldSS, oldESP, getSS(), getESP());
         }
-    } else if (getPE() && originalCPL < getCPL()) {
-        vlog(LogCPU, "%s lowering privilege from ring%u to ring%u", toString(type), originalCPL, getCPL(), descriptor);
-        //ASSERT_NOT_REACHED();
+        setCPL(descriptor.DPL());
+    } else if (getPE() && originalCPL == descriptor.DPL()) {
+        vlog(LogCPU, "%s same privilege from ring%u to ring%u", toString(type), originalCPL, descriptor.DPL(), descriptor);
+        setCPL(originalCPL);
     }
     }
 
@@ -669,6 +681,37 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type)
             push32(originalEIP);
         }
     }
+
+    if (type == JumpType::IRET || type == JumpType::RETF) {
+        bool isReturnToOuterPrivilegeLevel = getPE() && getCPL() > originalCPL;
+        if (isReturnToOuterPrivilegeLevel) {
+        if (o16()) {
+            WORD newSP = pop16();
+            WORD newSS = pop16();
+            vlog(LogCPU, "%s to outer ring, ss:sp %04x:%04x -> %04x:%04x", toString(type), getSS(), getSP(), newSS, newSP);
+            setESP(newSP);
+            setSS(newSS);
+        } else {
+            DWORD newESP = pop32();
+            WORD newSS = pop32();
+            vlog(LogCPU, "%s to outer ring, ss:esp %04x:%08x -> %04x:%08x", toString(type), getSS(), getESP(), newSS, newESP);
+            setESP(newESP);
+            setSS(newSS);
+        }
+        }
+    }
+}
+
+void CPU::setCPL(BYTE cpl)
+{
+#ifdef DEBUG_CPL
+    WORD oldCS = CS;
+#endif
+    CS = (CS & ~0x3) | cpl;
+    cachedDescriptor(SegmentRegisterIndex::CS).m_RPL = cpl;
+#ifdef DEBUG_CPL
+    vlog(LogCPU, "CS(:CPL) adjust %04x -> %04x", oldCS, CS);
+#endif
 }
 
 void CPU::jump16(WORD segment, WORD offset, JumpType type)

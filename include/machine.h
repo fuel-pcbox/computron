@@ -23,13 +23,13 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MACHINE_H
-#define MACHINE_H
+#pragma once
 
 #include <functional>
 #include <QObject>
 #include "types.h"
 #include "OwnPtr.h"
+#include "Common.h"
 
 class IODevice;
 class BusMouse;
@@ -71,7 +71,7 @@ public:
     Settings& settings() { return *m_settings; }
     VGAMemory& vgaMemory() { return *m_vgaMemory; }
 
-    bool isForAutotest();
+    bool isForAutotest() PURE;
 
     MachineWidget* widget() { return m_widget; }
     void setWidget(MachineWidget* widget) { m_widget = widget; }
@@ -119,5 +119,3 @@ private:
 
     MachineWidget* m_widget { nullptr };
 };
-
-#endif

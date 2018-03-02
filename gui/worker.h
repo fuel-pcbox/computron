@@ -31,7 +31,7 @@
 
 class CPU;
 
-class Worker : public QThread
+class Worker final : public QThread
 {
     Q_OBJECT
 public:
@@ -43,7 +43,7 @@ public:
     void rebootMachine();
 
 public slots:
-    void run();
+    void run() override;
     void shutdown();
 
 private:

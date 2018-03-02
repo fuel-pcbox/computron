@@ -247,6 +247,8 @@ void CPU::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
 
     switch (segmentRegisterIndex) {
     case SegmentRegisterIndex::CS:
+        if (getPE())
+            setCPL(descriptor.DPL());
         updateDefaultSizes();
         updateCodeSegmentCache();
         break;

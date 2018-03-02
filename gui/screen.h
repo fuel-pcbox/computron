@@ -33,7 +33,7 @@
 
 class Machine;
 
-class Screen : public QWidget
+class Screen final : public QWidget
 {
     Q_OBJECT
 public:
@@ -72,11 +72,11 @@ public:
     };
 
 protected:
-    void keyPressEvent( QKeyEvent *e );
-    void keyReleaseEvent( QKeyEvent *e );
-    void mouseMoveEvent( QMouseEvent *e );
-    void mousePressEvent( QMouseEvent *e );
-    void mouseReleaseEvent( QMouseEvent *e );
+    void keyPressEvent(QKeyEvent*) override;
+    void keyReleaseEvent(QKeyEvent*) override;
+    void mouseMoveEvent(QMouseEvent*) override;
+    void mousePressEvent(QMouseEvent*) override;
+    void mouseReleaseEvent(QMouseEvent*) override;
 
 public slots:
     void refresh();
@@ -87,8 +87,8 @@ private slots:
     void scheduleRefresh();
 
 private:
-    void paintEvent( QPaintEvent * );
-    void resizeEvent( QResizeEvent * );
+    void paintEvent(QPaintEvent*) override;
+    void resizeEvent(QResizeEvent*) override;
     void init();
     void putCharacter(QPainter& p, int row, int column, BYTE color, BYTE c);
 

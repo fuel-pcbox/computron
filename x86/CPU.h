@@ -184,6 +184,8 @@ public:
     unsigned int getIOPL() const { return this->IOPL; }
 
     BYTE getCPL() const { return m_descriptor[(int)SegmentRegisterIndex::CS].RPL(); }
+    void setCPL(BYTE);
+
     bool getNT() const { return this->NT; }
     bool getVIP() const { return this->VIP; }
     bool getVIF() const { return this->VIF; }
@@ -490,10 +492,10 @@ public:
     enum Command { EnterMainLoop, ExitMainLoop, SoftReboot, HardReboot };
     void queueCommand(Command);
 
-    static const char* registerName(CPU::RegisterIndex8);
-    static const char* registerName(CPU::RegisterIndex16);
-    static const char* registerName(CPU::RegisterIndex32);
-    static const char* registerName(SegmentRegisterIndex);
+    static const char* registerName(CPU::RegisterIndex8) PURE;
+    static const char* registerName(CPU::RegisterIndex16) PURE;
+    static const char* registerName(CPU::RegisterIndex32) PURE;
+    static const char* registerName(SegmentRegisterIndex) PURE;
 
 protected:
     void _CPUID(Instruction&);
@@ -996,6 +998,7 @@ private:
     DWORD readInstruction32() override;
 
     void initWatches();
+    void hardReboot();
 
     void updateDefaultSizes();
     void updateStackSize();

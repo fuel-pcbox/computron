@@ -23,8 +23,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef DEBUG_H
-#define DEBUG_H
+#pragma once
 
 #ifdef CT_DEBUG
 #include <QtCore/qdebug.h>
@@ -59,6 +58,4 @@ enum VLogChannel {
     LogTimer,
 };
 
-extern void vlog(VLogChannel channel, const char *format, ...);
-
-#endif
+void vlog(VLogChannel channel, const char *format, ...);

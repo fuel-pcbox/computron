@@ -216,7 +216,7 @@ DWORD cpu_rcl(CPU& cpu, DWORD data, BYTE steps, BYTE bits)
 
 DWORD cpu_rcr(CPU& cpu, DWORD data, BYTE steps, BYTE bits)
 {
-    DWORD result = (DWORD)data;
+    DWORD result = data;
     DWORD n;
 
     steps &= 0x1F;

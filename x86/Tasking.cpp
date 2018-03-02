@@ -77,7 +77,7 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
         outgoingEFlags &= ~(1 << 14); // Clear NT flag in outgoing task.
     }
 
-    outgoingTSS.setEFlags(getEFlags());
+    outgoingTSS.setEFlags(outgoingEFlags);
 
     outgoingTSS.setCS(getCS());
     outgoingTSS.setDS(getDS());

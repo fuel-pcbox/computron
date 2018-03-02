@@ -54,7 +54,7 @@ signals:
 
 private:
     BYTE m_systemControlPortData;
-    BYTE m_ram[32];
+    BYTE m_ram[64];
     BYTE m_command;
     bool m_hasCommand;
     bool m_lastWasCommand;

@@ -63,31 +63,14 @@ void CPU::_IRET(Instruction&)
         WORD nip = pop16();
         WORD ncs = pop16();
         WORD flags = pop16();
-        bool isReturnToOuterPrivilegeLevel = (getPE() && (ncs & 3) > getCPL());
         jump16(ncs, nip, JumpType::IRET);
         setFlags(flags);
-        if (isReturnToOuterPrivilegeLevel) {
-            vlog(LogCPU, "IRET hax");
-            WORD nsp = pop16();
-            WORD nss = pop16();
-            vlog(LogCPU, "SS:ESP %04x:%08x -> %04x:%08x", getSS(), getSP(), nss, nsp);
-            setESP(nsp);
-            setSS(nss);
-        }
     } else {
         DWORD nip = pop32();
         WORD ncs = pop32();
         DWORD flags = pop32();
-        bool isReturnToOuterPrivilegeLevel = (getPE() && (ncs & 3) > getCPL());
         jump32(ncs, nip, JumpType::IRET);
         setFlags(flags);
-        if (isReturnToOuterPrivilegeLevel) {
-            vlog(LogCPU, "IRETD hax");
-            DWORD nsp = pop32();
-            WORD nss = pop32();
-            setESP(nsp);
-            setSS(nss);
-        }
     }
 }
 

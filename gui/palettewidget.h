@@ -31,17 +31,17 @@
 
 class Machine;
 
-class PaletteWidget : public QWidget
+class PaletteWidget final : public QWidget
 {
     Q_OBJECT
 public:
     explicit PaletteWidget(Machine&, QWidget* parent = 0);
     virtual ~PaletteWidget();
 
-    QSize sizeHint() const;
+    virtual QSize sizeHint() const override;
 
 protected:
-    virtual void paintEvent(QPaintEvent*);
+    virtual void paintEvent(QPaintEvent*) override;
 
 private slots:
     void onPaletteChanged();

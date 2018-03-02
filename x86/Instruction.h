@@ -56,11 +56,11 @@ public:
         , m_o32(o32)
     { }
 
-    virtual bool a32() const { return m_a32; }
-    virtual bool o32() const { return m_o32; }
-    virtual BYTE readInstruction8() { return *(m_data++); }
-    virtual WORD readInstruction16();
-    virtual DWORD readInstruction32();
+    virtual bool a32() const override { return m_a32; }
+    virtual bool o32() const override { return m_o32; }
+    virtual BYTE readInstruction8() override { return *(m_data++); }
+    virtual WORD readInstruction16() override;
+    virtual DWORD readInstruction32() override;
 
 private:
     const BYTE* m_data { nullptr };
