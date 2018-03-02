@@ -87,44 +87,20 @@ void CPU::_JMP_FAR_mem32(Instruction& insn)
     jump32(ptr[2], makeDWORD(ptr[1], ptr[0]), JumpType::JMP);
 }
 
-ALWAYS_INLINE bool CPU::evaluateCondition(BYTE cc) const
-{
-    switch (cc) {
-    case 0: return getOF();
-    case 1: return !getOF();
-    case 2: return getCF();
-    case 3: return !getCF();
-    case 4: return getZF();
-    case 5: return !getZF();
-    case 6: return getCF() | getZF();
-    case 7: return !(getCF() | getZF());
-    case 8: return getSF();
-    case 9: return !getSF();
-    case 10: return getPF();
-    case 11: return !getPF();
-    case 12: return getSF() ^ getOF();
-    case 13: return !(getSF() ^ getOF());
-    case 14: return (getSF() ^ getOF()) | getZF();
-    case 15: return !((getSF() ^ getOF()) | getZF());
-    }
-    ASSERT_NOT_REACHED();
-    return false;
-}
-
 void CPU::_SETcc_RM8(Instruction& insn)
 {
-    insn.modrm().write8(evaluateCondition(insn.cc()));
+    insn.modrm().write8(evaluate(insn.cc()));
 }
 
 void CPU::_Jcc_imm8(Instruction& insn)
 {
-    if (evaluateCondition(insn.cc()))
+    if (evaluate(insn.cc()))
         jumpRelative8(insn.imm8());
 }
 
 void CPU::_Jcc_NEAR_imm(Instruction& insn)
 {
-    if (!evaluateCondition(insn.cc()))
+    if (!evaluate(insn.cc()))
         return;
     if (a16())
         jumpRelative16(insn.imm16());

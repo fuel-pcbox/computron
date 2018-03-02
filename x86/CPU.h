@@ -495,8 +495,6 @@ public:
     static const char* registerName(CPU::RegisterIndex32);
     static const char* registerName(SegmentRegisterIndex);
 
-    bool evaluateCondition(BYTE cc) const;
-
 protected:
     void _CPUID(Instruction&);
     void _UNSUPP(Instruction&);

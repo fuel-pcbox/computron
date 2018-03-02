@@ -439,7 +439,7 @@ void CPU::queueCommand(Command command)
     m_hasCommands = true;
 }
 
-ALWAYS_INLINE void CPU::flushCommandQueue()
+void CPU::flushCommandQueue()
 {
 #if 0
     static int xxx = 0;
