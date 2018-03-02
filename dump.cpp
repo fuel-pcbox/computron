@@ -118,7 +118,10 @@ void CPU::dumpSelector(const char* segmentRegisterName, SegmentRegisterIndex seg
 {
     auto& descriptor = cachedDescriptor(segmentIndex);
     vlog(LogDump, "%s:", segmentRegisterName);
-    dumpDescriptor(descriptor);
+    if (descriptor.isNull())
+        vlog(LogDump, "%04x: (null descriptor)", getSegment(segmentIndex));
+    else
+        dumpDescriptor(descriptor);
 }
 
 const char* CPU::registerName(SegmentRegisterIndex index)
