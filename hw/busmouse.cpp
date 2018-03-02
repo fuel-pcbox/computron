@@ -37,6 +37,8 @@ BusMouse::BusMouse(Machine& machine)
     listen(0x23c, IODevice::ReadWrite);
     listen(0x23d, IODevice::ReadOnly);
     listen(0x23e, IODevice::ReadWrite);
+
+    reset();
 }
 
 BusMouse::~BusMouse()
@@ -45,7 +47,7 @@ BusMouse::~BusMouse()
 
 void BusMouse::reset()
 {
-    m_interrupts = true;
+    m_interrupts = false;
     m_command = 0;
     m_buttons = 0 ;
     m_currentX = 0;
