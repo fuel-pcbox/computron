@@ -102,8 +102,6 @@ BYTE Keyboard::in8(WORD port)
             data = m_ram[ramIndex];
         } else if (m_lastWasCommand && m_command == CMD_SET_LEDS) {
             data = 0xFA; // ACK
-            m_lastWasCommand = false;
-            m_command = 0;
         } else {
             BYTE key = kbd_pop_raw();
 #ifdef KBD_DEBUG
@@ -171,6 +169,7 @@ void Keyboard::out8(WORD port, BYTE data)
                 m_command = data;
                 m_hasCommand = true;
                 m_lastWasCommand = true;
+                vlog(LogKeyboard, "Got set leds (%02X), awaiting state...", data);
                 return;
             }
             vlog(LogKeyboard, "Got data (%02X) without command", data);
