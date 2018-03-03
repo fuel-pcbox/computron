@@ -151,8 +151,10 @@ public:
 
     void jumpToInterruptHandler(int isr, bool requestedByPIC = false);
 
-    void GP(WORD code);
-    void pageFault(DWORD address, WORD error);
+    void triggerGP(WORD selector, const QString& reason);
+    void triggerSS(WORD selector, const QString& reason);
+    void triggerNP(WORD selector, const QString& reason);
+    void triggerPageFault(DWORD address, WORD error);
 
     void exception(BYTE num);
     void exception(BYTE num, WORD error);
@@ -1051,6 +1053,8 @@ private:
 
     void dumpSelector(const char* segmentRegisterName, SegmentRegisterIndex);
     void syncSegmentRegister(SegmentRegisterIndex);
+    bool validateSegmentLoad(SegmentRegisterIndex, const Descriptor&);
+
     SegmentDescriptor m_descriptor[6];
 
     // This points to the base of CS for fast opcode fetches.

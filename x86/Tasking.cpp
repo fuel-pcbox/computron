@@ -103,10 +103,14 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
     if (getPG())
         CR3 = incomingTSS.getCR3();
 
-    setLDT(incomingTSS.getLDT());
+    auto ldtDescriptor = getDescriptor(incomingTSS.getLDT());
+    if (!ldtDescriptor.isLDT() || !ldtDescriptor.present()) {
+        // FIXME: What do? #TS?
+    }
 
-    setES(incomingTSS.getES());
+    setLDT(incomingTSS.getLDT());
     setCS(incomingTSS.getCS());
+    setES(incomingTSS.getES());
     setDS(incomingTSS.getDS());
     setFS(incomingTSS.getFS());
     setGS(incomingTSS.getGS());
@@ -146,9 +150,8 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
     CR0 |= 0x04; // TS (Task Switched)
 
     if (getEIP() > cachedDescriptor(SegmentRegisterIndex::CS).effectiveLimit()) {
-        vlog(LogCPU, "Task switch to EIP:%08x outside CS:%04x limit");
         dumpDescriptor(cachedDescriptor(SegmentRegisterIndex::CS));
-        GP(0);
+        triggerGP(0, "Task switch to EIP outside CS limit");
     }
 
     if (getTF()) {

@@ -229,8 +229,7 @@ void CPU::_RDTSC(Instruction&)
 void CPU::_WBINVD(Instruction&)
 {
     if (getPE() && getCPL() != 0) {
-        vlog(LogCPU, "WBINVD GP(0)");
-        GP(0);
+        triggerGP(0, "WBINVD");
     }
 }
 
@@ -239,34 +238,6 @@ void CPU::_VKILL(Instruction&)
     vlog(LogCPU, "0xF1: Secret shutdown command received!");
     //dumpAll();
     hard_exit(0);
-}
-
-void CPU::exception(BYTE num)
-{
-    setEIP(getBaseEIP());
-    jumpToInterruptHandler(num);
-}
-
-void CPU::exception(BYTE num, WORD error)
-{
-    exception(num);
-    if (o32())
-        push32(error);
-    else
-        push16(error);
-}
-
-void CPU::GP(WORD code)
-{
-    WORD selector = code & 0xfff8;
-    bool TI = code & 4;
-    bool I = code & 2;
-    bool EX = code & 1;
-    vlog(LogCPU, "#GP(%04X) selector=%04X, TI=%u, I=%u, EX=%u", code, selector, TI, I, EX);
-#ifdef CRASH_ON_GPF
-    ASSERT_NOT_REACHED();
-#endif
-    exception(13, code);
 }
 
 CPU::CPU(Machine& m)
@@ -756,7 +727,7 @@ void CPU::_NOP(Instruction&)
 void CPU::_HLT(Instruction&)
 {
     if (getCPL() != 0) {
-        GP(0);
+        triggerGP(0, "HLT with CPL!=0");
         return;
     }
 
@@ -1107,7 +1078,7 @@ enum PageTableEntryFlags {
     Dirty = 0x40,
 };
 
-void CPU::pageFault(DWORD address, WORD error)
+void CPU::triggerPageFault(DWORD address, WORD error)
 {
     CR2 = address;
     exception(0x0e, error);
@@ -1130,7 +1101,7 @@ DWORD CPU::translateAddress(DWORD address)
 
     if (!(pageDirectoryEntry & PageTableEntryFlags::Present) || !(pageTableEntry & PageTableEntryFlags::Present)) {
         // FIXME: Pass correct error code!
-        pageFault(address, 0x0);
+        triggerPageFault(address, 0x0);
     }
 
     DWORD translatedAddress = (pageTableEntry & 0xfffff000) | offset;
@@ -1161,7 +1132,7 @@ bool CPU::validateAddress(const SegmentDescriptor& descriptor, DWORD offset, Mem
              toString(accessType),
              offset,
              descriptor.index());
-        GP(0);
+        triggerGP(0, "Access through null selector");
         return false;
     }
 
@@ -1180,7 +1151,7 @@ bool CPU::validateAddress(const SegmentDescriptor& descriptor, DWORD offset, Mem
         dumpDescriptor(descriptor);
         //dumpAll();
         //debugger().enter();
-        GP(descriptor.index());
+        triggerGP(descriptor.index(), "Access outside segment limit");
         return false;
     }
     ASSERT(offset <= descriptor.effectiveLimit());

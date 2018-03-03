@@ -427,7 +427,9 @@ void CPU::dumpDescriptor(const Descriptor& descriptor)
 
 void CPU::dumpDescriptor(const SegmentDescriptor& descriptor)
 {
-    if (descriptor.isCode())
+    if (descriptor.isNull())
+        vlog(LogCPU, "Descriptor with index '%04x' is null", descriptor.index());
+    else if (descriptor.isCode())
         dumpDescriptor(descriptor.asCodeSegmentDescriptor());
     else
         dumpDescriptor(descriptor.asDataSegmentDescriptor());

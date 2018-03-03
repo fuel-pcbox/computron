@@ -55,16 +55,18 @@ void CPU::_SLDT_RM16(Instruction& insn)
     insn.modrm().writeClearing16(LDTR.segment, o32());
 }
 
-void CPU::setLDT(WORD segment)
+void CPU::setLDT(WORD selector)
 {
-    auto descriptor = getDescriptor(segment);
+    auto descriptor = getDescriptor(selector);
     DWORD base = 0;
     DWORD limit = 0;
     if (!descriptor.isNull()) {
         // FIXME: Generate exception?
         if (descriptor.isLDT()) {
-            ASSERT(descriptor.isLDT());
             auto& ldtDescriptor = descriptor.asLDTDescriptor();
+            if (!descriptor.present()) {
+                triggerNP(selector, "LDT segment not present");
+            }
             base = ldtDescriptor.base();
             limit = ldtDescriptor.limit();
         } else {
@@ -72,7 +74,7 @@ void CPU::setLDT(WORD segment)
             dumpDescriptor(descriptor);
         }
     }
-    LDTR.segment = segment;
+    LDTR.segment = selector;
     LDTR.base = base;
     LDTR.limit = limit;
     vlog(LogAlert, "setLDT { segment: %04X => base:%08X, limit:%08X }", LDTR.segment, LDTR.base, LDTR.limit);
@@ -126,7 +128,7 @@ void CPU::_CLTS(Instruction&)
 {
     if (getPE()) {
         if (getCPL() != 0) {
-            GP(0);
+            triggerGP(0, "CLTS with CPL!=0");
             return;
         }
     }
@@ -137,7 +139,7 @@ void CPU::_LMSW_RM16(Instruction& insn)
 {
     if (getPE()) {
         if (getCPL() != 0) {
-            GP(0);
+            triggerGP(0, "LMSW with CPL!=0");
             return;
         }
     }
@@ -213,6 +215,115 @@ const char* toString(SegmentRegisterIndex segment)
     return nullptr;
 }
 
+void CPU::exception(BYTE num)
+{
+    setEIP(getBaseEIP());
+    jumpToInterruptHandler(num);
+}
+
+void CPU::exception(BYTE num, WORD error)
+{
+    exception(num);
+    if (o32())
+        push32(error);
+    else
+        push16(error);
+}
+
+void CPU::triggerGP(WORD code, const QString& reason)
+{
+    WORD selector = code & 0xfff8;
+    bool TI = code & 4;
+    bool I = code & 2;
+    bool EX = code & 1;
+    vlog(LogCPU, "Exception: #GP(%04x) selector=%04X, TI=%u, I=%u, EX=%u :: %s", code, selector, TI, I, EX, qPrintable(reason));
+#ifdef CRASH_ON_GPF
+    ASSERT_NOT_REACHED();
+#endif
+    exception(13, code);
+}
+
+void CPU::triggerSS(WORD selector, const QString& reason)
+{
+    vlog(LogCPU, "Exception: #SS(%04x) :: %s", selector, qPrintable(reason));
+    exception(0xc, selector);
+}
+
+void CPU::triggerNP(WORD selector, const QString& reason)
+{
+    vlog(LogCPU, "Exception: #NP(%04x) :: %s", selector, qPrintable(reason));
+    exception(0xb, selector);
+}
+
+bool CPU::validateSegmentLoad(SegmentRegisterIndex reg, const Descriptor& descriptor)
+{
+    if (!getPE())
+        return true;
+
+    WORD selector = getSegment(reg);
+    BYTE selectorRPL = selector & 3;
+
+    if (descriptor.isError()) {
+        triggerGP(selector, "Selector outside table limits");
+        return false;
+    }
+
+    if (reg == SegmentRegisterIndex::SS) {
+        if (descriptor.isNull()) {
+            triggerGP(0, "SS loaded with null descriptor");
+            return false;
+        }
+        if (selectorRPL != getCPL()) {
+            triggerGP(0, QString("SS selector RPL(%1) != CPL(%2)").arg(selectorRPL).arg(getCPL()));
+            return false;
+        }
+        if (!descriptor.isData() || !descriptor.asDataSegmentDescriptor().writable()) {
+            triggerGP(selector, "SS loaded with something other than a writable data segment");
+            return false;
+        }
+        if (!descriptor.present()) {
+            triggerSS(selector, "SS loaded with non-present segment");
+            return false;
+        }
+        return true;
+    }
+
+    if (descriptor.isNull())
+        return true;
+
+    if (reg == SegmentRegisterIndex::DS
+        || reg == SegmentRegisterIndex::ES
+        || reg == SegmentRegisterIndex::FS
+        || reg == SegmentRegisterIndex::GS) {
+        if (!descriptor.isData() && (descriptor.isCode() && !descriptor.asCodeSegmentDescriptor().readable())) {
+            triggerGP(selector, QString("%1 loaded with non-data or non-readable code segment").arg(registerName(reg)));
+            return false;
+        }
+        if (descriptor.isData() || (descriptor.isCode() && !descriptor.asCodeSegmentDescriptor().conforming())) {
+            if (selectorRPL > descriptor.DPL()) {
+                triggerGP(selector, QString("%1 loaded with data or non-conforming code segment and RPL > DPL").arg(registerName(reg)));
+                return false;
+            }
+            if (getCPL() > descriptor.DPL()) {
+                triggerGP(selector, QString("%1 loaded with data or non-conforming code segment and RPL > DPL").arg(registerName(reg)));
+                return false;
+            }
+        }
+        if (!descriptor.present()) {
+            triggerNP(selector, QString("%1 loaded with non-present segment").arg(registerName(reg)));
+            return false;
+        }
+    }
+
+    if (!descriptor.isNull() && !descriptor.isSegmentDescriptor()) {
+        dumpDescriptor(descriptor);
+        triggerGP(0, QString("%1 loaded with system segment").arg(registerName(reg)));
+        return false;
+    }
+
+    return true;
+}
+
 void CPU::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
 {
     auto& descriptorCache = static_cast<Descriptor&>(m_descriptor[(int)segmentRegisterIndex]);
@@ -220,14 +331,8 @@ void CPU::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
     WORD selector = getSegment(segmentRegisterIndex);
     auto descriptor = getDescriptor(selector);
 
-    if (descriptor.isError()) {
-        vlog(LogCPU, "Error when loading %s with %04x: m_error=%u",
-            toString(segmentRegisterIndex),
-            selector,
-            (unsigned)descriptor.error()
-        );
-        GP(selector);
-        return;
+    if (!validateSegmentLoad(segmentRegisterIndex, descriptor)) {
+        //CRASH();
     }
 
     if (descriptor.isNull()) {
@@ -235,8 +340,6 @@ void CPU::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
         return;
     }
 
-    if (!descriptor.isSegmentDescriptor())
-        dumpDescriptor(descriptor);
     ASSERT(descriptor.isSegmentDescriptor());
 
     if (!getPE() || segmentRegisterIndex == SegmentRegisterIndex::SS) {
@@ -247,7 +350,7 @@ void CPU::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
     descriptorCache = descriptor.asSegmentDescriptor();
     if (options.pedebug) {
         if (getPE()) {
-            vlog(LogCPU, "%s loaded with %04X { type:%02X, base:%08X, limit:%08X }",
+            vlog(LogCPU, "%s loaded with %04x { type:%02X, base:%08X, limit:%08X }",
                 toString(segmentRegisterIndex),
                 selector,
                 descriptor.asSegmentDescriptor().type(),
@@ -259,8 +362,9 @@ void CPU::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
 
     switch (segmentRegisterIndex) {
     case SegmentRegisterIndex::CS:
-        if (getPE())
+        if (getPE()) {
             setCPL(descriptor.DPL());
+        }
         updateDefaultSizes();
         updateCodeSegmentCache();
         break;

@@ -98,7 +98,7 @@ void CPU::_MOV_reg32_CR(Instruction& insn)
     int crIndex = insn.registerIndex();
 
     if (getVM()) {
-        GP(0);
+        triggerGP(0, "MOV reg32, CRx with VM=1");
         return;
     }
 
@@ -113,7 +113,7 @@ void CPU::_MOV_reg32_CR(Instruction& insn)
         // table (PDPT) and the loading of a control register causes the
         // PDPT to be loaded into the processor.
         if (getCPL() != 0) {
-            GP(0);
+            triggerGP(0, "MOV reg32, CRx with CPL!=0");
             return;
         }
     } else {
@@ -136,7 +136,7 @@ void CPU::_MOV_CR_reg32(Instruction& insn)
     int crIndex = insn.registerIndex();
 
     if (getVM()) {
-        GP(0);
+        triggerGP(0, "MOV CRx, reg32 with VM=1");
         return;
     }
 
@@ -151,7 +151,7 @@ void CPU::_MOV_CR_reg32(Instruction& insn)
         // table (PDPT) and the loading of a control register causes the
         // PDPT to be loaded into the processor.
         if (getCPL() != 0) {
-            GP(0);
+            triggerGP(0, "MOV CRx, reg32 with CPL!=0");
             return;
         }
     } else {
@@ -180,13 +180,13 @@ void CPU::_MOV_reg32_DR(Instruction& insn)
     auto registerIndex = static_cast<CPU::RegisterIndex32>(insn.rm() & 7);
 
     if (getVM()) {
-        GP(0);
+        triggerGP(0, "MOV reg32, DRx with VM=1");
         return;
     }
 
     if (getPE()) {
         if (getCPL() != 0) {
-            GP(0);
+            triggerGP(0, "MOV reg32, DRx with CPL!=0");
             return;
         }
     }
@@ -201,13 +201,13 @@ void CPU::_MOV_DR_reg32(Instruction& insn)
     auto registerIndex = static_cast<CPU::RegisterIndex32>(insn.rm() & 7);
 
     if (getVM()) {
-        GP(0);
+        triggerGP(0, "MOV DRx, reg32 with VM=1");
         return;
     }
 
     if (getPE()) {
         if (getCPL() != 0) {
-            GP(0);
+            triggerGP(0, "MOV DRx, reg32 with CPL!=0");
             return;
         }
     }
