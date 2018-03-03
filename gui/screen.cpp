@@ -42,9 +42,6 @@
 #include <QtCore/QDebug>
 #include <QtCore/QTimer>
 
-// FIXME: Remove. This is here because VGA has no way of grabbing at the Screen.
-volatile bool g_screen_in_refresh = false;
-
 struct fontcharbitmap_t {
     BYTE data[16];
 };
@@ -155,8 +152,11 @@ void Screen::putCharacter(QPainter &p, int row, int column, BYTE color, BYTE c)
 
 class RefreshGuard {
 public:
-    RefreshGuard() { g_screen_in_refresh = true; }
-    ~RefreshGuard() { g_screen_in_refresh = false; }
+    RefreshGuard(Machine& machine) : m_machine(machine) { m_machine.vga().willRefreshScreen(); }
+    ~RefreshGuard() { m_machine.vga().didRefreshScreen(); }
+
+private:
+    Machine& m_machine;
 };
 
 inline bool isVideoModeUsingVGAMemory(BYTE videoMode)
@@ -166,7 +166,7 @@ inline bool isVideoModeUsingVGAMemory(BYTE videoMode)
 
 void Screen::refresh()
 {
-    RefreshGuard guard;
+    RefreshGuard guard(machine());
 
     BYTE videoMode = currentVideoMode();
 

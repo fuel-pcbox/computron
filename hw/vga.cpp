@@ -64,6 +64,8 @@ struct VGA::Private
 
     BYTE paletteRegister[17];
     RGBColor colorRegister[256];
+
+    bool screenInRefresh { false };
 };
 
 static const RGBColor default_vga_color_registers[256] =
@@ -135,6 +137,7 @@ void VGA::reset()
 
     d->next3C0IsIndex = true;
     d->paletteDirty = true;
+    d->screenInRefresh = false;
 }
 
 void VGA::out8(WORD port, BYTE data)
@@ -235,10 +238,18 @@ void VGA::out8(WORD port, BYTE data)
     }
 }
 
+void VGA::willRefreshScreen()
+{
+    d->screenInRefresh = true;
+}
+
+void VGA::didRefreshScreen()
+{
+    d->screenInRefresh = false;
+}
+
 BYTE VGA::in8(WORD port)
 {
-    extern volatile bool g_screen_in_refresh;
-
     switch (port) {
     case 0x3B4:
     case 0x3D4:
@@ -268,8 +279,7 @@ BYTE VGA::in8(WORD port)
         // 0000 0100
         BYTE value = 0x04;
 
-        // FIXME: Needs mutex protection (or more clever mechanism.)
-        if (!g_screen_in_refresh) {
+        if (!d->screenInRefresh) {
             value |= 0x08;
             value |= 0x01;
         }

@@ -23,8 +23,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef VGA_H
-#define VGA_H
+#pragma once
 
 #include "iodevice.h"
 #include "OwnPtr.h"
@@ -58,6 +57,9 @@ public:
 
     WORD startAddress() const;
 
+    void willRefreshScreen();
+    void didRefreshScreen();
+
 signals:
     void paletteChanged();
 
@@ -65,5 +67,3 @@ private:
     struct Private;
     OwnPtr<Private> d;
 };
-
-#endif
