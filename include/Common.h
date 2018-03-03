@@ -48,6 +48,7 @@ struct RuntimeOptions {
     bool pedebug { false };
     bool vlogcycle { false };
     bool crashOnGPF { false };
+    bool crashOnException { false };
     QString autotestPath;
     QString configPath;
 };

@@ -218,6 +218,9 @@ const char* toString(SegmentRegisterIndex segment)
 
 void CPU::exception(BYTE num)
 {
+    if (options.crashOnException)
+        ASSERT_NOT_REACHED();
+
     switch (m_exceptionState) {
     case NoException:
         m_exceptionState = SingleFault;

@@ -118,6 +118,8 @@ void parseArguments(const QStringList& arguments)
             options.vlogcycle = true;
         else if (argument == "--crash-on-gpf")
             options.crashOnGPF = true;
+        else if (argument == "--crash-on-exception")
+            options.crashOnException = true;
         else if (argument == "--pedebug")
             options.pedebug = true;
         else if (argument == "--vgadebug")

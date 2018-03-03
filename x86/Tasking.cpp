@@ -88,7 +88,7 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
     EXCEPTION_ON(GP, 0, incomingTSSDescriptor.isNull(), "Incoming TSS descriptor is null");
     EXCEPTION_ON(GP, 0, !incomingTSSDescriptor.isGlobal(), "Incoming TSS descriptor is not from GDT");
     EXCEPTION_ON(GP, 0, incomingTSSDescriptor.isBusy(), "Incoming TSS descriptor is busy");
-    EXCEPTION_ON(NP, 0, incomingTSSDescriptor.present(), "Incoming TSS descriptor is not present");
+    EXCEPTION_ON(NP, 0, !incomingTSSDescriptor.present(), "Incoming TSS descriptor is not present");
     EXCEPTION_ON(GP, 0, incomingTSSDescriptor.limit() < 103, "Incoming TSS descriptor limit too small");
 
     auto outgoingDescriptor = getDescriptor(TR.segment);
@@ -150,8 +150,10 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
         CR3 = incomingTSS.getCR3();
 
     auto ldtDescriptor = getDescriptor(incomingTSS.getLDT());
-    EXCEPTION_ON(TS, incomingTSS.getLDT() & 0xfffc, !ldtDescriptor.isLDT(), "Incoming TSS LDT is not an LDT");
-    EXCEPTION_ON(TS, incomingTSS.getLDT() & 0xfffc, !ldtDescriptor.present(), "Incoming TSS LDT is not present");
+    if (!ldtDescriptor.isNull()) {
+        EXCEPTION_ON(TS, incomingTSS.getLDT() & 0xfffc, !ldtDescriptor.isLDT(), "Incoming TSS LDT is not an LDT");
+        EXCEPTION_ON(TS, incomingTSS.getLDT() & 0xfffc, !ldtDescriptor.present(), "Incoming TSS LDT is not present");
+    }
 
     setLDT(incomingTSS.getLDT());
     setCS(incomingTSS.getCS());
