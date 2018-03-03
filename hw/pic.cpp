@@ -185,7 +185,7 @@ void PIC::serviceIRQ(CPU& cpu)
         machine.slavePIC().m_irr &= ~(1 << (interrupt_to_service - 8));
         machine.slavePIC().m_isr |= (1 << (interrupt_to_service - 8));
 
-        cpu.jumpToInterruptHandler(machine.slavePIC().m_isrBase | interrupt_to_service, true);
+        cpu.jumpToInterruptHandler(machine.slavePIC().m_isrBase | (interrupt_to_service - 8), true);
     }
 
     lockerGlobal.unlock();
