@@ -699,14 +699,7 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr)
 void CPU::setCPL(BYTE cpl)
 {
     ASSERT(getPE());
-#ifdef DEBUG_CPL
-    WORD oldCS = CS;
-#endif
-    CS = (CS & ~0x3) | cpl;
     cachedDescriptor(SegmentRegisterIndex::CS).m_RPL = cpl;
-#ifdef DEBUG_CPL
-    vlog(LogCPU, "CS(:CPL) adjust %04x -> %04x, CPL=%u", oldCS, CS, getCPL());
-#endif
 }
 
 void CPU::jump16(WORD segment, WORD offset, JumpType type, BYTE isr)
