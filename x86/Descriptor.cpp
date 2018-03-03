@@ -37,6 +37,7 @@ Descriptor CPU::getDescriptor(WORD selector)
         descriptor.m_RPL = 0;
         descriptor.m_D = false;
         descriptor.m_DT = true;
+        descriptor.m_P = true;
         descriptor.m_isGlobal = true;
         return descriptor;
     }
