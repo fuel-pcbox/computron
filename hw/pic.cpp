@@ -178,9 +178,12 @@ void PIC::serviceIRQ(CPU& cpu)
 
     BYTE interrupt_to_service = 0xFF;
 
-    for (int i = 0; i < 16; ++i)
-        if (s_pendingRequests & (1 << i))
+    for (int i = 0; i < 16; ++i) {
+        if (s_pendingRequests & (1 << i)) {
             interrupt_to_service = i;
+            break;
+        }
+    }
 
     if (interrupt_to_service == 0xFF)
         return;
