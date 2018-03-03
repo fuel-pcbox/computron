@@ -179,12 +179,24 @@ void CPU::_LSL_reg16_RM16(Instruction& insn)
 {
     WORD selector = insn.modrm().read16() & 0xffff;
     auto descriptor = getDescriptor(selector);
+    if (descriptor.isError()) {
+        setZF(0);
+        return;
+    }
     insn.reg16() = descriptor.asSegmentDescriptor().effectiveLimit();
+    setZF(1);
 }
 
-void CPU::_LSL_reg32_RM32(Instruction&)
+void CPU::_LSL_reg32_RM32(Instruction& insn)
 {
-    ASSERT_NOT_REACHED();
+    WORD selector = insn.modrm().read16() & 0xffff;
+    auto descriptor = getDescriptor(selector);
+    if (descriptor.isError()) {
+        setZF(0);
+        return;
+    }
+    insn.reg32() = descriptor.asSegmentDescriptor().effectiveLimit();
+    setZF(1);
 }
 
 const char* toString(SegmentRegisterIndex segment)
