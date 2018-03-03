@@ -185,7 +185,7 @@ public:
 
     unsigned int getIOPL() const { return this->IOPL; }
 
-    BYTE getCPL() const { return m_descriptor[(int)SegmentRegisterIndex::CS].RPL(); }
+    BYTE getCPL() const { return cachedDescriptor(SegmentRegisterIndex::CS).RPL(); }
     void setCPL(BYTE);
 
     bool getNT() const { return this->NT; }
@@ -444,6 +444,7 @@ public:
     void setState(State s) { m_state = s; }
 
     SegmentDescriptor& cachedDescriptor(SegmentRegisterIndex index) { return m_descriptor[(int)index]; }
+    const SegmentDescriptor& cachedDescriptor(SegmentRegisterIndex index) const { return m_descriptor[(int)index]; }
 
     // Dumps registers, flags & stack
     void dumpAll();

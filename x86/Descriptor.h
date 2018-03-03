@@ -49,7 +49,7 @@ public:
 
     unsigned index() const { return m_index; }
     bool isGlobal() const { return m_isGlobal; }
-    bool RPL() const { return m_RPL; }
+    BYTE RPL() const { return m_RPL; }
 
     bool isSegmentDescriptor() const { return m_DT; }
     bool isSystemDescriptor() const { return !m_DT; }
@@ -70,6 +70,8 @@ public:
     bool isTSS() const;
     bool isLDT() const;
     bool isNull() const { return m_DT == 0 && m_type == 0; }
+
+    bool isNonconformingCode() const;
 
     SegmentDescriptor& asSegmentDescriptor();
     SystemDescriptor& asSystemDescriptor();
@@ -312,4 +314,9 @@ inline bool Descriptor::isCode() const
 inline bool Descriptor::isData() const
 {
     return isSegmentDescriptor() && asSegmentDescriptor().isData();
+}
+
+inline bool Descriptor::isNonconformingCode() const
+{
+    return isCode() && !asCodeSegmentDescriptor().conforming();
 }

@@ -237,9 +237,8 @@ void CPU::triggerGP(WORD code, const QString& reason)
     bool I = code & 2;
     bool EX = code & 1;
     vlog(LogCPU, "Exception: #GP(%04x) selector=%04X, TI=%u, I=%u, EX=%u :: %s", code, selector, TI, I, EX, qPrintable(reason));
-#ifdef CRASH_ON_GPF
-    ASSERT_NOT_REACHED();
-#endif
+    if (options.crashOnGPF)
+        ASSERT_NOT_REACHED();
     exception(13, code);
 }
 
@@ -270,19 +269,19 @@ bool CPU::validateSegmentLoad(SegmentRegisterIndex reg, const Descriptor& descri
 
     if (reg == SegmentRegisterIndex::SS) {
         if (descriptor.isNull()) {
-            triggerGP(0, "SS loaded with null descriptor");
+            triggerGP(0, "ss loaded with null descriptor");
             return false;
         }
         if (selectorRPL != getCPL()) {
-            triggerGP(0, QString("SS selector RPL(%1) != CPL(%2)").arg(selectorRPL).arg(getCPL()));
+            triggerGP(0, QString("ss selector RPL(%1) != CPL(%2)").arg(selectorRPL).arg(getCPL()));
             return false;
         }
         if (!descriptor.isData() || !descriptor.asDataSegmentDescriptor().writable()) {
-            triggerGP(selector, "SS loaded with something other than a writable data segment");
+            triggerGP(selector, "ss loaded with something other than a writable data segment");
             return false;
         }
         if (!descriptor.present()) {
-            triggerSS(selector, "SS loaded with non-present segment");
+            triggerSS(selector, "ss loaded with non-present segment");
             return false;
         }
         return true;
@@ -299,7 +298,7 @@ bool CPU::validateSegmentLoad(SegmentRegisterIndex reg, const Descriptor& descri
             triggerGP(selector, QString("%1 loaded with non-data or non-readable code segment").arg(registerName(reg)));
             return false;
         }
-        if (descriptor.isData() || (descriptor.isCode() && !descriptor.asCodeSegmentDescriptor().conforming())) {
+        if (descriptor.isData() || descriptor.isNonconformingCode()) {
             if (selectorRPL > descriptor.DPL()) {
                 triggerGP(selector, QString("%1 loaded with data or non-conforming code segment and RPL > DPL").arg(registerName(reg)));
                 return false;

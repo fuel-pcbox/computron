@@ -448,6 +448,10 @@ void CPU::dumpDescriptor(const Gate& gate)
         gate.present() ? "yes" : "no",
         gate.DPL()
     );
+    if (gate.isCallGate()) {
+        vlog(LogCPU, "Call gate points to:");
+        dumpDescriptor(getDescriptor(gate.selector()));
+    }
 }
 
 void CPU::dumpDescriptor(const SystemDescriptor& segment)

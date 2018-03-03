@@ -37,8 +37,9 @@
 #include "Tasking.h"
 
 #define CRASH_ON_OPCODE_00_00
+#define CRASH_ON_VM
+//#define DEBUG_CPL
 //#define DISASSEMBLE_EVERYTHING
-//#define CRASH_ON_GPF
 //#define DEBUG_I386NF
 
 inline bool hasA20Bit(DWORD address)
@@ -205,12 +206,19 @@ void CPU::decodeNext()
 
 void CPU::execute(Instruction&& insn)
 {
+#ifdef CRASH_ON_VM
+    if (getVM()) {
+        dumpTrace();
+        ASSERT_NOT_REACHED();
+    }
+#endif
+
 #ifdef CRASH_ON_OPCODE_00_00
     if (insn.op() == 0 && insn.rm() == 0) {
         dumpTrace();
         ASSERT_NOT_REACHED();
     }
- #endif
+#endif
 
 #ifdef DISASSEMBLE_EVERYTHING
     vlog(LogCPU, "%s", qPrintable(insn.toString(m_baseEIP, x32())));
@@ -599,9 +607,10 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr)
     WORD originalCS = getCS();
     DWORD originalEIP = getEIP();
 
-    //vlog(LogCPU, "[PE=%u, PG=%u] %s to %04X:%08X", getPE(), getPG(), toString(type), segment, offset);
+    //vlog(LogCPU, "[PE=%u, PG=%u] %s from %04x:%08x to %04x:%08x", getPE(), getPG(), toString(type), originalCS, originalEIP, segment, offset);
 
     auto descriptor = getDescriptor(segment);
+    auto targetDescriptor = descriptor;
 
     if (descriptor.isSystemDescriptor()) {
         auto& sys = descriptor.asSystemDescriptor();
@@ -610,6 +619,7 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr)
         dumpDescriptor(descriptor);
         if (sys.isGate()) {
             auto& gate = sys.asGate();
+            targetDescriptor = getDescriptor(gate.selector());
             vlog(LogCPU, "Gate (%s) to %04x:%08x (count=%u)", gate.typeName(), gate.selector(), gate.offset(), gate.parameterCount());
             ASSERT(gate.isCallGate());
             setCS(gate.selector());
@@ -631,9 +641,9 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr)
         setEIP(offset);
     }
 
-    if (type == JumpType::CALL || type == JumpType::INT) {
-    if (getPE() && descriptor.DPL() < originalCPL) {
-        vlog(LogCPU, "%s escalating privilege from ring%u to ring%u", toString(type), originalCPL, descriptor.DPL(), descriptor);
+    if (getPE() && (type == JumpType::CALL || type == JumpType::INT)) {
+    if (targetDescriptor.isNonconformingCode() && targetDescriptor.DPL() < originalCPL) {
+        vlog(LogCPU, "%s escalating privilege from ring%u to ring%u", toString(type), originalCPL, targetDescriptor.DPL(), targetDescriptor);
         WORD oldSS = getSS();
         DWORD oldESP = getESP();
         auto tss = currentTSS();
@@ -648,9 +658,9 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr)
             push32(oldESP);
             vlog(LogCPU, "%s to inner ring, ss:esp %04x:%08x -> %04x:%08x", toString(type), oldSS, oldESP, getSS(), getESP());
         }
-        setCPL(descriptor.DPL());
-    } else if (getPE() && originalCPL == descriptor.DPL()) {
-        vlog(LogCPU, "%s same privilege from ring%u to ring%u", toString(type), originalCPL, descriptor.DPL(), descriptor);
+        setCPL(targetDescriptor.DPL());
+    } else {
+        vlog(LogCPU, "%s same privilege from ring%u to ring%u", toString(type), originalCPL, targetDescriptor.DPL());
         setCPL(originalCPL);
     }
     }
@@ -671,13 +681,13 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr)
         if (o16()) {
             WORD newSP = pop16();
             WORD newSS = pop16();
-            vlog(LogCPU, "%s to outer ring, ss:sp %04x:%04x -> %04x:%04x", toString(type), getSS(), getSP(), newSS, newSP);
+            vlog(LogCPU, "%s from ring%u to ring%u, ss:sp %04x:%04x -> %04x:%04x", toString(type), originalCPL, getCPL(), getSS(), getSP(), newSS, newSP);
             setESP(newSP);
             setSS(newSS);
         } else {
             DWORD newESP = pop32();
             WORD newSS = pop32();
-            vlog(LogCPU, "%s to outer ring, ss:esp %04x:%08x -> %04x:%08x", toString(type), getSS(), getESP(), newSS, newESP);
+            vlog(LogCPU, "%s from ring%u to ring%u, ss:esp %04x:%08x -> %04x:%08x", toString(type), originalCPL, getCPL(), getSS(), getESP(), newSS, newESP);
             setESP(newESP);
             setSS(newSS);
         }
@@ -687,13 +697,14 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr)
 
 void CPU::setCPL(BYTE cpl)
 {
+    ASSERT(getPE());
 #ifdef DEBUG_CPL
     WORD oldCS = CS;
 #endif
     CS = (CS & ~0x3) | cpl;
     cachedDescriptor(SegmentRegisterIndex::CS).m_RPL = cpl;
 #ifdef DEBUG_CPL
-    vlog(LogCPU, "CS(:CPL) adjust %04x -> %04x", oldCS, CS);
+    vlog(LogCPU, "CS(:CPL) adjust %04x -> %04x, CPL=%u", oldCS, CS, getCPL());
 #endif
 }
 
