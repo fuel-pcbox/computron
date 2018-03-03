@@ -154,6 +154,7 @@ public:
     void triggerGP(WORD selector, const QString& reason);
     void triggerSS(WORD selector, const QString& reason);
     void triggerNP(WORD selector, const QString& reason);
+    void triggerTS(WORD selector, const QString& reason);
     void triggerPF(DWORD address, WORD error, const QString& reason);
 
     void exception(BYTE num);

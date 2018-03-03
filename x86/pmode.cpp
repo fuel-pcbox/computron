@@ -255,6 +255,12 @@ void CPU::triggerNP(WORD selector, const QString& reason)
     exception(0xb, selector);
 }
 
+void CPU::triggerTS(WORD selector, const QString& reason)
+{
+    vlog(LogCPU, "Exception: #TS(%04x) :: %s", selector, qPrintable(reason));
+    exception(0xa, selector);
+}
+
 void CPU::triggerPF(DWORD address, WORD error, const QString& reason)
 {
     vlog(LogCPU, "Exception: #PF(%04x) address=%08x :: %s", error, address, qPrintable(reason));

@@ -72,10 +72,24 @@ void CPU::_LTR_RM16(Instruction& insn)
     vlog(LogAlert, "LTR { segment: %04x => base:%08x, limit:%08x }", TR.segment, TR.base, TR.limit);
 }
 
+#define EXCEPTION_ON(type, code, condition, reason) \
+    do { \
+        if ((condition)) { \
+            trigger ## type(code, reason); \
+            return; \
+        } \
+    } while(0)
+
 void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
 {
     ASSERT(incomingTSSDescriptor.is32Bit());
     //ASSERT(incomingTSSDescriptor.isAvailable());
+
+    EXCEPTION_ON(GP, 0, incomingTSSDescriptor.isNull(), "Incoming TSS descriptor is null");
+    EXCEPTION_ON(GP, 0, !incomingTSSDescriptor.isGlobal(), "Incoming TSS descriptor is not from GDT");
+    EXCEPTION_ON(GP, 0, incomingTSSDescriptor.isBusy(), "Incoming TSS descriptor is busy");
+    EXCEPTION_ON(NP, 0, incomingTSSDescriptor.present(), "Incoming TSS descriptor is not present");
+    EXCEPTION_ON(GP, 0, incomingTSSDescriptor.limit() < 103, "Incoming TSS descriptor limit too small");
 
     auto outgoingDescriptor = getDescriptor(TR.segment);
     if (!outgoingDescriptor.isTSS()) {
@@ -136,9 +150,8 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
         CR3 = incomingTSS.getCR3();
 
     auto ldtDescriptor = getDescriptor(incomingTSS.getLDT());
-    if (!ldtDescriptor.isLDT() || !ldtDescriptor.present()) {
-        // FIXME: What do? #TS?
-    }
+    EXCEPTION_ON(TS, incomingTSS.getLDT() & 0xfffc, !ldtDescriptor.isLDT(), "Incoming TSS LDT is not an LDT");
+    EXCEPTION_ON(TS, incomingTSS.getLDT() & 0xfffc, !ldtDescriptor.present(), "Incoming TSS LDT is not present");
 
     setLDT(incomingTSS.getLDT());
     setCS(incomingTSS.getCS());
@@ -181,10 +194,7 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
 
     CR0 |= 0x04; // TS (Task Switched)
 
-    if (getEIP() > cachedDescriptor(SegmentRegisterIndex::CS).effectiveLimit()) {
-        dumpDescriptor(cachedDescriptor(SegmentRegisterIndex::CS));
-        triggerGP(0, "Task switch to EIP outside CS limit");
-    }
+    EXCEPTION_ON(GP, 0, getEIP() > cachedDescriptor(SegmentRegisterIndex::CS).effectiveLimit(), "Task switch to EIP outside CS limit");
 
     if (getTF()) {
         vlog(LogCPU, "Leaving task switch with TF=1");
