@@ -587,6 +587,7 @@ static const char* toString(JumpType type)
     case JumpType::INT: return "INT";
     case JumpType::JMP: return "JMP";
     case JumpType::Internal: return "Internal";
+    case JumpType::GateEntry: return "GateEntry";
     default:
         ASSERT_NOT_REACHED();
         return nullptr;
@@ -607,10 +608,9 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr)
     WORD originalCS = getCS();
     DWORD originalEIP = getEIP();
 
-    //vlog(LogCPU, "[PE=%u, PG=%u] %s from %04x:%08x to %04x:%08x", getPE(), getPG(), toString(type), originalCS, originalEIP, segment, offset);
+    //vlog(LogCPU, "[PE=%u, PG=%u] %s from %04x:%08x to %04x:%08x", getPE(), getPG(), toString(type), getBaseCS(), getBaseEIP(), segment, offset);
 
     auto descriptor = getDescriptor(segment);
-    auto targetDescriptor = descriptor;
 
     if (descriptor.isSystemDescriptor()) {
         auto& sys = descriptor.asSystemDescriptor();
@@ -619,13 +619,12 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr)
         dumpDescriptor(descriptor);
         if (sys.isGate()) {
             auto& gate = sys.asGate();
-            targetDescriptor = getDescriptor(gate.selector());
             vlog(LogCPU, "Gate (%s) to %04x:%08x (count=%u)", gate.typeName(), gate.selector(), gate.offset(), gate.parameterCount());
             ASSERT(gate.isCallGate());
-            setCS(gate.selector());
-            setEIP(gate.offset());
             ASSERT(!gate.parameterCount()); // FIXME: Implement
-            //dumpDescriptor(getDescriptor(TR.segment));
+            // NOTE: We recurse here, jumping to the gate entry point.
+            jump32(gate.selector(), gate.offset(), JumpType::GateEntry, isr);
+            return;
         } else if (sys.isTSS()) {
             auto& tssDescriptor = sys.asTSSDescriptor();
             vlog(LogCPU, "CS is this:");
@@ -642,8 +641,8 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr)
     }
 
     if (getPE() && (type == JumpType::CALL || type == JumpType::INT)) {
-    if (targetDescriptor.isNonconformingCode() && targetDescriptor.DPL() < originalCPL) {
-        vlog(LogCPU, "%s escalating privilege from ring%u to ring%u", toString(type), originalCPL, targetDescriptor.DPL(), targetDescriptor);
+    if (descriptor.isNonconformingCode() && descriptor.DPL() < originalCPL) {
+        vlog(LogCPU, "%s escalating privilege from ring%u to ring%u", toString(type), originalCPL, descriptor.DPL(), descriptor);
         WORD oldSS = getSS();
         DWORD oldESP = getESP();
         auto tss = currentTSS();
@@ -658,9 +657,9 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr)
             push32(oldESP);
             vlog(LogCPU, "%s to inner ring, ss:esp %04x:%08x -> %04x:%08x", toString(type), oldSS, oldESP, getSS(), getESP());
         }
-        setCPL(targetDescriptor.DPL());
+        setCPL(descriptor.DPL());
     } else {
-        vlog(LogCPU, "%s same privilege from ring%u to ring%u", toString(type), originalCPL, targetDescriptor.DPL());
+        vlog(LogCPU, "%s same privilege from ring%u to ring%u", toString(type), originalCPL, descriptor.DPL());
         setCPL(originalCPL);
     }
     }

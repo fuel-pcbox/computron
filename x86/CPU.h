@@ -63,7 +63,7 @@ struct WatchedAddress {
     QWORD lastSeenValue { neverSeen };
 };
 
-enum class JumpType { Internal, IRET, RETF, INT, CALL, JMP };
+enum class JumpType { Internal, GateEntry, IRET, RETF, INT, CALL, JMP };
 
 class CPU final : public InstructionStream {
     friend void buildOpcodeTablesIfNeeded();
