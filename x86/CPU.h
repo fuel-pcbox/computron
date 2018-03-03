@@ -154,7 +154,7 @@ public:
     void triggerGP(WORD selector, const QString& reason);
     void triggerSS(WORD selector, const QString& reason);
     void triggerNP(WORD selector, const QString& reason);
-    void triggerPageFault(DWORD address, WORD error);
+    void triggerPF(DWORD address, WORD error, const QString& reason);
 
     void exception(BYTE num);
     void exception(BYTE num, WORD error);
@@ -391,7 +391,7 @@ public:
     inline void writeUnmappedMemory8(DWORD address, BYTE data);
     inline void writeUnmappedMemory16(DWORD address, WORD data);
 
-    enum class MemoryAccessType { Read, Write };
+    enum class MemoryAccessType { Read, Write, InternalPointer };
 
     template<typename T> bool validatePhysicalAddress(DWORD, MemoryAccessType);
     template<typename T> bool validateAddress(const SegmentDescriptor&, DWORD offset, MemoryAccessType);
@@ -406,7 +406,7 @@ public:
     template<typename T> void writeMemory(const SegmentDescriptor&, DWORD address, T data);
     template<typename T> void writeMemory(SegmentRegisterIndex, DWORD address, T data);
 
-    DWORD translateAddress(DWORD);
+    bool translateAddress(DWORD linearAddress, DWORD& physicalAddress, MemoryAccessType);
 
     BYTE readMemory8(DWORD address);
     BYTE readMemory8(WORD segment, DWORD offset);

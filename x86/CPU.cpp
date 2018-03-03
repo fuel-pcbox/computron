@@ -1089,19 +1089,18 @@ enum PageTableEntryFlags {
     Dirty = 0x40,
 };
 
-void CPU::triggerPageFault(DWORD address, WORD error)
+bool CPU::translateAddress(DWORD linearAddress, DWORD& physicalAddress, MemoryAccessType accessType)
 {
-    CR2 = address;
-    exception(0x0e, error);
-}
+    if (!getPE() || !getPG()) {
+        physicalAddress = linearAddress;
+        return true;
+    }
 
-DWORD CPU::translateAddress(DWORD address)
-{
-    ASSERT(getPG());
+    ASSERT(getCR3() < m_memorySize);
 
-    DWORD dir = (address >> 22) & 0x3FF;
-    DWORD page = (address >> 12) & 0x3FF;
-    DWORD offset = address & 0xFFF;
+    DWORD dir = (linearAddress >> 22) & 0x3FF;
+    DWORD page = (linearAddress >> 12) & 0x3FF;
+    DWORD offset = linearAddress & 0xFFF;
 
     DWORD* PDBR = reinterpret_cast<DWORD*>(&m_memory[getCR3()]);
     ASSERT(!(getCR3() & 0x03ff));
@@ -1110,18 +1109,24 @@ DWORD CPU::translateAddress(DWORD address)
     DWORD* pageTable = reinterpret_cast<DWORD*>(&m_memory[pageDirectoryEntry & 0xfffff000]);
     DWORD pageTableEntry = pageTable[page];
 
-    if (!(pageDirectoryEntry & PageTableEntryFlags::Present) || !(pageTableEntry & PageTableEntryFlags::Present)) {
+    if (!(pageDirectoryEntry & PageTableEntryFlags::Present)) {
         // FIXME: Pass correct error code!
-        triggerPageFault(address, 0x0);
+        triggerPF(linearAddress, 0, QString("Page not present in PDE(%1)").arg(pageDirectoryEntry, 8, 16, QLatin1Char('0')));
+        return false;
+    }
+    if (!(pageTableEntry & PageTableEntryFlags::Present)) {
+        // FIXME: Pass correct error code!
+        triggerPF(linearAddress, 0, QString("Page not present in PTE(%1)").arg(pageTableEntry, 8, 16, QLatin1Char('0')));
+        return false;
     }
 
-    DWORD translatedAddress = (pageTableEntry & 0xfffff000) | offset;
+    physicalAddress = (pageTableEntry & 0xfffff000) | offset;
 
 #ifdef DEBUG_PAGING
-    vlog(LogCPU, "PG=1 Translating %08X {dir=%03X, page=%03X, offset=%03X} => %08X [%08X + %08X]", address, dir, page, offset, translatedAddress, pageDirectoryEntry, pageTableEntry);
+    vlog(LogCPU, "PG=1 Translating %08x {dir=%03x, page=%03x, offset=%03x} => %08x [%08x + %08x]", linearAddress, dir, page, offset, translatedAddress, pageDirectoryEntry, pageTableEntry);
 #endif
 
-    return translatedAddress;
+    return true;
 }
 
 static const char* toString(CPU::MemoryAccessType type)
@@ -1129,6 +1134,7 @@ static const char* toString(CPU::MemoryAccessType type)
     switch (type) {
     case CPU::MemoryAccessType::Read: return "Read";
     case CPU::MemoryAccessType::Write: return "Write";
+    case CPU::MemoryAccessType::InternalPointer: return "InternalPointer";
     default: return "(wat)";
     }
 }
@@ -1167,10 +1173,10 @@ bool CPU::validateAddress(const SegmentDescriptor& descriptor, DWORD offset, Mem
     }
     ASSERT(offset <= descriptor.effectiveLimit());
 
-    DWORD physicalAddress = descriptor.base() + offset;
-    if (getPG()) {
-        physicalAddress = translateAddress(physicalAddress);
-    }
+    DWORD linearAddress = descriptor.base() + offset;
+    DWORD physicalAddress;
+    if (!translateAddress(linearAddress, physicalAddress, accessType))
+        return false;
     return true;
 }
 
@@ -1204,24 +1210,24 @@ bool CPU::validatePhysicalAddress(DWORD address, MemoryAccessType accessType)
 }
 
 template<typename T>
-T CPU::readMemory(DWORD address)
+T CPU::readMemory(DWORD linearAddress)
 {
-    address &= a20Mask();
-    if (getPG()) {
-        address = translateAddress(address);
-    }
-    if (!validatePhysicalAddress<T>(address, MemoryAccessType::Read))
+    DWORD physicalAddress;
+    if (!translateAddress(linearAddress, physicalAddress, MemoryAccessType::Read))
+        return 0;
+    physicalAddress &= a20Mask();
+    if (!validatePhysicalAddress<T>(physicalAddress, MemoryAccessType::Read))
         return 0;
     T value;
-    if (addressIsInVGAMemory(address))
-        value = machine().vgaMemory().read<T>(address);
+    if (addressIsInVGAMemory(physicalAddress))
+        value = machine().vgaMemory().read<T>(physicalAddress);
     else
-        value = *reinterpret_cast<T*>(&m_memory[address]);
-    if (options.memdebug || shouldLogMemoryRead(address)) {
+        value = *reinterpret_cast<T*>(&m_memory[physicalAddress]);
+    if (options.memdebug || shouldLogMemoryRead(physicalAddress)) {
         if (options.novlog)
-            printf("%04X:%04X: %zu-bit read [A20=%s] 0x%08X, value: %08X\n", getBaseCS(), getBaseEIP(), sizeof(T) * 8, isA20Enabled() ? "on" : "off", address, value);
+            printf("%04X:%04X: %zu-bit read [A20=%s] 0x%08X, value: %08X\n", getBaseCS(), getBaseEIP(), sizeof(T) * 8, isA20Enabled() ? "on" : "off", physicalAddress, value);
         else
-            vlog(LogCPU, "%zu-bit read [A20=%s] 0x%08X, value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", address, value);
+            vlog(LogCPU, "%zu-bit read [A20=%s] 0x%08X, value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", physicalAddress, value);
     }
     return value;
 }
@@ -1234,11 +1240,11 @@ T CPU::readMemory(const SegmentDescriptor& descriptor, DWORD offset)
             //ASSERT_NOT_REACHED();
             return 0;
         }
-        DWORD physicalAddress = descriptor.base() + offset;
+        DWORD linearAddress = descriptor.base() + offset;
+        DWORD physicalAddress;
 
-        if (getPG()) {
-            physicalAddress = translateAddress(physicalAddress);
-        }
+        if (!translateAddress(linearAddress, physicalAddress, MemoryAccessType::Read))
+            return 0;
 
         if (!validatePhysicalAddress<T>(physicalAddress, MemoryAccessType::Read))
             return 0;
@@ -1289,26 +1295,26 @@ WORD CPU::readMemory16(SegmentRegisterIndex segment, DWORD offset) { return read
 DWORD CPU::readMemory32(SegmentRegisterIndex segment, DWORD offset) { return readMemory<DWORD>(segment, offset); }
 
 template<typename T>
-void CPU::writeMemory(DWORD address, T value)
+void CPU::writeMemory(DWORD linearAddress, T value)
 {
-    address &= a20Mask();
-    if (getPG()) {
-        address = translateAddress(address);
-    }
-    if (options.memdebug || shouldLogMemoryWrite(address)) {
+    DWORD physicalAddress;
+    if (!translateAddress(linearAddress, physicalAddress, MemoryAccessType::Write))
+        return;
+    physicalAddress &= a20Mask();
+    if (options.memdebug || shouldLogMemoryWrite(physicalAddress)) {
         if (options.novlog)
-            printf("%04X:%08X: %zu-bit write [A20=%s] 0x%08X, value: %08X\n", getBaseCS(), getBaseEIP(), sizeof(T) * 8, isA20Enabled() ? "on" : "off", address, value);
+            printf("%04X:%08X: %zu-bit write [A20=%s] 0x%08X, value: %08X\n", getBaseCS(), getBaseEIP(), sizeof(T) * 8, isA20Enabled() ? "on" : "off", physicalAddress, value);
         else
-            vlog(LogCPU, "%zu-bit write [A20=%s] 0x%08X, value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", address, value);
+            vlog(LogCPU, "%zu-bit write [A20=%s] 0x%08X, value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", physicalAddress, value);
     }
 
-    if (addressIsInVGAMemory(address)) {
-        machine().vgaMemory().write(address, value);
+    if (addressIsInVGAMemory(physicalAddress)) {
+        machine().vgaMemory().write(physicalAddress, value);
         return;
     }
 
-    *reinterpret_cast<T*>(&m_memory[address]) = value;
-    didTouchMemory(address);
+    *reinterpret_cast<T*>(&m_memory[physicalAddress]) = value;
+    didTouchMemory(physicalAddress);
 }
 
 template<typename T>
@@ -1319,11 +1325,11 @@ void CPU::writeMemory(const SegmentDescriptor& descriptor, DWORD offset, T value
             //ASSERT_NOT_REACHED();
             return;
         }
-        DWORD physicalAddress = descriptor.base() + offset;
+        DWORD linearAddress = descriptor.base() + offset;
+        DWORD physicalAddress;
 
-        if (getPG()) {
-            physicalAddress = translateAddress(physicalAddress);
-        }
+        if (!translateAddress(linearAddress, physicalAddress, MemoryAccessType::Write))
+            return;
 
         if (!validatePhysicalAddress<T>(physicalAddress, MemoryAccessType::Write))
             return;
@@ -1450,14 +1456,14 @@ BYTE* CPU::memoryPointer(SegmentRegisterIndex segment, DWORD offset)
 BYTE* CPU::memoryPointer(const SegmentDescriptor& descriptor, DWORD offset)
 {
     if (getPE()) {
-        if (!validateAddress<BYTE>(descriptor, offset, MemoryAccessType::Read)) {
+        if (!validateAddress<BYTE>(descriptor, offset, MemoryAccessType::InternalPointer)) {
             //ASSERT_NOT_REACHED();
             return nullptr;
         }
-        DWORD physicalAddress = descriptor.base() + offset;
-        if (getPG()) {
-            physicalAddress = translateAddress(physicalAddress);
-        }
+        DWORD linearAddress = descriptor.base() + offset;
+        DWORD physicalAddress;
+        if (!translateAddress(linearAddress, physicalAddress, MemoryAccessType::InternalPointer))
+            return nullptr;
         if (options.memdebug || shouldLogMemoryPointer(physicalAddress))
             vlog(LogCPU, "MemoryPointer PE [A20=%s] %04X:%08X (phys: %08X)", isA20Enabled() ? "on" : "off", descriptor.index(), offset, physicalAddress);
         didTouchMemory(physicalAddress);
@@ -1471,14 +1477,14 @@ BYTE* CPU::memoryPointer(WORD segmentIndex, DWORD offset)
     return memoryPointer(getSegmentDescriptor(segmentIndex), offset);
 }
 
-BYTE* CPU::memoryPointer(DWORD address)
+BYTE* CPU::memoryPointer(DWORD linearAddress)
 {
-    if (getPE() && getPG()) {
-        address = translateAddress(address);
-    }
-    address &= a20Mask();
-    didTouchMemory(address);
-    return &m_memory[address];
+    DWORD physicalAddress;
+    if (!translateAddress(linearAddress, physicalAddress, MemoryAccessType::InternalPointer))
+        return nullptr;
+    physicalAddress &= a20Mask();
+    didTouchMemory(physicalAddress);
+    return &m_memory[physicalAddress];
 }
 
 BYTE CPU::fetchOpcodeByte()

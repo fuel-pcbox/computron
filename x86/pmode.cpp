@@ -254,6 +254,13 @@ void CPU::triggerNP(WORD selector, const QString& reason)
     exception(0xb, selector);
 }
 
+void CPU::triggerPF(DWORD address, WORD error, const QString& reason)
+{
+    vlog(LogCPU, "Exception: #PF(%04x) address=%08x :: %s", error, address, qPrintable(reason));
+    CR2 = address;
+    exception(0x0e, error);
+}
+
 bool CPU::validateSegmentLoad(SegmentRegisterIndex reg, const Descriptor& descriptor)
 {
     if (!getPE())
