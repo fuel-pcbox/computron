@@ -36,11 +36,35 @@ void CPU::_STR_RM16(Instruction& insn)
 
 void CPU::_LTR_RM16(Instruction& insn)
 {
+    if (!getPE()) {
+        exception(6);
+        return;
+    }
+
+    bool raised = false;
     WORD selector = insn.modrm().read16();
     auto descriptor = getDescriptor(selector);
-    ASSERT(descriptor.isGlobal()); // FIXME: Generate exception?
-    ASSERT(descriptor.isTSS());
+
+    if (getCPL() != 0) {
+        triggerGP(0, QString("LTR with CPL(%u)!=0").arg(getCPL()));
+        raised = true;
+    } else if (!descriptor.isGlobal()) {
+        triggerGP(selector, "LTR selector must reference GDT");
+        raised = true;
+    } else if (!descriptor.isTSS()) {
+        triggerGP(selector, "LTR with non-TSS descriptor");
+        raised = true;
+    }
+
     auto& tssDescriptor = descriptor.asTSSDescriptor();
+    if (!raised && tssDescriptor.isBusy()) {
+        triggerGP(selector, "LTR with busy TSS");
+        raised = true;
+    }
+    if (!raised && !tssDescriptor.present()) {
+        triggerNP(selector, "LTR with non-present TSS");
+        raised = true;
+    }
     TR.segment = selector;
     TR.base = tssDescriptor.base();
     TR.limit = tssDescriptor.limit();
