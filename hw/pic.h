@@ -23,8 +23,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PIC_H
-#define PIC_H
+#pragma once
 
 #include "iodevice.h"
 #include <QtCore/QMutex>
@@ -50,21 +49,22 @@ public:
     static bool hasPendingIRQ();
     static void serviceIRQ(CPU&);
     static void raiseIRQ(Machine&, BYTE num);
+    static void setIgnoreAllIRQs(bool);
 
 private:
     WORD m_baseAddress { 0 };
     BYTE m_isrBase { 0 };
+    BYTE m_irqBase { 0 };
 
     BYTE m_isr { 0 };
     BYTE m_irr { 0 };
     BYTE m_imr { 0 };
 
-    bool m_icw2Expected { 0 };
-    bool m_readIRR { 0 };
+    bool m_icw2Expected { false };
+    bool m_icw4Expected { false };
+    bool m_readIRR { false };
 
     static WORD s_pendingRequests;
     static void updatePendingRequests(Machine&);
     static QMutex s_mutex;
 };
-
-#endif

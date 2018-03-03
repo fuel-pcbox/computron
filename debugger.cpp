@@ -27,6 +27,7 @@
 #include "Common.h"
 #include "debug.h"
 #include "CPU.h"
+#include "pic.h"
 #include <QDebug>
 #include <QStringBuilder>
 #include <QStringList>
@@ -136,13 +137,37 @@ void Debugger::handleCommand(const QString& rawCommand)
         return;
     }
 
+    if (lowerCommand == "irq")
+        return handleIRQ(arguments);
+
     printf("Unknown command: %s\n", command.toUtf8().constData());
+}
+
+void Debugger::handleIRQ(const QStringList& arguments)
+{
+    if (arguments.size() != 1)
+        goto usage;
+
+    if (arguments[0] == "off") {
+        printf("Ignoring all IRQs\n");
+        PIC::setIgnoreAllIRQs(true);
+        return;
+    }
+
+    if (arguments[0] == "on") {
+        printf("Allowing all IRQs\n");
+        PIC::setIgnoreAllIRQs(false);
+        return;
+    }
+
+usage:
+    printf("usage: irq <on|off>\n");
 }
 
 void Debugger::handleBreakpoint(const QStringList& arguments)
 {
     if (arguments.size() != 3) {
-        printf("usage: b <add|del> segment:offset\n");
+        printf("usage: b <add|del> <segment> <offset>\n");
         if (!cpu().breakpoints().empty()) {
             printf("\nCurrent breakpoints:\n");
             for (auto& breakpoint : cpu().breakpoints()) {

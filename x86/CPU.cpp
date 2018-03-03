@@ -39,6 +39,7 @@
 #define CRASH_ON_OPCODE_00_00
 //#define DISASSEMBLE_EVERYTHING
 //#define CRASH_ON_GPF
+//#define DEBUG_I386NF
 
 inline bool hasA20Bit(DWORD address)
 {
@@ -50,6 +51,10 @@ static bool shouldLogAllMemoryAccesses(DWORD address)
     UNUSED_PARAM(address);
 #ifdef CT_DETERMINISTIC
     return true;
+#endif
+#ifdef DEBUG_I386NF
+    if (address >= 0x0001be5e && address <= (0x0001be5e + sizeof(TSS32)))
+        return true;
 #endif
     return false;
 }
@@ -1102,10 +1107,10 @@ enum PageTableEntryFlags {
     Dirty = 0x40,
 };
 
-void CPU::pageFault(DWORD error)
+void CPU::pageFault(DWORD address, WORD error)
 {
-    UNUSED_PARAM(error);
-    ASSERT_NOT_REACHED();
+    CR2 = address;
+    exception(0x0e, error);
 }
 
 DWORD CPU::translateAddress(DWORD address)
@@ -1124,8 +1129,8 @@ DWORD CPU::translateAddress(DWORD address)
     DWORD pageTableEntry = pageTable[page];
 
     if (!(pageDirectoryEntry & PageTableEntryFlags::Present) || !(pageTableEntry & PageTableEntryFlags::Present)) {
-        // FIXME: Implement!!
-        pageFault(0);
+        // FIXME: Pass correct error code!
+        pageFault(address, 0x0);
     }
 
     DWORD translatedAddress = (pageTableEntry & 0xfffff000) | offset;

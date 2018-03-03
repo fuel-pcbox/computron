@@ -33,6 +33,12 @@
 static volatile bool s_haveRequests = false;
 WORD PIC::s_pendingRequests = 0x0000;
 QMutex PIC::s_mutex;
+static bool s_ignoringIRQs = false;
+
+void PIC::setIgnoreAllIRQs(bool b)
+{
+    s_ignoringIRQs = b;
+}
 
 void PIC::updatePendingRequests(Machine& machine)
 {
@@ -50,6 +56,7 @@ PIC::PIC(bool isMaster, Machine& machine)
     : IODevice("PIC", machine)
     , m_baseAddress(isMaster ? 0x20 : 0xA0)
     , m_isrBase(isMaster ? 0x08 : 0x70)
+    , m_irqBase(isMaster ? 0 : 8)
 {    
     listen(m_baseAddress, IODevice::ReadWrite);
     listen(m_baseAddress + 1, IODevice::ReadWrite);
@@ -67,6 +74,7 @@ void PIC::reset()
     m_irr = 0x00;
     m_imr = 0x00;
     m_icw2Expected = false;
+    m_icw4Expected = false;
     m_readIRR = true;
 }
 
@@ -93,8 +101,7 @@ void PIC::out8(WORD port, BYTE data)
         if (data & 0x10) {
             // ICW1
             vlog(LogPIC, "Got ICW1 %02X on port %02X", data, port);
-            // I'm not sure we'll ever see an ICW4...
-            // m_icw4Needed = data & 0x01;
+            vlog(LogPIC, "[ICW1] ICW4 needed = %s", (data & 1) ? "yes" : "no");
             vlog(LogPIC, "[ICW1] Cascade = %s", (data & 2) ? "yes" : "no");
             vlog(LogPIC, "[ICW1] Vector size = %u", (data & 4) ? 4 : 8);
             vlog(LogPIC, "[ICW1] Level triggered = %s", (data & 8) ? "yes" : "no");
@@ -103,6 +110,7 @@ void PIC::out8(WORD port, BYTE data)
             m_irr = 0;
             m_readIRR = true;
             m_icw2Expected = true;
+            m_icw4Expected = data & 0x01;
             updatePendingRequests(machine());
             return;
         }
@@ -119,7 +127,7 @@ void PIC::out8(WORD port, BYTE data)
         // OCW1 - IMR write
         vlog(LogPIC, "New IRQ mask set: %02X", data);
         for (int i = 0; i < 8; ++i)
-            vlog(LogPIC, " - IRQ %u: %s", i, (data & (1 << i)) ? "masked" : "service");
+            vlog(LogPIC, " - IRQ %u: %s", m_irqBase + i, (data & (1 << i)) ? "masked" : "service");
         m_imr = data;
         updatePendingRequests(machine());
         return;
@@ -161,6 +169,9 @@ void PIC::serviceIRQ(CPU& cpu)
 {
     QMutexLocker lockerGlobal(&s_mutex);
     Machine& machine = cpu.machine();
+
+    if (s_ignoringIRQs)
+        return;
 
     if (!s_pendingRequests)
         return;

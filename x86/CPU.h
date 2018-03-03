@@ -152,7 +152,7 @@ public:
     void jumpToInterruptHandler(int isr, bool requestedByPIC = false);
 
     void GP(WORD code);
-    void pageFault(DWORD error);
+    void pageFault(DWORD address, WORD error);
 
     void exception(BYTE num);
     void exception(BYTE num, WORD error);
