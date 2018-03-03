@@ -9,3 +9,5 @@ setups/*
 *.orig
 *.rej
 callgrind.*
+*.diff
+core
