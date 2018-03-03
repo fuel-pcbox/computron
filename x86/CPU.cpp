@@ -727,7 +727,7 @@ void CPU::_NOP(Instruction&)
 void CPU::_HLT(Instruction&)
 {
     if (getCPL() != 0) {
-        triggerGP(0, "HLT with CPL!=0");
+        triggerGP(0, QString("HLT with CPL!=0(%1)").arg(getCPL()));
         return;
     }
 

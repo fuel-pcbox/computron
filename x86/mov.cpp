@@ -113,7 +113,7 @@ void CPU::_MOV_reg32_CR(Instruction& insn)
         // table (PDPT) and the loading of a control register causes the
         // PDPT to be loaded into the processor.
         if (getCPL() != 0) {
-            triggerGP(0, "MOV reg32, CRx with CPL!=0");
+            triggerGP(0, QString("MOV reg32, CRx with CPL!=0(%1)").arg(getCPL()));
             return;
         }
     } else {
@@ -151,7 +151,7 @@ void CPU::_MOV_CR_reg32(Instruction& insn)
         // table (PDPT) and the loading of a control register causes the
         // PDPT to be loaded into the processor.
         if (getCPL() != 0) {
-            triggerGP(0, "MOV CRx, reg32 with CPL!=0");
+            triggerGP(0, QString("MOV CRx, reg32 with CPL!=0(%1)").arg(getCPL()));
             return;
         }
     } else {
@@ -186,7 +186,7 @@ void CPU::_MOV_reg32_DR(Instruction& insn)
 
     if (getPE()) {
         if (getCPL() != 0) {
-            triggerGP(0, "MOV reg32, DRx with CPL!=0");
+            triggerGP(0, QString("MOV reg32, DRx with CPL!=0(%1)").arg(getCPL()));
             return;
         }
     }
@@ -207,7 +207,7 @@ void CPU::_MOV_DR_reg32(Instruction& insn)
 
     if (getPE()) {
         if (getCPL() != 0) {
-            triggerGP(0, "MOV DRx, reg32 with CPL!=0");
+            triggerGP(0, QString("MOV DRx, reg32 with CPL!=0(%1)").arg(getCPL()));
             return;
         }
     }

@@ -128,7 +128,7 @@ void CPU::_CLTS(Instruction&)
 {
     if (getPE()) {
         if (getCPL() != 0) {
-            triggerGP(0, "CLTS with CPL!=0");
+            triggerGP(0, QString("CLTS with CPL!=0(%1)").arg(getCPL()));
             return;
         }
     }
@@ -139,7 +139,7 @@ void CPU::_LMSW_RM16(Instruction& insn)
 {
     if (getPE()) {
         if (getCPL() != 0) {
-            triggerGP(0, "LMSW with CPL!=0");
+            triggerGP(0, QString("LMSW with CPL!=0(%1)").arg(getCPL()));
             return;
         }
     }
