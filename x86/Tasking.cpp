@@ -87,9 +87,14 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
 
     EXCEPTION_ON(GP, 0, incomingTSSDescriptor.isNull(), "Incoming TSS descriptor is null");
     EXCEPTION_ON(GP, 0, !incomingTSSDescriptor.isGlobal(), "Incoming TSS descriptor is not from GDT");
-    EXCEPTION_ON(GP, 0, incomingTSSDescriptor.isBusy(), "Incoming TSS descriptor is busy");
     EXCEPTION_ON(NP, 0, !incomingTSSDescriptor.present(), "Incoming TSS descriptor is not present");
     EXCEPTION_ON(GP, 0, incomingTSSDescriptor.limit() < 103, "Incoming TSS descriptor limit too small");
+
+    if (source == JumpType::IRET) {
+        EXCEPTION_ON(GP, 0, incomingTSSDescriptor.isAvailable(), "Incoming TSS descriptor is available");
+    } else {
+        EXCEPTION_ON(GP, 0, incomingTSSDescriptor.isBusy(), "Incoming TSS descriptor is busy");
+    }
 
     auto outgoingDescriptor = getDescriptor(TR.segment);
     if (!outgoingDescriptor.isTSS()) {
