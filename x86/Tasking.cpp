@@ -77,7 +77,15 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
     ASSERT(incomingTSSDescriptor.is32Bit());
     //ASSERT(incomingTSSDescriptor.isAvailable());
 
-    TSSDescriptor outgoingTSSDescriptor = getDescriptor(TR.segment).asTSSDescriptor();
+    auto outgoingDescriptor = getDescriptor(TR.segment);
+    if (!outgoingDescriptor.isTSS()) {
+        // Hmm, what have we got ourselves into now?
+        vlog(LogCPU, "Switching tasks and outgoing TSS is not a TSS:");
+        dumpDescriptor(outgoingDescriptor);
+    }
+
+    TSSDescriptor outgoingTSSDescriptor = outgoingDescriptor.asTSSDescriptor();
+    ASSERT(outgoingTSSDescriptor.isTSS());
 
     TSS outgoingTSS(*this, TR.base, outgoingTSSDescriptor.is32Bit());
 
