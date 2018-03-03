@@ -98,7 +98,9 @@ void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
         case 0xe: // 80386 Interrupt Gate (32-bit)
             break;
         default:
-            ASSERT_NOT_REACHED();
+            // FIXME: What should be the error code here?
+            triggerGP(isr, "Interrupt to bad gate type");
+            break;
         }
     } else {
         // FIXME: should use PE-safe reads

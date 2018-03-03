@@ -53,14 +53,12 @@ void CPU::_MOV_RM32_seg(Instruction& insn)
 
 void CPU::_MOV_seg_RM16(Instruction& insn)
 {
-    insn.segreg() = insn.modrm().read16();
-    syncSegmentRegister(insn.segmentRegisterIndex());
+    setSegmentRegister(insn.segmentRegisterIndex(), insn.modrm().read16());
 }
 
 void CPU::_MOV_seg_RM32(Instruction& insn)
 {
-    insn.segreg() = insn.modrm().read32();
-    syncSegmentRegister(insn.segmentRegisterIndex());
+    setSegmentRegister(insn.segmentRegisterIndex(), insn.modrm().read32());
 }
 
 void CPU::_MOV_RM8_reg8(Instruction& insn)

@@ -218,6 +218,24 @@ const char* toString(SegmentRegisterIndex segment)
 
 void CPU::exception(BYTE num)
 {
+    switch (m_exceptionState) {
+    case NoException:
+        m_exceptionState = SingleFault;
+        break;
+    case SingleFault:
+        vlog(LogAlert, "D-D-Double Fault!");
+        m_exceptionState = DoubleFault;
+        num = 0x8; // Reroute to #DF handler
+        break;
+    case DoubleFault:
+        vlog(LogAlert, "T-T-Triple Fault!");
+        m_exceptionState = TripleFault;
+        CRASH();
+        break;
+    case TripleFault:
+        // Yikes...
+        break;
+    }
     setEIP(getBaseEIP());
     jumpToInterruptHandler(num);
 }
@@ -268,12 +286,11 @@ void CPU::triggerPF(DWORD address, WORD error, const QString& reason)
     exception(0x0e, error);
 }
 
-bool CPU::validateSegmentLoad(SegmentRegisterIndex reg, const Descriptor& descriptor)
+bool CPU::validateSegmentLoad(SegmentRegisterIndex reg, WORD selector, const Descriptor& descriptor)
 {
     if (!getPE())
         return true;
 
-    WORD selector = getSegment(reg);
     BYTE selectorRPL = selector & 3;
 
     if (descriptor.isError()) {
@@ -287,6 +304,7 @@ bool CPU::validateSegmentLoad(SegmentRegisterIndex reg, const Descriptor& descri
             return false;
         }
         if (selectorRPL != getCPL()) {
+            dumpDescriptor(descriptor);
             triggerGP(0, QString("ss selector RPL(%1) != CPL(%2)").arg(selectorRPL).arg(getCPL()));
             return false;
         }
@@ -337,16 +355,18 @@ bool CPU::validateSegmentLoad(SegmentRegisterIndex reg, const Descriptor& descri
     return true;
 }
 
-void CPU::syncSegmentRegister(SegmentRegisterIndex segmentRegisterIndex)
+void CPU::setSegmentRegister(SegmentRegisterIndex segmentRegisterIndex, WORD selector)
 {
     auto& descriptorCache = static_cast<Descriptor&>(m_descriptor[(int)segmentRegisterIndex]);
-
-    WORD selector = getSegment(segmentRegisterIndex);
     auto descriptor = getDescriptor(selector);
 
-    if (!validateSegmentLoad(segmentRegisterIndex, descriptor)) {
-        //CRASH();
+    if (!validateSegmentLoad(segmentRegisterIndex, selector, descriptor)) {
+        dumpDescriptor(descriptor);
+        CRASH();
+        return;
     }
+
+    *m_segmentMap[(int)segmentRegisterIndex] = selector;
 
     if (descriptor.isNull()) {
         descriptorCache = descriptor;

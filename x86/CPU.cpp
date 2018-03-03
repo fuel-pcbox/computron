@@ -206,6 +206,8 @@ void CPU::decodeNext()
 
 void CPU::execute(Instruction&& insn)
 {
+    m_exceptionState = NoException;
+
 #ifdef CRASH_ON_VM
     if (getVM()) {
         dumpTrace();
@@ -1410,38 +1412,32 @@ void CPU::updateCodeSegmentCache()
 
 void CPU::setCS(WORD value)
 {
-    this->CS = value;
-    syncSegmentRegister(SegmentRegisterIndex::CS);
+    setSegmentRegister(SegmentRegisterIndex::CS, value);
 }
 
 void CPU::setDS(WORD value)
 {
-    this->DS = value;
-    syncSegmentRegister(SegmentRegisterIndex::DS);
+    setSegmentRegister(SegmentRegisterIndex::DS, value);
 }
 
 void CPU::setES(WORD value)
 {
-    this->ES = value;
-    syncSegmentRegister(SegmentRegisterIndex::ES);
+    setSegmentRegister(SegmentRegisterIndex::ES, value);
 }
 
 void CPU::setSS(WORD value)
 {
-    this->SS = value;
-    syncSegmentRegister(SegmentRegisterIndex::SS);
+    setSegmentRegister(SegmentRegisterIndex::SS, value);
 }
 
 void CPU::setFS(WORD value)
 {
-    this->FS = value;
-    syncSegmentRegister(SegmentRegisterIndex::FS);
+    setSegmentRegister(SegmentRegisterIndex::FS, value);
 }
 
 void CPU::setGS(WORD value)
 {
-    this->GS = value;
-    syncSegmentRegister(SegmentRegisterIndex::GS);
+    setSegmentRegister(SegmentRegisterIndex::GS, value);
 }
 
 BYTE* CPU::memoryPointer(SegmentRegisterIndex segment, DWORD offset)

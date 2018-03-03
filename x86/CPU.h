@@ -1054,8 +1054,8 @@ private:
     void writeToGDT(Descriptor&);
 
     void dumpSelector(const char* segmentRegisterName, SegmentRegisterIndex);
-    void syncSegmentRegister(SegmentRegisterIndex);
-    bool validateSegmentLoad(SegmentRegisterIndex, const Descriptor&);
+    void setSegmentRegister(SegmentRegisterIndex, WORD selector);
+    bool validateSegmentLoad(SegmentRegisterIndex, WORD selector, const Descriptor&);
 
     SegmentDescriptor m_descriptor[6];
 
@@ -1184,6 +1184,9 @@ private:
 
     DWORD m_baseMemorySize { 0 };
     DWORD m_extendedMemorySize { 0 };
+
+    enum ExceptionState { NoException, SingleFault, DoubleFault, TripleFault };
+    ExceptionState m_exceptionState { NoException };
 
     std::set<DWORD> m_breakpoints;
 
