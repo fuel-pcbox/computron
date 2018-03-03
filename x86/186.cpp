@@ -49,17 +49,17 @@ void CPU::_ENTER(Instruction& insn)
 {
     ASSERT(o16());
     ASSERT(a16());
-    ASSERT(s16());
+    //ASSERT(s16());
 
     WORD size = insn.imm16_2();
     BYTE nestingLevel = insn.imm8_1() & 31;
     push16(getBP());
     WORD frameTemp = getSP();
     if (nestingLevel > 0) {
-        WORD tmpBP = getBP();
+        WORD tmpEBP = getEBP();
         for (WORD i = 1; i < nestingLevel - 1; ++i) {
-            tmpBP -= 2;
-            push16(readMemory16(SegmentRegisterIndex::SS, getBP()));
+            tmpEBP -= 2;
+            push16(readMemory16(SegmentRegisterIndex::SS, getEBP()));
         }
         push16(frameTemp);
     }

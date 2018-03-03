@@ -150,6 +150,10 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
         dumpDescriptor(cachedDescriptor(SegmentRegisterIndex::CS));
         GP(0);
     }
+
+    if (getTF()) {
+        vlog(LogCPU, "Leaving task switch with TF=1");
+    }
 }
 
 void CPU::dumpTSS(const TSS &tss)

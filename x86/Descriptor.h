@@ -156,6 +156,8 @@ public:
     WORD selector() const { return m_gateSelector; }
     DWORD offset() const { return m_gateOffset; }
     WORD parameterCount() const { return m_gateParameterCount; }
+
+    bool is32Bit() const { return type() == InterruptGate_32bit || type() == CallGate_32bit || type() == TrapGate_32bit; }
 };
 
 class TSSDescriptor : public SystemDescriptor {

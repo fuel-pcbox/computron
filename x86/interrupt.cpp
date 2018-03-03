@@ -79,8 +79,10 @@ void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
     bool isTrap = false;
     FarPointer vector;
 
+    Gate gate;
+
     if (getPE()) {
-        auto gate = getInterruptGate(isr);
+        gate = getInterruptGate(isr);
 
         vector.segment = gate.selector();
         vector.offset = gate.offset();
@@ -116,7 +118,10 @@ void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
     }
 #endif
 
-    if (o16())
+    bool pushSize16 = o16();
+    if (getPE())
+        pushSize16 = !gate.is32Bit();
+    if (pushSize16)
         push16(getFlags());
     else
         push32(getEFlags());
@@ -128,9 +133,9 @@ void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
     setNT(0);
 
     if (o16())
-        jump16(vector.segment, vector.offset, JumpType::INT);
+        jump16(vector.segment, vector.offset, JumpType::INT, isr);
     else
-        jump32(vector.segment, vector.offset, JumpType::INT);
+        jump32(vector.segment, vector.offset, JumpType::INT, isr);
 }
 
 FarPointer CPU::getInterruptVector16(int isr)

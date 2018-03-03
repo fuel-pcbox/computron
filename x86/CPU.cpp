@@ -609,8 +609,16 @@ static const char* toString(JumpType type)
     }
 }
 
-void CPU::jump32(WORD segment, DWORD offset, JumpType type)
+void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr)
 {
+    bool pushSize16 = o16();
+
+    if (getPE() && type == JumpType::INT) {
+        // INT through gate; respect bit size of gate descriptor!
+        // FIXME: Don't reparse the gate here.
+        pushSize16 = !getInterruptGate(isr).is32Bit();
+    }
+
     WORD originalCPL = getCPL();
     WORD originalCS = getCS();
     DWORD originalEIP = getEIP();
@@ -637,7 +645,6 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type)
             vlog(LogCPU, "CS is this:");
             dumpDescriptor(cachedDescriptor(SegmentRegisterIndex::CS));
             vlog(LogCPU, "%s to TSS descriptor (%s) -> %08x", toString(type), tssDescriptor.typeName(), tssDescriptor.base());
-
             taskSwitch(tssDescriptor, type);
         } else {
             ASSERT_NOT_REACHED();
@@ -656,7 +663,7 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type)
         auto tss = currentTSS();
         setSS(tss.getRingSS(getCPL()));
         setESP(tss.getRingESP(getCPL()));
-        if (o16()) {
+        if (pushSize16) {
             push16(oldSS);
             push16(oldESP);
             vlog(LogCPU, "%s to inner ring, ss:sp %04x:%04x -> %04x:%04x", toString(type), oldSS, oldESP, getSS(), getSP());
@@ -673,7 +680,7 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type)
     }
 
     if (type == JumpType::CALL || type == JumpType::INT) {
-        if (o16()) {
+        if (pushSize16) {
             push16(originalCS);
             push16(originalEIP);
         } else {
@@ -714,9 +721,9 @@ void CPU::setCPL(BYTE cpl)
 #endif
 }
 
-void CPU::jump16(WORD segment, WORD offset, JumpType type)
+void CPU::jump16(WORD segment, WORD offset, JumpType type, BYTE isr)
 {
-    jump32(segment, offset, type);
+    jump32(segment, offset, type, isr);
 }
 
 void CPU::_UNSUPP(Instruction& insn)
@@ -984,7 +991,6 @@ void CPU::_DEC_RM8(Instruction& insn)
 
 void CPU::_LDS_reg16_mem16(Instruction& insn)
 {
-    ASSERT(a16());
     WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
     insn.reg16() = read16FromPointer(ptr);
     setDS(read16FromPointer(ptr + 1));
@@ -992,7 +998,6 @@ void CPU::_LDS_reg16_mem16(Instruction& insn)
 
 void CPU::_LDS_reg32_mem32(Instruction& insn)
 {
-    ASSERT(a32());
     FarPointer ptr = readModRMFarPointerOffsetFirst(insn.modrm());
     insn.reg32() = ptr.offset;
     setDS(ptr.segment);
@@ -1000,7 +1005,6 @@ void CPU::_LDS_reg32_mem32(Instruction& insn)
 
 void CPU::_LES_reg16_mem16(Instruction& insn)
 {
-    ASSERT(a16());
     WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
     insn.reg16() = read16FromPointer(ptr);
     setES(read16FromPointer(ptr + 1));
@@ -1008,7 +1012,6 @@ void CPU::_LES_reg16_mem16(Instruction& insn)
 
 void CPU::_LES_reg32_mem32(Instruction& insn)
 {
-    ASSERT(a32());
     FarPointer ptr = readModRMFarPointerOffsetFirst(insn.modrm());
     insn.reg32() = ptr.offset;
     setES(ptr.segment);
@@ -1016,7 +1019,6 @@ void CPU::_LES_reg32_mem32(Instruction& insn)
 
 void CPU::_LFS_reg16_mem16(Instruction& insn)
 {
-    ASSERT(a16());
     WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
     insn.reg16() = read16FromPointer(ptr);
     setFS(read16FromPointer(ptr + 1));
@@ -1024,7 +1026,6 @@ void CPU::_LFS_reg16_mem16(Instruction& insn)
 
 void CPU::_LFS_reg32_mem32(Instruction& insn)
 {
-    ASSERT(a32());
     FarPointer ptr = readModRMFarPointerOffsetFirst(insn.modrm());
     insn.reg32() = ptr.offset;
     setFS(ptr.segment);
@@ -1032,7 +1033,6 @@ void CPU::_LFS_reg32_mem32(Instruction& insn)
 
 void CPU::_LSS_reg16_mem16(Instruction& insn)
 {
-    ASSERT(a16());
     WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
     insn.reg16() = read16FromPointer(ptr);
     setSS(read16FromPointer(ptr + 1));
@@ -1040,7 +1040,6 @@ void CPU::_LSS_reg16_mem16(Instruction& insn)
 
 void CPU::_LSS_reg32_mem32(Instruction& insn)
 {
-    ASSERT(a32());
     FarPointer ptr = readModRMFarPointerOffsetFirst(insn.modrm());
     insn.reg32() = ptr.offset;
     setSS(ptr.segment);
@@ -1048,7 +1047,6 @@ void CPU::_LSS_reg32_mem32(Instruction& insn)
 
 void CPU::_LGS_reg16_mem16(Instruction& insn)
 {
-    ASSERT(a16());
     WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
     insn.reg16() = read16FromPointer(ptr);
     setGS(read16FromPointer(ptr + 1));
@@ -1056,7 +1054,6 @@ void CPU::_LGS_reg16_mem16(Instruction& insn)
 
 void CPU::_LGS_reg32_mem32(Instruction& insn)
 {
-    ASSERT(a32());
     FarPointer ptr = readModRMFarPointerOffsetFirst(insn.modrm());
     insn.reg32() = ptr.offset;
     setGS(ptr.segment);
@@ -1153,6 +1150,15 @@ template<typename T>
 bool CPU::validateAddress(const SegmentDescriptor& descriptor, DWORD offset, MemoryAccessType accessType)
 {
     ASSERT(getPE());
+
+    if (descriptor.isNull()) {
+        vlog(LogAlert, "NULL! %s offset %08X into null selector (selector index: %04X)",
+             toString(accessType),
+             offset,
+             descriptor.index());
+        GP(0);
+        return false;
+    }
 
     DWORD offsetForLimitChecking = descriptor.granularity() ? (offset & 0xfffff000) : offset;
 

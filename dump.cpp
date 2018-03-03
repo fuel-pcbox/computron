@@ -417,7 +417,9 @@ void CPU::dumpIVT()
 
 void CPU::dumpDescriptor(const Descriptor& descriptor)
 {
-    if (descriptor.isSegmentDescriptor())
+    if (descriptor.isNull())
+        vlog(LogCPU, "Descriptor with index '%04x' is null", descriptor.index());
+    else if (descriptor.isSegmentDescriptor())
         dumpDescriptor(descriptor.asSegmentDescriptor());
     else
         dumpDescriptor(descriptor.asSystemDescriptor());
