@@ -66,6 +66,7 @@ void CPU::setLDT(WORD selector)
             auto& ldtDescriptor = descriptor.asLDTDescriptor();
             if (!descriptor.present()) {
                 triggerNP(selector, "LDT segment not present");
+                return;
             }
             base = ldtDescriptor.base();
             limit = ldtDescriptor.limit();

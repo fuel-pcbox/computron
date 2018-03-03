@@ -41,35 +41,35 @@ void CPU::_LTR_RM16(Instruction& insn)
         return;
     }
 
-    bool raised = false;
     WORD selector = insn.modrm().read16();
     auto descriptor = getDescriptor(selector);
 
     if (getCPL() != 0) {
         triggerGP(0, QString("LTR with CPL(%u)!=0").arg(getCPL()));
-        raised = true;
-    } else if (!descriptor.isGlobal()) {
+        return;
+    }
+    if (!descriptor.isGlobal()) {
         triggerGP(selector, "LTR selector must reference GDT");
-        raised = true;
-    } else if (!descriptor.isTSS()) {
+        return;
+    }
+    if (!descriptor.isTSS()) {
         triggerGP(selector, "LTR with non-TSS descriptor");
-        raised = true;
+        return;
     }
-
     auto& tssDescriptor = descriptor.asTSSDescriptor();
-    if (!raised && tssDescriptor.isBusy()) {
+    if (tssDescriptor.isBusy()) {
         triggerGP(selector, "LTR with busy TSS");
-        raised = true;
+        return;
     }
-    if (!raised && !tssDescriptor.present()) {
+    if (!tssDescriptor.present()) {
         triggerNP(selector, "LTR with non-present TSS");
-        raised = true;
+        return;
     }
     TR.segment = selector;
     TR.base = tssDescriptor.base();
     TR.limit = tssDescriptor.limit();
     TR.is32Bit = tssDescriptor.is32Bit();
-    vlog(LogAlert, "LTR { segment: %04X => base:%08X, limit:%08X }", TR.segment, TR.base, TR.limit);
+    vlog(LogAlert, "LTR { segment: %04x => base:%08x, limit:%08x }", TR.segment, TR.base, TR.limit);
 }
 
 void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
