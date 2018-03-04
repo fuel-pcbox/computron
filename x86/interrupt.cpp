@@ -148,22 +148,12 @@ void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
             break;
         }
     } else {
-        // FIXME: should use PE-safe reads
+        if (options.trapint)
+            vlog(LogCPU, "PE=0 Interrupt %02X,%02X trapped%s", isr, this->regs.B.AH, requestedByPIC ? " (from PIC)" : "");
+
         vector.segment = (m_memory[isr * 4 + 3] << 8) | m_memory[isr * 4 + 2];
         vector.offset = (m_memory[isr * 4 + 1] << 8) | m_memory[isr * 4];
     }
-
-#ifdef CT_DEBUG
-    if (options.trapint)
-        vlog(LogCPU, "Interrupt %02X,%02X trapped%s", isr, this->regs.B.AH, requestedByPIC ? " (from PIC)" : "");
-
-    if (isr == 0x06) {
-        vlog(LogCPU, "Invalid opcode trap (%02X)", *(codeMemory() + this->getBaseEIP()));
-        dumpAll();
-        debugger().enter();
-        //return;
-    }
-#endif
 
     if (o16())
         jump16(vector.segment, vector.offset, JumpType::INT, isr, getFlags());

@@ -472,6 +472,7 @@ void buildOpcodeTablesIfNeeded()
     build(0x69, "IMUL",   OP_reg16_RM16_imm16, &CPU::_IMUL_reg16_RM16_imm16, OP_reg32_RM32_imm32, &CPU::_IMUL_reg32_RM32_imm32);
     build(0x6A, "PUSH",   OP_imm8,             &CPU::_PUSH_imm8);
     build(0x6B, "IMUL",   OP_reg16_RM16_imm8,  &CPU::_IMUL_reg16_RM16_imm8, OP_reg32_RM32_imm8, &CPU::_IMUL_reg32_RM32_imm8);
+    build(0x6C, "INSB",   OP,                  &CPU::_INSB);
     build(0x6E, "OUTSB",  OP,                  &CPU::_OUTSB);
     build(0x6F, "OUTSW",  OP,                  &CPU::_OUTSW, "OUTSD",  OP,             &CPU::_OUTSD);
 

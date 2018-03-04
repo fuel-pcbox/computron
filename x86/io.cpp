@@ -169,6 +169,11 @@ void CPU::_IN_EAX_DX(Instruction&)
     regs.W.__EAX_high_word = makeWORD(d, c);
 }
 
+void CPU::_INSB(Instruction&)
+{
+    ASSERT_NOT_REACHED();
+}
+
 void CPU::out(WORD port, BYTE value)
 {
 #ifdef CT_DEBUG

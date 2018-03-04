@@ -397,7 +397,6 @@ CPU::~CPU()
 {
     delete [] m_memory;
     m_memory = nullptr;
-    m_codeMemory = nullptr;
 }
 
 void CPU::executeOneInstruction()
@@ -727,7 +726,7 @@ void CPU::_UNSUPP(Instruction& insn)
     QStringList dbs;
     for (int i = 0; i < 16; ++i) {
         QString s;
-        s.sprintf("0x%02X", codeMemory()[baseEIP + i]);
+        s.sprintf("0x%02X", readMemory8(SegmentRegisterIndex::CS, baseEIP + i));
         dbs.append(s);
     }
     ndis.append(dbs.join(", "));
@@ -1424,8 +1423,7 @@ void CPU::updateStackSize()
 
 void CPU::updateCodeSegmentCache()
 {
-    // Point m_codeMemory to CS:0 for fast opcode fetching.
-    m_codeMemory = memoryPointer(SegmentRegisterIndex::CS, 0);
+    // FIXME: We need some kind of fast pointer for fetching from CS:EIP.
 }
 
 void CPU::setCS(WORD value)
@@ -1510,50 +1508,35 @@ BYTE* CPU::memoryPointer(DWORD linearAddress)
 BYTE CPU::fetchOpcodeByte()
 {
     if (x32())
-        return m_codeMemory[this->EIP++];
+        return readMemory8(SegmentRegisterIndex::CS, EIP++);
     else
-        return m_codeMemory[this->IP++];
-#if 0
-    BYTE b = readMemory8(getCS(), getEIP());
-    this->IP += 1;
-    return b;
-#endif
+        return readMemory8(SegmentRegisterIndex::CS, IP++);
 }
 
 WORD CPU::fetchOpcodeWord()
 {
     WORD w;
     if (x32()) {
-        w = *reinterpret_cast<WORD*>(&m_codeMemory[getEIP()]);
+        w = readMemory16(SegmentRegisterIndex::CS, getEIP());
         this->EIP += 2;
     } else {
-        w = *reinterpret_cast<WORD*>(&m_codeMemory[getIP()]);
+        w = readMemory16(SegmentRegisterIndex::CS, getIP());
         this->IP += 2;
     }
     return w;
-#if 0
-    WORD w = readMemory16(getCS(), getEIP());
-    this->IP += 2;
-    return w;
-#endif
 }
 
 DWORD CPU::fetchOpcodeDWord()
 {
     DWORD d;
     if (x32()) {
-        d = *reinterpret_cast<DWORD*>(&m_codeMemory[getEIP()]);
+        d = readMemory32(SegmentRegisterIndex::CS, getEIP());
         this->EIP += 4;
     } else {
-        d = *reinterpret_cast<DWORD*>(&m_codeMemory[getIP()]);
+        d = readMemory32(SegmentRegisterIndex::CS, getIP());
         this->IP += 4;
     }
     return d;
-#if 0
-    DWORD d = readMemory32(getCS(), getEIP());
-    this->IP += 4;
-    return d;
-#endif
 }
 
 void CPU::_CPUID(Instruction&)
@@ -1572,4 +1555,13 @@ void CPU::_LOCK(Instruction&)
 
 void CPU::initWatches()
 {
+#ifdef DEBUG_I386NF
+    const DWORD base = 0x0000ff70;
+    m_watches.append(WatchedAddress("dos_block_sel", base + 0x061e, WordSize));
+    m_watches.append(WatchedAddress("client_ds", base + 0x0616, WordSize));
+    m_watches.append(WatchedAddress("read_soffset", base + 0x0622, DWordSize));
+    m_watches.append(WatchedAddress("read_size", base + 0x0626, DWordSize));
+    m_watches.append(WatchedAddress("entry_eip", base + 0x0610, DWordSize));
+    m_watches.append(WatchedAddress("entry_cs", base + 0x0614, WordSize));
+#endif
 }

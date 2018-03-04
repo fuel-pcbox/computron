@@ -755,6 +755,7 @@ protected:
     void _IN_AL_DX(Instruction&);
     void _IN_AX_DX(Instruction&);
     void _IN_EAX_DX(Instruction&);
+    void _INSB(Instruction&);
 
     void _ADD_RM8_reg8(Instruction&);
     void _ADD_RM16_reg16(Instruction&);
@@ -1086,8 +1087,6 @@ private:
         m_baseEIP = getEIP();
     }
 
-    inline BYTE* codeMemory() const;
-
     void flushCommandQueue();
 
     void setLDT(WORD segment);
@@ -1102,9 +1101,6 @@ private:
     void validateSegmentLoad(SegmentRegisterIndex, WORD selector, const Descriptor&);
 
     SegmentDescriptor m_descriptor[6];
-
-    // This points to the base of CS for fast opcode fetches.
-    BYTE* m_codeMemory;
 
     union {
         struct {
@@ -1302,11 +1298,6 @@ void CPU::writeUnmappedMemory8(DWORD address, BYTE value)
 void CPU::writeUnmappedMemory16(DWORD address, WORD value)
 {
     write16ToPointer(reinterpret_cast<WORD*>(m_memory + address), value);
-}
-
-BYTE* CPU::codeMemory() const
-{
-    return m_codeMemory;
 }
 
 #include "debug.h"

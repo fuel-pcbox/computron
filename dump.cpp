@@ -109,7 +109,7 @@ void CPU::dumpTrace()
         "C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u "
         "A%u O%u X%u\n",
         getCS(), getEIP(),
-        codeMemory()[getEIP()],
+        readMemory8(getCS(), getEIP()),
         getEAX(), getEBX(), getECX(), getEDX(), getESP(), getEBP(), getESI(), getEDI(),
         getCR0(),
         isA20Enabled(),
@@ -254,7 +254,7 @@ void CPU::dumpWatches()
 
 void CPU::dumpAll()
 {
-    BYTE* csip = codeMemory();
+    BYTE* csip = memoryPointer(SegmentRegisterIndex::CS, getEIP());
 
     auto dumpRegister = [this](CPU::RegisterIndex16 registerIndex)
     {
