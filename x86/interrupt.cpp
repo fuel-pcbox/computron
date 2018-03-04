@@ -59,6 +59,7 @@ void CPU::_IRET(Instruction&)
             return;
         }
     }
+
     if (o16()) {
         WORD nip = pop16();
         WORD ncs = pop16();
@@ -70,8 +71,15 @@ void CPU::_IRET(Instruction&)
         WORD ncs = pop32();
         DWORD flags = pop32();
         jump32(ncs, nip, JumpType::IRET);
-        setFlags(flags);
+        setEFlags(flags);
     }
+}
+
+static WORD makeErrorCode(WORD num, bool idt, bool requestedByPIC)
+{
+    if (idt)
+        return (num << 3) | 2 | requestedByPIC;
+    return num & 0xfc;
 }
 
 void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
@@ -84,10 +92,41 @@ void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
     if (getPE()) {
         gate = getInterruptGate(isr);
 
+        if (!requestedByPIC) {
+            if (gate.DPL() < getCPL()) {
+                throw GeneralProtectionFault(makeErrorCode(isr, 1, requestedByPIC), "Software interrupt trying to escalate privilege");
+            }
+        }
+
+        if (!gate.present()) {
+            throw NotPresent(makeErrorCode(isr, 1, requestedByPIC), "Interrupt gate not present");
+        }
+
+        if (gate.isNull()) {
+            throw GeneralProtectionFault(requestedByPIC, "Interrupt gate is null");
+        }
+
         vector.segment = gate.selector();
         vector.offset = gate.offset();
 
         vlog(LogCPU, "PE=1 Interrupt %02x trapped%s, type: %s (%1x), %04x:%08x", isr, requestedByPIC ? " (from PIC)" : "", gate.typeName(), gate.type(), vector.segment, vector.offset);
+
+        Descriptor codeDescriptor = getDescriptor(gate.selector());
+        if (codeDescriptor.isError()) {
+            throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, requestedByPIC), "Interrupt gate to segment outside table limit");
+        }
+
+        if (!codeDescriptor.isCode()) {
+            throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, requestedByPIC), "Interrupt gate to non-code segment");
+        }
+
+        if (codeDescriptor.DPL() > getCPL()) {
+            throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, requestedByPIC), QString("Interrupt gate to segment with DPL(%1)>CPL(%2)").arg(codeDescriptor.DPL()).arg(getCPL()));
+        }
+
+        if (!codeDescriptor.present()) {
+            throw NotPresent(makeErrorCode(gate.selector(), 0, requestedByPIC), "Interrupt to non-present segment");
+        }
 
         switch (gate.type()) {
         case 0x7: // 80286 Trap Gate (16-bit)

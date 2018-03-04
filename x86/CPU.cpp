@@ -677,9 +677,8 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr)
         }
     }
 
-    if (type == JumpType::IRET || type == JumpType::RETF) {
-        bool isReturnToOuterPrivilegeLevel = getPE() && getCPL() > originalCPL;
-        if (isReturnToOuterPrivilegeLevel) {
+    bool isReturnToOuterPrivilegeLevel = getPE() && getCPL() > originalCPL;
+    if (isReturnToOuterPrivilegeLevel && (type == JumpType::IRET || type == JumpType::RETF)) {
         if (o16()) {
             WORD newSP = pop16();
             WORD newSS = pop16();
@@ -692,7 +691,6 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr)
             vlog(LogCPU, "%s from ring%u to ring%u, ss:esp %04x:%08x -> %04x:%08x", toString(type), originalCPL, getCPL(), getSS(), getESP(), newSS, newESP);
             setESP(newESP);
             setSS(newSS);
-        }
         }
     }
 }
