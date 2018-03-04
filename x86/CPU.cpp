@@ -1472,6 +1472,13 @@ BYTE* CPU::memoryPointer(DWORD linearAddress)
         return nullptr;
     physicalAddress &= a20Mask();
     didTouchMemory(physicalAddress);
+    if (options.memdebug || shouldLogMemoryPointer(physicalAddress)) {
+        vlog(LogCPU, "MemoryPointer PE=%u [A20=%s] linear:%08x, phys:%08x",
+             getPE(),
+             isA20Enabled() ? "on" : "off",
+             linearAddress,
+             physicalAddress);
+    }
     return &m_memory[physicalAddress];
 }
 
