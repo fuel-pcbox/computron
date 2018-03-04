@@ -75,22 +75,22 @@ void PIC::reset()
     m_imr = 0x00;
     m_icw2Expected = false;
     m_icw4Expected = false;
-    m_readIRR = true;
+    m_readISR = true;
 }
 
 void PIC::out8(WORD port, BYTE data)
 {
     if ((port & 0x01) == 0x00) {
         if (data == 0x20) {
-            // Nonspecific IOI
-            m_isr = 0x00;
+            //vlog(LogPIC, "Nonspecific EOI");
+            m_isr &= m_isr - 1;
             return;
         }
         if ((data & 0x18) == 0x08) {
             // OCW3
             vlog(LogPIC, "Got OCW3 %02X on port %02X", data, port);
             if (data & 0x02)
-                m_readIRR = data & 0x01;
+                m_readISR = data & 0x01;
             return;
         }
         if ((data & 0x18) == 0x00) {
@@ -108,7 +108,7 @@ void PIC::out8(WORD port, BYTE data)
             m_imr = 0;
             m_isr = 0;
             m_irr = 0;
-            m_readIRR = true;
+            m_readISR = false;
             m_icw2Expected = true;
             m_icw4Expected = data & 0x01;
             updatePendingRequests(machine());
@@ -140,19 +140,18 @@ void PIC::out8(WORD port, BYTE data)
 
 BYTE PIC::in8(WORD)
 {
-    if (m_readIRR) {
-        vlog(LogPIC, "Read IRR (%02X)", m_irr);
-        return m_irr;
-    } else {
+    if (m_readISR) {
         vlog(LogPIC, "Read ISR (%02X)", m_isr);
         return m_isr;
+    } else {
+        vlog(LogPIC, "Read IRR (%02X)", m_irr);
+        return m_irr;
     }
 }
 
 void PIC::raise(BYTE num)
 {
     m_irr |= 1 << num;
-    m_isr |= 1 << num;
 }
 
 void PIC::raiseIRQ(Machine& machine, BYTE num)

@@ -62,7 +62,7 @@ private:
 
     bool m_icw2Expected { false };
     bool m_icw4Expected { false };
-    bool m_readIRR { false };
+    bool m_readISR { false };
 
     static WORD s_pendingRequests;
     static void updatePendingRequests(Machine&);
