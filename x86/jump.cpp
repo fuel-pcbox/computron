@@ -136,10 +136,10 @@ void CPU::_CALL_FAR_mem16(Instruction& insn)
     jump16(ptr[1], ptr[0], JumpType::CALL);
 }
 
-void CPU::_CALL_FAR_mem32(Instruction&)
+void CPU::_CALL_FAR_mem32(Instruction& insn)
 {
-    // FIXME: Implement!
-    ASSERT_NOT_REACHED();
+    WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
+    jump32(ptr[2], makeDWORD(ptr[1], ptr[0]), JumpType::CALL);
 }
 
 void CPU::_CALL_RM16(Instruction& insn)
