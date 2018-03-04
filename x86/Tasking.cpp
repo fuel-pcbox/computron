@@ -37,33 +37,27 @@ void CPU::_STR_RM16(Instruction& insn)
 void CPU::_LTR_RM16(Instruction& insn)
 {
     if (!getPE()) {
-        exception(6);
-        return;
+        throw InvalidOpcode();
     }
 
     WORD selector = insn.modrm().read16();
     auto descriptor = getDescriptor(selector);
 
     if (getCPL() != 0) {
-        triggerGP(0, QString("LTR with CPL(%u)!=0").arg(getCPL()));
-        return;
+        throw GeneralProtectionFault(0, QString("LTR with CPL(%u)!=0").arg(getCPL()));
     }
     if (!descriptor.isGlobal()) {
-        triggerGP(selector, "LTR selector must reference GDT");
-        return;
+        throw GeneralProtectionFault(selector, "LTR selector must reference GDT");
     }
     if (!descriptor.isTSS()) {
-        triggerGP(selector, "LTR with non-TSS descriptor");
-        return;
+        throw GeneralProtectionFault(selector, "LTR with non-TSS descriptor");
     }
     auto& tssDescriptor = descriptor.asTSSDescriptor();
     if (tssDescriptor.isBusy()) {
-        triggerGP(selector, "LTR with busy TSS");
-        return;
+        throw GeneralProtectionFault(selector, "LTR with busy TSS");
     }
     if (!tssDescriptor.present()) {
-        triggerNP(selector, "LTR with non-present TSS");
-        return;
+        throw NotPresent(selector, "LTR with non-present TSS");
     }
     TR.segment = selector;
     TR.base = tssDescriptor.base();
@@ -75,8 +69,7 @@ void CPU::_LTR_RM16(Instruction& insn)
 #define EXCEPTION_ON(type, code, condition, reason) \
     do { \
         if ((condition)) { \
-            trigger ## type(code, reason); \
-            return; \
+            throw type(code, reason); \
         } \
     } while(0)
 
@@ -85,15 +78,15 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
     ASSERT(incomingTSSDescriptor.is32Bit());
     //ASSERT(incomingTSSDescriptor.isAvailable());
 
-    EXCEPTION_ON(GP, 0, incomingTSSDescriptor.isNull(), "Incoming TSS descriptor is null");
-    EXCEPTION_ON(GP, 0, !incomingTSSDescriptor.isGlobal(), "Incoming TSS descriptor is not from GDT");
-    EXCEPTION_ON(NP, 0, !incomingTSSDescriptor.present(), "Incoming TSS descriptor is not present");
-    EXCEPTION_ON(GP, 0, incomingTSSDescriptor.limit() < 103, "Incoming TSS descriptor limit too small");
+    EXCEPTION_ON(GeneralProtectionFault, 0, incomingTSSDescriptor.isNull(), "Incoming TSS descriptor is null");
+    EXCEPTION_ON(GeneralProtectionFault, 0, !incomingTSSDescriptor.isGlobal(), "Incoming TSS descriptor is not from GDT");
+    EXCEPTION_ON(NotPresent, 0, !incomingTSSDescriptor.present(), "Incoming TSS descriptor is not present");
+    EXCEPTION_ON(GeneralProtectionFault, 0, incomingTSSDescriptor.limit() < 103, "Incoming TSS descriptor limit too small");
 
     if (source == JumpType::IRET) {
-        EXCEPTION_ON(GP, 0, incomingTSSDescriptor.isAvailable(), "Incoming TSS descriptor is available");
+        EXCEPTION_ON(GeneralProtectionFault, 0, incomingTSSDescriptor.isAvailable(), "Incoming TSS descriptor is available");
     } else {
-        EXCEPTION_ON(GP, 0, incomingTSSDescriptor.isBusy(), "Incoming TSS descriptor is busy");
+        EXCEPTION_ON(GeneralProtectionFault, 0, incomingTSSDescriptor.isBusy(), "Incoming TSS descriptor is busy");
     }
 
     auto outgoingDescriptor = getDescriptor(TR.segment);
@@ -156,8 +149,8 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
 
     auto ldtDescriptor = getDescriptor(incomingTSS.getLDT());
     if (!ldtDescriptor.isNull()) {
-        EXCEPTION_ON(TS, incomingTSS.getLDT() & 0xfffc, !ldtDescriptor.isLDT(), "Incoming TSS LDT is not an LDT");
-        EXCEPTION_ON(TS, incomingTSS.getLDT() & 0xfffc, !ldtDescriptor.present(), "Incoming TSS LDT is not present");
+        EXCEPTION_ON(InvalidTSS, incomingTSS.getLDT() & 0xfffc, !ldtDescriptor.isLDT(), "Incoming TSS LDT is not an LDT");
+        EXCEPTION_ON(InvalidTSS, incomingTSS.getLDT() & 0xfffc, !ldtDescriptor.present(), "Incoming TSS LDT is not present");
     }
 
     setLDT(incomingTSS.getLDT());
@@ -201,7 +194,7 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
 
     CR0 |= 0x04; // TS (Task Switched)
 
-    EXCEPTION_ON(GP, 0, getEIP() > cachedDescriptor(SegmentRegisterIndex::CS).effectiveLimit(), "Task switch to EIP outside CS limit");
+    EXCEPTION_ON(GeneralProtectionFault, 0, getEIP() > cachedDescriptor(SegmentRegisterIndex::CS).effectiveLimit(), "Task switch to EIP outside CS limit");
 
     if (getTF()) {
         vlog(LogCPU, "Leaving task switch with TF=1");

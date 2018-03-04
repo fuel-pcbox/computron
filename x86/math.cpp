@@ -374,8 +374,7 @@ void CPU::_DIV_RM8(Instruction& insn)
     WORD tAX = regs.W.AX;
 
     if (value == 0) {
-        exception(0);
-        return;
+        throw DivideError("Divide by zero");
     }
 
     // FIXME: divide error if result overflows
@@ -389,8 +388,7 @@ void CPU::_DIV_RM16(Instruction& insn)
     DWORD tDXAX = regs.W.AX + (regs.W.DX << 16);
 
     if (value == 0) {
-        exception(0);
-        return;
+        throw DivideError("Divide by zero");
     }
 
     // FIXME: divide error if result overflows
@@ -404,8 +402,7 @@ void CPU::_DIV_RM32(Instruction& insn)
     QWORD tEDXEAX = getEAX() | ((QWORD)getEDX() << 32);
 
     if (value == 0) {
-        exception(0);
-        return;
+        throw DivideError("Divide by zero");
     }
 
     // FIXME: divide error if result overflows
@@ -419,8 +416,7 @@ void CPU::_IDIV_RM8(Instruction& insn)
     SIGNED_WORD tAX = (SIGNED_WORD)regs.W.AX;
 
     if (value == 0) {
-        exception(0);
-        return;
+        throw DivideError("Divide by zero");
     }
 
     // FIXME: divide error if result overflows
@@ -434,8 +430,7 @@ void CPU::_IDIV_RM16(Instruction& insn)
     SIGNED_DWORD tDXAX = (regs.W.AX + (regs.W.DX << 16));
 
     if (value == 0) {
-        exception(0);
-        return;
+        throw DivideError("Divide by zero");
     }
 
     // FIXME: divide error if result overflows
@@ -449,8 +444,7 @@ void CPU::_IDIV_RM32(Instruction& insn)
     SIGNED_QWORD tEDXEAX = ((QWORD)regs.D.EAX + ((QWORD)regs.D.EDX << 32));
 
     if (value == 0) {
-        exception(0);
-        return;
+        throw DivideError("Divide by zero");
     }
 
     // FIXME: divide error if result overflows

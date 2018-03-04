@@ -65,8 +65,7 @@ void CPU::setLDT(WORD selector)
         if (descriptor.isLDT()) {
             auto& ldtDescriptor = descriptor.asLDTDescriptor();
             if (!descriptor.present()) {
-                triggerNP(selector, "LDT segment not present");
-                return;
+                throw NotPresent(selector, "LDT segment not present");
             }
             base = ldtDescriptor.base();
             limit = ldtDescriptor.limit();
@@ -129,7 +128,7 @@ void CPU::_CLTS(Instruction&)
 {
     if (getPE()) {
         if (getCPL() != 0) {
-            triggerGP(0, QString("CLTS with CPL!=0(%1)").arg(getCPL()));
+            throw GeneralProtectionFault(0, QString("CLTS with CPL!=0(%1)").arg(getCPL()));
             return;
         }
     }
@@ -140,7 +139,7 @@ void CPU::_LMSW_RM16(Instruction& insn)
 {
     if (getPE()) {
         if (getCPL() != 0) {
-            triggerGP(0, QString("LMSW with CPL!=0(%1)").arg(getCPL()));
+            throw GeneralProtectionFault(0, QString("LMSW with CPL!=0(%1)").arg(getCPL()));
             return;
         }
     }
@@ -216,43 +215,26 @@ const char* toString(SegmentRegisterIndex segment)
     return nullptr;
 }
 
-void CPU::exception(BYTE num)
+void CPU::raiseException(const Exception& e)
 {
     if (options.crashOnException)
         ASSERT_NOT_REACHED();
 
-    switch (m_exceptionState) {
-    case NoException:
-        m_exceptionState = SingleFault;
-        break;
-    case SingleFault:
-        vlog(LogAlert, "D-D-Double Fault!");
-        m_exceptionState = DoubleFault;
-        num = 0x8; // Reroute to #DF handler
-        break;
-    case DoubleFault:
-        vlog(LogAlert, "T-T-Triple Fault!");
-        m_exceptionState = TripleFault;
-        CRASH();
-        break;
-    case TripleFault:
-        // Yikes...
-        break;
+    try {
+        setEIP(getBaseEIP());
+        jumpToInterruptHandler(e.num());
+        if (e.hasCode()) {
+            if (o32())
+                push32(e.code());
+            else
+                push16(e.code());
+        }
+    } catch (Exception e) {
+        ASSERT_NOT_REACHED();
     }
-    setEIP(getBaseEIP());
-    jumpToInterruptHandler(num);
 }
 
-void CPU::exception(BYTE num, WORD error)
-{
-    exception(num);
-    if (o32())
-        push32(error);
-    else
-        push16(error);
-}
-
-void CPU::triggerGP(WORD code, const QString& reason)
+Exception CPU::GeneralProtectionFault(WORD code, const QString& reason)
 {
     WORD selector = code & 0xfff8;
     bool TI = code & 4;
@@ -261,101 +243,101 @@ void CPU::triggerGP(WORD code, const QString& reason)
     vlog(LogCPU, "Exception: #GP(%04x) selector=%04X, TI=%u, I=%u, EX=%u :: %s", code, selector, TI, I, EX, qPrintable(reason));
     if (options.crashOnGPF)
         ASSERT_NOT_REACHED();
-    exception(13, code);
+    return Exception(0xd, code, reason);
 }
 
-void CPU::triggerSS(WORD selector, const QString& reason)
+Exception CPU::StackFault(WORD selector, const QString& reason)
 {
     vlog(LogCPU, "Exception: #SS(%04x) :: %s", selector, qPrintable(reason));
-    exception(0xc, selector);
+    return Exception(0xc, selector, reason);
 }
 
-void CPU::triggerNP(WORD selector, const QString& reason)
+Exception CPU::NotPresent(WORD selector, const QString& reason)
 {
     vlog(LogCPU, "Exception: #NP(%04x) :: %s", selector, qPrintable(reason));
-    exception(0xb, selector);
+    return Exception(0xb, selector, reason);
 }
 
-void CPU::triggerTS(WORD selector, const QString& reason)
+Exception CPU::InvalidOpcode(const QString& reason)
+{
+    vlog(LogCPU, "Exception: #UD :: %s", qPrintable(reason));
+    return Exception(0x6, reason);
+}
+
+Exception CPU::InvalidTSS(WORD selector, const QString& reason)
 {
     vlog(LogCPU, "Exception: #TS(%04x) :: %s", selector, qPrintable(reason));
-    exception(0xa, selector);
+    return Exception(0xa, selector, reason);
 }
 
-void CPU::triggerPF(DWORD address, WORD error, const QString& reason)
+Exception CPU::PageFault(DWORD address, WORD error, const QString& reason)
 {
     vlog(LogCPU, "Exception: #PF(%04x) address=%08x :: %s", error, address, qPrintable(reason));
     CR2 = address;
-    exception(0x0e, error);
+    return Exception(0xe, error, address, reason);
 }
 
-bool CPU::validateSegmentLoad(SegmentRegisterIndex reg, WORD selector, const Descriptor& descriptor)
+Exception CPU::DivideError(const QString& reason)
+{
+    vlog(LogCPU, "Exception: #DE :: %s", qPrintable(reason));
+    return Exception(0x0, reason);
+}
+
+void CPU::validateSegmentLoad(SegmentRegisterIndex reg, WORD selector, const Descriptor& descriptor)
 {
     if (!getPE())
-        return true;
+        return;
 
     BYTE selectorRPL = selector & 3;
 
     if (descriptor.isError()) {
-        triggerGP(selector, "Selector outside table limits");
-        return false;
+        throw GeneralProtectionFault(selector, "Selector outside table limits");
     }
 
     if (reg == SegmentRegisterIndex::SS) {
         if (descriptor.isNull()) {
-            triggerGP(0, "ss loaded with null descriptor");
-            return false;
+            throw GeneralProtectionFault(0, "ss loaded with null descriptor");
         }
         if (selectorRPL != getCPL()) {
             dumpDescriptor(descriptor);
-            triggerGP(0, QString("ss selector RPL(%1) != CPL(%2)").arg(selectorRPL).arg(getCPL()));
-            return false;
+            throw GeneralProtectionFault(0, QString("ss selector RPL(%1) != CPL(%2)").arg(selectorRPL).arg(getCPL()));
         }
         if (!descriptor.isData() || !descriptor.asDataSegmentDescriptor().writable()) {
-            triggerGP(selector, "ss loaded with something other than a writable data segment");
-            return false;
+            throw GeneralProtectionFault(selector, "ss loaded with something other than a writable data segment");
         }
         if (!descriptor.present()) {
-            triggerSS(selector, "ss loaded with non-present segment");
-            return false;
+            throw StackFault(selector, "ss loaded with non-present segment");
         }
-        return true;
+        return;
     }
 
     if (descriptor.isNull())
-        return true;
+        return;
 
     if (reg == SegmentRegisterIndex::DS
         || reg == SegmentRegisterIndex::ES
         || reg == SegmentRegisterIndex::FS
         || reg == SegmentRegisterIndex::GS) {
         if (!descriptor.isData() && (descriptor.isCode() && !descriptor.asCodeSegmentDescriptor().readable())) {
-            triggerGP(selector, QString("%1 loaded with non-data or non-readable code segment").arg(registerName(reg)));
-            return false;
+            throw GeneralProtectionFault(selector, QString("%1 loaded with non-data or non-readable code segment").arg(registerName(reg)));
         }
         if (descriptor.isData() || descriptor.isNonconformingCode()) {
             if (selectorRPL > descriptor.DPL()) {
-                triggerGP(selector, QString("%1 loaded with data or non-conforming code segment and RPL > DPL").arg(registerName(reg)));
-                return false;
+                throw GeneralProtectionFault(selector, QString("%1 loaded with data or non-conforming code segment and RPL > DPL").arg(registerName(reg)));
             }
             if (getCPL() > descriptor.DPL()) {
-                triggerGP(selector, QString("%1 loaded with data or non-conforming code segment and RPL > DPL").arg(registerName(reg)));
-                return false;
+                throw GeneralProtectionFault(selector, QString("%1 loaded with data or non-conforming code segment and RPL > DPL").arg(registerName(reg)));
             }
         }
         if (!descriptor.present()) {
-            triggerNP(selector, QString("%1 loaded with non-present segment").arg(registerName(reg)));
-            return false;
+            throw NotPresent(selector, QString("%1 loaded with non-present segment").arg(registerName(reg)));
         }
     }
 
     if (!descriptor.isNull() && !descriptor.isSegmentDescriptor()) {
         dumpDescriptor(descriptor);
-        triggerGP(0, QString("%1 loaded with system segment").arg(registerName(reg)));
-        return false;
+        throw GeneralProtectionFault(0, QString("%1 loaded with system segment").arg(registerName(reg)));
     }
-
-    return true;
 }
 
 void CPU::setSegmentRegister(SegmentRegisterIndex segmentRegisterIndex, WORD selector)
@@ -363,11 +345,7 @@ void CPU::setSegmentRegister(SegmentRegisterIndex segmentRegisterIndex, WORD sel
     auto& descriptorCache = static_cast<Descriptor&>(m_descriptor[(int)segmentRegisterIndex]);
     auto descriptor = getDescriptor(selector);
 
-    if (!validateSegmentLoad(segmentRegisterIndex, selector, descriptor)) {
-        dumpDescriptor(descriptor);
-        CRASH();
-        return;
-    }
+    validateSegmentLoad(segmentRegisterIndex, selector, descriptor);
 
     *m_segmentMap[(int)segmentRegisterIndex] = selector;
 
@@ -415,8 +393,7 @@ void CPU::setSegmentRegister(SegmentRegisterIndex segmentRegisterIndex, WORD sel
 void CPU::_VERR_RM16(Instruction& insn)
 {
     if (!getPE()) {
-        exception(6); // #UD
-        return;
+        throw InvalidOpcode("VERR not recognized in real mode");
     }
     WORD selector = insn.modrm().read16();
     auto descriptor = getDescriptor(selector);

@@ -42,8 +42,7 @@ void CPU::_AAA(Instruction&)
 void CPU::_AAM(Instruction& insn)
 {
     if (insn.imm8() == 0) {
-        exception(0);
-        return;
+        throw DivideError("AAM with 0 immediate");
     }
 
     BYTE tempAL = regs.B.AL;

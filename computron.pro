@@ -3,7 +3,7 @@ TEMPLATE = app
 TARGET = computron
 DEPENDPATH += . x86 bios gui hw include
 INCLUDEPATH += . include gui hw x86
-QMAKE_CXXFLAGS += -std=c++17 -g -O0 -W -Wall -Wimplicit-fallthrough -fno-exceptions -fno-rtti
+QMAKE_CXXFLAGS += -std=c++17 -g -O0 -W -Wall -Wimplicit-fallthrough -fno-rtti
 
 DEFINES += CT_DEBUG
 DEFINES += CT_TRACE

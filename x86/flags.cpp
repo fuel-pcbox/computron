@@ -110,7 +110,7 @@ void CPU::_STI(Instruction&)
             if ((getIOPL() < getCPL()) && getCPL() == 3 && !getVIP())
                 setVIF(1);
             else
-                triggerGP(0, "STI with VM=0");
+                throw GeneralProtectionFault(0, "STI with VM=0");
         }
     } else {
         if (getIOPL() == 3) {
@@ -119,7 +119,7 @@ void CPU::_STI(Instruction&)
             if (getIOPL() < 3 && !getVIP() && getVME()) {
                 setVIF(1);
             } else {
-                triggerGP(0, "STI with VM=1");
+                throw GeneralProtectionFault(0, "STI with VM=1");
             }
         }
     }
@@ -139,7 +139,7 @@ void CPU::_CLI(Instruction&)
             if ((getIOPL() < getCPL()) && getCPL() == 3 && getPVI())
                 setVIF(0);
             else
-                triggerGP(0, "CLI with VM=0");
+                throw GeneralProtectionFault(0, "CLI with VM=0");
         }
     } else {
         if (getIOPL() == 3) {
@@ -148,7 +148,7 @@ void CPU::_CLI(Instruction&)
             if (getIOPL() < 3 && getVME()) {
                 setVIF(0);
             } else {
-                triggerGP(0, "CLI with VM=1");
+                throw GeneralProtectionFault(0, "CLI with VM=1");
             }
         }
     }

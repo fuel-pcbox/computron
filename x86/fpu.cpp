@@ -50,6 +50,6 @@ void CPU::_ESCAPE(Instruction& insn)
     //        communicate with the FPU.
 #if 0
     // 80286+: Coprocessor not available exception.
-    exception(7);
+    throw Exception(7, "No FPU");
 #endif
 }

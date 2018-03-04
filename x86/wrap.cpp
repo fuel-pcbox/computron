@@ -119,7 +119,7 @@ void CPU::_wrap_0xC0(Instruction& insn)
     case 5: modrm.write8(rightShift(value, imm)); break;
     case 6:
         vlog(LogAlert, "C0 /6 not wrapped");
-        exception(6);
+        throw InvalidOpcode();
         break;
     case 7: modrm.write8(cpu_sar(*this, value, imm, 8)); break;
     }
@@ -140,7 +140,7 @@ void CPU::_wrap_0xC1_16(Instruction& insn)
     case 5: modrm.write16(rightShift(value, imm)); break;
     case 6:
         vlog(LogAlert, "[16bit] C1 /6 not wrapped");
-        exception(6);
+        throw InvalidOpcode();
         break;
     case 7: modrm.write16(cpu_sar(*this, value, imm, 16)); break;
     }
@@ -161,7 +161,7 @@ void CPU::_wrap_0xC1_32(Instruction& insn)
     case 5: modrm.write32(rightShift(value, imm)); break;
     case 6:
         vlog(LogAlert, "[32bit] C1 /6 not wrapped");
-        exception(6);
+        throw InvalidOpcode();
         break;
     case 7: modrm.write32(cpu_sar(*this, value, imm, 32)); break;
     }
@@ -181,7 +181,7 @@ void CPU::_wrap_0xD0(Instruction& insn)
     case 5: modrm.write8(rightShift(value, 1)); break;
     case 6:
         vlog(LogAlert, "D0 /6 not wrapped");
-        exception(6);
+        throw InvalidOpcode();
         break;
     case 7: modrm.write8(cpu_sar(*this, value, 1, 8 )); break;
     }
@@ -201,7 +201,7 @@ void CPU::_wrap_0xD1_16(Instruction& insn)
     case 5: modrm.write16(rightShift(value, 1)); break;
     case 6:
         vlog(LogAlert, "[16bit] D1 /6 not wrapped");
-        exception(6);
+        throw InvalidOpcode();
         break;
     case 7: modrm.write16(cpu_sar(*this, value, 1, 16)); break;
     }
@@ -221,7 +221,7 @@ void CPU::_wrap_0xD1_32(Instruction& insn)
     case 5: modrm.write32(rightShift(value, 1)); break;
     case 6:
         vlog(LogAlert, "[32bit] D1 /6 not wrapped");
-        exception(6);
+        throw InvalidOpcode();
         break;
     case 7: modrm.write32(cpu_sar(*this, value, 1, 32)); break;
     }
@@ -241,7 +241,7 @@ void CPU::_wrap_0xD2(Instruction& insn)
     case 5: modrm.write8(rightShift(value, regs.B.CL)); break;
     case 6:
         vlog(LogAlert, "D2 /6 not wrapped");
-        exception(6);
+        throw InvalidOpcode();
         break;
     case 7: modrm.write8(cpu_sar(*this, value, regs.B.CL, 8 )); break;
     }
@@ -261,7 +261,7 @@ void CPU::_wrap_0xD3_16(Instruction& insn)
     case 5: modrm.write16(rightShift(value, regs.B.CL)); break;
     case 6:
         vlog(LogAlert, "[16bit] D3 /6 not wrapped");
-        exception(6);
+        throw InvalidOpcode();
         break;
     case 7: modrm.write16(cpu_sar(*this, value, regs.B.CL, 16)); break;
     }
@@ -281,7 +281,7 @@ void CPU::_wrap_0xD3_32(Instruction& insn)
     case 5: modrm.write32(rightShift(value, regs.B.CL)); break;
     case 6:
         vlog(LogAlert, "[32bit] D3 /6 not wrapped");
-        exception(6);
+        throw InvalidOpcode();
         break;
     case 7: modrm.write32(cpu_sar(*this, value, regs.B.CL, 32)); break;
     }

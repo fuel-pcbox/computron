@@ -229,7 +229,7 @@ void Debugger::handleReconfigure()
 
 void Debugger::handleStep()
 {
-    cpu().exec();
+    cpu().executeOneInstruction();
     cpu().dumpAll();
     cpu().dumpWatches();
     vlog(LogDump, "Next instruction:");

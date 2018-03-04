@@ -118,7 +118,7 @@ template void CPU::writeRegister<DWORD>(int, DWORD);
 void CPU::_UD0(Instruction&)
 {
     vlog(LogAlert, "Undefined opcode 0F FF (UD0)");
-    exception(6);
+    throw InvalidOpcode();
 }
 
 void CPU::_OperandSizeOverride(Instruction&)
@@ -199,15 +199,13 @@ void CPU::decodeNext()
 
     auto insn = Instruction::fromStream(*this);
     if (!insn.isValid())
-        exception(6);
+        throw InvalidOpcode();
     else
         execute(std::move(insn));
 }
 
 void CPU::execute(Instruction&& insn)
 {
-    m_exceptionState = NoException;
-
 #ifdef CRASH_ON_VM
     if (getVM()) {
         dumpTrace();
@@ -239,7 +237,7 @@ void CPU::_RDTSC(Instruction&)
 void CPU::_WBINVD(Instruction&)
 {
     if (getPE() && getCPL() != 0) {
-        triggerGP(0, "WBINVD");
+        throw GeneralProtectionFault(0, "WBINVD");
     }
 }
 
@@ -402,10 +400,14 @@ CPU::~CPU()
     m_codeMemory = nullptr;
 }
 
-void CPU::exec()
+void CPU::executeOneInstruction()
 {
-    saveBaseAddress();
-    decodeNext();
+    try {
+        saveBaseAddress();
+        decodeNext();
+    } catch(Exception e) {
+        raiseException(e);
+    }
 }
 
 void CPU::haltedLoop()
@@ -520,8 +522,7 @@ void CPU::mainLoop()
         if (!m_watches.isEmpty())
             dumpWatches();
 
-        // Fetch & decode AKA execute the next instruction.
-        exec();
+        executeOneInstruction();
 
         if (getTF()) {
             // The Trap Flag is set, so we'll execute one instruction and
@@ -722,7 +723,7 @@ void CPU::_UNSUPP(Instruction& insn)
     ndis.append(dbs.join(", "));
     vlog(LogAlert, qPrintable(ndis));
     dumpAll();
-    exception(6);
+    throw InvalidOpcode();
 }
 
 void CPU::_NOP(Instruction&)
@@ -732,8 +733,7 @@ void CPU::_NOP(Instruction&)
 void CPU::_HLT(Instruction&)
 {
     if (getCPL() != 0) {
-        triggerGP(0, QString("HLT with CPL!=0(%1)").arg(getCPL()));
-        return;
+        throw GeneralProtectionFault(0, QString("HLT with CPL!=0(%1)").arg(getCPL()));
     }
 
     setState(CPU::Halted);
@@ -1045,8 +1045,7 @@ void CPU::_LEA_reg32_mem32(Instruction& insn)
     auto& modrm = insn.modrm();
     if (modrm.isRegister()) {
         vlog(LogAlert, "LEA_reg32_mem32 with register source!");
-        exception(6);
-        return;
+        throw InvalidOpcode();
     }
 
     insn.reg32() = modrm.offset();
@@ -1057,8 +1056,7 @@ void CPU::_LEA_reg16_mem16(Instruction& insn)
     auto& modrm = insn.modrm();
     if (modrm.isRegister()) {
         vlog(LogAlert, "LEA_reg16_mem16 with register source!");
-        exception(6);
-        return;
+        throw InvalidOpcode();
     }
 
     insn.reg16() = modrm.offset();
@@ -1105,13 +1103,11 @@ bool CPU::translateAddress(DWORD linearAddress, DWORD& physicalAddress, MemoryAc
 
     if (!(pageDirectoryEntry & PageTableEntryFlags::Present)) {
         // FIXME: Pass correct error code!
-        triggerPF(linearAddress, 0, QString("Page not present in PDE(%1)").arg(pageDirectoryEntry, 8, 16, QLatin1Char('0')));
-        return false;
+        throw PageFault(linearAddress, 0, QString("Page not present in PDE(%1)").arg(pageDirectoryEntry, 8, 16, QLatin1Char('0')));
     }
     if (!(pageTableEntry & PageTableEntryFlags::Present)) {
         // FIXME: Pass correct error code!
-        triggerPF(linearAddress, 0, QString("Page not present in PTE(%1)").arg(pageTableEntry, 8, 16, QLatin1Char('0')));
-        return false;
+        throw PageFault(linearAddress, 0, QString("Page not present in PTE(%1)").arg(pageTableEntry, 8, 16, QLatin1Char('0')));
     }
 
     physicalAddress = (pageTableEntry & 0xfffff000) | offset;
@@ -1143,8 +1139,7 @@ bool CPU::validateAddress(const SegmentDescriptor& descriptor, DWORD offset, Mem
              toString(accessType),
              offset,
              descriptor.index());
-        triggerGP(0, "Access through null selector");
-        return false;
+        throw GeneralProtectionFault(0, "Access through null selector");
     }
 
     DWORD offsetForLimitChecking = descriptor.granularity() ? (offset & 0xfffff000) : offset;
@@ -1162,8 +1157,7 @@ bool CPU::validateAddress(const SegmentDescriptor& descriptor, DWORD offset, Mem
         dumpDescriptor(descriptor);
         //dumpAll();
         //debugger().enter();
-        triggerGP(descriptor.index(), "Access outside segment limit");
-        return false;
+        throw GeneralProtectionFault(descriptor.index(), "Access outside segment limit");
     }
     ASSERT(offset <= descriptor.effectiveLimit());
 

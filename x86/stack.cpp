@@ -221,7 +221,7 @@ void CPU::_PUSHFD(Instruction&)
     if (!getPE() || (getPE() && ((!getVM() || (getVM() && getIOPL() == 3)))))
         push32(getEFlags() & 0x00FCFFFF);
     else
-        triggerGP(0, "PUSHFD");
+        throw GeneralProtectionFault(0, "PUSHFD");
 }
 
 void CPU::_PUSH_imm32(Instruction& insn)
@@ -234,7 +234,7 @@ void CPU::_PUSHF(Instruction&)
     if (!getPE() || (getPE() && ((!getVM() || (getVM() && getIOPL() == 3)))))
         push16(getFlags());
     else
-        triggerGP(0, "PUSHF");
+        throw GeneralProtectionFault(0, "PUSHF");
 }
 
 void CPU::_POPF(Instruction&)
@@ -253,7 +253,7 @@ void CPU::_POPF(Instruction&)
             setFlags(pop16());
             setIOPL(oldIOPL);
         } else
-            triggerGP(0, "POPF");
+            throw GeneralProtectionFault(0, "POPF");
     }
 }
 
@@ -273,6 +273,6 @@ void CPU::_POPFD(Instruction&)
             setEFlags(pop32());
             setIOPL(oldIOPL);
         } else
-            triggerGP(0, "POPFD");
+            throw GeneralProtectionFault(0, "POPFD");
     }
 }

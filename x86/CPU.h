@@ -65,6 +65,48 @@ struct WatchedAddress {
 
 enum class JumpType { Internal, GateEntry, IRET, RETF, INT, CALL, JMP };
 
+class Exception {
+public:
+    Exception(BYTE num, WORD code, DWORD address, const QString& reason)
+        : m_num(num)
+        , m_code(code)
+        , m_address(address)
+        , m_hasCode(true)
+        , m_reason(reason)
+    {
+    }
+
+    Exception(BYTE num, WORD code, const QString& reason)
+        : m_num(num)
+        , m_code(code)
+        , m_hasCode(true)
+        , m_reason(reason)
+    {
+    }
+
+    Exception(BYTE num, const QString& reason)
+        : m_num(num)
+        , m_hasCode(false)
+        , m_reason(reason)
+    {
+    }
+
+    ~Exception() { }
+
+    BYTE num() const { return m_num; }
+    WORD code() const { return m_code; }
+    bool hasCode() const { return m_hasCode; }
+    DWORD address() const { return m_address; }
+    QString reason() const { return m_reason; }
+
+private:
+    BYTE m_num { 0 };
+    WORD m_code { 0 };
+    DWORD m_address { 0 };
+    bool m_hasCode { false };
+    QString m_reason;
+};
+
 class CPU final : public InstructionStream {
     friend void buildOpcodeTablesIfNeeded();
 public:
@@ -151,14 +193,15 @@ public:
 
     void jumpToInterruptHandler(int isr, bool requestedByPIC = false);
 
-    void triggerGP(WORD selector, const QString& reason);
-    void triggerSS(WORD selector, const QString& reason);
-    void triggerNP(WORD selector, const QString& reason);
-    void triggerTS(WORD selector, const QString& reason);
-    void triggerPF(DWORD address, WORD error, const QString& reason);
+    Exception GeneralProtectionFault(WORD selector, const QString& reason);
+    Exception StackFault(WORD selector, const QString& reason);
+    Exception NotPresent(WORD selector, const QString& reason);
+    Exception InvalidTSS(WORD selector, const QString& reason);
+    Exception PageFault(DWORD address, WORD error, const QString& reason);
+    Exception DivideError(const QString& reason);
+    Exception InvalidOpcode(const QString& reason = QString());
 
-    void exception(BYTE num);
-    void exception(BYTE num, WORD error);
+    void raiseException(const Exception&);
 
     void setIF(bool value) { this->IF = value; }
     void setCF(bool value) { this->CF = value; }
@@ -326,8 +369,7 @@ public:
     void decodeNext();
     void execute(Instruction&&);
 
-    // Execute the next instruction at CS:IP
-    void exec();
+    void executeOneInstruction();
 
     // CPU main loop - will fetch & decode until stopped
     void mainLoop();
@@ -1056,7 +1098,7 @@ private:
 
     void dumpSelector(const char* segmentRegisterName, SegmentRegisterIndex);
     void setSegmentRegister(SegmentRegisterIndex, WORD selector);
-    bool validateSegmentLoad(SegmentRegisterIndex, WORD selector, const Descriptor&);
+    void validateSegmentLoad(SegmentRegisterIndex, WORD selector, const Descriptor&);
 
     SegmentDescriptor m_descriptor[6];
 
@@ -1185,9 +1227,6 @@ private:
 
     DWORD m_baseMemorySize { 0 };
     DWORD m_extendedMemorySize { 0 };
-
-    enum ExceptionState { NoException, SingleFault, DoubleFault, TripleFault };
-    ExceptionState m_exceptionState { NoException };
 
     std::set<DWORD> m_breakpoints;
 

@@ -99,7 +99,7 @@ void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
             break;
         default:
             // FIXME: What should be the error code here?
-            triggerGP(isr, "Interrupt to bad gate type");
+            throw GeneralProtectionFault(isr, "Interrupt to bad gate type");
             break;
         }
     } else {

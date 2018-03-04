@@ -96,8 +96,7 @@ void CPU::_MOV_reg32_CR(Instruction& insn)
     int crIndex = insn.registerIndex();
 
     if (getVM()) {
-        triggerGP(0, "MOV reg32, CRx with VM=1");
-        return;
+        throw GeneralProtectionFault(0, "MOV reg32, CRx with VM=1");
     }
 
     if (getPE()) {
@@ -111,8 +110,7 @@ void CPU::_MOV_reg32_CR(Instruction& insn)
         // table (PDPT) and the loading of a control register causes the
         // PDPT to be loaded into the processor.
         if (getCPL() != 0) {
-            triggerGP(0, QString("MOV reg32, CRx with CPL!=0(%1)").arg(getCPL()));
-            return;
+            throw GeneralProtectionFault(0, QString("MOV reg32, CRx with CPL!=0(%1)").arg(getCPL()));
         }
     } else {
         // FIXME: GP(0) conditions:
@@ -121,8 +119,7 @@ void CPU::_MOV_reg32_CR(Instruction& insn)
         // If an attempt is made to write invalid bit combinations in CR0
         // (such as setting the PG flag to 1 when the PE flag is set to 0).
         if (crIndex == 1 || crIndex == 5 || crIndex == 6 || crIndex == 7) {
-            exception(6);
-            return;
+            throw InvalidOpcode("Invalid control register");
         }
     }
 
@@ -134,8 +131,7 @@ void CPU::_MOV_CR_reg32(Instruction& insn)
     int crIndex = insn.registerIndex();
 
     if (getVM()) {
-        triggerGP(0, "MOV CRx, reg32 with VM=1");
-        return;
+        throw GeneralProtectionFault(0, "MOV CRx, reg32 with VM=1");
     }
 
     if (getPE()) {
@@ -149,8 +145,7 @@ void CPU::_MOV_CR_reg32(Instruction& insn)
         // table (PDPT) and the loading of a control register causes the
         // PDPT to be loaded into the processor.
         if (getCPL() != 0) {
-            triggerGP(0, QString("MOV CRx, reg32 with CPL!=0(%1)").arg(getCPL()));
-            return;
+            throw GeneralProtectionFault(0, QString("MOV CRx, reg32 with CPL!=0(%1)").arg(getCPL()));
         }
     } else {
         // FIXME: GP(0) conditions:
@@ -159,8 +154,7 @@ void CPU::_MOV_CR_reg32(Instruction& insn)
         // If an attempt is made to write invalid bit combinations in CR0
         // (such as setting the PG flag to 1 when the PE flag is set to 0).
         if (crIndex == 1 || crIndex == 5 || crIndex == 6 || crIndex == 7) {
-            exception(6);
-            return;
+            throw InvalidOpcode("Invalid control register");
         }
     }
 
@@ -178,13 +172,13 @@ void CPU::_MOV_reg32_DR(Instruction& insn)
     auto registerIndex = static_cast<CPU::RegisterIndex32>(insn.rm() & 7);
 
     if (getVM()) {
-        triggerGP(0, "MOV reg32, DRx with VM=1");
+        throw GeneralProtectionFault(0, "MOV reg32, DRx with VM=1");
         return;
     }
 
     if (getPE()) {
         if (getCPL() != 0) {
-            triggerGP(0, QString("MOV reg32, DRx with CPL!=0(%1)").arg(getCPL()));
+            throw GeneralProtectionFault(0, QString("MOV reg32, DRx with CPL!=0(%1)").arg(getCPL()));
             return;
         }
     }
@@ -199,13 +193,13 @@ void CPU::_MOV_DR_reg32(Instruction& insn)
     auto registerIndex = static_cast<CPU::RegisterIndex32>(insn.rm() & 7);
 
     if (getVM()) {
-        triggerGP(0, "MOV DRx, reg32 with VM=1");
+        throw GeneralProtectionFault(0, "MOV DRx, reg32 with VM=1");
         return;
     }
 
     if (getPE()) {
         if (getCPL() != 0) {
-            triggerGP(0, QString("MOV DRx, reg32 with CPL!=0(%1)").arg(getCPL()));
+            throw GeneralProtectionFault(0, QString("MOV DRx, reg32 with CPL!=0(%1)").arg(getCPL()));
             return;
         }
     }
