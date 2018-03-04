@@ -458,10 +458,11 @@ public:
     void dumpMemory(WORD segment, DWORD offset, int rows);
     void dumpFlatMemory(DWORD address);
     void dumpRawMemory(BYTE*);
-    int dumpDisassembled(WORD segment, DWORD offset);
+    unsigned dumpDisassembled(WORD segment, DWORD offset, unsigned count = 1);
 
     void dumpMemory(SegmentDescriptor&, DWORD offset, int rows);
-    int dumpDisassembled(SegmentDescriptor&, DWORD offset);
+    unsigned dumpDisassembled(SegmentDescriptor&, DWORD offset, unsigned count = 1);;
+    unsigned dumpDisassembledInternal(SegmentDescriptor&, DWORD offset);
 
     void dumpTSS(const TSS&);
 

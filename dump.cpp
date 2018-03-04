@@ -28,7 +28,7 @@
 #include "CPU.h"
 #include "debug.h"
 
-int CPU::dumpDisassembled(SegmentDescriptor& descriptor, DWORD offset)
+unsigned CPU::dumpDisassembledInternal(SegmentDescriptor& descriptor, DWORD offset)
 {
     char buf[512];
     char* p = buf;
@@ -44,9 +44,9 @@ int CPU::dumpDisassembled(SegmentDescriptor& descriptor, DWORD offset)
     auto insn = Instruction::fromStream(stream);
 
     if (x32())
-        p += sprintf(p, "0x%04x:0x%08x ", descriptor.index(), offset);
+        p += sprintf(p, "%04x:%08x ", descriptor.index(), offset);
     else
-        p += sprintf(p, "0x%04x:0x%04x ", descriptor.index(), offset);
+        p += sprintf(p, "%04x:%04x ", descriptor.index(), offset);
 
     for (unsigned i = 0; i < insn.length(); ++i)
         p += sprintf(p, "%02x", data[i]);
@@ -58,17 +58,27 @@ int CPU::dumpDisassembled(SegmentDescriptor& descriptor, DWORD offset)
 
     vlog(LogDump, buf);
 
+
     /* Recurse if this is a prefix instruction. */
     if (insn.op() == 0x26 || insn.op() == 0x2E || insn.op() == 0x36 || insn.op() == 0x3E || insn.op() == 0xF2 || insn.op() == 0xF3)
-        dumpDisassembled(descriptor, offset + insn.length());
+        return insn.length() + dumpDisassembledInternal(descriptor, offset + insn.length());
 
-    return 0;
+    return insn.length();
 }
 
-int CPU::dumpDisassembled(WORD segment, DWORD offset)
+unsigned CPU::dumpDisassembled(SegmentDescriptor& descriptor, DWORD offset, unsigned count)
+{
+    unsigned bytes = 0;
+    for (unsigned i = 0; i < count; ++i) {
+        bytes += dumpDisassembledInternal(descriptor, offset + bytes);
+    }
+    return bytes;
+}
+
+unsigned CPU::dumpDisassembled(WORD segment, DWORD offset, unsigned count)
 {
     auto descriptor = getSegmentDescriptor(segment);
-    return dumpDisassembled(descriptor, offset);
+    return dumpDisassembled(descriptor, offset, count);
 }
 
 #ifdef CT_TRACE

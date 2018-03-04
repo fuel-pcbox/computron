@@ -63,6 +63,7 @@ private:
     void handleDumpFlatMemory(const QStringList&);
     void handleTracing(const QStringList&);
     void handleIRQ(const QStringList&);
+    void handleDumpUnassembled(const QStringList&);
 };
 
 #endif
