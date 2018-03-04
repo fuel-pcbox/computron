@@ -649,8 +649,8 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
         WORD oldSS = getSS();
         DWORD oldESP = getESP();
         auto tss = currentTSS();
-        setSS(tss.getRingSS(getCPL()));
-        setESP(tss.getRingESP(getCPL()));
+        setSS(tss.getRingSS(descriptor.DPL()));
+        setESP(tss.getRingESP(descriptor.DPL()));
         if (pushSize16) {
             push16(oldSS);
             push16(oldESP);
