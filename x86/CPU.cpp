@@ -1126,19 +1126,21 @@ bool CPU::translateAddress(DWORD linearAddress, DWORD& physicalAddress, MemoryAc
         WORD error = PageFaultFlags::NotPresent
                    | (accessType == MemoryAccessType::Write ? PageFaultFlags::Write : PageFaultFlags::Read)
                    | (inUserMode ? PageFaultFlags::UserMode : PageFaultFlags::SupervisorMode);
+        vlog(LogCPU, "#PF Translating %08x {dir=%03x, page=%03x, offset=%03x} PDE=%08x, PTE=%08x", linearAddress, dir, page, offset, pageDirectoryEntry, pageTableEntry);
         throw PageFault(linearAddress, error, QString("Page not present in PDE(%1)").arg(pageDirectoryEntry, 8, 16, QLatin1Char('0')));
     }
     if (!(pageTableEntry & PageTableEntryFlags::Present)) {
         WORD error = PageFaultFlags::NotPresent
                    | (accessType == MemoryAccessType::Write ? PageFaultFlags::Write : PageFaultFlags::Read)
                    | (inUserMode ? PageFaultFlags::UserMode : PageFaultFlags::SupervisorMode);
+        vlog(LogCPU, "#PF Translating %08x {dir=%03x, page=%03x, offset=%03x} PDE=%08x, PTE=%08x", linearAddress, dir, page, offset, pageDirectoryEntry, pageTableEntry);
         throw PageFault(linearAddress, error, QString("Page not present in PTE(%1)").arg(pageTableEntry, 8, 16, QLatin1Char('0')));
     }
 
     physicalAddress = (pageTableEntry & 0xfffff000) | offset;
 
 #ifdef DEBUG_PAGING
-    vlog(LogCPU, "PG=1 Translating %08x {dir=%03x, page=%03x, offset=%03x} => %08x [%08x + %08x]", linearAddress, dir, page, offset, translatedAddress, pageDirectoryEntry, pageTableEntry);
+    vlog(LogCPU, "PG=1 Translating %08x {dir=%03x, page=%03x, offset=%03x} => %08x [%08x + %08x]", linearAddress, dir, page, offset, physicalAddress, pageDirectoryEntry, pageTableEntry);
 #endif
 
     return true;
