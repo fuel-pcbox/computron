@@ -877,7 +877,8 @@ protected:
     // 80186+ INSTRUCTIONS
 
     void _BOUND(Instruction&);
-    void _ENTER(Instruction&);
+    void _ENTER_16(Instruction&);
+    void _ENTER_32(Instruction&);
     void _LEAVE(Instruction&);
 
     void _PUSHA(Instruction&);

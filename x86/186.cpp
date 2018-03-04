@@ -45,7 +45,7 @@ void CPU::_PUSH_imm16(Instruction& insn)
     push16(insn.imm16());
 }
 
-void CPU::_ENTER(Instruction& insn)
+void CPU::_ENTER_16(Instruction& insn)
 {
     ASSERT(o16());
     ASSERT(a16());
@@ -65,6 +65,29 @@ void CPU::_ENTER(Instruction& insn)
     }
     setBP(frameTemp);
     setSP(getSP() - size);
+}
+
+
+void CPU::_ENTER_32(Instruction& insn)
+{
+    ASSERT(o32());
+    ASSERT(a32());
+    //ASSERT(s32());
+
+    WORD size = insn.imm16_2();
+    BYTE nestingLevel = insn.imm8_1() & 31;
+    push32(getEBP());
+    WORD frameTemp = getESP();
+    if (nestingLevel > 0) {
+        WORD tmpEBP = getEBP();
+        for (WORD i = 1; i < nestingLevel - 1; ++i) {
+            tmpEBP -= 4;
+            push32(readMemory32(SegmentRegisterIndex::SS, getEBP()));
+        }
+        push32(frameTemp);
+    }
+    setEBP(frameTemp);
+    setESP(getESP() - size);
 }
 
 void CPU::_LEAVE(Instruction&)

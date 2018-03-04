@@ -217,8 +217,11 @@ const char* toString(SegmentRegisterIndex segment)
 
 void CPU::raiseException(const Exception& e)
 {
-    if (options.crashOnException)
+    if (options.crashOnException) {
+        dumpAll();
+        vlog(LogAlert, "CRASH ON EXCEPTION");
         ASSERT_NOT_REACHED();
+    }
 
     try {
         setEIP(getBaseEIP());
@@ -242,8 +245,11 @@ Exception CPU::GeneralProtectionFault(WORD code, const QString& reason)
     bool I = code & 2;
     bool EX = code & 1;
     vlog(LogCPU, "Exception: #GP(%04x) selector=%04X, TI=%u, I=%u, EX=%u :: %s", code, selector, TI, I, EX, qPrintable(reason));
-    if (options.crashOnGPF)
+    if (options.crashOnGPF) {
+        dumpAll();
+        vlog(LogAlert, "CRASH ON GPF");
         ASSERT_NOT_REACHED();
+    }
     return Exception(0xd, code, reason);
 }
 

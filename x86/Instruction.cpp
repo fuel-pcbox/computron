@@ -558,7 +558,7 @@ void buildOpcodeTablesIfNeeded()
     build(0xC5, "LDS",    OP_reg16_mem16,      &CPU::_LDS_reg16_mem16,  OP_reg32_mem32, &CPU::_LDS_reg32_mem32);
     build(0xC6, "MOV",    OP_RM8_imm8,         &CPU::_MOV_RM8_imm8);
     build(0xC7, "MOV",    OP_RM16_imm16,       &CPU::_MOV_RM16_imm16,   OP_RM32_imm32,  &CPU::_MOV_RM32_imm32);
-    build(0xC8, "ENTER",  OP_imm8_imm16,       &CPU::_ENTER);
+    build(0xC8, "ENTER",  OP_imm8_imm16,       &CPU::_ENTER_16,         OP_imm8_imm16,  &CPU::_ENTER_32);
     build(0xC9, "LEAVE",  OP,                  &CPU::_LEAVE);
     build(0xCA, "RETF",   OP_imm16,            &CPU::_RETF_imm16);
     build(0xCB, "RETF",   OP,                  &CPU::_RETF);

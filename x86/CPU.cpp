@@ -38,7 +38,7 @@
 
 #define CRASH_ON_OPCODE_00_00
 #define CRASH_ON_VM
-//#define DEBUG_CPL
+//#define LOG_FAR_JUMPS
 //#define DISASSEMBLE_EVERYTHING
 //#define DEBUG_I386NF
 
@@ -403,9 +403,11 @@ CPU::~CPU()
 void CPU::executeOneInstruction()
 {
     try {
+        resetSegmentPrefix();
         saveBaseAddress();
         decodeNext();
     } catch(Exception e) {
+        resetSegmentPrefix();
         raiseException(e);
     }
 }
@@ -611,7 +613,9 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
     WORD originalCS = getCS();
     DWORD originalEIP = getEIP();
 
-    //vlog(LogCPU, "[PE=%u, PG=%u] %s from %04x:%08x to %04x:%08x", getPE(), getPG(), toString(type), getBaseCS(), getBaseEIP(), segment, offset);
+#ifdef LOG_FAR_JUMPS
+    vlog(LogCPU, "[PE=%u, PG=%u] %s from %04x:%08x to %04x:%08x", getPE(), getPG(), toString(type), getBaseCS(), getBaseEIP(), segment, offset);
+#endif
 
     auto descriptor = getDescriptor(segment);
 

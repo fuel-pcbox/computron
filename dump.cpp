@@ -259,9 +259,9 @@ void CPU::dumpAll()
     auto dumpRegister = [this](CPU::RegisterIndex16 registerIndex)
     {
         if (getPE())
-            vlog(LogDump, "E%s: %08X", CPU::registerName(registerIndex), getRegister32(static_cast<CPU::RegisterIndex32>(registerIndex)));
+            vlog(LogDump, "e%s: %08x", CPU::registerName(registerIndex), getRegister32(static_cast<CPU::RegisterIndex32>(registerIndex)));
         else
-            vlog(LogDump, "%s: %04X", CPU::registerName(registerIndex), getRegister16(registerIndex));
+            vlog(LogDump, "%s: %04x", CPU::registerName(registerIndex), getRegister16(registerIndex));
     };
 
     dumpRegister(RegisterAX);
