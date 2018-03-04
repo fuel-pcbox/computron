@@ -192,14 +192,18 @@ void CPU::_RETF_imm16(Instruction& insn)
     if (o32()) {
         DWORD nip = pop32();
         WORD ncs = pop32();
+        if (s32())
+            regs.D.ESP += insn.imm16();
+        else
+            regs.W.SP += insn.imm16();
         jump32(ncs, nip, JumpType::RETF);
     } else {
         WORD nip = pop16();
         WORD ncs = pop16();
+        if (s32())
+            regs.D.ESP += insn.imm16();
+        else
+            regs.W.SP += insn.imm16();
         jump16(ncs, nip, JumpType::RETF);
     }
-    if (s32())
-        regs.D.ESP += insn.imm16();
-    else
-        regs.W.SP += insn.imm16();
-    }
+}

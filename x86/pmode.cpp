@@ -222,9 +222,10 @@ void CPU::raiseException(const Exception& e)
 
     try {
         setEIP(getBaseEIP());
+        auto gate = getInterruptGate(e.num());
         jumpToInterruptHandler(e.num());
         if (e.hasCode()) {
-            if (o32())
+            if (gate.is32Bit())
                 push32(e.code());
             else
                 push16(e.code());
