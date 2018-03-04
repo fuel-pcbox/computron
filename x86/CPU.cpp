@@ -597,7 +597,7 @@ static const char* toString(JumpType type)
     }
 }
 
-void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr)
+void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flags)
 {
     bool pushSize16 = o16();
 
@@ -667,6 +667,13 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr)
     }
     }
 
+    if (type == JumpType::INT) {
+        if (pushSize16)
+            push16(flags);
+        else
+            push32(flags);
+    }
+
     if (type == JumpType::CALL || type == JumpType::INT) {
         if (pushSize16) {
             push16(originalCS);
@@ -698,12 +705,13 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr)
 void CPU::setCPL(BYTE cpl)
 {
     ASSERT(getPE());
+    CS = (CS & ~3) | cpl;
     cachedDescriptor(SegmentRegisterIndex::CS).m_RPL = cpl;
 }
 
-void CPU::jump16(WORD segment, WORD offset, JumpType type, BYTE isr)
+void CPU::jump16(WORD segment, WORD offset, JumpType type, BYTE isr, DWORD flags)
 {
-    jump32(segment, offset, type, isr);
+    jump32(segment, offset, type, isr, flags);
 }
 
 void CPU::_UNSUPP(Instruction& insn)
