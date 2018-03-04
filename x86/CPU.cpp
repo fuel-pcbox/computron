@@ -1072,11 +1072,24 @@ inline void CPU::didTouchMemory(DWORD address)
         machine().notifyScreen();
 }
 
-enum PageTableEntryFlags {
+struct PageTableEntryFlags {
+enum Flags {
     Present = 0x01,
     ReadWrite = 0x02,
     UserSupervisor = 0x04,
     Dirty = 0x40,
+};
+};
+
+struct PageFaultFlags {
+enum Flags {
+    NotPresent = 0x00,
+    ProtectionViolation = 0x01,
+    Read = 0x00,
+    Write = 0x02,
+    UserMode = 0x04,
+    SupervisorMode = 0x00,
+};
 };
 
 bool CPU::translateAddress(DWORD linearAddress, DWORD& physicalAddress, MemoryAccessType accessType)
@@ -1099,13 +1112,19 @@ bool CPU::translateAddress(DWORD linearAddress, DWORD& physicalAddress, MemoryAc
     DWORD* pageTable = reinterpret_cast<DWORD*>(&m_memory[pageDirectoryEntry & 0xfffff000]);
     DWORD pageTableEntry = pageTable[page];
 
+    bool inUserMode = getCPL() == 3;
+
     if (!(pageDirectoryEntry & PageTableEntryFlags::Present)) {
-        // FIXME: Pass correct error code!
-        throw PageFault(linearAddress, 0, QString("Page not present in PDE(%1)").arg(pageDirectoryEntry, 8, 16, QLatin1Char('0')));
+        WORD error = PageFaultFlags::NotPresent
+                   | (accessType == MemoryAccessType::Write ? PageFaultFlags::Write : PageFaultFlags::Read)
+                   | (inUserMode ? PageFaultFlags::UserMode : PageFaultFlags::SupervisorMode);
+        throw PageFault(linearAddress, error, QString("Page not present in PDE(%1)").arg(pageDirectoryEntry, 8, 16, QLatin1Char('0')));
     }
     if (!(pageTableEntry & PageTableEntryFlags::Present)) {
-        // FIXME: Pass correct error code!
-        throw PageFault(linearAddress, 0, QString("Page not present in PTE(%1)").arg(pageTableEntry, 8, 16, QLatin1Char('0')));
+        WORD error = PageFaultFlags::NotPresent
+                   | (accessType == MemoryAccessType::Write ? PageFaultFlags::Write : PageFaultFlags::Read)
+                   | (inUserMode ? PageFaultFlags::UserMode : PageFaultFlags::SupervisorMode);
+        throw PageFault(linearAddress, error, QString("Page not present in PTE(%1)").arg(pageTableEntry, 8, 16, QLatin1Char('0')));
     }
 
     physicalAddress = (pageTableEntry & 0xfffff000) | offset;
