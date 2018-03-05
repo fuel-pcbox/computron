@@ -225,13 +225,19 @@ void CPU::raiseException(const Exception& e)
 
     try {
         setEIP(getBaseEIP());
-        auto gate = getInterruptGate(e.num());
+        bool pushSize16;
+        if (getPE()) {
+            auto gate = getInterruptGate(e.num());
+            pushSize16 = !gate.is32Bit();
+        } else {
+            pushSize16 = true;
+        }
         jumpToInterruptHandler(e.num());
         if (e.hasCode()) {
-            if (gate.is32Bit())
-                push32(e.code());
-            else
+            if (pushSize16)
                 push16(e.code());
+            else
+                push32(e.code());
         }
     } catch (Exception e) {
         ASSERT_NOT_REACHED();
