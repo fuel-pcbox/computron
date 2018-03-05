@@ -75,7 +75,7 @@ void PIC::reset()
     m_imr = 0x00;
     m_icw2Expected = false;
     m_icw4Expected = false;
-    m_readISR = true;
+    m_readISR = false;
 }
 
 void PIC::out8(WORD port, BYTE data)
