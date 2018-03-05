@@ -204,8 +204,8 @@ void CPU::mathFlags16(DWORD result, WORD dest, WORD src)
 void CPU::mathFlags32(QWORD result, DWORD dest, DWORD src)
 {
     setCF(result & 0xFFFFFFFF00000000ULL);
-    setSF(result & 0x80000000);
-    setZF((result & 0xFFFFFFFF) == 0);
+    setSF(result & 0x80000000ULL);
+    setZF((result & 0xFFFFFFFFULL) == 0);
     setPF(parity_table[result & 0xFF]);
     adjustFlag32(result, dest, src);
 }

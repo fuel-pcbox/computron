@@ -93,8 +93,8 @@ void CPU::_STOSD(Instruction&)
 
 void CPU::_CMPSB(Instruction&)
 {
-    BYTE src;
-    BYTE dest;
+    WORD src;
+    WORD dest;
 
     if (a16()) {
         src = readMemory8(currentSegment(), getSI());
@@ -113,8 +113,8 @@ void CPU::_CMPSB(Instruction&)
 
 void CPU::_CMPSW(Instruction&)
 {
-    WORD src;
-    WORD dest;
+    DWORD src;
+    DWORD dest;
 
     if (a16()) {
         src = readMemory16(currentSegment(), getSI());
@@ -133,8 +133,8 @@ void CPU::_CMPSW(Instruction&)
 
 void CPU::_CMPSD(Instruction&)
 {
-    DWORD src;
-    DWORD dest;
+    QWORD src;
+    QWORD dest;
 
     if (a16()) {
         src = readMemory32(currentSegment(), getSI());
@@ -153,7 +153,7 @@ void CPU::_CMPSD(Instruction&)
 
 void CPU::_SCASB(Instruction&)
 {
-    BYTE dest;
+    WORD dest;
 
     if (a16()) {
         dest = readMemory8(SegmentRegisterIndex::ES, getDI());
@@ -168,7 +168,7 @@ void CPU::_SCASB(Instruction&)
 
 void CPU::_SCASW(Instruction&)
 {
-    WORD dest;
+    DWORD dest;
 
     if (a16()) {
         dest = readMemory16(SegmentRegisterIndex::ES, getDI());
@@ -183,7 +183,7 @@ void CPU::_SCASW(Instruction&)
 
 void CPU::_SCASD(Instruction&)
 {
-    DWORD dest;
+    QWORD dest;
 
     if (a16()) {
         dest = readMemory32(SegmentRegisterIndex::ES, getDI());
