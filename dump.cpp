@@ -254,8 +254,6 @@ void CPU::dumpWatches()
 
 void CPU::dumpAll()
 {
-    BYTE* csip = memoryPointer(SegmentRegisterIndex::CS, getEIP());
-
     auto dumpRegister = [this](CPU::RegisterIndex16 registerIndex)
     {
         if (getPE())
@@ -300,8 +298,6 @@ void CPU::dumpAll()
     vlog(LogDump, "IDTR: {base=%08X, limit=%04X}", this->IDTR.base, this->IDTR.limit);
 
     vlog(LogDump, "C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u", getCF(), getPF(), getAF(), getZF(), getSF(), getIF(), getDF(), getOF());
-
-    vlog(LogDump, "  -  (%02X %02X%02X%02X%02X%02X)", csip[0], csip[1], csip[2], csip[3], csip[4], csip[5]);
 
     dumpDisassembled(cachedDescriptor(SegmentRegisterIndex::CS), getBaseEIP());
 
