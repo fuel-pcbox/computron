@@ -48,6 +48,7 @@ void CPU::_AAM(Instruction& insn)
     regs.B.AH = tempAL / insn.imm8();
     regs.B.AL = tempAL % insn.imm8();
     updateFlags8(regs.B.AL);
+    setAF(0);
 }
 
 void CPU::_AAD(Instruction& insn)
@@ -58,12 +59,13 @@ void CPU::_AAD(Instruction& insn)
     regs.B.AL = (tempAL + (tempAH * insn.imm8())) & 0xFF;
     regs.B.AH = 0x00;
     updateFlags8(regs.B.AL);
+    setAF(0);
 }
 
 void CPU::_AAS(Instruction&)
 {
     if (((regs.B.AL & 0x0F) > 9) || getAF()) {
-        regs.B.AL -= 6;
+        regs.W.AX -= 6;
         regs.B.AH -= 1;
         setAF(1);
         setCF(1);
@@ -71,6 +73,7 @@ void CPU::_AAS(Instruction&)
         setAF(0);
         setCF(0);
     }
+    regs.B.AL &= 0x0F;
 }
 
 void CPU::_DAS(Instruction&)
