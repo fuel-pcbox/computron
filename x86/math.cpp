@@ -241,11 +241,11 @@ void CPU::_IMUL_RM8(Instruction& insn)
 void CPU::_IMUL_reg32_RM32_imm8(Instruction& insn)
 {
     SIGNED_DWORD value = insn.modrm().read32();
-    SIGNED_QWORD result = doImul(value, static_cast<SIGNED_DWORD>(insn.imm8()));
+    SIGNED_QWORD result = doImul(value, signExtend<SIGNED_DWORD>(insn.imm8()));
 
     insn.reg32() = result;
 
-    if (result > 0x7FFFFFFF || result < -0x80000000) {
+    if (result > 0x7FFFFFFFLL || result < -0x80000000LL) {
         setCF(1);
         setOF(1);
     } else {
@@ -261,7 +261,7 @@ void CPU::_IMUL_reg32_RM32_imm32(Instruction& insn)
 
     insn.reg32() = result;
 
-    if (result > 0x7FFFFFFF || result < -0x80000000) {
+    if (result > 0x7FFFFFFFLL || result < -0x80000000LL) {
         setCF(1);
         setOF(1);
     } else {
@@ -311,7 +311,7 @@ void CPU::_IMUL_reg32_RM32(Instruction& insn)
 
     insn.reg32() = result;
 
-    if (result > 0x7FFFFFFF || result < -0x80000000) {
+    if (result > 0x7FFFFFFFLL || result < -0x80000000LL) {
         setCF(1);
         setOF(1);
     } else {
@@ -323,7 +323,7 @@ void CPU::_IMUL_reg32_RM32(Instruction& insn)
 void CPU::_IMUL_reg16_RM16_imm8(Instruction& insn)
 {
     SIGNED_WORD value = insn.modrm().read16();
-    SIGNED_DWORD result = doImul(value, static_cast<SIGNED_WORD>(insn.imm8()));
+    SIGNED_DWORD result = doImul(value, signExtend<SIGNED_WORD>(insn.imm8()));
 
     insn.reg16() = result;
 
@@ -359,7 +359,7 @@ void CPU::_IMUL_RM32(Instruction& insn)
     regs.D.EAX = result;
     regs.D.EDX = result >> 32;
 
-    if (result > 0x7FFFFFFF || result < -0x80000000) {
+    if (result > 0x7FFFFFFFLL || result < -0x80000000LL) {
         setCF(1);
         setOF(1);
     } else {
