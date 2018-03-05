@@ -28,8 +28,7 @@
 void CPU::_AAA(Instruction&)
 {
     if (((regs.B.AL & 0x0F)>9) || getAF()) {
-        regs.B.AL += 6;
-        regs.B.AH += 1;
+        regs.W.AX += 0x0106;
         setAF(1);
         setCF(1);
     } else {
