@@ -163,7 +163,7 @@ void CPU::_SCASB(Instruction&)
         nextEDI(1);
     }
 
-    cmpFlags8(getAL() - dest, dest, getAL());
+    cmpFlags8(getAL() - dest, getAL(), dest);
 }
 
 void CPU::_SCASW(Instruction&)
@@ -178,7 +178,7 @@ void CPU::_SCASW(Instruction&)
         nextEDI(2);
     }
 
-    cmpFlags16(getAX() - dest, dest, getAX());
+    cmpFlags16(getAX() - dest, getAX(), dest);
 }
 
 void CPU::_SCASD(Instruction&)
@@ -193,7 +193,7 @@ void CPU::_SCASD(Instruction&)
         nextEDI(4);
     }
 
-    cmpFlags32(getEAX() - dest, dest, getEAX());
+    cmpFlags32(getEAX() - dest, getEAX(), dest);
 }
 
 void CPU::_MOVSB(Instruction&)
