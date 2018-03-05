@@ -309,53 +309,69 @@ T CPU::doBtc(T dest, U bitIndex)
 template<typename T>
 T CPU::doBSF(T src)
 {
-    if (src == 0) {
-        setZF(0);
-        return 0;
-    }
-    setZF(1);
+    ASSERT(src != 0);
+    setZF(0);
     for (int i = 0; i < BitSizeOfType<T>::bits; ++i) {
         T mask = 1 << i;
         if (src & mask)
             return i;
     }
+    ASSERT_NOT_REACHED();
     return 0;
 }
 
 template<typename T>
 T CPU::doBSR(T src)
 {
-    if (src == 0) {
-        setZF(0);
-        return 0;
-    }
-    setZF(1);
+    ASSERT(src != 0);
+    setZF(0);
     for (int i = BitSizeOfType<T>::bits - 1; i >= 0; --i) {
         T mask = 1 << i;
         if (src & mask)
             return i;
     }
+    ASSERT_NOT_REACHED();
     return 0;
 }
 
 void CPU::_BSF_reg16_RM16(Instruction& insn)
 {
-    insn.reg16() = doBSF(insn.modrm().read16());
+    auto value = insn.modrm().read16();
+    if (!value) {
+        setZF(1);
+        return;
+    }
+    insn.reg16() = doBSF(value);
 }
 
 void CPU::_BSF_reg32_RM32(Instruction& insn)
 {
-    insn.reg32() = doBSF(insn.modrm().read32());
+    auto value = insn.modrm().read32();
+    if (!value) {
+        setZF(1);
+        return;
+    }
+    insn.reg32() = doBSF(value);
 }
 
 void CPU::_BSR_reg16_RM16(Instruction& insn)
 {
-    insn.reg16() = doBSR(insn.modrm().read16());
+    auto value = insn.modrm().read16();
+    if (!value) {
+        setZF(1);
+        return;
+    }
+    insn.reg16() = doBSR(value);
 }
 
 void CPU::_BSR_reg32_RM32(Instruction& insn)
 {
-    insn.reg32() = doBSR(insn.modrm().read32());
+    auto value = insn.modrm().read32();
+    if (!value) {
+        setZF(1);
+        return;
+    }
+    insn.reg32() = doBSR(value);
 }
 
 void CPU::_SHLD_RM16_reg16_imm8(Instruction& insn)
