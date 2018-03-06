@@ -91,10 +91,10 @@ T CPU::leftShift(T data, int steps)
 
     if (steps <= BitSizeOfType<T>::bits) {
         setCF(result >> (BitSizeOfType<T>::bits - steps) & 1);
-        if (steps == 1)
-            setOF((data >> (BitSizeOfType<T>::bits - 1)) ^ getCF());
     }
     result <<= steps;
+    if (steps == 1)
+        setOF((result >> (BitSizeOfType<T>::bits - 1)) ^ getCF());
 
     updateFlags(result, BitSizeOfType<T>::bits);
     return result;
