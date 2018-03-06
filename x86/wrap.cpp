@@ -47,14 +47,15 @@ T CPU::doRol(T data, int steps)
 template<typename T>
 T CPU::doRor(T data, int steps)
 {
-    T result = data;
-    steps &= 0x1F;
+    steps &= 0x1f;
     if (!steps)
         return data;
 
-    setCF((result >> (steps - 1)) & 1);
-    if ((steps &= BitSizeOfType<T>::bits - 1))
-        result = (data >> steps) | (data << (BitSizeOfType<T>::bits - steps));
+    T result = data;
+    steps &= BitSizeOfType<T>::bits - 1;
+    result = (data >> steps) | (data << (BitSizeOfType<T>::bits - steps));
+    setCF((result >> (BitSizeOfType<T>::bits - 1)) & 1);
+
     if (steps == 1)
         setOF((result >> (BitSizeOfType<T>::bits - 1)) ^ ((result >> (BitSizeOfType<T>::bits - 2) & 1)));
 
