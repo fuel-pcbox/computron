@@ -267,35 +267,38 @@ DEFAULT_RM32_imm8(doBts, _BTS_RM32_imm8)
 DEFAULT_RM16_reg16(doBts, _BTS_RM16_reg16)
 DEFAULT_RM32_reg32(doBts, _BTS_RM32_reg32)
 
-template<typename T, typename U>
-T CPU::doBt(T src, U bitIndex)
+template<typename T>
+T CPU::doBt(T src, int bitIndex)
 {
-    T bitMask = 1 << bitIndex;
-    setCF((src & bitMask) != 0);
+    bitIndex &= BitSizeOfType<T>::bits - 1;
+    setCF((src >> bitIndex) & 1);
     return src;
 }
 
-template<typename T, typename U>
-T CPU::doBtr(T dest, U bitIndex)
+template<typename T>
+T CPU::doBtr(T dest, int bitIndex)
 {
+    bitIndex &= BitSizeOfType<T>::bits - 1;
     T bitMask = 1 << bitIndex;
     T result = dest & ~bitMask;
     setCF((dest & bitMask) != 0);
     return result;
 }
 
-template<typename T, typename U>
-T CPU::doBts(T dest, U bitIndex)
+template<typename T>
+T CPU::doBts(T dest, int bitIndex)
 {
+    bitIndex &= BitSizeOfType<T>::bits - 1;
     T bitMask = 1 << bitIndex;
     T result = dest | bitMask;
     setCF((dest & bitMask) != 0);
     return result;
 }
 
-template<typename T, typename U>
-T CPU::doBtc(T dest, U bitIndex)
+template<typename T>
+T CPU::doBtc(T dest, int bitIndex)
 {
+    bitIndex &= BitSizeOfType<T>::bits - 1;
     T bitMask = 1 << bitIndex;
     T result;
     if (dest & bitMask)

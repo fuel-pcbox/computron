@@ -1067,10 +1067,10 @@ private:
     template<typename T> T doOr(T, T);
     template<typename T> T doAnd(T, T);
 
-    template<typename T, typename U> T doBt(T, U);
-    template<typename T, typename U> T doBtr(T, U);
-    template<typename T, typename U> T doBtc(T, U);
-    template<typename T, typename U> T doBts(T, U);
+    template<typename T> T doBt(T, int bitIndex);
+    template<typename T> T doBtr(T, int bitIndex);
+    template<typename T> T doBtc(T, int bitIndex);
+    template<typename T> T doBts(T, int bitIndex);
     template<typename T> T doBSF(T);
     template<typename T> T doBSR(T);
 
