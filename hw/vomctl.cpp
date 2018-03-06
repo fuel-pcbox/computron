@@ -27,6 +27,7 @@
 #include "CPU.h"
 #include "Common.h"
 #include "debug.h"
+#include <stdio.h>
 
 struct VomCtl::Private
 {
@@ -48,6 +49,8 @@ VomCtl::VomCtl(Machine& machine)
     listen(0xE6, IODevice::WriteOnly);
     listen(0xE7, IODevice::WriteOnly);
     listen(0xE8, IODevice::WriteOnly);
+
+    listen(0x666, IODevice::WriteOnly);
 
     reset();
 }
@@ -108,6 +111,13 @@ void VomCtl::out8(WORD port, BYTE data)
     case 0xE7:
     case 0xE8:
         vm_call8(*g_cpu, port, data);
+        break;
+    case 0x666:
+        {
+            static FILE* fp = fopen("out.txt", "w");
+            fputc(data, fp);
+            fflush(fp);
+        }
         break;
     default:
         IODevice::out8(port, data);
