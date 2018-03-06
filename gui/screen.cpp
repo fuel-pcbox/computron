@@ -62,6 +62,7 @@ struct Screen::Private
     BYTE *videoMemory;
 
     QTimer refreshTimer;
+    QTimer periodicRefreshTimer;
 };
 
 Screen::Screen(Machine& m)
@@ -100,9 +101,16 @@ Screen::Screen(Machine& m)
 
     setMouseTracking(true);
 
+    // This timer is kicked whenever screen memory is modified.
     d->refreshTimer.setSingleShot(true);
     d->refreshTimer.setInterval(25);
     connect(&d->refreshTimer, SIGNAL(timeout()), this, SLOT(refresh()));
+
+    // This timer does a forced refresh() every second, in case we miss anything.
+    // FIXME: This would not be needed if we had perfect invalidation + scanline timing.
+    d->periodicRefreshTimer.setInterval(1000);
+    d->periodicRefreshTimer.start();
+    connect(&d->periodicRefreshTimer, SIGNAL(timeout()), this, SLOT(refresh()));
 
 #if 0
     // HACK 2000: Type w<ENTER> at boot for Windows ;-)

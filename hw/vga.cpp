@@ -66,6 +66,7 @@ struct VGA::Private
     RGBColor colorRegister[256];
 
     bool screenInRefresh { false };
+    BYTE statusRegister { 0 };
 };
 
 static const RGBColor default_vga_color_registers[256] =
@@ -138,6 +139,7 @@ void VGA::reset()
     d->next3C0IsIndex = true;
     d->paletteDirty = true;
     d->screenInRefresh = false;
+    d->statusRegister = 0;
 }
 
 void VGA::out8(WORD port, BYTE data)
@@ -246,6 +248,7 @@ void VGA::willRefreshScreen()
 void VGA::didRefreshScreen()
 {
     d->screenInRefresh = false;
+    d->statusRegister |= 0x08;
 }
 
 BYTE VGA::in8(WORD port)
@@ -267,6 +270,7 @@ BYTE VGA::in8(WORD port)
 
     case 0x3BA:
     case 0x3DA: {
+        BYTE value = d->statusRegister;
         // 6845 - Port 3DA Status Register
         //
         //  |7|6|5|4|3|2|1|0|  3DA Status Register
@@ -276,13 +280,8 @@ BYTE VGA::in8(WORD port)
         //  | | | | `------- 1 = vertical retrace, RAM access OK for next 1.25ms
         //  `-------------- unused
 
-        // 0000 0100
-        BYTE value = 0x04;
-
-        if (!d->screenInRefresh) {
-            value |= 0x08;
-            value |= 0x01;
-        }
+        d->statusRegister ^= 0x01;
+        d->statusRegister &= 0x01;
 
         d->next3C0IsIndex = true;
         return value;
