@@ -214,8 +214,8 @@ void CPU::cmpFlags8(DWORD result, BYTE dest, BYTE src)
 {
     mathFlags8(result, dest, src);
     setOF(((
-        ((src)^(dest)) &
-        ((src)^(src-dest))
+        ((result)^(dest)) &
+        ((src)^(dest))
         )>>(7))&1);
 }
 
@@ -223,8 +223,8 @@ void CPU::cmpFlags16(DWORD result, WORD dest, WORD src)
 {
     mathFlags16(result, dest, src);
     setOF(((
-        ((src)^(dest)) &
-        ((src)^(src-dest))
+        ((result)^(dest)) &
+        ((src)^(dest))
         )>>(15))&1);
 }
 
@@ -232,8 +232,8 @@ void CPU::cmpFlags32(QWORD result, DWORD dest, DWORD src)
 {
     mathFlags32(result, dest, src);
     setOF(((
-        ((src)^(dest)) &
-        ((src)^(src-dest))
+        ((result)^(dest)) &
+        ((src)^(dest))
         )>>(31))&1);
 }
 
