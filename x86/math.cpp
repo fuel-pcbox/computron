@@ -69,7 +69,7 @@ QWORD CPU::doAdc(T dest, T src)
     setOF(((
           ((result)^(dest)) &
           ((result)^(src))
-         )>>(BitSizeOfType<T>::bits))&1);
+         )>>(BitSizeOfType<T>::bits - 1))&1);
     return result;
 }
 
