@@ -31,15 +31,15 @@ template<typename T>
 T CPU::doRol(T data, int steps)
 {
     T result = data;
-    steps &= 0x1F;
+    steps &= 0x1f;
     if (!steps)
         return data;
 
-    setCF(data >> (BitSizeOfType<T>::bits - steps) & 1);
-    if ((steps &= BitSizeOfType<T>::bits - 1))
-        result = (data << steps) | (data >> (BitSizeOfType<T>::bits - steps));
+    steps &= BitSizeOfType<T>::bits - 1;
+    result = (data << steps) | (data >> (BitSizeOfType<T>::bits - steps));
+    setCF(result & 1);
     if (steps == 1)
-        setOF(((data >> (BitSizeOfType<T>::bits - 1)) & 1) ^ getCF());
+        setOF(((result >> (BitSizeOfType<T>::bits - 1)) & 1) ^ getCF());
 
     return result;
 }
