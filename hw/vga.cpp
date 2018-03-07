@@ -90,7 +90,7 @@ VGA::VGA(Machine& m)
     listen(0x3BA, IODevice::ReadWrite);
     listen(0x3C0, IODevice::WriteOnly);
     listen(0x3C1, IODevice::ReadOnly);
-    listen(0x3C4, IODevice::WriteOnly);
+    listen(0x3C4, IODevice::ReadWrite);
     listen(0x3C5, IODevice::ReadWrite);
     listen(0x3C7, IODevice::WriteOnly);
     listen(0x3C8, IODevice::WriteOnly);
@@ -293,6 +293,9 @@ BYTE VGA::in8(WORD port)
         return d->paletteRegister[d->paletteIndex];
     }
 
+    case 0x3C4:
+        return d->currentSequencer;
+
     case 0x3C5:
         if (d->currentSequencer > 0x4) {
             vlog(LogVGA, "Invalid IO sequencer #%u read", d->currentSequencer);
@@ -346,7 +349,7 @@ BYTE VGA::in8(WORD port)
 
 BYTE VGA::readRegister(BYTE index)
 {
-    ASSERT(index < 0x12);
+    ASSERT(index <= 0x18);
     return d->ioRegister[index];
 }
 
@@ -359,7 +362,7 @@ BYTE VGA::readRegister2(BYTE index)
 
 BYTE VGA::readSequencer(BYTE index)
 {
-    ASSERT(index < 0x4);
+    ASSERT(index < 0x5);
     return d->ioSequencer[index];
 }
 
