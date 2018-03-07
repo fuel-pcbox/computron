@@ -163,7 +163,9 @@ void CPU::_MOV_CR_reg32(Instruction& insn)
     if (crIndex == 0 || crIndex == 3)
         updateCodeSegmentCache();
 
+#ifdef VERBOSE_DEBUG
     vlog(LogCPU, "MOV CR%u <- %08X", crIndex, getControlRegister(crIndex));
+#endif
 }
 
 void CPU::_MOV_reg32_DR(Instruction& insn)

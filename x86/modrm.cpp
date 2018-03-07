@@ -105,7 +105,9 @@ FarPointer CPU::readModRMFarPointerSegmentFirst(MemoryOrRegisterReference& modrm
     ptr.segment = readMemory16(modrm.segment(), modrm.offset());
     ptr.offset = readMemory32(modrm.segment(), modrm.offset() + 2);
 
+#ifdef MODRM_DEBUG
     vlog(LogCPU, "Loaded far pointer (segment first) from %s:%08x [PE=%u, PG=%u], got %04x:%08x", registerName(modrm.segment()), modrm.offset(), getPE(), getPG(), ptr.segment, ptr.offset);
+#endif
 
     return ptr;
 }
@@ -118,7 +120,9 @@ FarPointer CPU::readModRMFarPointerOffsetFirst(MemoryOrRegisterReference& modrm)
     ptr.segment = readMemory16(modrm.segment(), modrm.offset() + 4);
     ptr.offset = readMemory32(modrm.segment(), modrm.offset());
 
+#ifdef MODRM_DEBUG
     vlog(LogCPU, "Loaded far pointer (offset first) from %s:%08x [PE=%u, PG=%u], got %04x:%08x", registerName(modrm.segment()), modrm.offset(), getPE(), getPG(), ptr.segment, ptr.offset);
+#endif
 
     return ptr;
 }

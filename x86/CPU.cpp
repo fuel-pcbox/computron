@@ -621,11 +621,15 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
     if (descriptor.isSystemDescriptor()) {
         auto& sys = descriptor.asSystemDescriptor();
 
+#ifdef DEBUG_JUMPS
         vlog(LogCPU, "%s to %04x:%08x hit system descriptor type %s (%x)", toString(type), segment, offset, sys.typeName(), (unsigned)sys.type());
         dumpDescriptor(descriptor);
+#endif
         if (sys.isGate()) {
             auto& gate = sys.asGate();
+#ifdef DEBUG_JUMPS
             vlog(LogCPU, "Gate (%s) to %04x:%08x (count=%u)", gate.typeName(), gate.selector(), gate.offset(), gate.parameterCount());
+#endif
             ASSERT(gate.isCallGate());
             ASSERT(!gate.parameterCount()); // FIXME: Implement
             // NOTE: We recurse here, jumping to the gate entry point.
@@ -633,9 +637,11 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
             return;
         } else if (sys.isTSS()) {
             auto& tssDescriptor = sys.asTSSDescriptor();
+#ifdef DEBUG_JUMPS
             vlog(LogCPU, "CS is this:");
             dumpDescriptor(cachedDescriptor(SegmentRegisterIndex::CS));
             vlog(LogCPU, "%s to TSS descriptor (%s) -> %08x", toString(type), tssDescriptor.typeName(), tssDescriptor.base());
+#endif
             taskSwitch(tssDescriptor, type);
         } else {
             ASSERT_NOT_REACHED();
@@ -648,7 +654,9 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
 
     if (getPE() && (type == JumpType::CALL || type == JumpType::INT)) {
     if (descriptor.isNonconformingCode() && descriptor.DPL() < originalCPL) {
+#ifdef DEBUG_JUMPS
         vlog(LogCPU, "%s escalating privilege from ring%u to ring%u", toString(type), originalCPL, descriptor.DPL(), descriptor);
+#endif
         WORD oldSS = getSS();
         DWORD oldESP = getESP();
         auto tss = currentTSS();
@@ -657,15 +665,21 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
         if (pushSize16) {
             push16(oldSS);
             push16(oldESP);
+#ifdef DEBUG_JUMPS
             vlog(LogCPU, "%s to inner ring, ss:sp %04x:%04x -> %04x:%04x", toString(type), oldSS, oldESP, getSS(), getSP());
+#endif
         } else {
             push32(oldSS);
             push32(oldESP);
+#ifdef DEBUG_JUMPS
             vlog(LogCPU, "%s to inner ring, ss:esp %04x:%08x -> %04x:%08x", toString(type), oldSS, oldESP, getSS(), getESP());
+#endif
         }
         setCPL(descriptor.DPL());
     } else {
+#ifdef DEBUG_JUMPS
         vlog(LogCPU, "%s same privilege from ring%u to ring%u", toString(type), originalCPL, descriptor.DPL());
+#endif
         setCPL(originalCPL);
     }
     }
@@ -692,13 +706,17 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
         if (o16()) {
             WORD newSP = pop16();
             WORD newSS = pop16();
+#ifdef DEBUG_JUMPS
             vlog(LogCPU, "%s from ring%u to ring%u, ss:sp %04x:%04x -> %04x:%04x", toString(type), originalCPL, getCPL(), getSS(), getSP(), newSS, newSP);
+#endif
             setESP(newSP);
             setSS(newSS);
         } else {
             DWORD newESP = pop32();
             WORD newSS = pop32();
+#ifdef DEBUG_JUMPS
             vlog(LogCPU, "%s from ring%u to ring%u, ss:esp %04x:%08x -> %04x:%08x", toString(type), originalCPL, getCPL(), getSS(), getESP(), newSS, newESP);
+#endif
             setESP(newESP);
             setSS(newSS);
         }
@@ -1394,31 +1412,39 @@ void CPU::updateDefaultSizes()
 {
     m_shouldRestoreSizesAfterOverride = false;
 
+#ifdef VERBOSE_DEBUG
     bool oldO32 = m_operandSize32;
     bool oldA32 = m_addressSize32;
+#endif
 
     auto& csDescriptor = m_descriptor[(int)SegmentRegisterIndex::CS];
     m_addressSize32 = csDescriptor.D();
     m_operandSize32 = csDescriptor.D();
 
+#ifdef VERBOSE_DEBUG
     if (oldO32 != m_operandSize32 || oldA32 != m_addressSize32) {
         vlog(LogCPU, "updateDefaultSizes PE=%u X:%u O:%u A:%u (newCS: %04X)", getPE(), x16() ? 16 : 32, o16() ? 16 : 32, a16() ? 16 : 32, getCS());
         dumpDescriptor(csDescriptor);
     }
+#endif
 }
 
 void CPU::updateStackSize()
 {
+#ifdef VERBOSE_DEBUG
     bool oldS32 = m_stackSize32;
+#endif
 
     auto& ssDescriptor = m_descriptor[(int)SegmentRegisterIndex::SS];
     m_stackSize32 = ssDescriptor.D();
     ASSERT(ssDescriptor.asDataSegmentDescriptor().expandDown());
 
+#ifdef VERBOSE_DEBUG
     if (oldS32 != m_stackSize32) {
         vlog(LogCPU, "updateStackSize PE=%u S:%u (newSS: %04x)", getPE(), s16() ? 16 : 32, getSS());
         dumpDescriptor(ssDescriptor);
     }
+#endif
 }
 
 void CPU::updateCodeSegmentCache()

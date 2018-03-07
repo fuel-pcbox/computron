@@ -77,7 +77,10 @@ void CPU::setLDT(WORD selector)
     LDTR.segment = selector;
     LDTR.base = base;
     LDTR.limit = limit;
+
+#ifdef DEBUG_LDT
     vlog(LogAlert, "setLDT { segment: %04X => base:%08X, limit:%08X }", LDTR.segment, LDTR.base, LDTR.limit);
+#endif
 }
 
 void CPU::_LLDT_RM16(Instruction& insn)
@@ -93,14 +96,15 @@ void CPU::_LLDT_RM16(Instruction& insn)
 
 void CPU::_LGDT(Instruction& insn)
 {
+#ifdef DEBUG_GDT
     vlog(LogAlert, "Begin LGDT");
+#endif
     FarPointer ptr = readModRMFarPointerSegmentFirst(insn.modrm());
     DWORD baseMask = o32() ? 0xffffffff : 0x00ffffff;
     GDTR.base = ptr.offset & baseMask;
     GDTR.limit = ptr.segment;
-    vlog(LogAlert, "LGDT { base:%08X, limit:%08X }", GDTR.base, GDTR.limit);
-
 #ifdef DEBUG_GDT
+    vlog(LogAlert, "LGDT { base:%08X, limit:%08X }", GDTR.base, GDTR.limit);
     for (unsigned i = 0; i < GDTR.limit; i += 8) {
         dumpSegment(i);
     }
@@ -113,9 +117,8 @@ void CPU::_LIDT(Instruction& insn)
     DWORD baseMask = o32() ? 0xffffffff : 0x00ffffff;
     IDTR.base = ptr.offset & baseMask;
     IDTR.limit = ptr.segment;
-    vlog(LogAlert, "LIDT { base:%08X, limit:%08X }", IDTR.base, IDTR.limit);
-
 #if DEBUG_IVT
+    vlog(LogAlert, "LIDT { base:%08X, limit:%08X }", IDTR.base, IDTR.limit);
     if (getPE()) {
         for (DWORD isr = 0; isr < (IDTR.limit / 16); ++isr) {
             dumpDescriptor(getInterruptGate(isr));
@@ -146,13 +149,17 @@ void CPU::_LMSW_RM16(Instruction& insn)
 
     WORD msw = insn.modrm().read16();
     CR0 = (CR0 & 0xFFFFFFF0) | (msw & 0x0F);
+#ifdef PMODE_DEBUG
     vlog(LogCPU, "LMSW set CR0=%08X, PE=%u", CR0, getPE());
+#endif
 }
 
 void CPU::_SMSW_RM16(Instruction& insn)
 {
     auto& modrm = insn.modrm();
+#ifdef PMODE_DEBUG
     vlog(LogCPU, "SMSW get LSW(CR0)=%04X, PE=%u", CR0 & 0xFFFF, getPE());
+#endif
     if (o32() && modrm.isRegister())
         modrm.write32(CR0);
     else

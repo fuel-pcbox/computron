@@ -131,7 +131,9 @@ void CMOS::out8(WORD port, BYTE data)
         return;
     }
 
+#ifdef CMOS_DEBUG
     vlog(LogCMOS, "Write register %02x <- %02x", m_registerIndex, data);
+#endif
     m_ram[m_registerIndex] = data;
 }
 

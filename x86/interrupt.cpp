@@ -115,7 +115,8 @@ void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
         vector.segment = gate.selector();
         vector.offset = gate.offset();
 
-        vlog(LogCPU, "PE=1 Interrupt %02x trapped%s, type: %s (%1x), %04x:%08x", isr, requestedByPIC ? " (from PIC)" : "", gate.typeName(), gate.type(), vector.segment, vector.offset);
+        if (options.trapint)
+            vlog(LogCPU, "PE=1 Interrupt %02x trapped%s, type: %s (%1x), %04x:%08x", isr, requestedByPIC ? " (from PIC)" : "", gate.typeName(), gate.type(), vector.segment, vector.offset);
 
         Descriptor codeDescriptor = getDescriptor(gate.selector());
         if (codeDescriptor.isError()) {
