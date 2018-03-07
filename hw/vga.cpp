@@ -125,6 +125,10 @@ void VGA::reset()
 
     d->ioSequencer[2] = 0x0F;
 
+    // Start with graphics mode bitmask 0xFF by default.
+    // FIXME: This kind of stuff should be done by a VGA BIOS..
+    d->ioRegister2[0x8] = 0xff;
+
     d->dac_data_read_index = 0;
     d->dac_data_read_subindex = 0;
     d->dac_data_write_index = 0;
@@ -231,7 +235,7 @@ void VGA::out8(WORD port, BYTE data)
 
     case 0x3CF:
         // FIXME: Find the number of valid registers and do something for OOB access.
-        // vlog(LogVGA, "writing to reg2 %d, data is %02X", current_register2, data);
+        //vlog(LogVGA, "Writing to reg2 %02x, data is %02x", d->currentRegister2, data);
         d->ioRegister2[d->currentRegister2] = data;
         break;
 
