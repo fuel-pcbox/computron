@@ -418,3 +418,8 @@ BYTE VGA::currentVideoMode() const
     //        Need to find out how the 6845 stores this information.
     return machine().cpu().readUnmappedMemory8(0x449) & 0x7f;
 }
+
+bool VGA::inChain4Mode() const
+{
+    return d->ioSequencer[0x4] & 0x8;
+}

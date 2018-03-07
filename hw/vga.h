@@ -60,6 +60,8 @@ public:
     void willRefreshScreen();
     void didRefreshScreen();
 
+    bool inChain4Mode() const;
+
 signals:
     void paletteChanged();
 
