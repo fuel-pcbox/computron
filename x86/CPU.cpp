@@ -1289,7 +1289,11 @@ T CPU::readMemory(const SegmentDescriptor& descriptor, DWORD offset)
         if (!validatePhysicalAddress<T>(physicalAddress, MemoryAccessType::Read))
             return 0;
 
-        T value = *reinterpret_cast<T*>(&m_memory[physicalAddress]);
+        T value;
+        if (addressIsInVGAMemory(physicalAddress))
+            value = machine().vgaMemory().read<T>(physicalAddress);
+        else
+            value = *reinterpret_cast<T*>(&m_memory[physicalAddress]);
 #ifdef MEMORY_DEBUGGING
         if (options.memdebug || shouldLogMemoryRead(physicalAddress)) {
             if (options.novlog)
