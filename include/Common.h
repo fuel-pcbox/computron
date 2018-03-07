@@ -28,7 +28,7 @@
 #include "types.h"
 #include <QString>
 
-#define ALWAYS_INLINE __attribute__ ((always_inline))
+#define ALWAYS_INLINE __attribute__ ((always_inline)) inline
 #define PURE __attribute__ ((pure))
 #define UNUSED_PARAM(x) (void)(x)
 
