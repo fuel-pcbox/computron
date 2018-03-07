@@ -125,7 +125,8 @@ Screen::~Screen()
 
 void Screen::scheduleRefresh()
 {
-    d->refreshTimer.start();
+    if (!d->refreshTimer.isActive())
+        d->refreshTimer.start();
 }
 
 void Screen::notify()
