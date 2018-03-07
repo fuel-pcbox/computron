@@ -437,9 +437,9 @@ public:
     enum class MemoryAccessType { Read, Write, InternalPointer };
 
     template<typename T> bool validatePhysicalAddress(DWORD, MemoryAccessType);
-    template<typename T> bool validateAddress(const SegmentDescriptor&, DWORD offset, MemoryAccessType);
-    template<typename T> bool validateAddress(SegmentRegisterIndex, DWORD offset, MemoryAccessType);
-    template<typename T> bool validateAddress(WORD segment, DWORD offset, MemoryAccessType);
+    template<typename T> void validateAddress(const SegmentDescriptor&, DWORD offset, MemoryAccessType);
+    template<typename T> void validateAddress(SegmentRegisterIndex, DWORD offset, MemoryAccessType);
+    template<typename T> void validateAddress(WORD segment, DWORD offset, MemoryAccessType);
     template<typename T> T readMemory(DWORD address);
     template<typename T> T readMemory(WORD segment, DWORD address);
     template<typename T> T readMemory(const SegmentDescriptor&, DWORD address);
@@ -449,7 +449,7 @@ public:
     template<typename T> void writeMemory(const SegmentDescriptor&, DWORD address, T data);
     template<typename T> void writeMemory(SegmentRegisterIndex, DWORD address, T data);
 
-    bool translateAddress(DWORD linearAddress, DWORD& physicalAddress, MemoryAccessType);
+    void translateAddress(DWORD linearAddress, DWORD& physicalAddress, MemoryAccessType);
 
     BYTE readMemory8(DWORD address);
     BYTE readMemory8(WORD segment, DWORD offset);
@@ -1050,6 +1050,8 @@ private:
     void updateCodeSegmentCache();
 
     void didTouchMemory(DWORD address);
+
+    void translateAddressSlowCase(DWORD linearAddress, DWORD& physicalAddress, MemoryAccessType);
 
     template<typename T>
     T rightShift(T, int steps);

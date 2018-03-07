@@ -1121,13 +1121,17 @@ enum Flags {
 };
 };
 
-bool CPU::translateAddress(DWORD linearAddress, DWORD& physicalAddress, MemoryAccessType accessType)
+ALWAYS_INLINE void CPU::translateAddress(DWORD linearAddress, DWORD& physicalAddress, MemoryAccessType accessType)
 {
     if (!getPE() || !getPG()) {
         physicalAddress = linearAddress;
-        return true;
+        return;
     }
+    translateAddressSlowCase(linearAddress, physicalAddress, accessType);
+}
 
+void CPU::translateAddressSlowCase(DWORD linearAddress, DWORD& physicalAddress, MemoryAccessType accessType)
+{
     ASSERT(getCR3() < m_memorySize);
 
     DWORD dir = (linearAddress >> 22) & 0x3FF;
@@ -1163,8 +1167,6 @@ bool CPU::translateAddress(DWORD linearAddress, DWORD& physicalAddress, MemoryAc
 #ifdef DEBUG_PAGING
     vlog(LogCPU, "PG=1 Translating %08x {dir=%03x, page=%03x, offset=%03x} => %08x [%08x + %08x]", linearAddress, dir, page, offset, physicalAddress, pageDirectoryEntry, pageTableEntry);
 #endif
-
-    return true;
 }
 
 static const char* toString(CPU::MemoryAccessType type)
@@ -1178,7 +1180,7 @@ static const char* toString(CPU::MemoryAccessType type)
 }
 
 template<typename T>
-bool CPU::validateAddress(const SegmentDescriptor& descriptor, DWORD offset, MemoryAccessType accessType)
+void CPU::validateAddress(const SegmentDescriptor& descriptor, DWORD offset, MemoryAccessType accessType)
 {
     ASSERT(getPE());
 
@@ -1211,21 +1213,19 @@ bool CPU::validateAddress(const SegmentDescriptor& descriptor, DWORD offset, Mem
 
     DWORD linearAddress = descriptor.base() + offset;
     DWORD physicalAddress;
-    if (!translateAddress(linearAddress, physicalAddress, accessType))
-        return false;
-    return true;
+    translateAddress(linearAddress, physicalAddress, accessType);
 }
 
 template<typename T>
-bool CPU::validateAddress(SegmentRegisterIndex registerIndex, DWORD offset, MemoryAccessType accessType)
+void CPU::validateAddress(SegmentRegisterIndex registerIndex, DWORD offset, MemoryAccessType accessType)
 {
-    return validateAddress<T>(m_descriptor[(int)registerIndex], offset, accessType);
+    validateAddress<T>(m_descriptor[(int)registerIndex], offset, accessType);
 }
 
 template<typename T>
-bool CPU::validateAddress(WORD segmentIndex, DWORD offset, MemoryAccessType accessType)
+void CPU::validateAddress(WORD segmentIndex, DWORD offset, MemoryAccessType accessType)
 {
-    return validateAddress<T>(getSegmentDescriptor(segmentIndex), offset, accessType);
+    validateAddress<T>(getSegmentDescriptor(segmentIndex), offset, accessType);
 }
 
 template<typename T>
@@ -1249,8 +1249,7 @@ template<typename T>
 T CPU::readMemory(DWORD linearAddress)
 {
     DWORD physicalAddress;
-    if (!translateAddress(linearAddress, physicalAddress, MemoryAccessType::Read))
-        return 0;
+    translateAddress(linearAddress, physicalAddress, MemoryAccessType::Read);
     physicalAddress &= a20Mask();
     if (!validatePhysicalAddress<T>(physicalAddress, MemoryAccessType::Read))
         return 0;
@@ -1272,15 +1271,12 @@ template<typename T>
 T CPU::readMemory(const SegmentDescriptor& descriptor, DWORD offset)
 {
     if (getPE()) {
-        if (!validateAddress<T>(descriptor, offset, MemoryAccessType::Read)) {
-            //ASSERT_NOT_REACHED();
-            return 0;
-        }
+        validateAddress<T>(descriptor, offset, MemoryAccessType::Read);
+
         DWORD linearAddress = descriptor.base() + offset;
         DWORD physicalAddress;
 
-        if (!translateAddress(linearAddress, physicalAddress, MemoryAccessType::Read))
-            return 0;
+        translateAddress(linearAddress, physicalAddress, MemoryAccessType::Read);
 
         if (!validatePhysicalAddress<T>(physicalAddress, MemoryAccessType::Read))
             return 0;
@@ -1334,8 +1330,7 @@ template<typename T>
 void CPU::writeMemory(DWORD linearAddress, T value)
 {
     DWORD physicalAddress;
-    if (!translateAddress(linearAddress, physicalAddress, MemoryAccessType::Write))
-        return;
+    translateAddress(linearAddress, physicalAddress, MemoryAccessType::Write);
     physicalAddress &= a20Mask();
     if (options.memdebug || shouldLogMemoryWrite(physicalAddress)) {
         if (options.novlog)
@@ -1357,15 +1352,11 @@ template<typename T>
 void CPU::writeMemory(const SegmentDescriptor& descriptor, DWORD offset, T value)
 {
     if (getPE()) {
-        if (!validateAddress<T>(descriptor, offset, MemoryAccessType::Write)) {
-            //ASSERT_NOT_REACHED();
-            return;
-        }
+        validateAddress<T>(descriptor, offset, MemoryAccessType::Write);
+
         DWORD linearAddress = descriptor.base() + offset;
         DWORD physicalAddress;
-
-        if (!translateAddress(linearAddress, physicalAddress, MemoryAccessType::Write))
-            return;
+        translateAddress(linearAddress, physicalAddress, MemoryAccessType::Write);
 
         if (!validatePhysicalAddress<T>(physicalAddress, MemoryAccessType::Write))
             return;
@@ -1493,14 +1484,11 @@ BYTE* CPU::memoryPointer(SegmentRegisterIndex segment, DWORD offset)
 BYTE* CPU::memoryPointer(const SegmentDescriptor& descriptor, DWORD offset)
 {
     if (getPE()) {
-        if (!validateAddress<BYTE>(descriptor, offset, MemoryAccessType::InternalPointer)) {
-            //ASSERT_NOT_REACHED();
-            return nullptr;
-        }
+        validateAddress<BYTE>(descriptor, offset, MemoryAccessType::InternalPointer);
+
         DWORD linearAddress = descriptor.base() + offset;
         DWORD physicalAddress;
-        if (!translateAddress(linearAddress, physicalAddress, MemoryAccessType::InternalPointer))
-            return nullptr;
+        translateAddress(linearAddress, physicalAddress, MemoryAccessType::InternalPointer);
         if (options.memdebug || shouldLogMemoryPointer(physicalAddress))
             vlog(LogCPU, "MemoryPointer PE [A20=%s] %04X:%08X (phys: %08X)", isA20Enabled() ? "on" : "off", descriptor.index(), offset, physicalAddress);
         didTouchMemory(physicalAddress);
@@ -1517,8 +1505,7 @@ BYTE* CPU::memoryPointer(WORD segmentIndex, DWORD offset)
 BYTE* CPU::memoryPointer(DWORD linearAddress)
 {
     DWORD physicalAddress;
-    if (!translateAddress(linearAddress, physicalAddress, MemoryAccessType::InternalPointer))
-        return nullptr;
+    translateAddress(linearAddress, physicalAddress, MemoryAccessType::InternalPointer);
     physicalAddress &= a20Mask();
     didTouchMemory(physicalAddress);
     if (options.memdebug || shouldLogMemoryPointer(physicalAddress)) {
