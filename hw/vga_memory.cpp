@@ -105,11 +105,6 @@ void VGAMemory::write8(DWORD address, BYTE value)
 
     address -= 0xA0000;
 
-    if (machine().vga().currentVideoMode() == 0x13) {
-        m_plane[0][address] = value;
-        return;
-    }
-
     if (WRITE_MODE == 2) {
 
         BYTE bitmask = BIT_MASK;
@@ -229,20 +224,23 @@ void VGAMemory::write8(DWORD address, BYTE value)
         return;
     }
 
-    /*
-     * Check first if any planes should be written.
-     */
+    BYTE plane = 0xf;
 
-    BYTE plane_mask = machine().vga().readSequencer(2) & 0x0F;
+    if (machine().vga().inChain4Mode()) {
+        plane = 1 << (address & 0x3);
+        address &= ~0x3;
+    }
 
-    if (plane_mask) {
-        if (plane_mask & 0x01)
+    plane &= machine().vga().readSequencer(2) & 0x0f;
+
+    if (plane) {
+        if (plane & 0x01)
             m_plane[0][address] = new_val[0];
-        if (plane_mask & 0x02)
+        if (plane & 0x02)
             m_plane[1][address] = new_val[1];
-        if (plane_mask & 0x04)
+        if (plane & 0x04)
             m_plane[2][address] = new_val[2];
-        if (plane_mask & 0x08)
+        if (plane & 0x08)
             m_plane[3][address] = new_val[3];
 
         // FIXME: We shouldn't have to check this on every pass.
@@ -292,15 +290,18 @@ BYTE VGAMemory::read8(DWORD address)
 
     address -= 0xA0000;
 
-    if (machine().vga().currentVideoMode() == 0x13)
-        return m_plane[0][address];
-
     m_latch[0] = m_plane[0][address];
     m_latch[1] = m_plane[1][address];
     m_latch[2] = m_plane[2][address];
     m_latch[3] = m_plane[3][address];
 
-    return m_latch[machine().vga().readRegister2(4)];
+    BYTE plane = machine().vga().readRegister2(4) & 0xf;
+    if (machine().vga().inChain4Mode()) {
+        plane = address & 3;
+        address &= ~3;
+    }
+
+    return m_latch[plane];
 }
 
 template<typename T>

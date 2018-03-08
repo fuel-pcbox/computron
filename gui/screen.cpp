@@ -276,7 +276,33 @@ void Screen::renderMode13(QImage& target)
     const BYTE* videoMemory = machine().vgaMemory().plane(0);
     WORD startAddress = machine().vga().startAddress();
     videoMemory += startAddress;
-    memcpy(target.bits(), videoMemory, 320 * 200);
+
+    if (machine().vga().inChain4Mode()) {
+        //memcpy(target.bits(), videoMemory, 320 * 200);
+        //return;
+    }
+
+#if 0
+    DWORD lineOffset = machine().vga().readRegister(0x13) << 1;
+    if (machine().vga().readRegister(0x14) & 0x40)
+        lineOffset <<= 2;
+    else if (machine().vga().readRegister(0x17) & 0x40)
+        lineOffset <<= 1;
+#endif
+
+    // FIXME: This is a hack, the code above should result in the correct lineOffset;
+    DWORD lineOffset = target.bytesPerLine() >> 2;
+
+    auto* bits = target.bits();
+    auto* bit = bits;
+
+    for (unsigned y = 0; y < 200; ++y) {
+        for (unsigned x = 0; x < 320; ++x) {
+            BYTE plane = x % 4;
+            DWORD byteOffset = (plane * 65536) + (y * lineOffset) + (x >> 2);
+            *(bit++) = videoMemory[byteOffset];
+        }
+    }
 }
 
 void Screen::renderMode12(QImage &target)
