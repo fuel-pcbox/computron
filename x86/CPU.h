@@ -520,9 +520,9 @@ public:
     bool x32() const { return m_descriptor[(int)SegmentRegisterIndex::CS].D(); }
 
     bool a16() const { return !m_addressSize32; }
-    virtual bool a32() const override { return m_addressSize32; }
+    bool a32() const { return m_addressSize32; }
     bool o16() const { return !m_operandSize32; }
-    virtual bool o32() const override { return m_operandSize32; }
+    bool o32() const { return m_operandSize32; }
 
     bool s16() const { return !m_stackSize32; }
     bool s32() const { return m_stackSize32; }
@@ -1304,7 +1304,7 @@ void CPU::writeUnmappedMemory16(DWORD address, WORD value)
 
 #include "debug.h"
 
-bool CPU::evaluate(BYTE conditionCode) const
+ALWAYS_INLINE bool CPU::evaluate(BYTE conditionCode) const
 {
     ASSERT(conditionCode <= 0xF);
 
@@ -1330,3 +1330,37 @@ bool CPU::evaluate(BYTE conditionCode) const
 }
 
 #endif
+
+ALWAYS_INLINE BYTE& Instruction::reg8()
+{
+#ifdef DEBUG_INSTRUCTION
+    ASSERT(m_cpu);
+#endif
+    return *m_cpu->treg8[registerIndex()];
+}
+
+ALWAYS_INLINE WORD& Instruction::reg16()
+{
+#ifdef DEBUG_INSTRUCTION
+    ASSERT(m_cpu);
+    ASSERT(m_cpu->o16());
+#endif
+    return *m_cpu->treg16[registerIndex()];
+}
+
+ALWAYS_INLINE WORD& Instruction::segreg()
+{
+#ifdef DEBUG_INSTRUCTION
+    ASSERT(m_cpu);
+#endif
+    return *m_cpu->m_segmentMap[registerIndex()];
+}
+
+ALWAYS_INLINE DWORD& Instruction::reg32()
+{
+#ifdef DEBUG_INSTRUCTION
+    ASSERT(m_cpu);
+    ASSERT(m_cpu->o32());
+#endif
+    return *m_cpu->treg32[registerIndex()];
+}

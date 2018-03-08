@@ -200,7 +200,7 @@ void CPU::decodeNext()
         dumpTrace();
 #endif
 
-    auto insn = Instruction::fromStream(*this);
+    auto insn = Instruction::fromStream(*this, o32(), a32());
     if (!insn.isValid())
         throw InvalidOpcode();
     else

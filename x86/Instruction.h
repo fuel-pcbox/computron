@@ -38,10 +38,6 @@ typedef void (CPU::*InstructionImpl)(Instruction&);
 
 class InstructionStream {
 public:
-    bool a16() const { return !a32(); }
-    bool o16() const { return !o32(); }
-    virtual bool a32() const = 0;
-    virtual bool o32() const = 0;
     virtual BYTE readInstruction8() = 0;
     virtual WORD readInstruction16() = 0;
     virtual DWORD readInstruction32() = 0;
@@ -50,22 +46,16 @@ public:
 
 class SimpleInstructionStream final : public InstructionStream {
 public:
-    SimpleInstructionStream(const BYTE* data, bool a32, bool o32)
+    SimpleInstructionStream(const BYTE* data)
         : m_data(data)
-        , m_a32(a32)
-        , m_o32(o32)
     { }
 
-    virtual bool a32() const override { return m_a32; }
-    virtual bool o32() const override { return m_o32; }
     virtual BYTE readInstruction8() override { return *(m_data++); }
     virtual WORD readInstruction16() override;
     virtual DWORD readInstruction32() override;
 
 private:
     const BYTE* m_data { nullptr };
-    bool m_a32 { false };
-    bool m_o32 { false };
 };
 
 class MemoryOrRegisterReference {
@@ -134,7 +124,7 @@ private:
 
 class Instruction {
 public:
-    static Instruction fromStream(InstructionStream&);
+    static Instruction fromStream(InstructionStream&, bool o32, bool a32);
     ~Instruction() { }
 
     void execute(CPU&);
@@ -170,7 +160,7 @@ public:
     bool hasRM() const { return m_hasRM; }
     bool hasSubOp() const { return m_hasSubOp; }
 
-    unsigned registerIndex() const;
+    unsigned registerIndex() const { return m_registerIndex; }
     SegmentRegisterIndex segmentRegisterIndex() const { return static_cast<SegmentRegisterIndex>(registerIndex()); }
 
     BYTE cc() const { return m_hasSubOp ? m_subOp & 0xf : m_op & 0xf; }
@@ -178,7 +168,7 @@ public:
     QString toString(DWORD origin, bool x32) const;
 
 private:
-    explicit Instruction(InstructionStream&);
+    Instruction(InstructionStream&, bool o32, bool a32);
 
     const char* reg8Name() const;
     const char* reg16Name() const;

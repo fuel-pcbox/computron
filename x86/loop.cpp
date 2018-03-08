@@ -112,7 +112,7 @@ void CPU::handleRepeatOpcode(Instruction&& insn, bool shouldEqual)
 
     case 0x66: {
         m_operandSize32 = !m_operandSize32;
-        auto newInsn = Instruction::fromStream(*this);
+        auto newInsn = Instruction::fromStream(*this, o32(), a32());
         handleRepeatOpcode(std::move(newInsn), shouldEqual);
         m_operandSize32 = !m_operandSize32;
         return;
@@ -120,7 +120,7 @@ void CPU::handleRepeatOpcode(Instruction&& insn, bool shouldEqual)
 
     case 0x67: {
         m_addressSize32 = !m_addressSize32;
-        auto newInsn = Instruction::fromStream(*this);
+        auto newInsn = Instruction::fromStream(*this, o32(), a32());
         handleRepeatOpcode(std::move(newInsn), shouldEqual);
         m_addressSize32 = !m_addressSize32;
         return;
@@ -155,20 +155,20 @@ void CPU::handleRepeatOpcode(Instruction&& insn, bool shouldEqual)
 
     // Recurse if this opcode was a segment prefix.
     // FIXME: Infinite recursion IS possible here.
-    auto newInsn = Instruction::fromStream(*this);
+    auto newInsn = Instruction::fromStream(*this, o32(), a32());
     handleRepeatOpcode(std::move(newInsn), shouldEqual);
 }
 
 void CPU::_REP(Instruction&)
 {
-    auto newInsn = Instruction::fromStream(*this);
+    auto newInsn = Instruction::fromStream(*this, o32(), a32());
     handleRepeatOpcode(std::move(newInsn), true);
     resetSegmentPrefix();
 }
 
 void CPU::_REPNE(Instruction&)
 {
-    auto newInsn = Instruction::fromStream(*this);
+    auto newInsn = Instruction::fromStream(*this, o32(), a32());
     handleRepeatOpcode(std::move(newInsn), false);
     resetSegmentPrefix();
 }

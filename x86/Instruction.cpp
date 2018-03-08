@@ -807,9 +807,9 @@ void buildOpcodeTablesIfNeeded()
     hasBuiltTables = true;
 }
 
-Instruction Instruction::fromStream(InstructionStream& stream)
+Instruction Instruction::fromStream(InstructionStream& stream, bool o32, bool a32)
 {
-    return Instruction(stream);
+    return Instruction(stream, o32, a32);
 }
 
 unsigned Instruction::length() const
@@ -828,27 +828,26 @@ unsigned Instruction::length() const
     return len;
 }
 
-Instruction::Instruction(InstructionStream& stream)
+Instruction::Instruction(InstructionStream& stream, bool o32, bool a32)
+    : m_a32(a32)
 {
-    m_a32 = stream.a32();
     m_op = stream.readInstruction8();
 
     if (m_op == 0x0F) {
         m_hasSubOp = true;
         m_subOp = stream.readInstruction8();
-        m_descriptor = stream.o32() ? &s_0F_table32[m_subOp] : &s_0F_table16[m_subOp];
+        m_descriptor = o32 ? &s_0F_table32[m_subOp] : &s_0F_table16[m_subOp];
     } else {
-        m_descriptor = stream.o32() ? &s_table32[m_op] : &s_table16[m_op];
+        m_descriptor = o32 ? &s_table32[m_op] : &s_table16[m_op];
     }
 
     m_hasRM = m_descriptor->hasRM;
     if (m_hasRM) {
         // Consume ModR/M (may include SIB and displacement.)
         m_modrm.decode(stream, m_a32);
+        m_registerIndex = (m_modrm.m_rm >> 3) & 7;
     } else {
-        if (m_descriptor->opcodeHasRegisterIndex) {
-            m_registerIndex = m_op & 7;
-        }
+        m_registerIndex = m_op & 7;
     }
 
     bool hasSlash = m_descriptor->format == MultibyteWithSlash;
@@ -881,39 +880,6 @@ Instruction::Instruction(InstructionStream& stream)
         m_imm2 = stream.readBytes(m_imm2Bytes);
     if (m_imm1Bytes)
         m_imm1 = stream.readBytes(m_imm1Bytes);
-}
-
-unsigned Instruction::registerIndex() const
-{
-    if (m_hasRM)
-        return (m_modrm.m_rm >> 3) & 7;
-    return m_registerIndex;
-}
-
-BYTE& Instruction::reg8()
-{
-    ASSERT(m_cpu);
-    return *m_cpu->treg8[registerIndex()];
-}
-
-WORD& Instruction::reg16()
-{
-    ASSERT(m_cpu);
-    ASSERT(m_cpu->o16());
-    return *m_cpu->treg16[registerIndex()];
-}
-
-WORD& Instruction::segreg()
-{
-    ASSERT(m_cpu);
-    return *m_cpu->m_segmentMap[registerIndex()];
-}
-
-DWORD& Instruction::reg32()
-{
-    ASSERT(m_cpu);
-    ASSERT(m_cpu->o32());
-    return *m_cpu->treg32[registerIndex()];
 }
 
 void Instruction::execute(CPU& cpu)
