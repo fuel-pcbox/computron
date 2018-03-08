@@ -30,6 +30,7 @@
 #include "types.h"
 #include "OwnPtr.h"
 #include "Common.h"
+#include <QHash>
 
 class IODevice;
 class BusMouse;
@@ -47,6 +48,11 @@ class VGAMemory;
 class VomCtl;
 class Worker;
 class MachineWidget;
+
+class IODevicePass {
+    friend IODevice;
+    IODevicePass() { }
+};
 
 class Machine : public QObject
 {
@@ -79,6 +85,12 @@ public:
     void resetAllIODevices();
     void notifyScreen();
 
+    IODevice* inputDeviceForPort(WORD port);
+    IODevice* outputDeviceForPort(WORD port);
+
+    void registerInputDevice(IODevicePass, WORD port, IODevice&);
+    void registerOutputDevice(IODevicePass, WORD port, IODevice&);
+
 public slots:
     void start();
     void stop();
@@ -95,6 +107,9 @@ private:
     void applySettings();
 
     Worker& worker() { return *m_worker; }
+
+    IODevice* inputDeviceForPortSlowCase(WORD port);
+    IODevice* outputDeviceForPortSlowCase(WORD port);
 
     QString m_name;
     OwnPtr<Settings> m_settings;
@@ -118,4 +133,24 @@ private:
     OwnPtr<VomCtl> m_vomCtl;
 
     MachineWidget* m_widget { nullptr };
+
+    IODevice* m_fastInputDevices[1024];
+    IODevice* m_fastOutputDevices[1024];
+
+    QHash<WORD, IODevice*> m_allInputDevices;
+    QHash<WORD, IODevice*> m_allOutputDevices;
 };
+
+inline IODevice* Machine::inputDeviceForPort(WORD port)
+{
+    if (port < 1024)
+        return m_fastInputDevices[port];
+    return inputDeviceForPortSlowCase(port);
+}
+
+inline IODevice* Machine::outputDeviceForPort(WORD port)
+{
+    if (port < 1024)
+        return m_fastOutputDevices[port];
+    return outputDeviceForPortSlowCase(port);
+}

@@ -65,6 +65,9 @@ Machine::Machine(const QString& name, OwnPtr<Settings>&& settings, QObject* pare
     , m_settings(std::move(settings))
     , m_cpu(make<CPU>(*this))
 {
+    memset(m_fastInputDevices, 0, sizeof(m_fastInputDevices));
+    memset(m_fastOutputDevices, 0, sizeof(m_fastOutputDevices));
+
     applySettings();
 
     cpu().setBaseMemorySize(640 * 1024);
@@ -244,4 +247,28 @@ void Machine::resetAllIODevices()
     forEachIODevice([] (IODevice& device) {
         device.reset();
     });
+}
+
+IODevice* Machine::inputDeviceForPortSlowCase(WORD port)
+{
+    return m_allInputDevices.value(port, nullptr);
+}
+
+IODevice* Machine::outputDeviceForPortSlowCase(WORD port)
+{
+    return m_allOutputDevices.value(port, nullptr);
+}
+
+void Machine::registerInputDevice(IODevicePass, WORD port, IODevice& device)
+{
+    if (port < 1024)
+        m_fastInputDevices[port] = &device;
+    m_allInputDevices.insert(port, &device);
+}
+
+void Machine::registerOutputDevice(IODevicePass, WORD port, IODevice& device)
+{
+    if (port < 1024)
+        m_fastOutputDevices[port] = &device;
+    m_allOutputDevices.insert(port, &device);
 }

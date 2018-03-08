@@ -27,6 +27,7 @@
 #include "CPU.h"
 #include "debug.h"
 #include "iodevice.h"
+#include "machine.h"
 
 void CPU::_OUT_imm8_AL(Instruction& insn)
 {
@@ -184,8 +185,8 @@ void CPU::out(WORD port, BYTE value)
     }
 #endif
 
-    if (IODevice::writeDevices().contains(port)) {
-        IODevice::writeDevices()[port]->out8(port, value);
+    if (auto* device = machine().outputDeviceForPort(port)) {
+        device->out8(port, value);
         return;
     }
 
@@ -196,8 +197,8 @@ void CPU::out(WORD port, BYTE value)
 BYTE CPU::in(WORD port)
 {
     BYTE value;
-    if (IODevice::readDevices().contains(port)) {
-        value = IODevice::readDevices()[port]->in8(port);
+    if (auto* device = machine().inputDeviceForPort(port)) {
+        value = device->in8(port);
     } else {
         if (!IODevice::shouldIgnorePort(port))
             vlog(LogAlert, "Unhandled I/O read from port %04X", port);

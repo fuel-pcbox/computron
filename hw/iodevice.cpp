@@ -26,6 +26,7 @@
 #include "iodevice.h"
 #include "debug.h"
 #include "pic.h"
+#include "machine.h"
 #include <QList>
 
 QSet<WORD> IODevice::s_ignorePorts;
@@ -34,18 +35,6 @@ QList<IODevice*>& IODevice::devices()
 {
     static QList<IODevice*> s_devices;
     return s_devices;
-}
-
-QHash<WORD, IODevice*>& IODevice::readDevices()
-{
-    static QHash<WORD, IODevice*> s_readDevices;
-    return s_readDevices;
-}
-
-QHash<WORD, IODevice*>& IODevice::writeDevices()
-{
-    static QHash<WORD, IODevice*> s_writeDevices;
-    return s_writeDevices;
 }
 
 IODevice::IODevice(const char* name, Machine& machine, int irq)
@@ -64,10 +53,10 @@ IODevice::~IODevice()
 void IODevice::listen(WORD port, ListenMask mask)
 {
     if (mask & ReadOnly)
-        readDevices()[port] = this;
+        machine().registerInputDevice(IODevicePass(), port, *this);
 
     if (mask & WriteOnly)
-        writeDevices()[port] = this;
+        machine().registerOutputDevice(IODevicePass(), port, *this);
 
     m_ports.append(port);
 }

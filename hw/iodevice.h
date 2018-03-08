@@ -48,8 +48,6 @@ public:
     virtual void out8(WORD port, BYTE data);
 
     static QList<IODevice*>& devices();
-    static QHash<WORD, IODevice*>& readDevices();
-    static QHash<WORD, IODevice*>& writeDevices();
 
     static bool shouldIgnorePort(WORD port);
     static void ignorePort(WORD port);
