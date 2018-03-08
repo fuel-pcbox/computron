@@ -50,7 +50,7 @@ struct CounterInfo {
     QElapsedTimer qtimer;
 
     void check(PIT&);
-    void rollOver(PIT&);
+    bool rolledOver { false };
 };
 
 struct PIT::Private
@@ -98,11 +98,13 @@ WORD CounterInfo::value()
             currentValue = 0;
         else
             currentValue %= reload;
+        rolledOver = true;
     } else if (currentValue < 0) {
         if (reload == 0)
             currentValue = 0;
         else
             currentValue = currentValue % reload + reload;
+        rolledOver = true;
     }
 
 #ifdef PIT_DEBUG
@@ -113,13 +115,11 @@ WORD CounterInfo::value()
 
 void CounterInfo::check(PIT& pit)
 {
-    double nsec = qtimer.nsecsElapsed() / 1000;
-    int ticks = floor(nsec * baseFrequency);
-    int currentValue = startValue - ticks;
-    if (currentValue < 0) {
-        startValue = reload;
+    value();
+    if (rolledOver) {
         if (mode == 0)
             pit.raiseIRQ();
+        rolledOver = false;
     }
 }
 
