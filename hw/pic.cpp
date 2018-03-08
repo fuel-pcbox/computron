@@ -78,6 +78,17 @@ void PIC::reset()
     m_readISR = false;
 }
 
+void PIC::dumpMask()
+{
+    for (int i = 0; i < 8; ++i)
+        vlog(LogPIC, " - IRQ %u: %s", m_irqBase + i, (m_imr & (1 << i)) ? "masked" : "service");
+}
+
+void PIC::unmaskAll()
+{
+    m_imr = 0;
+}
+
 void PIC::out8(WORD port, BYTE data)
 {
     if ((port & 0x01) == 0x00) {

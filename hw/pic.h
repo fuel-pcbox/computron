@@ -46,6 +46,9 @@ public:
     BYTE getIRR() const { return m_irr; }
     BYTE getISR() const { return m_isr; }
 
+    void dumpMask();
+    void unmaskAll();
+
     static bool hasPendingIRQ();
     static void serviceIRQ(CPU&);
     static void raiseIRQ(Machine&, BYTE num);

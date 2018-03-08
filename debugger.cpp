@@ -28,6 +28,8 @@
 #include "debug.h"
 #include "CPU.h"
 #include "pic.h"
+#include "machine.h"
+#include "pic.h"
 #include <QDebug>
 #include <QStringBuilder>
 #include <QStringList>
@@ -142,6 +144,18 @@ void Debugger::handleCommand(const QString& rawCommand)
 
     if (lowerCommand == "irq")
         return handleIRQ(arguments);
+
+    if (lowerCommand == "picmasks") {
+        cpu().machine().masterPIC().dumpMask();
+        cpu().machine().slavePIC().dumpMask();
+        return;
+    }
+
+    if (lowerCommand == "unmask") {
+        cpu().machine().masterPIC().unmaskAll();
+        cpu().machine().slavePIC().unmaskAll();
+        return;
+    }
 
     printf("Unknown command: %s\n", command.toUtf8().constData());
 }
