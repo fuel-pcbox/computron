@@ -437,16 +437,8 @@ void CPU::queueCommand(Command command)
     m_hasCommands = true;
 }
 
-void CPU::flushCommandQueue()
+ALWAYS_INLINE void CPU::flushCommandQueue()
 {
-#if 0
-    static int xxx = 0;
-    if (++xxx >= 100) {
-        usleep(1);
-        xxx = 0;
-    }
-#endif
-
     if (!m_hasCommands)
         return;
 
