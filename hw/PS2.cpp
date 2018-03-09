@@ -27,6 +27,8 @@
 #include "Common.h"
 #include "CPU.h"
 
+//#define PS2_DEBUG
+
 static const WORD SystemControlPortA = 0x92;
 
 PS2::PS2(Machine& machine)
@@ -47,7 +49,9 @@ BYTE PS2::in8(WORD port)
 {
     if (port == SystemControlPortA) {
         BYTE data = g_cpu->isA20Enabled() << 1;
+#ifdef PS2_DEBUG
         vlog(LogIO, "System Control Port A read, returning %02X", data);
+#endif
         return data;
     }
     return IODevice::in8(port);
@@ -56,7 +60,9 @@ BYTE PS2::in8(WORD port)
 void PS2::out8(WORD port, BYTE data)
 {
     if (port == SystemControlPortA) {
+#ifdef PS2_DEBUG
         vlog(LogIO, "A20=%u->%u (System Control Port A)", g_cpu->isA20Enabled(), !!(data & 0x2));
+#endif
         g_cpu->setA20Enabled(data & 0x2);
         return;
     }
