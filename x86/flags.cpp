@@ -29,9 +29,18 @@ bool CPU::getPF() const
 {
     if (m_dirtyFlags & Flag::PF) {
         PF = 0x9669 << 2 >> ((m_lastResult ^ m_lastResult >> 4) & 0xf) & Flag::PF;
-        m_dirtyFlags &= Flag::PF;
+        m_dirtyFlags &= ~Flag::PF;
     }
     return PF;
+}
+
+bool CPU::getZF() const
+{
+    if (m_dirtyFlags & Flag::ZF) {
+        ZF = (~m_lastResult & (m_lastResult - 1)) >> (m_lastOpSize - 1) & 1;
+        m_dirtyFlags &= ~Flag::ZF;
+    }
+    return ZF;
 }
 
 void CPU::adjustFlag32(QWORD result, DWORD src, DWORD dest)
@@ -41,44 +50,41 @@ void CPU::adjustFlag32(QWORD result, DWORD src, DWORD dest)
 
 void CPU::updateFlags32(DWORD data)
 {
-    m_dirtyFlags |= Flag::PF;
+    m_dirtyFlags |= Flag::PF | Flag::ZF;
     m_lastResult = data;
+    m_lastOpSize = DWordSize;
     setSF((data & 0x80000000) != 0);
-    setZF(data == 0);
 }
 
 void CPU::updateFlags16(WORD data)
 {
-    m_dirtyFlags |= Flag::PF;
+    m_dirtyFlags |= Flag::PF | Flag::ZF;
     m_lastResult = data;
+    m_lastOpSize = WordSize;
     setSF(data & 0x8000);
-    setZF(data == 0);
 }
 
 void CPU::updateFlags8(BYTE data)
 {
-    m_dirtyFlags |= Flag::PF;
+    m_dirtyFlags |= Flag::PF | Flag::ZF;
     m_lastResult = data;
+    m_lastOpSize = ByteSize;
     setSF(data & 0x80);
-    setZF(data == 0);
 }
 
 void CPU::updateFlags(DWORD data, BYTE bits)
 {
-    m_dirtyFlags |= Flag::PF;
+    m_dirtyFlags |= Flag::PF | Flag::ZF;
     m_lastResult = data;
+    m_lastOpSize = bits;
 
     if (bits == 8) {
-        data &= 0xFF;
         setSF(data & 0x80);
     } else if (bits == 16) {
-        data &= 0xFFFF;
         setSF(data & 0x8000);
     } else {
         setSF(data & 0x80000000);
     }
-
-    setZF(data == 0);
 }
 
 void CPU::_STC(Instruction&)
@@ -180,37 +186,34 @@ void CPU::_SAHF(Instruction&)
 
 void CPU::mathFlags8(WORD result, BYTE dest, BYTE src)
 {
-    m_dirtyFlags |= Flag::PF;
+    m_dirtyFlags |= Flag::PF | Flag::ZF;
     m_lastResult = result;
     m_lastOpSize = ByteSize;
 
     setCF(result & 0xFF00);
     setSF(result & 0x0080);
-    setZF((result & 0x00FF) == 0);
     adjustFlag32(result, dest, src);
 }
 
 void CPU::mathFlags16(DWORD result, WORD dest, WORD src)
 {
-    m_dirtyFlags |= Flag::PF;
+    m_dirtyFlags |= Flag::PF | Flag::ZF;
     m_lastResult = result;
     m_lastOpSize = WordSize;
 
     setCF(result & 0xFFFF0000);
     setSF(result & 0x8000);
-    setZF((result & 0xFFFF) == 0);
     adjustFlag32(result, dest, src);
 }
 
 void CPU::mathFlags32(QWORD result, DWORD dest, DWORD src)
 {
-    m_dirtyFlags |= Flag::PF;
+    m_dirtyFlags |= Flag::PF | Flag::ZF;
     m_lastResult = result;
     m_lastOpSize = DWordSize;
 
     setCF(result & 0xFFFFFFFF00000000ULL);
     setSF(result & 0x80000000ULL);
-    setZF((result & 0xFFFFFFFFULL) == 0);
     adjustFlag32(result, dest, src);
 }
 

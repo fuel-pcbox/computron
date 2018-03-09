@@ -233,7 +233,7 @@ public:
     void setTF(bool value) { this->TF = value; }
     void setOF(bool value) { this->OF = value; }
     void setPF(bool value) { m_dirtyFlags &= ~Flag::PF; this->PF = value; }
-    void setZF(bool value) { this->ZF = value; }
+    void setZF(bool value) { m_dirtyFlags &= ~Flag::ZF; this->ZF = value; }
     void setVIF(bool value) { this->VIF = value; }
     void setNT(bool value) { this->NT = value; }
     void setRF(bool value) { this->RF = value; }
@@ -247,7 +247,7 @@ public:
     bool getTF() const { return this->TF; }
     bool getOF() const { return this->OF; }
     bool getPF() const;
-    bool getZF() const { return this->ZF; }
+    bool getZF() const;
 
     unsigned int getIOPL() const { return this->IOPL; }
 
@@ -1292,7 +1292,7 @@ private:
     QWORD m_cycle { 0 };
 
     mutable DWORD m_dirtyFlags { 0 };
-    DWORD m_lastResult { 0 };
+    QWORD m_lastResult { 0 };
     unsigned m_lastOpSize { ByteSize };
 };
 
@@ -1340,18 +1340,18 @@ ALWAYS_INLINE bool CPU::evaluate(BYTE conditionCode) const
     case  1: return !this->OF;                           // NO
     case  2: return this->CF;                            // B, C, NAE
     case  3: return !this->CF;                           // NB, NC, AE
-    case  4: return this->ZF;                            // E, Z
-    case  5: return !this->ZF;                           // NE, NZ
-    case  6: return (this->CF | this->ZF);               // BE, NA
-    case  7: return !(this->CF | this->ZF);              // NBE, A
+    case  4: return getZF();                             // E, Z
+    case  5: return !getZF();                            // NE, NZ
+    case  6: return (this->CF | getZF());                // BE, NA
+    case  7: return !(this->CF | getZF());               // NBE, A
     case  8: return this->SF;                            // S
     case  9: return !this->SF;                           // NS
     case 10: return getPF();                             // P, PE
     case 11: return !getPF();                            // NP, PO
     case 12: return this->SF ^ this->OF;                 // L, NGE
     case 13: return !(this->SF ^ this->OF);              // NL, GE
-    case 14: return (this->SF ^ this->OF) | this->ZF;    // LE, NG
-    case 15: return !((this->SF ^ this->OF) | this->ZF); // NLE, G
+    case 14: return (this->SF ^ this->OF) | getZF();     // LE, NG
+    case 15: return !((this->SF ^ this->OF) | getZF());  // NLE, G
     }
     return 0;
 }
