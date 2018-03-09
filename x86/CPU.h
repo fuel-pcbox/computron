@@ -228,7 +228,7 @@ public:
     void setIF(bool value) { this->IF = value; }
     void setCF(bool value) { this->CF = value; }
     void setDF(bool value) { this->DF = value; }
-    void setSF(bool value) { this->SF = value; }
+    void setSF(bool value) { m_dirtyFlags &= ~Flag::SF; this->SF = value; }
     void setAF(bool value) { this->AF = value; }
     void setTF(bool value) { this->TF = value; }
     void setOF(bool value) { this->OF = value; }
@@ -242,7 +242,7 @@ public:
     bool getIF() const { return this->IF; }
     bool getCF() const { return this->CF; }
     bool getDF() const { return this->DF; }
-    bool getSF() const { return this->SF; }
+    bool getSF() const;
     bool getAF() const { return this->AF; }
     bool getTF() const { return this->TF; }
     bool getOF() const { return this->OF; }
@@ -1344,14 +1344,14 @@ ALWAYS_INLINE bool CPU::evaluate(BYTE conditionCode) const
     case  5: return !getZF();                            // NE, NZ
     case  6: return (this->CF | getZF());                // BE, NA
     case  7: return !(this->CF | getZF());               // NBE, A
-    case  8: return this->SF;                            // S
-    case  9: return !this->SF;                           // NS
+    case  8: return getSF();                             // S
+    case  9: return !getSF();                            // NS
     case 10: return getPF();                             // P, PE
     case 11: return !getPF();                            // NP, PO
-    case 12: return this->SF ^ this->OF;                 // L, NGE
-    case 13: return !(this->SF ^ this->OF);              // NL, GE
-    case 14: return (this->SF ^ this->OF) | getZF();     // LE, NG
-    case 15: return !((this->SF ^ this->OF) | getZF());  // NLE, G
+    case 12: return getSF() ^ this->OF;                  // L, NGE
+    case 13: return !(getSF() ^ this->OF);               // NL, GE
+    case 14: return (getSF() ^ this->OF) | getZF();      // LE, NG
+    case 15: return !((getSF() ^ this->OF) | getZF());   // NLE, G
     }
     return 0;
 }
