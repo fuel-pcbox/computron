@@ -1168,8 +1168,6 @@ static const char* toString(CPU::MemoryAccessType type)
 template<typename T>
 void CPU::validateAddress(const SegmentDescriptor& descriptor, DWORD offset, MemoryAccessType accessType)
 {
-    ASSERT(getPE());
-
     if (descriptor.isNull()) {
         vlog(LogAlert, "NULL! %s offset %08X into null selector (selector index: %04X)",
              toString(accessType),
@@ -1195,11 +1193,6 @@ void CPU::validateAddress(const SegmentDescriptor& descriptor, DWORD offset, Mem
         //debugger().enter();
         throw GeneralProtectionFault(descriptor.index(), "Access outside segment limit");
     }
-    ASSERT(offset <= descriptor.effectiveLimit());
-
-    DWORD linearAddress = descriptor.base() + offset;
-    DWORD physicalAddress;
-    translateAddress(linearAddress, physicalAddress, accessType);
 }
 
 template<typename T>
