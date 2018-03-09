@@ -30,7 +30,7 @@
 #include "machine.h"
 
 // FIXME: These should not be globals.
-std::atomic<bool> PIC::s_haveRequests = false;
+std::atomic<bool> PIC::s_haveRequests;
 WORD PIC::s_pendingRequests = 0x0000;
 QMutex PIC::s_mutex;
 static bool s_ignoringIRQs = false;
