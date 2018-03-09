@@ -554,7 +554,7 @@ public:
     void nextESI(int size) { this->regs.D.ESI += (getDF() ? -size : size); }
     void nextEDI(int size) { this->regs.D.EDI += (getDF() ? -size : size); }
 
-    enum Command { EnterMainLoop, ExitMainLoop, SoftReboot, HardReboot };
+    enum Command { EnterMainLoop, ExitMainLoop, HardReboot };
     void queueCommand(Command);
 
     static const char* registerName(CPU::RegisterIndex8) PURE;
@@ -1276,7 +1276,6 @@ private:
     bool m_stackSize32 { false };
 
     bool m_shouldBreakOutOfMainLoop { false };
-    bool m_shouldSoftReboot { false };
     bool m_shouldHardReboot { false };
 
     QVector<WatchedAddress> m_watches;

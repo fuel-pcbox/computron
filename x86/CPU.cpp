@@ -458,9 +458,6 @@ ALWAYS_INLINE void CPU::flushCommandQueue()
         case HardReboot:
             m_shouldHardReboot = true;
             break;
-        case SoftReboot:
-            m_shouldSoftReboot = true;
-            break;
         }
     }
 
@@ -483,21 +480,12 @@ void CPU::mainLoop()
         if (m_shouldBreakOutOfMainLoop)
             return;
 
-        if (m_shouldSoftReboot) {
-            setA20Enabled(false);
-            setControlRegister(0, 0);
-            jump32(0xF000, 0x0, JumpType::Internal);
-            m_shouldSoftReboot = false;
-            continue;
-        }
-
         if (m_shouldHardReboot) {
             hardReboot();
             continue;
         }
 
 #ifdef CT_DEBUG
-
         if (!m_breakpoints.empty()) {
             DWORD flatPC = realModeAddressToPhysicalAddress(getCS(), getEIP());
             for (auto& breakpoint : m_breakpoints) {
