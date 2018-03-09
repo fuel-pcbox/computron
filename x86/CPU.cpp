@@ -38,15 +38,11 @@
 
 #define CRASH_ON_OPCODE_00_00
 #define CRASH_ON_VM
+#define A20_ENABLED
 //#define LOG_FAR_JUMPS
 //#define DISASSEMBLE_EVERYTHING
 //#define DEBUG_I386NF
 //#define MEMORY_DEBUGGING
-
-inline bool hasA20Bit(DWORD address)
-{
-    return address & 0x100000;
-}
 
 #ifdef MEMORY_DEBUGGING
 static bool shouldLogAllMemoryAccesses(DWORD address)
@@ -1232,7 +1228,9 @@ T CPU::readMemory(DWORD linearAddress)
 {
     DWORD physicalAddress;
     translateAddress(linearAddress, physicalAddress, MemoryAccessType::Read);
+#ifdef A20_ENABLED
     physicalAddress &= a20Mask();
+#endif
     if (!validatePhysicalAddress<T>(physicalAddress, MemoryAccessType::Read))
         return 0;
     T value;
@@ -1261,6 +1259,10 @@ T CPU::readMemory(const SegmentDescriptor& descriptor, DWORD offset)
         DWORD physicalAddress;
 
         translateAddress(linearAddress, physicalAddress, MemoryAccessType::Read);
+
+#ifdef A20_ENABLED
+        physicalAddress &= a20Mask();
+#endif
 
         if (!validatePhysicalAddress<T>(physicalAddress, MemoryAccessType::Read))
             return 0;
@@ -1321,7 +1323,9 @@ void CPU::writeMemory(DWORD linearAddress, T value)
 {
     DWORD physicalAddress;
     translateAddress(linearAddress, physicalAddress, MemoryAccessType::Write);
+#ifdef A20_ENABLED
     physicalAddress &= a20Mask();
+#endif
 #ifdef MEMORY_DEBUGGING
     if (options.memdebug || shouldLogMemoryWrite(physicalAddress)) {
         if (options.novlog)
@@ -1503,7 +1507,9 @@ BYTE* CPU::memoryPointer(DWORD linearAddress)
 {
     DWORD physicalAddress;
     translateAddress(linearAddress, physicalAddress, MemoryAccessType::InternalPointer);
+#ifdef A20_ENABLED
     physicalAddress &= a20Mask();
+#endif
     didTouchMemory(physicalAddress);
 #ifdef MEMORY_DEBUGGING
     if (options.memdebug || shouldLogMemoryPointer(physicalAddress)) {
