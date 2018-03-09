@@ -393,6 +393,10 @@ void CPU::reset()
     m_addressSize32 = false;
     m_operandSize32 = false;
 
+    m_dirtyFlags = 0;
+    m_lastResult = 0;
+    m_lastOpSize = ByteSize;
+
     initWatches();
 }
 

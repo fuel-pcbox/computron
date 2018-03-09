@@ -47,9 +47,9 @@ enum class SegmentRegisterIndex {
 };
 
 enum ValueSize {
-    ByteSize,
-    WordSize,
-    DWordSize
+    ByteSize = 8,
+    WordSize = 16,
+    DWordSize = 32,
 };
 
 template<typename T> struct BitSizeOfType { static const int bits = sizeof(T) * 8; };

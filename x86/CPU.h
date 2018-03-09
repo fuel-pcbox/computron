@@ -113,6 +113,28 @@ public:
     explicit CPU(Machine&);
     ~CPU();
 
+    struct Flag {
+    enum Flags {
+        CF = 0x0001,
+        PF = 0x0004,
+        AF = 0x0010,
+        ZF = 0x0040,
+        SF = 0x0080,
+        TF = 0x0100,
+        IF = 0x0200,
+        DF = 0x0400,
+        OF = 0x0800,
+        IOPL = 0x3000, // Note: this is a 2-bit field
+        NT = 0x4000,
+        RF = 0x10000,
+        VM = 0x20000,
+        AC = 0x40000,
+        VIF = 0x80000,
+        VIP = 0x100000,
+        ID = 0x200000,
+    };
+    };
+
     QWORD cycle() const { return m_cycle; }
 
     void reset();
@@ -210,7 +232,7 @@ public:
     void setAF(bool value) { this->AF = value; }
     void setTF(bool value) { this->TF = value; }
     void setOF(bool value) { this->OF = value; }
-    void setPF(bool value) { this->PF = value; }
+    void setPF(bool value) { m_dirtyFlags &= ~Flag::PF; this->PF = value; }
     void setZF(bool value) { this->ZF = value; }
     void setVIF(bool value) { this->VIF = value; }
     void setNT(bool value) { this->NT = value; }
@@ -224,7 +246,7 @@ public:
     bool getAF() const { return this->AF; }
     bool getTF() const { return this->TF; }
     bool getOF() const { return this->OF; }
-    bool getPF() const { return this->PF; }
+    bool getPF() const;
     bool getZF() const { return this->ZF; }
 
     unsigned int getIOPL() const { return this->IOPL; }
@@ -1168,7 +1190,8 @@ private:
     } regs;
 
     WORD CS, DS, ES, SS, FS, GS;
-    bool CF, DF, TF, PF, AF, ZF, SF, IF, OF;
+    mutable bool CF, PF, AF, ZF, SF, OF;
+    bool DF, IF, TF;
 
     unsigned int IOPL;
     bool NT;
@@ -1267,6 +1290,10 @@ private:
     bool m_isForAutotest { false };
 
     QWORD m_cycle { 0 };
+
+    mutable DWORD m_dirtyFlags { 0 };
+    DWORD m_lastResult { 0 };
+    unsigned m_lastOpSize { ByteSize };
 };
 
 extern CPU* g_cpu;
@@ -1319,8 +1346,8 @@ ALWAYS_INLINE bool CPU::evaluate(BYTE conditionCode) const
     case  7: return !(this->CF | this->ZF);              // NBE, A
     case  8: return this->SF;                            // S
     case  9: return !this->SF;                           // NS
-    case 10: return this->PF;                            // P, PE
-    case 11: return !this->PF;                           // NP, PO
+    case 10: return getPF();                             // P, PE
+    case 11: return !getPF();                            // NP, PO
     case 12: return this->SF ^ this->OF;                 // L, NGE
     case 13: return !(this->SF ^ this->OF);              // NL, GE
     case 14: return (this->SF ^ this->OF) | this->ZF;    // LE, NG

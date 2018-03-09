@@ -25,24 +25,14 @@
 
 #include "CPU.h"
 
-static const BYTE parity_table[0x100] = {
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1
-};
+bool CPU::getPF() const
+{
+    if (m_dirtyFlags & Flag::PF) {
+        PF = 0x9669 << 2 >> ((m_lastResult ^ m_lastResult >> 4) & 0xf) & Flag::PF;
+        m_dirtyFlags &= Flag::PF;
+    }
+    return PF;
+}
 
 void CPU::adjustFlag32(QWORD result, DWORD src, DWORD dest)
 {
@@ -51,27 +41,33 @@ void CPU::adjustFlag32(QWORD result, DWORD src, DWORD dest)
 
 void CPU::updateFlags32(DWORD data)
 {
-    setPF(parity_table[data & 0xFF]);
+    m_dirtyFlags |= Flag::PF;
+    m_lastResult = data;
     setSF((data & 0x80000000) != 0);
     setZF(data == 0);
 }
 
 void CPU::updateFlags16(WORD data)
 {
-    setPF(parity_table[data & 0xFF]);
+    m_dirtyFlags |= Flag::PF;
+    m_lastResult = data;
     setSF(data & 0x8000);
     setZF(data == 0);
 }
 
 void CPU::updateFlags8(BYTE data)
 {
-    setPF(parity_table[data]);
+    m_dirtyFlags |= Flag::PF;
+    m_lastResult = data;
     setSF(data & 0x80);
     setZF(data == 0);
 }
 
 void CPU::updateFlags(DWORD data, BYTE bits)
 {
+    m_dirtyFlags |= Flag::PF;
+    m_lastResult = data;
+
     if (bits == 8) {
         data &= 0xFF;
         setSF(data & 0x80);
@@ -82,7 +78,6 @@ void CPU::updateFlags(DWORD data, BYTE bits)
         setSF(data & 0x80000000);
     }
 
-    setPF(parity_table[data & 0xFF]);
     setZF(data == 0);
 }
 
@@ -185,28 +180,37 @@ void CPU::_SAHF(Instruction&)
 
 void CPU::mathFlags8(WORD result, BYTE dest, BYTE src)
 {
+    m_dirtyFlags |= Flag::PF;
+    m_lastResult = result;
+    m_lastOpSize = ByteSize;
+
     setCF(result & 0xFF00);
     setSF(result & 0x0080);
     setZF((result & 0x00FF) == 0);
-    setPF(parity_table[result & 0xFF]);
     adjustFlag32(result, dest, src);
 }
 
 void CPU::mathFlags16(DWORD result, WORD dest, WORD src)
 {
+    m_dirtyFlags |= Flag::PF;
+    m_lastResult = result;
+    m_lastOpSize = WordSize;
+
     setCF(result & 0xFFFF0000);
     setSF(result & 0x8000);
     setZF((result & 0xFFFF) == 0);
-    setPF(parity_table[result & 0xFF]);
     adjustFlag32(result, dest, src);
 }
 
 void CPU::mathFlags32(QWORD result, DWORD dest, DWORD src)
 {
+    m_dirtyFlags |= Flag::PF;
+    m_lastResult = result;
+    m_lastOpSize = DWordSize;
+
     setCF(result & 0xFFFFFFFF00000000ULL);
     setSF(result & 0x80000000ULL);
     setZF((result & 0xFFFFFFFFULL) == 0);
-    setPF(parity_table[result & 0xFF]);
     adjustFlag32(result, dest, src);
 }
 
