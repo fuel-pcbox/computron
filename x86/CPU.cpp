@@ -398,6 +398,8 @@ void CPU::reset()
     m_lastOpSize = ByteSize;
 
     initWatches();
+
+    recomputeMainLoopNeedsSlowStuff();
 }
 
 CPU::~CPU()
@@ -424,44 +426,29 @@ void CPU::haltedLoop()
 #ifdef HAVE_USLEEP
         usleep(100);
 #endif
-        flushCommandQueue();
         if (m_shouldHardReboot) {
             hardReboot();
             return;
         }
-        if (getIF() && PIC::hasPendingIRQ())
+        if (PIC::hasPendingIRQ() && getIF())
             PIC::serviceIRQ(*this);
     }
 }
 
 void CPU::queueCommand(Command command)
 {
-    QMutexLocker locker(&m_commandMutex);
-    m_commandQueue.enqueue(command);
-    m_hasCommands = true;
-}
-
-ALWAYS_INLINE void CPU::flushCommandQueue()
-{
-    if (!m_hasCommands)
-        return;
-
-    QMutexLocker locker(&m_commandMutex);
-    while (!m_commandQueue.isEmpty()) {
-        switch (m_commandQueue.dequeue()) {
-        case ExitMainLoop:
-            m_shouldBreakOutOfMainLoop = true;
-            break;
-        case EnterMainLoop:
-            m_shouldBreakOutOfMainLoop = false;
-            break;
-        case HardReboot:
-            m_shouldHardReboot = true;
-            break;
-        }
+    switch (command) {
+    case ExitMainLoop:
+        m_shouldBreakOutOfMainLoop = true;
+        break;
+    case EnterMainLoop:
+        m_shouldBreakOutOfMainLoop = false;
+        break;
+    case HardReboot:
+        m_shouldHardReboot = true;
+        break;
     }
-
-    m_hasCommands = false;
+    recomputeMainLoopNeedsSlowStuff();
 }
 
 void CPU::hardReboot()
@@ -471,44 +458,56 @@ void CPU::hardReboot()
     m_shouldHardReboot = false;
 }
 
+void CPU::recomputeMainLoopNeedsSlowStuff()
+{
+    m_mainLoopNeedsSlowStuff = m_shouldBreakOutOfMainLoop ||
+                               m_shouldHardReboot ||
+                               options.trace ||
+                               !m_breakpoints.empty() ||
+                               debugger().isActive() ||
+                               !m_watches.isEmpty();
+}
+
+bool CPU::mainLoopSlowStuff()
+{
+    if (m_shouldBreakOutOfMainLoop)
+        return false;
+
+    if (m_shouldHardReboot) {
+        hardReboot();
+        return true;
+    }
+
+    if (!m_breakpoints.empty()) {
+        DWORD flatPC = realModeAddressToPhysicalAddress(getCS(), getEIP());
+        for (auto& breakpoint : m_breakpoints) {
+            if (flatPC == breakpoint) {
+                debugger().enter();
+                break;
+            }
+        }
+    }
+
+    if (debugger().isActive()) {
+        saveBaseAddress();
+        debugger().doConsole();
+    }
+
+    if (options.trace)
+        dumpTrace();
+
+    if (!m_watches.isEmpty())
+        dumpWatches();
+
+    return true;
+}
+
 void CPU::mainLoop()
 {
     forever {
-
-        // FIXME: Throttle this so we don't spend the majority of CPU time in locking/unlocking this mutex.
-        flushCommandQueue();
-        if (m_shouldBreakOutOfMainLoop)
-            return;
-
-        if (m_shouldHardReboot) {
-            hardReboot();
-            continue;
+        if (m_mainLoopNeedsSlowStuff) {
+            mainLoopSlowStuff();
         }
-
-#ifdef CT_DEBUG
-        if (!m_breakpoints.empty()) {
-            DWORD flatPC = realModeAddressToPhysicalAddress(getCS(), getEIP());
-            for (auto& breakpoint : m_breakpoints) {
-                if (flatPC == breakpoint) {
-                    debugger().enter();
-                    break;
-                }
-            }
-        }
-
-        if (debugger().isActive()) {
-            saveBaseAddress();
-            debugger().doConsole();
-        }
-#endif
-
-#ifdef CT_TRACE
-        if (options.trace)
-            dumpTrace();
-#endif
-
-        if (!m_watches.isEmpty())
-            dumpWatches();
 
         executeOneInstruction();
 
@@ -523,7 +522,7 @@ void CPU::mainLoop()
             // NOTE: jumpToInterruptHandler() just set IF=0.
         }
 
-        if (getIF() && PIC::hasPendingIRQ())
+        if (PIC::hasPendingIRQ() && getIF())
             PIC::serviceIRQ(*this);
 
 #ifdef CT_DETERMINISTIC

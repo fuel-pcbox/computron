@@ -23,13 +23,10 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef VCPU_H
-#define VCPU_H
+#pragma once
 
 #include "Common.h"
 #include "debug.h"
-#include <QtCore/QMutex>
-#include <QtCore/QQueue>
 #include <QtCore/QVector>
 #include <set>
 #include "OwnPtr.h"
@@ -134,6 +131,8 @@ public:
         ID = 0x200000,
     };
     };
+
+    void recomputeMainLoopNeedsSlowStuff();
 
     QWORD cycle() const { return m_cycle; }
 
@@ -395,6 +394,7 @@ public:
 
     // CPU main loop - will fetch & decode until stopped
     void mainLoop();
+    bool mainLoopSlowStuff();
 
     // CPU main loop when halted (HLT) - will do nothing until an IRQ is raised
     void haltedLoop();
@@ -1111,8 +1111,6 @@ private:
         m_baseEIP = getEIP();
     }
 
-    void flushCommandQueue();
-
     void setLDT(WORD segment);
     void taskSwitch(WORD task, JumpType);
     void taskSwitch(TSSDescriptor&, JumpType);
@@ -1275,14 +1273,11 @@ private:
 
     bool m_stackSize32 { false };
 
-    bool m_shouldBreakOutOfMainLoop { false };
-    bool m_shouldHardReboot { false };
+    std::atomic<bool> m_mainLoopNeedsSlowStuff { false };
+    std::atomic<bool> m_shouldBreakOutOfMainLoop { false };
+    std::atomic<bool> m_shouldHardReboot { false };
 
     QVector<WatchedAddress> m_watches;
-
-    QMutex m_commandMutex;
-    bool m_hasCommands { false };
-    QQueue<Command> m_commandQueue;
 
     bool m_shouldRestoreSizesAfterOverride { false };
 
@@ -1354,8 +1349,6 @@ ALWAYS_INLINE bool CPU::evaluate(BYTE conditionCode) const
     }
     return 0;
 }
-
-#endif
 
 ALWAYS_INLINE BYTE& Instruction::reg8()
 {

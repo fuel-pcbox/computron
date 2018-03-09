@@ -50,11 +50,13 @@ Debugger::~Debugger()
 void Debugger::enter()
 {
     m_active = true;
+    cpu().recomputeMainLoopNeedsSlowStuff();
 }
 
 void Debugger::exit()
 {
     m_active = false;
+    cpu().recomputeMainLoopNeedsSlowStuff();
 }
 
 static QString doPrompt(const CPU& cpu)
@@ -205,6 +207,7 @@ void Debugger::handleBreakpoint(const QStringList& arguments)
         printf("delete breakpoint: %04X:%08X -> @0x%08X\n", segment, offset, flat);
         cpu().breakpoints().erase(flat);
     }
+    cpu().recomputeMainLoopNeedsSlowStuff();
 }
 
 void Debugger::doConsole()
@@ -311,6 +314,7 @@ void Debugger::handleTracing(const QStringList& arguments)
     if (arguments.size() == 1) {
         unsigned value = arguments.at(0).toUInt(0, 16);
         options.trace = value != 0;
+        cpu().recomputeMainLoopNeedsSlowStuff();
         return;
     }
 

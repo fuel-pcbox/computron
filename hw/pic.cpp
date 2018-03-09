@@ -30,7 +30,7 @@
 #include "machine.h"
 
 // FIXME: These should not be globals.
-static volatile bool s_haveRequests = false;
+std::atomic<bool> PIC::s_haveRequests = false;
 WORD PIC::s_pendingRequests = 0x0000;
 QMutex PIC::s_mutex;
 static bool s_ignoringIRQs = false;
@@ -45,11 +45,6 @@ void PIC::updatePendingRequests(Machine& machine)
     QMutexLocker locker(&s_mutex);
     s_pendingRequests = (machine.masterPIC().getIRR() & ~machine.masterPIC().getIMR() ) | ((machine.slavePIC().getIRR() & ~machine.slavePIC().getIMR()) << 8);
     s_haveRequests = s_pendingRequests != 0;
-}
-
-bool PIC::hasPendingIRQ()
-{
-    return s_haveRequests;
 }
 
 PIC::PIC(bool isMaster, Machine& machine)

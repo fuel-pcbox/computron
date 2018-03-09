@@ -49,10 +49,10 @@ public:
     void dumpMask();
     void unmaskAll();
 
-    static bool hasPendingIRQ();
     static void serviceIRQ(CPU&);
     static void raiseIRQ(Machine&, BYTE num);
     static void setIgnoreAllIRQs(bool);
+    static bool hasPendingIRQ() { return s_haveRequests; }
 
 private:
     WORD m_baseAddress { 0 };
@@ -70,4 +70,5 @@ private:
     static WORD s_pendingRequests;
     static void updatePendingRequests(Machine&);
     static QMutex s_mutex;
+    static std::atomic<bool> s_haveRequests;
 };
