@@ -66,7 +66,7 @@ struct Screen::Private
 };
 
 Screen::Screen(Machine& m)
-    : QWidget(nullptr),
+    : QOpenGLWidget(nullptr),
       d(make<Private>()),
       m_machine(m)
 {
@@ -103,7 +103,7 @@ Screen::Screen(Machine& m)
 
     // This timer is kicked whenever screen memory is modified.
     d->refreshTimer.setSingleShot(true);
-    d->refreshTimer.setInterval(25);
+    d->refreshTimer.setInterval(50);
     connect(&d->refreshTimer, SIGNAL(timeout()), this, SLOT(refresh()));
 
     // This timer does a forced refresh() every second, in case we miss anything.
@@ -364,7 +364,7 @@ void Screen::renderMode0D(QImage &target)
 
 void Screen::resizeEvent(QResizeEvent *e)
 {
-    QWidget::resizeEvent(e);
+    QOpenGLWidget::resizeEvent(e);
 
     vlog(LogScreen, "Resizing viewport");
     update();
@@ -396,7 +396,7 @@ void Screen::paintEvent(QPaintEvent *e)
     if (currentVideoMode() == 0x0D) {
         setScreenSize(640, 400);
         QPainter p(this);
-        p.drawImage(0, 0, m_render0D.scaled(640, 400));
+        p.drawImage(QRect(0, 0, 640, 400), m_render0D);
 
         if (m_tinted) {
             p.setOpacity(0.3);
@@ -408,7 +408,7 @@ void Screen::paintEvent(QPaintEvent *e)
     if (currentVideoMode() == 0x04) {
         setScreenSize(640, 400);
         QPainter p(this);
-        p.drawImage(0, 0, m_render04.scaled(640, 400));
+        p.drawImage(QRect(0, 0, 640, 400), m_render04);
 
         if (m_tinted) {
             p.setOpacity(0.3);
@@ -420,7 +420,7 @@ void Screen::paintEvent(QPaintEvent *e)
     if (currentVideoMode() == 0x13) {
         setScreenSize(640, 400);
         QPainter p(this);
-        p.drawImage(0, 0, m_render13.scaled(640, 400));
+        p.drawImage(QRect(0, 0, 640, 400), m_render13);
 
         if (m_tinted) {
             p.setOpacity(0.3);
@@ -540,13 +540,13 @@ void Screen::synchronizeColors()
 
 void Screen::mouseMoveEvent(QMouseEvent* e)
 {
-    QWidget::mouseMoveEvent(e);
+    QOpenGLWidget::mouseMoveEvent(e);
     machine().busMouse().moveEvent(e->x(), e->y());
 }
 
 void Screen::mousePressEvent(QMouseEvent* e)
 {
-    QWidget::mousePressEvent(e);
+    QOpenGLWidget::mousePressEvent(e);
     switch (e->button()) {
     case Qt::LeftButton:
         machine().busMouse().buttonPressEvent(e->x(), e->y(), BusMouse::LeftButton);
@@ -561,7 +561,7 @@ void Screen::mousePressEvent(QMouseEvent* e)
 
 void Screen::mouseReleaseEvent(QMouseEvent *e)
 {
-    QWidget::mouseReleaseEvent(e);
+    QOpenGLWidget::mouseReleaseEvent(e);
     switch (e->button()) {
     case Qt::LeftButton:
         machine().busMouse().buttonReleaseEvent(e->x(), e->y(), BusMouse::LeftButton);

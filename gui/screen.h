@@ -23,17 +23,17 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef SCREEN_H
-#define SCREEN_H
+#pragma once
 
 #include "OwnPtr.h"
 #include "types.h"
 #include <QtCore/QHash>
 #include <QtWidgets/QWidget>
+#include <QOpenGLWidget>
 
 class Machine;
 
-class Screen final : public QWidget
+class Screen final : public QOpenGLWidget
 {
     Q_OBJECT
 public:
@@ -130,5 +130,3 @@ private:
     BYTE m_videoModeInLastRefresh { 0xFF };
     Machine& m_machine;
 };
-
-#endif
