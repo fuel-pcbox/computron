@@ -1252,37 +1252,36 @@ T CPU::readMemory(DWORD linearAddress)
 template<typename T>
 T CPU::readMemory(const SegmentDescriptor& descriptor, DWORD offset)
 {
-    if (getPE()) {
-        validateAddress<T>(descriptor, offset, MemoryAccessType::Read);
+    DWORD linearAddress = descriptor.base() + offset;
+    if (!getPE()) {
+        return readMemory<T>(linearAddress);
+    }
 
-        DWORD linearAddress = descriptor.base() + offset;
-        DWORD physicalAddress;
-
-        translateAddress(linearAddress, physicalAddress, MemoryAccessType::Read);
+    validateAddress<T>(descriptor, offset, MemoryAccessType::Read);
+    DWORD physicalAddress;
+    translateAddress(linearAddress, physicalAddress, MemoryAccessType::Read);
 
 #ifdef A20_ENABLED
-        physicalAddress &= a20Mask();
+    physicalAddress &= a20Mask();
 #endif
 
-        if (!validatePhysicalAddress<T>(physicalAddress, MemoryAccessType::Read))
-            return 0;
+    if (!validatePhysicalAddress<T>(physicalAddress, MemoryAccessType::Read))
+        return 0;
 
-        T value;
-        if (addressIsInVGAMemory(physicalAddress))
-            value = machine().vgaMemory().read<T>(physicalAddress);
-        else
-            value = *reinterpret_cast<T*>(&m_memory[physicalAddress]);
+    T value;
+    if (addressIsInVGAMemory(physicalAddress))
+        value = machine().vgaMemory().read<T>(physicalAddress);
+    else
+        value = *reinterpret_cast<T*>(&m_memory[physicalAddress]);
 #ifdef MEMORY_DEBUGGING
-        if (options.memdebug || shouldLogMemoryRead(physicalAddress)) {
-            if (options.novlog)
-                printf("%04X:%08X: %zu-bit PE read [A20=%s] %04X:%08X (phys: %08X), value: %08X\n", getBaseCS(), getBaseEIP(), sizeof(T) * 8, isA20Enabled() ? "on" : "off", descriptor.index(), offset, physicalAddress, value);
-            else
-                vlog(LogCPU, "%zu-bit PE read [A20=%s] %04X:%08X (phys: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", descriptor.index(), offset, physicalAddress, value);
-        }
-#endif
-        return value;
+    if (options.memdebug || shouldLogMemoryRead(physicalAddress)) {
+        if (options.novlog)
+            printf("%04X:%08X: %zu-bit PE read [A20=%s] %04X:%08X (phys: %08X), value: %08X\n", getBaseCS(), getBaseEIP(), sizeof(T) * 8, isA20Enabled() ? "on" : "off", descriptor.index(), offset, physicalAddress, value);
+        else
+            vlog(LogCPU, "%zu-bit PE read [A20=%s] %04X:%08X (phys: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", descriptor.index(), offset, physicalAddress, value);
     }
-    return readMemory<T>(descriptor.base() + offset);
+#endif
+    return value;
 }
 
 template<typename T>
@@ -1347,30 +1346,30 @@ void CPU::writeMemory(DWORD linearAddress, T value)
 template<typename T>
 void CPU::writeMemory(const SegmentDescriptor& descriptor, DWORD offset, T value)
 {
-    if (getPE()) {
-        validateAddress<T>(descriptor, offset, MemoryAccessType::Write);
-
-        DWORD linearAddress = descriptor.base() + offset;
-        DWORD physicalAddress;
-        translateAddress(linearAddress, physicalAddress, MemoryAccessType::Write);
-
-        if (!validatePhysicalAddress<T>(physicalAddress, MemoryAccessType::Write))
-            return;
-
-#ifdef MEMORY_DEBUGGING
-        if (options.memdebug || shouldLogMemoryWrite(physicalAddress))
-            vlog(LogCPU, "%zu-bit PE write [A20=%s] %04X:%08X (phys: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", descriptor.index(), offset, physicalAddress, value);
-#endif
-
-        if (addressIsInVGAMemory(physicalAddress)) {
-            machine().vgaMemory().write(physicalAddress, value);
-            return;
-        }
-        *reinterpret_cast<T*>(&m_memory[physicalAddress]) = value;
-        didTouchMemory(physicalAddress);
+    DWORD linearAddress = descriptor.base() + offset;
+    if (!getPE()) {
+        writeMemory(linearAddress, value);
         return;
     }
-    writeMemory(descriptor.base() + offset, value);
+
+    validateAddress<T>(descriptor, offset, MemoryAccessType::Write);
+    DWORD physicalAddress;
+    translateAddress(linearAddress, physicalAddress, MemoryAccessType::Write);
+
+    if (!validatePhysicalAddress<T>(physicalAddress, MemoryAccessType::Write))
+        return;
+
+#ifdef MEMORY_DEBUGGING
+    if (options.memdebug || shouldLogMemoryWrite(physicalAddress))
+        vlog(LogCPU, "%zu-bit PE write [A20=%s] %04X:%08X (phys: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", descriptor.index(), offset, physicalAddress, value);
+#endif
+
+    if (addressIsInVGAMemory(physicalAddress)) {
+        machine().vgaMemory().write(physicalAddress, value);
+        return;
+    }
+    *reinterpret_cast<T*>(&m_memory[physicalAddress]) = value;
+    didTouchMemory(physicalAddress);
 }
 
 template<typename T>
@@ -1482,20 +1481,22 @@ BYTE* CPU::memoryPointer(SegmentRegisterIndex segment, DWORD offset)
 
 BYTE* CPU::memoryPointer(const SegmentDescriptor& descriptor, DWORD offset)
 {
-    if (getPE()) {
-        validateAddress<BYTE>(descriptor, offset, MemoryAccessType::InternalPointer);
+    DWORD linearAddress = descriptor.base() + offset;
+    if (!getPE())
+        return memoryPointer(linearAddress);
 
-        DWORD linearAddress = descriptor.base() + offset;
-        DWORD physicalAddress;
-        translateAddress(linearAddress, physicalAddress, MemoryAccessType::InternalPointer);
-#ifdef MEMORY_DEBUGGING
-        if (options.memdebug || shouldLogMemoryPointer(physicalAddress))
-            vlog(LogCPU, "MemoryPointer PE [A20=%s] %04X:%08X (phys: %08X)", isA20Enabled() ? "on" : "off", descriptor.index(), offset, physicalAddress);
+    validateAddress<BYTE>(descriptor, offset, MemoryAccessType::InternalPointer);
+    DWORD physicalAddress;
+    translateAddress(linearAddress, physicalAddress, MemoryAccessType::InternalPointer);
+#ifdef A20_ENABLED
+    physicalAddress &= a20Mask();
 #endif
-        didTouchMemory(physicalAddress);
-        return &m_memory[physicalAddress];
-    }
-    return memoryPointer(descriptor.base() + offset);
+#ifdef MEMORY_DEBUGGING
+    if (options.memdebug || shouldLogMemoryPointer(physicalAddress))
+        vlog(LogCPU, "MemoryPointer PE [A20=%s] %04X:%08X (phys: %08X)", isA20Enabled() ? "on" : "off", descriptor.index(), offset, physicalAddress);
+#endif
+    didTouchMemory(physicalAddress);
+    return &m_memory[physicalAddress];
 }
 
 BYTE* CPU::memoryPointer(WORD segmentIndex, DWORD offset)
