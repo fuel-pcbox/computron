@@ -626,6 +626,8 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
 #endif
             taskSwitch(tssDescriptor, type);
         } else {
+            vlog(LogCPU, "%s to %04x:%08x hit unhandled descriptor type %s (%x)", toString(type), segment, offset, sys.typeName(), (unsigned)sys.type());
+            dumpDescriptor(descriptor);
             ASSERT_NOT_REACHED();
         }
     } else { // it's a segment descriptor
