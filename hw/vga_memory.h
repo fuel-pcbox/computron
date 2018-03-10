@@ -30,10 +30,8 @@
 #include <QtCore/QRect>
 #include <QtGui/QBrush>
 #include <QtGui/QColor>
-#include <QtGui/QImage>
 
 class Machine;
-class QImage;
 
 class VGAMemory
 {
@@ -53,26 +51,14 @@ public:
      */
     BYTE *plane(int index) const;
 
-    const QImage* modeImage(BYTE mode) const;
-
-    bool isDirty() const;
-
-    QRect dirtyRect() const;
-
-    void clearDirty();
-
 private:
     void synchronizeColors();
 
     Machine& machine() const { return m_machine; }
     Machine& m_machine;
 
-    QImage m_screen12;
     QColor m_color[16];
     QBrush m_brush[16];
-
-    QRect m_dirtyRect;
-    bool m_dirty { false };
 
     BYTE* m_plane[4];
     BYTE m_latch[4];

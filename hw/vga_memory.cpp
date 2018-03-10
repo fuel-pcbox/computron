@@ -47,9 +47,6 @@
 VGAMemory::VGAMemory(Machine& m)
     : m_machine(m)
 {
-    m_screen12 = QImage(640, 480, QImage::Format_Indexed8);
-    m_screen12.fill(0);
-
     m_plane[0] = new BYTE[0x40000];
     m_plane[1] = m_plane[0] + 0x10000;
     m_plane[2] = m_plane[1] + 0x10000;
@@ -64,8 +61,6 @@ VGAMemory::VGAMemory(Machine& m)
 
     synchronizeColors();
     machine().vga().setPaletteDirty(true);
-
-    m_dirty = true;
 }
 
 VGAMemory::~VGAMemory()
@@ -242,38 +237,6 @@ void VGAMemory::write8(DWORD address, BYTE value)
             m_plane[2][address] = new_val[2];
         if (plane & 0x08)
             m_plane[3][address] = new_val[3];
-
-        // FIXME: We shouldn't have to check this on every pass.
-        if (machine().vga().isPaletteDirty())
-            synchronizeColors();
-
-#define D(i) ((m_plane[0][address]>>i) & 1) | (((m_plane[1][address]>>i) & 1)<<1) | (((m_plane[2][address]>>i) & 1)<<2) | (((m_plane[3][address]>>i) & 1)<<3)
-
-        // HACK: I don't really like this way of obtaining the current mode...
-        if (machine().vga().currentVideoMode() == 0x12 && address < (640 * 480 / 8)) {
-
-            // address 100 -> pixels 800-807
-            uchar *px = &m_screen12.bits()[address * 8];
-
-            *(px++) = D(7);
-            *(px++) = D(6);
-            *(px++) = D(5);
-            *(px++) = D(4);
-            *(px++) = D(3);
-            *(px++) = D(2);
-            *(px++) = D(1);
-            *(px++) = D(0);
-
-            uint y = address / 80;
-            uint x1 = (address % 80) * 8;
-
-            // 1 changed byte == 8 dirty pixels
-            QRect newDirty(x1, y, 8, 1);
-            if (!m_dirtyRect.contains(newDirty))
-                m_dirtyRect = m_dirtyRect.united(newDirty);
-        }
-
-        m_dirty = true;
     }
 }
 
@@ -332,38 +295,10 @@ BYTE *VGAMemory::plane(int index) const
     return m_plane[index];
 }
 
-const QImage* VGAMemory::modeImage(BYTE mode) const
-{
-    if (mode == 0x12)
-        return &m_screen12;
-
-#ifdef CT_DEBUG
-    vlog(LogAlert, "Screen image for unknown mode 0x%02X requested. Crashing!", mode);
-#endif
-    return 0;
-}
-
-bool VGAMemory::isDirty() const
-{
-    return m_dirty;
-}
-
-QRect VGAMemory::dirtyRect() const
-{
-    return m_dirtyRect;
-}
-
-void VGAMemory::clearDirty()
-{
-    m_dirtyRect = QRect();
-    m_dirty = false;
-}
-
 void VGAMemory::synchronizeColors()
 {
     for (int i = 0; i < 16; ++i) {
         m_color[i] = machine().vga().paletteColor(i);
         m_brush[i] = QBrush(m_color[i]);
-        m_screen12.setColor(i, m_color[i].rgb());
     }
 }

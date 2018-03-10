@@ -185,8 +185,6 @@ void Screen::refresh()
     }
 
     if (isVideoModeUsingVGAMemory(videoMode)) {
-        if (!machine().vgaMemory().isDirty())
-            return;
         if (machine().vga().isPaletteDirty()) {
             synchronizeColors();
             // FIXME: This will probably race with VGAMemory's internal palette.
@@ -197,8 +195,8 @@ void Screen::refresh()
     // FIXME: Unify these ridiculous drawing models somehow.
 
     if (videoMode == 0x12) {
-        update(machine().vgaMemory().dirtyRect());
-        machine().vgaMemory().clearDirty();
+        renderMode12(m_render12);
+        update();
         return;
     }
 
@@ -370,25 +368,16 @@ void Screen::resizeEvent(QResizeEvent *e)
     update();
 }
 
-void Screen::paintEvent(QPaintEvent *e)
+void Screen::paintEvent(QPaintEvent*)
 {
     if (currentVideoMode() == 0x12) {
         setScreenSize(640, 480);
-        QPainter wp(this);
-        wp.setClipRegion(e->rect());
-
-        const QImage *screenImage = machine().vgaMemory().modeImage(0x12);
-
-        if (screenImage)
-            wp.drawImage(rect(), *screenImage);
-        else {
-            vlog(LogScreen, "No screen buffer yet for mode 0x%02X", currentVideoMode());
-            wp.fillRect(rect(), Qt::red);
-        }
+        QPainter p(this);
+        p.drawImage(QRect(0, 0, 640, 480), m_render12);
 
         if (m_tinted) {
-            wp.setOpacity(0.3);
-            wp.fillRect(e->rect(), Qt::blue);
+            p.setOpacity(0.3);
+            p.fillRect(rect(), Qt::blue);
         }
         return;
     }
