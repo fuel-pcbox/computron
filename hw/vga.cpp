@@ -48,7 +48,8 @@ struct VGA::Private
     BYTE ioRegister[0x20];
     BYTE ioRegister2[0x20];
     BYTE ioSequencer[0x20];
-    BYTE paletteIndex;
+    BYTE paletteIndex { 0 };
+    bool paletteSource { false };
     BYTE columns;
     BYTE rows;
 
@@ -88,7 +89,7 @@ VGA::VGA(Machine& m)
     listen(0x3B4, IODevice::ReadWrite);
     listen(0x3B5, IODevice::ReadWrite);
     listen(0x3BA, IODevice::ReadWrite);
-    listen(0x3C0, IODevice::WriteOnly);
+    listen(0x3C0, IODevice::ReadWrite);
     listen(0x3C1, IODevice::ReadOnly);
     listen(0x3C4, IODevice::ReadWrite);
     listen(0x3C5, IODevice::ReadWrite);
@@ -175,10 +176,16 @@ void VGA::out8(WORD port, BYTE data)
 
     case 0x3C0: {
         QMutexLocker locker(&d->paletteMutex);
-        if (d->next3C0IsIndex)
-            d->paletteIndex = data;
-        else
-            d->paletteRegister[d->paletteIndex] = data;
+        if (d->next3C0IsIndex) {
+            d->paletteIndex = (data & 0x1f);
+            d->paletteSource = (data & 0x20);
+        } else {
+            if (d->paletteIndex < 0x10) {
+                d->paletteRegister[d->paletteIndex] = data;
+            } else {
+                vlog(LogVGA, "3c0 unhandled write to palette index %02x", d->paletteIndex);
+            }
+        }
         d->next3C0IsIndex = !d->next3C0IsIndex;
         break;
     }
@@ -258,6 +265,9 @@ void VGA::didRefreshScreen()
 BYTE VGA::in8(WORD port)
 {
     switch (port) {
+    case 0x3C0:
+        return d->paletteIndex | (d->paletteSource * 0x20);
+
     case 0x3B4:
     case 0x3D4:
         return d->currentRegister;
