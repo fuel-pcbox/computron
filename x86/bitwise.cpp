@@ -377,50 +377,91 @@ void CPU::_BSR_reg32_RM32(Instruction& insn)
     insn.reg32() = doBSR(value);
 }
 
+template<typename T>
+T CPU::doSHLD(T leftData, T rightData, int steps)
+{
+    steps &= 31;
+    if (!steps)
+        return leftData;
+
+    T result;
+
+    if (steps > BitSizeOfType<T>::bits) {
+        result = (leftData >> ((BitSizeOfType<T>::bits * 2) - steps) | (rightData << (steps - BitSizeOfType<T>::bits)));
+        setCF((rightData >> ((BitSizeOfType<T>::bits * 2) - steps)) & 1);
+    } else {
+        result = (leftData << steps) | (rightData >> (BitSizeOfType<T>::bits - steps));
+        setCF((leftData >> (BitSizeOfType<T>::bits - steps)) & 1);
+    }
+
+    if (steps == 1) {
+        setOF(getCF() ^ (result >> (BitSizeOfType<T>::bits - 1) & 1));
+    }
+
+    updateFlags(result, BitSizeOfType<T>::bits);
+    return result;
+}
+
 void CPU::_SHLD_RM16_reg16_imm8(Instruction& insn)
 {
-    DWORD value = makeDWORD(insn.modrm().read16(), insn.reg16());
-    insn.modrm().write16(leftShift(value, insn.imm8()) >> 16);
+    insn.modrm().write16(doSHLD(insn.modrm().read16(), insn.reg16(), insn.imm8()));
 }
 
 void CPU::_SHLD_RM32_reg32_imm8(Instruction& insn)
 {
-    QWORD value = makeQWORD(insn.modrm().read32(), insn.reg32());
-    insn.modrm().write32(leftShift(value, insn.imm8()) >> 32);
+    insn.modrm().write32(doSHLD(insn.modrm().read32(), insn.reg32(), insn.imm8()));
 }
 
 void CPU::_SHLD_RM16_reg16_CL(Instruction& insn)
 {
-    DWORD value = makeDWORD(insn.modrm().read16(), insn.reg16());
-    insn.modrm().write16(leftShift(value, getCL()) >> 16);
+    insn.modrm().write16(doSHLD(insn.modrm().read16(), insn.reg16(), getCL()));
 }
 
 void CPU::_SHLD_RM32_reg32_CL(Instruction& insn)
 {
-    QWORD value = makeQWORD(insn.modrm().read32(), insn.reg32());
-    insn.modrm().write32(leftShift(value, getCL()) >> 32);
+    insn.modrm().write32(doSHLD(insn.modrm().read32(), insn.reg32(), getCL()));
+}
+
+template<typename T>
+T CPU::doSHRD(T leftData, T rightData, int steps)
+{
+    steps &= 31;
+    if (!steps)
+        return rightData;
+
+    T result;
+    if (steps > BitSizeOfType<T>::bits) {
+        result = (rightData << (32 - steps)) | (leftData >> (steps - BitSizeOfType<T>::bits));
+        setCF((leftData >> (steps - (BitSizeOfType<T>::bits + 1))) & 1);
+    } else {
+        result = (rightData >> steps) | (leftData << (BitSizeOfType<T>::bits - steps));
+        setCF((rightData >> (steps - 1)) & 1);
+    }
+
+    if (steps == 1) {
+        setOF((result ^ rightData) >> (BitSizeOfType<T>::bits - 1) & 1);
+    }
+
+    updateFlags(result, BitSizeOfType<T>::bits);
+    return result;
 }
 
 void CPU::_SHRD_RM16_reg16_imm8(Instruction& insn)
 {
-    DWORD value = makeDWORD(insn.reg16(), insn.modrm().read16());
-    insn.modrm().write16(rightShift(value, insn.imm8()));
+    insn.modrm().write16(doSHRD(insn.reg16(), insn.modrm().read16(), insn.imm8()));
 }
 
 void CPU::_SHRD_RM32_reg32_imm8(Instruction& insn)
 {
-    QWORD value = makeQWORD(insn.reg32(), insn.modrm().read32());
-    insn.modrm().write32(rightShift(value, insn.imm8()));
+    insn.modrm().write32(doSHRD(insn.reg32(), insn.modrm().read32(), insn.imm8()));
 }
 
 void CPU::_SHRD_RM16_reg16_CL(Instruction& insn)
 {
-    DWORD value = makeDWORD(insn.reg16(), insn.modrm().read16());
-    insn.modrm().write16(rightShift(value, getCL()));
+    insn.modrm().write16(doSHRD(insn.reg16(), insn.modrm().read16(), getCL()));
 }
 
 void CPU::_SHRD_RM32_reg32_CL(Instruction& insn)
 {
-    QWORD value = makeQWORD(insn.reg32(), insn.modrm().read32());
-    insn.modrm().write32(rightShift(value, getCL()));
+    insn.modrm().write32(doSHRD(insn.reg32(), insn.modrm().read32(), getCL()));
 }
