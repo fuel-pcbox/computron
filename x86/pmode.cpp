@@ -171,6 +171,10 @@ void CPU::_LAR_reg16_RM16(Instruction& insn)
     // FIXME: This has various ways it can fail, implement them.
     WORD selector = insn.modrm().read16() & 0xffff;
     auto descriptor = getDescriptor(selector);
+    if (descriptor.isNull() || descriptor.isError()) {
+        setZF(0);
+        return;
+    }
     insn.reg16() = descriptor.m_high & 0x00ffff00;
     setZF(1);
 }
@@ -180,6 +184,10 @@ void CPU::_LAR_reg32_RM32(Instruction& insn)
     // FIXME: This has various ways it can fail, implement them.
     WORD selector = insn.modrm().read32() & 0xffff;
     auto descriptor = getDescriptor(selector);
+    if (descriptor.isNull() || descriptor.isError()) {
+        setZF(0);
+        return;
+    }
     insn.reg32() = descriptor.m_high & 0x00ffff00;
     setZF(1);
 }
