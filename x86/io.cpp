@@ -172,7 +172,15 @@ void CPU::_IN_EAX_DX(Instruction&)
 
 void CPU::_INSB(Instruction&)
 {
-    ASSERT_NOT_REACHED();
+    // FIXME: Should this really read the port without knowing that the destination memory is writable?
+    BYTE data = in(getDX());
+    if (a16()) {
+        writeMemory8(SegmentRegisterIndex::ES, getDI(), data);
+        nextDI(1);
+    } else {
+        writeMemory8(SegmentRegisterIndex::ES, getEDI(), data);
+        nextEDI(1);
+    }
 }
 
 void CPU::out(WORD port, BYTE value)
