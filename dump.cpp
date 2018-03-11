@@ -54,7 +54,10 @@ unsigned CPU::dumpDisassembledInternal(SegmentDescriptor& descriptor, DWORD offs
     for (unsigned i = 0; i < (14-(insn.length()*2)); ++i)
         p += sprintf(p, " ");
 
-    p += sprintf(p, " %s", qPrintable(insn.toString(offset, x32())));
+    if (insn.isValid())
+        p += sprintf(p, " %s", qPrintable(insn.toString(offset, x32())));
+    else
+        p += sprintf(p, " <invalid instruction>");
 
     vlog(LogDump, buf);
 
