@@ -27,7 +27,7 @@
 #include "CPU.h"
 #include "debugger.h"
 
-Descriptor CPU::getDescriptor(WORD selector)
+Descriptor CPU::getDescriptor(WORD selector, SegmentRegisterIndex segmentRegister)
 {
     if (!getPE()) {
         Descriptor descriptor;
@@ -39,6 +39,14 @@ Descriptor CPU::getDescriptor(WORD selector)
         descriptor.m_DT = true;
         descriptor.m_P = true;
         descriptor.m_isGlobal = true;
+        if (segmentRegister == SegmentRegisterIndex::SS) {
+            // Expand down
+            descriptor.m_type |= 0x4;
+        }
+        if (segmentRegister == SegmentRegisterIndex::CS) {
+            // Code
+            descriptor.m_type |= 0x8;
+        }
         return descriptor;
     }
 
@@ -57,9 +65,9 @@ Gate CPU::getInterruptGate(WORD index)
     return descriptor.asGate();
 }
 
-SegmentDescriptor CPU::getSegmentDescriptor(WORD selector)
+SegmentDescriptor CPU::getSegmentDescriptor(WORD selector, SegmentRegisterIndex segmentRegister)
 {
-    auto descriptor = getDescriptor(selector);
+    auto descriptor = getDescriptor(selector, segmentRegister);
     if (descriptor.isNull())
         return SegmentDescriptor();
     return descriptor.asSegmentDescriptor();

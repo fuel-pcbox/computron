@@ -363,7 +363,7 @@ void CPU::validateSegmentLoad(SegmentRegisterIndex reg, WORD selector, const Des
 void CPU::setSegmentRegister(SegmentRegisterIndex segmentRegisterIndex, WORD selector)
 {
     auto& descriptorCache = static_cast<Descriptor&>(m_descriptor[(int)segmentRegisterIndex]);
-    auto descriptor = getDescriptor(selector);
+    auto descriptor = getDescriptor(selector, segmentRegisterIndex);
 
     validateSegmentLoad(segmentRegisterIndex, selector, descriptor);
 
@@ -376,8 +376,9 @@ void CPU::setSegmentRegister(SegmentRegisterIndex segmentRegisterIndex, WORD sel
 
     ASSERT(descriptor.isSegmentDescriptor());
 
-    if (!getPE() || segmentRegisterIndex == SegmentRegisterIndex::SS) {
-        // HACK: In PE=0 mode, mark SS descriptors as "expand down"
+    if (getPE() && segmentRegisterIndex == SegmentRegisterIndex::SS) {
+        // HACK: In PE=1 mode, mark SS descriptors as "expand down"
+        // FIXME: Remove this! Why is this even a thing?
         descriptor.m_type |= 0x4;
     }
 

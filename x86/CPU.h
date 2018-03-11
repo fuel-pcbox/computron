@@ -182,8 +182,8 @@ public:
     void dumpDescriptor(const SystemDescriptor&);
     void dumpDescriptor(const CodeSegmentDescriptor&);
     void dumpDescriptor(const DataSegmentDescriptor&);
-    Descriptor getDescriptor(WORD selector);
-    SegmentDescriptor getSegmentDescriptor(WORD selector);
+    Descriptor getDescriptor(WORD selector, SegmentRegisterIndex = SegmentRegisterIndex::None);
+    SegmentDescriptor getSegmentDescriptor(WORD selector, SegmentRegisterIndex = SegmentRegisterIndex::None);
     Gate getInterruptGate(WORD index);
     Descriptor getDescriptor(const char* tableName, DWORD tableBase, DWORD tableLimit, WORD index, bool indexIsSelector);
 
@@ -456,7 +456,7 @@ public:
     inline void writeUnmappedMemory8(DWORD address, BYTE data);
     inline void writeUnmappedMemory16(DWORD address, WORD data);
 
-    enum class MemoryAccessType { Read, Write, InternalPointer };
+    enum class MemoryAccessType { Read, Write, Execute, InternalPointer };
 
     template<typename T> bool validatePhysicalAddress(DWORD, MemoryAccessType);
     template<typename T> void validateAddress(const SegmentDescriptor&, DWORD offset, MemoryAccessType);
@@ -464,7 +464,7 @@ public:
     template<typename T> void validateAddress(WORD segment, DWORD offset, MemoryAccessType);
     template<typename T> T readMemory(DWORD address);
     template<typename T> T readMemory(WORD segment, DWORD address);
-    template<typename T> T readMemory(const SegmentDescriptor&, DWORD address);
+    template<typename T, MemoryAccessType accessType = MemoryAccessType::Read> T readMemory(const SegmentDescriptor&, DWORD address);
     template<typename T> T readMemory(SegmentRegisterIndex, DWORD address);
     template<typename T> void writeMemory(DWORD address, T data);
     template<typename T> void writeMemory(WORD segment, DWORD address, T data);

@@ -40,6 +40,7 @@
 #define CRASH_ON_VM
 #define A20_ENABLED
 //#define LOG_FAR_JUMPS
+//#define DEBUG_JUMPS
 //#define DISASSEMBLE_EVERYTHING
 //#define DEBUG_I386NF
 //#define MEMORY_DEBUGGING
@@ -411,6 +412,7 @@ void CPU::executeOneInstruction()
         saveBaseAddress();
         decodeNext();
     } catch(Exception e) {
+        dumpDisassembled(cachedDescriptor(SegmentRegisterIndex::CS), m_baseEIP, 3);
         resetSegmentPrefix();
         raiseException(e);
     }
@@ -598,7 +600,7 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
     vlog(LogCPU, "[PE=%u, PG=%u] %s from %04x:%08x to %04x:%08x", getPE(), getPG(), toString(type), getBaseCS(), getBaseEIP(), segment, offset);
 #endif
 
-    auto descriptor = getDescriptor(segment);
+    auto descriptor = getDescriptor(segment, SegmentRegisterIndex::CS);
 
     if (descriptor.isSystemDescriptor()) {
         auto& sys = descriptor.asSystemDescriptor();
@@ -631,7 +633,7 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
             ASSERT_NOT_REACHED();
         }
     } else { // it's a segment descriptor
-        //ASSERT(descriptor.isCode());
+        ASSERT(descriptor.isCode());
         setCS(segment);
         setEIP(offset);
     }
@@ -1158,6 +1160,7 @@ static const char* toString(CPU::MemoryAccessType type)
     switch (type) {
     case CPU::MemoryAccessType::Read: return "Read";
     case CPU::MemoryAccessType::Write: return "Write";
+    case CPU::MemoryAccessType::Execute: return "Execute";
     case CPU::MemoryAccessType::InternalPointer: return "InternalPointer";
     default: return "(wat)";
     }
@@ -1172,6 +1175,36 @@ void CPU::validateAddress(const SegmentDescriptor& descriptor, DWORD offset, Mem
              offset,
              descriptor.index());
         throw GeneralProtectionFault(0, "Access through null selector");
+    }
+
+    switch (accessType) {
+    case MemoryAccessType::Read:
+        if (descriptor.isCode() && !descriptor.asCodeSegmentDescriptor().readable()) {
+            throw GeneralProtectionFault(0, "Attempt to read from non-readable code segment");
+        }
+        break;
+    case MemoryAccessType::Write:
+        if (!descriptor.isData()) {
+            throw GeneralProtectionFault(0, "Attempt to write to non-data segment");
+        }
+#if 0
+        // FIXME: Should we check this here? GazOS GPF's in a PUSH if we do this.
+        if (!descriptor.asDataSegmentDescriptor().writable()) {
+            throw GeneralProtectionFault(0, "Attempt to write to non-writable data segment");
+        }
+#endif
+        break;
+    case MemoryAccessType::Execute:
+        if (!descriptor.isCode()) {
+            throw GeneralProtectionFault(0, "Attempt to execute non-code segment");
+        }
+        break;
+    default:
+        break;
+    }
+
+    if (getCPL() > descriptor.DPL()) {
+        throw GeneralProtectionFault(0, QString("Insufficient privilege for access (CPL=%u, DPL=%u)").arg(getCPL()).arg(descriptor.DPL()));
     }
 
     DWORD offsetForLimitChecking = descriptor.granularity() ? (offset & 0xfffff000) : offset;
@@ -1251,7 +1284,7 @@ T CPU::readMemory(DWORD linearAddress)
     return value;
 }
 
-template<typename T>
+template<typename T, CPU::MemoryAccessType accessType>
 T CPU::readMemory(const SegmentDescriptor& descriptor, DWORD offset)
 {
     DWORD linearAddress = descriptor.base() + offset;
@@ -1259,15 +1292,15 @@ T CPU::readMemory(const SegmentDescriptor& descriptor, DWORD offset)
         return readMemory<T>(linearAddress);
     }
 
-    validateAddress<T>(descriptor, offset, MemoryAccessType::Read);
+    validateAddress<T>(descriptor, offset, accessType);
     DWORD physicalAddress;
-    translateAddress(linearAddress, physicalAddress, MemoryAccessType::Read);
+    translateAddress(linearAddress, physicalAddress, accessType);
 
 #ifdef A20_ENABLED
     physicalAddress &= a20Mask();
 #endif
 
-    if (!validatePhysicalAddress<T>(physicalAddress, MemoryAccessType::Read))
+    if (!validatePhysicalAddress<T>(physicalAddress, accessType))
         return 0;
 
     T value;
@@ -1529,19 +1562,19 @@ BYTE* CPU::memoryPointer(DWORD linearAddress)
 BYTE CPU::fetchOpcodeByte()
 {
     if (x32())
-        return readMemory8(SegmentRegisterIndex::CS, EIP++);
+        return readMemory<BYTE, MemoryAccessType::Execute>(cachedDescriptor(SegmentRegisterIndex::CS), EIP++);
     else
-        return readMemory8(SegmentRegisterIndex::CS, IP++);
+        return readMemory<BYTE, MemoryAccessType::Execute>(cachedDescriptor(SegmentRegisterIndex::CS), IP++);
 }
 
 WORD CPU::fetchOpcodeWord()
 {
     WORD w;
     if (x32()) {
-        w = readMemory16(SegmentRegisterIndex::CS, getEIP());
+        w = readMemory<WORD, MemoryAccessType::Execute>(cachedDescriptor(SegmentRegisterIndex::CS), getEIP());
         this->EIP += 2;
     } else {
-        w = readMemory16(SegmentRegisterIndex::CS, getIP());
+        w = readMemory<WORD, MemoryAccessType::Execute>(cachedDescriptor(SegmentRegisterIndex::CS), getIP());
         this->IP += 2;
     }
     return w;
@@ -1551,10 +1584,10 @@ DWORD CPU::fetchOpcodeDWord()
 {
     DWORD d;
     if (x32()) {
-        d = readMemory32(SegmentRegisterIndex::CS, getEIP());
+        d = readMemory<DWORD, MemoryAccessType::Execute>(cachedDescriptor(SegmentRegisterIndex::CS), getEIP());
         this->EIP += 4;
     } else {
-        d = readMemory32(SegmentRegisterIndex::CS, getIP());
+        d = readMemory<DWORD, MemoryAccessType::Execute>(cachedDescriptor(SegmentRegisterIndex::CS), getIP());
         this->IP += 4;
     }
     return d;
