@@ -34,6 +34,7 @@ Descriptor CPU::getDescriptor(WORD selector, SegmentRegisterIndex segmentRegiste
         descriptor.m_index = selector;
         descriptor.m_segmentBase = (DWORD)selector << 4;
         descriptor.m_segmentLimit = 0xFFFFF;
+        descriptor.m_effectiveLimit = 0xFFFFF;
         descriptor.m_RPL = 0;
         descriptor.m_D = false;
         descriptor.m_DT = true;
@@ -110,6 +111,10 @@ Descriptor CPU::getDescriptor(const char* tableName, DWORD tableBase, DWORD tabl
     } else {
         descriptor.m_segmentBase = (hi & 0xFF000000) | ((hi & 0xFF) << 16) | ((lo >> 16) & 0xFFFF);
         descriptor.m_segmentLimit = (hi & 0xF0000) | (lo & 0xFFFF);
+        if (descriptor.m_G)
+            descriptor.m_effectiveLimit = (descriptor.m_segmentLimit << 12) | 0xfff;
+        else
+            descriptor.m_effectiveLimit = descriptor.m_segmentLimit;
     }
 
     descriptor.m_high = hi;

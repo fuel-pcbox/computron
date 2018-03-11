@@ -111,6 +111,8 @@ protected:
     bool m_AVL { false };
     bool m_DT { false };
 
+    DWORD m_effectiveLimit { 0 };
+
     // These are not part of the descriptor, but metadata about the lookup that found this descriptor.
     unsigned m_index { 0xFFFFFFFF };
     bool m_isGlobal { false };
@@ -227,7 +229,7 @@ public:
     bool isData() const { return (m_type & 0x8) == 0; }
     bool accessed() const { return m_type & 0x1; }
 
-    DWORD effectiveLimit() const { return granularity() ? (limit() * 4096) : limit(); }
+    DWORD effectiveLimit() const { return m_effectiveLimit; }
     bool granularity() const { return m_G; }
 };
 
