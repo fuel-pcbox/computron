@@ -1203,9 +1203,12 @@ void CPU::validateAddress(const SegmentDescriptor& descriptor, DWORD offset, Mem
         break;
     }
 
+#if 0
+    // FIXME: Is this appropriate somehow? Need to figure it out. The code below as-is breaks IRET.
     if (getCPL() > descriptor.DPL()) {
-        throw GeneralProtectionFault(0, QString("Insufficient privilege for access (CPL=%u, DPL=%u)").arg(getCPL()).arg(descriptor.DPL()));
+        throw GeneralProtectionFault(0, QString("Insufficient privilege for access (CPL=%1, DPL=%2)").arg(getCPL()).arg(descriptor.DPL()));
     }
+#endif
 
     DWORD offsetForLimitChecking = descriptor.granularity() ? (offset & 0xfffff000) : offset;
 
