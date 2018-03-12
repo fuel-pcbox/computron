@@ -192,13 +192,15 @@ void VGA::out8(WORD port, BYTE data)
 
     case 0x3C4:
         d->currentSequencer = data & 0x1F;
-        if (d->currentSequencer > 0x4)
-            vlog(LogVGA, "Invalid I/O sequencer #%u selected", d->currentSequencer);
+        if (d->currentSequencer > 0x4 && d->currentSequencer != 0x6)
+            vlog(LogVGA, "Invalid VGA sequencer register #%u selected", d->currentSequencer);
         break;
 
     case 0x3C5:
-        if (d->currentSequencer > 0x4)
-            vlog(LogVGA, "Invalid I/O sequencer #%u written", d->currentSequencer);
+        if (d->currentSequencer > 0x4) {
+            vlog(LogVGA, "Invalid VGA sequencer register #%u written (data: %02x)", d->currentSequencer, data);
+            break;
+        }
         d->ioSequencer[d->currentSequencer] = data;
         break;
 
@@ -311,11 +313,16 @@ BYTE VGA::in8(WORD port)
         return d->currentSequencer;
 
     case 0x3C5:
+        if (d->currentSequencer == 0x6) {
+            // FIXME: What is this thing? Windows 3.0 sets this to 0x12 so I'll leave it like that for now..
+            vlog(LogVGA, "Weird VGA sequencer register 6 read");
+            return 0x12;
+        }
         if (d->currentSequencer > 0x4) {
-            vlog(LogVGA, "Invalid IO sequencer #%u read", d->currentSequencer);
+            vlog(LogVGA, "Invalid VGA sequencer register #%u read", d->currentSequencer);
             return IODevice::JunkValue;
         }
-        //vlog(LogVGA, "Reading sequencer %d, data is %02X", d->currentSequencer, d->ioSequencer[d->currentSequencer]);
+        //vlog(LogVGA, "Reading sequencer register %u, data is %02X", d->currentSequencer, d->ioSequencer[d->currentSequencer]);
         return d->ioSequencer[d->currentSequencer];
 
     case 0x3C9: {
