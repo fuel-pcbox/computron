@@ -27,6 +27,7 @@
 #include "CPU.h"
 #include "Common.h"
 #include "debug.h"
+#include "machine.h"
 #include <stdio.h>
 
 struct VomCtl::Private
@@ -76,9 +77,9 @@ BYTE VomCtl::in8(WORD port)
         case 0x01: // Get CPU type
             return 3;
         case 0x02: // RAM size LSB
-            return getLSB(g_cpu->baseMemorySize() / 1024);
+            return getLSB(machine().cpu().baseMemorySize() / 1024);
         case 0x03: // RAM size MSB
-            return getMSB(g_cpu->baseMemorySize() / 1024);
+            return getMSB(machine().cpu().baseMemorySize() / 1024);
         }
         vlog(LogVomCtl, "Invalid register %02X read", m_registerIndex);
         return IODevice::JunkValue;
@@ -110,7 +111,7 @@ void VomCtl::out8(WORD port, BYTE data)
     case 0xE6:
     case 0xE7:
     case 0xE8:
-        vm_call8(*g_cpu, port, data);
+        vm_call8(machine().cpu(), port, data);
         break;
     case 0x666:
         {

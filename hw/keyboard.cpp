@@ -28,6 +28,7 @@
 #include "keyboard.h"
 #include "pic.h"
 #include "debug.h"
+#include "machine.h"
 
 //#define KBD_DEBUG
 
@@ -189,7 +190,8 @@ void Keyboard::out8(WORD port, BYTE data)
 
         if (m_command == 0xD1) {
             vlog(LogKeyboard, "Write output port: A20=%s", (data & 0x02) ? "on" : "off");
-            g_cpu->setA20Enabled(data & 0x02);
+            // FIXME: Should this also update other places where A20 state is managed?
+            machine().cpu().setA20Enabled(data & 0x02);
             return;
         }
 
