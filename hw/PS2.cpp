@@ -26,6 +26,7 @@
 #include "PS2.h"
 #include "Common.h"
 #include "CPU.h"
+#include "machine.h"
 
 //#define PS2_DEBUG
 
@@ -41,6 +42,8 @@ PS2::~PS2()
 
 void PS2::reset()
 {
+    m_controlPortA = 0;
+    machine().cpu().setA20Enabled(false);
 }
 
 BYTE PS2::in8(WORD port)
@@ -58,10 +61,10 @@ void PS2::out8(WORD port, BYTE data)
 {
     if (port == 0x92) {
 #ifdef PS2_DEBUG
-        vlog(LogIO, "A20=%u->%u (System Control Port A)", g_cpu->isA20Enabled(), !!(data & 0x2));
+        vlog(LogIO, "A20=%u->%u (System Control Port A)", machine().cpu().isA20Enabled(), !!(data & 0x2));
 #endif
         m_controlPortA = data;
-        g_cpu->setA20Enabled(data & 0x2);
+        machine().cpu().setA20Enabled(data & 0x2);
         return;
     }
     IODevice::out8(port, data);
