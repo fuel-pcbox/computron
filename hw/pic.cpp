@@ -29,10 +29,8 @@
 #include "debug.h"
 #include "machine.h"
 
-// FIXME: These should not be globals.
-std::atomic<bool> PIC::s_haveRequests;
-WORD PIC::s_pendingRequests = 0x0000;
-QMutex PIC::s_mutex;
+// FIXME: This should not be global.
+std::atomic<WORD> PIC::s_pendingRequests;
 static bool s_ignoringIRQs = false;
 
 void PIC::setIgnoreAllIRQs(bool b)
@@ -42,9 +40,9 @@ void PIC::setIgnoreAllIRQs(bool b)
 
 void PIC::updatePendingRequests(Machine& machine)
 {
-    QMutexLocker locker(&s_mutex);
-    s_pendingRequests = (machine.masterPIC().getIRR() & ~machine.masterPIC().getIMR() ) | ((machine.slavePIC().getIRR() & ~machine.slavePIC().getIMR()) << 8);
-    s_haveRequests = s_pendingRequests != 0;
+    WORD masterRequests = (machine.masterPIC().getIRR() & ~machine.masterPIC().getIMR());
+    WORD slaveRequests = (machine.slavePIC().getIRR() & ~machine.slavePIC().getIMR());
+    s_pendingRequests = masterRequests | (slaveRequests << 8);
 }
 
 PIC::PIC(bool isMaster, Machine& machine)
@@ -172,42 +170,41 @@ void PIC::raiseIRQ(Machine& machine, BYTE num)
 
 void PIC::serviceIRQ(CPU& cpu)
 {
-    QMutexLocker lockerGlobal(&s_mutex);
-    Machine& machine = cpu.machine();
-
     if (s_ignoringIRQs)
         return;
 
-    if (!s_pendingRequests)
+    WORD pendingRequestsCopy = s_pendingRequests;
+    if (!pendingRequestsCopy)
         return;
 
-    BYTE interrupt_to_service = 0xFF;
+    Machine& machine = cpu.machine();
+
+    BYTE irqToService = 0xFF;
 
     for (int i = 0; i < 16; ++i) {
-        if (s_pendingRequests & (1 << i)) {
-            interrupt_to_service = i;
+        if (pendingRequestsCopy & (1 << i)) {
+            irqToService = i;
             break;
         }
     }
 
-    if (interrupt_to_service == 0xFF)
+    if (irqToService == 0xFF)
         return;
 
-    if (interrupt_to_service < 8) {
-        machine.masterPIC().m_irr &= ~(1 << interrupt_to_service);
-        machine.masterPIC().m_isr |= (1 << interrupt_to_service);
+    if (irqToService < 8) {
+        machine.masterPIC().m_irr &= ~(1 << irqToService);
+        machine.masterPIC().m_isr |= (1 << irqToService);
 
-        cpu.jumpToInterruptHandler(machine.masterPIC().m_isrBase | interrupt_to_service, true);
+        cpu.jumpToInterruptHandler(machine.masterPIC().m_isrBase | irqToService, true);
     }
     else
     {
-        machine.slavePIC().m_irr &= ~(1 << (interrupt_to_service - 8));
-        machine.slavePIC().m_isr |= (1 << (interrupt_to_service - 8));
+        machine.slavePIC().m_irr &= ~(1 << (irqToService - 8));
+        machine.slavePIC().m_isr |= (1 << (irqToService - 8));
 
-        cpu.jumpToInterruptHandler(machine.slavePIC().m_isrBase | (interrupt_to_service - 8), true);
+        cpu.jumpToInterruptHandler(machine.slavePIC().m_isrBase | (irqToService - 8), true);
     }
 
-    lockerGlobal.unlock();
     updatePendingRequests(machine);
 
     cpu.setState(CPU::Alive);

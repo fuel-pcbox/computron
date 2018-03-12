@@ -26,7 +26,6 @@
 #pragma once
 
 #include "iodevice.h"
-#include <QtCore/QMutex>
 
 class CPU;
 
@@ -52,9 +51,11 @@ public:
     static void serviceIRQ(CPU&);
     static void raiseIRQ(Machine&, BYTE num);
     static void setIgnoreAllIRQs(bool);
-    static bool hasPendingIRQ() { return s_haveRequests; }
+    static bool hasPendingIRQ() { return s_pendingRequests; }
 
 private:
+    static void updatePendingRequests(Machine&);
+
     WORD m_baseAddress { 0 };
     BYTE m_isrBase { 0 };
     BYTE m_irqBase { 0 };
@@ -67,8 +68,5 @@ private:
     bool m_icw4Expected { false };
     bool m_readISR { false };
 
-    static WORD s_pendingRequests;
-    static void updatePendingRequests(Machine&);
-    static QMutex s_mutex;
-    static std::atomic<bool> s_haveRequests;
+    static std::atomic<WORD> s_pendingRequests;
 };
