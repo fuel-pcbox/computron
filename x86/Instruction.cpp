@@ -1240,9 +1240,9 @@ QString Instruction::toString(DWORD origin, bool x32) const
     case OP_reg32_RM8:
         return QString("%1 %2, %3").arg(mnemonic).arg(reg32Name()).arg(RM8ARGS);
     case OP_RM16_imm16:
-        return QString("%1 %2, 0x%3").arg(mnemonic).arg(reg16Name()).arg(IMM16ARGS);
+        return QString("%1 %2, 0x%3").arg(mnemonic).arg(RM16ARGS).arg(IMM16ARGS);
     case OP_RM32_imm32:
-        return QString("%1 %2, 0x%3").arg(mnemonic).arg(reg32Name()).arg(IMM32ARGS);
+        return QString("%1 %2, 0x%3").arg(mnemonic).arg(RM32ARGS).arg(IMM32ARGS);
     case OP_RM16_seg:
         return QString("%1 %2, %3").arg(mnemonic).arg(RM16ARGS).arg(SEGARGS);
     case OP_RM32_seg:
