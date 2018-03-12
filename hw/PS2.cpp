@@ -29,12 +29,10 @@
 
 //#define PS2_DEBUG
 
-static const WORD SystemControlPortA = 0x92;
-
 PS2::PS2(Machine& machine)
     : IODevice("PS2", machine)
 {
-    listen(SystemControlPortA, IODevice::ReadWrite);
+    listen(0x92, IODevice::ReadWrite);
 }
 
 PS2::~PS2()
@@ -47,22 +45,22 @@ void PS2::reset()
 
 BYTE PS2::in8(WORD port)
 {
-    if (port == SystemControlPortA) {
-        BYTE data = g_cpu->isA20Enabled() << 1;
+    if (port == 0x92) {
 #ifdef PS2_DEBUG
-        vlog(LogIO, "System Control Port A read, returning %02X", data);
+        vlog(LogIO, "System Control Port A read, returning %02X", m_controlPortA);
 #endif
-        return data;
+        return m_controlPortA;
     }
     return IODevice::in8(port);
 }
 
 void PS2::out8(WORD port, BYTE data)
 {
-    if (port == SystemControlPortA) {
+    if (port == 0x92) {
 #ifdef PS2_DEBUG
         vlog(LogIO, "A20=%u->%u (System Control Port A)", g_cpu->isA20Enabled(), !!(data & 0x2));
 #endif
+        m_controlPortA = data;
         g_cpu->setA20Enabled(data & 0x2);
         return;
     }

@@ -37,6 +37,9 @@ public:
     virtual void reset() override;
     virtual BYTE in8(WORD port) override;
     virtual void out8(WORD port, BYTE data) override;
+
+private:
+    BYTE m_controlPortA { 0 };
 };
 
 #endif
