@@ -31,6 +31,7 @@
 #include "OwnPtr.h"
 #include "Common.h"
 #include <QHash>
+#include <QSet>
 
 class IODevice;
 class BusMouse;
@@ -85,11 +86,15 @@ public:
     void resetAllIODevices();
     void notifyScreen();
 
+    void forEachIODevice(std::function<void(IODevice&)>);
+
     IODevice* inputDeviceForPort(WORD port);
     IODevice* outputDeviceForPort(WORD port);
 
     void registerInputDevice(IODevicePass, WORD port, IODevice&);
     void registerOutputDevice(IODevicePass, WORD port, IODevice&);
+    void registerDevice(IODevicePass, IODevice&);
+    void unregisterDevice(IODevicePass, IODevice&);
 
 public slots:
     void start();
@@ -101,7 +106,6 @@ private slots:
     void onWorkerFinished();
 
 private:
-    void forEachIODevice(std::function<void(IODevice&)>);
     bool loadFile(DWORD address, const QString& fileName);
 
     void applySettings();
@@ -133,6 +137,8 @@ private:
     OwnPtr<VomCtl> m_vomCtl;
 
     MachineWidget* m_widget { nullptr };
+
+    QSet<IODevice*> m_allDevices;
 
     IODevice* m_fastInputDevices[1024];
     IODevice* m_fastOutputDevices[1024];

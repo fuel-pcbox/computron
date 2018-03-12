@@ -229,17 +229,9 @@ void Machine::notifyScreen()
 
 void Machine::forEachIODevice(std::function<void (IODevice &)> function)
 {
-    function(*m_pit);
-    function(*m_masterPIC);
-    function(*m_slavePIC);
-    function(*m_vga);
-    function(*m_vomCtl);
-    function(*m_cmos);
-    function(*m_busMouse);
-    function(*m_keyboard);
-    function(*m_fdc);
-    function(*m_ide);
-    function(*m_ps2);
+    for (IODevice* device : m_allDevices) {
+        function(*device);
+    }
 }
 
 void Machine::resetAllIODevices()
@@ -271,4 +263,14 @@ void Machine::registerOutputDevice(IODevicePass, WORD port, IODevice& device)
     if (port < 1024)
         m_fastOutputDevices[port] = &device;
     m_allOutputDevices.insert(port, &device);
+}
+
+void Machine::registerDevice(IODevicePass, IODevice& device)
+{
+    m_allDevices.insert(&device);
+}
+
+void Machine::unregisterDevice(IODevicePass, IODevice& device)
+{
+    m_allDevices.remove(&device);
 }

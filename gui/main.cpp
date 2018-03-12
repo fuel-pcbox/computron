@@ -88,8 +88,9 @@ int main(int argc, char** argv)
 
     QFile::remove("log.txt");
 
-    foreach (IODevice *device, IODevice::devices())
-        vlog(LogInit, "%s present", device->name());
+    machine->forEachIODevice([] (IODevice& device) {
+        vlog(LogInit, "%s present", device.name());
+    });
 
     if (machine->settings().isForAutotest()) {
         machine->cpu().mainLoop();

@@ -31,23 +31,17 @@
 
 QSet<WORD> IODevice::s_ignorePorts;
 
-QList<IODevice*>& IODevice::devices()
-{
-    static QList<IODevice*> s_devices;
-    return s_devices;
-}
-
 IODevice::IODevice(const char* name, Machine& machine, int irq)
     : m_machine(machine)
     , m_name(name)
     , m_irq(irq)
 {
-    devices().append(this);
+    m_machine.registerDevice(IODevicePass(), *this);
 }
 
 IODevice::~IODevice()
 {
-    devices().removeAll(this);
+    m_machine.unregisterDevice(IODevicePass(), *this);
 }
 
 void IODevice::listen(WORD port, ListenMask mask)
