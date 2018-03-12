@@ -28,6 +28,7 @@
 #include "types.h"
 #include <QString>
 
+#define CRASH() __builtin_trap()
 #define ALWAYS_INLINE __attribute__ ((always_inline)) inline
 #define PURE __attribute__ ((pure))
 #define LIKELY(x) __builtin_expect(!!(x), 1)
@@ -87,11 +88,5 @@ inline WORD read16FromPointer(WORD* pointer)
 #else
     return *pointer;
 #endif
-}
-
-inline void CRASH()
-{
-    WORD* p = reinterpret_cast<WORD*>(0xBB0DB00F);
-    *p = 0xDEAD;
 }
 
