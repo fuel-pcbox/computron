@@ -68,6 +68,8 @@ struct VGA::Private
 
     bool screenInRefresh { false };
     BYTE statusRegister { 0 };
+
+    BYTE miscellaneousOutputRegister { 0 };
 };
 
 static const RGBColor default_vga_color_registers[256] =
@@ -91,6 +93,7 @@ VGA::VGA(Machine& m)
     listen(0x3BA, IODevice::ReadWrite);
     listen(0x3C0, IODevice::ReadWrite);
     listen(0x3C1, IODevice::ReadOnly);
+    listen(0x3C2, IODevice::WriteOnly);
     listen(0x3C4, IODevice::ReadWrite);
     listen(0x3C5, IODevice::ReadWrite);
     listen(0x3C7, IODevice::WriteOnly);
@@ -145,6 +148,8 @@ void VGA::reset()
     d->paletteDirty = true;
     d->screenInRefresh = false;
     d->statusRegister = 0;
+
+    d->miscellaneousOutputRegister = 0xff;
 }
 
 void VGA::out8(WORD port, BYTE data)
@@ -172,6 +177,12 @@ void VGA::out8(WORD port, BYTE data)
 
     case 0x3BA:
         vlog(LogVGA, "Writing FCR");
+        break;
+
+    case 0x3C2:
+        vlog(LogVGA, "Writing MCR, data: %02x", data);
+        d->miscellaneousOutputRegister = data;
+        ASSERT_NOT_REACHED();
         break;
 
     case 0x3C0: {
@@ -353,10 +364,8 @@ BYTE VGA::in8(WORD port)
         return 0x00;
 
     case 0x3CC:
-        vlog(LogVGA, "Read MOR (Miscellaneous Output Register)");
-        // 0x01: I/O at 0x3Dx (otherwise at 0x3Bx)
-        // 0x02: RAM access enabled?
-        return 0x03;
+        vlog(LogVGA, "Read MOR (Miscellaneous Output Register): %02x", d->miscellaneousOutputRegister);
+        return d->miscellaneousOutputRegister;
 
     case 0x3CF:
         // FIXME: Find the number of valid registers and do something for OOB access.
