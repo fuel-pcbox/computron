@@ -151,7 +151,7 @@ void MemoryOrRegisterReference::decode(InstructionStream& stream, bool a32)
     }
 }
 
-void MemoryOrRegisterReference::decode16(InstructionStream&)
+ALWAYS_INLINE void MemoryOrRegisterReference::decode16(InstructionStream&)
 {
     ASSERT(!m_a32);
 
@@ -174,7 +174,7 @@ void MemoryOrRegisterReference::decode16(InstructionStream&)
     }
 }
 
-void MemoryOrRegisterReference::decode32(InstructionStream& stream)
+ALWAYS_INLINE void MemoryOrRegisterReference::decode32(InstructionStream& stream)
 {
     ASSERT(m_a32);
 
@@ -208,7 +208,7 @@ void MemoryOrRegisterReference::decode32(InstructionStream& stream)
     }
 }
 
-void MemoryOrRegisterReference::resolve16()
+ALWAYS_INLINE void MemoryOrRegisterReference::resolve16()
 {
     ASSERT(m_cpu);
     ASSERT(!m_a32);
@@ -235,7 +235,7 @@ void MemoryOrRegisterReference::resolve16()
     }
 }
 
-void MemoryOrRegisterReference::resolve32()
+ALWAYS_INLINE void MemoryOrRegisterReference::resolve32()
 {
     ASSERT(m_cpu);
     ASSERT(m_a32);

@@ -1,11 +1,14 @@
 macx:QMAKE_MAC_SDK = macosx10.9
+CONFIG += debug_and_release
 TEMPLATE = app
 TARGET = computron
 DEPENDPATH += . x86 bios gui hw include
 INCLUDEPATH += . include gui hw x86
-QMAKE_CXXFLAGS += -std=c++17 -g -O0 -W -Wall -Wimplicit-fallthrough -fno-rtti
+QMAKE_CXXFLAGS += -std=c++17 -g -W -Wall -Wimplicit-fallthrough -fno-rtti
 
-DEFINES += CT_DEBUG
+QMAKE_CXXFLAGS_RELEASE += -O3
+QMAKE_CXXFLAGS_DEBUG += -O0
+
 DEFINES += CT_TRACE
 //DEFINES += CT_DETERMINISTIC
 CONFIG += silent

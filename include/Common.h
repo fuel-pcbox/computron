@@ -30,6 +30,8 @@
 
 #define ALWAYS_INLINE __attribute__ ((always_inline)) inline
 #define PURE __attribute__ ((pure))
+#define LIKELY(x) __builtin_expect(!!(x), 1)
+#define UNLIKELY(x) __builtin_expect(!!(x), 0)
 #define UNUSED_PARAM(x) (void)(x)
 
 #define MAX_FN_LENGTH	128

@@ -1383,3 +1383,11 @@ ALWAYS_INLINE DWORD& Instruction::reg32()
 #endif
     return *m_cpu->treg32[registerIndex()];
 }
+
+ALWAYS_INLINE void Instruction::execute(CPU& cpu)
+{
+    m_cpu = &cpu;
+    if (m_hasRM)
+        m_modrm.resolve(cpu);
+    (cpu.*m_impl)(*this);
+}

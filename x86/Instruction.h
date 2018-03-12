@@ -189,6 +189,7 @@ private:
 
     MemoryOrRegisterReference m_modrm;
 
+    InstructionImpl m_impl;
     InstructionDescriptor* m_descriptor { nullptr };
     CPU* m_cpu { nullptr };
 };

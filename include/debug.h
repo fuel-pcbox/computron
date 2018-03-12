@@ -25,7 +25,7 @@
 
 #pragma once
 
-#ifdef CT_DEBUG
+#ifndef NDEBUG
 #include <QtCore/qdebug.h>
 #include <assert.h>
 #define ASSERT assert

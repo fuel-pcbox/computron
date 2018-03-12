@@ -856,7 +856,7 @@ Instruction::Instruction(InstructionStream& stream, bool o32, bool a32)
         m_descriptor = &m_descriptor->slashes[slash()];
     }
 
-    if (!m_descriptor->impl) {
+    if (UNLIKELY(!m_descriptor->impl)) {
         if (m_hasSubOp) {
             if (hasSlash)
                 vlog(LogCPU, "Instruction %02X %02X /%u not understood", m_op, m_subOp, slash());
@@ -872,6 +872,8 @@ Instruction::Instruction(InstructionStream& stream, bool o32, bool a32)
         return;
     }
 
+    m_impl = m_descriptor->impl;
+
     m_imm1Bytes = m_descriptor->imm1BytesForAddressSize(m_a32);
     m_imm2Bytes = m_descriptor->imm2BytesForAddressSize(m_a32);
 
@@ -880,14 +882,6 @@ Instruction::Instruction(InstructionStream& stream, bool o32, bool a32)
         m_imm2 = stream.readBytes(m_imm2Bytes);
     if (m_imm1Bytes)
         m_imm1 = stream.readBytes(m_imm1Bytes);
-}
-
-void Instruction::execute(CPU& cpu)
-{
-    m_cpu = &cpu;
-    if (m_hasRM)
-        m_modrm.resolve(cpu);
-    (cpu.*m_descriptor->impl)(*this);
 }
 
 DWORD InstructionStream::readBytes(unsigned count)

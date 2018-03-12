@@ -193,7 +193,7 @@ DWORD CPU::readInstruction32()
 void CPU::decodeNext()
 {
 #ifdef CT_TRACE
-    if (m_isForAutotest)
+    if (UNLIKELY(m_isForAutotest))
         dumpTrace();
 #endif
 
@@ -207,14 +207,14 @@ void CPU::decodeNext()
 void CPU::execute(Instruction&& insn)
 {
 #ifdef CRASH_ON_VM
-    if (getVM()) {
+    if (UNLIKELY(getVM())) {
         dumpTrace();
         ASSERT_NOT_REACHED();
     }
 #endif
 
 #ifdef CRASH_ON_OPCODE_00_00
-    if (insn.op() == 0 && insn.rm() == 0) {
+    if (UNLIKELY(insn.op() == 0 && insn.rm() == 0)) {
         dumpTrace();
         ASSERT_NOT_REACHED();
     }
@@ -503,13 +503,13 @@ bool CPU::mainLoopSlowStuff()
 void CPU::mainLoop()
 {
     forever {
-        if (m_mainLoopNeedsSlowStuff) {
+        if (UNLIKELY(m_mainLoopNeedsSlowStuff)) {
             mainLoopSlowStuff();
         }
 
         executeOneInstruction();
 
-        if (getTF()) {
+        if (UNLIKELY(getTF())) {
             // The Trap Flag is set, so we'll execute one instruction and
             // call ISR 1 as soon as it's finished.
             //

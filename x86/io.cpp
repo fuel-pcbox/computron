@@ -185,13 +185,11 @@ void CPU::_INSB(Instruction&)
 
 void CPU::out(WORD port, BYTE value)
 {
-#ifdef CT_DEBUG
     if (options.iopeek) {
         if (port != 0x00E6 && port != 0x0020 && port != 0x3D4 && port != 0x03d5 && port != 0xe2 && port != 0xe0) {
             vlog(LogIO, "CPU::out: %02X --> %04X", value, port);
         }
     }
-#endif
 
     if (auto* device = machine().outputDeviceForPort(port)) {
         device->out8(port, value);
@@ -212,12 +210,11 @@ BYTE CPU::in(WORD port)
             vlog(LogAlert, "Unhandled I/O read from port %04X", port);
         value = IODevice::JunkValue;
     }
-#ifdef CT_DEBUG
+
     if (options.iopeek) {
         if (port != 0x00E6 && port != 0x0020 && port != 0x3D4 && port != 0x03D5 && port != 0x3DA) {
             vlog(LogIO, "CPU::in: %04X = %02X", port, value);
         }
     }
-#endif
     return value;
 }
