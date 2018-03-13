@@ -81,6 +81,46 @@ READONLY_AL_imm8(doAnd, _TEST_AL_imm8)
 READONLY_AX_imm16(doAnd, _TEST_AX_imm16)
 READONLY_EAX_imm32(doAnd, _TEST_EAX_imm32)
 
+DEFAULT_RM8_imm8(doROL, _ROL_RM8_imm8)
+DEFAULT_RM16_imm8(doROL, _ROL_RM16_imm8)
+DEFAULT_RM32_imm8(doROL, _ROL_RM32_imm8)
+DEFAULT_RM8_1(doROL, _ROL_RM8_1)
+DEFAULT_RM16_1(doROL, _ROL_RM16_1)
+DEFAULT_RM32_1(doROL, _ROL_RM32_1)
+DEFAULT_RM8_CL(doROL, _ROL_RM8_CL)
+DEFAULT_RM16_CL(doROL, _ROL_RM16_CL)
+DEFAULT_RM32_CL(doROL, _ROL_RM32_CL)
+
+DEFAULT_RM8_imm8(doROR, _ROR_RM8_imm8)
+DEFAULT_RM16_imm8(doROR, _ROR_RM16_imm8)
+DEFAULT_RM32_imm8(doROR, _ROR_RM32_imm8)
+DEFAULT_RM8_1(doROR, _ROR_RM8_1)
+DEFAULT_RM16_1(doROR, _ROR_RM16_1)
+DEFAULT_RM32_1(doROR, _ROR_RM32_1)
+DEFAULT_RM8_CL(doROR, _ROR_RM8_CL)
+DEFAULT_RM16_CL(doROR, _ROR_RM16_CL)
+DEFAULT_RM32_CL(doROR, _ROR_RM32_CL)
+
+DEFAULT_RM8_imm8(doSHL, _SHL_RM8_imm8)
+DEFAULT_RM16_imm8(doSHL, _SHL_RM16_imm8)
+DEFAULT_RM32_imm8(doSHL, _SHL_RM32_imm8)
+DEFAULT_RM8_1(doSHL, _SHL_RM8_1)
+DEFAULT_RM16_1(doSHL, _SHL_RM16_1)
+DEFAULT_RM32_1(doSHL, _SHL_RM32_1)
+DEFAULT_RM8_CL(doSHL, _SHL_RM8_CL)
+DEFAULT_RM16_CL(doSHL, _SHL_RM16_CL)
+DEFAULT_RM32_CL(doSHL, _SHL_RM32_CL)
+
+DEFAULT_RM8_imm8(doSHR, _SHR_RM8_imm8)
+DEFAULT_RM16_imm8(doSHR, _SHR_RM16_imm8)
+DEFAULT_RM32_imm8(doSHR, _SHR_RM32_imm8)
+DEFAULT_RM8_1(doSHR, _SHR_RM8_1)
+DEFAULT_RM16_1(doSHR, _SHR_RM16_1)
+DEFAULT_RM32_1(doSHR, _SHR_RM32_1)
+DEFAULT_RM8_CL(doSHR, _SHR_RM8_CL)
+DEFAULT_RM16_CL(doSHR, _SHR_RM16_CL)
+DEFAULT_RM32_CL(doSHR, _SHR_RM32_CL)
+
 void CPU::_CBW(Instruction&)
 {
     if (getAL() & 0x80)
@@ -157,6 +197,79 @@ T CPU::doAnd(T dest, T src)
     updateCpuFlags(*this, result);
     setOF(0);
     setCF(0);
+    return result;
+}
+
+template<typename T>
+T CPU::doROL(T data, int steps)
+{
+    T result = data;
+    steps &= 0x1f;
+    if (!steps)
+        return data;
+
+    steps &= BitSizeOfType<T>::bits - 1;
+    result = (data << steps) | (data >> (BitSizeOfType<T>::bits - steps));
+    setCF(result & 1);
+    if (steps == 1)
+        setOF(((result >> (BitSizeOfType<T>::bits - 1)) & 1) ^ getCF());
+
+    return result;
+}
+
+template<typename T>
+T CPU::doROR(T data, int steps)
+{
+    steps &= 0x1f;
+    if (!steps)
+        return data;
+
+    T result = data;
+    steps &= BitSizeOfType<T>::bits - 1;
+    result = (data >> steps) | (data << (BitSizeOfType<T>::bits - steps));
+    setCF((result >> (BitSizeOfType<T>::bits - 1)) & 1);
+
+    if (steps == 1)
+        setOF((result >> (BitSizeOfType<T>::bits - 1)) ^ ((result >> (BitSizeOfType<T>::bits - 2) & 1)));
+
+    return result;
+}
+
+template<typename T>
+T CPU::doSHR(T data, int steps)
+{
+    T result = data;
+    steps &= 0x1F;
+    if (!steps)
+        return data;
+
+    if (steps <= BitSizeOfType<T>::bits) {
+        setCF((result >> (steps - 1)) & 1);
+        if (steps == 1)
+            setOF((data >> (BitSizeOfType<T>::bits - 1)) & 1);
+    }
+    result >>= steps;
+
+    updateFlags(result, BitSizeOfType<T>::bits);
+    return result;
+}
+
+template<typename T>
+T CPU::doSHL(T data, int steps)
+{
+    T result = data;
+    steps &= 0x1F;
+    if (!steps)
+        return data;
+
+    if (steps <= BitSizeOfType<T>::bits) {
+        setCF(result >> (BitSizeOfType<T>::bits - steps) & 1);
+    }
+    result <<= steps;
+    if (steps == 1)
+        setOF((result >> (BitSizeOfType<T>::bits - 1)) ^ getCF());
+
+    updateFlags(result, BitSizeOfType<T>::bits);
     return result;
 }
 

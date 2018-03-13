@@ -969,6 +969,46 @@ protected:
     void _BSR_reg16_RM16(Instruction&);
     void _BSR_reg32_RM32(Instruction&);
 
+    void _ROL_RM8_imm8(Instruction&);
+    void _ROL_RM16_imm8(Instruction&);
+    void _ROL_RM32_imm8(Instruction&);
+    void _ROL_RM8_1(Instruction&);
+    void _ROL_RM16_1(Instruction&);
+    void _ROL_RM32_1(Instruction&);
+    void _ROL_RM8_CL(Instruction&);
+    void _ROL_RM16_CL(Instruction&);
+    void _ROL_RM32_CL(Instruction&);
+
+    void _ROR_RM8_imm8(Instruction&);
+    void _ROR_RM16_imm8(Instruction&);
+    void _ROR_RM32_imm8(Instruction&);
+    void _ROR_RM8_1(Instruction&);
+    void _ROR_RM16_1(Instruction&);
+    void _ROR_RM32_1(Instruction&);
+    void _ROR_RM8_CL(Instruction&);
+    void _ROR_RM16_CL(Instruction&);
+    void _ROR_RM32_CL(Instruction&);
+
+    void _SHL_RM8_imm8(Instruction&);
+    void _SHL_RM16_imm8(Instruction&);
+    void _SHL_RM32_imm8(Instruction&);
+    void _SHL_RM8_1(Instruction&);
+    void _SHL_RM16_1(Instruction&);
+    void _SHL_RM32_1(Instruction&);
+    void _SHL_RM8_CL(Instruction&);
+    void _SHL_RM16_CL(Instruction&);
+    void _SHL_RM32_CL(Instruction&);
+
+    void _SHR_RM8_imm8(Instruction&);
+    void _SHR_RM16_imm8(Instruction&);
+    void _SHR_RM32_imm8(Instruction&);
+    void _SHR_RM8_1(Instruction&);
+    void _SHR_RM16_1(Instruction&);
+    void _SHR_RM32_1(Instruction&);
+    void _SHR_RM8_CL(Instruction&);
+    void _SHR_RM16_CL(Instruction&);
+    void _SHR_RM32_CL(Instruction&);
+
     void _SHLD_RM16_reg16_imm8(Instruction&);
     void _SHLD_RM32_reg32_imm8(Instruction&);
     void _SHLD_RM16_reg16_CL(Instruction&);
@@ -1075,17 +1115,14 @@ private:
 
     void translateAddressSlowCase(DWORD linearAddress, DWORD& physicalAddress, MemoryAccessType);
 
-    template<typename T>
-    T rightShift(T, int steps);
-
-    template<typename T>
-    T leftShift(T, int steps);
+    template<typename T> T doSHL(T, int steps);
+    template<typename T> T doSHR(T, int steps);
 
     template<typename T> T doSHLD(T, T, int steps);
     template<typename T> T doSHRD(T, T, int steps);
 
-    template<typename T> T doRol(T, int steps);
-    template<typename T> T doRor(T, int steps);
+    template<typename T> T doROL(T, int steps);
+    template<typename T> T doROR(T, int steps);
 
     template<typename T> T doXor(T, T);
     template<typename T> T doOr(T, T);

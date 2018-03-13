@@ -23,8 +23,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __templates_h__
-#define __templates_h__
+#pragma once
 
 #define DEFAULT_RM8_reg8(helper, name) \
     void CPU::name(Instruction& insn) { \
@@ -174,4 +173,38 @@
         modrm.write32(helper(modrm.read32(), insn.reg32())); \
     }
 
-#endif /* __templates_h__ */
+#define DEFAULT_RM8_1(helper, name) \
+    void CPU::name(Instruction& insn) { \
+        auto& modrm = insn.modrm(); \
+        modrm.write8(helper(modrm.read8(), 1)); \
+    }
+
+#define DEFAULT_RM16_1(helper, name) \
+    void CPU::name(Instruction& insn) { \
+        auto& modrm = insn.modrm(); \
+        modrm.write16(helper(modrm.read16(), 1)); \
+    }
+
+#define DEFAULT_RM32_1(helper, name) \
+    void CPU::name(Instruction& insn) { \
+        auto& modrm = insn.modrm(); \
+        modrm.write32(helper(modrm.read32(), 1)); \
+    }
+
+#define DEFAULT_RM8_CL(helper, name) \
+    void CPU::name(Instruction& insn) { \
+        auto& modrm = insn.modrm(); \
+        modrm.write8(helper(modrm.read8(), getCL())); \
+    }
+
+#define DEFAULT_RM16_CL(helper, name) \
+    void CPU::name(Instruction& insn) { \
+        auto& modrm = insn.modrm(); \
+        modrm.write16(helper(modrm.read16(), getCL())); \
+    }
+
+#define DEFAULT_RM32_CL(helper, name) \
+    void CPU::name(Instruction& insn) { \
+        auto& modrm = insn.modrm(); \
+        modrm.write32(helper(modrm.read32(), getCL())); \
+    }
