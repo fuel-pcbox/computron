@@ -131,6 +131,26 @@ DEFAULT_RM8_CL(doSAR, _SAR_RM8_CL)
 DEFAULT_RM16_CL(doSAR, _SAR_RM16_CL)
 DEFAULT_RM32_CL(doSAR, _SAR_RM32_CL)
 
+DEFAULT_RM8_imm8(doRCL, _RCL_RM8_imm8)
+DEFAULT_RM16_imm8(doRCL, _RCL_RM16_imm8)
+DEFAULT_RM32_imm8(doRCL, _RCL_RM32_imm8)
+DEFAULT_RM8_1(doRCL, _RCL_RM8_1)
+DEFAULT_RM16_1(doRCL, _RCL_RM16_1)
+DEFAULT_RM32_1(doRCL, _RCL_RM32_1)
+DEFAULT_RM8_CL(doRCL, _RCL_RM8_CL)
+DEFAULT_RM16_CL(doRCL, _RCL_RM16_CL)
+DEFAULT_RM32_CL(doRCL, _RCL_RM32_CL)
+
+DEFAULT_RM8_imm8(doRCR, _RCR_RM8_imm8)
+DEFAULT_RM16_imm8(doRCR, _RCR_RM16_imm8)
+DEFAULT_RM32_imm8(doRCR, _RCR_RM32_imm8)
+DEFAULT_RM8_1(doRCR, _RCR_RM8_1)
+DEFAULT_RM16_1(doRCR, _RCR_RM16_1)
+DEFAULT_RM32_1(doRCR, _RCR_RM32_1)
+DEFAULT_RM8_CL(doRCR, _RCR_RM8_CL)
+DEFAULT_RM16_CL(doRCR, _RCR_RM16_CL)
+DEFAULT_RM32_CL(doRCR, _RCR_RM32_CL)
+
 void CPU::_CBW(Instruction&)
 {
     if (getAL() & 0x80)
@@ -283,19 +303,10 @@ T CPU::doSHL(T data, int steps)
     return result;
 }
 
-inline DWORD allOnes(unsigned bits)
-{
-    if (bits == 8)
-        return 0xFF;
-    if (bits == 16)
-        return 0xFFFF;
-    ASSERT(bits == 32);
-    return 0xFFFFFFFF;
-}
-
 template<typename T>
 T CPU::doSAR(T data, int steps)
 {
+    // FIXME: This is painfully unoptimized.
     steps &= 0x1f;
     if (!steps)
         return data;
@@ -315,45 +326,56 @@ T CPU::doSAR(T data, int steps)
     return result;
 }
 
-DWORD cpu_rcl(CPU& cpu, DWORD data, BYTE steps, BYTE bits)
+template<typename T>
+inline T allOnes()
 {
-    DWORD result = data;
-    DWORD n;
-    DWORD mask = allOnes(bits);
+    if (BitSizeOfType<T>::bits == 8)
+        return 0xff;
+    if (BitSizeOfType<T>::bits == 16)
+        return 0xffff;
+    if (BitSizeOfType<T>::bits == 32)
+        return 0xffffffff;
+}
 
-    steps &= 0x1F;
+template<typename T>
+T CPU::doRCL(T data, int steps)
+{
+    // FIXME: This is painfully unoptimized.
+    T result = data;
+    T mask = allOnes<T>();
+    steps &= 0x1f;
     if (!steps)
         return data;
 
-    for (BYTE i = 0; i < steps; ++i) {
-        n = result;
-        result = ((result<<1) & mask) | cpu.getCF();
-        cpu.setCF((n>>(bits-1)) & 1);
+    for (int i = 0; i < steps; ++i) {
+        T n = result;
+        result = ((result << 1) & mask) | getCF();
+        setCF((n >> (BitSizeOfType<T>::bits - 1)) & 1);
     }
 
     if (steps == 1)
-        cpu.setOF((result >> (bits - 1)) ^ cpu.getCF());
+        setOF((result >> (BitSizeOfType<T>::bits - 1)) ^ getCF());
 
     return result;
 }
 
-DWORD cpu_rcr(CPU& cpu, DWORD data, BYTE steps, BYTE bits)
+template<typename T>
+T CPU::doRCR(T data, int steps)
 {
-    DWORD result = data;
-    DWORD n;
-
-    steps &= 0x1F;
+    // FIXME: This is painfully unoptimized.
+    T result = data;
+    steps &= 0x1f;
     if (!steps)
         return data;
 
-    for (BYTE i = 0; i < steps; ++i) {
-        n = result;
-        result = (result>>1) | (cpu.getCF()<<(bits-1));
-        cpu.setCF(n & 1);
+    for (int i = 0; i < steps; ++i) {
+        T n = result;
+        result = (result >> 1) | (getCF() << (BitSizeOfType<T>::bits - 1));
+        setCF(n & 1);
     }
 
     if (steps == 1)
-        cpu.setOF((result >> (bits - 1)) ^ ((result >> (bits - 2) & 1)));
+        setOF((result >> (BitSizeOfType<T>::bits - 1)) ^ ((result >> (BitSizeOfType<T>::bits - 2) & 1)));
 
     return result;
 }

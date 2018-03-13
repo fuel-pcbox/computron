@@ -1019,6 +1019,26 @@ protected:
     void _SAR_RM16_CL(Instruction&);
     void _SAR_RM32_CL(Instruction&);
 
+    void _RCL_RM8_imm8(Instruction&);
+    void _RCL_RM16_imm8(Instruction&);
+    void _RCL_RM32_imm8(Instruction&);
+    void _RCL_RM8_1(Instruction&);
+    void _RCL_RM16_1(Instruction&);
+    void _RCL_RM32_1(Instruction&);
+    void _RCL_RM8_CL(Instruction&);
+    void _RCL_RM16_CL(Instruction&);
+    void _RCL_RM32_CL(Instruction&);
+
+    void _RCR_RM8_imm8(Instruction&);
+    void _RCR_RM16_imm8(Instruction&);
+    void _RCR_RM32_imm8(Instruction&);
+    void _RCR_RM8_1(Instruction&);
+    void _RCR_RM16_1(Instruction&);
+    void _RCR_RM32_1(Instruction&);
+    void _RCR_RM8_CL(Instruction&);
+    void _RCR_RM16_CL(Instruction&);
+    void _RCR_RM32_CL(Instruction&);
+
     void _SHLD_RM16_reg16_imm8(Instruction&);
     void _SHLD_RM32_reg32_imm8(Instruction&);
     void _SHLD_RM16_reg16_CL(Instruction&);

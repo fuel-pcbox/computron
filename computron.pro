@@ -88,7 +88,6 @@ SOURCES += debug.cpp \
            x86/stack.cpp \
            x86/string.cpp \
            x86/Tasking.cpp \
-           x86/wrap.cpp \
            bios/floppy.cpp \
            gui/machinewidget.cpp \
            gui/main.cpp \
