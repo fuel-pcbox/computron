@@ -51,7 +51,7 @@ unsigned CPU::dumpDisassembledInternal(SegmentDescriptor& descriptor, DWORD offs
     for (unsigned i = 0; i < insn.length(); ++i)
         p += sprintf(p, "%02x", data[i]);
 
-    for (unsigned i = 0; i < (14-(insn.length()*2)); ++i)
+    for (unsigned i = 0; i < (32-(insn.length()*2)); ++i)
         p += sprintf(p, " ");
 
     if (insn.isValid())
