@@ -166,7 +166,11 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
     if (source == JumpType::CALL || source == JumpType::INT) {
         incomingEFlags |= (1 << 14);  // Set NT in incoming task.
     }
-    setEFlags(incomingEFlags);
+
+    if (incomingTSS.is32Bit())
+        setEFlags(incomingEFlags);
+    else
+        setFlags(incomingEFlags);
 
     setEAX(incomingTSS.getEAX());
     setEBX(incomingTSS.getEBX());
@@ -199,6 +203,10 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
     if (getTF()) {
         vlog(LogCPU, "Leaving task switch with TF=1");
     }
+
+#ifdef DEBUG_TASK_SWITCH
+    vlog(LogCPU, "Task switched to %08x, cpl=%u, iopl=%u", incomingTSSDescriptor.base(), getCPL(), getIOPL());
+#endif
 }
 
 void CPU::dumpTSS(const TSS &tss)
@@ -209,6 +217,15 @@ void CPU::dumpTSS(const TSS &tss)
     vlog(LogCPU, "ldt=%04x backlink=%04x cr3=%08x", tss.getLDT(), tss.getBacklink(), tss.getCR3());
     vlog(LogCPU, "ds=%04x ss=%04x es=%04x fs=%04x gs=%04x", tss.getDS(), tss.getSS(), tss.getES(), tss.getFS(), tss.getGS());
     vlog(LogCPU, "cs=%04x eip=%08x eflags=%08x", tss.getCS(), tss.getEIP(), tss.getEFlags());
+
+#ifdef DEBUG_TASK_SWITCH
+    bool isGlobal = (tss.getCS() & 0x04) == 0;
+    auto newCSDesc = isGlobal
+            ? getDescriptor(tss.getCS(), SegmentRegisterIndex::CS)
+            : getDescriptor("LDT", getDescriptor(tss.getLDT()).asLDTDescriptor().base(), getDescriptor(tss.getLDT()).asLDTDescriptor().limit(), tss.getCS(), true);
+
+    vlog(LogCPU, "cpl=%u {%u} iopl=%u", tss.getCS() & 3, newCSDesc.DPL(), ((tss.getEFlags() >> 12) & 3));
+#endif
 }
 
 void CPU::taskSwitch(WORD task, JumpType source)
