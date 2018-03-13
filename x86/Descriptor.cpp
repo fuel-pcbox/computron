@@ -63,6 +63,11 @@ Gate CPU::getInterruptGate(WORD index)
     auto descriptor = getDescriptor("IDT", IDTR.base, IDTR.limit, index, false);
     if (descriptor.isNull())
         return Gate();
+    if (!descriptor.isGate()) {
+        vlog(LogCPU, "FUCK! IDT entry %02x is not a gate, but this:", index);
+        dumpDescriptor(descriptor);
+        return Gate();
+    }
     return descriptor.asGate();
 }
 
