@@ -352,6 +352,10 @@ void CPU::reset()
     this->VM = 0;
     this->VIP = 0;
     this->VIF = 0;
+    this->NT = 0;
+    this->RF = 0;
+    this->AC = 0;
+    this->ID = 0;
 
     this->GDTR.base = 0;
     this->GDTR.limit = 0;

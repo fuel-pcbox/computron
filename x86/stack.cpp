@@ -239,40 +239,33 @@ void CPU::_PUSHF(Instruction&)
 
 void CPU::_POPF(Instruction&)
 {
-    if (!getVM()) {
-        if (!getPE() || getCPL() == 0)
-            setFlags(pop16());
-        else {
-            bool oldIOPL = getIOPL();
-            setFlags(pop16());
-            setIOPL(oldIOPL);
-        }
-    } else {
-        if (getIOPL() == 3) {
-            bool oldIOPL = getIOPL();
-            setFlags(pop16());
-            setIOPL(oldIOPL);
-        } else
-            throw GeneralProtectionFault(0, "POPF");
+    RELEASE_ASSERT(!getVM());
+    DWORD oldFlags = getEFlags();
+    DWORD newFlags = pop16();
+    DWORD flagsToKeep = 0xffff0000;
+    if (getPE() && getCPL() != 0) {
+        flagsToKeep |= Flag::IOPL;
     }
+    newFlags &= ~flagsToKeep;
+    newFlags |= oldFlags & flagsToKeep;
+    newFlags &= ~Flag::RF;
+    setEFlags(newFlags);
 }
 
 void CPU::_POPFD(Instruction&)
 {
-    if (!getVM()) {
-        if (!getPE() || getCPL() == 0)
-            setEFlags(pop32());
-        else {
-            bool oldIOPL = getIOPL();
-            setEFlags(pop32());
-            setIOPL(oldIOPL);
+    RELEASE_ASSERT(!getVM());
+    DWORD oldFlags = getEFlags();
+    DWORD newFlags = pop32();
+    DWORD flagsToKeep = Flag::VIP | Flag::VIF | Flag::RF;
+    if (getPE() && getCPL() != 0) {
+        flagsToKeep |= Flag::IOPL;
+        if (getCPL() > getIOPL()) {
+            flagsToKeep |= Flag::IF;
         }
-    } else {
-        if (getIOPL() == 3) {
-            bool oldIOPL = getIOPL();
-            setEFlags(pop32());
-            setIOPL(oldIOPL);
-        } else
-            throw GeneralProtectionFault(0, "POPFD");
     }
+    newFlags &= ~flagsToKeep;
+    newFlags |= oldFlags & flagsToKeep;
+    newFlags &= ~Flag::RF;
+    setEFlags(newFlags);
 }
