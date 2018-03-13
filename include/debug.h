@@ -29,11 +29,13 @@
 #include <QtCore/qdebug.h>
 #include <assert.h>
 #define ASSERT assert
+#define ASSERT_NOT_REACHED() ASSERT(false)
+#define RELEASE_ASSERT assert
 #else
 #define ASSERT(x)
+#define ASSERT_NOT_REACHED() CRASH()
+#define RELEASE_ASSERT(x) do { if (!(x)) { CRASH(); } while(0)
 #endif
-
-#define ASSERT_NOT_REACHED() ASSERT(false)
 
 enum VLogChannel {
     LogInit,
