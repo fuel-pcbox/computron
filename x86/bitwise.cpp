@@ -121,6 +121,16 @@ DEFAULT_RM8_CL(doSHR, _SHR_RM8_CL)
 DEFAULT_RM16_CL(doSHR, _SHR_RM16_CL)
 DEFAULT_RM32_CL(doSHR, _SHR_RM32_CL)
 
+DEFAULT_RM8_imm8(doSAR, _SAR_RM8_imm8)
+DEFAULT_RM16_imm8(doSAR, _SAR_RM16_imm8)
+DEFAULT_RM32_imm8(doSAR, _SAR_RM32_imm8)
+DEFAULT_RM8_1(doSAR, _SAR_RM8_1)
+DEFAULT_RM16_1(doSAR, _SAR_RM16_1)
+DEFAULT_RM32_1(doSAR, _SAR_RM32_1)
+DEFAULT_RM8_CL(doSAR, _SAR_RM8_CL)
+DEFAULT_RM16_CL(doSAR, _SAR_RM16_CL)
+DEFAULT_RM32_CL(doSAR, _SAR_RM32_CL)
+
 void CPU::_CBW(Instruction&)
 {
     if (getAL() & 0x80)
@@ -283,25 +293,25 @@ inline DWORD allOnes(unsigned bits)
     return 0xFFFFFFFF;
 }
 
-DWORD cpu_sar(CPU& cpu, DWORD data, BYTE steps, BYTE bits)
+template<typename T>
+T CPU::doSAR(T data, int steps)
 {
-    DWORD result = data;
-    DWORD n;
-    DWORD mask = 1 << (bits - 1);
-
-    steps &= 0x1F;
+    steps &= 0x1f;
     if (!steps)
         return data;
 
-    for (BYTE i = 0; i < steps; ++i) {
-        n = result;
+    T result = data;
+    T mask = 1 << (BitSizeOfType<T>::bits - 1);
+
+    for (int i = 0; i < steps; ++i) {
+        T n = result;
         result = (result >> 1) | (n & mask);
-        cpu.setCF(n & 1);
+        setCF(n & 1);
     }
 
     if (steps == 1)
-        cpu.setOF(0);
-    cpu.updateFlags(result, bits);
+        setOF(0);
+    updateFlags(result, BitSizeOfType<T>::bits);
     return result;
 }
 
