@@ -190,7 +190,7 @@ DWORD CPU::readInstruction32()
     return fetchOpcodeDWord();
 }
 
-void CPU::decodeNext()
+FLATTEN void CPU::decodeNext()
 {
 #ifdef CT_TRACE
     if (UNLIKELY(m_isForAutotest))
@@ -204,7 +204,7 @@ void CPU::decodeNext()
         execute(std::move(insn));
 }
 
-void CPU::execute(Instruction&& insn)
+FLATTEN void CPU::execute(Instruction&& insn)
 {
 #ifdef CRASH_ON_VM
     if (UNLIKELY(getVM())) {
@@ -409,7 +409,7 @@ CPU::~CPU()
     m_memory = nullptr;
 }
 
-void CPU::executeOneInstruction()
+FLATTEN void CPU::executeOneInstruction()
 {
     try {
         resetSegmentPrefix();
@@ -470,7 +470,7 @@ void CPU::recomputeMainLoopNeedsSlowStuff()
                                !m_watches.isEmpty();
 }
 
-bool CPU::mainLoopSlowStuff()
+NEVER_INLINE bool CPU::mainLoopSlowStuff()
 {
     if (m_shouldBreakOutOfMainLoop)
         return false;
@@ -504,7 +504,7 @@ bool CPU::mainLoopSlowStuff()
     return true;
 }
 
-void CPU::mainLoop()
+FLATTEN void CPU::mainLoop()
 {
     forever {
         if (UNLIKELY(m_mainLoopNeedsSlowStuff)) {

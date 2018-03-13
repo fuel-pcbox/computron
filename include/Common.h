@@ -30,6 +30,8 @@
 
 #define CRASH() __builtin_trap()
 #define ALWAYS_INLINE __attribute__ ((always_inline)) inline
+#define NEVER_INLINE __attribute__ ((__noinline__))
+#define FLATTEN __attribute__ ((__flatten__))
 #define PURE __attribute__ ((pure))
 #define LIKELY(x) __builtin_expect(!!(x), 1)
 #define UNLIKELY(x) __builtin_expect(!!(x), 0)

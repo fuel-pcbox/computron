@@ -88,7 +88,7 @@ void MemoryOrRegisterReference::writeClearing16(WORD data, bool o32)
     return write(data);
 }
 
-void MemoryOrRegisterReference::resolve(CPU& cpu)
+FLATTEN void MemoryOrRegisterReference::resolve(CPU& cpu)
 {
     m_cpu = &cpu;
     ASSERT(m_cpu->a32() == m_a32);
@@ -127,7 +127,7 @@ FarPointer CPU::readModRMFarPointerOffsetFirst(MemoryOrRegisterReference& modrm)
     return ptr;
 }
 
-void MemoryOrRegisterReference::decode(InstructionStream& stream, bool a32)
+FLATTEN void MemoryOrRegisterReference::decode(InstructionStream& stream, bool a32)
 {
     m_a32 = a32;
     m_rm = stream.readInstruction8();

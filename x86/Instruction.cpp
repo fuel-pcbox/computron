@@ -807,7 +807,7 @@ void buildOpcodeTablesIfNeeded()
     hasBuiltTables = true;
 }
 
-Instruction Instruction::fromStream(InstructionStream& stream, bool o32, bool a32)
+FLATTEN Instruction Instruction::fromStream(InstructionStream& stream, bool o32, bool a32)
 {
     return Instruction(stream, o32, a32);
 }
