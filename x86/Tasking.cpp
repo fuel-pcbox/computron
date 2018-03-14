@@ -59,6 +59,10 @@ void CPU::_LTR_RM16(Instruction& insn)
     if (!tssDescriptor.present()) {
         throw NotPresent(selector, "LTR with non-present TSS");
     }
+
+    tssDescriptor.setBusy();
+    writeToGDT(tssDescriptor);
+
     TR.segment = selector;
     TR.base = tssDescriptor.base();
     TR.limit = tssDescriptor.limit();
