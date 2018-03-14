@@ -277,23 +277,23 @@ CPU::CPU(Machine& m)
 
     m_debugger = make<Debugger>(*this);
 
-    m_controlRegisterMap[0] = &this->CR0;
-    m_controlRegisterMap[1] = &this->CR1;
-    m_controlRegisterMap[2] = &this->CR2;
-    m_controlRegisterMap[3] = &this->CR3;
-    m_controlRegisterMap[4] = &this->CR4;
-    m_controlRegisterMap[5] = &this->CR5;
-    m_controlRegisterMap[6] = &this->CR6;
-    m_controlRegisterMap[7] = &this->CR7;
+    m_controlRegisterMap[0] = &m_CR0;
+    m_controlRegisterMap[1] = &m_CR1;
+    m_controlRegisterMap[2] = &m_CR2;
+    m_controlRegisterMap[3] = &m_CR3;
+    m_controlRegisterMap[4] = &m_CR4;
+    m_controlRegisterMap[5] = &m_CR5;
+    m_controlRegisterMap[6] = &m_CR6;
+    m_controlRegisterMap[7] = &m_CR7;
 
-    m_debugRegisterMap[0] = &this->DR0;
-    m_debugRegisterMap[1] = &this->DR1;
-    m_debugRegisterMap[2] = &this->DR2;
-    m_debugRegisterMap[3] = &this->DR3;
-    m_debugRegisterMap[4] = &this->DR4;
-    m_debugRegisterMap[5] = &this->DR5;
-    m_debugRegisterMap[6] = &this->DR6;
-    m_debugRegisterMap[7] = &this->DR7;
+    m_debugRegisterMap[0] = &m_DR0;
+    m_debugRegisterMap[1] = &m_DR1;
+    m_debugRegisterMap[2] = &m_DR2;
+    m_debugRegisterMap[3] = &m_DR3;
+    m_debugRegisterMap[4] = &m_DR4;
+    m_debugRegisterMap[5] = &m_DR5;
+    m_debugRegisterMap[6] = &m_DR6;
+    m_debugRegisterMap[7] = &m_DR7;
 
     this->treg32[RegisterEAX] = &this->regs.D.EAX;
     this->treg32[RegisterEBX] = &this->regs.D.EBX;
@@ -339,22 +339,22 @@ void CPU::reset()
     m_a20Enabled = false;
 
     memset(&regs, 0, sizeof(regs));
-    this->CR0 = 0;
-    this->CR1 = 0;
-    this->CR2 = 0;
-    this->CR3 = 0;
-    this->CR4 = 0;
-    this->CR5 = 0;
-    this->CR6 = 0;
-    this->CR7 = 0;
-    this->DR0 = 0;
-    this->DR1 = 0;
-    this->DR2 = 0;
-    this->DR3 = 0;
-    this->DR4 = 0;
-    this->DR5 = 0;
-    this->DR6 = 0;
-    this->DR7 = 0;
+    m_CR0 = 0;
+    m_CR1 = 0;
+    m_CR2 = 0;
+    m_CR3 = 0;
+    m_CR4 = 0;
+    m_CR5 = 0;
+    m_CR6 = 0;
+    m_CR7 = 0;
+    m_DR0 = 0;
+    m_DR1 = 0;
+    m_DR2 = 0;
+    m_DR3 = 0;
+    m_DR4 = 0;
+    m_DR5 = 0;
+    m_DR6 = 0;
+    m_DR7 = 0;
 
     this->IOPL = 0;
     this->VM = 0;

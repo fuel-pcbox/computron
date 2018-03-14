@@ -148,8 +148,9 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
     dumpTSS(incomingTSS);
 #endif
 
-    if (getPG())
-        CR3 = incomingTSS.getCR3();
+    if (getPG()) {
+        m_CR3 = incomingTSS.getCR3();
+    }
 
     auto ldtDescriptor = getDescriptor(incomingTSS.getLDT());
     if (!ldtDescriptor.isNull()) {
@@ -199,7 +200,7 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
         writeToGDT(incomingTSSDescriptor);
     }
 
-    CR0 |= 0x04; // TS (Task Switched)
+    m_CR0 |= CR0::TS; // Task Switched
 
     EXCEPTION_ON(GeneralProtectionFault, 0, getEIP() > cachedDescriptor(SegmentRegisterIndex::CS).effectiveLimit(), "Task switch to EIP outside CS limit");
 

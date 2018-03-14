@@ -132,6 +132,15 @@ public:
     };
     };
 
+    struct CR0 {
+    enum Bits {
+        PE = 1 << 0,
+        TS = 1 << 3,
+        WP = 1 << 16,
+        PG = 1 << 31,
+    };
+    };
+
     void recomputeMainLoopNeedsSlowStuff();
 
     QWORD cycle() const { return m_cycle; }
@@ -258,10 +267,10 @@ public:
     bool getVIP() const { return this->VIP; }
     bool getVIF() const { return this->VIF; }
     bool getVM() const { return this->VM; }
-    bool getPE() const { return this->CR0 & 0x01; }
-    bool getPG() const { return this->CR0 & 0x80000000; }
-    bool getVME() const { return this->CR4 & 0x01; }
-    bool getPVI() const { return this->CR4 & 0x02; }
+    bool getPE() const { return m_CR0 & CR0::PE; }
+    bool getPG() const { return m_CR0 & CR0::PG; }
+    bool getVME() const { return m_CR4 & 0x01; }
+    bool getPVI() const { return m_CR4 & 0x02; }
 
     WORD getCS() const { return this->CS; }
     WORD getIP() const { return this->IP; }
@@ -354,23 +363,23 @@ public:
     void setESI(DWORD value) { this->regs.D.ESI = value; }
     void setEDI(DWORD value) { this->regs.D.EDI = value; }
 
-    DWORD getCR0() const { return this->CR0; }
-    DWORD getCR1() const { return this->CR1; }
-    DWORD getCR2() const { return this->CR2; }
-    DWORD getCR3() const { return this->CR3; }
-    DWORD getCR4() const { return this->CR4; }
-    DWORD getCR5() const { return this->CR5; }
-    DWORD getCR6() const { return this->CR6; }
-    DWORD getCR7() const { return this->CR7; }
+    DWORD getCR0() const { return m_CR0; }
+    DWORD getCR1() const { return m_CR1; }
+    DWORD getCR2() const { return m_CR2; }
+    DWORD getCR3() const { return m_CR3; }
+    DWORD getCR4() const { return m_CR4; }
+    DWORD getCR5() const { return m_CR5; }
+    DWORD getCR6() const { return m_CR6; }
+    DWORD getCR7() const { return m_CR7; }
 
-    DWORD getDR0() const { return this->DR0; }
-    DWORD getDR1() const { return this->DR1; }
-    DWORD getDR2() const { return this->DR2; }
-    DWORD getDR3() const { return this->DR3; }
-    DWORD getDR4() const { return this->DR4; }
-    DWORD getDR5() const { return this->DR5; }
-    DWORD getDR6() const { return this->DR6; }
-    DWORD getDR7() const { return this->DR7; }
+    DWORD getDR0() const { return m_DR0; }
+    DWORD getDR1() const { return m_DR1; }
+    DWORD getDR2() const { return m_DR2; }
+    DWORD getDR3() const { return m_DR3; }
+    DWORD getDR4() const { return m_DR4; }
+    DWORD getDR5() const { return m_DR5; }
+    DWORD getDR6() const { return m_DR6; }
+    DWORD getDR7() const { return m_DR7; }
 
     // Base CS:EIP is the start address of the currently executing instruction
     WORD getBaseCS() const { return m_baseCS; }
@@ -1288,8 +1297,8 @@ private:
         DWORD limit { 0 };
     } LDTR;
 
-    DWORD CR0, CR1, CR2, CR3, CR4, CR5, CR6, CR7;
-    DWORD DR0, DR1, DR2, DR3, DR4, DR5, DR6, DR7;
+    DWORD m_CR0, m_CR1, m_CR2, m_CR3, m_CR4, m_CR5, m_CR6, m_CR7;
+    DWORD m_DR0, m_DR1, m_DR2, m_DR3, m_DR4, m_DR5, m_DR6, m_DR7;
 
     union {
         struct {

@@ -154,7 +154,7 @@ void CPU::_CLTS(Instruction&)
             return;
         }
     }
-    CR0 &= ~(1 << 3);
+    m_CR0 &= ~(1 << 3);
 }
 
 void CPU::_LMSW_RM16(Instruction& insn)
@@ -167,9 +167,9 @@ void CPU::_LMSW_RM16(Instruction& insn)
     }
 
     WORD msw = insn.modrm().read16();
-    CR0 = (CR0 & 0xFFFFFFF0) | (msw & 0x0F);
+    m_CR0 = (m_CR0 & 0xFFFFFFF0) | (msw & 0x0F);
 #ifdef PMODE_DEBUG
-    vlog(LogCPU, "LMSW set CR0=%08X, PE=%u", CR0, getPE());
+    vlog(LogCPU, "LMSW set CR0=%08X, PE=%u", getCR0(), getPE());
 #endif
 }
 
@@ -177,12 +177,12 @@ void CPU::_SMSW_RM16(Instruction& insn)
 {
     auto& modrm = insn.modrm();
 #ifdef PMODE_DEBUG
-    vlog(LogCPU, "SMSW get LSW(CR0)=%04X, PE=%u", CR0 & 0xFFFF, getPE());
+    vlog(LogCPU, "SMSW get LSW(CR0)=%04X, PE=%u", getCR0() & 0xFFFF, getPE());
 #endif
     if (o32() && modrm.isRegister())
-        modrm.write32(CR0);
+        modrm.write32(getCR0());
     else
-        modrm.write16(CR0 & 0xFFFF);
+        modrm.write16(getCR0() & 0xFFFF);
 }
 
 void CPU::_LAR_reg16_RM16(Instruction& insn)
@@ -364,7 +364,7 @@ Exception CPU::InvalidTSS(WORD selector, const QString& reason)
 Exception CPU::PageFault(DWORD address, WORD error, const QString& reason)
 {
     vlog(LogCPU, "Exception: #PF(%04x) address=%08x :: %s", error, address, qPrintable(reason));
-    CR2 = address;
+    m_CR2 = address;
     return Exception(0xe, error, address, reason);
 }
 
