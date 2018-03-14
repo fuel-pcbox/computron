@@ -164,10 +164,12 @@ public:
     bool is32Bit() const { return type() == InterruptGate_32bit || type() == CallGate_32bit || type() == TrapGate_32bit; }
 };
 
+// Note: TSSDescriptor uses segment base+limit despite being a system descriptor.
 class TSSDescriptor : public SystemDescriptor {
 public:
     DWORD base() const { return m_segmentBase; }
     DWORD limit() const { return m_segmentLimit; }
+    DWORD effectiveLimit() const { return m_effectiveLimit; }
 
     void setBusy();
     void setAvailable();
@@ -178,10 +180,12 @@ public:
     bool is32Bit() const { return type() == AvailableTSS_32bit || type() == BusyTSS_32bit; }
 };
 
+// Note: LDTDescriptor uses segment base+limit despite being a system descriptor.
 class LDTDescriptor : public SystemDescriptor {
 public:
     DWORD base() const { return m_segmentBase; }
     DWORD limit() const { return m_segmentLimit; }
+    DWORD effectiveLimit() const { return m_effectiveLimit; }
 };
 
 inline Gate& Descriptor::asGate()

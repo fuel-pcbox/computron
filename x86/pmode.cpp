@@ -211,15 +211,45 @@ void CPU::_LAR_reg32_RM32(Instruction& insn)
     setZF(1);
 }
 
+static bool isValidDescriptorForLSL(const Descriptor& descriptor)
+{
+    if (descriptor.isNull())
+        return true;
+    if (descriptor.isError())
+        return true;
+    if (descriptor.isSegmentDescriptor())
+        return true;
+
+    switch (descriptor.asSystemDescriptor().type()) {
+    case SystemDescriptor::AvailableTSS_16bit:
+    case SystemDescriptor::LDT:
+    case SystemDescriptor::BusyTSS_16bit:
+    case SystemDescriptor::AvailableTSS_32bit:
+    case SystemDescriptor::BusyTSS_32bit:
+        return true;
+    default:
+        return false;
+    }
+}
+
 void CPU::_LSL_reg16_RM16(Instruction& insn)
 {
     WORD selector = insn.modrm().read16() & 0xffff;
     auto descriptor = getDescriptor(selector);
-    if (descriptor.isError()) {
+    // FIXME: This should also fail for conforming code segments somehow.
+    if (!isValidDescriptorForLSL(descriptor)) {
         setZF(0);
         return;
     }
-    insn.reg16() = descriptor.asSegmentDescriptor().effectiveLimit();
+
+    DWORD effectiveLimit;
+    if (descriptor.isLDT())
+        effectiveLimit = descriptor.asLDTDescriptor().effectiveLimit();
+    else if (descriptor.isTSS())
+        effectiveLimit = descriptor.asTSSDescriptor().effectiveLimit();
+    else
+        effectiveLimit = descriptor.asSegmentDescriptor().effectiveLimit();
+    insn.reg16() = effectiveLimit;
     setZF(1);
 }
 
@@ -227,11 +257,19 @@ void CPU::_LSL_reg32_RM32(Instruction& insn)
 {
     WORD selector = insn.modrm().read16() & 0xffff;
     auto descriptor = getDescriptor(selector);
+    // FIXME: This should also fail for conforming code segments somehow.
     if (descriptor.isError()) {
         setZF(0);
         return;
     }
-    insn.reg32() = descriptor.asSegmentDescriptor().effectiveLimit();
+    DWORD effectiveLimit;
+    if (descriptor.isLDT())
+        effectiveLimit = descriptor.asLDTDescriptor().effectiveLimit();
+    else if (descriptor.isTSS())
+        effectiveLimit = descriptor.asTSSDescriptor().effectiveLimit();
+    else
+        effectiveLimit = descriptor.asSegmentDescriptor().effectiveLimit();
+    insn.reg32() = effectiveLimit;
     setZF(1);
 }
 
