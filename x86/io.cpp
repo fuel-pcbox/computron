@@ -185,6 +185,10 @@ void CPU::_INSB(Instruction&)
 
 void CPU::out(WORD port, BYTE value)
 {
+    if (getPE() && getCPL() > getIOPL()) {
+        throw GeneralProtectionFault(0, QString("I/O write attempt with CPL(%1) > IOPL(%2)").arg(getCPL()).arg(getIOPL()));
+    }
+
     if (options.iopeek) {
         if (port != 0x00E6 && port != 0x0020 && port != 0x3D4 && port != 0x03d5 && port != 0xe2 && port != 0xe0) {
             vlog(LogIO, "CPU::out: %02X --> %04X", value, port);
@@ -202,6 +206,10 @@ void CPU::out(WORD port, BYTE value)
 
 BYTE CPU::in(WORD port)
 {
+    if (getPE() && getCPL() > getIOPL()) {
+        throw GeneralProtectionFault(0, QString("I/O read attempt with CPL(%1) > IOPL(%2)").arg(getCPL()).arg(getIOPL()));
+    }
+
     BYTE value;
     if (auto* device = machine().inputDeviceForPort(port)) {
         value = device->in8(port);
