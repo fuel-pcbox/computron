@@ -1096,6 +1096,7 @@ enum Flags {
     Present = 0x01,
     ReadWrite = 0x02,
     UserSupervisor = 0x04,
+    Accessed = 0x20,
     Dirty = 0x40,
 };
 };
@@ -1130,10 +1131,10 @@ void CPU::translateAddressSlowCase(DWORD linearAddress, DWORD& physicalAddress, 
 
     DWORD* PDBR = reinterpret_cast<DWORD*>(&m_memory[getCR3()]);
     ASSERT(!(getCR3() & 0x03ff));
-    DWORD pageDirectoryEntry = PDBR[dir];
+    DWORD& pageDirectoryEntry = PDBR[dir];
 
     DWORD* pageTable = reinterpret_cast<DWORD*>(&m_memory[pageDirectoryEntry & 0xfffff000]);
-    DWORD pageTableEntry = pageTable[page];
+    DWORD& pageTableEntry = pageTable[page];
 
     bool inUserMode = getCPL() == 3;
 
@@ -1151,6 +1152,12 @@ void CPU::translateAddressSlowCase(DWORD linearAddress, DWORD& physicalAddress, 
         vlog(LogCPU, "#PF Translating %08x {dir=%03x, page=%03x, offset=%03x} PDE=%08x, PTE=%08x", linearAddress, dir, page, offset, pageDirectoryEntry, pageTableEntry);
         throw PageFault(linearAddress, error, QString("Page not present in PTE(%1)").arg(pageTableEntry, 8, 16, QLatin1Char('0')));
     }
+
+    if (accessType == MemoryAccessType::Write)
+        pageTableEntry |= PageTableEntryFlags::Dirty;
+
+    pageDirectoryEntry |= PageTableEntryFlags::Accessed;
+    pageTableEntry |= PageTableEntryFlags::Accessed;
 
     physicalAddress = (pageTableEntry & 0xfffff000) | offset;
 
