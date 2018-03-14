@@ -32,8 +32,10 @@
 
 void CPU::_SGDT(Instruction& insn)
 {
-    auto& modrm = insn.modrm();
-    BYTE* ptr = reinterpret_cast<BYTE*>(modrm.memoryPointer());
+    if (insn.modrm().isRegister()) {
+        throw InvalidOpcode("SGDT with register destination");
+    }
+    BYTE* ptr = reinterpret_cast<BYTE*>(insn.modrm().memoryPointer());
     DWORD* basePtr = reinterpret_cast<DWORD*>(ptr);
     WORD* limitPtr = reinterpret_cast<WORD*>(ptr + 4);
     *basePtr = GDTR.base;
@@ -42,8 +44,10 @@ void CPU::_SGDT(Instruction& insn)
 
 void CPU::_SIDT(Instruction& insn)
 {
-    auto& modrm = insn.modrm();
-    BYTE* ptr = reinterpret_cast<BYTE*>(modrm.memoryPointer());
+    if (insn.modrm().isRegister()) {
+        throw InvalidOpcode("SIDT with register destination");
+    }
+    BYTE* ptr = reinterpret_cast<BYTE*>(insn.modrm().memoryPointer());
     DWORD* basePtr = reinterpret_cast<DWORD*>(ptr);
     WORD* limitPtr = reinterpret_cast<WORD*>(ptr + 4);
     *basePtr = IDTR.base;
@@ -85,6 +89,10 @@ void CPU::setLDT(WORD selector)
 
 void CPU::_LLDT_RM16(Instruction& insn)
 {
+    if (!getPE()) {
+        throw InvalidOpcode("LLDT not recognized in real mode");
+    }
+
     setLDT(insn.modrm().read16());
 
 #ifdef DEBUG_LDT
@@ -96,9 +104,13 @@ void CPU::_LLDT_RM16(Instruction& insn)
 
 void CPU::_LGDT(Instruction& insn)
 {
-#ifdef DEBUG_GDT
-    vlog(LogAlert, "Begin LGDT");
-#endif
+    if (getCPL() != 0) {
+        throw GeneralProtectionFault(0, "LGDT with CPL != 0");
+    }
+    if (insn.modrm().isRegister()) {
+        throw InvalidOpcode("LGDT with register source");
+    }
+
     FarPointer ptr = readModRMFarPointerSegmentFirst(insn.modrm());
     DWORD baseMask = o32() ? 0xffffffff : 0x00ffffff;
     GDTR.base = ptr.offset & baseMask;
@@ -113,6 +125,13 @@ void CPU::_LGDT(Instruction& insn)
 
 void CPU::_LIDT(Instruction& insn)
 {
+    if (getCPL() != 0) {
+        throw GeneralProtectionFault(0, "LIDT with CPL != 0");
+    }
+    if (insn.modrm().isRegister()) {
+        throw InvalidOpcode("LIDT with register source");
+    }
+
     FarPointer ptr = readModRMFarPointerSegmentFirst(insn.modrm());
     DWORD baseMask = o32() ? 0xffffffff : 0x00ffffff;
     IDTR.base = ptr.offset & baseMask;

@@ -37,7 +37,7 @@ void CPU::_STR_RM16(Instruction& insn)
 void CPU::_LTR_RM16(Instruction& insn)
 {
     if (!getPE()) {
-        throw InvalidOpcode();
+        throw InvalidOpcode("LTR not recognized in real mode");
     }
 
     WORD selector = insn.modrm().read16();
