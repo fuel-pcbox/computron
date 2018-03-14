@@ -612,11 +612,24 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
     WORD originalCS = getCS();
     DWORD originalEIP = getEIP();
 
+    BYTE selectorRPL = segment & 3;
+
 #ifdef LOG_FAR_JUMPS
     vlog(LogCPU, "[PE=%u, PG=%u] %s from %04x:%08x to %04x:%08x", getPE(), getPG(), toString(type), getBaseCS(), getBaseEIP(), segment, offset);
 #endif
 
     auto descriptor = getDescriptor(segment, SegmentRegisterIndex::CS);
+
+    if (getPE()) {
+        if (type == JumpType::RETF) {
+            if (!(selectorRPL >= getCPL())) {
+                throw GeneralProtectionFault(segment, QString("RETF with !(RPL(%1) >= CPL(%2))").arg(selectorRPL).arg(getCPL()));
+            }
+        }
+        if (descriptor.isNull()) {
+            throw GeneralProtectionFault(segment, QString("%1 to null selector").arg(toString(type)));
+        }
+    }
 
     if (descriptor.isSystemDescriptor()) {
         auto& sys = descriptor.asSystemDescriptor();
