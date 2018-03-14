@@ -27,9 +27,30 @@
 #include "CPU.h"
 #include "debug.h"
 
-void CPU::_BOUND(Instruction&)
+void CPU::_BOUND(Instruction& insn)
 {
-    ASSERT_NOT_REACHED();
+    bool isWithinBounds;
+    if (o32()) {
+        SIGNED_DWORD arrayIndex = insn.reg32();
+        SIGNED_DWORD* bounds = static_cast<SIGNED_DWORD*>(insn.modrm().memoryPointer());
+        isWithinBounds = arrayIndex >= bounds[0] && arrayIndex <= bounds[1];
+        vlog(LogCPU, "BOUND32 checking if %d is within [%d - %d]: %s",
+            arrayIndex,
+            bounds[0],
+            bounds[1],
+            isWithinBounds ? "yes" : "no");
+    } else {
+        SIGNED_WORD arrayIndex = insn.reg16();
+        SIGNED_WORD* bounds = static_cast<SIGNED_WORD*>(insn.modrm().memoryPointer());
+        isWithinBounds = arrayIndex >= bounds[0] && arrayIndex <= bounds[1];
+        vlog(LogCPU, "BOUND16 checking if %d is within [%d - %d]: %s",
+            arrayIndex,
+            bounds[0],
+            bounds[1],
+            isWithinBounds ? "yes" : "no");
+    }
+    if (!isWithinBounds)
+        throw Exception(5, "Array index outside bounds");
 }
 
 void CPU::_PUSH_imm8(Instruction& insn)
