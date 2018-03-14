@@ -377,9 +377,13 @@ void CPU::_DIV_RM8(Instruction& insn)
         throw DivideError("Divide by zero");
     }
 
-    // FIXME: divide error if result overflows
-    regs.B.AL = (BYTE)(tAX / value); // Quote
-    regs.B.AH = (BYTE)(tAX % value); // Remainder
+    WORD result = tAX / value;
+    if (result > 0xff) {
+        throw DivideError(QString("Unsigned divide overflow (%1 / %2 = %3)").arg(tAX).arg(value).arg(result));
+    }
+
+    regs.B.AL = result;
+    regs.B.AH = tAX % value;
 }
 
 void CPU::_DIV_RM16(Instruction& insn)
@@ -391,9 +395,13 @@ void CPU::_DIV_RM16(Instruction& insn)
         throw DivideError("Divide by zero");
     }
 
-    // FIXME: divide error if result overflows
-    regs.W.AX = (WORD)(tDXAX / value); // Quote
-    regs.W.DX = (WORD)(tDXAX % value); // Remainder
+    DWORD result = tDXAX / value;
+    if (result > 0xffff) {
+        throw DivideError(QString("Unsigned divide overflow (%1 / %2 = %3)").arg(tDXAX).arg(value).arg(result));
+    }
+
+    regs.W.AX = result;
+    regs.W.DX = tDXAX % value;
 }
 
 void CPU::_DIV_RM32(Instruction& insn)
@@ -405,9 +413,13 @@ void CPU::_DIV_RM32(Instruction& insn)
         throw DivideError("Divide by zero");
     }
 
-    // FIXME: divide error if result overflows
-    setEAX(tEDXEAX / value); // Quote
-    setEDX(tEDXEAX % value); // Remainder
+    QWORD result = tEDXEAX / value;
+    if (result > 0xffffffff) {
+        throw DivideError(QString("Unsigned divide overflow (%1 / %2 = %3)").arg(tEDXEAX).arg(value).arg(result));
+    }
+
+    setEAX(result);
+    setEDX(tEDXEAX % value);
 }
 
 void CPU::_IDIV_RM8(Instruction& insn)
@@ -419,9 +431,13 @@ void CPU::_IDIV_RM8(Instruction& insn)
         throw DivideError("Divide by zero");
     }
 
-    // FIXME: divide error if result overflows
-    regs.B.AL = (SIGNED_BYTE)(tAX / value); // Quote
-    regs.B.AH = (SIGNED_BYTE)(tAX % value); // Remainder
+    SIGNED_WORD result = tAX / value;
+    if (result > 0x7f || result < -0x80) {
+        throw DivideError(QString("Signed divide overflow (%1 / %2 = %3)").arg(tAX).arg(value).arg(result));
+    }
+
+    regs.B.AL = (SIGNED_BYTE)(result);
+    regs.B.AH = (SIGNED_BYTE)(tAX % value);
 }
 
 void CPU::_IDIV_RM16(Instruction& insn)
@@ -433,9 +449,13 @@ void CPU::_IDIV_RM16(Instruction& insn)
         throw DivideError("Divide by zero");
     }
 
-    // FIXME: divide error if result overflows
-    regs.W.AX = (SIGNED_WORD)(tDXAX / value); // Quote
-    regs.W.DX = (SIGNED_WORD)(tDXAX % value); // Remainder
+    SIGNED_DWORD result = tDXAX / value;
+    if (result > 0x7fff || result < -0x8000) {
+        throw DivideError(QString("Signed divide overflow (%1 / %2 = %3)").arg(tDXAX).arg(value).arg(result));
+    }
+
+    regs.W.AX = (SIGNED_WORD)(result);
+    regs.W.DX = (SIGNED_WORD)(tDXAX % value);
 }
 
 void CPU::_IDIV_RM32(Instruction& insn)
@@ -447,9 +467,13 @@ void CPU::_IDIV_RM32(Instruction& insn)
         throw DivideError("Divide by zero");
     }
 
-    // FIXME: divide error if result overflows
-    regs.D.EAX = (SIGNED_DWORD)(tEDXEAX / value); // Quote
-    regs.D.EDX = (SIGNED_DWORD)(tEDXEAX % value); // Remainder
+    SIGNED_QWORD result = tEDXEAX / value;
+    if (result > 0x7fffffffLL || result < -0x80000000LL) {
+        throw DivideError(QString("Signed divide overflow (%1 / %2 = %3)").arg(tEDXEAX).arg(value).arg(result));
+    }
+
+    regs.D.EAX = (SIGNED_DWORD)(result);
+    regs.D.EDX = (SIGNED_DWORD)(tEDXEAX % value);
 }
 
 void CPU::_NEG_RM8(Instruction& insn)
