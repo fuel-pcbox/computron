@@ -121,8 +121,8 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
 
     DWORD outgoingEFlags = getEFlags();
 
-    if (incomingTSSDescriptor.isBusy()) {
-        outgoingEFlags &= ~(1 << 14); // Clear NT flag in outgoing task.
+    if (source == JumpType::IRET) {
+        outgoingEFlags &= ~Flag::NT;
     }
 
     outgoingTSS.setEFlags(outgoingEFlags);
@@ -168,7 +168,7 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
 
     DWORD incomingEFlags = incomingTSS.getEFlags();
     if (source == JumpType::CALL || source == JumpType::INT) {
-        incomingEFlags |= (1 << 14);  // Set NT in incoming task.
+        incomingEFlags |= Flag::NT;
     }
 
     if (incomingTSS.is32Bit())
@@ -185,7 +185,6 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
     setESI(incomingTSS.getESI());
     setEDI(incomingTSS.getEDI());
 
-    //ASSERT(incomingTSS.backlink != TR.segment);
     if (source == JumpType::CALL || source == JumpType::INT) {
         incomingTSS.setBacklink(TR.segment);
     }
