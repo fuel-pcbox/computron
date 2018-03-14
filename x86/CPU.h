@@ -1363,10 +1363,6 @@ private:
 
 extern CPU* g_cpu;
 
-DWORD cpu_sar(CPU&, DWORD, BYTE, BYTE);
-DWORD cpu_rcl(CPU&, DWORD, BYTE, BYTE);
-DWORD cpu_rcr(CPU&, DWORD, BYTE, BYTE);
-
 // INLINE IMPLEMENTATIONS
 
 BYTE CPU::readUnmappedMemory8(DWORD address) const
