@@ -64,9 +64,9 @@ StateWidget::~StateWidget()
 
 #define DO_LABEL(name, fmt) d->ui.lbl ## name->setText(s.sprintf(fmt, cpu.get ## name()));
 
-#define DO_LABEL_N(name, title, fmt) do { \
+#define DO_LABEL_N(name, getterName, title, fmt) do { \
         d->ui.lblTitle ## name->setText(title); \
-        d->ui.lbl ## name->setText(s.sprintf(fmt, cpu.get ## name())); \
+        d->ui.lbl ## name->setText(s.sprintf(fmt, cpu.get ## getterName())); \
     } while (0);
 
 void StateWidget::sync()
@@ -75,47 +75,47 @@ void StateWidget::sync()
     auto& cpu = machine().cpu();
 
     if (cpu.x32()) {
-        DO_LABEL_N(EBX, "EBX", "%08X");
-        DO_LABEL_N(EAX, "EAX", "%08X");
-        DO_LABEL_N(ECX, "ECX", "%08X");
-        DO_LABEL_N(EDX, "EDX", "%08X");
-        DO_LABEL_N(EBP, "EBP", "%08X");
-        DO_LABEL_N(ESP, "ESP", "%08X");
-        DO_LABEL_N(ESI, "ESI", "%08X");
-        DO_LABEL_N(EDI, "EDI", "%08X");
+        DO_LABEL_N(EBX, EBX, "ebx", "%08x");
+        DO_LABEL_N(EAX, EAX, "eax", "%08x");
+        DO_LABEL_N(ECX, ECX, "ecx", "%08x");
+        DO_LABEL_N(EDX, EDX, "edx", "%08x");
+        DO_LABEL_N(EBP, EBP, "ebp", "%08x");
+        DO_LABEL_N(ESP, ESP, "esp", "%08x");
+        DO_LABEL_N(ESI, ESI, "esi", "%08x");
+        DO_LABEL_N(EDI, EDI, "edi", "%08x");
         d->ui.lblPC->setText(s.sprintf("%04X:%08X", cpu.getBaseCS(), cpu.getBaseEIP()));
     } else {
-        DO_LABEL_N(EBX, "BX", "%04X");
-        DO_LABEL_N(EAX, "AX", "%04X");
-        DO_LABEL_N(ECX, "CX", "%04X");
-        DO_LABEL_N(EDX, "DX", "%04X");
-        DO_LABEL_N(EBP, "BP", "%04X");
-        DO_LABEL_N(ESP, "SP", "%04X");
-        DO_LABEL_N(ESI, "SI", "%04X");
-        DO_LABEL_N(EDI, "DI", "%04X");
+        DO_LABEL_N(EBX, BX, "bx", "%04x");
+        DO_LABEL_N(EAX, AX, "ax", "%04x");
+        DO_LABEL_N(ECX, CX, "cx", "%04x");
+        DO_LABEL_N(EDX, DX, "dx", "%04x");
+        DO_LABEL_N(EBP, BP, "bp", "%04x");
+        DO_LABEL_N(ESP, SP, "sp", "%04x");
+        DO_LABEL_N(ESI, SI, "si", "%04x");
+        DO_LABEL_N(EDI, DI, "di", "%04x");
         d->ui.lblPC->setText(s.sprintf("%04X:%04X", cpu.getBaseCS(), cpu.getBaseIP()));
     }
-    DO_LABEL(CS, "%04X");
-    DO_LABEL(DS, "%04X");
-    DO_LABEL(ES, "%04X");
-    DO_LABEL(SS, "%04X");
-    DO_LABEL(FS, "%04X");
-    DO_LABEL(GS, "%04X");
-    DO_LABEL(CR0, "%08X");
-    DO_LABEL(CR3, "%08X");
+    DO_LABEL(CS, "%04x");
+    DO_LABEL(DS, "%04x");
+    DO_LABEL(ES, "%04x");
+    DO_LABEL(SS, "%04x");
+    DO_LABEL(FS, "%04x");
+    DO_LABEL(GS, "%04x");
+    DO_LABEL(CR0, "%08x");
+    DO_LABEL(CR3, "%08x");
 
-#define DO_FLAG(name) flagString += QString("<font color='%1'>%2</font> ").arg(cpu.get ## name() ? "black" : "#ccc").arg(# name);
+#define DO_FLAG(getterName, name) flagString += QString("<font color='%1'>%2</font> ").arg(cpu.get ## getterName() ? "black" : "#ccc").arg(name);
 
     QString flagString;
-    DO_FLAG(OF);
-    DO_FLAG(SF);
-    DO_FLAG(ZF);
-    DO_FLAG(AF);
-    DO_FLAG(PF);
-    DO_FLAG(CF);
-    DO_FLAG(IF);
-    DO_FLAG(TF);
-    DO_FLAG(NT);
+    DO_FLAG(OF, "of");
+    DO_FLAG(SF, "sf");
+    DO_FLAG(ZF, "zf");
+    DO_FLAG(AF, "af");
+    DO_FLAG(PF, "pf");
+    DO_FLAG(CF, "cf");
+    DO_FLAG(IF, "if");
+    DO_FLAG(TF, "tf");
+    DO_FLAG(NT, "nt");
 
     d->ui.lblFlags->setText(flagString);
 
