@@ -32,8 +32,13 @@ unsigned CPU::dumpDisassembledInternal(SegmentDescriptor& descriptor, DWORD offs
 {
     char buf[512];
     char* p = buf;
+    BYTE* data = nullptr;
 
-    BYTE* data = memoryPointer(descriptor, offset);
+    try {
+        data = memoryPointer(descriptor, offset);
+    } catch (...) {
+        data = nullptr;
+    }
 
     if (!data) {
         vlog(LogCPU, "dumpDisassembled can't dump %04x:%08x", descriptor.index(), offset);
@@ -362,12 +367,16 @@ void CPU::dumpRawMemory(BYTE* p)
 void CPU::dumpMemory(SegmentDescriptor& descriptor, DWORD offset, int rows)
 {
     offset &= 0xFFFFFFF0;
+    BYTE* p;
 
-    BYTE* p = memoryPointer(descriptor, offset);
+    try {
+        p = memoryPointer(descriptor, offset);
+    } catch (...) {
+        p = nullptr;
+    }
+
     if (!p) {
         vlog(LogCPU, "dumpMemory can't dump %04X:%08X", descriptor.index(), offset);
-        vlog(LogCPU, "Trying flat dump @ %08X...", offset);
-        dumpFlatMemory(offset);
         return;
     }
 
