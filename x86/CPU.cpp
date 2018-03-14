@@ -123,6 +123,10 @@ void CPU::_UD0(Instruction&)
 
 void CPU::_OperandSizeOverride(Instruction&)
 {
+#ifdef DEBUG_PREFIXES
+    ASSERT(!m_hasOperandSizePrefix);
+    m_hasOperandSizePrefix = true;
+#endif
     m_shouldRestoreSizesAfterOverride = true;
     bool prevOperandSize = m_operandSize32;
     m_operandSize32 = !m_operandSize32;
@@ -150,6 +154,10 @@ void CPU::_OperandSizeOverride(Instruction&)
 
 void CPU::_AddressSizeOverride(Instruction&)
 {
+#ifdef DEBUG_PREFIXES
+    ASSERT(!m_hasAddressSizePrefix);
+    m_hasAddressSizePrefix = true;
+#endif
     m_shouldRestoreSizesAfterOverride = true;
     bool prevAddressSize32 = m_addressSize32;
     m_addressSize32 = !m_addressSize32;
@@ -412,6 +420,10 @@ CPU::~CPU()
 FLATTEN void CPU::executeOneInstruction()
 {
     try {
+#ifdef DEBUG_PREFIXES
+        m_hasAddressSizePrefix = false;
+        m_hasOperandSizePrefix = false;
+#endif
         resetSegmentPrefix();
         saveBaseAddress();
         decodeNext();
@@ -773,6 +785,7 @@ void CPU::_XLAT(Instruction&)
 
 void CPU::_CS(Instruction&)
 {
+    ASSERT(!hasSegmentPrefix());
     setSegmentPrefix(SegmentRegisterIndex::CS);
     decodeNext();
     resetSegmentPrefix();
@@ -780,6 +793,7 @@ void CPU::_CS(Instruction&)
 
 void CPU::_DS(Instruction&)
 {
+    ASSERT(!hasSegmentPrefix());
     setSegmentPrefix(SegmentRegisterIndex::DS);
     decodeNext();
     resetSegmentPrefix();
@@ -787,6 +801,7 @@ void CPU::_DS(Instruction&)
 
 void CPU::_ES(Instruction&)
 {
+    ASSERT(!hasSegmentPrefix());
     setSegmentPrefix(SegmentRegisterIndex::ES);
     decodeNext();
     resetSegmentPrefix();
@@ -794,6 +809,7 @@ void CPU::_ES(Instruction&)
 
 void CPU::_SS(Instruction&)
 {
+    ASSERT(!hasSegmentPrefix());
     setSegmentPrefix(SegmentRegisterIndex::SS);
     decodeNext();
     resetSegmentPrefix();
@@ -801,6 +817,7 @@ void CPU::_SS(Instruction&)
 
 void CPU::_FS(Instruction&)
 {
+    ASSERT(!hasSegmentPrefix());
     setSegmentPrefix(SegmentRegisterIndex::FS);
     decodeNext();
     resetSegmentPrefix();
@@ -808,6 +825,7 @@ void CPU::_FS(Instruction&)
 
 void CPU::_GS(Instruction&)
 {
+    ASSERT(!hasSegmentPrefix());
     setSegmentPrefix(SegmentRegisterIndex::GS);
     decodeNext();
     resetSegmentPrefix();

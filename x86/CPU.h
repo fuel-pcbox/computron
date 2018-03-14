@@ -33,13 +33,13 @@
 #include "Instruction.h"
 #include "Descriptor.h"
 
+#define DEBUG_PREFIXES
+
 class Debugger;
 class Machine;
 class CPU;
 class TSS;
 class VGAMemory;
-
-#define CALL_HANDLER(handler16, handler32) if (o16()) { handler16(insn); } else { handler32(insn); }
 
 struct FarPointer {
     FarPointer() : segment(0), offset(0) { }
@@ -1360,6 +1360,11 @@ private:
     mutable DWORD m_dirtyFlags { 0 };
     QWORD m_lastResult { 0 };
     unsigned m_lastOpSize { ByteSize };
+
+#ifdef DEBUG_PREFIXES
+    bool m_hasAddressSizePrefix { false };
+    bool m_hasOperandSizePrefix { false };
+#endif
 };
 
 extern CPU* g_cpu;
