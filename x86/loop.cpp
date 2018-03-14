@@ -103,14 +103,36 @@ void CPU::_LOOPNE_imm8(Instruction& insn)
 void CPU::handleRepeatOpcode(Instruction&& insn, bool shouldEqual)
 {
     switch(insn.op()) {
-    case 0x26: setSegmentPrefix(SegmentRegisterIndex::ES); break;
-    case 0x2E: setSegmentPrefix(SegmentRegisterIndex::CS); break;
-    case 0x36: setSegmentPrefix(SegmentRegisterIndex::SS); break;
-    case 0x3E: setSegmentPrefix(SegmentRegisterIndex::DS); break;
-    case 0x64: setSegmentPrefix(SegmentRegisterIndex::FS); break;
-    case 0x65: setSegmentPrefix(SegmentRegisterIndex::GS); break;
+    case 0x26:
+        ASSERT(!hasSegmentPrefix());
+        setSegmentPrefix(SegmentRegisterIndex::ES);
+        break;
+    case 0x2E:
+        ASSERT(!hasSegmentPrefix());
+        setSegmentPrefix(SegmentRegisterIndex::CS);
+        break;
+    case 0x36:
+        ASSERT(!hasSegmentPrefix());
+        setSegmentPrefix(SegmentRegisterIndex::SS);
+        break;
+    case 0x3E:
+        ASSERT(!hasSegmentPrefix());
+        setSegmentPrefix(SegmentRegisterIndex::DS);
+        break;
+    case 0x64:
+        ASSERT(!hasSegmentPrefix());
+        setSegmentPrefix(SegmentRegisterIndex::FS);
+        break;
+    case 0x65:
+        ASSERT(!hasSegmentPrefix());
+        setSegmentPrefix(SegmentRegisterIndex::GS);
+        break;
 
     case 0x66: {
+#ifdef DEBUG_PREFIXES
+        ASSERT(!m_hasOperandSizePrefix);
+        m_hasOperandSizePrefix = true;
+#endif
         m_operandSize32 = !m_operandSize32;
         auto newInsn = Instruction::fromStream(*this, o32(), a32());
         handleRepeatOpcode(std::move(newInsn), shouldEqual);
@@ -119,6 +141,10 @@ void CPU::handleRepeatOpcode(Instruction&& insn, bool shouldEqual)
     }
 
     case 0x67: {
+#ifdef DEBUG_PREFIXES
+        ASSERT(!m_hasAddressSizePrefix);
+        m_hasAddressSizePrefix = true;
+#endif
         m_addressSize32 = !m_addressSize32;
         auto newInsn = Instruction::fromStream(*this, o32(), a32());
         handleRepeatOpcode(std::move(newInsn), shouldEqual);
