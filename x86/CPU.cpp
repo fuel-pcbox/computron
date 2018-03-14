@@ -646,7 +646,10 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
             ASSERT(gate.isCallGate());
             ASSERT(!gate.parameterCount()); // FIXME: Implement
             // NOTE: We recurse here, jumping to the gate entry point.
-            jump32(gate.selector(), gate.offset(), JumpType::GateEntry, isr);
+            DWORD gateOffset = gate.offset();
+            if (!gate.is32Bit())
+                gateOffset &= 0xffff;
+            jump32(gate.selector(), gateOffset, JumpType::GateEntry, isr);
             return;
         } else if (sys.isTSS()) {
             auto& tssDescriptor = sys.asTSSDescriptor();
