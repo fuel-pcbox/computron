@@ -292,6 +292,12 @@ Exception CPU::InvalidOpcode(const QString& reason)
     return Exception(0x6, reason);
 }
 
+Exception CPU::BoundRangeExceeded(const QString& reason)
+{
+    vlog(LogCPU, "Exception: #BR :: %s", qPrintable(reason));
+    return Exception(0x5, reason);
+}
+
 Exception CPU::InvalidTSS(WORD selector, const QString& reason)
 {
     vlog(LogCPU, "Exception: #TS(%04x) :: %s", selector, qPrintable(reason));

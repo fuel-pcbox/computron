@@ -221,6 +221,7 @@ public:
     Exception PageFault(DWORD address, WORD error, const QString& reason);
     Exception DivideError(const QString& reason);
     Exception InvalidOpcode(const QString& reason = QString());
+    Exception BoundRangeExceeded(const QString& reason);
 
     void raiseException(const Exception&);
 
