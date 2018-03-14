@@ -1212,7 +1212,7 @@ void CPU::translateAddressSlowCase(DWORD linearAddress, DWORD& physicalAddress, 
             vlog(LogCPU, "#PF Translating %08x {dir=%03x, page=%03x, offset=%03x} PDE=%08x, PTE=%08x", linearAddress, dir, page, offset, pageDirectoryEntry, pageTableEntry);
             throw PageFault(linearAddress, error, QString("Page not writable in PDE(%1)").arg(pageDirectoryEntry, 8, 16, QLatin1Char('0')));
         }
-        if (!(pageDirectoryEntry & PageTableEntryFlags::ReadWrite)) {
+        if (!(pageTableEntry & PageTableEntryFlags::ReadWrite)) {
             WORD error = PageFaultFlags::ProtectionViolation
                        | PageFaultFlags::Write
                        | (inUserMode ? PageFaultFlags::UserMode : PageFaultFlags::SupervisorMode);
