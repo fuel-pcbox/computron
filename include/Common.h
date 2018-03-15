@@ -52,6 +52,7 @@ struct RuntimeOptions {
     bool novlog { false };
     bool pedebug { false };
     bool vlogcycle { false };
+    bool crashOnPF { false };
     bool crashOnGPF { false };
     bool crashOnException { false };
     QString autotestPath;

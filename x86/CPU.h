@@ -518,6 +518,7 @@ public:
 
     // Dumps all ISR handler pointers (0000:0000 - 0000:03FF)
     void dumpIVT();
+    void dumpIDT();
 
     void dumpMemory(WORD segment, DWORD offset, int rows);
     void dumpFlatMemory(DWORD address);

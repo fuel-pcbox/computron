@@ -117,6 +117,8 @@ void parseArguments(const QStringList& arguments)
             options.memdebug = true;
         else if (argument == "--vlog-cycle")
             options.vlogcycle = true;
+        else if (argument == "--crash-on-pf")
+            options.crashOnPF = true;
         else if (argument == "--crash-on-gpf")
             options.crashOnGPF = true;
         else if (argument == "--crash-on-exception")

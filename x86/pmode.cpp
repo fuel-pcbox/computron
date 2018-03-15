@@ -28,7 +28,7 @@
 
 //#define DEBUG_GDT
 //#define DEBUG_LDT
-//#define DEBUG_IVT
+//#define DEBUG_IDT
 
 void CPU::_SGDT(Instruction& insn)
 {
@@ -123,6 +123,16 @@ void CPU::_LGDT(Instruction& insn)
 #endif
 }
 
+void CPU::dumpIDT()
+{
+    vlog(LogDump, "IDT { base:%08X, limit:%08X }", IDTR.base, IDTR.limit);
+    if (getPE()) {
+        for (DWORD isr = 0; isr < (IDTR.limit / 16); ++isr) {
+            dumpDescriptor(getInterruptGate(isr));
+        }
+    }
+}
+
 void CPU::_LIDT(Instruction& insn)
 {
     if (getCPL() != 0) {
@@ -136,13 +146,8 @@ void CPU::_LIDT(Instruction& insn)
     DWORD baseMask = o32() ? 0xffffffff : 0x00ffffff;
     IDTR.base = ptr.offset & baseMask;
     IDTR.limit = ptr.segment;
-#if DEBUG_IVT
-    vlog(LogAlert, "LIDT { base:%08X, limit:%08X }", IDTR.base, IDTR.limit);
-    if (getPE()) {
-        for (DWORD isr = 0; isr < (IDTR.limit / 16); ++isr) {
-            dumpDescriptor(getInterruptGate(isr));
-        }
-    }
+#if DEBUG_IDT
+    dumpIDT();
 #endif
 }
 
@@ -365,6 +370,11 @@ Exception CPU::PageFault(DWORD address, WORD error, const QString& reason)
 {
     vlog(LogCPU, "Exception: #PF(%04x) address=%08x :: %s", error, address, qPrintable(reason));
     m_CR2 = address;
+    if (options.crashOnPF) {
+        dumpAll();
+        vlog(LogAlert, "CRASH ON #PF");
+        ASSERT_NOT_REACHED();
+    }
     return Exception(0xe, error, address, reason);
 }
 
