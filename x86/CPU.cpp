@@ -246,6 +246,10 @@ void CPU::_WBINVD(Instruction&)
 
 void CPU::_VKILL(Instruction&)
 {
+    // FIXME: Maybe (0xf1) is a bad choice of opcode here, since that's also INT1 / ICEBP.
+    if (!machine().isForAutotest()) {
+        throw InvalidOpcode("VKILL (0xf1) is an invalid opcode outside of auto-test mode!");
+    }
     vlog(LogCPU, "0xF1: Secret shutdown command received!");
     //dumpAll();
     hard_exit(0);
@@ -1177,32 +1181,32 @@ void CPU::translateAddressSlowCase(DWORD linearAddress, DWORD& physicalAddress, 
     bool inUserMode = getCPL() == 3;
 
     if (!(pageDirectoryEntry & PageTableEntryFlags::Present)) {
-        vlog(LogCPU, "#PF Translating %08x {dir=%03x, page=%03x, offset=%03x} PDE=%08x, PTE=%08x", linearAddress, dir, page, offset, pageDirectoryEntry, pageTableEntry);
+        vlog(LogCPU, "#PF Translating %08x {dir=%03x, page=%03x, offset=%03x} PDBR=%08x, PDE=%08x, PTE=%08x", linearAddress, dir, page, offset, getCR3(), pageDirectoryEntry, pageTableEntry);
         throw PageFault(linearAddress, makePFErrorCode(PageFaultFlags::NotPresent, accessType, inUserMode), QString("Page not present in PDE(%1)").arg(pageDirectoryEntry, 8, 16, QLatin1Char('0')));
     }
     if (!(pageTableEntry & PageTableEntryFlags::Present)) {
-        vlog(LogCPU, "#PF Translating %08x {dir=%03x, page=%03x, offset=%03x} PDE=%08x, PTE=%08x", linearAddress, dir, page, offset, pageDirectoryEntry, pageTableEntry);
+        vlog(LogCPU, "#PF Translating %08x {dir=%03x, page=%03x, offset=%03x} PDBR=%08x, PDE=%08x, PTE=%08x", linearAddress, dir, page, offset, getCR3(), pageDirectoryEntry, pageTableEntry);
         throw PageFault(linearAddress, makePFErrorCode(PageFaultFlags::NotPresent, accessType, inUserMode), QString("Page not present in PTE(%1)").arg(pageTableEntry, 8, 16, QLatin1Char('0')));
     }
 
     if (inUserMode) {
         if (!(pageDirectoryEntry & PageTableEntryFlags::UserSupervisor)) {
-            vlog(LogCPU, "#PF Translating %08x {dir=%03x, page=%03x, offset=%03x} PDE=%08x, PTE=%08x", linearAddress, dir, page, offset, pageDirectoryEntry, pageTableEntry);
+            vlog(LogCPU, "#PF Translating %08x {dir=%03x, page=%03x, offset=%03x} PDBR=%08x, PDE=%08x, PTE=%08x", linearAddress, dir, page, offset, getCR3(), pageDirectoryEntry, pageTableEntry);
             throw PageFault(linearAddress, makePFErrorCode(PageFaultFlags::ProtectionViolation, accessType, inUserMode), QString("Page not accessible in user mode in PDE(%1)").arg(pageDirectoryEntry, 8, 16, QLatin1Char('0')));
         }
         if (!(pageTableEntry & PageTableEntryFlags::UserSupervisor)) {
-            vlog(LogCPU, "#PF Translating %08x {dir=%03x, page=%03x, offset=%03x} PDE=%08x, PTE=%08x", linearAddress, dir, page, offset, pageDirectoryEntry, pageTableEntry);
+            vlog(LogCPU, "#PF Translating %08x {dir=%03x, page=%03x, offset=%03x} PDBR=%08x, PDE=%08x, PTE=%08x", linearAddress, dir, page, offset, getCR3(), pageDirectoryEntry, pageTableEntry);
             throw PageFault(linearAddress, makePFErrorCode(PageFaultFlags::ProtectionViolation, accessType, inUserMode), QString("Page not accessible in user mode in PTE(%1)").arg(pageTableEntry, 8, 16, QLatin1Char('0')));
         }
     }
 
     if ((inUserMode || getCR0() & CR0::WP) && accessType == MemoryAccessType::Write) {
         if (!(pageDirectoryEntry & PageTableEntryFlags::ReadWrite)) {
-            vlog(LogCPU, "#PF Translating %08x {dir=%03x, page=%03x, offset=%03x} PDE=%08x, PTE=%08x", linearAddress, dir, page, offset, pageDirectoryEntry, pageTableEntry);
+            vlog(LogCPU, "#PF Translating %08x {dir=%03x, page=%03x, offset=%03x} PDBR=%08x, PDE=%08x, PTE=%08x", linearAddress, dir, page, offset, getCR3(), pageDirectoryEntry, pageTableEntry);
             throw PageFault(linearAddress, makePFErrorCode(PageFaultFlags::ProtectionViolation, accessType, inUserMode), QString("Page not writable in PDE(%1)").arg(pageDirectoryEntry, 8, 16, QLatin1Char('0')));
         }
         if (!(pageTableEntry & PageTableEntryFlags::ReadWrite)) {
-            vlog(LogCPU, "#PF Translating %08x {dir=%03x, page=%03x, offset=%03x} PDE=%08x, PTE=%08x", linearAddress, dir, page, offset, pageDirectoryEntry, pageTableEntry);
+            vlog(LogCPU, "#PF Translating %08x {dir=%03x, page=%03x, offset=%03x} PDBR=%08x, PDE=%08x, PTE=%08x", linearAddress, dir, page, offset, getCR3(), pageDirectoryEntry, pageTableEntry);
             throw PageFault(linearAddress, makePFErrorCode(PageFaultFlags::ProtectionViolation, accessType, inUserMode), QString("Page not writable in PTE(%1)").arg(pageTableEntry, 8, 16, QLatin1Char('0')));
         }
     }
