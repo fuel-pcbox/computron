@@ -645,6 +645,7 @@ void buildOpcodeTablesIfNeeded()
     buildSlash(0xC0, 3, "RCR",   OP_RM8_imm8,   &CPU::_RCR_RM8_imm8);
     buildSlash(0xC0, 4, "SHL",   OP_RM8_imm8,   &CPU::_SHL_RM8_imm8);
     buildSlash(0xC0, 5, "SHR",   OP_RM8_imm8,   &CPU::_SHR_RM8_imm8);
+    buildSlash(0xC0, 6, "SHL",   OP_RM8_imm8,   &CPU::_SHL_RM8_imm8); // Undocumented
     buildSlash(0xC0, 7, "SAR",   OP_RM8_imm8,   &CPU::_SAR_RM8_imm8);
 
     buildSlash(0xC1, 0, "ROL",   OP_RM16_imm8,  &CPU::_ROL_RM16_imm8,   OP_RM32_imm8,  &CPU::_ROL_RM32_imm8);
@@ -653,6 +654,7 @@ void buildOpcodeTablesIfNeeded()
     buildSlash(0xC1, 3, "RCR",   OP_RM16_imm8,  &CPU::_RCR_RM16_imm8,   OP_RM32_imm8,  &CPU::_RCR_RM32_imm8);
     buildSlash(0xC1, 4, "SHL",   OP_RM16_imm8,  &CPU::_SHL_RM16_imm8,   OP_RM32_imm8,  &CPU::_SHL_RM32_imm8);
     buildSlash(0xC1, 5, "SHR",   OP_RM16_imm8,  &CPU::_SHR_RM16_imm8,   OP_RM32_imm8,  &CPU::_SHR_RM32_imm8);
+    buildSlash(0xC1, 6, "SHL",   OP_RM16_imm8,  &CPU::_SHL_RM16_imm8,   OP_RM32_imm8,  &CPU::_SHL_RM32_imm8); // Undocumented
     buildSlash(0xC1, 7, "SAR",   OP_RM16_imm8,  &CPU::_SAR_RM16_imm8,   OP_RM32_imm8,  &CPU::_SAR_RM32_imm8);
 
     buildSlash(0xD0, 0, "ROL",   OP_RM8_1,      &CPU::_ROL_RM8_1);
@@ -661,6 +663,7 @@ void buildOpcodeTablesIfNeeded()
     buildSlash(0xD0, 3, "RCR",   OP_RM8_1,      &CPU::_RCR_RM8_1);
     buildSlash(0xD0, 4, "SHL",   OP_RM8_1,      &CPU::_SHL_RM8_1);
     buildSlash(0xD0, 5, "SHR",   OP_RM8_1,      &CPU::_SHR_RM8_1);
+    buildSlash(0xD0, 6, "SHL",   OP_RM8_1,      &CPU::_SHL_RM8_1); // Undocumented
     buildSlash(0xD0, 7, "SAR",   OP_RM8_1,      &CPU::_SAR_RM8_1);
 
     buildSlash(0xD1, 0, "ROL",   OP_RM16_1,     &CPU::_ROL_RM16_1,      OP_RM32_1,     &CPU::_ROL_RM32_1);
@@ -669,6 +672,7 @@ void buildOpcodeTablesIfNeeded()
     buildSlash(0xD1, 3, "RCR",   OP_RM16_1,     &CPU::_RCR_RM16_1,      OP_RM32_1,     &CPU::_RCR_RM32_1);
     buildSlash(0xD1, 4, "SHL",   OP_RM16_1,     &CPU::_SHL_RM16_1,      OP_RM32_1,     &CPU::_SHL_RM32_1);
     buildSlash(0xD1, 5, "SHR",   OP_RM16_1,     &CPU::_SHR_RM16_1,      OP_RM32_1,     &CPU::_SHR_RM32_1);
+    buildSlash(0xD1, 6, "SHL",   OP_RM16_1,     &CPU::_SHL_RM16_1,      OP_RM32_1,     &CPU::_SHL_RM32_1); // Undocumented
     buildSlash(0xD1, 7, "SAR",   OP_RM16_1,     &CPU::_SAR_RM16_1,      OP_RM32_1,     &CPU::_SAR_RM32_1);
 
     buildSlash(0xD2, 0, "ROL",   OP_RM8_CL,     &CPU::_ROL_RM8_CL);
@@ -677,6 +681,7 @@ void buildOpcodeTablesIfNeeded()
     buildSlash(0xD2, 3, "RCR",   OP_RM8_CL,     &CPU::_RCR_RM8_CL);
     buildSlash(0xD2, 4, "SHL",   OP_RM8_CL,     &CPU::_SHL_RM8_CL);
     buildSlash(0xD2, 5, "SHR",   OP_RM8_CL,     &CPU::_SHR_RM8_CL);
+    buildSlash(0xD2, 6, "SHL",   OP_RM8_CL,     &CPU::_SHL_RM8_CL); // Undocumented
     buildSlash(0xD2, 7, "SAR",   OP_RM8_CL,     &CPU::_SAR_RM8_CL);
 
     buildSlash(0xD3, 0, "ROL",   OP_RM16_CL,    &CPU::_ROL_RM16_CL,     OP_RM32_CL,    &CPU::_ROL_RM32_CL);
@@ -685,9 +690,11 @@ void buildOpcodeTablesIfNeeded()
     buildSlash(0xD3, 3, "RCR",   OP_RM16_CL,    &CPU::_RCR_RM16_CL,     OP_RM32_CL,    &CPU::_RCR_RM32_CL);
     buildSlash(0xD3, 4, "SHL",   OP_RM16_CL,    &CPU::_SHL_RM16_CL,     OP_RM32_CL,    &CPU::_SHL_RM32_CL);
     buildSlash(0xD3, 5, "SHR",   OP_RM16_CL,    &CPU::_SHR_RM16_CL,     OP_RM32_CL,    &CPU::_SHR_RM32_CL);
+    buildSlash(0xD3, 6, "SHL",   OP_RM16_CL,    &CPU::_SHL_RM16_CL,     OP_RM32_CL,    &CPU::_SHL_RM32_CL); // Undocumented
     buildSlash(0xD3, 7, "SAR",   OP_RM16_CL,    &CPU::_SAR_RM16_CL,     OP_RM32_CL,    &CPU::_SAR_RM32_CL);
 
     buildSlash(0xF6, 0, "TEST",  OP_RM8_imm8,   &CPU::_TEST_RM8_imm8);
+    buildSlash(0xF6, 1, "TEST",  OP_RM8_imm8,   &CPU::_TEST_RM8_imm8); // Undocumented
     buildSlash(0xF6, 2, "NOT",   OP_RM8,        &CPU::_NOT_RM8);
     buildSlash(0xF6, 3, "NEG",   OP_RM8,        &CPU::_NEG_RM8);
     buildSlash(0xF6, 4, "MUL",   OP_RM8,        &CPU::_MUL_RM8);
@@ -696,6 +703,7 @@ void buildOpcodeTablesIfNeeded()
     buildSlash(0xF6, 7, "IDIV",  OP_RM8,        &CPU::_IDIV_RM8);
 
     buildSlash(0xF7, 0, "TEST",  OP_RM16_imm16, &CPU::_TEST_RM16_imm16, OP_RM32_imm32, &CPU::_TEST_RM32_imm32);
+    buildSlash(0xF7, 1, "TEST",  OP_RM16_imm16, &CPU::_TEST_RM16_imm16, OP_RM32_imm32, &CPU::_TEST_RM32_imm32); // Undocumented
     buildSlash(0xF7, 2, "NOT",   OP_RM16,       &CPU::_NOT_RM16,        OP_RM32,       &CPU::_NOT_RM32);
     buildSlash(0xF7, 3, "NEG",   OP_RM16,       &CPU::_NEG_RM16,        OP_RM32,       &CPU::_NEG_RM32);
     buildSlash(0xF7, 4, "MUL",   OP_RM16,       &CPU::_MUL_RM16,        OP_RM32,       &CPU::_MUL_RM32);
