@@ -117,7 +117,7 @@ void CPU::dumpTrace()
         "C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u "
         "A%u O%u X%u\n",
         getCS(), getEIP(),
-        readMemory8(getCS(), getEIP()),
+        readMemory8(SegmentRegisterIndex::CS, getEIP()),
         getEAX(), getEBX(), getECX(), getEDX(), getESP(), getEBP(), getESI(), getEDI(),
         getCR0(),
         isA20Enabled(),

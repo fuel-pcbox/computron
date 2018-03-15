@@ -1305,12 +1305,6 @@ void CPU::validateAddress(SegmentRegisterIndex registerIndex, DWORD offset, Memo
 }
 
 template<typename T>
-void CPU::validateAddress(WORD segmentIndex, DWORD offset, MemoryAccessType accessType)
-{
-    validateAddress<T>(getSegmentDescriptor(segmentIndex), offset, accessType);
-}
-
-template<typename T>
 bool CPU::validatePhysicalAddress(DWORD address, MemoryAccessType accessType)
 {
     UNUSED_PARAM(accessType);
@@ -1392,12 +1386,6 @@ T CPU::readMemory(const SegmentDescriptor& descriptor, DWORD offset)
 }
 
 template<typename T>
-T CPU::readMemory(WORD segmentIndex, DWORD offset)
-{
-    return readMemory<T>(getSegmentDescriptor(segmentIndex), offset);
-}
-
-template<typename T>
 T CPU::readMemory(SegmentRegisterIndex segment, DWORD offset)
 {
     auto& descriptor = m_descriptor[(int)segment];
@@ -1417,9 +1405,6 @@ template void CPU::writeMemory<DWORD>(SegmentRegisterIndex, DWORD, DWORD);
 BYTE CPU::readMemory8(DWORD address) { return readMemory<BYTE>(address); }
 WORD CPU::readMemory16(DWORD address) { return readMemory<WORD>(address); }
 DWORD CPU::readMemory32(DWORD address) { return readMemory<DWORD>(address); }
-BYTE CPU::readMemory8(WORD segmentIndex, DWORD offset) { return readMemory<BYTE>(segmentIndex, offset); }
-WORD CPU::readMemory16(WORD segmentIndex, DWORD offset) { return readMemory<WORD>(segmentIndex, offset); }
-DWORD CPU::readMemory32(WORD segmentIndex, DWORD offset) { return readMemory<DWORD>(segmentIndex, offset); }
 BYTE CPU::readMemory8(SegmentRegisterIndex segment, DWORD offset) { return readMemory<BYTE>(segment, offset); }
 WORD CPU::readMemory16(SegmentRegisterIndex segment, DWORD offset) { return readMemory<WORD>(segment, offset); }
 DWORD CPU::readMemory32(SegmentRegisterIndex segment, DWORD offset) { return readMemory<DWORD>(segment, offset); }
@@ -1480,12 +1465,6 @@ void CPU::writeMemory(const SegmentDescriptor& descriptor, DWORD offset, T value
 }
 
 template<typename T>
-void CPU::writeMemory(WORD segmentIndex, DWORD offset, T value)
-{
-    writeMemory<T>(getSegmentDescriptor(segmentIndex), offset, value);
-}
-
-template<typename T>
 void CPU::writeMemory(SegmentRegisterIndex segment, DWORD offset, T value)
 {
     auto& descriptor = m_descriptor[(int)segment];
@@ -1497,9 +1476,6 @@ void CPU::writeMemory(SegmentRegisterIndex segment, DWORD offset, T value)
 void CPU::writeMemory8(DWORD address, BYTE value) { writeMemory(address, value); }
 void CPU::writeMemory16(DWORD address, WORD value) { writeMemory(address, value); }
 void CPU::writeMemory32(DWORD address, DWORD value) { writeMemory(address, value); }
-void CPU::writeMemory8(WORD segment, DWORD offset, BYTE value) { writeMemory(segment, offset, value); }
-void CPU::writeMemory16(WORD segment, DWORD offset, WORD value) { writeMemory(segment, offset, value); }
-void CPU::writeMemory32(WORD segment, DWORD offset, DWORD value) { writeMemory(segment, offset, value); }
 void CPU::writeMemory8(SegmentRegisterIndex segment, DWORD offset, BYTE value) { writeMemory(segment, offset, value); }
 void CPU::writeMemory16(SegmentRegisterIndex segment, DWORD offset, WORD value) { writeMemory(segment, offset, value); }
 void CPU::writeMemory32(SegmentRegisterIndex segment, DWORD offset, DWORD value) { writeMemory(segment, offset, value); }

@@ -471,41 +471,31 @@ public:
     template<typename T> bool validatePhysicalAddress(DWORD, MemoryAccessType);
     template<typename T> void validateAddress(const SegmentDescriptor&, DWORD offset, MemoryAccessType);
     template<typename T> void validateAddress(SegmentRegisterIndex, DWORD offset, MemoryAccessType);
-    template<typename T> void validateAddress(WORD segment, DWORD offset, MemoryAccessType);
     template<typename T> T readMemory(DWORD address);
-    template<typename T> T readMemory(WORD segment, DWORD address);
     template<typename T, MemoryAccessType accessType = MemoryAccessType::Read> T readMemory(const SegmentDescriptor&, DWORD address);
     template<typename T> T readMemory(SegmentRegisterIndex, DWORD address);
     template<typename T> void writeMemory(DWORD address, T data);
-    template<typename T> void writeMemory(WORD segment, DWORD address, T data);
     template<typename T> void writeMemory(const SegmentDescriptor&, DWORD address, T data);
     template<typename T> void writeMemory(SegmentRegisterIndex, DWORD address, T data);
 
     void translateAddress(DWORD linearAddress, DWORD& physicalAddress, MemoryAccessType);
 
     BYTE readMemory8(DWORD address);
-    BYTE readMemory8(WORD segment, DWORD offset);
     BYTE readMemory8(SegmentRegisterIndex, DWORD offset);
     WORD readMemory16(DWORD address);
-    WORD readMemory16(WORD segment, DWORD offset);
     WORD readMemory16(SegmentRegisterIndex, DWORD offset);
     DWORD readMemory32(DWORD address);
-    DWORD readMemory32(WORD segment, DWORD offset);
     DWORD readMemory32(SegmentRegisterIndex, DWORD offset);
     void writeMemory8(DWORD address, BYTE data);
-    void writeMemory8(WORD segment, DWORD offset, BYTE data);
     void writeMemory8(SegmentRegisterIndex, DWORD offset, BYTE data);
     void writeMemory16(DWORD address, WORD data);
-    void writeMemory16(WORD segment, DWORD offset, WORD data);
     void writeMemory16(SegmentRegisterIndex, DWORD offset, WORD data);
     void writeMemory32(DWORD address, DWORD data);
-    void writeMemory32(WORD segment, DWORD offset, DWORD data);
     void writeMemory32(SegmentRegisterIndex, DWORD offset, DWORD data);
 
     BYTE readModRM8(BYTE rmbyte);
     WORD readModRM16(BYTE rmbyte);
     DWORD readModRM32(BYTE rmbyte);
-    void readModRM48(BYTE rmbyte, WORD& segment, DWORD& offset);
     FarPointer readModRMFarPointerSegmentFirst(MemoryOrRegisterReference&);
     FarPointer readModRMFarPointerOffsetFirst(MemoryOrRegisterReference&);
     void writeModRM8(BYTE rmbyte, BYTE value);
