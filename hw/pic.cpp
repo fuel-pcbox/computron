@@ -158,6 +158,11 @@ void PIC::raise(BYTE num)
     m_irr |= 1 << num;
 }
 
+void PIC::lower(BYTE num)
+{
+    m_irr &= 1 << num;
+}
+
 void PIC::raiseIRQ(Machine& machine, BYTE num)
 {
     if (num < 8)
@@ -166,6 +171,25 @@ void PIC::raiseIRQ(Machine& machine, BYTE num)
         machine.slavePIC().raise(num - 8);
 
     updatePendingRequests(machine);
+}
+
+void PIC::lowerIRQ(Machine& machine, BYTE num)
+{
+    if (num < 8)
+        machine.masterPIC().lower(num);
+    else
+        machine.slavePIC().lower(num - 8);
+
+    updatePendingRequests(machine);
+}
+
+bool PIC::isIRQRaised(Machine& machine, BYTE num)
+{
+    if (num < 8)
+        return machine.masterPIC().m_irr & (1 << num);
+    else
+        return machine.slavePIC().m_irr & (1 << (num - 8));
+
 }
 
 void PIC::serviceIRQ(CPU& cpu)

@@ -41,6 +41,8 @@ public:
     Machine& machine() const { return m_machine; }
 
     void raiseIRQ();
+    void lowerIRQ();
+    bool isIRQRaised() const;
 
     virtual void reset() = 0;
 

@@ -40,6 +40,7 @@ public:
     BYTE in8(WORD port) override;
 
     void raise(BYTE num);
+    void lower(BYTE num);
 
     BYTE getIMR() const { return m_imr; }
     BYTE getIRR() const { return m_irr; }
@@ -50,6 +51,8 @@ public:
 
     static void serviceIRQ(CPU&);
     static void raiseIRQ(Machine&, BYTE num);
+    static void lowerIRQ(Machine&, BYTE num);
+    static bool isIRQRaised(Machine&, BYTE num);
     static void setIgnoreAllIRQs(bool);
     static bool hasPendingIRQ() { return s_pendingRequests; }
 

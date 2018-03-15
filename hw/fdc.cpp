@@ -145,6 +145,9 @@ BYTE FDC::in8(WORD port)
             /* Second drive installed */
             data |= 0x40;
         }
+        if (isIRQRaised()) {
+            data |= 0x80;
+        }
         vlog(LogFDC, "Read status register A: %02X", data);
         break;
     }

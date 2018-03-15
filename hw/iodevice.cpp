@@ -92,3 +92,17 @@ void IODevice::raiseIRQ()
     ASSERT(m_irq < 256);
     PIC::raiseIRQ(machine(), m_irq);
 }
+
+void IODevice::lowerIRQ()
+{
+    ASSERT(m_irq != -1);
+    ASSERT(m_irq < 256);
+    PIC::lowerIRQ(machine(), m_irq);
+}
+
+bool IODevice::isIRQRaised() const
+{
+    ASSERT(m_irq != -1);
+    ASSERT(m_irq < 256);
+    return PIC::isIRQRaised(machine(), m_irq);
+}
