@@ -44,6 +44,25 @@ enum FDCCommand {
     GetVersion = 0x10,
 };
 
+enum FDCDataRate {
+    _500kbps = 0,
+    _300kbps = 1,
+    _250kbps = 2,
+    _1000kbps = 3,
+};
+
+static const char* toString(FDCDataRate rate)
+{
+    switch (rate) {
+    case _500kbps: return "500 kbps";
+    case _300kbps: return "300 kbps";
+    case _250kbps: return "250 kbps";
+    case _1000kbps: return "1000 kbps";
+    }
+    ASSERT_NOT_REACHED();
+    return nullptr;
+}
+
 struct FDCDrive
 {
     FDCDrive() { }
@@ -68,6 +87,7 @@ struct FDC::Private
     BYTE driveIndex;
     bool enabled;
     bool usingDMA;
+    FDCDataRate dataRate;
     BYTE dataDirection;
     BYTE currentStatusRegister;
     BYTE statusRegister[4];
@@ -86,9 +106,9 @@ FDC::FDC(Machine& machine)
     listen(0x3F0, IODevice::ReadOnly);
     listen(0x3F1, IODevice::ReadOnly);
     listen(0x3F2, IODevice::WriteOnly);
-    listen(0x3F4, IODevice::ReadOnly);
+    listen(0x3F4, IODevice::ReadWrite);
     listen(0x3F5, IODevice::ReadWrite);
-    listen(0x3F7, IODevice::ReadOnly);
+    listen(0x3F7, IODevice::ReadWrite);
 
     reset();
 }
@@ -104,6 +124,7 @@ void FDC::reset()
     d->usingDMA = false;
     d->dataDirection = DATA_FROM_CPU_TO_FDC;
     d->currentStatusRegister = 0;
+    d->dataRate = FDCDataRate::_250kbps;
 
     d->commandIndex = 0;
     d->commandSize = 0;
@@ -258,6 +279,24 @@ void FDC::out8(WORD port, BYTE data)
         }
         break;
     }
+
+    case 0x3f4:
+        d->dataRate = static_cast<FDCDataRate>(data & 3);
+        vlog(LogFDC, "Set data rate (via Data Rate Select Register): %s", toString(d->dataRate));
+        if (data & 0x80) {
+            // S/W reset
+            ASSERT_NOT_REACHED();
+        }
+        if (data & 0x40) {
+            // Power down
+            ASSERT_NOT_REACHED();
+        }
+        break;
+
+    case 0x3f7:
+        d->dataRate = static_cast<FDCDataRate>(data & 3);
+        vlog(LogFDC, "Set data rate (via Configuration Control Register): %s", toString(d->dataRate));
+        break;
 
     default:
         IODevice::out8(port, data);
