@@ -190,7 +190,7 @@ void CPU::out(WORD port, BYTE value)
     }
 
     if (options.iopeek) {
-        if (port != 0x00E6 && port != 0x0020 && port != 0x3D4 && port != 0x03d5 && port != 0xe2 && port != 0xe0) {
+        if (port != 0x00E6 && port != 0x0020 && port != 0x3D4 && port != 0x03d5 && port != 0xe2 && port != 0xe0 && port != 0x92) {
             vlog(LogIO, "CPU::out: %02X --> %04X", value, port);
         }
     }
@@ -220,7 +220,7 @@ BYTE CPU::in(WORD port)
     }
 
     if (options.iopeek) {
-        if (port != 0x00E6 && port != 0x0020 && port != 0x3D4 && port != 0x03D5 && port != 0x3DA) {
+        if (port != 0x00E6 && port != 0x0020 && port != 0x3D4 && port != 0x03D5 && port != 0x3DA && port != 0x92) {
             vlog(LogIO, "CPU::in: %04X = %02X", port, value);
         }
     }
