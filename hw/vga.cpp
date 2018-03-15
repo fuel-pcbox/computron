@@ -180,9 +180,9 @@ void VGA::out8(WORD port, BYTE data)
         break;
 
     case 0x3C2:
-        vlog(LogVGA, "Writing MCR, data: %02x", data);
+        vlog(LogVGA, "Writing MOR (Miscellaneous Output Register), data: %02x", data);
         d->miscellaneousOutputRegister = data;
-        ASSERT_NOT_REACHED();
+        // FIXME: Do we need to deal with I/O remapping here?
         break;
 
     case 0x3C0: {
