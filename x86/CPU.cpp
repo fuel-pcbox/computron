@@ -1143,6 +1143,7 @@ enum Flags {
     Write = 0x02,
     UserMode = 0x04,
     SupervisorMode = 0x00,
+    InstructionFetch = 0x08,
 };
 };
 
@@ -1153,6 +1154,14 @@ ALWAYS_INLINE void CPU::translateAddress(DWORD linearAddress, DWORD& physicalAdd
         return;
     }
     translateAddressSlowCase(linearAddress, physicalAddress, accessType);
+}
+
+static WORD makePFErrorCode(PageFaultFlags::Flags flags, CPU::MemoryAccessType accessType, bool inUserMode)
+{
+    return flags
+         | (accessType == CPU::MemoryAccessType::Write ? PageFaultFlags::Write : PageFaultFlags::Read)
+         | (inUserMode ? PageFaultFlags::UserMode : PageFaultFlags::SupervisorMode)
+         | (accessType == CPU::MemoryAccessType::Execute ? PageFaultFlags::InstructionFetch : 0);
 }
 
 void CPU::translateAddressSlowCase(DWORD linearAddress, DWORD& physicalAddress, MemoryAccessType accessType)
@@ -1173,51 +1182,33 @@ void CPU::translateAddressSlowCase(DWORD linearAddress, DWORD& physicalAddress, 
     bool inUserMode = getCPL() == 3;
 
     if (!(pageDirectoryEntry & PageTableEntryFlags::Present)) {
-        WORD error = PageFaultFlags::NotPresent
-                   | (accessType == MemoryAccessType::Write ? PageFaultFlags::Write : PageFaultFlags::Read)
-                   | (inUserMode ? PageFaultFlags::UserMode : PageFaultFlags::SupervisorMode);
         vlog(LogCPU, "#PF Translating %08x {dir=%03x, page=%03x, offset=%03x} PDE=%08x, PTE=%08x", linearAddress, dir, page, offset, pageDirectoryEntry, pageTableEntry);
-        throw PageFault(linearAddress, error, QString("Page not present in PDE(%1)").arg(pageDirectoryEntry, 8, 16, QLatin1Char('0')));
+        throw PageFault(linearAddress, makePFErrorCode(PageFaultFlags::NotPresent, accessType, inUserMode), QString("Page not present in PDE(%1)").arg(pageDirectoryEntry, 8, 16, QLatin1Char('0')));
     }
     if (!(pageTableEntry & PageTableEntryFlags::Present)) {
-        WORD error = PageFaultFlags::NotPresent
-                   | (accessType == MemoryAccessType::Write ? PageFaultFlags::Write : PageFaultFlags::Read)
-                   | (inUserMode ? PageFaultFlags::UserMode : PageFaultFlags::SupervisorMode);
         vlog(LogCPU, "#PF Translating %08x {dir=%03x, page=%03x, offset=%03x} PDE=%08x, PTE=%08x", linearAddress, dir, page, offset, pageDirectoryEntry, pageTableEntry);
-        throw PageFault(linearAddress, error, QString("Page not present in PTE(%1)").arg(pageTableEntry, 8, 16, QLatin1Char('0')));
+        throw PageFault(linearAddress, makePFErrorCode(PageFaultFlags::NotPresent, accessType, inUserMode), QString("Page not present in PTE(%1)").arg(pageTableEntry, 8, 16, QLatin1Char('0')));
     }
 
     if (inUserMode) {
         if (!(pageDirectoryEntry & PageTableEntryFlags::UserSupervisor)) {
-            WORD error = PageFaultFlags::ProtectionViolation
-                       | (accessType == MemoryAccessType::Write ? PageFaultFlags::Write : PageFaultFlags::Read)
-                       | PageFaultFlags::UserMode;
             vlog(LogCPU, "#PF Translating %08x {dir=%03x, page=%03x, offset=%03x} PDE=%08x, PTE=%08x", linearAddress, dir, page, offset, pageDirectoryEntry, pageTableEntry);
-            throw PageFault(linearAddress, error, QString("Page not accessible in user mode in PDE(%1)").arg(pageDirectoryEntry, 8, 16, QLatin1Char('0')));
+            throw PageFault(linearAddress, makePFErrorCode(PageFaultFlags::ProtectionViolation, accessType, inUserMode), QString("Page not accessible in user mode in PDE(%1)").arg(pageDirectoryEntry, 8, 16, QLatin1Char('0')));
         }
         if (!(pageTableEntry & PageTableEntryFlags::UserSupervisor)) {
-            WORD error = PageFaultFlags::ProtectionViolation
-                       | (accessType == MemoryAccessType::Write ? PageFaultFlags::Write : PageFaultFlags::Read)
-                       | PageFaultFlags::UserMode;
             vlog(LogCPU, "#PF Translating %08x {dir=%03x, page=%03x, offset=%03x} PDE=%08x, PTE=%08x", linearAddress, dir, page, offset, pageDirectoryEntry, pageTableEntry);
-            throw PageFault(linearAddress, error, QString("Page not accessible in user mode in PTE(%1)").arg(pageTableEntry, 8, 16, QLatin1Char('0')));
+            throw PageFault(linearAddress, makePFErrorCode(PageFaultFlags::ProtectionViolation, accessType, inUserMode), QString("Page not accessible in user mode in PTE(%1)").arg(pageTableEntry, 8, 16, QLatin1Char('0')));
         }
     }
 
     if ((inUserMode || getCR0() & CR0::WP) && accessType == MemoryAccessType::Write) {
         if (!(pageDirectoryEntry & PageTableEntryFlags::ReadWrite)) {
-            WORD error = PageFaultFlags::ProtectionViolation
-                       | PageFaultFlags::Write
-                       | (inUserMode ? PageFaultFlags::UserMode : PageFaultFlags::SupervisorMode);
             vlog(LogCPU, "#PF Translating %08x {dir=%03x, page=%03x, offset=%03x} PDE=%08x, PTE=%08x", linearAddress, dir, page, offset, pageDirectoryEntry, pageTableEntry);
-            throw PageFault(linearAddress, error, QString("Page not writable in PDE(%1)").arg(pageDirectoryEntry, 8, 16, QLatin1Char('0')));
+            throw PageFault(linearAddress, makePFErrorCode(PageFaultFlags::ProtectionViolation, accessType, inUserMode), QString("Page not writable in PDE(%1)").arg(pageDirectoryEntry, 8, 16, QLatin1Char('0')));
         }
         if (!(pageTableEntry & PageTableEntryFlags::ReadWrite)) {
-            WORD error = PageFaultFlags::ProtectionViolation
-                       | PageFaultFlags::Write
-                       | (inUserMode ? PageFaultFlags::UserMode : PageFaultFlags::SupervisorMode);
             vlog(LogCPU, "#PF Translating %08x {dir=%03x, page=%03x, offset=%03x} PDE=%08x, PTE=%08x", linearAddress, dir, page, offset, pageDirectoryEntry, pageTableEntry);
-            throw PageFault(linearAddress, error, QString("Page not writable in PTE(%1)").arg(pageTableEntry, 8, 16, QLatin1Char('0')));
+            throw PageFault(linearAddress, makePFErrorCode(PageFaultFlags::ProtectionViolation, accessType, inUserMode), QString("Page not writable in PTE(%1)").arg(pageTableEntry, 8, 16, QLatin1Char('0')));
         }
     }
 
