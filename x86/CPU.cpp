@@ -42,7 +42,6 @@
 //#define LOG_FAR_JUMPS
 //#define DEBUG_JUMPS
 //#define DISASSEMBLE_EVERYTHING
-//#define DEBUG_I386NF
 //#define MEMORY_DEBUGGING
 
 #ifdef MEMORY_DEBUGGING
@@ -51,10 +50,6 @@ static bool shouldLogAllMemoryAccesses(DWORD address)
     UNUSED_PARAM(address);
 #ifdef CT_DETERMINISTIC
     return true;
-#endif
-#ifdef DEBUG_I386NF
-    if (address >= 0x0001be5e && address <= (0x0001be5e + sizeof(TSS32)))
-        return true;
 #endif
     return false;
 }
@@ -1682,13 +1677,4 @@ void CPU::_LOCK(Instruction&)
 
 void CPU::initWatches()
 {
-#ifdef DEBUG_I386NF
-    const DWORD base = 0x0000ff70;
-    m_watches.append(WatchedAddress("dos_block_sel", base + 0x061e, WordSize));
-    m_watches.append(WatchedAddress("client_ds", base + 0x0616, WordSize));
-    m_watches.append(WatchedAddress("read_soffset", base + 0x0622, DWordSize));
-    m_watches.append(WatchedAddress("read_size", base + 0x0626, DWordSize));
-    m_watches.append(WatchedAddress("entry_eip", base + 0x0610, DWordSize));
-    m_watches.append(WatchedAddress("entry_cs", base + 0x0614, WordSize));
-#endif
 }
