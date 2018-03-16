@@ -784,8 +784,11 @@ void CPU::_HLT(Instruction&)
 
     if (!getIF()) {
         vlog(LogCPU, "Halted with IF=0");
-    } else
+    } else {
+#ifdef VERBOSE_DEBUG
         vlog(LogCPU, "Halted");
+#endif
+    }
 
     haltedLoop();
 }

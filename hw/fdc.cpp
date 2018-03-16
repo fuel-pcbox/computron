@@ -32,9 +32,19 @@
 #define FDC_NEC765
 #define FDC_DEBUG
 
+// Spec: http://www.buchty.net/casio/files/82077.pdf
+
+// 0x3f4 - MSR (Main Status Register)
+#define FDC_MSR_RQM     (1 << 7)
+#define FDC_MSR_DIO     (1 << 6)
+#define FDC_MSR_NONDMA  (1 << 5)
+#define FDC_MSR_CMDBSY  (1 << 4)
+#define FDC_MSR_DRV3BSY (1 << 3)
+#define FDC_MSR_DRV2BSY (1 << 2)
+#define FDC_MSR_DRV1BSY (1 << 1)
+#define FDC_MSR_DRV0BSY (1 << 0)
+
 #define DATA_REGISTER_READY 0x80
-#define DATA_FROM_FDC_TO_CPU 0x40
-#define DATA_FROM_CPU_TO_FDC 0x00
 
 enum FDCCommand {
     SenseInterruptStatus = 0x08,
@@ -42,6 +52,12 @@ enum FDCCommand {
     SeekToTrack = 0x0f,
     Recalibrate = 0x07,
     GetVersion = 0x10,
+    DumpRegisters = 0x0e,
+    PerpendicularMode = 0x12,
+    Configure = 0x13,
+    Lock = 0x94,
+    Unlock = 0x14,
+    SenseDriveStatus = 0x04,
 };
 
 enum FDCDataRate {
@@ -74,11 +90,11 @@ struct FDCDrive
     BYTE stepRateTime { 0 };
     BYTE headLoadTime { 0 };
     BYTE headUnloadTime { 0 };
-    bool nonDMA { 0 };
     BYTE bytesPerSector { 0 };
     BYTE endOfTrack { 0 };
     BYTE gap3Length { 0 };
     BYTE dataLength { 0 };
+    BYTE digitalInputRegister { 0 };
 };
 
 struct FDC::Private
@@ -86,17 +102,21 @@ struct FDC::Private
     FDCDrive drive[2];
     BYTE driveIndex;
     bool enabled;
-    bool usingDMA;
     FDCDataRate dataRate;
     BYTE dataDirection;
-    BYTE currentStatusRegister;
+    BYTE mainStatusRegister;
     BYTE statusRegister[4];
-    BYTE command[9];
+    bool hasPendingReset { false };
+    QVector<BYTE> command;
     BYTE commandSize;
-    BYTE commandIndex;
     QList<BYTE> commandResult;
+    BYTE configureData { 0 };
+    BYTE precompensationStartNumber { 0 };
+    BYTE perpendicularModeConfig { 0 };
+    bool lock { false };
+    BYTE expectedSenseInterruptCount { 0 };
 
-    FDCDrive& currentDrive() { return drive[driveIndex]; }
+    FDCDrive& currentDrive() { ASSERT(driveIndex < 2); return drive[driveIndex]; }
 };
 
 FDC::FDC(Machine& machine)
@@ -117,23 +137,81 @@ FDC::~FDC()
 {
 }
 
-void FDC::reset()
+void FDC::setDataDirection(DataDirection direction)
 {
+    if (direction == DataDirection::FromFDC)
+        d->mainStatusRegister |= (unsigned)DataDirection::FromFDC;
+    else
+        d->mainStatusRegister &= ~(unsigned)DataDirection::FromFDC;
+}
+
+FDC::DataDirection FDC::dataDirection() const
+{
+    return static_cast<DataDirection>(d->mainStatusRegister & (unsigned)DataDirection::Mask);
+}
+
+void FDC::setUsingDMA(bool value)
+{
+    if (value)
+        d->mainStatusRegister &= ~FDC_MSR_NONDMA;
+    else
+        d->mainStatusRegister |= FDC_MSR_NONDMA;
+}
+
+bool FDC::usingDMA() const
+{
+    return !(d->mainStatusRegister & FDC_MSR_NONDMA);
+}
+
+void FDC::resetController(ResetSource resetSource)
+{
+    if (resetSource == Software) {
+        vlog(LogFDC, "Reset by software");
+    } else {
+        d->dataRate = FDCDataRate::_250kbps;
+        d->lock = false;
+
+        // FIXME: I think we should pretend the disks are changed.
+        // However I'm not sure when exactly to mark them as unchanged. Need to figure out.
+        //d->drive[0].digitalInputRegister = 0x80;
+        //d->drive[1].digitalInputRegister = 0x80;
+    }
+
+    d->hasPendingReset = false;
     d->driveIndex = 0;
     d->enabled = false;
-    d->usingDMA = false;
-    d->dataDirection = DATA_FROM_CPU_TO_FDC;
-    d->currentStatusRegister = 0;
-    d->dataRate = FDCDataRate::_250kbps;
+    setUsingDMA(false);
+    setDataDirection(DataDirection::ToFDC);
+    d->mainStatusRegister = 0;
 
-    d->commandIndex = 0;
     d->commandSize = 0;
-    d->command[0] = 0;
+    d->command.clear();
 
     d->statusRegister[0] = 0;
     d->statusRegister[1] = 0;
     d->statusRegister[2] = 0;
-    d->statusRegister[3] = 0;
+    d->statusRegister[3] = 0x28;
+
+    for (unsigned i = 0; i < 2; ++i) {
+        d->drive[i].cylinder = 0;
+        d->drive[i].head = 0;
+        d->drive[i].sector = 0;
+        d->drive[i].endOfTrack = 0;
+    }
+
+    d->perpendicularModeConfig = 0;
+
+    if (!d->lock) {
+        d->configureData = 0;
+        d->precompensationStartNumber = 0;
+    }
+
+    lowerIRQ();
+}
+
+void FDC::reset()
+{
+    resetController(ResetSource::Hardware);
 }
 
 BYTE FDC::in8(WORD port)
@@ -157,27 +235,8 @@ BYTE FDC::in8(WORD port)
         break;
 
     case 0x3F4: {
-        // 0x80 - MRQ  - main request (1: data register ready, 0: data register not ready)
-        // 0x40 - DIO  - data input/output (1: controller ? cpu, 0: cpu ? controller)
-        // 0x20 - NDMA - non-DMA mode (1: controller not in DMA mode, 0: controller in DMA mode)
-        // 0x10 - BUSY - device busy (1: busy, 0: ready)
-        // 0x08 - ACTD ..
-        // 0x04 - ACTC ..
-        // 0x02 - ACTB ..
-        // 0x01 - ACTA - drive X in positioning mode
-
-        data |= 0x80; // MRQ = 1
-
-        data |= d->dataDirection;
-
-        if (!d->usingDMA)
-            data |= 0x20;
-
-        if (!d->commandResult.isEmpty() || d->commandSize != 0)
-            data |= 0x10;
-
-        vlog(LogFDC, "Read main status register: %02X (direction: %s)", data, (d->dataDirection == DATA_FROM_CPU_TO_FDC) ? "to FDC" : "from FDC");
-        break;
+        vlog(LogFDC, "Read main status register: %02x (direction: %s)", d->mainStatusRegister, (dataDirection() == DataDirection::ToFDC) ? "to FDC" : "from FDC");
+        return d->mainStatusRegister;
     }
 
     case 0x3F5: {
@@ -190,14 +249,17 @@ BYTE FDC::in8(WORD port)
         vlog(LogFDC, "Read command result byte %02X", data);
 
         if (d->commandResult.isEmpty()) {
-            d->dataDirection = DATA_FROM_CPU_TO_FDC;
+            setDataDirection(DataDirection::ToFDC);
         }
 
         break;
 
     case 0x3F7:
-        data = 0;
-        vlog(LogFDC, "Read DIR = %02X", data);
+        if (d->driveIndex < 2) {
+            vlog(LogFDC, "Read drive %u DIR = %02X", d->driveIndex, d->currentDrive().digitalInputRegister);
+            data = d->currentDrive().digitalInputRegister;
+        } else
+            vlog(LogFDC, "Wanted DIR, but invalid drive %u selected", d->driveIndex);
         break;
     }
 
@@ -223,36 +285,41 @@ void FDC::out8(WORD port, BYTE data)
 #endif
     switch (port) {
     case 0x3F2: {
-        bool old_fdc_enabled = d->enabled;
+        bool wasEnabled = d->enabled;
 
         vlog(LogFDC, "Writing to FDC digital output, data: %02X", data);
 
         d->driveIndex = data & 3;
         d->enabled = (data & 0x04) != 0;
-        d->usingDMA = (data & 0x08) != 0;
+        setUsingDMA(data & 0x08);
 
         d->drive[0].motor = (data & 0x10) != 0;
         d->drive[1].motor = (data & 0x20) != 0;
 
         vlog(LogFDC, "  Current drive: %u", d->driveIndex);
         vlog(LogFDC, "  FDC enabled:   %s", d->enabled ? "yes" : "no");
-        vlog(LogFDC, "  DMA+I/O mode:  %s", d->usingDMA ? "yes" : "no");
+        vlog(LogFDC, "  DMA+I/O mode:  %s", usingDMA() ? "yes" : "no");
 
         vlog(LogFDC, "  Motors:        %u %u", d->drive[0].motor, d->drive[1].motor);
 
         //if (!d->currentDrive().motor)
         //    vlog(LogFDC, "Invalid state: Current drive (%u) has motor off.", d->driveIndex);
 
-        if (d->enabled != old_fdc_enabled)
-            generateFDCInterrupt();
+        if (!wasEnabled && d->enabled) {
+            // Back to business.
+        } else if (wasEnabled && !d->enabled) {
+            resetControllerSoon();
+        }
 
         break;
     }
 
     case 0x3F5: {
-        vlog(LogFDC, "Command: %02X", data);
+        vlog(LogFDC, "Command byte: %02X", data);
 
-        if (d->commandIndex == 0) {
+        if (d->command.isEmpty()) {
+            d->mainStatusRegister &= FDC_MSR_DIO;
+            d->mainStatusRegister |= FDC_MSR_RQM | FDC_MSR_CMDBSY;
             // Determine the command length
             if (isReadDataCommand(data)) {
                 d->commandSize = 9;
@@ -260,25 +327,31 @@ void FDC::out8(WORD port, BYTE data)
                 switch (data) {
                 case GetVersion:
                 case SenseInterruptStatus:
+                case DumpRegisters:
+                case Lock:
+                case Unlock:
                     d->commandSize = 1;
                     break;
                 case Recalibrate:
+                case PerpendicularMode:
+                case SenseDriveStatus:
                     d->commandSize = 2;
                     break;
                 case SeekToTrack:
                 case SpecifyStepAndHeadLoad:
                     d->commandSize = 3;
                     break;
+                case Configure:
+                    d->commandSize = 4;
+                    break;
                 }
             }
         }
 
-        d->command[d->commandIndex++] = data;
+        d->command.append(data);
 
-        if (d->commandIndex >= d->commandSize) {
-            executeCommand();
-            d->commandIndex = 0;
-            d->dataDirection = !d->commandResult.isEmpty() ? DATA_FROM_FDC_TO_CPU : DATA_FROM_CPU_TO_FDC;
+        if (d->command.size() >= d->commandSize) {
+            executeCommandSoon();
         }
         break;
     }
@@ -287,8 +360,7 @@ void FDC::out8(WORD port, BYTE data)
         d->dataRate = static_cast<FDCDataRate>(data & 3);
         vlog(LogFDC, "Set data rate (via Data Rate Select Register): %s", toString(d->dataRate));
         if (data & 0x80) {
-            // S/W reset
-            ASSERT_NOT_REACHED();
+            resetControllerSoon();
         }
         if (data & 0x40) {
             // Power down
@@ -304,6 +376,13 @@ void FDC::out8(WORD port, BYTE data)
     default:
         IODevice::out8(port, data);
     }
+}
+
+void FDC::resetControllerSoon()
+{
+    d->hasPendingReset = true;
+    d->mainStatusRegister &= FDC_MSR_NONDMA;
+    executeCommandSoon();
 }
 
 void FDC::executeReadDataCommand()
@@ -329,9 +408,41 @@ void FDC::executeReadDataCommand()
     );
 }
 
+void FDC::executeCommandSoon()
+{
+    // FIXME: Don't do this immediately, do it "soon"!
+    executeCommand();
+}
+
 void FDC::executeCommand()
 {
-    vlog(LogFDC, "Executing command %02X", d->command[0]);
+    executeCommandInternal();
+    d->command.clear();
+    if ((d->statusRegister[0] & 0xc0) == 0x80) {
+        // Command was invalid
+        d->commandResult.clear();
+        d->commandResult.append(d->statusRegister[0]);
+    }
+    setDataDirection(!d->commandResult.isEmpty() ? DataDirection::FromFDC : DataDirection::ToFDC);
+    d->mainStatusRegister |= FDC_MSR_RQM;
+
+    if (d->commandResult.isEmpty()) {
+        d->mainStatusRegister &= ~FDC_MSR_CMDBSY;
+    } else {
+        d->mainStatusRegister |= FDC_MSR_CMDBSY;
+    }
+}
+
+void FDC::executeCommandInternal()
+{
+    if (d->hasPendingReset) {
+        resetController(Software);
+        d->expectedSenseInterruptCount = 4;
+        generateFDCInterrupt();
+        return;
+    }
+
+    vlog(LogFDC, "Executing command %02x", d->command[0]);
     d->commandResult.clear();
 
     if (isReadDataCommand(d->command[0]))
@@ -342,17 +453,27 @@ void FDC::executeCommand()
         d->currentDrive().stepRateTime = (d->command[1] >> 4) & 0xf;
         d->currentDrive().headUnloadTime = d->command[1] & 0xf;
         d->currentDrive().headLoadTime = (d->command[2] >> 1) & 0x7f;
-        d->currentDrive().nonDMA = d->command[2] & 1;
+
+        setUsingDMA(!(d->command[2] & 1));
         vlog(LogFDC, "SpecifyStepAndHeadLoad { SRT:%1x, HUT:%1x, HLT:%1x, ND:%1x }",
             d->currentDrive().stepRateTime,
             d->currentDrive().headUnloadTime,
             d->currentDrive().headLoadTime,
-            d->currentDrive().nonDMA);
+            !usingDMA());
         break;
     case SenseInterruptStatus:
         vlog(LogFDC, "SenseInterruptStatus");
         d->commandResult.append(d->statusRegister[0]);
         d->commandResult.append(d->currentDrive().cylinder);
+        // Linux sends 4 SenseInterruptStatus commands after a controller reset because of "drive polling"
+        if (d->expectedSenseInterruptCount) {
+            BYTE driveIndex = 4 - d->expectedSenseInterruptCount;
+            d->statusRegister[0] &= 0xf8;
+            d->statusRegister[0] |= (d->drive[driveIndex].head << 2) | driveIndex;
+            --d->expectedSenseInterruptCount;
+        } else if (!isIRQRaised()) {
+            d->statusRegister[0] = 0x80;
+        }
         break;
     case Recalibrate:
         d->driveIndex = d->command[1] & 3;
@@ -363,11 +484,11 @@ void FDC::executeCommand()
         d->driveIndex = d->command[1] & 3;
         d->currentDrive().head = (d->command[1] >> 2) & 1;
         d->currentDrive().cylinder = d->command[2];
-        generateFDCInterrupt(true);
         vlog(LogFDC, "SeekToTrack { drive:%u, C:%u, H:%u }",
             d->driveIndex,
             d->currentDrive().cylinder,
             d->currentDrive().head);
+        generateFDCInterrupt(true);
         break;
     case GetVersion:
         vlog(LogFDC, "Get version");
@@ -378,8 +499,49 @@ void FDC::executeCommand()
         d->commandResult.append(d->statusRegister[0]);
 #endif
         break;
+    case DumpRegisters:
+        d->commandResult.append(d->drive[0].cylinder);
+        d->commandResult.append(d->drive[1].cylinder);
+        d->commandResult.append(0); // Drive 2 cylinder
+        d->commandResult.append(0); // Drive 3 cylinder
+        d->commandResult.append((d->currentDrive().stepRateTime << 4) | (d->currentDrive().headUnloadTime));
+        d->commandResult.append((d->currentDrive().headUnloadTime << 1) | !usingDMA());
+        d->commandResult.append((d->currentDrive().endOfTrack << 1) | !usingDMA());
+        d->commandResult.append((d->lock * 0x80) | (d->perpendicularModeConfig & 0x7f));
+        d->commandResult.append(d->configureData);
+        d->commandResult.append(d->precompensationStartNumber);
+        break;
+    case PerpendicularMode:
+        d->perpendicularModeConfig = d->command[1];
+        vlog(LogFDC, "Perpendicular mode configuration: %02x", d->perpendicularModeConfig);
+        break;
+    case Lock:
+    case Unlock:
+        d->lock = (d->command[0] & 0x80);
+        d->commandResult.append(d->lock * 0x10);
+        break;
+    case Configure:
+        if (d->command[1] != 0) {
+            vlog(LogFDC, "Weird, expected second byte of Configure command to be all zeroes!");
+        }
+        d->configureData = d->command[2];
+        d->precompensationStartNumber = d->command[3];
+        break;
+    case SenseDriveStatus: {
+        BYTE driveIndex = d->command[1] & 3;
+        d->drive[driveIndex].head = (d->command[1] >> 2) & 1;
+        d->statusRegister[3] = 0x28; // Reserved bits, always set.
+        d->statusRegister[3] |= d->command[1] & 7;
+        if (d->drive[driveIndex].cylinder == 0)
+            d->statusRegister[3] |= 0x10;
+        d->commandResult.append(d->statusRegister[3]);
+        break;
+    }
     default:
         vlog(LogFDC, "Unknown command! %02X", d->command[0]);
+        if (d->command[0] != 0x18)
+            ASSERT_NOT_REACHED();
+        d->statusRegister[0] = 0x80;
         break;
     }
 }

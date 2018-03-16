@@ -114,13 +114,13 @@ Machine::Machine(const QString& name, OwnPtr<Settings>&& settings, QObject* pare
         IODevice::ignorePort(0xFC8F);
     }
 
+    m_masterPIC = make<PIC>(true, *this);
+    m_slavePIC = make<PIC>(false, *this);
     m_busMouse = make<BusMouse>(*this);
     m_cmos = make<CMOS>(*this);
     m_fdc = make<FDC>(*this);
     m_ide = make<IDE>(*this);
     m_keyboard = make<Keyboard>(*this);
-    m_masterPIC = make<PIC>(true, *this);
-    m_slavePIC = make<PIC>(false, *this);
     m_ps2 = make<PS2>(*this);
     m_vomCtl = make<VomCtl>(*this);
     m_pit = make<PIT>(*this);

@@ -23,8 +23,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef FDC_H
-#define FDC_H
+#pragma once
 
 #include "iodevice.h"
 #include "OwnPtr.h"
@@ -40,14 +39,22 @@ public:
     virtual void out8(WORD port, BYTE data) override;
 
 private:
+    enum ResetSource { Software, Hardware };
+    enum class DataDirection { FromFDC = 0x40, ToFDC = 0, Mask = 0x40 };
+    void setDataDirection(DataDirection);
+    DataDirection dataDirection() const;
+    bool usingDMA() const;
+    void setUsingDMA(bool);
+    void resetController(ResetSource);
+    void resetControllerSoon();
     void generateFDCInterrupt(bool seekCompleted = false);
     void updateStatus(bool seekCompleted = false);
 
+    void executeCommandSoon();
     void executeCommand();
+    void executeCommandInternal();
     void executeReadDataCommand();
 
     struct Private;
     OwnPtr<Private> d;
 };
-
-#endif

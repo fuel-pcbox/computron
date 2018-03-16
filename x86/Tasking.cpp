@@ -27,7 +27,7 @@
 #include "debugger.h"
 #include "Tasking.h"
 
-#define DEBUG_TASK_SWITCH
+//#define DEBUG_TASK_SWITCH
 
 void CPU::_STR_RM16(Instruction& insn)
 {
