@@ -490,11 +490,11 @@ void CPU::dumpDescriptor(const SystemDescriptor& segment)
 
 void CPU::dumpDescriptor(const CodeSegmentDescriptor& segment)
 {
-    vlog(LogCPU, "%s segment %04x: { type: CODE, base:%08x, limit:%06x, bits:%u, P:%s, G:%s, DPL:%u, A:%s, readable:%s, conforming:%s }",
+    vlog(LogCPU, "%s segment %04x: { type: CODE, base:%08x, e-limit:%08x, bits:%u, P:%s, G:%s, DPL:%u, A:%s, readable:%s, conforming:%s }",
         segment.isGlobal() ? "Global" : "Local",
         segment.index(),
         segment.base(),
-        segment.limit(),
+        segment.effectiveLimit(),
         segment.D() ? 32 : 16,
         segment.present() ? "yes" : "no",
         segment.granularity() ? "4K" : "1b",
@@ -507,11 +507,11 @@ void CPU::dumpDescriptor(const CodeSegmentDescriptor& segment)
 
 void CPU::dumpDescriptor(const DataSegmentDescriptor& segment)
 {
-    vlog(LogCPU, "%s segment %04x: { type: DATA, base:%08x, limit:%06x, bits:%u, P:%s, G:%s, DPL:%u, A:%s, writable:%s, expandDown:%s }",
+    vlog(LogCPU, "%s segment %04x: { type: DATA, base:%08x, e-limit:%08x, bits:%u, P:%s, G:%s, DPL:%u, A:%s, writable:%s, expandDown:%s }",
         segment.isGlobal() ? "Global" : "Local",
         segment.index(),
         segment.base(),
-        segment.limit(),
+        segment.effectiveLimit(),
         segment.D() ? 32 : 16,
         segment.present() ? "yes" : "no",
         segment.granularity() ? "4K" : "1b",
