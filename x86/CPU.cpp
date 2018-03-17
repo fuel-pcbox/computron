@@ -272,7 +272,7 @@ CPU::CPU(Machine& m)
         hard_exit(1);
     }
 
-    memset(m_memory, 0, 1048576 + 65536);
+    memset(m_memory, 0x0, m_memorySize);
 
     m_debugger = make<Debugger>(*this);
 
