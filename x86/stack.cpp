@@ -239,25 +239,21 @@ void CPU::_PUSHF(Instruction&)
 
 void CPU::_POPF(Instruction&)
 {
-    RELEASE_ASSERT(!getVM());
-    DWORD oldFlags = getEFlags();
-    DWORD newFlags = pop16();
-    DWORD flagsToKeep = 0xffff0000;
-    if (getPE() && getCPL() != 0) {
-        flagsToKeep |= Flag::IOPL;
-    }
-    newFlags &= ~flagsToKeep;
-    newFlags |= oldFlags & flagsToKeep;
-    newFlags &= ~Flag::RF;
-    setEFlags(newFlags);
+    setEFlagsRespectfully(pop16());
 }
 
 void CPU::_POPFD(Instruction&)
 {
+    setEFlagsRespectfully(pop32());
+}
+
+void CPU::setEFlagsRespectfully(DWORD newFlags)
+{
     RELEASE_ASSERT(!getVM());
     DWORD oldFlags = getEFlags();
-    DWORD newFlags = pop32();
     DWORD flagsToKeep = Flag::VIP | Flag::VIF | Flag::RF;
+    if (o16())
+        flagsToKeep |= 0xffff0000;
     if (getPE() && getCPL() != 0) {
         flagsToKeep |= Flag::IOPL;
         if (getCPL() > getIOPL()) {

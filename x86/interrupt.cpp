@@ -50,8 +50,6 @@ void CPU::_INTO(Instruction&)
 
 void CPU::_IRET(Instruction&)
 {
-    BYTE originalIOPL = getIOPL();
-
     if (getPE()) {
         if (getNT()) {
             ASSERT(!getVM());
@@ -67,17 +65,13 @@ void CPU::_IRET(Instruction&)
         WORD ncs = pop16();
         WORD flags = pop16();
         jump16(ncs, nip, JumpType::IRET);
-        setFlags(flags);
+        setEFlagsRespectfully(flags);
     } else {
         DWORD nip = pop32();
         WORD ncs = pop32();
         DWORD flags = pop32();
         jump32(ncs, nip, JumpType::IRET);
-        setEFlags(flags);
-    }
-
-    if (getPE() && getCPL() != 0) {
-        setIOPL(originalIOPL);
+        setEFlagsRespectfully(flags);
     }
 }
 

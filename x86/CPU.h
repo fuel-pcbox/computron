@@ -440,6 +440,7 @@ public:
     WORD getFlags() const;
     void setEFlags(DWORD flags);
     void setFlags(WORD flags);
+    void setEFlagsRespectfully(DWORD flags);
 
     inline bool evaluate(BYTE) const;
 
