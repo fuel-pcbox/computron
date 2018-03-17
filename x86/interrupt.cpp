@@ -157,9 +157,9 @@ void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
     }
 
     if (o16())
-        jump16(vector.segment, vector.offset, JumpType::INT, isr, getFlags());
+        jump16(vector.segment, vector.offset, JumpType::INT, isr, getFlags(), &gate);
     else
-        jump32(vector.segment, vector.offset, JumpType::INT, isr, getEFlags());
+        jump32(vector.segment, vector.offset, JumpType::INT, isr, getEFlags(), &gate);
 
     if (!isTrap)
         setIF(0);

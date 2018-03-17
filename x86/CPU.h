@@ -60,7 +60,7 @@ struct WatchedAddress {
     QWORD lastSeenValue { neverSeen };
 };
 
-enum class JumpType { Internal, GateEntry, IRET, RETF, INT, CALL, JMP };
+enum class JumpType { Internal, IRET, RETF, INT, CALL, JMP };
 
 class Exception {
 public:
@@ -386,8 +386,8 @@ public:
     WORD getBaseIP() const { return m_baseEIP & 0xFFFF; }
     DWORD getBaseEIP() const { return m_baseEIP; }
 
-    void jump32(WORD segment, DWORD offset, JumpType, BYTE isr = 0, DWORD flags = 0);
-    void jump16(WORD segment, WORD offset, JumpType, BYTE isr = 0, DWORD flags = 0);
+    void jump32(WORD segment, DWORD offset, JumpType, BYTE isr = 0, DWORD flags = 0, Gate* = nullptr);
+    void jump16(WORD segment, WORD offset, JumpType, BYTE isr = 0, DWORD flags = 0, Gate* = nullptr);
     void jumpRelative8(SIGNED_BYTE displacement);
     void jumpRelative16(SIGNED_WORD displacement);
     void jumpRelative32(SIGNED_DWORD displacement);

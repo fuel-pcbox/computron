@@ -590,21 +590,19 @@ static const char* toString(JumpType type)
     case JumpType::INT: return "INT";
     case JumpType::JMP: return "JMP";
     case JumpType::Internal: return "Internal";
-    case JumpType::GateEntry: return "GateEntry";
     default:
         ASSERT_NOT_REACHED();
         return nullptr;
     }
 }
 
-void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flags)
+void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flags, Gate* gate)
 {
     bool pushSize16 = o16();
 
-    if (getPE() && type == JumpType::INT) {
-        // INT through gate; respect bit size of gate descriptor!
-        // FIXME: Don't reparse the gate here.
-        pushSize16 = !getInterruptGate(isr).is32Bit();
+    if (getPE() && gate) {
+        // Coming through a gate; respect bit size of gate descriptor!
+        pushSize16 = !gate->is32Bit();
     }
 
     WORD originalCPL = getCPL();
@@ -648,7 +646,7 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
             DWORD gateOffset = gate.offset();
             if (!gate.is32Bit())
                 gateOffset &= 0xffff;
-            jump32(gate.selector(), gateOffset, JumpType::GateEntry, isr);
+            jump32(gate.selector(), gateOffset, type, isr, flags, &gate);
             return;
         } else if (sys.isTSS()) {
             auto& tssDescriptor = sys.asTSSDescriptor();
@@ -747,9 +745,9 @@ void CPU::setCPL(BYTE cpl)
     cachedDescriptor(SegmentRegisterIndex::CS).m_RPL = cpl;
 }
 
-void CPU::jump16(WORD segment, WORD offset, JumpType type, BYTE isr, DWORD flags)
+void CPU::jump16(WORD segment, WORD offset, JumpType type, BYTE isr, DWORD flags, Gate* gate)
 {
-    jump32(segment, offset, type, isr, flags);
+    jump32(segment, offset, type, isr, flags, gate);
 }
 
 void CPU::_UNSUPP(Instruction& insn)
