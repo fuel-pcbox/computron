@@ -64,12 +64,18 @@ void CPU::_IRET(Instruction&)
         WORD nip = pop16();
         WORD ncs = pop16();
         WORD flags = pop16();
+#ifdef DEBUG_JUMPS
+        vlog(LogCPU, "Popped 16-bit cs:ip!flags %04x:%04x!%04x @stack{%04x:%08x}", ncs, nip, flags, getSS(), getESP());
+#endif
         jump16(ncs, nip, JumpType::IRET);
         setEFlagsRespectfully(flags);
     } else {
         DWORD nip = pop32();
         WORD ncs = pop32();
         DWORD flags = pop32();
+#ifdef DEBUG_JUMPS
+        vlog(LogCPU, "Popped 32-bit cs:eip!flags %04x:%08x!%08x @stack{%04x:%08x}", ncs, nip, flags, getSS(), getESP());
+#endif
         jump32(ncs, nip, JumpType::IRET);
         setEFlagsRespectfully(flags);
     }

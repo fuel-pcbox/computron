@@ -40,7 +40,6 @@
 #define CRASH_ON_VM
 #define A20_ENABLED
 //#define LOG_FAR_JUMPS
-//#define DEBUG_JUMPS
 //#define DISASSEMBLE_EVERYTHING
 //#define MEMORY_DEBUGGING
 
@@ -605,6 +604,8 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
         pushSize16 = !gate->is32Bit();
     }
 
+    WORD originalSS = getSS();
+    DWORD originalESP = getESP();
     WORD originalCPL = getCPL();
     WORD originalCS = getCS();
     DWORD originalEIP = getEIP();
@@ -620,7 +621,7 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
     if (getPE()) {
         if (type == JumpType::RETF) {
             if (!(selectorRPL >= getCPL())) {
-                throw GeneralProtectionFault(segment, QString("RETF with !(RPL(%1) >= CPL(%2))").arg(selectorRPL).arg(getCPL()));
+                throw GeneralProtectionFault(segment, QString("%1 with !(RPL(%2) >= CPL(%3))").arg(toString(type)).arg(selectorRPL).arg(getCPL()));
             }
         }
         if (descriptor.isNull()) {
@@ -672,23 +673,23 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
 #ifdef DEBUG_JUMPS
         vlog(LogCPU, "%s escalating privilege from ring%u to ring%u", toString(type), originalCPL, descriptor.DPL(), descriptor);
 #endif
-        WORD oldSS = getSS();
-        DWORD oldESP = getESP();
         auto tss = currentTSS();
         setSS(tss.getRingSS(descriptor.DPL()));
         setESP(tss.getRingESP(descriptor.DPL()));
         if (pushSize16) {
-            push16(oldSS);
-            push16(oldESP);
 #ifdef DEBUG_JUMPS
-            vlog(LogCPU, "%s to inner ring, ss:sp %04x:%04x -> %04x:%04x", toString(type), oldSS, oldESP, getSS(), getSP());
+            vlog(LogCPU, "%s to inner ring, ss:sp %04x:%04x -> %04x:%04x", toString(type), originalSS, originalESP, getSS(), getSP());
+            vlog(LogCPU, "Push 16-bit ss:sp %04x:%04x @stack{%04x:%08x}", originalSS, originalESP, getSS(), getESP());
 #endif
+            push16(originalSS);
+            push16(originalESP);
         } else {
-            push32(oldSS);
-            push32(oldESP);
 #ifdef DEBUG_JUMPS
-            vlog(LogCPU, "%s to inner ring, ss:esp %04x:%08x -> %04x:%08x", toString(type), oldSS, oldESP, getSS(), getESP());
+            vlog(LogCPU, "%s to inner ring, ss:esp %04x:%08x -> %04x:%08x", toString(type), originalSS, originalESP, getSS(), getESP());
+            vlog(LogCPU, "Push 32-bit ss:esp %04x:%08x @stack{%04x:%08x}", originalSS, originalESP, getSS(), getESP());
 #endif
+            push32(originalSS);
+            push32(originalESP);
         }
         setCPL(descriptor.DPL());
     } else {
@@ -700,29 +701,43 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
     }
 
     if (type == JumpType::INT) {
-        if (pushSize16)
+        if (pushSize16) {
+#ifdef DEBUG_JUMPS
+            vlog(LogCPU, "Push 16-bit flags %04x @stack{%04x:%08x}", flags, getSS(), getESP());
+#endif
             push16(flags);
-        else
+        } else {
+#ifdef DEBUG_JUMPS
+            vlog(LogCPU, "Push 32-bit flags %08x @stack{%04x:%08x}", flags, getSS(), getESP());
+#endif
             push32(flags);
+        }
     }
 
     if (type == JumpType::CALL || type == JumpType::INT) {
         if (pushSize16) {
+#ifdef DEBUG_JUMPS
+            vlog(LogCPU, "Push 16-bit cs:ip %04x:%04x @stack{%04x:%08x}", originalCS, originalEIP, getSS(), getESP());
+#endif
             push16(originalCS);
             push16(originalEIP);
         } else {
+#ifdef DEBUG_JUMPS
+            vlog(LogCPU, "Push 32-bit cs:eip %04x:%08x @stack{%04x:%08x}", originalCS, originalEIP, getSS(), getESP());
+#endif
             push32(originalCS);
             push32(originalEIP);
         }
     }
 
-    bool isReturnToOuterPrivilegeLevel = getPE() && getCPL() > originalCPL;
+    bool isReturnToOuterPrivilegeLevel = getPE() && selectorRPL > originalCPL;
     if (isReturnToOuterPrivilegeLevel && (type == JumpType::IRET || type == JumpType::RETF)) {
         if (o16()) {
             WORD newSP = pop16();
             WORD newSS = pop16();
 #ifdef DEBUG_JUMPS
-            vlog(LogCPU, "%s from ring%u to ring%u, ss:sp %04x:%04x -> %04x:%04x", toString(type), originalCPL, getCPL(), getSS(), getSP(), newSS, newSP);
+            vlog(LogCPU, "Popped 16-bit ss:sp %04x:%04x @stack{%04x:%08x}", newSS, newSP, getSS(), getESP());
+            vlog(LogCPU, "%s from ring%u to ring%u, ss:sp %04x:%04x -> %04x:%04x", toString(type), originalCPL, getCPL(), originalSS, originalESP, newSS, newSP);
 #endif
             setESP(newSP);
             setSS(newSS);
@@ -730,7 +745,8 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
             DWORD newESP = pop32();
             WORD newSS = pop32();
 #ifdef DEBUG_JUMPS
-            vlog(LogCPU, "%s from ring%u to ring%u, ss:esp %04x:%08x -> %04x:%08x", toString(type), originalCPL, getCPL(), getSS(), getESP(), newSS, newESP);
+            vlog(LogCPU, "Popped 32-bit ss:esp %04x:%08x @stack{%04x:%08x}", newSS, newESP, getSS(), getESP());
+            vlog(LogCPU, "%s from ring%u to ring%u, ss:esp %04x:%08x -> %04x:%08x", toString(type), originalCPL, getCPL(), originalSS, originalESP, newSS, newESP);
 #endif
             setESP(newESP);
             setSS(newSS);
