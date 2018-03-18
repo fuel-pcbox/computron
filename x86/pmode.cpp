@@ -65,7 +65,6 @@ void CPU::setLDT(WORD selector)
     DWORD base = 0;
     DWORD limit = 0;
     if (!descriptor.isNull()) {
-        // FIXME: Generate exception?
         if (descriptor.isLDT()) {
             auto& ldtDescriptor = descriptor.asLDTDescriptor();
             if (!descriptor.present()) {
@@ -74,8 +73,7 @@ void CPU::setLDT(WORD selector)
             base = ldtDescriptor.base();
             limit = ldtDescriptor.limit();
         } else {
-            // FIXME: What do when non-LDT descriptor loaded?
-            dumpDescriptor(descriptor);
+            throw GeneralProtectionFault(selector, "Not an LDT descriptor");
         }
     }
     LDTR.segment = selector;
