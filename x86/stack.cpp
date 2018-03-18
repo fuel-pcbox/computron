@@ -30,11 +30,11 @@ void CPU::push32(DWORD value)
 {
     //vlog(LogCPU, "push32: %08X", value);
     if (s16()) {
+        writeMemory32(SegmentRegisterIndex::SS, this->getSP() - 4, value);
         this->regs.W.SP -= 4;
-        writeMemory32(SegmentRegisterIndex::SS, this->getSP(), value);
     } else {
+        writeMemory32(SegmentRegisterIndex::SS, this->getESP() - 4, value);
         this->regs.D.ESP -= 4;
-        writeMemory32(SegmentRegisterIndex::SS, this->getESP(), value);
     }
 }
 
@@ -42,11 +42,11 @@ void CPU::push16(WORD value)
 {
     //vlog(LogCPU, "push16: %04X", value);
     if (s16()) {
+        writeMemory16(SegmentRegisterIndex::SS, this->getSP() - 2, value);
         this->regs.W.SP -= 2;
-        writeMemory16(SegmentRegisterIndex::SS, this->getSP(), value);
     } else {
+        writeMemory16(SegmentRegisterIndex::SS, this->getESP() - 2, value);
         this->regs.D.ESP -= 2;
-        writeMemory16(SegmentRegisterIndex::SS, this->getESP(), value);
     }
 }
 
