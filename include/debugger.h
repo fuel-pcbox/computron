@@ -64,6 +64,7 @@ private:
     void handleTracing(const QStringList&);
     void handleIRQ(const QStringList&);
     void handleDumpUnassembled(const QStringList&);
+    void handleSelector(const QStringList&);
 };
 
 #endif

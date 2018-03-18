@@ -92,12 +92,16 @@ void CPU::_LLDT_RM16(Instruction& insn)
     }
 
     setLDT(insn.modrm().read16());
-
 #ifdef DEBUG_LDT
-    for (unsigned i = 0; i < LDTR.limit; i += 8) {
-        dumpSegment(i | 4);
-    }
+    dumpLDT();
 #endif
+}
+
+void CPU::dumpLDT()
+{
+    for (unsigned i = 0; i < LDTR.limit; i += 8) {
+        dumpDescriptor(getDescriptor(i | 4));
+    }
 }
 
 void CPU::_LGDT(Instruction& insn)
@@ -115,10 +119,15 @@ void CPU::_LGDT(Instruction& insn)
     GDTR.limit = ptr.segment;
 #ifdef DEBUG_GDT
     vlog(LogAlert, "LGDT { base:%08X, limit:%08X }", GDTR.base, GDTR.limit);
-    for (unsigned i = 0; i < GDTR.limit; i += 8) {
-        dumpSegment(i);
-    }
+    dumpGDT();
 #endif
+}
+
+void CPU::dumpGDT()
+{
+    for (unsigned i = 0; i < LDTR.limit; i += 8) {
+        dumpDescriptor(getDescriptor(i));
+    }
 }
 
 void CPU::dumpIDT()
@@ -398,11 +407,13 @@ void CPU::validateSegmentLoad(SegmentRegisterIndex reg, WORD selector, const Des
             throw GeneralProtectionFault(0, "ss loaded with null descriptor");
         }
         if (selectorRPL != getCPL()) {
-            dumpDescriptor(descriptor);
-            throw GeneralProtectionFault(0, QString("ss selector RPL(%1) != CPL(%2)").arg(selectorRPL).arg(getCPL()));
+            throw GeneralProtectionFault(selector, QString("ss selector RPL(%1) != CPL(%2)").arg(selectorRPL).arg(getCPL()));
         }
         if (!descriptor.isData() || !descriptor.asDataSegmentDescriptor().writable()) {
             throw GeneralProtectionFault(selector, "ss loaded with something other than a writable data segment");
+        }
+        if (descriptor.DPL() != getCPL()) {
+            throw GeneralProtectionFault(selector, QString("ss selector leads to descriptor with DPL(%1) != CPL(%2)").arg(descriptor.DPL()).arg(getCPL()));
         }
         if (!descriptor.present()) {
             throw StackFault(selector, "ss loaded with non-present segment");

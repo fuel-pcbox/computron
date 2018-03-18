@@ -132,6 +132,19 @@ void Debugger::handleCommand(const QString& rawCommand)
     if (lowerCommand == "b")
         return handleBreakpoint(arguments);
 
+    if (lowerCommand == "sel")
+        return handleSelector(arguments);
+
+    if (lowerCommand == "gdt") {
+        cpu().dumpGDT();
+        return;
+    }
+
+    if (lowerCommand == "ldt") {
+        cpu().dumpLDT();
+        return;
+    }
+
     if (lowerCommand == "sti") {
         vlog(LogDump, "IF <- 1");
         cpu().setIF(1);
@@ -256,6 +269,16 @@ void Debugger::handleStep()
 void Debugger::handleContinue()
 {
     exit();
+}
+
+void Debugger::handleSelector(const QStringList& arguments)
+{
+    if (arguments.size() == 0) {
+        vlog(LogDump, "usage: sel <selector>");
+        return;
+    }
+    WORD select = arguments.at(0).toUInt(0, 16);
+    cpu().dumpDescriptor(cpu().getDescriptor(select));
 }
 
 void Debugger::handleDumpMemory(const QStringList& arguments)
