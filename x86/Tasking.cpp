@@ -221,6 +221,9 @@ void CPU::dumpTSS(const TSS &tss)
     vlog(LogCPU, "ldt=%04x backlink=%04x cr3=%08x", tss.getLDT(), tss.getBacklink(), tss.getCR3());
     vlog(LogCPU, "ds=%04x ss=%04x es=%04x fs=%04x gs=%04x", tss.getDS(), tss.getSS(), tss.getES(), tss.getFS(), tss.getGS());
     vlog(LogCPU, "cs=%04x eip=%08x eflags=%08x", tss.getCS(), tss.getEIP(), tss.getEFlags());
+    vlog(LogCPU, "stack0 { %04x:%08x }", tss.getSS0(), tss.getESP0());
+    vlog(LogCPU, "stack1 { %04x:%08x }", tss.getSS1(), tss.getESP1());
+    vlog(LogCPU, "stack2 { %04x:%08x }", tss.getSS2(), tss.getESP2());
 
 #ifdef DEBUG_TASK_SWITCH
     bool isGlobal = (tss.getCS() & 0x04) == 0;
