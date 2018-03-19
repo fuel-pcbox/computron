@@ -23,11 +23,12 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef IDE_H
-#define IDE_H
+#pragma once
 
 #include "iodevice.h"
 #include "OwnPtr.h"
+
+struct IDEController;
 
 class IDE final : public IODevice
 {
@@ -49,12 +50,12 @@ public:
     virtual void reset() override;
     virtual BYTE in8(WORD port) override;
     virtual void out8(WORD port, BYTE data) override;
-
-    Status status() const;
+    virtual WORD in16(WORD port) override;
 
 private:
+    void executeCommand(IDEController&, BYTE);
+    Status status(const IDEController&) const;
+
     struct Private;
     OwnPtr<Private> d;
 };
-
-#endif

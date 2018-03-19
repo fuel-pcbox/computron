@@ -47,7 +47,11 @@ public:
     virtual void reset() = 0;
 
     virtual BYTE in8(WORD port);
+    virtual WORD in16(WORD port);
+    virtual DWORD in32(WORD port);
     virtual void out8(WORD port, BYTE data);
+    virtual void out16(WORD port, WORD data);
+    virtual void out32(WORD port, DWORD data);
 
     static bool shouldIgnorePort(WORD port);
     static void ignorePort(WORD port);

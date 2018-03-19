@@ -70,10 +70,38 @@ void IODevice::out8(WORD port, BYTE data)
     vlog(LogIO, "FIXME: IODevice[%s]::out8(%04X, %02X)", m_name, port, data);
 }
 
+void IODevice::out16(WORD port, WORD data)
+{
+    vlog(LogIO, "IODevice[%s]::out16(%04x) fallback to multiple out8() calls", m_name, port);
+    out8(port, getLSB(data));
+    out8(port + 1, getMSB(data));
+}
+
+void IODevice::out32(WORD port, DWORD data)
+{
+    vlog(LogIO, "IODevice[%s]::out32(%04x) fallback to multiple out8() calls", m_name, port);
+    out8(port + 0, getLSB(getLSW(data)));
+    out8(port + 1, getMSB(getLSW(data)));
+    out8(port + 2, getLSB(getMSW(data)));
+    out8(port + 3, getMSB(getMSW(data)));
+}
+
 BYTE IODevice::in8(WORD port)
 {
     vlog(LogIO, "FIXME: IODevice[%s]::in8(%04X)", m_name, port);
     return IODevice::JunkValue;
+}
+
+WORD IODevice::in16(WORD port)
+{
+    vlog(LogIO, "IODevice[%s]::in16(%04x) fallback to multiple in8() calls", m_name, port);
+    return makeWORD(in8(port + 1), in8(port));
+}
+
+DWORD IODevice::in32(WORD port)
+{
+    vlog(LogIO, "IODevice[%s]::in32(%04x) fallback to multiple in8() calls", m_name, port);
+    return makeDWORD(makeWORD(in8(port + 3), in8(port + 2)), makeWORD(in8(port + 1), in8(port)));
 }
 
 void IODevice::ignorePort(WORD port)

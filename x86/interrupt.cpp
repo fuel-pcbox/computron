@@ -54,7 +54,9 @@ void CPU::_IRET(Instruction&)
         if (getNT()) {
             ASSERT(!getVM());
             auto tss = currentTSS();
+#ifdef DEBUG_TASK_SWITCH
             vlog(LogCPU, "IRET with NT=1 switching tasks. Inner TSS @ %08X -> Outer TSS sel %04X...", TR.base, tss.getBacklink());
+#endif
             taskSwitch(tss.getBacklink(), JumpType::IRET);
             return;
         }

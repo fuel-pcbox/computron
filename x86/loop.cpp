@@ -152,6 +152,9 @@ void CPU::handleRepeatOpcode(Instruction&& insn, bool shouldEqual)
         return;
     }
 
+    case 0x6C: DO_REP(_INSB); return;
+    case 0x6D: DO_REP_NEW(_INSW, _INSD); return;
+
     case 0x6E: DO_REP(_OUTSB); return;
     case 0x6F: DO_REP_NEW(_OUTSW, _OUTSD); return;
 

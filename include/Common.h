@@ -26,6 +26,7 @@
 #pragma once
 
 //#define DEBUG_JUMPS
+//#define DEBUG_TASK_SWITCH
 
 #include "types.h"
 #include <QString>

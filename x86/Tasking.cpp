@@ -27,8 +27,6 @@
 #include "debugger.h"
 #include "Tasking.h"
 
-//#define DEBUG_TASK_SWITCH
-
 void CPU::_STR_RM16(Instruction& insn)
 {
     insn.modrm().writeClearing16(TR.segment, o32());
@@ -67,7 +65,9 @@ void CPU::_LTR_RM16(Instruction& insn)
     TR.base = tssDescriptor.base();
     TR.limit = tssDescriptor.limit();
     TR.is32Bit = tssDescriptor.is32Bit();
+#ifdef DEBUG_TASK_SWITCH
     vlog(LogAlert, "LTR { segment: %04x => base:%08x, limit:%08x }", TR.segment, TR.base, TR.limit);
+#endif
 }
 
 #define EXCEPTION_ON(type, code, condition, reason) \
@@ -237,9 +237,7 @@ void CPU::dumpTSS(const TSS &tss)
 
 void CPU::taskSwitch(WORD task, JumpType source)
 {
-    // FIXME: This should mark the outgoing task as non-busy.
     auto descriptor = getDescriptor(task);
-    vlog(LogCPU, "taskSwitch with selector:%04x, type:%1x", task, descriptor.type());
     auto& tssDescriptor = descriptor.asTSSDescriptor();
     taskSwitch(tssDescriptor, source);
 }

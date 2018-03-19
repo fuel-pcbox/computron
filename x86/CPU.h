@@ -421,15 +421,12 @@ public:
 
     Debugger& debugger() { return *m_debugger; }
 
-    /*!
-        Writes an 8-bit value to an output port.
-     */
-    void out(WORD port, BYTE value);
-
-    /*!
-        Reads an 8-bit value from an input port.
-     */
-    BYTE in(WORD port);
+    BYTE in8(WORD port);
+    WORD in16(WORD port);
+    DWORD in32(WORD port);
+    void out8(WORD port, BYTE value);
+    void out16(WORD port, WORD value);
+    void out32(WORD port, DWORD value);
 
     BYTE* memoryPointer(DWORD address);
     BYTE* memoryPointer(WORD segment, DWORD offset);
@@ -781,6 +778,8 @@ protected:
     void _IN_AX_DX(Instruction&);
     void _IN_EAX_DX(Instruction&);
     void _INSB(Instruction&);
+    void _INSW(Instruction&);
+    void _INSD(Instruction&);
 
     void _ADD_RM8_reg8(Instruction&);
     void _ADD_RM16_reg16(Instruction&);

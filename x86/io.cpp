@@ -31,42 +31,32 @@
 
 void CPU::_OUT_imm8_AL(Instruction& insn)
 {
-    out(insn.imm8(), regs.B.AL);
+    out8(insn.imm8(), getAL());
 }
 
 void CPU::_OUT_imm8_AX(Instruction& insn)
 {
-    WORD port = insn.imm8();
-    out(port, regs.B.AL);
-    out(port + 1, regs.B.AH);
+    out16(insn.imm8(), getAX());
 }
 
 void CPU::_OUT_imm8_EAX(Instruction& insn)
 {
-    WORD port = insn.imm8();
-    out(port, regs.B.AL);
-    out(port + 1, regs.B.AH);
-    out(port + 2, getLSB(regs.W.__EAX_high_word));
-    out(port + 3, getMSB(regs.W.__EAX_high_word));
+    out32(insn.imm8(), getEAX());
 }
 
 void CPU::_OUT_DX_AL(Instruction&)
 {
-    out(getDX(), regs.B.AL);
+    out8(getDX(), getAL());
 }
 
 void CPU::_OUT_DX_AX(Instruction&)
 {
-    out(getDX(), regs.B.AL);
-    out(getDX() + 1, regs.B.AH);
+    out16(getDX(), getAX());
 }
 
 void CPU::_OUT_DX_EAX(Instruction&)
 {
-    out(getDX(), regs.B.AL);
-    out(getDX() + 1, regs.B.AH);
-    out(getDX() + 2, getLSB(regs.W.__EAX_high_word));
-    out(getDX() + 3, getMSB(regs.W.__EAX_high_word));
+    out32(getDX(), getEAX());
 }
 
 void CPU::_OUTSB(Instruction&)
@@ -81,99 +71,78 @@ void CPU::_OUTSB(Instruction&)
         nextESI(1);
     }
 
-    out(getDX(), data);
+    out8(getDX(), data);
 }
 
 void CPU::_OUTSW(Instruction&)
 {
-    BYTE lsb;
-    BYTE msb;
+    WORD data;
 
     if (a16()) {
-        lsb = readMemory8(currentSegment(), regs.W.SI);
-        msb = readMemory8(currentSegment(), regs.W.SI + 1);
+        data = readMemory16(currentSegment(), regs.W.SI);
         nextSI(2);
     } else {
-        lsb = readMemory8(currentSegment(), regs.D.ESI);
-        msb = readMemory8(currentSegment(), regs.D.ESI + 1);
+        data = readMemory16(currentSegment(), regs.D.ESI);
         nextESI(2);
     }
 
-    out(getDX(), lsb);
-    out(getDX() + 1, msb);
+    out16(getDX(), data);
 }
 
 void CPU::_OUTSD(Instruction&)
 {
-    BYTE b1, b2, b3, b4;
+    DWORD data;
 
     if (a16()) {
-        b1 = readMemory8(currentSegment(), regs.W.SI);
-        b2 = readMemory8(currentSegment(), regs.W.SI + 1);
-        b3 = readMemory8(currentSegment(), regs.W.SI + 2);
-        b4 = readMemory8(currentSegment(), regs.W.SI + 3);
+        data = readMemory32(currentSegment(), regs.W.SI);
         nextSI(4);
     } else {
-        b1 = readMemory8(currentSegment(), regs.D.ESI);
-        b2 = readMemory8(currentSegment(), regs.D.ESI + 1);
-        b3 = readMemory8(currentSegment(), regs.D.ESI + 2);
-        b4 = readMemory8(currentSegment(), regs.D.ESI + 3);
+        data = readMemory32(currentSegment(), regs.D.ESI);
         nextESI(4);
     }
 
-    out(getDX(), b1);
-    out(getDX() + 1, b2);
-    out(getDX() + 2, b3);
-    out(getDX() + 3, b4);
+    out32(getDX(), data);
 }
 
 void CPU::_IN_AL_imm8(Instruction& insn)
 {
-    regs.B.AL = in(insn.imm8());
+    setAL(in8(insn.imm8()));
 }
 
 void CPU::_IN_AX_imm8(Instruction& insn)
 {
-    WORD port = insn.imm8();
-    regs.B.AL = in(port);
-    regs.B.AH = in(port + 1);
+    setAX(in16(insn.imm8()));
 }
 
 void CPU::_IN_EAX_imm8(Instruction& insn)
 {
-    WORD port = insn.imm8();
-    BYTE b1 = in(port);
-    BYTE b2 = in(port + 1);
-    BYTE b3 = in(port + 2);
-    BYTE b4 = in(port + 3);
-    regs.W.AX = makeWORD(b2, b1);
-    regs.W.__EAX_high_word = makeWORD(b4, b3);
+    setEAX(in32(insn.imm8()));
 }
 
 void CPU::_IN_AL_DX(Instruction&)
 {
-    regs.B.AL = in(getDX());
+    setAL(in8(getDX()));
 }
 
 void CPU::_IN_AX_DX(Instruction&)
 {
-    regs.B.AL = in(getDX());
-    regs.B.AH = in(getDX() + 1);
+    setAX(in16(getDX()));
 }
 
 void CPU::_IN_EAX_DX(Instruction&)
 {
-    regs.B.AL = in(getDX());
-    regs.B.AH = in(getDX() + 1);
-    BYTE c = in(getDX() + 2);
-    BYTE d = in(getDX() + 3);
-    regs.W.__EAX_high_word = makeWORD(d, c);
+    setEAX(in32(getDX()));
 }
+
+// Important note from IA32 manual, regarding string I/O instructions:
+// "These instructions may read from the I/O port without writing to the memory location if an exception or VM exit
+// occurs due to the write (e.g. #PF). If this would be problematic, for example because the I/O port read has side-
+// effects, software should ensure the write to the memory location does not cause an exception or VM exit."
 
 void CPU::_INSB(Instruction&)
 {
     // FIXME: Should this really read the port without knowing that the destination memory is writable?
-    BYTE data = in(getDX());
+    BYTE data = in8(getDX());
     if (a16()) {
         writeMemory8(SegmentRegisterIndex::ES, getDI(), data);
         nextDI(1);
@@ -183,7 +152,31 @@ void CPU::_INSB(Instruction&)
     }
 }
 
-void CPU::out(WORD port, BYTE value)
+void CPU::_INSW(Instruction&)
+{
+    WORD data = in16(getDX());
+    if (a16()) {
+        writeMemory16(SegmentRegisterIndex::ES, getDI(), data);
+        nextDI(2);
+    } else {
+        writeMemory16(SegmentRegisterIndex::ES, getEDI(), data);
+        nextEDI(2);
+    }
+}
+
+void CPU::_INSD(Instruction&)
+{
+    DWORD data = in32(getDX());
+    if (a16()) {
+        writeMemory32(SegmentRegisterIndex::ES, getDI(), data);
+        nextDI(4);
+    } else {
+        writeMemory32(SegmentRegisterIndex::ES, getEDI(), data);
+        nextEDI(4);
+    }
+}
+
+void CPU::out8(WORD port, BYTE value)
 {
     if (getPE() && getCPL() > getIOPL()) {
         throw GeneralProtectionFault(0, QString("I/O write attempt with CPL(%1) > IOPL(%2)").arg(getCPL()).arg(getIOPL()));
@@ -191,7 +184,7 @@ void CPU::out(WORD port, BYTE value)
 
     if (options.iopeek) {
         if (port != 0x00E6 && port != 0x0020 && port != 0x3D4 && port != 0x03d5 && port != 0xe2 && port != 0xe0 && port != 0x92) {
-            vlog(LogIO, "CPU::out: %02X --> %04X", value, port);
+            vlog(LogIO, "CPU::out8: %02X --> %04X", value, port);
         }
     }
 
@@ -204,7 +197,49 @@ void CPU::out(WORD port, BYTE value)
         vlog(LogAlert, "Unhandled I/O write to port %04X, data %02X", port, value);
 }
 
-BYTE CPU::in(WORD port)
+void CPU::out16(WORD port, WORD value)
+{
+    if (getPE() && getCPL() > getIOPL()) {
+        throw GeneralProtectionFault(0, QString("I/O write attempt with CPL(%1) > IOPL(%2)").arg(getCPL()).arg(getIOPL()));
+    }
+
+    if (options.iopeek) {
+        if (port != 0x00E6 && port != 0x0020 && port != 0x3D4 && port != 0x03d5 && port != 0xe2 && port != 0xe0 && port != 0x92) {
+            vlog(LogIO, "CPU::out16: %02X --> %04X", value, port);
+        }
+    }
+
+    if (auto* device = machine().outputDeviceForPort(port)) {
+        device->out16(port, value);
+        return;
+    }
+
+    if (!IODevice::shouldIgnorePort(port))
+        vlog(LogAlert, "Unhandled I/O write to port %04X, data %02X", port, value);
+}
+
+void CPU::out32(WORD port, DWORD value)
+{
+    if (getPE() && getCPL() > getIOPL()) {
+        throw GeneralProtectionFault(0, QString("I/O write attempt with CPL(%1) > IOPL(%2)").arg(getCPL()).arg(getIOPL()));
+    }
+
+    if (options.iopeek) {
+        if (port != 0x00E6 && port != 0x0020 && port != 0x3D4 && port != 0x03d5 && port != 0xe2 && port != 0xe0 && port != 0x92) {
+            vlog(LogIO, "CPU::out32: %02X --> %04X", value, port);
+        }
+    }
+
+    if (auto* device = machine().outputDeviceForPort(port)) {
+        device->out32(port, value);
+        return;
+    }
+
+    if (!IODevice::shouldIgnorePort(port))
+        vlog(LogAlert, "Unhandled I/O write to port %04X, data %02X", port, value);
+}
+
+BYTE CPU::in8(WORD port)
 {
     if (getPE() && getCPL() > getIOPL()) {
         throw GeneralProtectionFault(0, QString("I/O read attempt with CPL(%1) > IOPL(%2)").arg(getCPL()).arg(getIOPL()));
@@ -221,8 +256,50 @@ BYTE CPU::in(WORD port)
 
     if (options.iopeek) {
         if (port != 0x00E6 && port != 0x0020 && port != 0x3D4 && port != 0x03D5 && port != 0x3DA && port != 0x92) {
-            vlog(LogIO, "CPU::in: %04X = %02X", port, value);
+            vlog(LogIO, "CPU::in8: %04X = %02X", port, value);
         }
+    }
+    return value;
+}
+
+WORD CPU::in16(WORD port)
+{
+    if (getPE() && getCPL() > getIOPL()) {
+        throw GeneralProtectionFault(0, QString("I/O read attempt with CPL(%1) > IOPL(%2)").arg(getCPL()).arg(getIOPL()));
+    }
+
+    WORD value;
+    if (auto* device = machine().inputDeviceForPort(port)) {
+        value = device->in16(port);
+    } else {
+        if (!IODevice::shouldIgnorePort(port))
+            vlog(LogAlert, "Unhandled 16-bit I/O read from port %04X", port);
+        value = IODevice::JunkValue;
+    }
+
+    if (options.iopeek) {
+        vlog(LogIO, "CPU::in16: %04X = %02X", port, value);
+    }
+    return value;
+}
+
+DWORD CPU::in32(WORD port)
+{
+    if (getPE() && getCPL() > getIOPL()) {
+        throw GeneralProtectionFault(0, QString("I/O read attempt with CPL(%1) > IOPL(%2)").arg(getCPL()).arg(getIOPL()));
+    }
+
+    DWORD value;
+    if (auto* device = machine().inputDeviceForPort(port)) {
+        value = device->in32(port);
+    } else {
+        if (!IODevice::shouldIgnorePort(port))
+            vlog(LogAlert, "Unhandled 32-bit I/O read from port %04X", port);
+        value = IODevice::JunkValue;
+    }
+
+    if (options.iopeek) {
+        vlog(LogIO, "CPU::in32: %04X = %02X", port, value);
     }
     return value;
 }
