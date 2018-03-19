@@ -51,6 +51,9 @@ Descriptor CPU::getDescriptor(WORD selector, SegmentRegisterIndex segmentRegiste
         return descriptor;
     }
 
+    if (selector == 0)
+        return Descriptor();
+
     bool isGlobal = (selector & 0x04) == 0;
     if (isGlobal)
         return getDescriptor("GDT", GDTR.base, GDTR.limit, selector, true);
