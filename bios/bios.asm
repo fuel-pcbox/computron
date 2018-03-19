@@ -1368,13 +1368,29 @@ vga_load_cursor:
 
 vga_store_cursor:
     push    ax
+    push    bx
+    push    dx
+    mov     bx, ax
+
     mov     dx, 0x3d4
     mov     al, 0x0e
-    out     dx, ax
-    pop     ax
-    xchg    al, ah
+    out     dx, al
+
+    mov     dx, 0x3d5
+    mov     al, bh
+    out     dx, al
+
+    mov     dx, 0x3d4
     mov     al, 0x0f
-    out     dx, ax
+    out     dx, al
+
+    mov     dx, 0x3d5
+    mov     al, bl
+    out     dx, al
+
+    pop     dx
+    pop     bx
+    pop     ax
     ret
 
 ; Interrupt 10, 02
