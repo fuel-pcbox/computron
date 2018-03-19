@@ -142,15 +142,19 @@ void PIC::out8(WORD port, BYTE data)
     hard_exit(1);
 }
 
-BYTE PIC::in8(WORD)
+BYTE PIC::in8(WORD port)
 {
-    if (m_readISR) {
-        vlog(LogPIC, "Read ISR (%02X)", m_isr);
-        return m_isr;
-    } else {
-        vlog(LogPIC, "Read IRR (%02X)", m_irr);
+    if ((port & 1) == 0) {
+        if (m_readISR) {
+            vlog(LogPIC, "Read ISR (%02x)", m_isr);
+            return m_isr;
+        }
+        vlog(LogPIC, "Read IRR (%02x)", m_irr);
         return m_irr;
     }
+
+    vlog(LogPIC, "Read IMR (%02x)", m_imr);
+    return m_imr;
 }
 
 void PIC::raise(BYTE num)
