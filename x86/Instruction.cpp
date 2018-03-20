@@ -419,7 +419,6 @@ void buildOpcodeTablesIfNeeded()
     build(0x23, "AND",    OP_reg16_RM16,       &CPU::_AND_reg16_RM16,  OP_reg32_RM32,  &CPU::_AND_reg32_RM32);
     build(0x24, "AND",    OP_AL_imm8,          &CPU::_AND_AL_imm8);
     build(0x25, "AND",    OP_AX_imm16,         &CPU::_AND_AX_imm16,    OP_EAX_imm32,   &CPU::_AND_EAX_imm32);
-    build(0x26, "ES:",    InstructionPrefix,   &CPU::_ES);
     build(0x27, "DAA",    OP,                  &CPU::_DAA);
     build(0x28, "SUB",    OP_RM8_reg8,         &CPU::_SUB_RM8_reg8);
     build(0x29, "SUB",    OP_RM16_reg16,       &CPU::_SUB_RM16_reg16,  OP_RM32_reg32,  &CPU::_SUB_RM32_reg32);
@@ -427,7 +426,6 @@ void buildOpcodeTablesIfNeeded()
     build(0x2B, "SUB",    OP_reg16_RM16,       &CPU::_SUB_reg16_RM16,  OP_reg32_RM32,  &CPU::_SUB_reg32_RM32);
     build(0x2C, "SUB",    OP_AL_imm8,          &CPU::_SUB_AL_imm8);
     build(0x2D, "SUB",    OP_AX_imm16,         &CPU::_SUB_AX_imm16,    OP_EAX_imm32,   &CPU::_SUB_EAX_imm32);
-    build(0x2E, "CS:",    InstructionPrefix,   &CPU::_CS);
     build(0x2F, "DAS",    OP,                  &CPU::_DAS);
 
     build(0x30, "XOR",    OP_RM8_reg8,         &CPU::_XOR_RM8_reg8);
@@ -436,7 +434,6 @@ void buildOpcodeTablesIfNeeded()
     build(0x33, "XOR",    OP_reg16_RM16,       &CPU::_XOR_reg16_RM16,  OP_reg32_RM32,  &CPU::_XOR_reg32_RM32);
     build(0x34, "XOR",    OP_AL_imm8,          &CPU::_XOR_AL_imm8);
     build(0x35, "XOR",    OP_AX_imm16,         &CPU::_XOR_AX_imm16,    OP_EAX_imm32,   &CPU::_XOR_EAX_imm32);
-    build(0x36, "SS:",    InstructionPrefix,   &CPU::_SS);
     build(0x37, "AAA",    OP,                  &CPU::_AAA);
     build(0x38, "CMP",    OP_RM8_reg8,         &CPU::_CMP_RM8_reg8);
     build(0x39, "CMP",    OP_RM16_reg16,       &CPU::_CMP_RM16_reg16,  OP_RM32_reg32,  &CPU::_CMP_RM32_reg32);
@@ -444,7 +441,6 @@ void buildOpcodeTablesIfNeeded()
     build(0x3B, "CMP",    OP_reg16_RM16,       &CPU::_CMP_reg16_RM16,  OP_reg32_RM32,  &CPU::_CMP_reg32_RM32);
     build(0x3C, "CMP",    OP_AL_imm8,          &CPU::_CMP_AL_imm8);
     build(0x3D, "CMP",    OP_AX_imm16,         &CPU::_CMP_AX_imm16,    OP_EAX_imm32,   &CPU::_CMP_EAX_imm32);
-    build(0x3E, "DS:",    InstructionPrefix,   &CPU::_DS);
     build(0x3F, "AAS",    OP,                  &CPU::_AAS);
 
     for (BYTE i = 0; i <= 7; ++i)
@@ -463,8 +459,6 @@ void buildOpcodeTablesIfNeeded()
     build(0x61, "POPAW",  OP,                  &CPU::_POPA,  "POPAW",  OP,             &CPU::_POPAD);
     build(0x62, "BOUND",  OP_reg16_RM16,       &CPU::_BOUND, "BOUND",  OP_reg32_RM32,  &CPU::_BOUND);
 
-    build(0x64, "FS:",    InstructionPrefix,   &CPU::_FS);
-    build(0x65, "GS:",    InstructionPrefix,   &CPU::_GS);
     build(0x66, "o!",     InstructionPrefix,   &CPU::_OperandSizeOverride);
     build(0x67, "a!",     InstructionPrefix,   &CPU::_AddressSizeOverride);
 
@@ -834,13 +828,38 @@ unsigned Instruction::length() const
     }
     len += m_imm1Bytes;
     len += m_imm2Bytes;
+    len += m_prefixBytes;
     return len;
+}
+
+static SegmentRegisterIndex toSegmentPrefix(BYTE op)
+{
+    switch (op) {
+    case 0x26: return SegmentRegisterIndex::ES;
+    case 0x2e: return SegmentRegisterIndex::CS;
+    case 0x36: return SegmentRegisterIndex::SS;
+    case 0x3e: return SegmentRegisterIndex::DS;
+    case 0x64: return SegmentRegisterIndex::FS;
+    case 0x65: return SegmentRegisterIndex::GS;
+    default: return SegmentRegisterIndex::None;
+    }
 }
 
 Instruction::Instruction(InstructionStream& stream, bool o32, bool a32)
     : m_a32(a32)
 {
-    m_op = stream.readInstruction8();
+    for (;; ++m_prefixBytes) {
+        BYTE opbyte = stream.readInstruction8();
+        auto segmentPrefix = toSegmentPrefix(opbyte);
+        if (segmentPrefix != SegmentRegisterIndex::None) {
+            // FIXME: What should we do here? Respect the first or last prefix?
+            ASSERT(!hasSegmentPrefix());
+            m_segmentPrefix = segmentPrefix;
+            continue;
+        }
+        m_op = opbyte;
+        break;
+    }
 
     if (m_op == 0x0F) {
         m_hasSubOp = true;
@@ -1104,12 +1123,21 @@ static QString relativeAddress(DWORD origin, bool x32, SIGNED_DWORD imm)
     return s.sprintf("%04x", w + si);
 }
 
+QString Instruction::toString(DWORD origin, bool x32) const
+{
+    QString segmentPrefix;
+    if (hasSegmentPrefix()) {
+        segmentPrefix = QString("%1: ").arg(CPU::registerName(m_segmentPrefix));
+    }
+    return QString("%1%2").arg(segmentPrefix).arg(toStringInternal(origin, x32));
+}
+
 #define RELADDRARGS relativeAddress(origin + (m_a32 ? 5 : 3), x32, SIGNED_DWORD(m_a32 ? imm32() : imm16()))
 #define RELIMM8ARGS relativeAddress(origin + 2, x32, SIGNED_BYTE(imm8()))
 #define RELIMM16ARGS relativeAddress(origin + 3, x32, SIGNED_DWORD(imm16()))
 #define RELIMM32ARGS relativeAddress(origin + 5, x32, SIGNED_DWORD(imm32()))
 
-QString Instruction::toString(DWORD origin, bool x32) const
+QString Instruction::toStringInternal(DWORD origin, bool x32) const
 {
     QString mnemonic = QString(m_descriptor->mnemonic).toLower();
 

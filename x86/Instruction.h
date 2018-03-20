@@ -131,6 +131,8 @@ public:
 
     MemoryOrRegisterReference& modrm() { ASSERT(hasRM()); return m_modrm; }
 
+    bool hasSegmentPrefix() const { return m_segmentPrefix != SegmentRegisterIndex::None; }
+
     bool isValid() const { return m_descriptor; }
 
     unsigned length() const;
@@ -170,6 +172,8 @@ public:
 private:
     Instruction(InstructionStream&, bool o32, bool a32);
 
+    QString toStringInternal(DWORD origin, bool x32) const;
+
     const char* reg8Name() const;
     const char* reg16Name() const;
     const char* reg32Name() const;
@@ -186,6 +190,9 @@ private:
 
     unsigned m_imm1Bytes { 0 };
     unsigned m_imm2Bytes { 0 };
+    unsigned m_prefixBytes { 0 };
+
+    SegmentRegisterIndex m_segmentPrefix { SegmentRegisterIndex::None };
 
     MemoryOrRegisterReference m_modrm;
 

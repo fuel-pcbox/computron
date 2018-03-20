@@ -608,12 +608,6 @@ protected:
     void _CDQ(Instruction&);
 
     void _XLAT(Instruction&);
-
-    void _CS(Instruction&);
-    void _DS(Instruction&);
-    void _ES(Instruction&);
-    void _SS(Instruction&);
-
     void _SALC(Instruction&);
 
     void _JMP_imm32(Instruction&);
@@ -1073,9 +1067,6 @@ protected:
     void _POP_FS(Instruction&);
     void _POP_GS(Instruction&);
 
-    void _FS(Instruction&);
-    void _GS(Instruction&);
-
     void _MOV_RM32_reg32(Instruction&);
     void _MOV_reg32_RM32(Instruction&);
     void _MOV_reg32_CR(Instruction&);
@@ -1464,6 +1455,8 @@ ALWAYS_INLINE DWORD& Instruction::reg32()
 ALWAYS_INLINE void Instruction::execute(CPU& cpu)
 {
     m_cpu = &cpu;
+    if (hasSegmentPrefix())
+        cpu.setSegmentPrefix(m_segmentPrefix);
     if (m_hasRM)
         m_modrm.resolve(cpu);
     (cpu.*m_impl)(*this);

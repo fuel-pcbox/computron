@@ -815,54 +815,6 @@ void CPU::_XLAT(Instruction&)
         setAL(readMemory8(currentSegment(), getBX() + getAL()));
 }
 
-void CPU::_CS(Instruction&)
-{
-    ASSERT(!hasSegmentPrefix());
-    setSegmentPrefix(SegmentRegisterIndex::CS);
-    decodeNext();
-    resetSegmentPrefix();
-}
-
-void CPU::_DS(Instruction&)
-{
-    ASSERT(!hasSegmentPrefix());
-    setSegmentPrefix(SegmentRegisterIndex::DS);
-    decodeNext();
-    resetSegmentPrefix();
-}
-
-void CPU::_ES(Instruction&)
-{
-    ASSERT(!hasSegmentPrefix());
-    setSegmentPrefix(SegmentRegisterIndex::ES);
-    decodeNext();
-    resetSegmentPrefix();
-}
-
-void CPU::_SS(Instruction&)
-{
-    ASSERT(!hasSegmentPrefix());
-    setSegmentPrefix(SegmentRegisterIndex::SS);
-    decodeNext();
-    resetSegmentPrefix();
-}
-
-void CPU::_FS(Instruction&)
-{
-    ASSERT(!hasSegmentPrefix());
-    setSegmentPrefix(SegmentRegisterIndex::FS);
-    decodeNext();
-    resetSegmentPrefix();
-}
-
-void CPU::_GS(Instruction&)
-{
-    ASSERT(!hasSegmentPrefix());
-    setSegmentPrefix(SegmentRegisterIndex::GS);
-    decodeNext();
-    resetSegmentPrefix();
-}
-
 void CPU::_XCHG_AX_reg16(Instruction& insn)
 {
     qSwap(insn.reg16(), regs.W.AX);

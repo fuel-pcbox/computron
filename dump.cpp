@@ -68,7 +68,7 @@ unsigned CPU::dumpDisassembledInternal(SegmentDescriptor& descriptor, DWORD offs
 
 
     /* Recurse if this is a prefix instruction. */
-    if (insn.op() == 0x26 || insn.op() == 0x2E || insn.op() == 0x36 || insn.op() == 0x3E || insn.op() == 0xF2 || insn.op() == 0xF3)
+    if (insn.op() == 0xf2 || insn.op() == 0xf3)
         return insn.length() + dumpDisassembledInternal(descriptor, offset + insn.length());
 
     return insn.length();
