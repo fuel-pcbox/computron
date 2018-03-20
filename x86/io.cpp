@@ -176,7 +176,8 @@ void CPU::_INSD(Instruction&)
     }
 }
 
-void CPU::out8(WORD port, BYTE value)
+template<typename T>
+void CPU::out(WORD port, T data)
 {
     if (getPE() && getCPL() > getIOPL()) {
         throw GeneralProtectionFault(0, QString("I/O write attempt with CPL(%1) > IOPL(%2)").arg(getCPL()).arg(getIOPL()));
@@ -184,122 +185,69 @@ void CPU::out8(WORD port, BYTE value)
 
     if (options.iopeek) {
         if (port != 0x00E6 && port != 0x0020 && port != 0x3D4 && port != 0x03d5 && port != 0xe2 && port != 0xe0 && port != 0x92) {
-            vlog(LogIO, "CPU::out8: %02X --> %04X", value, port);
+            vlog(LogIO, "CPU::out<%zu>: %x --> %03x", sizeof(T) * 8, data, port);
         }
     }
 
     if (auto* device = machine().outputDeviceForPort(port)) {
-        device->out8(port, value);
+        device->out<T>(port, data);
         return;
     }
 
     if (!IODevice::shouldIgnorePort(port))
-        vlog(LogAlert, "Unhandled I/O write to port %04X, data %02X", port, value);
+        vlog(LogAlert, "Unhandled I/O write to port %03x, data %x", port, data);
 }
 
-void CPU::out16(WORD port, WORD value)
+
+template<typename T> T CPU::in(WORD port)
 {
     if (getPE() && getCPL() > getIOPL()) {
-        throw GeneralProtectionFault(0, QString("I/O write attempt with CPL(%1) > IOPL(%2)").arg(getCPL()).arg(getIOPL()));
+        throw GeneralProtectionFault(0, QString("I/O read attempt with CPL(%1) > IOPL(%2)").arg(getCPL()).arg(getIOPL()));
+    }
+
+    T data;
+    if (auto* device = machine().inputDeviceForPort(port)) {
+        data = device->in<T>(port);
+    } else {
+        if (!IODevice::shouldIgnorePort(port))
+            vlog(LogAlert, "Unhandled I/O read from port %03x", port);
+        data = IODevice::JunkValue;
     }
 
     if (options.iopeek) {
-        if (port != 0x00E6 && port != 0x0020 && port != 0x3D4 && port != 0x03d5 && port != 0xe2 && port != 0xe0 && port != 0x92) {
-            vlog(LogIO, "CPU::out16: %02X --> %04X", value, port);
+        if (port != 0xe6 && port != 0x20 && port != 0x3d4 && port != 0x03d5 && port != 0x3da && port != 0x92) {
+            vlog(LogIO, "CPU::in<%zu>: %03x = %x", port, data);
         }
     }
-
-    if (auto* device = machine().outputDeviceForPort(port)) {
-        device->out16(port, value);
-        return;
-    }
-
-    if (!IODevice::shouldIgnorePort(port))
-        vlog(LogAlert, "Unhandled I/O write to port %04X, data %02X", port, value);
+    return data;
 }
 
-void CPU::out32(WORD port, DWORD value)
+void CPU::out8(WORD port, BYTE data)
 {
-    if (getPE() && getCPL() > getIOPL()) {
-        throw GeneralProtectionFault(0, QString("I/O write attempt with CPL(%1) > IOPL(%2)").arg(getCPL()).arg(getIOPL()));
-    }
+    out<BYTE>(port, data);
+}
 
-    if (options.iopeek) {
-        if (port != 0x00E6 && port != 0x0020 && port != 0x3D4 && port != 0x03d5 && port != 0xe2 && port != 0xe0 && port != 0x92) {
-            vlog(LogIO, "CPU::out32: %02X --> %04X", value, port);
-        }
-    }
+void CPU::out16(WORD port, WORD data)
+{
+    out<WORD>(port, data);
+}
 
-    if (auto* device = machine().outputDeviceForPort(port)) {
-        device->out32(port, value);
-        return;
-    }
-
-    if (!IODevice::shouldIgnorePort(port))
-        vlog(LogAlert, "Unhandled I/O write to port %04X, data %02X", port, value);
+void CPU::out32(WORD port, DWORD data)
+{
+    out<DWORD>(port, data);
 }
 
 BYTE CPU::in8(WORD port)
 {
-    if (getPE() && getCPL() > getIOPL()) {
-        throw GeneralProtectionFault(0, QString("I/O read attempt with CPL(%1) > IOPL(%2)").arg(getCPL()).arg(getIOPL()));
-    }
-
-    BYTE value;
-    if (auto* device = machine().inputDeviceForPort(port)) {
-        value = device->in8(port);
-    } else {
-        if (!IODevice::shouldIgnorePort(port))
-            vlog(LogAlert, "Unhandled I/O read from port %04X", port);
-        value = IODevice::JunkValue;
-    }
-
-    if (options.iopeek) {
-        if (port != 0x00E6 && port != 0x0020 && port != 0x3D4 && port != 0x03D5 && port != 0x3DA && port != 0x92) {
-            vlog(LogIO, "CPU::in8: %04X = %02X", port, value);
-        }
-    }
-    return value;
+    return in<BYTE>(port);
 }
 
 WORD CPU::in16(WORD port)
 {
-    if (getPE() && getCPL() > getIOPL()) {
-        throw GeneralProtectionFault(0, QString("I/O read attempt with CPL(%1) > IOPL(%2)").arg(getCPL()).arg(getIOPL()));
-    }
-
-    WORD value;
-    if (auto* device = machine().inputDeviceForPort(port)) {
-        value = device->in16(port);
-    } else {
-        if (!IODevice::shouldIgnorePort(port))
-            vlog(LogAlert, "Unhandled 16-bit I/O read from port %04X", port);
-        value = IODevice::JunkValue;
-    }
-
-    if (options.iopeek) {
-        vlog(LogIO, "CPU::in16: %04X = %02X", port, value);
-    }
-    return value;
+    return in<WORD>(port);
 }
 
 DWORD CPU::in32(WORD port)
 {
-    if (getPE() && getCPL() > getIOPL()) {
-        throw GeneralProtectionFault(0, QString("I/O read attempt with CPL(%1) > IOPL(%2)").arg(getCPL()).arg(getIOPL()));
-    }
-
-    DWORD value;
-    if (auto* device = machine().inputDeviceForPort(port)) {
-        value = device->in32(port);
-    } else {
-        if (!IODevice::shouldIgnorePort(port))
-            vlog(LogAlert, "Unhandled 32-bit I/O read from port %04X", port);
-        value = IODevice::JunkValue;
-    }
-
-    if (options.iopeek) {
-        vlog(LogIO, "CPU::in32: %04X = %02X", port, value);
-    }
-    return value;
+    return in<DWORD>(port);
 }

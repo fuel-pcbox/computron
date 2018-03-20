@@ -23,12 +23,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __iodevice_h__
-#define __iodevice_h__
+#pragma once
 
+#include "debug.h"
 #include "types.h"
 #include <QList>
-#include <QHash>
 
 class Machine;
 class IODevice
@@ -45,6 +44,9 @@ public:
     bool isIRQRaised() const;
 
     virtual void reset() = 0;
+
+    template<typename T> T in(WORD port);
+    template<typename T> void out(WORD port, T data);
 
     virtual BYTE in8(WORD port);
     virtual WORD in16(WORD port);
@@ -77,4 +79,22 @@ private:
     static QSet<WORD> s_ignorePorts;
 };
 
-#endif
+template<typename T> inline T IODevice::in(WORD port)
+{
+    if (sizeof(T) == 1)
+        return in8(port);
+    if (sizeof(T) == 2)
+        return in16(port);
+    ASSERT(sizeof(T) == 4);
+    return in32(port);
+}
+
+template<typename T> inline void IODevice::out(WORD port, T data)
+{
+    if (sizeof(T) == 1)
+        return out8(port, data);
+    if (sizeof(T) == 2)
+        return out16(port, data);
+    ASSERT(sizeof(T) == 4);
+    return out32(port, data);
+}

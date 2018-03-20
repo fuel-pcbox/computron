@@ -421,6 +421,9 @@ public:
 
     Debugger& debugger() { return *m_debugger; }
 
+    template<typename T> T in(WORD port);
+    template<typename T> void out(WORD port, T data);
+
     BYTE in8(WORD port);
     WORD in16(WORD port);
     DWORD in32(WORD port);
