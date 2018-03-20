@@ -216,7 +216,7 @@ template<typename T> T CPU::in(WORD port)
 
     if (options.iopeek) {
         if (port != 0xe6 && port != 0x20 && port != 0x3d4 && port != 0x03d5 && port != 0x3da && port != 0x92) {
-            vlog(LogIO, "CPU::in<%zu>: %03x = %x", port, data);
+            vlog(LogIO, "CPU::in<%zu>: %03x = %x", sizeof(T) * 8, port, data);
         }
     }
     return data;

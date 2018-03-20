@@ -61,8 +61,8 @@ struct IDEController
         return chs2lba(drive, cylinderIndex, headIndex, sectorIndex);
     }
 
-    WORD readWordFromSectorBuffer();
-    void writeWordToSectorBuffer(IDE&, WORD);
+    template<typename T> T readFromSectorBuffer();
+    template<typename T> void writeToSectorBuffer(IDE&, T);
 
     QByteArray m_readBuffer;
     int m_readBufferIndex { 0 };
@@ -112,10 +112,21 @@ void IDEController::writeSectors()
     m_writeBufferIndex = 0;
 }
 
-void IDEController::writeWordToSectorBuffer(IDE& ide, WORD w)
+template<typename T>
+void IDEController::writeToSectorBuffer(IDE& ide, T data)
 {
-    m_writeBuffer[m_writeBufferIndex++] = getLSB(w);
-    m_writeBuffer[m_writeBufferIndex++] = getMSB(w);
+    if (m_writeBufferIndex >= m_writeBuffer.size()) {
+        vlog(LogIDE, "ide%u: Write buffer already full!");
+        return;
+    }
+    if ((m_writeBufferIndex + static_cast<int>(sizeof(T))) > m_writeBuffer.size()) {
+        vlog(LogIDE, "ide%u: Not enough space left in write buffer!");
+        ASSERT_NOT_REACHED();
+        return;
+    }
+    T* bufferPtr = reinterpret_cast<T*>(&m_writeBuffer.data()[m_writeBufferIndex]);
+    *bufferPtr = data;
+    m_writeBufferIndex += sizeof(T);
     if (m_writeBufferIndex < m_writeBuffer.size())
         return;
     vlog(LogIDE, "ide%u: Got all sector data, flushing to disk!", controllerIndex);
@@ -132,15 +143,21 @@ void IDEController::writeWordToSectorBuffer(IDE& ide, WORD w)
     ide.raiseIRQ();
 }
 
-WORD IDEController::readWordFromSectorBuffer()
+template<typename T>
+T IDEController::readFromSectorBuffer()
 {
     if (m_readBufferIndex >= m_readBuffer.size()) {
-        vlog(LogIDE, "ide%u: No data left in sector buffer!");
+        vlog(LogIDE, "ide%u: No data left in read buffer!");
         return 0;
     }
-    WORD data = makeWORD(m_readBuffer.at(m_readBufferIndex + 1), m_readBuffer.at(m_readBufferIndex));
-    m_readBufferIndex += 2;
-    return data;
+    if ((m_readBufferIndex + static_cast<int>(sizeof(T))) > m_readBuffer.size()) {
+        vlog(LogIDE, "ide%u: Not enough data left in read buffer!");
+        ASSERT_NOT_REACHED();
+        return 0;
+    }
+    const T* data = reinterpret_cast<T*>(&m_readBuffer.data()[m_readBufferIndex]);
+    m_readBufferIndex += sizeof(T);
+    return *data;
 }
 
 static const int gNumControllers = 2;
@@ -198,6 +215,9 @@ void IDE::out8(WORD port, BYTE data)
     IDEController& controller = d->controller[controllerIndex];
 
     switch (port & 0xF) {
+    case 0x0:
+        controller.writeToSectorBuffer<BYTE>(*this, data);
+        break;
     case 0x2:
         vlog(LogIDE, "Controller %d sector count set: %u", controllerIndex, data);
         controller.sectorCount = data;
@@ -232,8 +252,8 @@ void IDE::out8(WORD port, BYTE data)
 
 BYTE IDE::in8(WORD port)
 {
-    const int controllerIndex = (((port) & 0x1F0) == 0x170);
-    const IDEController& controller = d->controller[controllerIndex];
+    int controllerIndex = (((port) & 0x1F0) == 0x170);
+    IDEController& controller = d->controller[controllerIndex];
 
     // FIXME: This port should maybe be managed by the FDC?
     if (port == 0x3f6) {
@@ -242,6 +262,8 @@ BYTE IDE::in8(WORD port)
     }
 
     switch (port & 0xF) {
+    case 0:
+        return controller.readFromSectorBuffer<BYTE>();
     case 0x1:
         vlog(LogIDE, "Controller %d error queried: %02X", controllerIndex, controller.error);
         return controller.error;
@@ -277,7 +299,20 @@ WORD IDE::in16(WORD port)
 
     switch (port & 0xF) {
     case 0:
-        return controller.readWordFromSectorBuffer();
+        return controller.readFromSectorBuffer<WORD>();
+    default:
+        return IODevice::in16(port);
+    }
+}
+
+DWORD IDE::in32(WORD port)
+{
+    int controllerIndex = (((port) & 0x1f0) == 0x170);
+    IDEController& controller = d->controller[controllerIndex];
+
+    switch (port & 0xF) {
+    case 0:
+        return controller.readFromSectorBuffer<DWORD>();
     default:
         return IODevice::in16(port);
     }
@@ -294,7 +329,25 @@ void IDE::out16(WORD port, WORD data)
 
     switch (port & 0xF) {
     case 0x0:
-        controller.writeWordToSectorBuffer(*this, data);
+        controller.writeToSectorBuffer<WORD>(*this, data);
+        break;
+    default:
+        return IODevice::out16(port, data);
+    }
+}
+
+void IDE::out32(WORD port, DWORD data)
+{
+#ifdef IDE_DEBUG
+    vlog(LogFDC, "out32 %03x, %08x", port, data);
+#endif
+
+    const int controllerIndex = (((port) & 0x1F0) == 0x170);
+    IDEController& controller = d->controller[controllerIndex];
+
+    switch (port & 0xF) {
+    case 0x0:
+        controller.writeToSectorBuffer<DWORD>(*this, data);
         break;
     default:
         return IODevice::out16(port, data);
