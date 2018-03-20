@@ -29,6 +29,8 @@
 #include "machine.h"
 #include <QList>
 
+//#define IODEVICE_DEBUG
+
 QSet<WORD> IODevice::s_ignorePorts;
 
 IODevice::IODevice(const char* name, Machine& machine, int irq)
@@ -72,14 +74,18 @@ void IODevice::out8(WORD port, BYTE data)
 
 void IODevice::out16(WORD port, WORD data)
 {
+#ifdef IODEVICE_DEBUG
     vlog(LogIO, "IODevice[%s]::out16(%04x) fallback to multiple out8() calls", m_name, port);
+#endif
     out8(port, getLSB(data));
     out8(port + 1, getMSB(data));
 }
 
 void IODevice::out32(WORD port, DWORD data)
 {
+#ifdef IODEVICE_DEBUG
     vlog(LogIO, "IODevice[%s]::out32(%04x) fallback to multiple out8() calls", m_name, port);
+#endif
     out8(port + 0, getLSB(getLSW(data)));
     out8(port + 1, getMSB(getLSW(data)));
     out8(port + 2, getLSB(getMSW(data)));
@@ -94,13 +100,17 @@ BYTE IODevice::in8(WORD port)
 
 WORD IODevice::in16(WORD port)
 {
+#ifdef IODEVICE_DEBUG
     vlog(LogIO, "IODevice[%s]::in16(%04x) fallback to multiple in8() calls", m_name, port);
+#endif
     return makeWORD(in8(port + 1), in8(port));
 }
 
 DWORD IODevice::in32(WORD port)
 {
+#ifdef IODEVICE_DEBUG
     vlog(LogIO, "IODevice[%s]::in32(%04x) fallback to multiple in8() calls", m_name, port);
+#endif
     return makeDWORD(makeWORD(in8(port + 3), in8(port + 2)), makeWORD(in8(port + 1), in8(port)));
 }
 
