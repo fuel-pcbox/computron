@@ -50,20 +50,25 @@ struct IDEController
 
     void identify(IDE&);
     void readSectors(IDE&);
+    void writeSectors();
 
     DWORD lba() const
     {
         if (inLBAMode) {
-            return ((DWORD)cylinderIndex << 16) | sectorIndex;
+            return ((DWORD)cylinderIndex << 8) | sectorIndex;
         }
         unsigned drive = controllerIndex + 2;
         return chs2lba(drive, cylinderIndex, headIndex, sectorIndex);
     }
 
     WORD readWordFromSectorBuffer();
+    void writeWordToSectorBuffer(IDE&, WORD);
 
-    QByteArray m_buffer;
-    int m_bufferIndex { 0 };
+    QByteArray m_readBuffer;
+    int m_readBufferIndex { 0 };
+
+    QByteArray m_writeBuffer;
+    int m_writeBufferIndex { 0 };
 };
 
 void IDEController::identify(IDE& ide)
@@ -74,10 +79,10 @@ void IDEController::identify(IDE& ide)
     data[1] = drv_sectors[drive] / (drv_spt[drive] * drv_heads[drive]);
     data[3] = drv_heads[drive];
     data[6] = drv_spt[drive];
-    m_buffer.resize(512);
-    memcpy(m_buffer.data(), data, sizeof(data));
-    strcpy(m_buffer.data() + 54, "oCpmtuor niDks");
-    m_bufferIndex = 0;
+    m_readBuffer.resize(512);
+    memcpy(m_readBuffer.data(), data, sizeof(data));
+    strcpy(m_readBuffer.data() + 54, "oCpmtuor niDks");
+    m_readBufferIndex = 0;
     ide.raiseIRQ();
 }
 
@@ -85,28 +90,56 @@ void IDEController::readSectors(IDE& ide)
 {
     unsigned drive = controllerIndex + 2;
     vlog(LogIDE, "ide%u: Read sectors (LBA: %u, count: %u)", controllerIndex, lba(), sectorCount);
-    FILE* f = fopen(drv_imgfile[drive], "r");
+    FILE* f = fopen(drv_imgfile[drive], "rb");
     RELEASE_ASSERT(f);
-    m_buffer.resize(drv_sectsize[drive] * sectorCount);
+    m_readBuffer.resize(drv_sectsize[drive] * sectorCount);
     int result;
     result = fseek(f, lba() * drv_sectsize[drive], SEEK_SET);
     ASSERT(result != -1);
-    result = fread(m_buffer.data(), drv_sectsize[drive], sectorCount, f);
+    result = fread(m_readBuffer.data(), drv_sectsize[drive], sectorCount, f);
     ASSERT(result != -1);
     result = fclose(f);
     ASSERT(result != -1);
-    m_bufferIndex = 0;
+    m_readBufferIndex = 0;
+    ide.raiseIRQ();
+}
+
+void IDEController::writeSectors()
+{
+    unsigned drive = controllerIndex + 2;
+    vlog(LogIDE, "ide%u: Write sectors (LBA: %u, count: %u)", controllerIndex, lba(), sectorCount);
+    m_writeBuffer.resize(drv_sectsize[drive] * sectorCount);
+    m_writeBufferIndex = 0;
+}
+
+void IDEController::writeWordToSectorBuffer(IDE& ide, WORD w)
+{
+    m_writeBuffer[m_writeBufferIndex++] = getLSB(w);
+    m_writeBuffer[m_writeBufferIndex++] = getMSB(w);
+    if (m_writeBufferIndex < m_writeBuffer.size())
+        return;
+    vlog(LogIDE, "ide%u: Got all sector data, flushing to disk!", controllerIndex);
+    unsigned drive = controllerIndex + 2;
+    FILE* f = fopen(drv_imgfile[drive], "rb+");
+    RELEASE_ASSERT(f);
+    int result;
+    result = fseek(f, lba() * drv_sectsize[drive], SEEK_SET);
+    ASSERT(result != -1);
+    result = fwrite(m_writeBuffer.data(), drv_sectsize[drive], sectorCount, f);
+    ASSERT(result != -1);
+    result = fclose(f);
+    ASSERT(result != -1);
     ide.raiseIRQ();
 }
 
 WORD IDEController::readWordFromSectorBuffer()
 {
-    if (m_bufferIndex >= m_buffer.size()) {
+    if (m_readBufferIndex >= m_readBuffer.size()) {
         vlog(LogIDE, "ide%u: No data left in sector buffer!");
         return 0;
     }
-    WORD data = makeWORD(m_buffer.at(m_bufferIndex + 1), m_buffer.at(m_bufferIndex));
-    m_bufferIndex += 2;
+    WORD data = makeWORD(m_readBuffer.at(m_readBufferIndex + 1), m_readBuffer.at(m_readBufferIndex));
+    m_readBufferIndex += 2;
     return data;
 }
 
@@ -121,7 +154,7 @@ IDE::IDE(Machine& machine)
     : IODevice("IDE", machine, 14)
     , d(make<Private>())
 {
-    listen(0x170, IODevice::ReadOnly);
+    listen(0x170, IODevice::ReadWrite);
     listen(0x171, IODevice::ReadOnly);
     listen(0x172, IODevice::ReadWrite);
     listen(0x173, IODevice::ReadWrite);
@@ -129,7 +162,7 @@ IDE::IDE(Machine& machine)
     listen(0x175, IODevice::ReadWrite);
     listen(0x176, IODevice::ReadWrite);
     listen(0x177, IODevice::ReadWrite);
-    listen(0x1F0, IODevice::ReadOnly);
+    listen(0x1F0, IODevice::ReadWrite);
     listen(0x1F1, IODevice::ReadOnly);
     listen(0x1F2, IODevice::ReadWrite);
     listen(0x1F3, IODevice::ReadWrite);
@@ -137,6 +170,8 @@ IDE::IDE(Machine& machine)
     listen(0x1F5, IODevice::ReadWrite);
     listen(0x1F6, IODevice::ReadWrite);
     listen(0x1F7, IODevice::ReadWrite);
+
+    listen(0x3f6, IODevice::ReadOnly);
 
     reset();
 }
@@ -200,6 +235,12 @@ BYTE IDE::in8(WORD port)
     const int controllerIndex = (((port) & 0x1F0) == 0x170);
     const IDEController& controller = d->controller[controllerIndex];
 
+    // FIXME: This port should maybe be managed by the FDC?
+    if (port == 0x3f6) {
+        vlog(LogIDE, "Controller %d alternate status queried: %02X", controllerIndex, status(controller));
+        return status(controller);
+    }
+
     switch (port & 0xF) {
     case 0x1:
         vlog(LogIDE, "Controller %d error queried: %02X", controllerIndex, controller.error);
@@ -242,6 +283,24 @@ WORD IDE::in16(WORD port)
     }
 }
 
+void IDE::out16(WORD port, WORD data)
+{
+#ifdef IDE_DEBUG
+    vlog(LogFDC, "out16 %03x, %04x", port, data);
+#endif
+
+    const int controllerIndex = (((port) & 0x1F0) == 0x170);
+    IDEController& controller = d->controller[controllerIndex];
+
+    switch (port & 0xF) {
+    case 0x0:
+        controller.writeWordToSectorBuffer(*this, data);
+        break;
+    default:
+        return IODevice::out16(port, data);
+    }
+}
+
 void IDE::executeCommand(IDEController& controller, BYTE command)
 {
     switch (command) {
@@ -249,9 +308,19 @@ void IDE::executeCommand(IDEController& controller, BYTE command)
     case 0x21:
         controller.readSectors(*this);
         break;
+    case 0x30:
+        controller.writeSectors();
+        break;
     case 0xEC:
         controller.identify(*this);
         break;
+#if 0
+    case 0x90:
+        // Run diagnostics, FIXME: this isn't a very nice implementation lol.
+        controller.error = 0;
+        raiseIRQ();
+        break;
+#endif
     default:
         vlog(LogIDE, "Unknown command %02x", command);
         break;
@@ -262,8 +331,12 @@ IDE::Status IDE::status(const IDEController& controller) const
 {
     // FIXME: ...
     unsigned status = INDEX | DRDY;
-    if (controller.m_bufferIndex < controller.m_buffer.size()) {
+    if (controller.m_readBufferIndex < controller.m_readBuffer.size()) {
         status |= DRQ;
     }
+    if (controller.m_writeBufferIndex < controller.m_writeBuffer.size()) {
+        status |= DRQ;
+    }
+
     return static_cast<Status>(status);
 }

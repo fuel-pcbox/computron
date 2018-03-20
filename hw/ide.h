@@ -51,6 +51,7 @@ public:
     virtual BYTE in8(WORD port) override;
     virtual void out8(WORD port, BYTE data) override;
     virtual WORD in16(WORD port) override;
+    virtual void out16(WORD port, WORD data) override;
 
 private:
     void executeCommand(IDEController&, BYTE);
