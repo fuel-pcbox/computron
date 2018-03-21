@@ -62,6 +62,29 @@ struct WatchedAddress {
 
 enum class JumpType { Internal, IRET, RETF, INT, CALL, JMP };
 
+
+struct PageTableEntryFlags {
+enum Flags {
+    Present = 0x01,
+    ReadWrite = 0x02,
+    UserSupervisor = 0x04,
+    Accessed = 0x20,
+    Dirty = 0x40,
+};
+};
+
+struct PageFaultFlags {
+enum Flags {
+    NotPresent = 0x00,
+    ProtectionViolation = 0x01,
+    Read = 0x00,
+    Write = 0x02,
+    UserMode = 0x04,
+    SupervisorMode = 0x00,
+    InstructionFetch = 0x08,
+};
+};
+
 class Exception {
 public:
     Exception(BYTE num, WORD code, DWORD address, const QString& reason)
@@ -151,6 +174,8 @@ public:
 
     std::set<DWORD>& breakpoints() { return m_breakpoints; }
 
+    enum class MemoryAccessType { Read, Write, Execute, InternalPointer };
+
     enum RegisterIndex8 {
         RegisterAL = 0,
         RegisterCL,
@@ -227,7 +252,7 @@ public:
     Exception StackFault(WORD selector, const QString& reason);
     Exception NotPresent(WORD selector, const QString& reason);
     Exception InvalidTSS(WORD selector, const QString& reason);
-    Exception PageFault(DWORD address, WORD error, const QString& reason);
+    Exception PageFault(DWORD linearAddress, PageFaultFlags::Flags, MemoryAccessType, bool inUserMode, const char* faultTable, DWORD pde, DWORD pte = 0);
     Exception DivideError(const QString& reason);
     Exception InvalidOpcode(const QString& reason = QString());
     Exception BoundRangeExceeded(const QString& reason);
@@ -466,8 +491,6 @@ public:
     inline DWORD readUnmappedMemory32(DWORD address) const;
     inline void writeUnmappedMemory8(DWORD address, BYTE data);
     inline void writeUnmappedMemory16(DWORD address, WORD data);
-
-    enum class MemoryAccessType { Read, Write, Execute, InternalPointer };
 
     template<typename T> bool validatePhysicalAddress(DWORD, MemoryAccessType);
     template<typename T> void validateAddress(const SegmentDescriptor&, DWORD offset, MemoryAccessType);

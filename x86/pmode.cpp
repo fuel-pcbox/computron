@@ -373,18 +373,6 @@ Exception CPU::InvalidTSS(WORD selector, const QString& reason)
     return Exception(0xa, selector, reason);
 }
 
-Exception CPU::PageFault(DWORD address, WORD error, const QString& reason)
-{
-    vlog(LogCPU, "Exception: #PF(%04x) address=%08x :: %s", error, address, qPrintable(reason));
-    m_CR2 = address;
-    if (options.crashOnPF) {
-        dumpAll();
-        vlog(LogAlert, "CRASH ON #PF");
-        ASSERT_NOT_REACHED();
-    }
-    return Exception(0xe, error, address, reason);
-}
-
 Exception CPU::DivideError(const QString& reason)
 {
     vlog(LogCPU, "Exception: #DE :: %s", qPrintable(reason));

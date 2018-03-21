@@ -1093,27 +1093,16 @@ inline void CPU::didTouchMemory(DWORD address)
         machine().notifyScreen();
 }
 
-struct PageTableEntryFlags {
-enum Flags {
-    Present = 0x01,
-    ReadWrite = 0x02,
-    UserSupervisor = 0x04,
-    Accessed = 0x20,
-    Dirty = 0x40,
-};
-};
-
-struct PageFaultFlags {
-enum Flags {
-    NotPresent = 0x00,
-    ProtectionViolation = 0x01,
-    Read = 0x00,
-    Write = 0x02,
-    UserMode = 0x04,
-    SupervisorMode = 0x00,
-    InstructionFetch = 0x08,
-};
-};
+static const char* toString(CPU::MemoryAccessType type)
+{
+    switch (type) {
+    case CPU::MemoryAccessType::Read: return "Read";
+    case CPU::MemoryAccessType::Write: return "Write";
+    case CPU::MemoryAccessType::Execute: return "Execute";
+    case CPU::MemoryAccessType::InternalPointer: return "InternalPointer";
+    default: return "(wat)";
+    }
+}
 
 ALWAYS_INLINE void CPU::translateAddress(DWORD linearAddress, DWORD& physicalAddress, MemoryAccessType accessType)
 {
@@ -1130,6 +1119,29 @@ static WORD makePFErrorCode(PageFaultFlags::Flags flags, CPU::MemoryAccessType a
          | (accessType == CPU::MemoryAccessType::Write ? PageFaultFlags::Write : PageFaultFlags::Read)
          | (inUserMode ? PageFaultFlags::UserMode : PageFaultFlags::SupervisorMode)
          | (accessType == CPU::MemoryAccessType::Execute ? PageFaultFlags::InstructionFetch : 0);
+}
+
+Exception CPU::PageFault(DWORD linearAddress, PageFaultFlags::Flags flags, CPU::MemoryAccessType accessType, bool inUserMode, const char* faultTable, DWORD pde, DWORD pte)
+{
+    WORD error = makePFErrorCode(flags, accessType, inUserMode);
+    vlog(LogCPU, "Exception: #PF(%04x) %s in %s for %s %s @%08x, PDBR=%08x, PDE=%08x, PTE=%08x",
+         error,
+         (flags & PageFaultFlags::ProtectionViolation) ? "PV" : "NP",
+         faultTable,
+         inUserMode ? "User" : "Supervisor",
+         toString(accessType),
+         linearAddress,
+         getCR3(),
+         pde,
+         pte
+    );
+    m_CR2 = linearAddress;
+    if (options.crashOnPF) {
+        dumpAll();
+        vlog(LogAlert, "CRASH ON #PF");
+        ASSERT_NOT_REACHED();
+    }
+    return Exception(0xe, error, linearAddress, "Page fault");
 }
 
 void CPU::translateAddressSlowCase(DWORD linearAddress, DWORD& physicalAddress, MemoryAccessType accessType)
@@ -1150,33 +1162,28 @@ void CPU::translateAddressSlowCase(DWORD linearAddress, DWORD& physicalAddress, 
     bool inUserMode = getCPL() == 3;
 
     if (!(pageDirectoryEntry & PageTableEntryFlags::Present)) {
-        vlog(LogCPU, "#PF Translating %08x {dir=%03x, page=%03x, offset=%03x} PDBR=%08x, PDE=%08x, PTE=%08x", linearAddress, dir, page, offset, getCR3(), pageDirectoryEntry, pageTableEntry);
-        throw PageFault(linearAddress, makePFErrorCode(PageFaultFlags::NotPresent, accessType, inUserMode), QString("Page not present in PDE(%1)").arg(pageDirectoryEntry, 8, 16, QLatin1Char('0')));
+        throw PageFault(linearAddress, PageFaultFlags::NotPresent, accessType, inUserMode, "PDE", pageDirectoryEntry);
     }
+
     if (!(pageTableEntry & PageTableEntryFlags::Present)) {
-        vlog(LogCPU, "#PF Translating %08x {dir=%03x, page=%03x, offset=%03x} PDBR=%08x, PDE=%08x, PTE=%08x", linearAddress, dir, page, offset, getCR3(), pageDirectoryEntry, pageTableEntry);
-        throw PageFault(linearAddress, makePFErrorCode(PageFaultFlags::NotPresent, accessType, inUserMode), QString("Page not present in PTE(%1)").arg(pageTableEntry, 8, 16, QLatin1Char('0')));
+        throw PageFault(linearAddress, PageFaultFlags::NotPresent, accessType, inUserMode, "PTE", pageDirectoryEntry, pageTableEntry);
     }
 
     if (inUserMode) {
         if (!(pageDirectoryEntry & PageTableEntryFlags::UserSupervisor)) {
-            vlog(LogCPU, "#PF Translating %08x {dir=%03x, page=%03x, offset=%03x} PDBR=%08x, PDE=%08x, PTE=%08x", linearAddress, dir, page, offset, getCR3(), pageDirectoryEntry, pageTableEntry);
-            throw PageFault(linearAddress, makePFErrorCode(PageFaultFlags::ProtectionViolation, accessType, inUserMode), QString("Page not accessible in user mode in PDE(%1)").arg(pageDirectoryEntry, 8, 16, QLatin1Char('0')));
+            throw PageFault(linearAddress, PageFaultFlags::ProtectionViolation, accessType, inUserMode, "PDE", pageDirectoryEntry);
         }
         if (!(pageTableEntry & PageTableEntryFlags::UserSupervisor)) {
-            vlog(LogCPU, "#PF Translating %08x {dir=%03x, page=%03x, offset=%03x} PDBR=%08x, PDE=%08x, PTE=%08x", linearAddress, dir, page, offset, getCR3(), pageDirectoryEntry, pageTableEntry);
-            throw PageFault(linearAddress, makePFErrorCode(PageFaultFlags::ProtectionViolation, accessType, inUserMode), QString("Page not accessible in user mode in PTE(%1)").arg(pageTableEntry, 8, 16, QLatin1Char('0')));
+            throw PageFault(linearAddress, PageFaultFlags::ProtectionViolation, accessType, inUserMode, "PTE", pageDirectoryEntry, pageTableEntry);
         }
     }
 
     if ((inUserMode || getCR0() & CR0::WP) && accessType == MemoryAccessType::Write) {
         if (!(pageDirectoryEntry & PageTableEntryFlags::ReadWrite)) {
-            vlog(LogCPU, "#PF Translating %08x {dir=%03x, page=%03x, offset=%03x} PDBR=%08x, PDE=%08x, PTE=%08x", linearAddress, dir, page, offset, getCR3(), pageDirectoryEntry, pageTableEntry);
-            throw PageFault(linearAddress, makePFErrorCode(PageFaultFlags::ProtectionViolation, accessType, inUserMode), QString("Page not writable in PDE(%1)").arg(pageDirectoryEntry, 8, 16, QLatin1Char('0')));
+            throw PageFault(linearAddress, PageFaultFlags::ProtectionViolation, accessType, inUserMode, "PDE", pageDirectoryEntry);
         }
         if (!(pageTableEntry & PageTableEntryFlags::ReadWrite)) {
-            vlog(LogCPU, "#PF Translating %08x {dir=%03x, page=%03x, offset=%03x} PDBR=%08x, PDE=%08x, PTE=%08x", linearAddress, dir, page, offset, getCR3(), pageDirectoryEntry, pageTableEntry);
-            throw PageFault(linearAddress, makePFErrorCode(PageFaultFlags::ProtectionViolation, accessType, inUserMode), QString("Page not writable in PTE(%1)").arg(pageTableEntry, 8, 16, QLatin1Char('0')));
+            throw PageFault(linearAddress, PageFaultFlags::ProtectionViolation, accessType, inUserMode, "PTE", pageDirectoryEntry, pageTableEntry);
         }
     }
 
@@ -1191,17 +1198,6 @@ void CPU::translateAddressSlowCase(DWORD linearAddress, DWORD& physicalAddress, 
 #ifdef DEBUG_PAGING
     vlog(LogCPU, "PG=1 Translating %08x {dir=%03x, page=%03x, offset=%03x} => %08x [%08x + %08x]", linearAddress, dir, page, offset, physicalAddress, pageDirectoryEntry, pageTableEntry);
 #endif
-}
-
-static const char* toString(CPU::MemoryAccessType type)
-{
-    switch (type) {
-    case CPU::MemoryAccessType::Read: return "Read";
-    case CPU::MemoryAccessType::Write: return "Write";
-    case CPU::MemoryAccessType::Execute: return "Execute";
-    case CPU::MemoryAccessType::InternalPointer: return "InternalPointer";
-    default: return "(wat)";
-    }
 }
 
 template<typename T>
