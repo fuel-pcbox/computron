@@ -456,7 +456,7 @@ void buildOpcodeTablesIfNeeded()
         build(0x58 + i, "POP", OP_reg16, &CPU::_POP_reg16, OP_reg32, &CPU::_POP_reg32);
 
     build(0x60, "PUSHAW", OP,                  &CPU::_PUSHA, "PUSHAD", OP,             &CPU::_PUSHAD);
-    build(0x61, "POPAW",  OP,                  &CPU::_POPA,  "POPAW",  OP,             &CPU::_POPAD);
+    build(0x61, "POPAW",  OP,                  &CPU::_POPA,  "POPAD",  OP,             &CPU::_POPAD);
     build(0x62, "BOUND",  OP_reg16_RM16,       &CPU::_BOUND, "BOUND",  OP_reg32_RM32,  &CPU::_BOUND);
 
     build(0x68, "PUSH",   OP_imm16,            &CPU::_PUSH_imm16,      OP_imm32,       &CPU::_PUSH_imm32);
