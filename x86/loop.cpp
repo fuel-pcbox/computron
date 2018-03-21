@@ -91,22 +91,6 @@ void CPU::_LOOPNE_imm8(Instruction& insn)
 void CPU::handleRepeatOpcode(Instruction& insn, bool shouldEqual)
 {
     switch(insn.op()) {
-    case 0x66: {
-        m_operandSize32 = !m_operandSize32;
-        auto newInsn = Instruction::fromStream(*this, o32(), a32());
-        handleRepeatOpcode(newInsn, shouldEqual);
-        m_operandSize32 = !m_operandSize32;
-        return;
-    }
-
-    case 0x67: {
-        m_addressSize32 = !m_addressSize32;
-        auto newInsn = Instruction::fromStream(*this, o32(), a32());
-        handleRepeatOpcode(newInsn, shouldEqual);
-        m_addressSize32 = !m_addressSize32;
-        return;
-    }
-
     case 0x6C: DO_REP; return; // INSB
     case 0x6D: DO_REP; return; // INSW/INSD
     case 0x6E: DO_REP; return; // OUTSB
@@ -134,12 +118,12 @@ void CPU::handleRepeatOpcode(Instruction& insn, bool shouldEqual)
 
 void CPU::_REP(Instruction&)
 {
-    auto newInsn = Instruction::fromStream(*this, o32(), a32());
+    auto newInsn = Instruction::fromStream(*this, m_operandSize32, m_addressSize32);
     handleRepeatOpcode(newInsn, true);
 }
 
 void CPU::_REPNE(Instruction&)
 {
-    auto newInsn = Instruction::fromStream(*this, o32(), a32());
+    auto newInsn = Instruction::fromStream(*this, m_operandSize32, m_addressSize32);
     handleRepeatOpcode(newInsn, false);
 }

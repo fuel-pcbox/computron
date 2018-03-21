@@ -132,6 +132,8 @@ public:
     MemoryOrRegisterReference& modrm() { ASSERT(hasRM()); return m_modrm; }
 
     bool hasSegmentPrefix() const { return m_segmentPrefix != SegmentRegisterIndex::None; }
+    bool hasAddressSizeOverridePrefix() const { return m_hasAddressSizeOverridePrefix; }
+    bool hasOperandSizeOverridePrefix() const { return m_hasOperandSizeOverridePrefix; }
 
     bool isValid() const { return m_descriptor; }
 
@@ -184,6 +186,7 @@ private:
     DWORD m_imm2 { 0 };
     BYTE m_registerIndex { 0 };
     bool m_a32 { false };
+    bool m_o32 { false };
 
     bool m_hasSubOp { false };
     bool m_hasRM { false };
@@ -193,6 +196,8 @@ private:
     unsigned m_prefixBytes { 0 };
 
     SegmentRegisterIndex m_segmentPrefix { SegmentRegisterIndex::None };
+    bool m_hasOperandSizeOverridePrefix { false };
+    bool m_hasAddressSizeOverridePrefix { false };
 
     MemoryOrRegisterReference m_modrm;
 

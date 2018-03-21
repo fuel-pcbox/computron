@@ -230,6 +230,8 @@ public:
     void clearPrefix()
     {
         m_segmentPrefix = SegmentRegisterIndex::None;
+        m_effectiveAddressSize32 = m_addressSize32;
+        m_effectiveOperandSize32 = m_operandSize32;
     }
 
     // Extended memory size in KiB (will be reported by CMOS)
@@ -577,10 +579,10 @@ public:
     bool x16() const { return !x32(); }
     bool x32() const { return m_descriptor[(int)SegmentRegisterIndex::CS].D(); }
 
-    bool a16() const { return !m_addressSize32; }
-    bool a32() const { return m_addressSize32; }
-    bool o16() const { return !m_operandSize32; }
-    bool o32() const { return m_operandSize32; }
+    bool a16() const { return !m_effectiveAddressSize32; }
+    bool a32() const { return m_effectiveAddressSize32; }
+    bool o16() const { return !m_effectiveOperandSize32; }
+    bool o32() const { return m_effectiveOperandSize32; }
 
     bool s16() const { return !m_stackSize32; }
     bool s32() const { return m_stackSize32; }
@@ -1148,9 +1150,6 @@ protected:
     void _RDTSC(Instruction&);
 
     void _UD0(Instruction&);
-    void _AddressSizeOverride(Instruction&);
-    void _OperandSizeOverride(Instruction&);
-
     void _LOCK(Instruction&);
 
     // REP* helper.
@@ -1372,7 +1371,8 @@ private:
 
     bool m_addressSize32 { false };
     bool m_operandSize32 { false };
-
+    bool m_effectiveAddressSize32 { false };
+    bool m_effectiveOperandSize32 { false };
     bool m_stackSize32 { false };
 
     std::atomic<bool> m_mainLoopNeedsSlowStuff { false };
@@ -1380,8 +1380,6 @@ private:
     std::atomic<bool> m_shouldHardReboot { false };
 
     QVector<WatchedAddress> m_watches;
-
-    bool m_shouldRestoreSizesAfterOverride { false };
 
     bool m_isForAutotest { false };
 
@@ -1487,6 +1485,10 @@ ALWAYS_INLINE void Instruction::execute(CPU& cpu)
     m_cpu = &cpu;
     if (hasSegmentPrefix())
         cpu.setSegmentPrefix(m_segmentPrefix);
+    if (hasOperandSizeOverridePrefix())
+        cpu.m_effectiveOperandSize32 = m_o32;
+    if (hasAddressSizeOverridePrefix())
+        cpu.m_effectiveAddressSize32 = m_a32;
     if (m_hasRM)
         m_modrm.resolve(cpu);
     (cpu.*m_impl)(*this);

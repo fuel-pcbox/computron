@@ -115,34 +115,6 @@ void CPU::_UD0(Instruction&)
     throw InvalidOpcode();
 }
 
-void CPU::_OperandSizeOverride(Instruction&)
-{
-    m_shouldRestoreSizesAfterOverride = true;
-    bool prevOperandSize = m_operandSize32;
-    m_operandSize32 = !m_operandSize32;
-
-    decodeNext();
-
-    if (m_shouldRestoreSizesAfterOverride) {
-        ASSERT(m_operandSize32 != prevOperandSize);
-        m_operandSize32 = prevOperandSize;
-    }
-}
-
-void CPU::_AddressSizeOverride(Instruction&)
-{
-    m_shouldRestoreSizesAfterOverride = true;
-    bool prevAddressSize32 = m_addressSize32;
-    m_addressSize32 = !m_addressSize32;
-
-    decodeNext();
-
-    if (m_shouldRestoreSizesAfterOverride) {
-        ASSERT(m_addressSize32 != prevAddressSize32);
-        m_addressSize32 = prevAddressSize32;
-    }
-}
-
 BYTE CPU::readInstruction8()
 {
     return fetchOpcodeByte();
@@ -365,6 +337,8 @@ void CPU::reset()
 
     m_addressSize32 = false;
     m_operandSize32 = false;
+    m_effectiveAddressSize32 = false;
+    m_effectiveOperandSize32 = false;
 
     m_dirtyFlags = 0;
     m_lastResult = 0;
@@ -384,9 +358,9 @@ CPU::~CPU()
 FLATTEN void CPU::executeOneInstruction()
 {
     try {
-        clearPrefix();
         saveBaseAddress();
         decodeNext();
+        clearPrefix();
     } catch(Exception e) {
         dumpDisassembled(cachedDescriptor(SegmentRegisterIndex::CS), m_baseEIP, 3);
         clearPrefix();
@@ -1438,8 +1412,6 @@ void CPU::writeMemory32(SegmentRegisterIndex segment, DWORD offset, DWORD value)
 
 void CPU::updateDefaultSizes()
 {
-    m_shouldRestoreSizesAfterOverride = false;
-
 #ifdef VERBOSE_DEBUG
     bool oldO32 = m_operandSize32;
     bool oldA32 = m_addressSize32;

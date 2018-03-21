@@ -459,9 +459,6 @@ void buildOpcodeTablesIfNeeded()
     build(0x61, "POPAW",  OP,                  &CPU::_POPA,  "POPAW",  OP,             &CPU::_POPAD);
     build(0x62, "BOUND",  OP_reg16_RM16,       &CPU::_BOUND, "BOUND",  OP_reg32_RM32,  &CPU::_BOUND);
 
-    build(0x66, "o!",     InstructionPrefix,   &CPU::_OperandSizeOverride);
-    build(0x67, "a!",     InstructionPrefix,   &CPU::_AddressSizeOverride);
-
     build(0x68, "PUSH",   OP_imm16,            &CPU::_PUSH_imm16,      OP_imm32,       &CPU::_PUSH_imm32);
     build(0x69, "IMUL",   OP_reg16_RM16_imm16, &CPU::_IMUL_reg16_RM16_imm16, OP_reg32_RM32_imm32, &CPU::_IMUL_reg32_RM32_imm32);
     build(0x6A, "PUSH",   OP_imm8,             &CPU::_PUSH_imm8);
@@ -847,9 +844,21 @@ static SegmentRegisterIndex toSegmentPrefix(BYTE op)
 
 Instruction::Instruction(InstructionStream& stream, bool o32, bool a32)
     : m_a32(a32)
+    , m_o32(o32)
 {
     for (;; ++m_prefixBytes) {
         BYTE opbyte = stream.readInstruction8();
+        if (opbyte == 0x66) {
+            m_o32 = !o32;
+            m_hasOperandSizeOverridePrefix = true;
+            continue;
+        }
+        if (opbyte == 0x67) {
+            m_a32 = !a32;
+            m_hasAddressSizeOverridePrefix = true;
+            continue;
+        }
+
         auto segmentPrefix = toSegmentPrefix(opbyte);
         if (segmentPrefix != SegmentRegisterIndex::None) {
             // FIXME: What should we do here? Respect the first or last prefix?
@@ -864,9 +873,9 @@ Instruction::Instruction(InstructionStream& stream, bool o32, bool a32)
     if (m_op == 0x0F) {
         m_hasSubOp = true;
         m_subOp = stream.readInstruction8();
-        m_descriptor = o32 ? &s_0F_table32[m_subOp] : &s_0F_table16[m_subOp];
+        m_descriptor = m_o32 ? &s_0F_table32[m_subOp] : &s_0F_table16[m_subOp];
     } else {
-        m_descriptor = o32 ? &s_table32[m_op] : &s_table16[m_op];
+        m_descriptor = m_o32 ? &s_table32[m_op] : &s_table16[m_op];
     }
 
     m_hasRM = m_descriptor->hasRM;
@@ -1126,10 +1135,18 @@ static QString relativeAddress(DWORD origin, bool x32, SIGNED_DWORD imm)
 QString Instruction::toString(DWORD origin, bool x32) const
 {
     QString segmentPrefix;
+    QString asizePrefix;
+    QString osizePrefix;
     if (hasSegmentPrefix()) {
         segmentPrefix = QString("%1: ").arg(CPU::registerName(m_segmentPrefix));
     }
-    return QString("%1%2").arg(segmentPrefix).arg(toStringInternal(origin, x32));
+    if (hasAddressSizeOverridePrefix()) {
+        asizePrefix = m_a32 ? "a32 " : "a16 ";
+    }
+    if (hasOperandSizeOverridePrefix()) {
+        osizePrefix = m_o32 ? "o32 " : "o16 ";
+    }
+    return QString("%1%2%3%4").arg(segmentPrefix).arg(asizePrefix).arg(osizePrefix).arg(toStringInternal(origin, x32));
 }
 
 #define RELADDRARGS relativeAddress(origin + (m_a32 ? 5 : 3), x32, SIGNED_DWORD(m_a32 ? imm32() : imm16()))
