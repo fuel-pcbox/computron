@@ -128,8 +128,10 @@ void CPU::_ENTER_32(Instruction& insn)
 void CPU::_LEAVE(Instruction&)
 {
     if (s16()) {
+        snoop(SegmentRegisterIndex::SS, getBP(), MemoryAccessType::Read);
         setSP(getBP());
     } else {
+        snoop(SegmentRegisterIndex::SS, getEBP(), MemoryAccessType::Read);
         setESP(getEBP());
     }
 
@@ -142,6 +144,9 @@ void CPU::_LEAVE(Instruction&)
 
 void CPU::_PUSHA(Instruction&)
 {
+    snoop(SegmentRegisterIndex::SS, currentStackPointer(), MemoryAccessType::Write);
+    snoop(SegmentRegisterIndex::SS, currentStackPointer() - 16, MemoryAccessType::Write);
+
     WORD oldSP = getSP();
     push16(getAX());
     push16(getCX());
@@ -155,6 +160,9 @@ void CPU::_PUSHA(Instruction&)
 
 void CPU::_PUSHAD(Instruction&)
 {
+    snoop(SegmentRegisterIndex::SS, currentStackPointer(), MemoryAccessType::Write);
+    snoop(SegmentRegisterIndex::SS, currentStackPointer() - 32, MemoryAccessType::Write);
+
     DWORD oldESP = getESP();
     push32(getEAX());
     push32(getECX());
@@ -168,6 +176,9 @@ void CPU::_PUSHAD(Instruction&)
 
 void CPU::_POPA(Instruction&)
 {
+    snoop(SegmentRegisterIndex::SS, currentStackPointer(), MemoryAccessType::Read);
+    snoop(SegmentRegisterIndex::SS, currentStackPointer() + 16, MemoryAccessType::Read);
+
     setDI(pop16());
     setSI(pop16());
     setBP(pop16());
@@ -180,6 +191,9 @@ void CPU::_POPA(Instruction&)
 
 void CPU::_POPAD(Instruction&)
 {
+    snoop(SegmentRegisterIndex::SS, currentStackPointer(), MemoryAccessType::Read);
+    snoop(SegmentRegisterIndex::SS, currentStackPointer() + 32, MemoryAccessType::Read);
+
     setEDI(pop32());
     setESI(pop32());
     setEBP(pop32());

@@ -411,6 +411,13 @@ public:
     WORD getBaseIP() const { return m_baseEIP & 0xFFFF; }
     DWORD getBaseEIP() const { return m_baseEIP; }
 
+    DWORD currentStackPointer() const
+    {
+        if (s32())
+            return getESP();
+        return getSP();
+    }
+
     void jump32(WORD segment, DWORD offset, JumpType, BYTE isr = 0, DWORD flags = 0, Gate* = nullptr);
     void jump16(WORD segment, WORD offset, JumpType, BYTE isr = 0, DWORD flags = 0, Gate* = nullptr);
     void jumpRelative8(SIGNED_BYTE displacement);
@@ -503,6 +510,8 @@ public:
     template<typename T> void writeMemory(SegmentRegisterIndex, DWORD address, T data);
 
     void translateAddress(DWORD linearAddress, DWORD& physicalAddress, MemoryAccessType);
+    void snoop(DWORD linearAddress, MemoryAccessType);
+    void snoop(SegmentRegisterIndex, DWORD offset, MemoryAccessType);
 
     BYTE readMemory8(DWORD address);
     BYTE readMemory8(SegmentRegisterIndex, DWORD offset);

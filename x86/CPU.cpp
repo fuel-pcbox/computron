@@ -1200,6 +1200,22 @@ void CPU::translateAddressSlowCase(DWORD linearAddress, DWORD& physicalAddress, 
 #endif
 }
 
+void CPU::snoop(DWORD linearAddress, MemoryAccessType accessType)
+{
+    if (!getPE())
+        return;
+    DWORD physicalAddress;
+    translateAddress(linearAddress, physicalAddress, accessType);
+}
+
+void CPU::snoop(SegmentRegisterIndex segreg, DWORD offset, MemoryAccessType accessType)
+{
+    if (!getPE())
+        return;
+    DWORD linearAddress = cachedDescriptor(segreg).base() + offset;
+    snoop(linearAddress, accessType);
+}
+
 template<typename T>
 void CPU::validateAddress(const SegmentDescriptor& descriptor, DWORD offset, MemoryAccessType accessType)
 {
