@@ -27,6 +27,7 @@
 #include "Common.h"
 #include "CPU.h"
 #include "debug.h"
+#include "Tasking.h"
 
 unsigned CPU::dumpDisassembledInternal(SegmentDescriptor& descriptor, DWORD offset)
 {
@@ -280,32 +281,48 @@ void CPU::dumpAll()
     dumpRegister(RegisterDI);
 
     if (!getPE()) {
-        vlog(LogDump, "CS: %04X", getCS());
-        vlog(LogDump, "DS: %04X", getDS());
-        vlog(LogDump, "ES: %04X", getES());
-        vlog(LogDump, "SS: %04X", getSS());
-        vlog(LogDump, "FS: %04X", getFS());
-        vlog(LogDump, "GS: %04X", getGS());
+        vlog(LogDump, "cs: %04x", getCS());
+        vlog(LogDump, "ds: %04x", getDS());
+        vlog(LogDump, "es: %04x", getES());
+        vlog(LogDump, "ss: %04x", getSS());
+        vlog(LogDump, "fs: %04x", getFS());
+        vlog(LogDump, "gs: %04x", getGS());
     } else {
-        dumpSelector("CS", SegmentRegisterIndex::CS);
-        dumpSelector("DS", SegmentRegisterIndex::DS);
-        dumpSelector("ES", SegmentRegisterIndex::ES);
-        dumpSelector("SS", SegmentRegisterIndex::SS);
-        dumpSelector("FS", SegmentRegisterIndex::FS);
-        dumpSelector("GS", SegmentRegisterIndex::GS);
+        dumpSelector("cs", SegmentRegisterIndex::CS);
+        dumpSelector("ds", SegmentRegisterIndex::DS);
+        dumpSelector("es", SegmentRegisterIndex::ES);
+        dumpSelector("ss", SegmentRegisterIndex::SS);
+        dumpSelector("fs", SegmentRegisterIndex::FS);
+        dumpSelector("gs", SegmentRegisterIndex::GS);
     }
-    vlog(LogDump, "EIP: %08X", getEIP());
+    vlog(LogDump, "eip: %08x", getEIP());
 
-    vlog(LogDump, "CR0: %08X", getCR0());
-    vlog(LogDump, "CR3: %08X", getCR3());
+    vlog(LogDump, "cr0: %08x    cr3: %08x      a20: %u", getCR0(), getCR3(), isA20Enabled());
+    vlog(LogDump, "cpl: %u     iopl: %u", getCPL(), getIOPL());
 
-    vlog(LogDump, "A20: %u", isA20Enabled());
+    vlog(LogDump, "a%u[%u] o%u[%u] s%u x%u",
+         m_effectiveAddressSize32 ? 32 : 16,
+         m_addressSize32 ? 32 : 16,
+         m_effectiveOperandSize32 ? 32 : 16,
+         m_operandSize32 ? 32 : 16,
+         s16() ? 16 : 32,
+         x16() ? 16 : 32);
 
-    vlog(LogDump, "GDTR: {base=%08X, limit=%04X}", this->GDTR.base, this->GDTR.limit);
-    vlog(LogDump, "LDTR: {base=%08X, limit=%04X}", this->LDTR.base, this->LDTR.limit);
-    vlog(LogDump, "IDTR: {base=%08X, limit=%04X}", this->IDTR.base, this->IDTR.limit);
+    vlog(LogDump, "gdtr: {base=%08x, limit=%04x}", this->GDTR.base, this->GDTR.limit);
+    vlog(LogDump, "ldtr: {base=%08x, limit=%04x}", this->LDTR.base, this->LDTR.limit);
+    vlog(LogDump, "idtr: {base=%08x, limit=%04x}", this->IDTR.base, this->IDTR.limit);
+    vlog(LogDump, "  tr: {base=%08x, limit=%04x}", this->TR.base, this->TR.limit);
 
-    vlog(LogDump, "C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u", getCF(), getPF(), getAF(), getZF(), getSF(), getIF(), getDF(), getOF());
+    if (getPE() && TR.segment != 0) {
+        auto descriptor = getDescriptor(TR.segment);
+        if (descriptor.isTSS()) {
+            auto& tssDescriptor = descriptor.asTSSDescriptor();
+            TSS tss(*this, tssDescriptor.base(), tssDescriptor.is32Bit());
+            dumpTSS(tss);
+        }
+    }
+
+    vlog(LogDump, "cf=%u pf=%u af=%u zf=%u sf=%u if=%u df=%u of=%u tf=%u nt=%u", getCF(), getPF(), getAF(), getZF(), getSF(), getIF(), getDF(), getOF(), getTF(), getNT());
 
     dumpDisassembled(cachedDescriptor(SegmentRegisterIndex::CS), getBaseEIP());
 
@@ -376,7 +393,7 @@ void CPU::dumpMemory(SegmentDescriptor& descriptor, DWORD offset, int rows)
     }
 
     if (!p) {
-        vlog(LogCPU, "dumpMemory can't dump %04X:%08X", descriptor.index(), offset);
+        vlog(LogCPU, "dumpMemory can't dump %04x:%08x", descriptor.index(), offset);
         return;
     }
 
@@ -424,7 +441,7 @@ void CPU::dumpIVT()
     // XXX: For alignment reasons, we're skipping INT FF
     for (int i = 0; i < 0xFF; i += 4) {
         vlog(LogDump,
-            "%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X\t%02X>  %04X:%04X",
+            "%02x>  %04x:%04x\t%02x>  %04x:%04x\t%02x>  %04x:%04x\t%02X>  %04x:%04x",
             i, isrSegment(*this, i), isrOffset(*this, i),
             i + 1, isrSegment(*this, i + 1), isrOffset(*this, i + 1),
             i + 2, isrSegment(*this, i + 2), isrOffset(*this, i + 2),

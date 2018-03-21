@@ -362,8 +362,8 @@ FLATTEN void CPU::executeOneInstruction()
         decodeNext();
         clearPrefix();
     } catch(Exception e) {
-        dumpDisassembled(cachedDescriptor(SegmentRegisterIndex::CS), m_baseEIP, 3);
         clearPrefix();
+        dumpDisassembled(cachedDescriptor(SegmentRegisterIndex::CS), m_baseEIP, 3);
         raiseException(e);
     }
 }
