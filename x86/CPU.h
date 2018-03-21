@@ -1168,6 +1168,7 @@ private:
     void updateDefaultSizes();
     void updateStackSize();
     void updateCodeSegmentCache();
+    void makeNextInstructionUninterruptible();
 
     void didTouchMemory(DWORD address);
 
@@ -1350,6 +1351,7 @@ private:
     std::set<DWORD> m_breakpoints;
 
     bool m_a20Enabled { false };
+    bool m_nextInstructionIsUninterruptible { false };
 
     OwnPtr<Debugger> m_debugger;
 

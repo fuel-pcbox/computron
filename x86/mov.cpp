@@ -54,11 +54,17 @@ void CPU::_MOV_RM32_seg(Instruction& insn)
 void CPU::_MOV_seg_RM16(Instruction& insn)
 {
     setSegmentRegister(insn.segmentRegisterIndex(), insn.modrm().read16());
+    if (insn.segmentRegisterIndex() == SegmentRegisterIndex::SS) {
+        makeNextInstructionUninterruptible();
+    }
 }
 
 void CPU::_MOV_seg_RM32(Instruction& insn)
 {
     setSegmentRegister(insn.segmentRegisterIndex(), insn.modrm().read32());
+    if (insn.segmentRegisterIndex() == SegmentRegisterIndex::SS) {
+        makeNextInstructionUninterruptible();
+    }
 }
 
 void CPU::_MOV_RM8_reg8(Instruction& insn)

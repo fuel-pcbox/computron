@@ -198,6 +198,7 @@ void CPU::_POP_SS(Instruction&)
         setSS(pop16());
     else
         setSS(pop32());
+    makeNextInstructionUninterruptible();
 }
 
 void CPU::_POP_FS(Instruction&)

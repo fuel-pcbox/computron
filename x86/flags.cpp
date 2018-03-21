@@ -98,12 +98,14 @@ void CPU::_STD(Instruction&)
 void CPU::_STI(Instruction&)
 {
     if (!getPE()) {
+        makeNextInstructionUninterruptible();
         setIF(1);
         return;
     }
 
     if (!getVM()) {
         if (getIOPL() >= getCPL()) {
+            makeNextInstructionUninterruptible();
             setIF(1);
         } else {
             if ((getIOPL() < getCPL()) && getCPL() == 3 && !getVIP())

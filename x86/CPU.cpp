@@ -335,6 +335,7 @@ CPU::CPU(Machine& m)
 void CPU::reset()
 {
     m_a20Enabled = false;
+    m_nextInstructionIsUninterruptible = false;
 
     memset(&regs, 0, sizeof(regs));
     m_CR0 = 0;
@@ -470,6 +471,11 @@ void CPU::hardReboot()
     m_shouldHardReboot = false;
 }
 
+void CPU::makeNextInstructionUninterruptible()
+{
+    m_nextInstructionIsUninterruptible = true;
+}
+
 void CPU::recomputeMainLoopNeedsSlowStuff()
 {
     m_mainLoopNeedsSlowStuff = m_shouldBreakOutOfMainLoop ||
@@ -522,6 +528,14 @@ FLATTEN void CPU::mainLoop()
         }
 
         executeOneInstruction();
+
+        // FIXME: An obvious optimization here would be to dispatch next insn directly from whoever put us in this state.
+        // Easy to implement: just call executeOneInstruction() in e.g "POP SS"
+        // I'll do this once things feel more trustworthy in general.
+        if (UNLIKELY(m_nextInstructionIsUninterruptible)) {
+            m_nextInstructionIsUninterruptible = false;
+            continue;
+        }
 
         if (UNLIKELY(getTF())) {
             // The Trap Flag is set, so we'll execute one instruction and
