@@ -35,11 +35,11 @@ void CPU::_SGDT(Instruction& insn)
     if (insn.modrm().isRegister()) {
         throw InvalidOpcode("SGDT with register destination");
     }
-    BYTE* ptr = reinterpret_cast<BYTE*>(insn.modrm().memoryPointer());
-    DWORD* basePtr = reinterpret_cast<DWORD*>(ptr);
-    WORD* limitPtr = reinterpret_cast<WORD*>(ptr + 4);
-    *basePtr = GDTR.base;
-    *limitPtr = GDTR.limit;
+    snoop(insn.modrm().segment(), insn.modrm().offset(), MemoryAccessType::Write);
+    snoop(insn.modrm().segment(), insn.modrm().offset() + 6, MemoryAccessType::Write);
+    DWORD maskedBase = o16() ? (GDTR.base & 0x00ffffff) : GDTR.base;
+    writeMemory16(insn.modrm().segment(), insn.modrm().offset(), GDTR.limit);
+    writeMemory32(insn.modrm().segment(), insn.modrm().offset() + 2, maskedBase);
 }
 
 void CPU::_SIDT(Instruction& insn)
@@ -47,11 +47,11 @@ void CPU::_SIDT(Instruction& insn)
     if (insn.modrm().isRegister()) {
         throw InvalidOpcode("SIDT with register destination");
     }
-    BYTE* ptr = reinterpret_cast<BYTE*>(insn.modrm().memoryPointer());
-    DWORD* basePtr = reinterpret_cast<DWORD*>(ptr);
-    WORD* limitPtr = reinterpret_cast<WORD*>(ptr + 4);
-    *basePtr = IDTR.base;
-    *limitPtr = IDTR.limit;
+    snoop(insn.modrm().segment(), insn.modrm().offset(), MemoryAccessType::Write);
+    snoop(insn.modrm().segment(), insn.modrm().offset() + 6, MemoryAccessType::Write);
+    DWORD maskedBase = o16() ? (IDTR.base & 0x00ffffff) : IDTR.base;
+    writeMemory16(insn.modrm().segment(), insn.modrm().offset(), IDTR.limit);
+    writeMemory32(insn.modrm().segment(), insn.modrm().offset() + 2, maskedBase);
 }
 
 void CPU::_SLDT_RM16(Instruction& insn)
