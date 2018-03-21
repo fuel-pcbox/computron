@@ -117,26 +117,9 @@ void CPU::_UD0(Instruction&)
 
 void CPU::_OperandSizeOverride(Instruction&)
 {
-#ifdef DEBUG_PREFIXES
-    ASSERT(!m_hasOperandSizePrefix);
-    m_hasOperandSizePrefix = true;
-#endif
     m_shouldRestoreSizesAfterOverride = true;
     bool prevOperandSize = m_operandSize32;
     m_operandSize32 = !m_operandSize32;
-
-#ifdef CT_DEBUG_OVERRIDE_OPCODES
-    vlog(LogCPU, "Operation size override detected! Opcode: db 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X ",
-         readMemory8(getCS(), getEIP() - 1),
-         readMemory8(getCS(), getEIP()),
-         readMemory8(getCS(), getEIP() + 1),
-         readMemory8(getCS(), getEIP() + 2),
-         readMemory8(getCS(), getEIP() + 3),
-         readMemory8(getCS(), getEIP() + 4),
-         readMemory8(getCS(), getEIP() + 5)
-    );
-    dumpAll();
-#endif
 
     decodeNext();
 
@@ -148,26 +131,9 @@ void CPU::_OperandSizeOverride(Instruction&)
 
 void CPU::_AddressSizeOverride(Instruction&)
 {
-#ifdef DEBUG_PREFIXES
-    ASSERT(!m_hasAddressSizePrefix);
-    m_hasAddressSizePrefix = true;
-#endif
     m_shouldRestoreSizesAfterOverride = true;
     bool prevAddressSize32 = m_addressSize32;
     m_addressSize32 = !m_addressSize32;
-
-#ifdef CT_DEBUG_OVERRIDE_OPCODES
-    vlog(LogCPU, "Address size override detected! Opcode: db 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X ",
-         readMemory8(getCS(), getEIP() - 1),
-         readMemory8(getCS(), getEIP()),
-         readMemory8(getCS(), getEIP() + 1),
-         readMemory8(getCS(), getEIP() + 2),
-         readMemory8(getCS(), getEIP() + 3),
-         readMemory8(getCS(), getEIP() + 4),
-         readMemory8(getCS(), getEIP() + 5)
-    );
-    dumpAll();
-#endif
 
     decodeNext();
 
@@ -199,14 +165,13 @@ FLATTEN void CPU::decodeNext()
         dumpTrace();
 #endif
 
-    auto insn = Instruction::fromStream(*this, o32(), a32());
+    auto insn = Instruction::fromStream(*this, m_operandSize32, m_addressSize32);
     if (!insn.isValid())
         throw InvalidOpcode();
-    else
-        execute(std::move(insn));
+    execute(insn);
 }
 
-FLATTEN void CPU::execute(Instruction&& insn)
+FLATTEN void CPU::execute(Instruction& insn)
 {
 #ifdef CRASH_ON_VM
     if (UNLIKELY(getVM())) {
@@ -419,16 +384,12 @@ CPU::~CPU()
 FLATTEN void CPU::executeOneInstruction()
 {
     try {
-#ifdef DEBUG_PREFIXES
-        m_hasAddressSizePrefix = false;
-        m_hasOperandSizePrefix = false;
-#endif
-        resetSegmentPrefix();
+        clearPrefix();
         saveBaseAddress();
         decodeNext();
     } catch(Exception e) {
         dumpDisassembled(cachedDescriptor(SegmentRegisterIndex::CS), m_baseEIP, 3);
-        resetSegmentPrefix();
+        clearPrefix();
         raiseException(e);
     }
 }

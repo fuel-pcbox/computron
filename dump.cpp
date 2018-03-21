@@ -46,7 +46,7 @@ unsigned CPU::dumpDisassembledInternal(SegmentDescriptor& descriptor, DWORD offs
     }
 
     SimpleInstructionStream stream(data);
-    auto insn = Instruction::fromStream(stream, o32(), a32());
+    auto insn = Instruction::fromStream(stream, m_operandSize32, m_addressSize32);
 
     if (x32())
         p += sprintf(p, "%04x:%08x ", descriptor.index(), offset);

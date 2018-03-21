@@ -33,8 +33,6 @@
 #include "Instruction.h"
 #include "Descriptor.h"
 
-#define DEBUG_PREFIXES
-
 class Debugger;
 class Machine;
 class CPU;
@@ -229,7 +227,10 @@ public:
         m_segmentPrefix = segment;
     }
 
-    void resetSegmentPrefix() { m_segmentPrefix = SegmentRegisterIndex::None; }
+    void clearPrefix()
+    {
+        m_segmentPrefix = SegmentRegisterIndex::None;
+    }
 
     // Extended memory size in KiB (will be reported by CMOS)
     DWORD extendedMemorySize() const { return m_extendedMemorySize; }
@@ -430,7 +431,7 @@ public:
     FarPointer getInterruptVector32(int isr);
 
     void decodeNext();
-    void execute(Instruction&&);
+    void execute(Instruction&);
 
     void executeOneInstruction();
 
@@ -1153,7 +1154,7 @@ protected:
     void _LOCK(Instruction&);
 
     // REP* helper.
-    void handleRepeatOpcode(Instruction&&, bool shouldEqual);
+    void handleRepeatOpcode(Instruction&, bool shouldEqual);
 
 private:
     friend class Instruction;
@@ -1389,11 +1390,6 @@ private:
     mutable DWORD m_dirtyFlags { 0 };
     QWORD m_lastResult { 0 };
     unsigned m_lastOpSize { ByteSize };
-
-#ifdef DEBUG_PREFIXES
-    bool m_hasAddressSizePrefix { false };
-    bool m_hasOperandSizePrefix { false };
-#endif
 };
 
 extern CPU* g_cpu;

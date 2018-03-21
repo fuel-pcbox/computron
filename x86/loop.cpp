@@ -100,29 +100,21 @@ void CPU::_LOOPNE_imm8(Instruction& insn)
         for (setZF(shouldEqual); regs.W.CX && (getZF() == shouldEqual); --regs.W.CX) { CALL_HANDLER(o16Handler, o32Handler); } \
     } while (0)
 
-void CPU::handleRepeatOpcode(Instruction&& insn, bool shouldEqual)
+void CPU::handleRepeatOpcode(Instruction& insn, bool shouldEqual)
 {
     switch(insn.op()) {
     case 0x66: {
-#ifdef DEBUG_PREFIXES
-        ASSERT(!m_hasOperandSizePrefix);
-        m_hasOperandSizePrefix = true;
-#endif
         m_operandSize32 = !m_operandSize32;
         auto newInsn = Instruction::fromStream(*this, o32(), a32());
-        handleRepeatOpcode(std::move(newInsn), shouldEqual);
+        handleRepeatOpcode(newInsn, shouldEqual);
         m_operandSize32 = !m_operandSize32;
         return;
     }
 
     case 0x67: {
-#ifdef DEBUG_PREFIXES
-        ASSERT(!m_hasAddressSizePrefix);
-        m_hasAddressSizePrefix = true;
-#endif
         m_addressSize32 = !m_addressSize32;
         auto newInsn = Instruction::fromStream(*this, o32(), a32());
-        handleRepeatOpcode(std::move(newInsn), shouldEqual);
+        handleRepeatOpcode(newInsn, shouldEqual);
         m_addressSize32 = !m_addressSize32;
         return;
     }
@@ -147,32 +139,22 @@ void CPU::handleRepeatOpcode(Instruction&& insn, bool shouldEqual)
 
     case 0x90:
         // PAUSE / REP NOP
-        execute(std::move(insn));
+        execute(insn);
         return;
 
     default:
-        debugger().enter();
-        vlog(LogAlert, "SUSPICIOUS: Opcode %02X used with REP* prefix", insn.op());
-        execute(std::move(insn));
-        return;
+        throw InvalidOpcode(QString("Opcode %1 used with REP* prefix").arg(insn.op(), 2, 16, QLatin1Char('0')));
     }
-
-    // Recurse if this opcode was a segment prefix.
-    // FIXME: Infinite recursion IS possible here.
-    auto newInsn = Instruction::fromStream(*this, o32(), a32());
-    handleRepeatOpcode(std::move(newInsn), shouldEqual);
 }
 
 void CPU::_REP(Instruction&)
 {
     auto newInsn = Instruction::fromStream(*this, o32(), a32());
-    handleRepeatOpcode(std::move(newInsn), true);
-    resetSegmentPrefix();
+    handleRepeatOpcode(newInsn, true);
 }
 
 void CPU::_REPNE(Instruction&)
 {
     auto newInsn = Instruction::fromStream(*this, o32(), a32());
-    handleRepeatOpcode(std::move(newInsn), false);
-    resetSegmentPrefix();
+    handleRepeatOpcode(newInsn, false);
 }
