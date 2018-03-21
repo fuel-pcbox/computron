@@ -70,35 +70,23 @@ void CPU::_LOOPNE_imm8(Instruction& insn)
     }
 }
 
-#define CALL_HANDLER(handler16, handler32) if (o16()) { handler16(insn); } else { handler32(insn); }
-
-#define DO_REP_NEW(o16Handler, o32Handler) do { \
+#define DO_REP do { \
     if (a32()) \
-        for (; regs.D.ECX; --regs.D.ECX) { CALL_HANDLER(o16Handler, o32Handler); } \
+        for (; regs.D.ECX; --regs.D.ECX) { execute(insn); } \
     else \
-        for (; regs.W.CX; --regs.W.CX) { CALL_HANDLER(o16Handler, o32Handler); } \
+        for (; regs.W.CX; --regs.W.CX) { execute(insn); } \
     } while(0)
 
-#define DO_REP(func) do { \
-    if (a32()) \
-        for (; regs.D.ECX; --regs.D.ECX) { func(insn); } \
-    else \
-        for (; regs.W.CX; --regs.W.CX) { func(insn); } \
-    } while(0)
-
-#define DO_REPZ(func) do { \
-    if (a32()) \
-        for (setZF(shouldEqual); regs.D.ECX && (getZF() == shouldEqual); --regs.D.ECX) { func(insn); } \
-    else \
-        for (setZF(shouldEqual); regs.W.CX && (getZF() == shouldEqual); --regs.W.CX) { func(insn); } \
-    } while (0)
-
-#define DO_REPZ_NEW(o16Handler, o32Handler) do { \
-    if (a32()) \
-        for (setZF(shouldEqual); regs.D.ECX && (getZF() == shouldEqual); --regs.D.ECX) { CALL_HANDLER(o16Handler, o32Handler); } \
-    else \
-        for (setZF(shouldEqual); regs.W.CX && (getZF() == shouldEqual); --regs.W.CX) { CALL_HANDLER(o16Handler, o32Handler); } \
-    } while (0)
+#define DO_REPZ do { \
+    if (a32()) { \
+        if (getECX() == 0) \
+            return; \
+        for (setZF(shouldEqual); regs.D.ECX && (getZF() == shouldEqual); --regs.D.ECX) { execute(insn); } \
+    } else { \
+        if (getCX() == 0) \
+            return; \
+        for (setZF(shouldEqual); regs.W.CX && (getZF() == shouldEqual); --regs.W.CX) { execute(insn); } \
+    } } while (0)
 
 void CPU::handleRepeatOpcode(Instruction& insn, bool shouldEqual)
 {
@@ -119,23 +107,20 @@ void CPU::handleRepeatOpcode(Instruction& insn, bool shouldEqual)
         return;
     }
 
-    case 0x6C: DO_REP(_INSB); return;
-    case 0x6D: DO_REP_NEW(_INSW, _INSD); return;
-
-    case 0x6E: DO_REP(_OUTSB); return;
-    case 0x6F: DO_REP_NEW(_OUTSW, _OUTSD); return;
-
-    case 0xA4: DO_REP(_MOVSB); return;
-    case 0xA5: DO_REP_NEW(_MOVSW, _MOVSD); return;
-    case 0xAA: DO_REP(_STOSB); return;
-    case 0xAB: DO_REP_NEW(_STOSW, _STOSD); return;
-    case 0xAC: DO_REP(_LODSB); return;
-    case 0xAD: DO_REP_NEW(_LODSW, _LODSD); return;
-
-    case 0xA6: DO_REPZ(_CMPSB); return;
-    case 0xA7: DO_REPZ_NEW(_CMPSW, _CMPSD); return;
-    case 0xAE: DO_REPZ(_SCASB); return;
-    case 0xAF: DO_REPZ_NEW(_SCASW, _SCASD); return;
+    case 0x6C: DO_REP; return; // INSB
+    case 0x6D: DO_REP; return; // INSW/INSD
+    case 0x6E: DO_REP; return; // OUTSB
+    case 0x6F: DO_REP; return; // OUTSW/OUTSD
+    case 0xA4: DO_REP; return; // MOVSB
+    case 0xA5: DO_REP; return; // MOVSW/MOVSD
+    case 0xAA: DO_REP; return; // STOSB
+    case 0xAB: DO_REP; return; // STOSW/STOSD
+    case 0xAC: DO_REP; return; // LODSB
+    case 0xAD: DO_REP; return; // LODSW/LODSD
+    case 0xA6: DO_REPZ; return; // CMPSB
+    case 0xA7: DO_REPZ; return; // CMPSW/CMPSD
+    case 0xAE: DO_REPZ; return; // SCASB
+    case 0xAF: DO_REPZ; return; // SCASW/SCASD
 
     case 0x90:
         // PAUSE / REP NOP
