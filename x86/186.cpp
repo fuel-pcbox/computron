@@ -111,10 +111,11 @@ void CPU::_ENTER_32(Instruction& insn)
 
     WORD size = insn.imm16_2();
     BYTE nestingLevel = insn.imm8_1() & 31;
+
     push32(getEBP());
-    WORD frameTemp = getESP();
+    DWORD frameTemp = getESP();
     if (nestingLevel > 0) {
-        WORD tmpEBP = getEBP();
+        DWORD tmpEBP = getEBP();
         for (WORD i = 1; i < nestingLevel - 1; ++i) {
             tmpEBP -= 4;
             push32(readMemory32(SegmentRegisterIndex::SS, getEBP()));
