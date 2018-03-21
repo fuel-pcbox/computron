@@ -133,14 +133,13 @@ void CPU::dumpTrace()
 }
 #endif
 
-void CPU::dumpSelector(const char* segmentRegisterName, SegmentRegisterIndex segmentIndex)
+void CPU::dumpSelector(const char* prefix, SegmentRegisterIndex segmentIndex)
 {
     auto& descriptor = cachedDescriptor(segmentIndex);
-    vlog(LogDump, "%s:", segmentRegisterName);
     if (descriptor.isNull())
-        vlog(LogDump, "%04x: (null descriptor)", getSegment(segmentIndex));
+        vlog(LogDump, "%s: %04x: (null descriptor)", prefix, getSegment(segmentIndex));
     else
-        dumpDescriptor(descriptor);
+        dumpDescriptor(descriptor, prefix);
 }
 
 const char* CPU::registerName(SegmentRegisterIndex index)
@@ -263,43 +262,22 @@ void CPU::dumpWatches()
 
 void CPU::dumpAll()
 {
-    auto dumpRegister = [this](CPU::RegisterIndex16 registerIndex)
-    {
-        if (getPE())
-            vlog(LogDump, "e%s: %08x", CPU::registerName(registerIndex), getRegister32(static_cast<CPU::RegisterIndex32>(registerIndex)));
-        else
-            vlog(LogDump, "%s: %04x", CPU::registerName(registerIndex), getRegister16(registerIndex));
-    };
-
-    dumpRegister(RegisterAX);
-    dumpRegister(RegisterBX);
-    dumpRegister(RegisterCX);
-    dumpRegister(RegisterDX);
-    dumpRegister(RegisterBP);
-    dumpRegister(RegisterSP);
-    dumpRegister(RegisterSI);
-    dumpRegister(RegisterDI);
+    vlog(LogDump, "eax: %08x  ebx: %08x  ecx: %08x  edx: %08x", getEAX(), getEBX(), getECX(), getEDX());
+    vlog(LogDump, "ebp: %08x  esp: %08x  esi: %08x  edi: %08x", getEBP(), getESP(), getESI(), getEDI());
 
     if (!getPE()) {
-        vlog(LogDump, "cs: %04x", getCS());
-        vlog(LogDump, "ds: %04x", getDS());
-        vlog(LogDump, "es: %04x", getES());
-        vlog(LogDump, "ss: %04x", getSS());
-        vlog(LogDump, "fs: %04x", getFS());
-        vlog(LogDump, "gs: %04x", getGS());
+        vlog(LogDump, "ds: %04x  es: %04x ss: %04x  fs: %04x  gs: %04x", getDS(), getES(), getSS(), getFS(), getGS());
+        vlog(LogDump, "cs: %04x eip: %08x", getCS(), getEIP());
     } else {
-        dumpSelector("cs", SegmentRegisterIndex::CS);
-        dumpSelector("ds", SegmentRegisterIndex::DS);
-        dumpSelector("es", SegmentRegisterIndex::ES);
-        dumpSelector("ss", SegmentRegisterIndex::SS);
-        dumpSelector("fs", SegmentRegisterIndex::FS);
-        dumpSelector("gs", SegmentRegisterIndex::GS);
+        dumpSelector("ds: ", SegmentRegisterIndex::DS);
+        dumpSelector("es: ", SegmentRegisterIndex::ES);
+        dumpSelector("ss: ", SegmentRegisterIndex::SS);
+        dumpSelector("fs: ", SegmentRegisterIndex::FS);
+        dumpSelector("gs: ", SegmentRegisterIndex::GS);
+        dumpSelector("cs: ", SegmentRegisterIndex::CS);
+        vlog(LogDump, "eip: %08x", getEIP());
     }
-    vlog(LogDump, "eip: %08x", getEIP());
-
-    vlog(LogDump, "cr0: %08x    cr3: %08x      a20: %u", getCR0(), getCR3(), isA20Enabled());
-    vlog(LogDump, "cpl: %u     iopl: %u", getCPL(), getIOPL());
-
+    vlog(LogDump, "cpl: %u  iopl: %u  a20: %u", getCPL(), getIOPL(), isA20Enabled());
     vlog(LogDump, "a%u[%u] o%u[%u] s%u x%u",
          m_effectiveAddressSize32 ? 32 : 16,
          m_addressSize32 ? 32 : 16,
@@ -308,10 +286,11 @@ void CPU::dumpAll()
          s16() ? 16 : 32,
          x16() ? 16 : 32);
 
-    vlog(LogDump, "gdtr: {base=%08x, limit=%04x}", this->GDTR.base, this->GDTR.limit);
-    vlog(LogDump, "ldtr: {base=%08x, limit=%04x}", this->LDTR.base, this->LDTR.limit);
-    vlog(LogDump, "idtr: {base=%08x, limit=%04x}", this->IDTR.base, this->IDTR.limit);
-    vlog(LogDump, "  tr: {base=%08x, limit=%04x}", this->TR.base, this->TR.limit);
+    vlog(LogDump, "cr0: %08x  cr3: %08x", getCR0(), getCR3());
+    vlog(LogDump, "idtr: {base=%08x, limit=%04x}", IDTR.base, IDTR.limit);
+    vlog(LogDump, "gdtr: {base=%08x, limit=%04x}", GDTR.base, GDTR.limit);
+    vlog(LogDump, "ldtr: {base=%08x, limit=%04x, (selector=%04x)}", LDTR.base, LDTR.limit, LDTR.segment);
+    vlog(LogDump, "  tr: {base=%08x, limit=%04x, (selector=%04x, %u-bit)}", TR.base, TR.limit, TR.segment, TR.is32Bit ? 32 : 16);
 
     if (getPE() && TR.segment != 0) {
         auto descriptor = getDescriptor(TR.segment);
@@ -325,9 +304,6 @@ void CPU::dumpAll()
     vlog(LogDump, "cf=%u pf=%u af=%u zf=%u sf=%u if=%u df=%u of=%u tf=%u nt=%u", getCF(), getPF(), getAF(), getZF(), getSF(), getIF(), getDF(), getOF(), getTF(), getNT());
 
     dumpDisassembled(cachedDescriptor(SegmentRegisterIndex::CS), getBaseEIP());
-
-    dumpMemory(cachedDescriptor(SegmentRegisterIndex::CS), getBaseEIP(), 4);
-
 }
 
 static inline BYTE n(BYTE b)
@@ -450,29 +426,30 @@ void CPU::dumpIVT()
     }
 }
 
-void CPU::dumpDescriptor(const Descriptor& descriptor)
+void CPU::dumpDescriptor(const Descriptor& descriptor, const char* prefix)
 {
     if (descriptor.isNull())
-        vlog(LogCPU, "Descriptor with index '%04x' is null", descriptor.index());
+        vlog(LogCPU, "%s%04x (null descriptor)", prefix, descriptor.index());
     else if (descriptor.isSegmentDescriptor())
-        dumpDescriptor(descriptor.asSegmentDescriptor());
+        dumpDescriptor(descriptor.asSegmentDescriptor(), prefix);
     else
-        dumpDescriptor(descriptor.asSystemDescriptor());
+        dumpDescriptor(descriptor.asSystemDescriptor(), prefix);
 }
 
-void CPU::dumpDescriptor(const SegmentDescriptor& descriptor)
+void CPU::dumpDescriptor(const SegmentDescriptor& descriptor, const char* prefix)
 {
     if (descriptor.isNull())
-        vlog(LogCPU, "Descriptor with index '%04x' is null", descriptor.index());
+        vlog(LogCPU, "%s%04x (null descriptor)", prefix, descriptor.index());
     else if (descriptor.isCode())
-        dumpDescriptor(descriptor.asCodeSegmentDescriptor());
+        dumpDescriptor(descriptor.asCodeSegmentDescriptor(), prefix);
     else
-        dumpDescriptor(descriptor.asDataSegmentDescriptor());
+        dumpDescriptor(descriptor.asDataSegmentDescriptor(), prefix);
 }
 
-void CPU::dumpDescriptor(const Gate& gate)
+void CPU::dumpDescriptor(const Gate& gate, const char* prefix)
 {
-    vlog(LogCPU, "System segment %04x: { type: %s (%02x), entry:%04x:%06x, paramCount:%u, bits:%u, P:%s, DPL:%u }",
+    vlog(LogCPU, "%s%04x (gate) { type: %s (%02x), entry:%04x:%06x, params:%u, bits:%u, p:%u, dpl:%u }",
+        prefix,
         gate.index(),
         gate.typeName(),
         (BYTE)gate.type(),
@@ -480,62 +457,65 @@ void CPU::dumpDescriptor(const Gate& gate)
         gate.offset(),
         gate.parameterCount(),
         gate.D() ? 32 : 16,
-        gate.present() ? "yes" : "no",
+        gate.present(),
         gate.DPL()
     );
     if (gate.isCallGate()) {
         vlog(LogCPU, "Call gate points to:");
-        dumpDescriptor(getDescriptor(gate.selector()));
+        dumpDescriptor(getDescriptor(gate.selector()), prefix);
     }
 }
 
-void CPU::dumpDescriptor(const SystemDescriptor& segment)
+void CPU::dumpDescriptor(const SystemDescriptor& segment, const char* prefix)
 {
     if (segment.isGate()) {
-        dumpDescriptor(segment.asGate());
+        dumpDescriptor(segment.asGate(), prefix);
         return;
     }
-    vlog(LogCPU, "System segment %04x: { type: %s (%02x), bits:%u, P:%s, DPL:%u }",
+    vlog(LogCPU, "%s%04x (system segment) { type: %s (%02x), bits:%u, p:%u, dpl:%u }",
+        prefix,
         segment.index(),
         segment.typeName(),
         (BYTE)segment.type(),
         segment.D() ? 32 : 16,
-        segment.present() ? "yes" : "no",
+        segment.present(),
         segment.DPL()
     );
 }
 
-void CPU::dumpDescriptor(const CodeSegmentDescriptor& segment)
+void CPU::dumpDescriptor(const CodeSegmentDescriptor& segment, const char* prefix)
 {
-    vlog(LogCPU, "%s segment %04x: { type: CODE, base:%08x, e-limit:%08x, bits:%u, P:%s, G:%s, DPL:%u, A:%s, readable:%s, conforming:%s }",
-        segment.isGlobal() ? "Global" : "Local",
+    vlog(LogCPU, "%s%04x (%s segment) { type: code, base:%08x, e-limit:%08x, bits:%u, p:%u, g:%s, dpl:%u, a:%u, readable:%u, conforming:%u }",
+        prefix,
         segment.index(),
+        segment.isGlobal() ? "global" : "local",
         segment.base(),
         segment.effectiveLimit(),
         segment.D() ? 32 : 16,
-        segment.present() ? "yes" : "no",
-        segment.granularity() ? "4K" : "1b",
+        segment.present(),
+        segment.granularity() ? "4k" : "1b",
         segment.DPL(),
-        segment.accessed() ? "yes" : "no",
-        segment.conforming() ? "yes" : "no",
-        segment.readable() ? "yes" : "no"
+        segment.accessed(),
+        segment.conforming(),
+        segment.readable()
     );
 }
 
-void CPU::dumpDescriptor(const DataSegmentDescriptor& segment)
+void CPU::dumpDescriptor(const DataSegmentDescriptor& segment, const char* prefix)
 {
-    vlog(LogCPU, "%s segment %04x: { type: DATA, base:%08x, e-limit:%08x, bits:%u, P:%s, G:%s, DPL:%u, A:%s, writable:%s, expandDown:%s }",
-        segment.isGlobal() ? "Global" : "Local",
+    vlog(LogCPU, "%s%04x (%s segment) { type: data, base:%08x, e-limit:%08x, bits:%u, p:%u, g:%s, dpl:%u, a:%u, writable:%u, expandDown:%u }",
+        prefix,
         segment.index(),
+        segment.isGlobal() ? "global" : "local",
         segment.base(),
         segment.effectiveLimit(),
         segment.D() ? 32 : 16,
-        segment.present() ? "yes" : "no",
-        segment.granularity() ? "4K" : "1b",
+        segment.present(),
+        segment.granularity() ? "4k" : "1b",
         segment.DPL(),
-        segment.accessed() ? "yes" : "no",
-        segment.writable() ? "yes" : "no",
-        segment.expandDown() ? "yes" : "no"
+        segment.accessed(),
+        segment.writable(),
+        segment.expandDown()
     );
 }
 

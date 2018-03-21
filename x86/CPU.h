@@ -208,12 +208,12 @@ public:
     };
 
     void dumpSegment(WORD index);
-    void dumpDescriptor(const Descriptor&);
-    void dumpDescriptor(const Gate&);
-    void dumpDescriptor(const SegmentDescriptor&);
-    void dumpDescriptor(const SystemDescriptor&);
-    void dumpDescriptor(const CodeSegmentDescriptor&);
-    void dumpDescriptor(const DataSegmentDescriptor&);
+    void dumpDescriptor(const Descriptor&, const char* prefix = "");
+    void dumpDescriptor(const Gate&, const char* prefix = "");
+    void dumpDescriptor(const SegmentDescriptor&, const char* prefix = "");
+    void dumpDescriptor(const SystemDescriptor&, const char* prefix = "");
+    void dumpDescriptor(const CodeSegmentDescriptor&, const char* prefix = "");
+    void dumpDescriptor(const DataSegmentDescriptor&, const char* prefix = "");
     Descriptor getDescriptor(WORD selector, SegmentRegisterIndex = SegmentRegisterIndex::None);
     SegmentDescriptor getSegmentDescriptor(WORD selector, SegmentRegisterIndex = SegmentRegisterIndex::None);
     Gate getInterruptGate(WORD index);
@@ -1218,7 +1218,7 @@ private:
 
     void writeToGDT(Descriptor&);
 
-    void dumpSelector(const char* segmentRegisterName, SegmentRegisterIndex);
+    void dumpSelector(const char* prefix, SegmentRegisterIndex);
     void setSegmentRegister(SegmentRegisterIndex, WORD selector);
     void validateSegmentLoad(SegmentRegisterIndex, WORD selector, const Descriptor&);
 
