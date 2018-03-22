@@ -28,83 +28,62 @@
 
 #include "debugger.h"
 
+void CPU::doLOOP(Instruction& insn, bool condition)
+{
+    if (!decrementCXForAddressSize() && condition)
+        jumpRelative8(static_cast<SIGNED_BYTE>(insn.imm8()));
+}
+
 void CPU::_LOOP_imm8(Instruction& insn)
 {
-    SIGNED_BYTE displacement = insn.imm8();
-    if (a32()) {
-        --regs.D.ECX;
-        if (regs.D.ECX)
-            jumpRelative8(displacement);
-    } else {
-        --regs.W.CX;
-        if (regs.W.CX)
-            jumpRelative8(displacement);
-    }
+    doLOOP(insn, true);
 }
 
-void CPU::_LOOPE_imm8(Instruction& insn)
+void CPU::_LOOPZ_imm8(Instruction& insn)
 {
-    SIGNED_BYTE displacement = insn.imm8();
-    if (a32()) {
-        --regs.D.ECX;
-        if (regs.D.ECX && getZF())
-            jumpRelative8(displacement);
-    } else {
-        --regs.W.CX;
-        if (regs.W.CX && getZF())
-            jumpRelative8(displacement);
-    }
+    doLOOP(insn, getZF());
 }
 
-void CPU::_LOOPNE_imm8(Instruction& insn)
+void CPU::_LOOPNZ_imm8(Instruction& insn)
 {
-    SIGNED_BYTE displacement = insn.imm8();
-    if (a32()) {
-        --regs.D.ECX;
-        if (regs.D.ECX && !getZF())
-            jumpRelative8(displacement);
-    } else {
-        --regs.W.CX;
-        if (regs.W.CX && !getZF())
-            jumpRelative8(displacement);
+    doLOOP(insn, !getZF());
+}
+
+void CPU::doREP(Instruction& insn)
+{
+    while (readRegisterForAddressSize(RegisterCX) != 0) {
+        execute(insn);
+        decrementCXForAddressSize();
     }
 }
 
-#define DO_REP do { \
-    if (a32()) \
-        for (; regs.D.ECX; --regs.D.ECX) { execute(insn); } \
-    else \
-        for (; regs.W.CX; --regs.W.CX) { execute(insn); } \
-    } while(0)
+void CPU::doREPZ(Instruction& insn, bool wantedZF)
+{
+    while (readRegisterForAddressSize(RegisterCX) != 0) {
+        execute(insn);
+        decrementCXForAddressSize();
+        if (getZF() != wantedZF)
+            break;
+    }
+}
 
-#define DO_REPZ do { \
-    if (a32()) { \
-        if (getECX() == 0) \
-            return; \
-        for (setZF(shouldEqual); regs.D.ECX && (getZF() == shouldEqual); --regs.D.ECX) { execute(insn); } \
-    } else { \
-        if (getCX() == 0) \
-            return; \
-        for (setZF(shouldEqual); regs.W.CX && (getZF() == shouldEqual); --regs.W.CX) { execute(insn); } \
-    } } while (0)
-
-void CPU::handleRepeatOpcode(Instruction& insn, bool shouldEqual)
+void CPU::handleRepeatOpcode(Instruction& insn, bool wantedZF)
 {
     switch(insn.op()) {
-    case 0x6C: DO_REP; return; // INSB
-    case 0x6D: DO_REP; return; // INSW/INSD
-    case 0x6E: DO_REP; return; // OUTSB
-    case 0x6F: DO_REP; return; // OUTSW/OUTSD
-    case 0xA4: DO_REP; return; // MOVSB
-    case 0xA5: DO_REP; return; // MOVSW/MOVSD
-    case 0xAA: DO_REP; return; // STOSB
-    case 0xAB: DO_REP; return; // STOSW/STOSD
-    case 0xAC: DO_REP; return; // LODSB
-    case 0xAD: DO_REP; return; // LODSW/LODSD
-    case 0xA6: DO_REPZ; return; // CMPSB
-    case 0xA7: DO_REPZ; return; // CMPSW/CMPSD
-    case 0xAE: DO_REPZ; return; // SCASB
-    case 0xAF: DO_REPZ; return; // SCASW/SCASD
+    case 0x6C: doREP(insn); return; // INSB
+    case 0x6D: doREP(insn); return; // INSW/INSD
+    case 0x6E: doREP(insn); return; // OUTSB
+    case 0x6F: doREP(insn); return; // OUTSW/OUTSD
+    case 0xA4: doREP(insn); return; // MOVSB
+    case 0xA5: doREP(insn); return; // MOVSW/MOVSD
+    case 0xAA: doREP(insn); return; // STOSB
+    case 0xAB: doREP(insn); return; // STOSW/STOSD
+    case 0xAC: doREP(insn); return; // LODSB
+    case 0xAD: doREP(insn); return; // LODSW/LODSD
+    case 0xA6: doREPZ(insn, wantedZF); return; // CMPSB
+    case 0xA7: doREPZ(insn, wantedZF); return; // CMPSW/CMPSD
+    case 0xAE: doREPZ(insn, wantedZF); return; // SCASB
+    case 0xAF: doREPZ(insn, wantedZF); return; // SCASW/SCASD
 
     case 0x90:
         // PAUSE / REP NOP
@@ -122,7 +101,7 @@ void CPU::_REP(Instruction&)
     handleRepeatOpcode(newInsn, true);
 }
 
-void CPU::_REPNE(Instruction&)
+void CPU::_REPNZ(Instruction&)
 {
     auto newInsn = Instruction::fromStream(*this, m_operandSize32, m_addressSize32);
     handleRepeatOpcode(newInsn, false);

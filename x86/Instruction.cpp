@@ -558,8 +558,8 @@ void buildOpcodeTablesIfNeeded()
     for (BYTE i = 0; i <= 7; ++i)
         build(0xD8 + i, "FPU?",   OP_RM8,              &CPU::_ESCAPE);
 
-    build(0xE0, "LOOPNZ", OP_imm8,             &CPU::_LOOPNE_imm8);
-    build(0xE1, "LOOPZ",  OP_imm8,             &CPU::_LOOPE_imm8);
+    build(0xE0, "LOOPNZ", OP_imm8,             &CPU::_LOOPNZ_imm8);
+    build(0xE1, "LOOPZ",  OP_imm8,             &CPU::_LOOPZ_imm8);
     build(0xE2, "LOOP",   OP_imm8,             &CPU::_LOOP_imm8);
     build(0xE3, "JCXZ",   OP_imm8,             &CPU::_JCXZ_imm8);
     build(0xE4, "IN",     OP_AL_imm8,          &CPU::_IN_AL_imm8);
@@ -579,7 +579,7 @@ void buildOpcodeTablesIfNeeded()
 
     build(0xF1, "VKILL",  OP,                  &CPU::_VKILL);
 
-    build(0xF2, "REPNZ",  InstructionPrefix,   &CPU::_REPNE);
+    build(0xF2, "REPNZ",  InstructionPrefix,   &CPU::_REPNZ);
     build(0xF3, "REP",    InstructionPrefix,   &CPU::_REP);
     build(0xF4, "HLT",    OP,                  &CPU::_HLT);
     build(0xF5, "CMC",    OP,                  &CPU::_CMC);

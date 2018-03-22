@@ -503,6 +503,7 @@ public:
     DWORD readRegisterForAddressSize(int registerIndex);
     void writeRegisterForAddressSize(int registerIndex, DWORD);
     void stepRegisterForAddressSize(int registerIndex, DWORD stepSize);
+    bool decrementCXForAddressSize();
 
     // These are faster than readMemory*() but will not access VGA memory, etc.
     inline BYTE readUnmappedMemory8(DWORD address) const;
@@ -666,12 +667,15 @@ protected:
     void _RETF(Instruction&);
     void _RETF_imm16(Instruction&);
 
+    void doLOOP(Instruction&, bool condition);
     void _LOOP_imm8(Instruction&);
-    void _LOOPE_imm8(Instruction&);
-    void _LOOPNE_imm8(Instruction&);
+    void _LOOPZ_imm8(Instruction&);
+    void _LOOPNZ_imm8(Instruction&);
 
+    void doREP(Instruction&);
+    void doREPZ(Instruction&, bool wantedZF);
     void _REP(Instruction&);
-    void _REPNE(Instruction&);
+    void _REPNZ(Instruction&);
 
     void _XCHG_AX_reg16(Instruction&);
     void _XCHG_EAX_reg32(Instruction&);
@@ -1145,8 +1149,7 @@ protected:
     void _UD0(Instruction&);
     void _LOCK(Instruction&);
 
-    // REP* helper.
-    void handleRepeatOpcode(Instruction&, bool shouldEqual);
+    void handleRepeatOpcode(Instruction&, bool conditionForZF);
 
 private:
     friend class Instruction;

@@ -112,6 +112,16 @@ void CPU::stepRegisterForAddressSize(int registerIndex, DWORD stepSize)
         *treg16[registerIndex] += getDF() ? -stepSize : stepSize;
 }
 
+bool CPU::decrementCXForAddressSize()
+{
+    if (a32()) {
+        setECX(getECX() - 1);
+        return getECX() == 0;
+    }
+    setCX(getCX() - 1);
+    return getCX() == 0;
+}
+
 template<typename T>
 void CPU::writeRegister(int registerIndex, T value)
 {
