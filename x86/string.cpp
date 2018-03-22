@@ -25,218 +25,119 @@
 
 #include "CPU.h"
 
+template<typename T>
+void CPU::doLODS()
+{
+    writeRegister<T>(RegisterAL, readMemory<T>(currentSegment(), readRegisterForAddressSize(RegisterSI)));
+    stepRegisterForAddressSize(RegisterSI, sizeof(T));
+}
+
 void CPU::_LODSB(Instruction&)
 {
-    if (a16()) {
-        regs.B.AL = readMemory8(currentSegment(), getSI());
-        nextSI(1);
-    } else {
-        regs.B.AL = readMemory8(currentSegment(), getESI());
-        nextESI(1);
-    }
+    doLODS<BYTE>();
 }
 
 void CPU::_LODSW(Instruction&)
 {
-    if (a16()) {
-        regs.W.AX = readMemory16(currentSegment(), getSI());
-        nextSI(2);
-    } else {
-        regs.W.AX = readMemory16(currentSegment(), getESI());
-        nextESI(2);
-    }
+    doLODS<WORD>();
 }
 
 void CPU::_LODSD(Instruction&)
 {
-    if (a16()) {
-        regs.D.EAX = readMemory32(currentSegment(), getSI());
-        nextSI(4);
-    } else {
-        regs.D.EAX = readMemory32(currentSegment(), getESI());
-        nextESI(4);
-    }
+    doLODS<DWORD>();
+}
+
+template<typename T>
+void CPU::doSTOS()
+{
+    writeMemory<T>(SegmentRegisterIndex::ES, readRegisterForAddressSize(RegisterDI), readRegister<T>(RegisterAL));
+    stepRegisterForAddressSize(RegisterDI, sizeof(T));
 }
 
 void CPU::_STOSB(Instruction&)
 {
-    if (a16()) {
-        writeMemory8(SegmentRegisterIndex::ES, getDI(), getAL());
-        nextDI(1);
-    } else {
-        writeMemory8(SegmentRegisterIndex::ES, getEDI(), getAL());
-        nextEDI(1);
-    }
+    doSTOS<BYTE>();
 }
 
 void CPU::_STOSW(Instruction&)
 {
-    if (a16()) {
-        writeMemory16(SegmentRegisterIndex::ES, getDI(), getAX());
-        nextDI(2);
-    } else {
-        writeMemory16(SegmentRegisterIndex::ES, getEDI(), getAX());
-        nextEDI(2);
-    }
+    doSTOS<WORD>();
 }
 
 void CPU::_STOSD(Instruction&)
 {
-    if (a16()) {
-        writeMemory32(SegmentRegisterIndex::ES, getDI(), getEAX());
-        nextDI(4);
-    } else {
-        writeMemory32(SegmentRegisterIndex::ES, getEDI(), getEAX());
-        nextEDI(4);
-    }
+    doSTOS<DWORD>();
+}
+
+template<typename T, typename U>
+void CPU::doCMPS()
+{
+    static_assert(sizeof(U) == sizeof(T) * 2);
+    U src = readMemory<T>(currentSegment(), readRegisterForAddressSize(RegisterSI));
+    U dest = readMemory<T>(SegmentRegisterIndex::ES, readRegisterForAddressSize(RegisterDI));
+    stepRegisterForAddressSize(RegisterSI, sizeof(T));
+    stepRegisterForAddressSize(RegisterDI, sizeof(T));
+    cmpFlags<T>(src - dest, src, dest);
 }
 
 void CPU::_CMPSB(Instruction&)
 {
-    WORD src;
-    WORD dest;
-
-    if (a16()) {
-        src = readMemory8(currentSegment(), getSI());
-        dest = readMemory8(SegmentRegisterIndex::ES, getDI());
-        nextSI(1);
-        nextDI(1);
-    } else {
-        src = readMemory8(currentSegment(), getESI());
-        dest = readMemory8(SegmentRegisterIndex::ES, getEDI());
-        nextESI(1);
-        nextEDI(1);
-    }
-
-    cmpFlags8(src - dest, src, dest);
+    doCMPS<BYTE, WORD>();
 }
 
 void CPU::_CMPSW(Instruction&)
 {
-    DWORD src;
-    DWORD dest;
-
-    if (a16()) {
-        src = readMemory16(currentSegment(), getSI());
-        dest = readMemory16(SegmentRegisterIndex::ES, getDI());
-        nextSI(2);
-        nextDI(2);
-    } else {
-        src = readMemory16(currentSegment(), getESI());
-        dest = readMemory16(SegmentRegisterIndex::ES, getEDI());
-        nextESI(2);
-        nextEDI(2);
-    }
-
-    cmpFlags16(src - dest, src, dest);
+    doCMPS<WORD, DWORD>();
 }
 
 void CPU::_CMPSD(Instruction&)
 {
-    QWORD src;
-    QWORD dest;
+    doCMPS<DWORD, QWORD>();
+}
 
-    if (a16()) {
-        src = readMemory32(currentSegment(), getSI());
-        dest = readMemory32(SegmentRegisterIndex::ES, getDI());
-        nextSI(4);
-        nextDI(4);
-    } else {
-        src = readMemory32(currentSegment(), getESI());
-        dest = readMemory32(SegmentRegisterIndex::ES, getEDI());
-        nextESI(4);
-        nextEDI(4);
-    }
-
-    cmpFlags32(src - dest, src, dest);
+template<typename T, typename U>
+void CPU::doSCAS()
+{
+    U dest = readMemory<T>(SegmentRegisterIndex::ES, readRegisterForAddressSize(RegisterDI));
+    stepRegisterForAddressSize(RegisterDI, sizeof(T));
+    cmpFlags<T>(readRegister<T>(RegisterAL) - dest, readRegister<T>(RegisterAL), dest);
 }
 
 void CPU::_SCASB(Instruction&)
 {
-    WORD dest;
-
-    if (a16()) {
-        dest = readMemory8(SegmentRegisterIndex::ES, getDI());
-        nextDI(1);
-    } else {
-        dest = readMemory8(SegmentRegisterIndex::ES, getEDI());
-        nextEDI(1);
-    }
-
-    cmpFlags8(getAL() - dest, getAL(), dest);
+    doSCAS<BYTE, WORD>();
 }
 
 void CPU::_SCASW(Instruction&)
 {
-    DWORD dest;
-
-    if (a16()) {
-        dest = readMemory16(SegmentRegisterIndex::ES, getDI());
-        nextDI(2);
-    } else {
-        dest = readMemory16(SegmentRegisterIndex::ES, getEDI());
-        nextEDI(2);
-    }
-
-    cmpFlags16(getAX() - dest, getAX(), dest);
+    doSCAS<WORD, DWORD>();
 }
 
 void CPU::_SCASD(Instruction&)
 {
-    QWORD dest;
+    doSCAS<DWORD, QWORD>();
+}
 
-    if (a16()) {
-        dest = readMemory32(SegmentRegisterIndex::ES, getDI());
-        nextDI(4);
-    } else {
-        dest = readMemory32(SegmentRegisterIndex::ES, getEDI());
-        nextEDI(4);
-    }
-
-    cmpFlags32(getEAX() - dest, getEAX(), dest);
+template<typename T>
+void CPU::doMOVS()
+{
+    T tmp = readMemory<T>(currentSegment(), readRegisterForAddressSize(RegisterSI));
+    writeMemory<T>(SegmentRegisterIndex::ES, readRegisterForAddressSize(RegisterDI), tmp);
+    stepRegisterForAddressSize(RegisterSI, sizeof(T));
+    stepRegisterForAddressSize(RegisterDI, sizeof(T));
 }
 
 void CPU::_MOVSB(Instruction&)
 {
-    if (a16()) {
-        BYTE tmpb = readMemory8(currentSegment(), getSI());
-        writeMemory8(SegmentRegisterIndex::ES, getDI(), tmpb);
-        nextSI(1);
-        nextDI(1);
-    } else {
-        BYTE tmpb = readMemory8(currentSegment(), getESI());
-        writeMemory8(SegmentRegisterIndex::ES, getEDI(), tmpb);
-        nextESI(1);
-        nextEDI(1);
-    }
+    doMOVS<BYTE>();
 }
 
 void CPU::_MOVSW(Instruction&)
 {
-    if (a16()) {
-        WORD tmpw = readMemory16(currentSegment(), getSI());
-        writeMemory16(SegmentRegisterIndex::ES, getDI(), tmpw);
-        nextSI(2);
-        nextDI(2);
-    } else {
-        WORD tmpw = readMemory16(currentSegment(), getESI());
-        writeMemory16(SegmentRegisterIndex::ES, getEDI(), tmpw);
-        nextESI(2);
-        nextEDI(2);
-    }
+    doMOVS<WORD>();
 }
 
 void CPU::_MOVSD(Instruction&)
 {
-    if (a16()) {
-        DWORD tmpw = readMemory32(currentSegment(), regs.W.SI);
-        writeMemory32(SegmentRegisterIndex::ES, regs.W.DI, tmpw);
-        nextSI(4);
-        nextDI(4);
-    } else {
-        DWORD tmpw = readMemory32(currentSegment(), regs.D.ESI);
-        writeMemory32(SegmentRegisterIndex::ES, regs.D.EDI, tmpw);
-        nextESI(4);
-        nextEDI(4);
-    }
+    doMOVS<DWORD>();
 }

@@ -38,17 +38,6 @@ inline void updateCpuMathFlags(CPU& cpu, QWORD result, T dest, T src)
 }
 
 template<typename T>
-inline void updateCpuCmpFlags(CPU& cpu, QWORD result, T dest, T src)
-{
-    if (BitSizeOfType<T>::bits == 8)
-        cpu.cmpFlags8(result, dest, src);
-    else if (BitSizeOfType<T>::bits == 16)
-        cpu.cmpFlags16(result, dest, src);
-    else if (BitSizeOfType<T>::bits == 32)
-        cpu.cmpFlags32(result, dest, src);
-}
-
-template<typename T>
 QWORD CPU::doAdd(T dest, T src)
 {
     QWORD result = (QWORD)dest + (QWORD)src;
@@ -77,7 +66,7 @@ template<typename T>
 QWORD CPU::doSub(T dest, T src)
 {
     QWORD result = (QWORD)dest - (QWORD)src;
-    updateCpuCmpFlags(*this, result, dest, src);
+    cmpFlags<T>(result, dest, src);
     return result;
 }
 
@@ -85,7 +74,7 @@ template<typename T>
 QWORD CPU::doSbb(T dest, T src)
 {
     QWORD result = (QWORD)dest - (QWORD)src - (QWORD)getCF();
-    updateCpuCmpFlags(*this, result, dest, src);
+    cmpFlags<T>(result, dest, src);
     return result;
 }
 

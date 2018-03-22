@@ -89,6 +89,29 @@ T CPU::readRegister(int registerIndex)
     ASSERT_NOT_REACHED();
 }
 
+DWORD CPU::readRegisterForAddressSize(int registerIndex)
+{
+    if (a32())
+        return *treg32[registerIndex];
+    return *treg16[registerIndex];
+}
+
+void CPU::writeRegisterForAddressSize(int registerIndex, DWORD data)
+{
+    if (a32())
+        *treg32[registerIndex] = data;
+    else
+        *treg16[registerIndex] = data;
+}
+
+void CPU::stepRegisterForAddressSize(int registerIndex, DWORD stepSize)
+{
+    if (a32())
+        *treg32[registerIndex] += getDF() ? -stepSize : stepSize;
+    else
+        *treg16[registerIndex] += getDF() ? -stepSize : stepSize;
+}
+
 template<typename T>
 void CPU::writeRegister(int registerIndex, T value)
 {

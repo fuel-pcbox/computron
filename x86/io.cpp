@@ -59,49 +59,27 @@ void CPU::_OUT_DX_EAX(Instruction&)
     out32(getDX(), getEAX());
 }
 
+template<typename T>
+void CPU::doOUTS()
+{
+    T data = readMemory<T>(currentSegment(), readRegisterForAddressSize(RegisterSI));
+    stepRegisterForAddressSize(RegisterSI, sizeof(T));
+    out<T>(getDX(), data);
+}
+
 void CPU::_OUTSB(Instruction&)
 {
-    BYTE data;
-
-    if (a16()) {
-        data = readMemory8(currentSegment(), getSI());
-        nextSI(1);
-    } else {
-        data = readMemory8(currentSegment(), getESI());
-        nextESI(1);
-    }
-
-    out8(getDX(), data);
+    doOUTS<BYTE>();
 }
 
 void CPU::_OUTSW(Instruction&)
 {
-    WORD data;
-
-    if (a16()) {
-        data = readMemory16(currentSegment(), regs.W.SI);
-        nextSI(2);
-    } else {
-        data = readMemory16(currentSegment(), regs.D.ESI);
-        nextESI(2);
-    }
-
-    out16(getDX(), data);
+    doOUTS<WORD>();
 }
 
 void CPU::_OUTSD(Instruction&)
 {
-    DWORD data;
-
-    if (a16()) {
-        data = readMemory32(currentSegment(), regs.W.SI);
-        nextSI(4);
-    } else {
-        data = readMemory32(currentSegment(), regs.D.ESI);
-        nextESI(4);
-    }
-
-    out32(getDX(), data);
+    doOUTS<DWORD>();
 }
 
 void CPU::_IN_AL_imm8(Instruction& insn)
@@ -139,41 +117,28 @@ void CPU::_IN_EAX_DX(Instruction&)
 // occurs due to the write (e.g. #PF). If this would be problematic, for example because the I/O port read has side-
 // effects, software should ensure the write to the memory location does not cause an exception or VM exit."
 
-void CPU::_INSB(Instruction&)
+template<typename T>
+void CPU::doINS()
 {
     // FIXME: Should this really read the port without knowing that the destination memory is writable?
-    BYTE data = in8(getDX());
-    if (a16()) {
-        writeMemory8(SegmentRegisterIndex::ES, getDI(), data);
-        nextDI(1);
-    } else {
-        writeMemory8(SegmentRegisterIndex::ES, getEDI(), data);
-        nextEDI(1);
-    }
+    T data = in<T>(getDX());
+    writeMemory<T>(SegmentRegisterIndex::ES, readRegisterForAddressSize(RegisterDI), data);
+    stepRegisterForAddressSize(RegisterDI, sizeof(T));
+}
+
+void CPU::_INSB(Instruction&)
+{
+    doINS<BYTE>();
 }
 
 void CPU::_INSW(Instruction&)
 {
-    WORD data = in16(getDX());
-    if (a16()) {
-        writeMemory16(SegmentRegisterIndex::ES, getDI(), data);
-        nextDI(2);
-    } else {
-        writeMemory16(SegmentRegisterIndex::ES, getEDI(), data);
-        nextEDI(2);
-    }
+    doINS<WORD>();
 }
 
 void CPU::_INSD(Instruction&)
 {
-    DWORD data = in32(getDX());
-    if (a16()) {
-        writeMemory32(SegmentRegisterIndex::ES, getDI(), data);
-        nextDI(4);
-    } else {
-        writeMemory32(SegmentRegisterIndex::ES, getEDI(), data);
-        nextEDI(4);
-    }
+    doINS<DWORD>();
 }
 
 template<typename T>

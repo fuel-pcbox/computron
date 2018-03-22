@@ -492,8 +492,14 @@ public:
 
     void adjustFlag32(QWORD result, DWORD dest, DWORD src);
 
+    template<typename T> void cmpFlags(QWORD result, T, T);
+
     template<typename T> T readRegister(int registerIndex);
     template<typename T> void writeRegister(int registerIndex, T value);
+
+    DWORD readRegisterForAddressSize(int registerIndex);
+    void writeRegisterForAddressSize(int registerIndex, DWORD);
+    void stepRegisterForAddressSize(int registerIndex, DWORD stepSize);
 
     // These are faster than readMemory*() but will not access VGA memory, etc.
     inline BYTE readUnmappedMemory8(DWORD address) const;
@@ -587,11 +593,6 @@ public:
     bool s16() const { return !m_stackSize32; }
     bool s32() const { return m_stackSize32; }
 
-    void nextSI(int size) { this->regs.W.SI += (getDF() ? -size : size); }
-    void nextDI(int size) { this->regs.W.DI += (getDF() ? -size : size); }
-    void nextESI(int size) { this->regs.D.ESI += (getDF() ? -size : size); }
-    void nextEDI(int size) { this->regs.D.EDI += (getDF() ? -size : size); }
-
     enum Command { EnterMainLoop, ExitMainLoop, HardReboot };
     void queueCommand(Command);
 
@@ -674,6 +675,14 @@ protected:
     void _XCHG_reg8_RM8(Instruction&);
     void _XCHG_reg16_RM16(Instruction&);
     void _XCHG_reg32_RM32(Instruction&);
+
+    template<typename T> void doLODS();
+    template<typename T> void doSTOS();
+    template<typename T> void doMOVS();
+    template<typename T> void doINS();
+    template<typename T> void doOUTS();
+    template<typename T, typename U> void doCMPS();
+    template<typename T, typename U> void doSCAS();
 
     void _CMPSB(Instruction&);
     void _CMPSW(Instruction&);
@@ -1417,6 +1426,17 @@ void CPU::writeUnmappedMemory8(DWORD address, BYTE value)
 void CPU::writeUnmappedMemory16(DWORD address, WORD value)
 {
     write16ToPointer(reinterpret_cast<WORD*>(m_memory + address), value);
+}
+
+template<typename T>
+inline void CPU::cmpFlags(QWORD result, T dest, T src)
+{
+    if (BitSizeOfType<T>::bits == 8)
+        cmpFlags8(result, dest, src);
+    else if (BitSizeOfType<T>::bits == 16)
+        cmpFlags16(result, dest, src);
+    else if (BitSizeOfType<T>::bits == 32)
+        cmpFlags32(result, dest, src);
 }
 
 #include "debug.h"
