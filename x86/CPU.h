@@ -444,10 +444,6 @@ public:
     // CPU main loop when halted (HLT) - will do nothing until an IRQ is raised
     void haltedLoop();
 
-    BYTE fetchOpcodeByte();
-    WORD fetchOpcodeWord();
-    DWORD fetchOpcodeDWord();
-
     void push32(DWORD value);
     DWORD pop32();
 

@@ -138,21 +138,6 @@ void CPU::_UD0(Instruction&)
     throw InvalidOpcode();
 }
 
-BYTE CPU::readInstruction8()
-{
-    return fetchOpcodeByte();
-}
-
-WORD CPU::readInstruction16()
-{
-    return fetchOpcodeWord();
-}
-
-DWORD CPU::readInstruction32()
-{
-    return fetchOpcodeDWord();
-}
-
 FLATTEN void CPU::decodeNext()
 {
 #ifdef CT_TRACE
@@ -1557,7 +1542,7 @@ BYTE* CPU::memoryPointer(DWORD linearAddress)
     return &m_memory[physicalAddress];
 }
 
-BYTE CPU::fetchOpcodeByte()
+BYTE CPU::readInstruction8()
 {
     if (x32())
         return readMemory<BYTE, MemoryAccessType::Execute>(cachedDescriptor(SegmentRegisterIndex::CS), EIP++);
@@ -1565,7 +1550,7 @@ BYTE CPU::fetchOpcodeByte()
         return readMemory<BYTE, MemoryAccessType::Execute>(cachedDescriptor(SegmentRegisterIndex::CS), IP++);
 }
 
-WORD CPU::fetchOpcodeWord()
+WORD CPU::readInstruction16()
 {
     WORD w;
     if (x32()) {
@@ -1578,7 +1563,7 @@ WORD CPU::fetchOpcodeWord()
     return w;
 }
 
-DWORD CPU::fetchOpcodeDWord()
+DWORD CPU::readInstruction32()
 {
     DWORD d;
     if (x32()) {

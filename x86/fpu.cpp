@@ -38,14 +38,6 @@ void CPU::_ESCAPE(Instruction& insn)
         insn.op(), insn.rm(), insn.op(), insn.slash());
 
     return;
-    // FIXME: Instruction should take care of skipping bytes here!
-    ASSERT_NOT_REACHED();
-
-    // Even though we don't dispatch to an FPU, we still have to decode the full
-    // opcode, or the instruction stream will fall out of sync.
-    //BYTE rm = fetchOpcodeByte();
-    //(void) readModRM16(rm);
-
     // FIXME: If the code below is enabled, MSD.EXE hangs on startup trying to
     //        communicate with the FPU.
 #if 0
