@@ -528,22 +528,11 @@ void buildOpcodeTablesIfNeeded()
     build(0xAE, "SCASB",  OP,                  &CPU::_SCASB);
     build(0xAF, "SCASW",  OP,                  &CPU::_SCASW,   "SCASD", OP,             &CPU::_SCASD);
 
-    build(0xB0, "MOV",    OP_reg8_imm8,        &CPU::_MOV_AL_imm8);
-    build(0xB1, "MOV",    OP_reg8_imm8,        &CPU::_MOV_CL_imm8);
-    build(0xB2, "MOV",    OP_reg8_imm8,        &CPU::_MOV_DL_imm8);
-    build(0xB3, "MOV",    OP_reg8_imm8,        &CPU::_MOV_BL_imm8);
-    build(0xB4, "MOV",    OP_reg8_imm8,        &CPU::_MOV_AH_imm8);
-    build(0xB5, "MOV",    OP_reg8_imm8,        &CPU::_MOV_CH_imm8);
-    build(0xB6, "MOV",    OP_reg8_imm8,        &CPU::_MOV_DH_imm8);
-    build(0xB7, "MOV",    OP_reg8_imm8,        &CPU::_MOV_BH_imm8);
-    build(0xB8, "MOV",    OP_reg16_imm16,      &CPU::_MOV_AX_imm16,     OP_reg32_imm32, &CPU::_MOV_EAX_imm32);
-    build(0xB9, "MOV",    OP_reg16_imm16,      &CPU::_MOV_CX_imm16,     OP_reg32_imm32, &CPU::_MOV_ECX_imm32);
-    build(0xBA, "MOV",    OP_reg16_imm16,      &CPU::_MOV_DX_imm16,     OP_reg32_imm32, &CPU::_MOV_EDX_imm32);
-    build(0xBB, "MOV",    OP_reg16_imm16,      &CPU::_MOV_BX_imm16,     OP_reg32_imm32, &CPU::_MOV_EBX_imm32);
-    build(0xBC, "MOV",    OP_reg16_imm16,      &CPU::_MOV_SP_imm16,     OP_reg32_imm32, &CPU::_MOV_ESP_imm32);
-    build(0xBD, "MOV",    OP_reg16_imm16,      &CPU::_MOV_BP_imm16,     OP_reg32_imm32, &CPU::_MOV_EBP_imm32);
-    build(0xBE, "MOV",    OP_reg16_imm16,      &CPU::_MOV_SI_imm16,     OP_reg32_imm32, &CPU::_MOV_ESI_imm32);
-    build(0xBF, "MOV",    OP_reg16_imm16,      &CPU::_MOV_DI_imm16,     OP_reg32_imm32, &CPU::_MOV_EDI_imm32);
+    for (BYTE i = 0xb0; i <= 0xb7; ++i)
+        build(i, "MOV", OP_reg8_imm8, &CPU::_MOV_reg8_imm8);
+
+    for (BYTE i = 0xb8; i <= 0xbf; ++i)
+        build(i, "MOV", OP_reg16_imm16, &CPU::_MOV_reg16_imm16, OP_reg32_imm32, &CPU::_MOV_reg32_imm32);
 
     build(0xC2, "RET",    OP_imm16,            &CPU::_RET_imm16);
     build(0xC3, "RET",    OP,                  &CPU::_RET);

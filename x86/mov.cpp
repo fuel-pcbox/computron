@@ -216,124 +216,19 @@ void CPU::_MOV_DR_reg32(Instruction& insn)
     //vlog(LogCPU, "MOV DR%u <- %08X", drIndex, getDebugRegister(drIndex));
 }
 
-void CPU::_MOV_AL_imm8(Instruction& insn)
+void CPU::_MOV_reg8_imm8(Instruction& insn)
 {
-    regs.B.AL = insn.imm8();
+    writeRegister<BYTE>(insn.registerIndex(), insn.imm8());
 }
 
-void CPU::_MOV_BL_imm8(Instruction& insn)
+void CPU::_MOV_reg16_imm16(Instruction& insn)
 {
-    regs.B.BL = insn.imm8();
+    writeRegister<WORD>(insn.registerIndex(), insn.imm16());
 }
 
-void CPU::_MOV_CL_imm8(Instruction& insn)
+void CPU::_MOV_reg32_imm32(Instruction& insn)
 {
-    regs.B.CL = insn.imm8();
-}
-
-void CPU::_MOV_DL_imm8(Instruction& insn)
-{
-    regs.B.DL = insn.imm8();
-}
-
-void CPU::_MOV_AH_imm8(Instruction& insn)
-{
-    regs.B.AH = insn.imm8();
-}
-
-void CPU::_MOV_BH_imm8(Instruction& insn)
-{
-    regs.B.BH = insn.imm8();
-}
-
-void CPU::_MOV_CH_imm8(Instruction& insn)
-{
-    regs.B.CH = insn.imm8();
-}
-
-void CPU::_MOV_DH_imm8(Instruction& insn)
-{
-    regs.B.DH = insn.imm8();
-}
-
-void CPU::_MOV_EAX_imm32(Instruction& insn)
-{
-    regs.D.EAX = insn.imm32();
-}
-
-void CPU::_MOV_EBX_imm32(Instruction& insn)
-{
-    regs.D.EBX = insn.imm32();
-}
-
-void CPU::_MOV_ECX_imm32(Instruction& insn)
-{
-    regs.D.ECX = insn.imm32();
-}
-
-void CPU::_MOV_EDX_imm32(Instruction& insn)
-{
-    regs.D.EDX = insn.imm32();
-}
-
-void CPU::_MOV_EBP_imm32(Instruction& insn)
-{
-    regs.D.EBP = insn.imm32();
-}
-
-void CPU::_MOV_ESP_imm32(Instruction& insn)
-{
-    regs.D.ESP = insn.imm32();
-}
-
-void CPU::_MOV_ESI_imm32(Instruction& insn)
-{
-    regs.D.ESI = insn.imm32();
-}
-
-void CPU::_MOV_EDI_imm32(Instruction& insn)
-{
-    regs.D.EDI = insn.imm32();
-}
-
-void CPU::_MOV_AX_imm16(Instruction& insn)
-{
-    regs.W.AX = insn.imm16();
-}
-
-void CPU::_MOV_BX_imm16(Instruction& insn)
-{
-    regs.W.BX = insn.imm16();
-}
-
-void CPU::_MOV_CX_imm16(Instruction& insn)
-{
-    regs.W.CX = insn.imm16();
-}
-
-void CPU::_MOV_DX_imm16(Instruction& insn)
-{
-    regs.W.DX = insn.imm16();
-}
-
-void CPU::_MOV_BP_imm16(Instruction& insn)
-{
-    regs.W.BP = insn.imm16();
-}
-
-void CPU::_MOV_SP_imm16(Instruction& insn)
-{
-    regs.W.SP = insn.imm16();
-}
-
-void CPU::_MOV_SI_imm16(Instruction& insn)
-{
-    regs.W.SI = insn.imm16();
-}
-
-void CPU::_MOV_DI_imm16(Instruction& insn)
-{
-    regs.W.DI = insn.imm16();
+    writeRegister<DWORD>(insn.registerIndex(), insn.imm32());
 }
 
 void CPU::_MOV_AL_moff8(Instruction& insn)

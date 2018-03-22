@@ -706,23 +706,9 @@ protected:
     void _LES_reg16_mem16(Instruction&);
     void _LES_reg32_mem32(Instruction&);
 
-    void _MOV_AL_imm8(Instruction&);
-    void _MOV_BL_imm8(Instruction&);
-    void _MOV_CL_imm8(Instruction&);
-    void _MOV_DL_imm8(Instruction&);
-    void _MOV_AH_imm8(Instruction&);
-    void _MOV_BH_imm8(Instruction&);
-    void _MOV_CH_imm8(Instruction&);
-    void _MOV_DH_imm8(Instruction&);
-
-    void _MOV_AX_imm16(Instruction&);
-    void _MOV_BX_imm16(Instruction&);
-    void _MOV_CX_imm16(Instruction&);
-    void _MOV_DX_imm16(Instruction&);
-    void _MOV_BP_imm16(Instruction&);
-    void _MOV_SP_imm16(Instruction&);
-    void _MOV_SI_imm16(Instruction&);
-    void _MOV_DI_imm16(Instruction&);
+    void _MOV_reg8_imm8(Instruction&);
+    void _MOV_reg16_imm16(Instruction&);
+    void _MOV_reg32_imm32(Instruction&);
 
     void _MOV_seg_RM16(Instruction&);
     void _MOV_RM16_seg(Instruction&);
@@ -1117,14 +1103,6 @@ protected:
     void _MOV_reg32_DR(Instruction&);
     void _MOV_DR_reg32(Instruction&);
     void _MOV_moff32_EAX(Instruction&);
-    void _MOV_EAX_imm32(Instruction&);
-    void _MOV_EBX_imm32(Instruction&);
-    void _MOV_ECX_imm32(Instruction&);
-    void _MOV_EDX_imm32(Instruction&);
-    void _MOV_EBP_imm32(Instruction&);
-    void _MOV_ESP_imm32(Instruction&);
-    void _MOV_ESI_imm32(Instruction&);
-    void _MOV_EDI_imm32(Instruction&);
 
     void _MOV_seg_RM32(Instruction&);
 
