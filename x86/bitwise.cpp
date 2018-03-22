@@ -380,19 +380,25 @@ T CPU::doRCR(T data, int steps)
     return result;
 }
 
+template<typename T>
+void CPU::doNOT(Instruction& insn)
+{
+    insn.modrm().write<T>(~insn.modrm().read<T>());
+}
+
 void CPU::_NOT_RM8(Instruction& insn)
 {
-    insn.modrm().write8(~insn.modrm().read8());
+    doNOT<BYTE>(insn);
 }
 
 void CPU::_NOT_RM16(Instruction& insn)
 {
-    insn.modrm().write16(~insn.modrm().read16());
+    doNOT<WORD>(insn);
 }
 
 void CPU::_NOT_RM32(Instruction& insn)
 {
-    insn.modrm().write32(~insn.modrm().read32());
+    doNOT<DWORD>(insn);
 }
 
 DEFAULT_RM16_imm8(doBt, _BT_RM16_imm8)

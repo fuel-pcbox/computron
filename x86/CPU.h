@@ -895,6 +895,9 @@ protected:
 
     void _TEST_RM8_imm8(Instruction&);
     void _TEST_RM16_imm16(Instruction&);
+
+    template<typename T> void doNEG(Instruction&);
+    template<typename T> void doNOT(Instruction&);
     void _NOT_RM8(Instruction&);
     void _NOT_RM16(Instruction&);
     void _NOT_RM32(Instruction&);

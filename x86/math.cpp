@@ -465,20 +465,23 @@ void CPU::_IDIV_RM32(Instruction& insn)
     regs.D.EDX = (SIGNED_DWORD)(tEDXEAX % value);
 }
 
+template<typename T>
+void CPU::doNEG(Instruction& insn)
+{
+    insn.modrm().write<T>(doSub((T)0, insn.modrm().read<T>()));
+}
+
 void CPU::_NEG_RM8(Instruction& insn)
 {
-    auto& modrm = insn.modrm();
-    modrm.write8(doSub((BYTE)0, modrm.read8()));
+    doNEG<BYTE>(insn);
 }
 
 void CPU::_NEG_RM16(Instruction& insn)
 {
-    auto& modrm = insn.modrm();
-    modrm.write16(doSub((WORD)0, modrm.read16()));
+    doNEG<WORD>(insn);
 }
 
 void CPU::_NEG_RM32(Instruction& insn)
 {
-    auto& modrm = insn.modrm();
-    modrm.write32(doSub((DWORD)0, modrm.read32()));
+    doNEG<DWORD>(insn);
 }
