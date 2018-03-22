@@ -168,10 +168,7 @@ void CPU::_RET_imm16(Instruction& insn)
         jumpAbsolute32(pop32());
     else
         jumpAbsolute16(pop16());
-    if (s32())
-        regs.D.ESP += insn.imm16();
-    else
-        regs.W.SP += insn.imm16();
+    adjustStackPointer(insn.imm16());
 }
 
 void CPU::_RETF(Instruction&)
@@ -192,18 +189,12 @@ void CPU::_RETF_imm16(Instruction& insn)
     if (o32()) {
         DWORD nip = pop32();
         WORD ncs = pop32();
-        if (s32())
-            regs.D.ESP += insn.imm16();
-        else
-            regs.W.SP += insn.imm16();
+        adjustStackPointer(insn.imm16());
         jump32(ncs, nip, JumpType::RETF);
     } else {
         WORD nip = pop16();
         WORD ncs = pop16();
-        if (s32())
-            regs.D.ESP += insn.imm16();
-        else
-            regs.W.SP += insn.imm16();
+        adjustStackPointer(insn.imm16());
         jump16(ncs, nip, JumpType::RETF);
     }
 }

@@ -28,54 +28,28 @@
 
 void CPU::push32(DWORD value)
 {
-    //vlog(LogCPU, "push32: %08X", value);
-    if (s16()) {
-        writeMemory32(SegmentRegisterIndex::SS, this->getSP() - 4, value);
-        this->regs.W.SP -= 4;
-    } else {
-        writeMemory32(SegmentRegisterIndex::SS, this->getESP() - 4, value);
-        this->regs.D.ESP -= 4;
-    }
+    writeMemory32(SegmentRegisterIndex::SS, currentStackPointer() - 4, value);
+    adjustStackPointer(-4);
 }
 
 void CPU::push16(WORD value)
 {
-    //vlog(LogCPU, "push16: %04X", value);
-    if (s16()) {
-        writeMemory16(SegmentRegisterIndex::SS, this->getSP() - 2, value);
-        this->regs.W.SP -= 2;
-    } else {
-        writeMemory16(SegmentRegisterIndex::SS, this->getESP() - 2, value);
-        this->regs.D.ESP -= 2;
-    }
+    writeMemory16(SegmentRegisterIndex::SS, currentStackPointer() - 2, value);
+    adjustStackPointer(-2);
 }
 
 DWORD CPU::pop32()
 {
-    DWORD d;
-    if (s16()) {
-        d = readMemory32(SegmentRegisterIndex::SS, this->getSP());
-        this->regs.W.SP += 4;
-    } else {
-        d = readMemory32(SegmentRegisterIndex::SS, this->getESP());
-        this->regs.D.ESP += 4;
-    }
-    //vlog(LogCPU, "pop32: %08X", d);
-    return d;
+    DWORD data = readMemory32(SegmentRegisterIndex::SS, currentStackPointer());
+    adjustStackPointer(4);
+    return data;
 }
 
 WORD CPU::pop16()
 {
-    WORD w;
-    if (s16()) {
-        w = readMemory16(SegmentRegisterIndex::SS, this->getSP());
-        this->regs.W.SP += 2;
-    } else {
-        w = readMemory16(SegmentRegisterIndex::SS, this->getESP());
-        this->regs.D.ESP += 2;
-    }
-    //vlog(LogCPU, "pop16: %08X", w);
-    return w;
+    WORD data = readMemory16(SegmentRegisterIndex::SS, currentStackPointer());
+    adjustStackPointer(2);
+    return data;
 }
 
 void CPU::_PUSH_reg16(Instruction& insn)

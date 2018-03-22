@@ -420,6 +420,13 @@ public:
             return getESP();
         return getSP();
     }
+    void adjustStackPointer(int delta)
+    {
+        if (s32())
+            setESP(getESP() + delta);
+        else
+            setSP(getSP() + delta);
+    }
 
     void jump32(WORD segment, DWORD offset, JumpType, BYTE isr = 0, DWORD flags = 0, Gate* = nullptr);
     void jump16(WORD segment, WORD offset, JumpType, BYTE isr = 0, DWORD flags = 0, Gate* = nullptr);
