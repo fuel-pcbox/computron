@@ -453,13 +453,6 @@ void CPU::setSegmentRegister(SegmentRegisterIndex segmentRegisterIndex, WORD sel
     }
 
     ASSERT(descriptor.isSegmentDescriptor());
-
-    if (getPE() && segmentRegisterIndex == SegmentRegisterIndex::SS) {
-        // HACK: In PE=1 mode, mark SS descriptors as "expand down"
-        // FIXME: Remove this! Why is this even a thing?
-        descriptor.m_type |= 0x4;
-    }
-
     descriptorCache = descriptor.asSegmentDescriptor();
     if (options.pedebug) {
         if (getPE()) {

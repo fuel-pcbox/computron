@@ -1437,7 +1437,6 @@ void CPU::updateStackSize()
 
     auto& ssDescriptor = m_descriptor[(int)SegmentRegisterIndex::SS];
     m_stackSize32 = ssDescriptor.D();
-    ASSERT(ssDescriptor.asDataSegmentDescriptor().expandDown());
 
 #ifdef VERBOSE_DEBUG
     if (oldS32 != m_stackSize32) {

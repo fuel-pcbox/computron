@@ -40,10 +40,6 @@ Descriptor CPU::getDescriptor(WORD selector, SegmentRegisterIndex segmentRegiste
         descriptor.m_DT = true;
         descriptor.m_P = true;
         descriptor.m_isGlobal = true;
-        if (segmentRegister == SegmentRegisterIndex::SS) {
-            // Expand down
-            descriptor.m_type |= 0x4;
-        }
         if (segmentRegister == SegmentRegisterIndex::CS) {
             // Code
             descriptor.m_type |= 0x8;
