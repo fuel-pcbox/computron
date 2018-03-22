@@ -3,6 +3,8 @@ images
 bios/bios.bin
 computron
 Makefile
+Makefile.Debug
+Makefile.Release
 *.pro.user
 log.txt
 setups/*
@@ -11,3 +13,4 @@ setups/*
 callgrind.*
 *.diff
 core
+out.txt
