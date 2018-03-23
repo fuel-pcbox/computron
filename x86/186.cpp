@@ -82,46 +82,42 @@ void CPU::_PUSH_imm16(Instruction& insn)
 
 void CPU::_ENTER16(Instruction& insn)
 {
-    ASSERT(a16());
-    ASSERT(s16());
-
     WORD size = insn.imm16_2();
     BYTE nestingLevel = insn.imm8_1() & 31;
     push16(getBP());
     WORD frameTemp = getSP();
+
     if (nestingLevel > 0) {
-        WORD tmpEBP = getEBP();
+        DWORD tmpEBP = currentBasePointer();
         for (WORD i = 1; i < nestingLevel - 1; ++i) {
             tmpEBP -= 2;
-            push16(readMemory16(SegmentRegisterIndex::SS, getEBP()));
+            push16(readMemory16(SegmentRegisterIndex::SS, currentBasePointer()));
         }
         push16(frameTemp);
     }
     setBP(frameTemp);
-    setSP(getSP() - size);
+    adjustStackPointer(-size);
+    snoop(SegmentRegisterIndex::SS, currentStackPointer(), MemoryAccessType::Write);
 }
-
 
 void CPU::_ENTER32(Instruction& insn)
 {
-    ASSERT(a32());
-    ASSERT(s32());
-
     WORD size = insn.imm16_2();
     BYTE nestingLevel = insn.imm8_1() & 31;
-
     push32(getEBP());
     DWORD frameTemp = getESP();
+
     if (nestingLevel > 0) {
-        DWORD tmpEBP = getEBP();
+        DWORD tmpEBP = currentBasePointer();
         for (WORD i = 1; i < nestingLevel - 1; ++i) {
-            tmpEBP -= 4;
-            push32(readMemory32(SegmentRegisterIndex::SS, getEBP()));
+            tmpEBP -= 2;
+            push32(readMemory32(SegmentRegisterIndex::SS, currentBasePointer()));
         }
         push32(frameTemp);
     }
     setEBP(frameTemp);
-    setESP(getESP() - size);
+    adjustStackPointer(-size);
+    snoop(SegmentRegisterIndex::SS, currentStackPointer(), MemoryAccessType::Write);
 }
 
 void CPU::_LEAVE16(Instruction&)
