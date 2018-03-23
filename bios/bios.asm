@@ -2227,6 +2227,6 @@ times 0xfff0-($-$$) nop ; pad up to fff0
 
 jmp 0xf000:0x0000 ; fff0: We start here after CPU reset
 
-bios_date db "11/02/03" ; fff5: BIOS release date
-db 0xfc ; IBM AT
-db 0x01
+bios_date db "11/02/03", 0 ; fff5: BIOS release date
+db 0xfc ; fffe: IBM AT
+db 0x01 ; ffff: sub model id or something like that

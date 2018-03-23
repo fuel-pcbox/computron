@@ -230,7 +230,7 @@ OwnPtr<Settings> Settings::createFromFile(const QString& fileName)
     auto settings = make<Settings>();
 
     // IBM PC's boot at this location, which usually contains a JMP to the
-    // BIOS entry point. (F000;0000 here, see Machine constructor.)
+    // BIOS entry point.
     settings->m_entryCS = 0xF000;
     settings->m_entryIP = 0xFFF0;
 
