@@ -853,8 +853,6 @@ Instruction::Instruction(InstructionStream& stream, bool o32, bool a32)
         }
         auto segmentPrefix = toSegmentPrefix(opbyte);
         if (segmentPrefix != SegmentRegisterIndex::None) {
-            // FIXME: What should we do here? Respect the first or last prefix?
-            ASSERT(!hasSegmentPrefix());
             m_segmentPrefix = segmentPrefix;
             continue;
         }
