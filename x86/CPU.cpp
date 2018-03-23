@@ -962,6 +962,9 @@ void CPU::_DEC_RM8(Instruction& insn)
 template<typename T>
 void CPU::doLxS(Instruction& insn, SegmentRegisterIndex segreg)
 {
+    if (insn.modrm().isRegister()) {
+        throw InvalidOpcode("LxS with register operand");
+    }
     auto offset = readMemory<T>(insn.modrm().segment(), insn.modrm().offset());
     WORD selector = readMemory16(insn.modrm().segment(), insn.modrm().offset() + sizeof(T));
     insn.reg<T>() = offset;

@@ -550,7 +550,6 @@ public:
     BYTE readModRM8(BYTE rmbyte);
     WORD readModRM16(BYTE rmbyte);
     DWORD readModRM32(BYTE rmbyte);
-    FarPointer readModRMFarPointer(MemoryOrRegisterReference&);
     void writeModRM8(BYTE rmbyte, BYTE value);
     void writeModRM16(BYTE rmbyte, WORD value);
     void writeModRM32(BYTE rmbyte, DWORD value);

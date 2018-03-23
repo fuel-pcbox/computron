@@ -105,21 +105,6 @@ FLATTEN void MemoryOrRegisterReference::resolve(CPU& cpu)
     return resolve16();
 }
 
-FarPointer CPU::readModRMFarPointer(MemoryOrRegisterReference& modrm)
-{
-    ASSERT(!modrm.isRegister());
-
-    FarPointer ptr;
-    ptr.segment = readMemory16(modrm.segment(), modrm.offset() + 4);
-    ptr.offset = readMemory32(modrm.segment(), modrm.offset());
-
-#ifdef MODRM_DEBUG
-    vlog(LogCPU, "Loaded far pointer from %s:%08x [PE=%u, PG=%u], got %04x:%08x", registerName(modrm.segment()), modrm.offset(), getPE(), getPG(), ptr.segment, ptr.offset);
-#endif
-
-    return ptr;
-}
-
 FLATTEN void MemoryOrRegisterReference::decode(InstructionStream& stream, bool a32)
 {
     m_a32 = a32;
