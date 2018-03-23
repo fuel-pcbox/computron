@@ -440,6 +440,10 @@ void CPU::validateSegmentLoad(SegmentRegisterIndex reg, WORD selector, const Des
 
 void CPU::writeSegmentRegister(SegmentRegisterIndex segreg, WORD selector)
 {
+    if ((int)segreg >= 6) {
+        throw InvalidOpcode("Write to invalid segment register");
+    }
+
     auto& descriptorCache = static_cast<Descriptor&>(m_descriptor[(int)segreg]);
     auto descriptor = getDescriptor(selector, segreg);
 
