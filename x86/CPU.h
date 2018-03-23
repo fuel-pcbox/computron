@@ -911,6 +911,8 @@ protected:
     void _DEC_reg16(Instruction&);
     void _DEC_reg32(Instruction&);
 
+    template<typename T> void doFarJump(Instruction&, JumpType);
+
     void _CALL_RM16(Instruction&);
     void _CALL_RM32(Instruction&);
     void _CALL_FAR_mem16(Instruction&);

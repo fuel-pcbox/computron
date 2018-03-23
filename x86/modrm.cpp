@@ -45,13 +45,6 @@ DWORD MemoryOrRegisterReference::offset()
         return m_offset16;
 }
 
-void* MemoryOrRegisterReference::memoryPointer()
-{
-    ASSERT(m_cpu);
-    ASSERT(!isRegister());
-    return m_cpu->memoryPointer(segment(), offset());
-}
-
 template<typename T>
 T MemoryOrRegisterReference::read()
 {

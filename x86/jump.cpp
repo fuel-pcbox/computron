@@ -75,16 +75,32 @@ void CPU::_JMP_RM32(Instruction& insn)
     jumpAbsolute32(insn.modrm().read32());
 }
 
+template<typename T>
+void CPU::doFarJump(Instruction& insn, JumpType jumpType)
+{
+    T offset = readMemory16(insn.modrm().segment(), insn.modrm().offset());
+    WORD selector = readMemory16(insn.modrm().segment(), insn.modrm().offset() + sizeof(T));
+    jump32(selector, offset, jumpType);
+}
+
 void CPU::_JMP_FAR_mem16(Instruction& insn)
 {
-    WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
-    jump16(ptr[1], ptr[0], JumpType::JMP);
+    doFarJump<WORD>(insn, JumpType::JMP);
 }
 
 void CPU::_JMP_FAR_mem32(Instruction& insn)
 {
-    WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
-    jump32(ptr[2], makeDWORD(ptr[1], ptr[0]), JumpType::JMP);
+    doFarJump<DWORD>(insn, JumpType::JMP);
+}
+
+void CPU::_CALL_FAR_mem16(Instruction& insn)
+{
+    doFarJump<WORD>(insn, JumpType::CALL);
+}
+
+void CPU::_CALL_FAR_mem32(Instruction& insn)
+{
+    doFarJump<DWORD>(insn, JumpType::CALL);
 }
 
 void CPU::_SETcc_RM8(Instruction& insn)
@@ -128,18 +144,6 @@ void CPU::_CALL_imm16_imm16(Instruction& insn)
 void CPU::_CALL_imm16_imm32(Instruction& insn)
 {
     jump32(insn.imm16_1(), insn.imm32_2(), JumpType::CALL);
-}
-
-void CPU::_CALL_FAR_mem16(Instruction& insn)
-{
-    WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
-    jump16(ptr[1], ptr[0], JumpType::CALL);
-}
-
-void CPU::_CALL_FAR_mem32(Instruction& insn)
-{
-    WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
-    jump32(ptr[2], makeDWORD(ptr[1], ptr[0]), JumpType::CALL);
 }
 
 void CPU::_CALL_RM16(Instruction& insn)
