@@ -113,10 +113,11 @@ void CPU::_LGDT(Instruction& insn)
         throw InvalidOpcode("LGDT with register source");
     }
 
-    FarPointer ptr = readModRMFarPointerSegmentFirst(insn.modrm());
+    DWORD base = readMemory32(insn.modrm().segment(), insn.modrm().offset() + 2);
+    WORD limit = readMemory16(insn.modrm().segment(), insn.modrm().offset());
     DWORD baseMask = o32() ? 0xffffffff : 0x00ffffff;
-    GDTR.base = ptr.offset & baseMask;
-    GDTR.limit = ptr.segment;
+    GDTR.base = base & baseMask;
+    GDTR.limit = limit;
 #ifdef DEBUG_GDT
     vlog(LogAlert, "LGDT { base:%08X, limit:%08X }", GDTR.base, GDTR.limit);
     dumpGDT();
@@ -149,10 +150,11 @@ void CPU::_LIDT(Instruction& insn)
         throw InvalidOpcode("LIDT with register source");
     }
 
-    FarPointer ptr = readModRMFarPointerSegmentFirst(insn.modrm());
+    DWORD base = readMemory32(insn.modrm().segment(), insn.modrm().offset() + 2);
+    WORD limit = readMemory16(insn.modrm().segment(), insn.modrm().offset());
     DWORD baseMask = o32() ? 0xffffffff : 0x00ffffff;
-    IDTR.base = ptr.offset & baseMask;
-    IDTR.limit = ptr.segment;
+    IDTR.base = base & baseMask;
+    IDTR.limit = limit;
 #if DEBUG_IDT
     dumpIDT();
 #endif
@@ -163,7 +165,6 @@ void CPU::_CLTS(Instruction&)
     if (getPE()) {
         if (getCPL() != 0) {
             throw GeneralProtectionFault(0, QString("CLTS with CPL!=0(%1)").arg(getCPL()));
-            return;
         }
     }
     m_CR0 &= ~(1 << 3);
@@ -174,7 +175,6 @@ void CPU::_LMSW_RM16(Instruction& insn)
     if (getPE()) {
         if (getCPL() != 0) {
             throw GeneralProtectionFault(0, QString("LMSW with CPL!=0(%1)").arg(getCPL()));
-            return;
         }
     }
 

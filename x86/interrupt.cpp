@@ -169,16 +169,3 @@ void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
     setRF(0);
     setNT(0);
 }
-
-FarPointer CPU::getInterruptVector16(int isr)
-{
-    vlog(LogAlert, "getInterruptVector16(%d)", isr);
-    hard_exit(1);
-    return { 0, 0 };
-}
-
-FarPointer CPU::getInterruptVector32(int isr)
-{
-    vlog(LogAlert, "getInterruptVector32(%d)", isr);
-    return { 0, 0 };
-}

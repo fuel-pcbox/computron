@@ -456,9 +456,6 @@ public:
     void jumpAbsolute16(WORD offset);
     void jumpAbsolute32(DWORD offset);
 
-    FarPointer getInterruptVector16(int isr);
-    FarPointer getInterruptVector32(int isr);
-
     void decodeNext();
     void execute(Instruction&);
 
@@ -562,8 +559,7 @@ public:
     BYTE readModRM8(BYTE rmbyte);
     WORD readModRM16(BYTE rmbyte);
     DWORD readModRM32(BYTE rmbyte);
-    FarPointer readModRMFarPointerSegmentFirst(MemoryOrRegisterReference&);
-    FarPointer readModRMFarPointerOffsetFirst(MemoryOrRegisterReference&);
+    FarPointer readModRMFarPointer(MemoryOrRegisterReference&);
     void writeModRM8(BYTE rmbyte, BYTE value);
     void writeModRM16(BYTE rmbyte, WORD value);
     void writeModRM32(BYTE rmbyte, DWORD value);

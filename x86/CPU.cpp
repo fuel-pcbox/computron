@@ -968,7 +968,7 @@ void CPU::_LDS_reg16_mem16(Instruction& insn)
 
 void CPU::_LDS_reg32_mem32(Instruction& insn)
 {
-    FarPointer ptr = readModRMFarPointerOffsetFirst(insn.modrm());
+    FarPointer ptr = readModRMFarPointer(insn.modrm());
     insn.reg32() = ptr.offset;
     setDS(ptr.segment);
 }
@@ -982,7 +982,7 @@ void CPU::_LES_reg16_mem16(Instruction& insn)
 
 void CPU::_LES_reg32_mem32(Instruction& insn)
 {
-    FarPointer ptr = readModRMFarPointerOffsetFirst(insn.modrm());
+    FarPointer ptr = readModRMFarPointer(insn.modrm());
     insn.reg32() = ptr.offset;
     setES(ptr.segment);
 }
@@ -996,7 +996,7 @@ void CPU::_LFS_reg16_mem16(Instruction& insn)
 
 void CPU::_LFS_reg32_mem32(Instruction& insn)
 {
-    FarPointer ptr = readModRMFarPointerOffsetFirst(insn.modrm());
+    FarPointer ptr = readModRMFarPointer(insn.modrm());
     insn.reg32() = ptr.offset;
     setFS(ptr.segment);
 }
@@ -1010,7 +1010,7 @@ void CPU::_LSS_reg16_mem16(Instruction& insn)
 
 void CPU::_LSS_reg32_mem32(Instruction& insn)
 {
-    FarPointer ptr = readModRMFarPointerOffsetFirst(insn.modrm());
+    FarPointer ptr = readModRMFarPointer(insn.modrm());
     insn.reg32() = ptr.offset;
     setSS(ptr.segment);
 }
@@ -1024,7 +1024,7 @@ void CPU::_LGS_reg16_mem16(Instruction& insn)
 
 void CPU::_LGS_reg32_mem32(Instruction& insn)
 {
-    FarPointer ptr = readModRMFarPointerOffsetFirst(insn.modrm());
+    FarPointer ptr = readModRMFarPointer(insn.modrm());
     insn.reg32() = ptr.offset;
     setGS(ptr.segment);
 }
