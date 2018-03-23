@@ -1023,24 +1023,18 @@ void CPU::_LGS_reg32_mem32(Instruction& insn)
 
 void CPU::_LEA_reg32_mem32(Instruction& insn)
 {
-    auto& modrm = insn.modrm();
-    if (modrm.isRegister()) {
-        vlog(LogAlert, "LEA_reg32_mem32 with register source!");
-        throw InvalidOpcode();
+    if (insn.modrm().isRegister()) {
+        throw InvalidOpcode("LEA_reg32_mem32 with register source");
     }
-
-    insn.reg32() = modrm.offset();
+    insn.reg32() = insn.modrm().offset();
 }
 
 void CPU::_LEA_reg16_mem16(Instruction& insn)
 {
-    auto& modrm = insn.modrm();
-    if (modrm.isRegister()) {
-        vlog(LogAlert, "LEA_reg16_mem16 with register source!");
-        throw InvalidOpcode();
+    if (insn.modrm().isRegister()) {
+        throw InvalidOpcode("LEA_reg16_mem16 with register source");
     }
-
-    insn.reg16() = modrm.offset();
+    insn.reg16() = insn.modrm().offset();
 }
 
 // FIXME: Make VGAMemory into some kind of "memory mapper" thingy and put this kind of logic in there.
