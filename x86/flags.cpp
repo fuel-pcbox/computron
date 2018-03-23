@@ -172,16 +172,16 @@ void CPU::_CMC(Instruction&)
 
 void CPU::_LAHF(Instruction&)
 {
-    regs.B.AH = getCF() | (getPF() * 4) | (getAF() * 16) | (getZF() * 64) | (getSF() * 128) | 2;
+    setAH(getCF() | (getPF() * Flag::PF) | (getAF() * Flag::AF) | (getZF() * Flag::ZF) | (getSF() * Flag::SF) | 2);
 }
 
 void CPU::_SAHF(Instruction&)
 {
-    setCF(regs.B.AH & 0x01);
-    setPF(regs.B.AH & 0x04);
-    setAF(regs.B.AH & 0x10);
-    setZF(regs.B.AH & 0x40);
-    setSF(regs.B.AH & 0x80);
+    setCF(getAH() & Flag::CF);
+    setPF(getAH() & Flag::PF);
+    setAF(getAH() & Flag::AF);
+    setZF(getAH() & Flag::ZF);
+    setSF(getAH() & Flag::SF);
 }
 
 void CPU::mathFlags8(WORD result, BYTE dest, BYTE src)
@@ -244,41 +244,40 @@ void CPU::cmpFlags32(QWORD result, DWORD dest, DWORD src)
 
 void CPU::setFlags(WORD flags)
 {
-    setCF(flags & 0x0001);
-    setPF(flags & 0x0004);
-    setAF(flags & 0x0010);
-    setZF(flags & 0x0040);
-    setSF(flags & 0x0080);
-    setTF(flags & 0x0100);
-    setIF(flags & 0x0200);
-    setDF(flags & 0x0400);
-    setOF(flags & 0x0800);
-    setIOPL((flags & 0x3000) >> 12);
-    setNT(flags & 0x4000);
+    setCF(flags & Flag::CF);
+    setPF(flags & Flag::PF);
+    setAF(flags & Flag::AF);
+    setZF(flags & Flag::ZF);
+    setSF(flags & Flag::SF);
+    setTF(flags & Flag::TF);
+    setIF(flags & Flag::IF);
+    setDF(flags & Flag::DF);
+    setOF(flags & Flag::OF);
+    setIOPL((flags & Flag::IOPL) >> 12);
+    setNT(flags & Flag::NT);
 }
 
 WORD CPU::getFlags() const
 {
     return 0x0002
-        | (getCF() << 0)
-        | (getPF() << 2)
-        | (getAF() << 4)
-        | (getZF() << 6)
-        | (getSF() << 7)
-        | (getTF() << 8)
-        | (getIF() << 9)
-        | (getDF() << 10)
-        | (getOF() << 11)
+        | (getCF() * Flag::CF)
+        | (getPF() * Flag::PF)
+        | (getAF() * Flag::AF)
+        | (getZF() * Flag::ZF)
+        | (getSF() * Flag::SF)
+        | (getTF() * Flag::TF)
+        | (getIF() * Flag::IF)
+        | (getDF() * Flag::DF)
+        | (getOF() * Flag::OF)
         | (getIOPL() << 12)
-        | (getNT() << 14);
+        | (getNT() * Flag::NT);
 }
 
 void CPU::setEFlags(DWORD eflags)
 {
-    setFlags(eflags & 0xFFFF);
-
-    this->RF = (eflags & 0x10000) != 0;
-    this->VM = (eflags & 0x20000) != 0;
+    setFlags(eflags & 0xffff);
+    setRF(eflags & Flag::RF);
+    setVM(eflags & Flag::VM);
 //    this->AC = (eflags & 0x40000) != 0;
 //    this->VIF = (eflags & 0x80000) != 0;
 //    this->VIP = (eflags & 0x100000) != 0;
@@ -288,8 +287,8 @@ void CPU::setEFlags(DWORD eflags)
 DWORD CPU::getEFlags() const
 {
     DWORD eflags = getFlags()
-         | (this->RF << 16)
-         | (this->VM << 17)
+         | (this->RF * Flag::RF)
+         | (this->VM * Flag::VM)
 //         | (this->AC << 18)
 //         | (this->VIF << 19)
 //         | (this->VIP << 20)
