@@ -422,12 +422,29 @@ public:
             return getESP();
         return getSP();
     }
-    void adjustStackPointer(int delta)
+    DWORD currentBasePointer() const
     {
         if (s32())
-            setESP(getESP() + delta);
+            return getEBP();
+        return getBP();
+    }
+    void setCurrentStackPointer(DWORD value)
+    {
+        if (s32())
+            setESP(value);
         else
-            setSP(getSP() + delta);
+            setSP(value);
+    }
+    void setCurrentBasePointer(DWORD value)
+    {
+        if (s32())
+            setEBP(value);
+        else
+            setBP(value);
+    }
+    void adjustStackPointer(int delta)
+    {
+        setCurrentStackPointer(currentStackPointer() + delta);
     }
 
     void jump32(WORD segment, DWORD offset, JumpType, BYTE isr = 0, DWORD flags = 0, Gate* = nullptr);
@@ -934,12 +951,11 @@ protected:
     void _wrap_0xD3_16(Instruction&);
     void _wrap_0xD3_32(Instruction&);
 
-    // 80186+ INSTRUCTIONS
-
     void _BOUND(Instruction&);
-    void _ENTER_16(Instruction&);
-    void _ENTER_32(Instruction&);
-    void _LEAVE(Instruction&);
+    void _ENTER16(Instruction&);
+    void _ENTER32(Instruction&);
+    void _LEAVE16(Instruction&);
+    void _LEAVE32(Instruction&);
 
     void _PUSHA(Instruction&);
     void _POPA(Instruction&);
@@ -952,8 +968,6 @@ protected:
     void _IMUL_reg32_RM32_imm8(Instruction&);
     void _IMUL_reg16_RM16_imm16(Instruction&);
     void _IMUL_reg32_RM32_imm32(Instruction&);
-
-    // 80386+ INSTRUCTIONS
 
     void _LMSW_RM16(Instruction&);
     void _SMSW_RM16(Instruction&);
