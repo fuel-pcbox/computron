@@ -174,6 +174,8 @@ public:
     DWORD& reg32();
     WORD& segreg();
 
+    template<typename T> T& reg();
+
     bool hasRM() const { return m_hasRM; }
     bool hasSubOp() const { return m_hasSubOp; }
 

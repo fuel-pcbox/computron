@@ -959,74 +959,63 @@ void CPU::_DEC_RM8(Instruction& insn)
     modrm.write8(value - 1);
 }
 
+template<typename T>
+void CPU::doLxS(Instruction& insn, SegmentRegisterIndex segreg)
+{
+    auto offset = readMemory<T>(insn.modrm().segment(), insn.modrm().offset());
+    WORD selector = readMemory16(insn.modrm().segment(), insn.modrm().offset() + sizeof(T));
+    insn.reg<T>() = offset;
+    setSegmentRegister(segreg, selector);
+}
+
 void CPU::_LDS_reg16_mem16(Instruction& insn)
 {
-    WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
-    insn.reg16() = read16FromPointer(ptr);
-    setDS(read16FromPointer(ptr + 1));
+    doLxS<WORD>(insn, SegmentRegisterIndex::DS);
 }
 
 void CPU::_LDS_reg32_mem32(Instruction& insn)
 {
-    FarPointer ptr = readModRMFarPointer(insn.modrm());
-    insn.reg32() = ptr.offset;
-    setDS(ptr.segment);
+    doLxS<DWORD>(insn, SegmentRegisterIndex::DS);
 }
 
 void CPU::_LES_reg16_mem16(Instruction& insn)
 {
-    WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
-    insn.reg16() = read16FromPointer(ptr);
-    setES(read16FromPointer(ptr + 1));
+    doLxS<WORD>(insn, SegmentRegisterIndex::ES);
 }
 
 void CPU::_LES_reg32_mem32(Instruction& insn)
 {
-    FarPointer ptr = readModRMFarPointer(insn.modrm());
-    insn.reg32() = ptr.offset;
-    setES(ptr.segment);
+    doLxS<DWORD>(insn, SegmentRegisterIndex::ES);
 }
 
 void CPU::_LFS_reg16_mem16(Instruction& insn)
 {
-    WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
-    insn.reg16() = read16FromPointer(ptr);
-    setFS(read16FromPointer(ptr + 1));
+    doLxS<WORD>(insn, SegmentRegisterIndex::FS);
 }
 
 void CPU::_LFS_reg32_mem32(Instruction& insn)
 {
-    FarPointer ptr = readModRMFarPointer(insn.modrm());
-    insn.reg32() = ptr.offset;
-    setFS(ptr.segment);
+    doLxS<DWORD>(insn, SegmentRegisterIndex::FS);
 }
 
 void CPU::_LSS_reg16_mem16(Instruction& insn)
 {
-    WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
-    insn.reg16() = read16FromPointer(ptr);
-    setSS(read16FromPointer(ptr + 1));
+    doLxS<WORD>(insn, SegmentRegisterIndex::SS);
 }
 
 void CPU::_LSS_reg32_mem32(Instruction& insn)
 {
-    FarPointer ptr = readModRMFarPointer(insn.modrm());
-    insn.reg32() = ptr.offset;
-    setSS(ptr.segment);
+    doLxS<DWORD>(insn, SegmentRegisterIndex::SS);
 }
 
 void CPU::_LGS_reg16_mem16(Instruction& insn)
 {
-    WORD* ptr = static_cast<WORD*>(insn.modrm().memoryPointer());
-    insn.reg16() = read16FromPointer(ptr);
-    setGS(read16FromPointer(ptr + 1));
+    doLxS<WORD>(insn, SegmentRegisterIndex::GS);
 }
 
 void CPU::_LGS_reg32_mem32(Instruction& insn)
 {
-    FarPointer ptr = readModRMFarPointer(insn.modrm());
-    insn.reg32() = ptr.offset;
-    setGS(ptr.segment);
+    doLxS<DWORD>(insn, SegmentRegisterIndex::GS);
 }
 
 void CPU::_LEA_reg32_mem32(Instruction& insn)

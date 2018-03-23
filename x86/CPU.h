@@ -332,7 +332,6 @@ public:
     void setRegister8(RegisterIndex8 registerIndex, BYTE value) { *treg8[registerIndex] = value; }
 
     WORD getSegment(SegmentRegisterIndex segmentIndex) const { return *m_segmentMap[static_cast<int>(segmentIndex)]; }
-    void setSegment(SegmentRegisterIndex segmentIndex, WORD value) const { *m_segmentMap[static_cast<int>(segmentIndex)] = value; }
 
     DWORD getControlRegister(int registerIndex) const { return *m_controlRegisterMap[registerIndex]; }
     void setControlRegister(int registerIndex, DWORD value) { *m_controlRegisterMap[registerIndex] = value; }
@@ -1104,6 +1103,7 @@ protected:
     void _MOVSX_reg32_RM8(Instruction&);
     void _MOVSX_reg32_RM16(Instruction&);
 
+    template<typename T> void doLxS(Instruction&, SegmentRegisterIndex);
     void _LFS_reg16_mem16(Instruction&);
     void _LFS_reg32_mem32(Instruction&);
     void _LGS_reg16_mem16(Instruction&);
@@ -1495,6 +1495,10 @@ ALWAYS_INLINE DWORD& Instruction::reg32()
 #endif
     return *m_cpu->treg32[registerIndex()];
 }
+
+template<> ALWAYS_INLINE BYTE& Instruction::reg<BYTE>() { return reg8(); }
+template<> ALWAYS_INLINE WORD& Instruction::reg<WORD>() { return reg16(); }
+template<> ALWAYS_INLINE DWORD& Instruction::reg<DWORD>() { return reg32(); }
 
 ALWAYS_INLINE void Instruction::execute(CPU& cpu)
 {
