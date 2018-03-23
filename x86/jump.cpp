@@ -198,3 +198,24 @@ void CPU::_RETF_imm16(Instruction& insn)
         jump16(ncs, nip, JumpType::RETF);
     }
 }
+
+void CPU::doLOOP(Instruction& insn, bool condition)
+{
+    if (!decrementCXForAddressSize() && condition)
+        jumpRelative8(static_cast<SIGNED_BYTE>(insn.imm8()));
+}
+
+void CPU::_LOOP_imm8(Instruction& insn)
+{
+    doLOOP(insn, true);
+}
+
+void CPU::_LOOPZ_imm8(Instruction& insn)
+{
+    doLOOP(insn, getZF());
+}
+
+void CPU::_LOOPNZ_imm8(Instruction& insn)
+{
+    doLOOP(insn, !getZF());
+}

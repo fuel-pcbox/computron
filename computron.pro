@@ -80,7 +80,6 @@ SOURCES += debug.cpp \
            x86/interrupt.cpp \
            x86/io.cpp \
            x86/jump.cpp \
-           x86/loop.cpp \
            x86/math.cpp \
            x86/modrm.cpp \
            x86/mov.cpp \
