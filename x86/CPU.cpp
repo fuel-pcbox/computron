@@ -40,7 +40,6 @@
 #define CRASH_ON_VM
 #define A20_ENABLED
 //#define LOG_FAR_JUMPS
-//#define DISASSEMBLE_EVERYTHING
 //#define MEMORY_DEBUGGING
 
 #ifdef MEMORY_DEBUGGING
@@ -178,7 +177,8 @@ FLATTEN void CPU::execute(Instruction& insn)
 #endif
 
 #ifdef DISASSEMBLE_EVERYTHING
-    vlog(LogCPU, "%s", qPrintable(insn.toString(m_baseEIP, x32())));
+    if (options.disassembleEverything)
+        vlog(LogCPU, "%s", qPrintable(insn.toString(m_baseEIP, x32())));
 #endif
     insn.execute(*this);
 

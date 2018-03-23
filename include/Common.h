@@ -27,6 +27,7 @@
 
 //#define DEBUG_JUMPS
 //#define DEBUG_TASK_SWITCH
+//#define DISASSEMBLE_EVERYTHING
 
 #include "types.h"
 #include <QString>
@@ -60,6 +61,9 @@ struct RuntimeOptions {
     bool crashOnException { false };
     QString autotestPath;
     QString configPath;
+#ifdef DISASSEMBLE_EVERYTHING
+    bool disassembleEverything { false };
+#endif
 };
 
 extern RuntimeOptions options;

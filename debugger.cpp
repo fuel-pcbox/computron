@@ -172,6 +172,17 @@ void Debugger::handleCommand(const QString& rawCommand)
         return;
     }
 
+#ifdef DISASSEMBLE_EVERYTHING
+    if (lowerCommand == "de1") {
+        options.disassembleEverything = true;
+        return;
+    }
+    if (lowerCommand == "de0") {
+        options.disassembleEverything = false;
+        return;
+    }
+#endif
+
     printf("Unknown command: %s\n", command.toUtf8().constData());
 }
 
