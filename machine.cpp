@@ -72,12 +72,6 @@ Machine::Machine(const QString& name, OwnPtr<Settings>&& settings, QObject* pare
 
     cpu().setBaseMemorySize(640 * 1024);
 
-    // FIXME: Move this somewhere else.
-    static const BYTE bootCode[] = { 0xEA, 0x00, 0x00, 0x00, 0xF0 };
-    BYTE* entryPoint = cpu().memoryPointer(0xF000, 0xFFF0);
-    ASSERT(entryPoint);
-    memcpy(entryPoint, bootCode, sizeof(bootCode));
-
     if (!m_settings->isForAutotest()) {
         // FIXME: Move this somewhere else.
         // Mitigate spam about uninteresting ports.

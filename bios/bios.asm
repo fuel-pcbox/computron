@@ -190,23 +190,10 @@ _bios_post:                         ; Power On Self-Test ;-)
     push    cs
     pop     ds
 
-; ***
-; Let's start by poking some random bytes that used to be in the config file.
     xor     ax, ax
     mov     es, ax
 
     mov     [es:0x500], byte 0xFF   ; PrintScreen error.
-
-    mov     ax, 0xF000
-    mov     es, ax
-    mov     [es:0xFFFE], word 0x01FC ; IBM AT
-
-    mov     si, bios_date
-    mov     di, 0xFFF5
-    mov     cx, 8
-    rep     movsb
-
-; ***
 
     call    vga_clear               ; Clear screen and move cursor to
     xor     ax, ax                  ; upper left corner.
@@ -2223,8 +2210,6 @@ iret_with_carry:
     msg_not            db  " not", 0
     msg_ready          db  " ready.", 0x0d, 0x0a, 0
 
-    bios_date          db  "11/02/03"
-
     msg_page_changed   db "Display page changed (not fully supported)", 0
 
 system_descriptor_table:
@@ -2237,3 +2222,11 @@ system_descriptor_table:
 
     ; this pretty much violates the whole ROM concept
     temp               dw  0x0000
+
+times 0xfff0-($-$$) nop ; pad up to fff0
+
+jmp 0xf000:0x0000 ; fff0: We start here after CPU reset
+
+bios_date db "11/02/03" ; fff5: BIOS release date
+db 0xfc ; IBM AT
+db 0x01
