@@ -43,6 +43,9 @@ Descriptor CPU::getDescriptor(WORD selector, SegmentRegisterIndex segmentRegiste
         if (segmentRegister == SegmentRegisterIndex::CS) {
             // Code
             descriptor.m_type |= 0x8;
+        } else {
+            // Data + Writable
+            descriptor.m_type |= 0x2;
         }
         return descriptor;
     }

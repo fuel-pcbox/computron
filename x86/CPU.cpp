@@ -1193,12 +1193,9 @@ void CPU::validateAddress(const SegmentDescriptor& descriptor, DWORD offset, Mem
         if (!descriptor.isData()) {
             throw GeneralProtectionFault(0, "Attempt to write to non-data segment");
         }
-#if 0
-        // FIXME: Should we check this here? GazOS GPF's in a PUSH if we do this.
         if (!descriptor.asDataSegmentDescriptor().writable()) {
             throw GeneralProtectionFault(0, "Attempt to write to non-writable data segment");
         }
-#endif
         break;
     case MemoryAccessType::Execute:
         if (!descriptor.isCode()) {
