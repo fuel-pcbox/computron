@@ -83,6 +83,8 @@ enum Flags {
 };
 };
 
+struct HardwareInterruptDuringREP { };
+
 class Exception {
 public:
     Exception(BYTE num, WORD code, DWORD address, const QString& reason)
@@ -672,24 +674,20 @@ protected:
     void _LOOPZ_imm8(Instruction&);
     void _LOOPNZ_imm8(Instruction&);
 
-    void doREP(Instruction&);
-    void doREPZ(Instruction&, bool wantedZF);
-    void _REP(Instruction&);
-    void _REPNZ(Instruction&);
-
     void _XCHG_AX_reg16(Instruction&);
     void _XCHG_EAX_reg32(Instruction&);
     void _XCHG_reg8_RM8(Instruction&);
     void _XCHG_reg16_RM16(Instruction&);
     void _XCHG_reg32_RM32(Instruction&);
 
-    template<typename T> void doLODS();
-    template<typename T> void doSTOS();
-    template<typename T> void doMOVS();
-    template<typename T> void doINS();
-    template<typename T> void doOUTS();
-    template<typename T, typename U> void doCMPS();
-    template<typename T, typename U> void doSCAS();
+    template<typename F> void doOnceOrRepeatedly(Instruction&, bool careAboutZF, F);
+    template<typename T> void doLODS(Instruction&);
+    template<typename T> void doSTOS(Instruction&);
+    template<typename T> void doMOVS(Instruction&);
+    template<typename T> void doINS(Instruction&);
+    template<typename T> void doOUTS(Instruction&);
+    template<typename T, typename U> void doCMPS(Instruction&);
+    template<typename T, typename U> void doSCAS(Instruction&);
 
     void _CMPSB(Instruction&);
     void _CMPSW(Instruction&);
@@ -1490,12 +1488,9 @@ ALWAYS_INLINE DWORD& Instruction::reg32()
 ALWAYS_INLINE void Instruction::execute(CPU& cpu)
 {
     m_cpu = &cpu;
-    if (hasSegmentPrefix())
-        cpu.setSegmentPrefix(m_segmentPrefix);
-    if (hasOperandSizeOverridePrefix())
-        cpu.m_effectiveOperandSize32 = m_o32;
-    if (hasAddressSizeOverridePrefix())
-        cpu.m_effectiveAddressSize32 = m_a32;
+    cpu.setSegmentPrefix(m_segmentPrefix);
+    cpu.m_effectiveOperandSize32 = m_o32;
+    cpu.m_effectiveAddressSize32 = m_a32;
     if (m_hasRM)
         m_modrm.resolve(cpu);
     (cpu.*m_impl)(*this);

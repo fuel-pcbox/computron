@@ -579,8 +579,6 @@ void buildOpcodeTablesIfNeeded()
 
     build(0xF1, "VKILL",  OP,                  &CPU::_VKILL);
 
-    build(0xF2, "REPNZ",  InstructionPrefix,   &CPU::_REPNZ);
-    build(0xF3, "REP",    InstructionPrefix,   &CPU::_REP);
     build(0xF4, "HLT",    OP,                  &CPU::_HLT);
     build(0xF5, "CMC",    OP,                  &CPU::_CMC);
 
@@ -837,17 +835,22 @@ Instruction::Instruction(InstructionStream& stream, bool o32, bool a32)
 {
     for (;; ++m_prefixBytes) {
         BYTE opbyte = stream.readInstruction8();
-        if (opbyte == 0x66) {
+        if (opbyte == Prefix::OperandSizeOverride) {
             m_o32 = !o32;
             m_hasOperandSizeOverridePrefix = true;
             continue;
         }
-        if (opbyte == 0x67) {
+        if (opbyte == Prefix::AddressSizeOverride) {
             m_a32 = !a32;
             m_hasAddressSizeOverridePrefix = true;
             continue;
         }
-
+        if (opbyte == Prefix::REPZ || opbyte == Prefix::REPNZ) {
+            // FIXME: What should we do here? Respect the first or last prefix?
+            ASSERT(!m_repPrefix);
+            m_repPrefix = opbyte;
+            continue;
+        }
         auto segmentPrefix = toSegmentPrefix(opbyte);
         if (segmentPrefix != SegmentRegisterIndex::None) {
             // FIXME: What should we do here? Respect the first or last prefix?
@@ -1126,6 +1129,7 @@ QString Instruction::toString(DWORD origin, bool x32) const
     QString segmentPrefix;
     QString asizePrefix;
     QString osizePrefix;
+    QString repPrefix;
     if (hasSegmentPrefix()) {
         segmentPrefix = QString("%1: ").arg(CPU::registerName(m_segmentPrefix));
     }
@@ -1135,7 +1139,10 @@ QString Instruction::toString(DWORD origin, bool x32) const
     if (hasOperandSizeOverridePrefix()) {
         osizePrefix = m_o32 ? "o32 " : "o16 ";
     }
-    return QString("%1%2%3%4").arg(segmentPrefix).arg(asizePrefix).arg(osizePrefix).arg(toStringInternal(origin, x32));
+    if (hasRepPrefix()) {
+        repPrefix = m_repPrefix == Prefix::REPNZ ? "REPNZ " : "REPZ ";
+    }
+    return QString("%1%2%3%4%5").arg(segmentPrefix).arg(asizePrefix).arg(osizePrefix).arg(repPrefix).arg(toStringInternal(origin, x32));
 }
 
 #define RELADDRARGS relativeAddress(origin + (m_a32 ? 5 : 3), x32, SIGNED_DWORD(m_a32 ? imm32() : imm16()))

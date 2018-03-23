@@ -383,6 +383,9 @@ FLATTEN void CPU::executeOneInstruction()
         clearPrefix();
         dumpDisassembled(cachedDescriptor(SegmentRegisterIndex::CS), m_baseEIP, 3);
         raiseException(e);
+    } catch(HardwareInterruptDuringREP) {
+        clearPrefix();
+        setEIP(getBaseEIP());
     }
 }
 

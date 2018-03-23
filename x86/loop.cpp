@@ -26,8 +26,6 @@
 #include "CPU.h"
 #include "debug.h"
 
-#include "debugger.h"
-
 void CPU::doLOOP(Instruction& insn, bool condition)
 {
     if (!decrementCXForAddressSize() && condition)
@@ -47,62 +45,4 @@ void CPU::_LOOPZ_imm8(Instruction& insn)
 void CPU::_LOOPNZ_imm8(Instruction& insn)
 {
     doLOOP(insn, !getZF());
-}
-
-void CPU::doREP(Instruction& insn)
-{
-    while (readRegisterForAddressSize(RegisterCX) != 0) {
-        execute(insn);
-        decrementCXForAddressSize();
-    }
-}
-
-void CPU::doREPZ(Instruction& insn, bool wantedZF)
-{
-    while (readRegisterForAddressSize(RegisterCX) != 0) {
-        execute(insn);
-        decrementCXForAddressSize();
-        if (getZF() != wantedZF)
-            break;
-    }
-}
-
-void CPU::handleRepeatOpcode(Instruction& insn, bool wantedZF)
-{
-    switch(insn.op()) {
-    case 0x6C: doREP(insn); return; // INSB
-    case 0x6D: doREP(insn); return; // INSW/INSD
-    case 0x6E: doREP(insn); return; // OUTSB
-    case 0x6F: doREP(insn); return; // OUTSW/OUTSD
-    case 0xA4: doREP(insn); return; // MOVSB
-    case 0xA5: doREP(insn); return; // MOVSW/MOVSD
-    case 0xAA: doREP(insn); return; // STOSB
-    case 0xAB: doREP(insn); return; // STOSW/STOSD
-    case 0xAC: doREP(insn); return; // LODSB
-    case 0xAD: doREP(insn); return; // LODSW/LODSD
-    case 0xA6: doREPZ(insn, wantedZF); return; // CMPSB
-    case 0xA7: doREPZ(insn, wantedZF); return; // CMPSW/CMPSD
-    case 0xAE: doREPZ(insn, wantedZF); return; // SCASB
-    case 0xAF: doREPZ(insn, wantedZF); return; // SCASW/SCASD
-
-    case 0x90:
-        // PAUSE / REP NOP
-        execute(insn);
-        return;
-
-    default:
-        throw InvalidOpcode(QString("Opcode %1 used with REP* prefix").arg(insn.op(), 2, 16, QLatin1Char('0')));
-    }
-}
-
-void CPU::_REP(Instruction&)
-{
-    auto newInsn = Instruction::fromStream(*this, m_operandSize32, m_addressSize32);
-    handleRepeatOpcode(newInsn, true);
-}
-
-void CPU::_REPNZ(Instruction&)
-{
-    auto newInsn = Instruction::fromStream(*this, m_operandSize32, m_addressSize32);
-    handleRepeatOpcode(newInsn, false);
 }

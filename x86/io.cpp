@@ -59,29 +59,6 @@ void CPU::_OUT_DX_EAX(Instruction&)
     out32(getDX(), getEAX());
 }
 
-template<typename T>
-void CPU::doOUTS()
-{
-    T data = readMemory<T>(currentSegment(), readRegisterForAddressSize(RegisterSI));
-    stepRegisterForAddressSize(RegisterSI, sizeof(T));
-    out<T>(getDX(), data);
-}
-
-void CPU::_OUTSB(Instruction&)
-{
-    doOUTS<BYTE>();
-}
-
-void CPU::_OUTSW(Instruction&)
-{
-    doOUTS<WORD>();
-}
-
-void CPU::_OUTSD(Instruction&)
-{
-    doOUTS<DWORD>();
-}
-
 void CPU::_IN_AL_imm8(Instruction& insn)
 {
     setAL(in8(insn.imm8()));
@@ -116,30 +93,6 @@ void CPU::_IN_EAX_DX(Instruction&)
 // "These instructions may read from the I/O port without writing to the memory location if an exception or VM exit
 // occurs due to the write (e.g. #PF). If this would be problematic, for example because the I/O port read has side-
 // effects, software should ensure the write to the memory location does not cause an exception or VM exit."
-
-template<typename T>
-void CPU::doINS()
-{
-    // FIXME: Should this really read the port without knowing that the destination memory is writable?
-    T data = in<T>(getDX());
-    writeMemory<T>(SegmentRegisterIndex::ES, readRegisterForAddressSize(RegisterDI), data);
-    stepRegisterForAddressSize(RegisterDI, sizeof(T));
-}
-
-void CPU::_INSB(Instruction&)
-{
-    doINS<BYTE>();
-}
-
-void CPU::_INSW(Instruction&)
-{
-    doINS<WORD>();
-}
-
-void CPU::_INSD(Instruction&)
-{
-    doINS<DWORD>();
-}
 
 template<typename T>
 void CPU::out(WORD port, T data)

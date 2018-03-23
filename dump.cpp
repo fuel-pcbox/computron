@@ -66,12 +66,6 @@ unsigned CPU::dumpDisassembledInternal(SegmentDescriptor& descriptor, DWORD offs
         p += sprintf(p, " <invalid instruction>");
 
     vlog(LogDump, buf);
-
-
-    /* Recurse if this is a prefix instruction. */
-    if (insn.op() == 0xf2 || insn.op() == 0xf3)
-        return insn.length() + dumpDisassembledInternal(descriptor, offset + insn.length());
-
     return insn.length();
 }
 

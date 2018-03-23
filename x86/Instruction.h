@@ -36,6 +36,16 @@ struct InstructionDescriptor;
 
 typedef void (CPU::*InstructionImpl)(Instruction&);
 
+struct Prefix {
+enum Op {
+    OperandSizeOverride = 0x66,
+    AddressSizeOverride = 0x67,
+    REP = 0xf3,
+    REPZ = 0xf3,
+    REPNZ = 0xf2,
+};
+};
+
 class InstructionStream {
 public:
     virtual BYTE readInstruction8() = 0;
@@ -134,6 +144,9 @@ public:
     bool hasSegmentPrefix() const { return m_segmentPrefix != SegmentRegisterIndex::None; }
     bool hasAddressSizeOverridePrefix() const { return m_hasAddressSizeOverridePrefix; }
     bool hasOperandSizeOverridePrefix() const { return m_hasOperandSizeOverridePrefix; }
+    bool hasRepPrefix() const { return m_repPrefix; }
+
+    BYTE repPrefix() const { return m_repPrefix; }
 
     bool isValid() const { return m_descriptor; }
 
@@ -198,6 +211,7 @@ private:
     SegmentRegisterIndex m_segmentPrefix { SegmentRegisterIndex::None };
     bool m_hasOperandSizeOverridePrefix { false };
     bool m_hasAddressSizeOverridePrefix { false };
+    BYTE m_repPrefix { 0 };
 
     MemoryOrRegisterReference m_modrm;
 
