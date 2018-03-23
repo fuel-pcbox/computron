@@ -1476,6 +1476,7 @@ ALWAYS_INLINE WORD& Instruction::segreg()
 {
 #ifdef DEBUG_INSTRUCTION
     ASSERT(m_cpu);
+    ASSERT(registerIndex() < 6);
 #endif
     return *m_cpu->m_segmentMap[registerIndex()];
 }
