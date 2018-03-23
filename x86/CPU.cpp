@@ -965,7 +965,7 @@ void CPU::doLxS(Instruction& insn, SegmentRegisterIndex segreg)
     auto offset = readMemory<T>(insn.modrm().segment(), insn.modrm().offset());
     WORD selector = readMemory16(insn.modrm().segment(), insn.modrm().offset() + sizeof(T));
     insn.reg<T>() = offset;
-    setSegmentRegister(segreg, selector);
+    writeSegmentRegister(segreg, selector);
 }
 
 void CPU::_LDS_reg16_mem16(Instruction& insn)
@@ -1463,32 +1463,32 @@ void CPU::updateCodeSegmentCache()
 
 void CPU::setCS(WORD value)
 {
-    setSegmentRegister(SegmentRegisterIndex::CS, value);
+    writeSegmentRegister(SegmentRegisterIndex::CS, value);
 }
 
 void CPU::setDS(WORD value)
 {
-    setSegmentRegister(SegmentRegisterIndex::DS, value);
+    writeSegmentRegister(SegmentRegisterIndex::DS, value);
 }
 
 void CPU::setES(WORD value)
 {
-    setSegmentRegister(SegmentRegisterIndex::ES, value);
+    writeSegmentRegister(SegmentRegisterIndex::ES, value);
 }
 
 void CPU::setSS(WORD value)
 {
-    setSegmentRegister(SegmentRegisterIndex::SS, value);
+    writeSegmentRegister(SegmentRegisterIndex::SS, value);
 }
 
 void CPU::setFS(WORD value)
 {
-    setSegmentRegister(SegmentRegisterIndex::FS, value);
+    writeSegmentRegister(SegmentRegisterIndex::FS, value);
 }
 
 void CPU::setGS(WORD value)
 {
-    setSegmentRegister(SegmentRegisterIndex::GS, value);
+    writeSegmentRegister(SegmentRegisterIndex::GS, value);
 }
 
 BYTE* CPU::memoryPointer(SegmentRegisterIndex segment, DWORD offset)

@@ -323,15 +323,7 @@ public:
     void setIP(WORD ip) { this->IP = ip; }
     void setEIP(DWORD eip) { this->EIP = eip; }
 
-    DWORD getRegister32(RegisterIndex32 registerIndex) const { return *treg32[registerIndex]; }
-    WORD getRegister16(RegisterIndex16 registerIndex) const { return *treg16[registerIndex]; }
-    BYTE getRegister8(RegisterIndex8 registerIndex) const { return *treg8[registerIndex]; }
-
-    void setRegister32(RegisterIndex32 registerIndex, DWORD value) { *treg32[registerIndex] = value; }
-    void setRegister16(RegisterIndex16 registerIndex, WORD value) { *treg16[registerIndex] = value; }
-    void setRegister8(RegisterIndex8 registerIndex, BYTE value) { *treg8[registerIndex] = value; }
-
-    WORD getSegment(SegmentRegisterIndex segmentIndex) const { return *m_segmentMap[static_cast<int>(segmentIndex)]; }
+    WORD readSegmentRegister(SegmentRegisterIndex segreg) const { return *m_segmentMap[static_cast<int>(segreg)]; }
 
     DWORD getControlRegister(int registerIndex) const { return *m_controlRegisterMap[registerIndex]; }
     void setControlRegister(int registerIndex, DWORD value) { *m_controlRegisterMap[registerIndex] = value; }
@@ -1224,7 +1216,7 @@ private:
     void writeToGDT(Descriptor&);
 
     void dumpSelector(const char* prefix, SegmentRegisterIndex);
-    void setSegmentRegister(SegmentRegisterIndex, WORD selector);
+    void writeSegmentRegister(SegmentRegisterIndex, WORD selector);
     void validateSegmentLoad(SegmentRegisterIndex, WORD selector, const Descriptor&);
 
     SegmentDescriptor m_descriptor[6];

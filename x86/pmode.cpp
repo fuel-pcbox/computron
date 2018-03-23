@@ -438,14 +438,14 @@ void CPU::validateSegmentLoad(SegmentRegisterIndex reg, WORD selector, const Des
     }
 }
 
-void CPU::setSegmentRegister(SegmentRegisterIndex segmentRegisterIndex, WORD selector)
+void CPU::writeSegmentRegister(SegmentRegisterIndex segreg, WORD selector)
 {
-    auto& descriptorCache = static_cast<Descriptor&>(m_descriptor[(int)segmentRegisterIndex]);
-    auto descriptor = getDescriptor(selector, segmentRegisterIndex);
+    auto& descriptorCache = static_cast<Descriptor&>(m_descriptor[(int)segreg]);
+    auto descriptor = getDescriptor(selector, segreg);
 
-    validateSegmentLoad(segmentRegisterIndex, selector, descriptor);
+    validateSegmentLoad(segreg, selector, descriptor);
 
-    *m_segmentMap[(int)segmentRegisterIndex] = selector;
+    *m_segmentMap[(int)segreg] = selector;
 
     if (descriptor.isNull()) {
         descriptorCache = descriptor;
@@ -457,7 +457,7 @@ void CPU::setSegmentRegister(SegmentRegisterIndex segmentRegisterIndex, WORD sel
     if (options.pedebug) {
         if (getPE()) {
             vlog(LogCPU, "%s loaded with %04x { type:%02X, base:%08X, limit:%08X }",
-                toString(segmentRegisterIndex),
+                toString(segreg),
                 selector,
                 descriptor.asSegmentDescriptor().type(),
                 descriptor.asSegmentDescriptor().base(),
@@ -466,7 +466,7 @@ void CPU::setSegmentRegister(SegmentRegisterIndex segmentRegisterIndex, WORD sel
         }
     }
 
-    switch (segmentRegisterIndex) {
+    switch (segreg) {
     case SegmentRegisterIndex::CS:
         if (getPE()) {
             setCPL(descriptor.DPL());

@@ -127,11 +127,11 @@ void CPU::dumpTrace()
 }
 #endif
 
-void CPU::dumpSelector(const char* prefix, SegmentRegisterIndex segmentIndex)
+void CPU::dumpSelector(const char* prefix, SegmentRegisterIndex segreg)
 {
-    auto& descriptor = cachedDescriptor(segmentIndex);
+    auto& descriptor = cachedDescriptor(segreg);
     if (descriptor.isNull())
-        vlog(LogDump, "%s: %04x: (null descriptor)", prefix, getSegment(segmentIndex));
+        vlog(LogDump, "%s: %04x: (null descriptor)", prefix, readSegmentRegister(segreg));
     else
         dumpDescriptor(descriptor, prefix);
 }

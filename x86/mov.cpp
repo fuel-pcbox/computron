@@ -53,7 +53,7 @@ void CPU::_MOV_RM32_seg(Instruction& insn)
 
 void CPU::_MOV_seg_RM16(Instruction& insn)
 {
-    setSegmentRegister(insn.segmentRegisterIndex(), insn.modrm().read16());
+    writeSegmentRegister(insn.segmentRegisterIndex(), insn.modrm().read16());
     if (insn.segmentRegisterIndex() == SegmentRegisterIndex::SS) {
         makeNextInstructionUninterruptible();
     }
@@ -61,7 +61,7 @@ void CPU::_MOV_seg_RM16(Instruction& insn)
 
 void CPU::_MOV_seg_RM32(Instruction& insn)
 {
-    setSegmentRegister(insn.segmentRegisterIndex(), insn.modrm().read32());
+    writeSegmentRegister(insn.segmentRegisterIndex(), insn.modrm().read32());
     if (insn.segmentRegisterIndex() == SegmentRegisterIndex::SS) {
         makeNextInstructionUninterruptible();
     }
@@ -129,7 +129,7 @@ void CPU::_MOV_reg32_CR(Instruction& insn)
         }
     }
 
-    setRegister32(static_cast<CPU::RegisterIndex32>(insn.rm() & 7), getControlRegister(crIndex));
+    writeRegister<DWORD>(insn.rm() & 7, getControlRegister(crIndex));
 }
 
 void CPU::_MOV_CR_reg32(Instruction& insn)
@@ -164,7 +164,7 @@ void CPU::_MOV_CR_reg32(Instruction& insn)
         }
     }
 
-    setControlRegister(crIndex, getRegister32(static_cast<CPU::RegisterIndex32>(insn.rm() & 7)));
+    setControlRegister(crIndex, readRegister<DWORD>(static_cast<CPU::RegisterIndex32>(insn.rm() & 7)));
 
     if (crIndex == 0 || crIndex == 3)
         updateCodeSegmentCache();
@@ -181,17 +181,15 @@ void CPU::_MOV_reg32_DR(Instruction& insn)
 
     if (getVM()) {
         throw GeneralProtectionFault(0, "MOV reg32, DRx with VM=1");
-        return;
     }
 
     if (getPE()) {
         if (getCPL() != 0) {
             throw GeneralProtectionFault(0, QString("MOV reg32, DRx with CPL!=0(%1)").arg(getCPL()));
-            return;
         }
     }
 
-    setRegister32(registerIndex, getDebugRegister(drIndex));
+    writeRegister(registerIndex, getDebugRegister(drIndex));
     vlog(LogCPU, "MOV %s <- DR%u (%08X)", registerName(registerIndex), drIndex, getDebugRegister(drIndex));
 }
 
@@ -202,17 +200,15 @@ void CPU::_MOV_DR_reg32(Instruction& insn)
 
     if (getVM()) {
         throw GeneralProtectionFault(0, "MOV DRx, reg32 with VM=1");
-        return;
     }
 
     if (getPE()) {
         if (getCPL() != 0) {
             throw GeneralProtectionFault(0, QString("MOV DRx, reg32 with CPL!=0(%1)").arg(getCPL()));
-            return;
         }
     }
 
-    setDebugRegister(drIndex, getRegister32(registerIndex));
+    setDebugRegister(drIndex, readRegister<DWORD>(registerIndex));
     //vlog(LogCPU, "MOV DR%u <- %08X", drIndex, getDebugRegister(drIndex));
 }
 
