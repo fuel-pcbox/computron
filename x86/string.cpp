@@ -100,7 +100,7 @@ void CPU::_STOSD(Instruction& insn)
 template<typename T, typename U>
 void CPU::doCMPS(Instruction& insn)
 {
-    static_assert(sizeof(U) == sizeof(T) * 2);
+    static_assert(sizeof(U) == sizeof(T) * 2, "U should be a super-sized T");
     doOnceOrRepeatedly(insn, true, [this] () {
         U src = readMemory<T>(currentSegment(), readRegisterForAddressSize(RegisterSI));
         U dest = readMemory<T>(SegmentRegisterIndex::ES, readRegisterForAddressSize(RegisterDI));
@@ -128,6 +128,7 @@ void CPU::_CMPSD(Instruction& insn)
 template<typename T, typename U>
 void CPU::doSCAS(Instruction& insn)
 {
+    static_assert(sizeof(U) == sizeof(T) * 2, "U should be a super-sized T");
     doOnceOrRepeatedly(insn, true, [this] () {
         U dest = readMemory<T>(SegmentRegisterIndex::ES, readRegisterForAddressSize(RegisterDI));
         stepRegisterForAddressSize(RegisterDI, sizeof(T));

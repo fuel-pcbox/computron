@@ -61,6 +61,10 @@ T MemoryOrRegisterReference::read()
     return m_cpu->readMemory<T>(segment(), offset());
 }
 
+template BYTE MemoryOrRegisterReference::read<BYTE>();
+template WORD MemoryOrRegisterReference::read<WORD>();
+template DWORD MemoryOrRegisterReference::read<DWORD>();
+
 template<typename T>
 void MemoryOrRegisterReference::write(T data)
 {
@@ -71,6 +75,10 @@ void MemoryOrRegisterReference::write(T data)
     }
     m_cpu->writeMemory<T>(segment(), offset(), data);
 }
+
+template void MemoryOrRegisterReference::write<BYTE>(BYTE);
+template void MemoryOrRegisterReference::write<WORD>(WORD);
+template void MemoryOrRegisterReference::write<DWORD>(DWORD);
 
 BYTE MemoryOrRegisterReference::read8() { return read<BYTE>(); }
 WORD MemoryOrRegisterReference::read16() { return read<WORD>(); }
