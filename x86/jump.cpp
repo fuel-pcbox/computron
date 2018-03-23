@@ -78,7 +78,7 @@ void CPU::_JMP_RM32(Instruction& insn)
 template<typename T>
 void CPU::doFarJump(Instruction& insn, JumpType jumpType)
 {
-    T offset = readMemory16(insn.modrm().segment(), insn.modrm().offset());
+    T offset = readMemory<T>(insn.modrm().segment(), insn.modrm().offset());
     WORD selector = readMemory16(insn.modrm().segment(), insn.modrm().offset() + sizeof(T));
     jump32(selector, offset, jumpType);
 }
