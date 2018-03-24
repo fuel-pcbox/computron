@@ -95,9 +95,9 @@ void CPU::_DAS(Instruction&)
     if (oldAL > 0x99 || oldCF == 1) {
         regs.B.AL -= 0x60;
         setCF(1);
-    } else {
-        setCF(0);
     }
+
+    updateFlags8(getAL());
 }
 
 void CPU::_DAA(Instruction&)
@@ -122,4 +122,6 @@ void CPU::_DAA(Instruction&)
     } else {
         setCF(0);
     }
+
+    updateFlags8(getAL());
 }
