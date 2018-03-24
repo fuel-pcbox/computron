@@ -241,8 +241,7 @@ T CPU::doROL(T data, int steps)
     steps &= BitSizeOfType<T>::bits - 1;
     result = (data << steps) | (data >> (BitSizeOfType<T>::bits - steps));
     setCF(result & 1);
-    if (steps == 1)
-        setOF(((result >> (BitSizeOfType<T>::bits - 1)) & 1) ^ getCF());
+    setOF(((result >> (BitSizeOfType<T>::bits - 1)) & 1) ^ getCF());
 
     return result;
 }
@@ -258,10 +257,7 @@ T CPU::doROR(T data, int steps)
     steps &= BitSizeOfType<T>::bits - 1;
     result = (data >> steps) | (data << (BitSizeOfType<T>::bits - steps));
     setCF((result >> (BitSizeOfType<T>::bits - 1)) & 1);
-
-    if (steps == 1)
-        setOF((result >> (BitSizeOfType<T>::bits - 1)) ^ ((result >> (BitSizeOfType<T>::bits - 2) & 1)));
-
+    setOF((result >> (BitSizeOfType<T>::bits - 1)) ^ ((result >> (BitSizeOfType<T>::bits - 2) & 1)));
     return result;
 }
 
@@ -275,8 +271,7 @@ T CPU::doSHR(T data, int steps)
 
     if (steps <= BitSizeOfType<T>::bits) {
         setCF((result >> (steps - 1)) & 1);
-        if (steps == 1)
-            setOF((data >> (BitSizeOfType<T>::bits - 1)) & 1);
+        setOF((data >> (BitSizeOfType<T>::bits - 1)) & 1);
     }
     result >>= steps;
 
@@ -296,9 +291,7 @@ T CPU::doSHL(T data, int steps)
         setCF(result >> (BitSizeOfType<T>::bits - steps) & 1);
     }
     result <<= steps;
-    if (steps == 1)
-        setOF((result >> (BitSizeOfType<T>::bits - 1)) ^ getCF());
-
+    setOF((result >> (BitSizeOfType<T>::bits - 1)) ^ getCF());
     updateFlags(result, BitSizeOfType<T>::bits);
     return result;
 }
@@ -319,9 +312,7 @@ T CPU::doSAR(T data, int steps)
         result = (result >> 1) | (n & mask);
         setCF(n & 1);
     }
-
-    if (steps == 1)
-        setOF(0);
+    setOF(0);
     updateFlags(result, BitSizeOfType<T>::bits);
     return result;
 }
@@ -352,10 +343,7 @@ T CPU::doRCL(T data, int steps)
         result = ((result << 1) & mask) | getCF();
         setCF((n >> (BitSizeOfType<T>::bits - 1)) & 1);
     }
-
-    if (steps == 1)
-        setOF((result >> (BitSizeOfType<T>::bits - 1)) ^ getCF());
-
+    setOF((result >> (BitSizeOfType<T>::bits - 1)) ^ getCF());
     return result;
 }
 
@@ -373,10 +361,7 @@ T CPU::doRCR(T data, int steps)
         result = (result >> 1) | (getCF() << (BitSizeOfType<T>::bits - 1));
         setCF(n & 1);
     }
-
-    if (steps == 1)
-        setOF((result >> (BitSizeOfType<T>::bits - 1)) ^ ((result >> (BitSizeOfType<T>::bits - 2) & 1)));
-
+    setOF((result >> (BitSizeOfType<T>::bits - 1)) ^ ((result >> (BitSizeOfType<T>::bits - 2) & 1)));
     return result;
 }
 
@@ -545,10 +530,7 @@ T CPU::doSHLD(T leftData, T rightData, int steps)
         setCF((leftData >> (BitSizeOfType<T>::bits - steps)) & 1);
     }
 
-    if (steps == 1) {
-        setOF(getCF() ^ (result >> (BitSizeOfType<T>::bits - 1) & 1));
-    }
-
+    setOF(getCF() ^ (result >> (BitSizeOfType<T>::bits - 1) & 1));
     updateFlags(result, BitSizeOfType<T>::bits);
     return result;
 }
@@ -589,10 +571,7 @@ T CPU::doSHRD(T leftData, T rightData, int steps)
         setCF((rightData >> (steps - 1)) & 1);
     }
 
-    if (steps == 1) {
-        setOF((result ^ rightData) >> (BitSizeOfType<T>::bits - 1) & 1);
-    }
-
+    setOF((result ^ rightData) >> (BitSizeOfType<T>::bits - 1) & 1);
     updateFlags(result, BitSizeOfType<T>::bits);
     return result;
 }
