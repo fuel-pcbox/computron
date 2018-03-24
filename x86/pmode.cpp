@@ -517,3 +517,19 @@ void CPU::_VERW_RM16(Instruction&)
 {
     ASSERT_NOT_REACHED();
 }
+
+void CPU::_ARPL(Instruction& insn)
+{
+    if (!getPE()) {
+        throw InvalidOpcode("ARPL not recognized in real mode");
+    }
+    WORD dest = insn.modrm().read16();
+    WORD src = insn.reg16();
+
+    if ((dest & 3) < (src & 3)) {
+        setZF(1);
+        insn.modrm().write16((dest & ~3) | (src & 3));
+    } else {
+        setZF(0);
+    }
+}

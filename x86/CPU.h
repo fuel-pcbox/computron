@@ -645,6 +645,7 @@ protected:
     void _LSL_reg32_RM32(Instruction&);
     void _VERR_RM16(Instruction&);
     void _VERW_RM16(Instruction&);
+    void _ARPL(Instruction&);
 
     void _WBINVD(Instruction&);
 
@@ -1467,7 +1468,6 @@ ALWAYS_INLINE WORD& Instruction::reg16()
 {
 #ifdef DEBUG_INSTRUCTION
     ASSERT(m_cpu);
-    ASSERT(m_cpu->o16());
 #endif
     return *m_cpu->treg16[registerIndex()];
 }
