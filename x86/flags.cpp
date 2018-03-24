@@ -78,13 +78,6 @@ void CPU::updateFlags8(BYTE data)
     m_lastOpSize = ByteSize;
 }
 
-void CPU::updateFlags(DWORD data, BYTE bits)
-{
-    m_dirtyFlags |= Flag::PF | Flag::ZF | Flag::SF;
-    m_lastResult = data;
-    m_lastOpSize = bits;
-}
-
 void CPU::_STC(Instruction&)
 {
     setCF(1);

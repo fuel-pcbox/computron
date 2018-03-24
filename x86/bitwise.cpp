@@ -188,23 +188,11 @@ void CPU::_SALC(Instruction&)
     setAL(getCF() ? 0xFF : 0);
 }
 
-// FIXME: Move this method into CPU.
-template<typename T>
-inline void updateCpuFlags(CPU& cpu, T result)
-{
-    if (BitSizeOfType<T>::bits == 8)
-        cpu.updateFlags8(result);
-    else if (BitSizeOfType<T>::bits == 16)
-        cpu.updateFlags16(result);
-    else if (BitSizeOfType<T>::bits == 32)
-        cpu.updateFlags32(result);
-}
-
 template <typename T>
 T CPU::doOr(T dest, T src)
 {
     T result = dest | src;
-    updateCpuFlags(*this, result);
+    updateFlags<T>(result);
     setOF(0);
     setCF(0);
     return result;
@@ -214,7 +202,7 @@ template<typename T>
 T CPU::doXor(T dest, T src)
 {
     T result = dest ^ src;
-    updateCpuFlags(*this, result);
+    updateFlags<T>(result);
     setOF(0);
     setCF(0);
     return result;
@@ -224,7 +212,7 @@ template<typename T>
 T CPU::doAnd(T dest, T src)
 {
     T result = dest & src;
-    updateCpuFlags(*this, result);
+    updateFlags<T>(result);
     setOF(0);
     setCF(0);
     return result;
@@ -275,7 +263,7 @@ T CPU::doSHR(T data, int steps)
     }
     result >>= steps;
 
-    updateFlags(result, BitSizeOfType<T>::bits);
+    updateFlags<T>(result);
     return result;
 }
 
@@ -292,7 +280,7 @@ T CPU::doSHL(T data, int steps)
     }
     result <<= steps;
     setOF((result >> (BitSizeOfType<T>::bits - 1)) ^ getCF());
-    updateFlags(result, BitSizeOfType<T>::bits);
+    updateFlags<T>(result);
     return result;
 }
 
@@ -313,7 +301,7 @@ T CPU::doSAR(T data, int steps)
         setCF(n & 1);
     }
     setOF(0);
-    updateFlags(result, BitSizeOfType<T>::bits);
+    updateFlags<T>(result);
     return result;
 }
 
@@ -531,7 +519,7 @@ T CPU::doSHLD(T leftData, T rightData, int steps)
     }
 
     setOF(getCF() ^ (result >> (BitSizeOfType<T>::bits - 1) & 1));
-    updateFlags(result, BitSizeOfType<T>::bits);
+    updateFlags<T>(result);
     return result;
 }
 
@@ -572,7 +560,7 @@ T CPU::doSHRD(T leftData, T rightData, int steps)
     }
 
     setOF((result ^ rightData) >> (BitSizeOfType<T>::bits - 1) & 1);
-    updateFlags(result, BitSizeOfType<T>::bits);
+    updateFlags<T>(result);
     return result;
 }
 

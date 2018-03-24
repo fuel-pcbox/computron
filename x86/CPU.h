@@ -488,9 +488,9 @@ public:
     void setFlags(WORD flags);
     void setEFlagsRespectfully(DWORD flags);
 
-    inline bool evaluate(BYTE) const;
+    bool evaluate(BYTE) const;
 
-    void updateFlags(DWORD value, BYTE bits);
+    template<typename T> void updateFlags(T);
     void updateFlags32(DWORD value);
     void updateFlags16(WORD value);
     void updateFlags8(BYTE value);
@@ -1493,6 +1493,22 @@ ALWAYS_INLINE DWORD& Instruction::reg32()
 template<> ALWAYS_INLINE BYTE& Instruction::reg<BYTE>() { return reg8(); }
 template<> ALWAYS_INLINE WORD& Instruction::reg<WORD>() { return reg16(); }
 template<> ALWAYS_INLINE DWORD& Instruction::reg<DWORD>() { return reg32(); }
+
+template<typename T>
+inline void CPU::updateFlags(T result)
+{
+    switch (BitSizeOfType<T>::bits) {
+    case 8:
+        updateFlags8(result);
+        break;
+    case 16:
+        updateFlags16(result);
+        break;
+    case 32:
+        updateFlags32(result);
+        break;
+    }
+}
 
 ALWAYS_INLINE void Instruction::execute(CPU& cpu)
 {
