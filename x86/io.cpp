@@ -169,3 +169,10 @@ DWORD CPU::in32(WORD port)
 {
     return in<DWORD>(port);
 }
+
+template BYTE CPU::in<BYTE>(WORD port);
+template WORD CPU::in<WORD>(WORD port);
+template DWORD CPU::in<DWORD>(WORD port);
+template void CPU::out<BYTE>(WORD port, BYTE);
+template void CPU::out<WORD>(WORD port, WORD);
+template void CPU::out<DWORD>(WORD port, DWORD);
