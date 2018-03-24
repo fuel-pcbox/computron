@@ -1139,7 +1139,7 @@ QString Instruction::toString(DWORD origin, bool x32) const
         osizePrefix = m_o32 ? "o32 " : "o16 ";
     }
     if (hasRepPrefix()) {
-        repPrefix = m_repPrefix == Prefix::REPNZ ? "REPNZ " : "REPZ ";
+        repPrefix = m_repPrefix == Prefix::REPNZ ? "repnz " : "repz ";
     }
     return QString("%1%2%3%4%5").arg(segmentPrefix).arg(asizePrefix).arg(osizePrefix).arg(repPrefix).arg(toStringInternal(origin, x32));
 }

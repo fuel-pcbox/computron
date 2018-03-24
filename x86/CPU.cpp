@@ -613,6 +613,19 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
 #endif
             ASSERT(gate.isCallGate());
             ASSERT(!gate.parameterCount()); // FIXME: Implement
+
+            if (gate.DPL() < getCPL()) {
+                throw GeneralProtectionFault(segment, QString("%1 to gate with DPL(%2) < CPL(%3)").arg(toString(type)).arg(gate.DPL()).arg(getCPL()));
+            }
+
+            if (gate.DPL() < selectorRPL) {
+                throw GeneralProtectionFault(segment, QString("%1 to gate with DPL(%2) < RPL(%3)").arg(toString(type)).arg(gate.DPL()).arg(selectorRPL));
+            }
+
+            if (!gate.present()) {
+                throw NotPresent(segment, QString("Gate not present"));
+            }
+
             // NOTE: We recurse here, jumping to the gate entry point.
             DWORD gateOffset = gate.offset();
             if (!gate.is32Bit())
@@ -634,12 +647,41 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
         }
     } else { // it's a segment descriptor
         ASSERT(descriptor.isCode());
+        auto& codeSegment = descriptor.asCodeSegmentDescriptor();
+
+        if (getPE()) {
+            if ((type == JumpType::CALL || type == JumpType::JMP) && !gate) {
+                if (codeSegment.conforming()) {
+                    if (codeSegment.DPL() > getCPL()) {
+                        throw GeneralProtectionFault(segment, QString("%1 -> Code segment DPL(%2) > CPL(%3)").arg(toString(type)).arg(codeSegment.DPL()).arg(getCPL()));
+                    }
+                } else {
+                    if (codeSegment.DPL() > selectorRPL) {
+                        throw GeneralProtectionFault(segment, QString("%1 -> Code segment DPL(%2) > RPL(%3)").arg(toString(type)).arg(codeSegment.DPL()).arg(selectorRPL));
+                    }
+                    if (codeSegment.DPL() != getCPL()) {
+                        throw GeneralProtectionFault(segment, QString("%1 -> Code segment DPL(%2) != CPL(%3)").arg(toString(type)).arg(codeSegment.DPL()).arg(getCPL()));
+                    }
+                }
+            }
+
+            if (offset > codeSegment.effectiveLimit()) {
+                throw GeneralProtectionFault(0, "Offset outside segment limit");
+            }
+
+            if (!codeSegment.present()) {
+                throw NotPresent(segment, QString("Code segment not present"));
+            }
+        }
         setCS(segment);
         setEIP(offset);
+        if (getPE() && (type == JumpType::CALL || type == JumpType::JMP) && !gate) {
+            setCPL(originalCPL);
+        }
     }
 
-    if (getPE() && (type == JumpType::CALL || type == JumpType::INT)) {
-    if (descriptor.isNonconformingCode() && descriptor.DPL() < originalCPL) {
+    if (getPE() && (type == JumpType::CALL || type == JumpType::INT) && gate) {
+    if (descriptor.DPL() < originalCPL) {
 #ifdef DEBUG_JUMPS
         vlog(LogCPU, "%s escalating privilege from ring%u to ring%u", toString(type), originalCPL, descriptor.DPL(), descriptor);
 #endif
