@@ -31,6 +31,9 @@
 
 void CPU::_BOUND(Instruction& insn)
 {
+    if (insn.modrm().isRegister()) {
+        throw InvalidOpcode("BOUND with register operand");
+    }
     QString reason;
     bool isWithinBounds;
     if (o32()) {
