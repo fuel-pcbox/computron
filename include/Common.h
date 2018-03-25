@@ -59,6 +59,7 @@ struct RuntimeOptions {
     bool crashOnPF { false };
     bool crashOnGPF { false };
     bool crashOnException { false };
+    bool stacklog { false };
     QString autotestPath;
     QString configPath;
 #ifdef DISASSEMBLE_EVERYTHING

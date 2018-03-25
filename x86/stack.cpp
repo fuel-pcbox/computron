@@ -30,17 +30,23 @@ void CPU::push32(DWORD value)
 {
     writeMemory32(SegmentRegisterIndex::SS, currentStackPointer() - 4, value);
     adjustStackPointer(-4);
+    if (UNLIKELY(options.stacklog))
+        vlog(LogCPU, "push32: %08x (at esp=%08x)", value, getESP());
 }
 
 void CPU::push16(WORD value)
 {
     writeMemory16(SegmentRegisterIndex::SS, currentStackPointer() - 2, value);
     adjustStackPointer(-2);
+    if (UNLIKELY(options.stacklog))
+        vlog(LogCPU, "push16: %04x (at esp=%08x)", value, getESP());
 }
 
 DWORD CPU::pop32()
 {
     DWORD data = readMemory32(SegmentRegisterIndex::SS, currentStackPointer());
+    if (UNLIKELY(options.stacklog))
+        vlog(LogCPU, "pop32: %08x (from esp=%08x)", data, getESP());
     adjustStackPointer(4);
     return data;
 }
@@ -48,6 +54,8 @@ DWORD CPU::pop32()
 WORD CPU::pop16()
 {
     WORD data = readMemory16(SegmentRegisterIndex::SS, currentStackPointer());
+    if (UNLIKELY(options.stacklog))
+        vlog(LogCPU, "pop16: %04x (from esp=%08x)", data, getESP());
     adjustStackPointer(2);
     return data;
 }

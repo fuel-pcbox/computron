@@ -190,6 +190,7 @@ void CPU::_RETF(Instruction&)
 
 void CPU::_RETF_imm16(Instruction& insn)
 {
+    BYTE originalCPL = getCPL();
     if (o32()) {
         DWORD nip = pop32();
         WORD ncs = pop32();
@@ -200,6 +201,9 @@ void CPU::_RETF_imm16(Instruction& insn)
         WORD ncs = pop16();
         adjustStackPointer(insn.imm16());
         jump16(ncs, nip, JumpType::RETF);
+    }
+    if (getCPL() != originalCPL) {
+        ASSERT_NOT_REACHED();
     }
 }
 

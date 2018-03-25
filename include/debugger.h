@@ -65,6 +65,7 @@ private:
     void handleIRQ(const QStringList&);
     void handleDumpUnassembled(const QStringList&);
     void handleSelector(const QStringList&);
+    void handleStack(const QStringList&);
 };
 
 #endif

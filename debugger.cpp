@@ -135,6 +135,9 @@ void Debugger::handleCommand(const QString& rawCommand)
     if (lowerCommand == "sel")
         return handleSelector(arguments);
 
+    if (lowerCommand == "k" || lowerCommand == "stack")
+        return handleStack(arguments);
+
     if (lowerCommand == "gdt") {
         cpu().dumpGDT();
         return;
@@ -169,6 +172,16 @@ void Debugger::handleCommand(const QString& rawCommand)
     if (lowerCommand == "unmask") {
         cpu().machine().masterPIC().unmaskAll();
         cpu().machine().slavePIC().unmaskAll();
+        return;
+    }
+
+    if (lowerCommand == "slon") {
+        options.stacklog = true;
+        return;
+    }
+
+    if (lowerCommand == "sloff") {
+        options.stacklog = false;
         return;
     }
 
@@ -292,6 +305,12 @@ void Debugger::handleSelector(const QStringList& arguments)
     cpu().dumpDescriptor(cpu().getDescriptor(select));
 }
 
+void Debugger::handleStack(const QStringList& arguments)
+{
+    UNUSED_PARAM(arguments);
+    cpu().dumpStack(DWordSize, 16);
+}
+
 void Debugger::handleDumpMemory(const QStringList& arguments)
 {
     WORD segment = cpu().getCS();
@@ -319,9 +338,9 @@ void Debugger::handleDumpUnassembled(const QStringList& arguments)
         offset = arguments.at(1).toUInt(0, 16);
     }
 
-    cpu().dumpDisassembled(segment, offset, 16);
+    DWORD bytesDisassembled = cpu().dumpDisassembled(segment, offset, 20);
+    vlog(LogDump, "Next offset: %08x", offset + bytesDisassembled);
 }
-
 
 void Debugger::handleDumpSegment(const QStringList& arguments)
 {

@@ -565,7 +565,7 @@ public:
 
     // Dumps registers, flags & stack
     void dumpAll();
-
+    void dumpStack(ValueSize, unsigned count);
     void dumpWatches();
 
     void dumpIVT();
@@ -726,7 +726,6 @@ protected:
 
     void _MOV_seg_RM16(Instruction&);
     void _MOV_RM16_seg(Instruction&);
-    void _MOV_RM32_seg(Instruction&);
     void _MOV_AL_moff8(Instruction&);
     void _MOV_AX_moff16(Instruction&);
     void _MOV_EAX_moff32(Instruction&);

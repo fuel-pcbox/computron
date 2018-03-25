@@ -53,6 +53,7 @@ public:
     static void raiseIRQ(Machine&, BYTE num);
     static void lowerIRQ(Machine&, BYTE num);
     static bool isIRQRaised(Machine&, BYTE num);
+    static bool isIgnoringAllIRQs();
     static void setIgnoreAllIRQs(bool);
     static bool hasPendingIRQ() { return s_pendingRequests; }
 

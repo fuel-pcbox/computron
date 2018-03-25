@@ -34,7 +34,7 @@ void CPU::doOnceOrRepeatedly(Instruction& insn, bool careAboutZF, F func)
         return;
     }
     while (readRegisterForAddressSize(RegisterCX)) {
-        if (getIF() && PIC::hasPendingIRQ()) {
+        if (getIF() && PIC::hasPendingIRQ() && !PIC::isIgnoringAllIRQs()) {
             throw HardwareInterruptDuringREP();
         }
         func();

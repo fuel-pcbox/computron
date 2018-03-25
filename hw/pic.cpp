@@ -33,6 +33,11 @@
 std::atomic<WORD> PIC::s_pendingRequests;
 static bool s_ignoringIRQs = false;
 
+bool PIC::isIgnoringAllIRQs()
+{
+    return s_ignoringIRQs;
+}
+
 void PIC::setIgnoreAllIRQs(bool b)
 {
     s_ignoringIRQs = b;

@@ -46,21 +46,7 @@ void CPU::_MOV_RM16_seg(Instruction& insn)
     if (insn.registerIndex() >= 6) {
         throw InvalidOpcode("MOV_RM16_seg with invalid segment register index");
     }
-    insn.modrm().write16(insn.segreg());
-}
-
-void CPU::_MOV_RM32_seg(Instruction& insn)
-{
-    if (insn.registerIndex() >= 6) {
-        throw InvalidOpcode("MOV_RM32_seg with invalid segment register index");
-    }
-    // Storing a segreg to a 32-bit memory location should apparently only
-    // store the relevant 16 bits of data. (Tested by test386.asm)
-    if (insn.modrm().isRegister()) {
-        insn.modrm().write32(insn.segreg());
-        return;
-    }
-    writeMemory16(insn.modrm().segment(), insn.modrm().offset(), insn.segreg());
+    insn.modrm().writeClearing16(insn.segreg(), o32());
 }
 
 void CPU::_MOV_seg_RM16(Instruction& insn)

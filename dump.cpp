@@ -518,3 +518,14 @@ void CPU::dumpSegment(WORD index)
     dumpDescriptor(getDescriptor(index));
 }
 
+void CPU::dumpStack(ValueSize valueSize, unsigned count)
+{
+    DWORD sp = currentStackPointer();
+    for (unsigned i = 0; i < count; ++i) {
+        if (valueSize == DWordSize) {
+            DWORD value = readMemory32(SegmentRegisterIndex::SS, sp);
+            vlog(LogDump, "%04x:%08x (+%04x) %08x", getSS(), sp, sp - currentStackPointer(), value);
+            sp += 4;
+        }
+    }
+}
