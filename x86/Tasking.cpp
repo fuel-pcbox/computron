@@ -218,7 +218,7 @@ void CPU::dumpTSS(const TSS &tss)
     vlog(LogCPU, "TSS bits=%u", tss.is32Bit() ? 32 : 16);
     vlog(LogCPU, "eax=%08x ebx=%08x ecx=%08x edx=%08x", tss.getEAX(), tss.getEBX(), tss.getECX(), tss.getEDX());
     vlog(LogCPU, "esi=%08x edi=%08x ebp=%08x esp=%08x", tss.getESI(), tss.getEDI(), tss.getEBP(), tss.getESP());
-    vlog(LogCPU, "ldt=%04x backlink=%04x cr3=%08x", tss.getLDT(), tss.getBacklink(), tss.getCR3());
+    vlog(LogCPU, "ldt=%04x backlink=%04x cr3=%08x", tss.getLDT(), tss.getBacklink(), getPG() ? tss.getCR3() : 0);
     vlog(LogCPU, "ds=%04x ss=%04x es=%04x fs=%04x gs=%04x", tss.getDS(), tss.getSS(), tss.getES(), tss.getFS(), tss.getGS());
     vlog(LogCPU, "cs=%04x eip=%08x eflags=%08x", tss.getCS(), tss.getEIP(), tss.getEFlags());
     vlog(LogCPU, "stack0 { %04x:%08x }", tss.getSS0(), tss.getESP0());
