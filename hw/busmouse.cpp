@@ -47,7 +47,7 @@ BusMouse::~BusMouse()
 
 void BusMouse::reset()
 {
-    m_interrupts = false;
+    m_interrupts = true;
     m_command = 0;
     m_buttons = 0 ;
     m_currentX = 0;
