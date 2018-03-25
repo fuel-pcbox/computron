@@ -93,7 +93,7 @@ void CPU::_ENTER16(Instruction& insn)
         DWORD tmpEBP = currentBasePointer();
         for (WORD i = 1; i < nestingLevel - 1; ++i) {
             tmpEBP -= 2;
-            push16(readMemory16(SegmentRegisterIndex::SS, currentBasePointer()));
+            push16(readMemory16(SegmentRegisterIndex::SS, tmpEBP));
         }
         push16(frameTemp);
     }
@@ -113,7 +113,7 @@ void CPU::_ENTER32(Instruction& insn)
         DWORD tmpEBP = currentBasePointer();
         for (WORD i = 1; i < nestingLevel - 1; ++i) {
             tmpEBP -= 4;
-            push32(readMemory32(SegmentRegisterIndex::SS, currentBasePointer()));
+            push32(readMemory32(SegmentRegisterIndex::SS, tmpEBP));
         }
         push32(frameTemp);
     }
