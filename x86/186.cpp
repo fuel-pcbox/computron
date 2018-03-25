@@ -112,7 +112,7 @@ void CPU::_ENTER32(Instruction& insn)
     if (nestingLevel > 0) {
         DWORD tmpEBP = currentBasePointer();
         for (WORD i = 1; i < nestingLevel - 1; ++i) {
-            tmpEBP -= 2;
+            tmpEBP -= 4;
             push32(readMemory32(SegmentRegisterIndex::SS, currentBasePointer()));
         }
         push32(frameTemp);
