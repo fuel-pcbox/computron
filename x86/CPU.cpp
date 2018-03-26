@@ -1285,9 +1285,7 @@ void CPU::validateAddress(const SegmentDescriptor& descriptor, DWORD offset, Mem
     }
 #endif
 
-    DWORD offsetForLimitChecking = descriptor.granularity() ? (offset & 0xfffff000) : offset;
-
-    if (offsetForLimitChecking > descriptor.effectiveLimit()) {
+    if (offset > descriptor.effectiveLimit()) {
         vlog(LogAlert, "FUG! %s offset %08X outside limit (selector index: %04X, effective limit: %08X [%08X x %s])",
              toString(accessType),
              offset,
