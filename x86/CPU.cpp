@@ -627,10 +627,7 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
             }
 
             // NOTE: We recurse here, jumping to the gate entry point.
-            DWORD gateOffset = gate.offset();
-            if (!gate.is32Bit())
-                gateOffset &= 0xffff;
-            jump32(gate.selector(), gateOffset, type, isr, flags, &gate);
+            jump32(gate.selector(), gate.offset(), type, isr, flags, &gate);
             return;
         } else if (sys.isTSS()) {
             auto& tssDescriptor = sys.asTSSDescriptor();
@@ -663,6 +660,10 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
                         throw GeneralProtectionFault(segment, QString("%1 -> Code segment DPL(%2) != CPL(%3)").arg(toString(type)).arg(codeSegment.DPL()).arg(getCPL()));
                     }
                 }
+            }
+
+            if (gate && !gate->is32Bit()) {
+                offset &= 0xffff;
             }
 
             if (offset > codeSegment.effectiveLimit()) {
