@@ -798,6 +798,21 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
             setESP(newESP);
             setSS(newSS);
         }
+
+        auto clearSegmentRegisterIfNeeded = [this, type] (SegmentRegisterIndex segreg) {
+            if (readSegmentRegister(segreg) == 0)
+                return;
+            auto& cached = cachedDescriptor(segreg);
+            if (cached.isNull() || (cached.DPL() < getCPL() && (cached.isData() || cached.isNonconformingCode()))) {
+                vlog(LogCPU, "%s clearing %s(%04x) with DPL=%u (CPL now %u)", toString(type), registerName(segreg), readSegmentRegister(segreg), cached.DPL(), getCPL());
+                writeSegmentRegister(segreg, 0);
+            }
+        };
+
+        clearSegmentRegisterIfNeeded(SegmentRegisterIndex::ES);
+        clearSegmentRegisterIfNeeded(SegmentRegisterIndex::FS);
+        clearSegmentRegisterIfNeeded(SegmentRegisterIndex::GS);
+        clearSegmentRegisterIfNeeded(SegmentRegisterIndex::DS);
     }
 }
 
