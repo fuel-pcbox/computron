@@ -594,7 +594,7 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
     auto descriptor = getDescriptor(segment, SegmentRegisterIndex::CS);
 
     if (getPE()) {
-        if (type == JumpType::RETF) {
+        if (type == JumpType::RETF || type == JumpType::IRET) {
             if (!(selectorRPL >= getCPL())) {
                 throw GeneralProtectionFault(segment, QString("%1 with !(RPL(%2) >= CPL(%3))").arg(toString(type)).arg(selectorRPL).arg(getCPL()));
             }
