@@ -187,14 +187,10 @@ void CPU::_LMSW_RM16(Instruction& insn)
 
 void CPU::_SMSW_RM16(Instruction& insn)
 {
-    auto& modrm = insn.modrm();
 #ifdef PMODE_DEBUG
     vlog(LogCPU, "SMSW get LSW(CR0)=%04X, PE=%u", getCR0() & 0xFFFF, getPE());
 #endif
-    if (o32() && modrm.isRegister())
-        modrm.write32(getCR0());
-    else
-        modrm.write16(getCR0() & 0xFFFF);
+    insn.modrm().writeClearing16(getCR0(), o32());
 }
 
 void CPU::_LAR_reg16_RM16(Instruction& insn)
