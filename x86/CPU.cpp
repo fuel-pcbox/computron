@@ -187,6 +187,9 @@ FLATTEN void CPU::execute(Instruction& insn)
 
 void CPU::_RDTSC(Instruction&)
 {
+    if (getPE() && getCPL() != 0) {
+        throw GeneralProtectionFault(0, "RDTSC with CPL != 0");
+    }
     setEDX(m_cycle >> 32);
     setEAX(m_cycle);
 }
@@ -361,6 +364,8 @@ void CPU::reset()
     m_dirtyFlags = 0;
     m_lastResult = 0;
     m_lastOpSize = ByteSize;
+
+    m_cycle = 0;
 
     initWatches();
 
