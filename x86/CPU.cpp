@@ -666,6 +666,8 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
             }
 
             if (offset > codeSegment.effectiveLimit()) {
+                vlog(LogCPU, "%s to eip(%08x) outside limit(%08x)", toString(type), offset, codeSegment.effectiveLimit());
+                dumpDescriptor(codeSegment);
                 throw GeneralProtectionFault(0, "Offset outside segment limit");
             }
 
@@ -686,8 +688,35 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
         vlog(LogCPU, "%s escalating privilege from ring%u to ring%u", toString(type), originalCPL, descriptor.DPL(), descriptor);
 #endif
         auto tss = currentTSS();
-        setSS(tss.getRingSS(descriptor.DPL()));
-        setESP(tss.getRingESP(descriptor.DPL()));
+
+        WORD newSS = tss.getRingSS(descriptor.DPL());
+        DWORD newESP = tss.getRingESP(descriptor.DPL());
+        auto newSSDescriptor = getDescriptor(newSS, SegmentRegisterIndex::SS);
+
+        // FIXME: For JumpType::INT, exceptions related to newSS should contain the extra error code.
+
+        if (newSSDescriptor.isNull()) {
+            throw InvalidTSS(newSS, "New ss is null");
+        }
+
+        if (newSSDescriptor.isError()) {
+            throw InvalidTSS(newSS, "New ss outside table limits");
+        }
+
+        if (newSSDescriptor.DPL() != descriptor.DPL()) {
+            throw InvalidTSS(newSS, QString("New ss DPL(%1) != code segment DPL(%2)").arg(newSSDescriptor.DPL()).arg(descriptor.DPL()));
+        }
+
+        if (!newSSDescriptor.isData() || !newSSDescriptor.asDataSegmentDescriptor().writable()) {
+            throw InvalidTSS(newSS, "New ss not a writable data segment");
+        }
+
+        if (!newSSDescriptor.present()) {
+            throw StackFault(newSS, "New ss not present");
+        }
+
+        setSS(newSS);
+        setESP(newESP);
         if (pushSize16) {
 #ifdef DEBUG_JUMPS
             vlog(LogCPU, "%s to inner ring, ss:sp %04x:%04x -> %04x:%04x", toString(type), originalSS, originalESP, getSS(), getSP());
