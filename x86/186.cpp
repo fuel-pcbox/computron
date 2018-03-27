@@ -94,7 +94,7 @@ void CPU::_ENTER16(Instruction& insn)
 
     if (nestingLevel > 0) {
         DWORD tmpEBP = currentBasePointer();
-        for (WORD i = 1; i < nestingLevel - 1; ++i) {
+        for (WORD i = 1; i < nestingLevel; ++i) {
             tmpEBP -= 2;
             push16(readMemory16(SegmentRegisterIndex::SS, tmpEBP));
         }
@@ -114,7 +114,7 @@ void CPU::_ENTER32(Instruction& insn)
 
     if (nestingLevel > 0) {
         DWORD tmpEBP = currentBasePointer();
-        for (WORD i = 1; i < nestingLevel - 1; ++i) {
+        for (WORD i = 1; i < nestingLevel; ++i) {
             tmpEBP -= 4;
             push32(readMemory32(SegmentRegisterIndex::SS, tmpEBP));
         }
