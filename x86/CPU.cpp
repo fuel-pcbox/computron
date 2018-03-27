@@ -644,7 +644,11 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
             ASSERT_NOT_REACHED();
         }
     } else { // it's a segment descriptor
-        ASSERT(descriptor.isCode());
+        if (!descriptor.isCode()) {
+            dumpDescriptor(descriptor);
+            ASSERT(getPE());
+            throw GeneralProtectionFault(segment, "Not a code segment");
+        }
         auto& codeSegment = descriptor.asCodeSegmentDescriptor();
 
         if (getPE()) {
