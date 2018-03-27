@@ -522,37 +522,28 @@ FLATTEN void CPU::mainLoop()
 
 void CPU::jumpRelative8(SIGNED_BYTE displacement)
 {
-    if (x32())
-        this->EIP += displacement;
-    else
-        this->IP += displacement;
+    EIP += displacement;
 }
 
 void CPU::jumpRelative16(SIGNED_WORD displacement)
 {
-    if (x32())
-        this->EIP += displacement;
-    else
-        this->IP += displacement;
+    EIP += displacement;
 }
 
 void CPU::jumpRelative32(SIGNED_DWORD displacement)
 {
-    this->EIP += displacement;
+    EIP += displacement;
 }
 
 void CPU::jumpAbsolute16(WORD address)
 {
-    if (x32())
-        this->EIP = address;
-    else
-        this->IP = address;
+    EIP = address;
 }
 
 void CPU::jumpAbsolute32(DWORD address)
 {
 //    vlog(LogCPU, "[PE=%u] Abs jump to %08X", getPE(), address);
-    this->EIP = address;
+    EIP = address;
 }
 
 static const char* toString(JumpType type)
@@ -613,6 +604,11 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
 #endif
         if (sys.isGate()) {
             auto& gate = sys.asGate();
+
+            if (type == JumpType::IRET || type == JumpType::RETF) {
+                throw GeneralProtectionFault(segment, QString("%1 through gate is illegal").arg(toString(type)));
+            }
+
 #ifdef DEBUG_JUMPS
             vlog(LogCPU, "Gate (%s) to %04x:%08x (count=%u)", gate.typeName(), gate.selector(), gate.offset(), gate.parameterCount());
 #endif
@@ -671,14 +667,14 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
                 offset &= 0xffff;
             }
 
+            if (!codeSegment.present()) {
+                throw NotPresent(segment, QString("Code segment not present"));
+            }
+
             if (offset > codeSegment.effectiveLimit()) {
                 vlog(LogCPU, "%s to eip(%08x) outside limit(%08x)", toString(type), offset, codeSegment.effectiveLimit());
                 dumpDescriptor(codeSegment);
                 throw GeneralProtectionFault(0, "Offset outside segment limit");
-            }
-
-            if (!codeSegment.present()) {
-                throw NotPresent(segment, QString("Code segment not present"));
             }
         }
         setCS(segment);
