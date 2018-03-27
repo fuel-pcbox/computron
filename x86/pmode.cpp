@@ -197,12 +197,13 @@ void CPU::_LAR_reg16_RM16(Instruction& insn)
 {
     // FIXME: This has various ways it can fail, implement them.
     WORD selector = insn.modrm().read16() & 0xffff;
+    WORD selectorRPL = selector & 3;
     auto descriptor = getDescriptor(selector);
-    if (descriptor.isNull() || descriptor.isError()) {
+    if (descriptor.isNull() || descriptor.isError() || descriptor.DPL() < getCPL() || descriptor.DPL() < selectorRPL) {
         setZF(0);
         return;
     }
-    insn.reg16() = descriptor.m_high & 0x00ffff00;
+    insn.reg16() = descriptor.m_high & 0xff00;
     setZF(1);
 }
 
@@ -210,8 +211,9 @@ void CPU::_LAR_reg32_RM32(Instruction& insn)
 {
     // FIXME: This has various ways it can fail, implement them.
     WORD selector = insn.modrm().read32() & 0xffff;
+    WORD selectorRPL = selector & 3;
     auto descriptor = getDescriptor(selector);
-    if (descriptor.isNull() || descriptor.isError()) {
+    if (descriptor.isNull() || descriptor.isError() || descriptor.DPL() < getCPL() || descriptor.DPL() < selectorRPL) {
         setZF(0);
         return;
     }
@@ -242,6 +244,9 @@ static bool isValidDescriptorForLSL(const Descriptor& descriptor)
 
 void CPU::_LSL_reg16_RM16(Instruction& insn)
 {
+    if (!getPE()) {
+        throw InvalidOpcode("LSL not recognized in real mode");
+    }
     WORD selector = insn.modrm().read16() & 0xffff;
     auto descriptor = getDescriptor(selector);
     // FIXME: This should also fail for conforming code segments somehow.
@@ -263,6 +268,9 @@ void CPU::_LSL_reg16_RM16(Instruction& insn)
 
 void CPU::_LSL_reg32_RM32(Instruction& insn)
 {
+    if (!getPE()) {
+        throw InvalidOpcode("LSL not recognized in real mode");
+    }
     WORD selector = insn.modrm().read16() & 0xffff;
     auto descriptor = getDescriptor(selector);
     // FIXME: This should also fail for conforming code segments somehow.
@@ -495,8 +503,7 @@ void CPU::_VERR_RM16(Instruction& insn)
     }
     WORD RPL = selector & 3;
 
-    bool isConformingCode = descriptor.isCode() && descriptor.asCodeSegmentDescriptor().conforming();
-    if (!isConformingCode && (getCPL() > descriptor.DPL() || RPL > descriptor.DPL())) {
+    if (descriptor.isNonconformingCode() && (getCPL() > descriptor.DPL() || RPL > descriptor.DPL())) {
         setZF(0);
         return;
     }
@@ -504,7 +511,6 @@ void CPU::_VERR_RM16(Instruction& insn)
     if (descriptor.isCode()) {
         setZF(descriptor.asCodeSegmentDescriptor().readable());
     } else {
-        // FIXME: How do I know if a data segment is "readable"? Are they always?
         setZF(1);
     }
 }
