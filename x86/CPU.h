@@ -465,6 +465,8 @@ public:
     void push16(WORD value);
     WORD pop16();
 
+    void pushSegmentRegisterValue(WORD);
+
     Debugger& debugger() { return *m_debugger; }
 
     template<typename T> T in(WORD port);

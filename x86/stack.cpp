@@ -26,6 +26,18 @@
 #include "CPU.h"
 #include "debug.h"
 
+void CPU::pushSegmentRegisterValue(WORD value)
+{
+    if (o16()) {
+        push16(value);
+        return;
+    }
+    writeMemory16(SegmentRegisterIndex::SS, currentStackPointer() - 4, value);
+    adjustStackPointer(-4);
+    if (UNLIKELY(options.stacklog))
+        vlog(LogCPU, "push32: %04x (at esp=%08x, special 16-bit write for segment registers)", value, getESP());
+}
+
 void CPU::push32(DWORD value)
 {
     writeMemory32(SegmentRegisterIndex::SS, currentStackPointer() - 4, value);
@@ -112,50 +124,32 @@ void CPU::_POP_RM32(Instruction& insn)
 
 void CPU::_PUSH_CS(Instruction&)
 {
-    if (o16())
-        push16(getCS());
-    else
-        push32(getCS());
+    pushSegmentRegisterValue(getCS());
 }
 
 void CPU::_PUSH_DS(Instruction&)
 {
-    if (o16())
-        push16(getDS());
-    else
-        push32(getDS());
+    pushSegmentRegisterValue(getDS());
 }
 
 void CPU::_PUSH_ES(Instruction&)
 {
-    if (o16())
-        push16(getES());
-    else
-        push32(getES());
+    pushSegmentRegisterValue(getES());
 }
 
 void CPU::_PUSH_SS(Instruction&)
 {
-    if (o16())
-        push16(getSS());
-    else
-        push32(getSS());
+    pushSegmentRegisterValue(getSS());
 }
 
 void CPU::_PUSH_FS(Instruction&)
 {
-    if (o16())
-        push16(getFS());
-    else
-        push32(getFS());
+    pushSegmentRegisterValue(getFS());
 }
 
 void CPU::_PUSH_GS(Instruction&)
 {
-    if (o16())
-        push16(getGS());
-    else
-        push32(getGS());
+    pushSegmentRegisterValue(getGS());
 }
 
 void CPU::_POP_DS(Instruction&)
