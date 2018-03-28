@@ -228,14 +228,14 @@ void PIC::serviceIRQ(CPU& cpu)
         machine.masterPIC().m_irr &= ~(1 << irqToService);
         machine.masterPIC().m_isr |= (1 << irqToService);
 
-        cpu.jumpToInterruptHandler(machine.masterPIC().m_isrBase | irqToService, true);
+        cpu.jumpToInterruptHandler(machine.masterPIC().m_isrBase | irqToService, CPU::InterruptSource::External);
     }
     else
     {
         machine.slavePIC().m_irr &= ~(1 << (irqToService - 8));
         machine.slavePIC().m_isr |= (1 << (irqToService - 8));
 
-        cpu.jumpToInterruptHandler(machine.slavePIC().m_isrBase | (irqToService - 8), true);
+        cpu.jumpToInterruptHandler(machine.slavePIC().m_isrBase | (irqToService - 8), CPU::InterruptSource::External);
     }
 
     updatePendingRequests(machine);

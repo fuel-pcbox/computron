@@ -504,9 +504,7 @@ FLATTEN void CPU::mainLoop()
             //
             // This is used by tools like DEBUG to implement step-by-step
             // execution :-)
-            jumpToInterruptHandler(1);
-
-            // NOTE: jumpToInterruptHandler() just set IF=0.
+            jumpToInterruptHandler(1, InterruptSource::Internal);
         }
 
         if (PIC::hasPendingIRQ() && getIF())
@@ -561,7 +559,7 @@ static const char* toString(JumpType type)
     }
 }
 
-void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flags, Gate* gate)
+void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flags, Gate* gate, std::optional<WORD> errorCode)
 {
     bool pushSize16 = o16();
 
@@ -820,6 +818,13 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
         clearSegmentRegisterIfNeeded(SegmentRegisterIndex::GS);
         clearSegmentRegisterIfNeeded(SegmentRegisterIndex::DS);
     }
+
+    if (errorCode.has_value()) {
+        if (pushSize16)
+            push16(errorCode.value());
+        else
+            push32(errorCode.value());
+    }
 }
 
 void CPU::setCPL(BYTE cpl)
@@ -829,9 +834,9 @@ void CPU::setCPL(BYTE cpl)
     cachedDescriptor(SegmentRegisterIndex::CS).m_RPL = cpl;
 }
 
-void CPU::jump16(WORD segment, WORD offset, JumpType type, BYTE isr, DWORD flags, Gate* gate)
+void CPU::jump16(WORD segment, WORD offset, JumpType type, BYTE isr, DWORD flags, Gate* gate, std::optional<WORD> errorCode)
 {
-    jump32(segment, offset, type, isr, flags, gate);
+    jump32(segment, offset, type, isr, flags, gate, errorCode);
 }
 
 void CPU::_UNSUPP(Instruction& insn)
@@ -1193,6 +1198,11 @@ Exception CPU::PageFault(DWORD linearAddress, PageFaultFlags::Flags flags, CPU::
     if (options.crashOnPF) {
         dumpAll();
         vlog(LogAlert, "CRASH ON #PF");
+        ASSERT_NOT_REACHED();
+    }
+    if (getEIP() == 0x100c2f7c) {
+
+        vlog(LogAlert, "CRASH ON specific #PF");
         ASSERT_NOT_REACHED();
     }
     return Exception(0xe, error, linearAddress, "Page fault");

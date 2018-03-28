@@ -31,12 +31,12 @@
 
 void CPU::_INT_imm8(Instruction& insn)
 {
-    jumpToInterruptHandler(insn.imm8());
+    jumpToInterruptHandler(insn.imm8(), InterruptSource::Internal);
 }
 
 void CPU::_INT3(Instruction&)
 {
-    jumpToInterruptHandler(3);
+    jumpToInterruptHandler(3, InterruptSource::Internal);
 }
 
 void CPU::_INTO(Instruction&)
@@ -45,7 +45,7 @@ void CPU::_INTO(Instruction&)
     vlog(LogAlert, "INTO used, can you believe it?");
 
     if (getOF())
-        jumpToInterruptHandler(4);
+        jumpToInterruptHandler(4, InterruptSource::Internal);
 }
 
 void CPU::_IRET(Instruction&)
@@ -83,14 +83,39 @@ void CPU::_IRET(Instruction&)
     }
 }
 
-static WORD makeErrorCode(WORD num, bool idt, bool requestedByPIC)
+static WORD makeErrorCode(WORD num, bool idt, CPU::InterruptSource source)
 {
     if (idt)
-        return (num << 3) | 2 | requestedByPIC;
+        return (num << 3) | 2 | (WORD)source;
     return num & 0xfc;
 }
 
-void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
+void CPU::interruptToTaskGate(int, InterruptSource source, std::optional<WORD> errorCode, Gate& gate)
+{
+    Descriptor descriptor = getDescriptor(gate.selector());
+    if (!descriptor.isGlobal()) {
+        throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, source), "Interrupt to task gate referencing local descriptor");
+    }
+    if (!descriptor.isTSS()) {
+        throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, source), "Interrupt to task gate referencing non-TSS descriptor");
+    }
+    auto& tssDescriptor = descriptor.asTSSDescriptor();
+    if (tssDescriptor.isBusy()) {
+        throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, source), "Interrupt to task gate referencing busy TSS descriptor");
+    }
+    if (!tssDescriptor.present()) {
+        throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, source), "Interrupt to task gate referencing non-present TSS descriptor");
+    }
+    taskSwitch(tssDescriptor, JumpType::INT);
+    if (errorCode.has_value()) {
+        if (tssDescriptor.is32Bit())
+            push32(errorCode.value());
+        else
+            push16(errorCode.value());
+    }
+}
+
+void CPU::jumpToInterruptHandler(int isr, InterruptSource source, std::optional<WORD> errorCode)
 {
     bool isTrap = false;
     FarPointer vector;
@@ -100,41 +125,46 @@ void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
     if (getPE()) {
         gate = getInterruptGate(isr);
 
-        if (!requestedByPIC) {
+        if (source == InterruptSource::Internal) {
             if (gate.DPL() < getCPL()) {
-                throw GeneralProtectionFault(makeErrorCode(isr, 1, requestedByPIC), "Software interrupt trying to escalate privilege");
+                throw GeneralProtectionFault(makeErrorCode(isr, 1, source), "Software interrupt trying to escalate privilege");
             }
         }
 
         if (!gate.present()) {
-            throw NotPresent(makeErrorCode(isr, 1, requestedByPIC), "Interrupt gate not present");
+            throw NotPresent(makeErrorCode(isr, 1, source), "Interrupt gate not present");
         }
 
         if (gate.isNull()) {
-            throw GeneralProtectionFault(requestedByPIC, "Interrupt gate is null");
+            throw GeneralProtectionFault(makeErrorCode(isr, 1, source), "Interrupt gate is null");
         }
 
         vector.segment = gate.selector();
         vector.offset = gate.offset();
 
         if (options.trapint)
-            vlog(LogCPU, "PE=1 Interrupt %02x trapped%s, type: %s (%1x), %04x:%08x", isr, requestedByPIC ? " (from PIC)" : "", gate.typeName(), gate.type(), vector.segment, vector.offset);
+            vlog(LogCPU, "PE=1 Interrupt %02x trapped%s, type: %s (%1x), %04x:%08x", isr, source == InterruptSource::External ? " (from PIC)" : "", gate.typeName(), gate.type(), vector.segment, vector.offset);
+
+        if (gate.isTaskGate()) {
+            interruptToTaskGate(isr, source, errorCode, gate);
+            return;
+        }
 
         Descriptor codeDescriptor = getDescriptor(gate.selector());
         if (codeDescriptor.isError()) {
-            throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, requestedByPIC), "Interrupt gate to segment outside table limit");
+            throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, source), "Interrupt gate to segment outside table limit");
         }
 
         if (!codeDescriptor.isCode()) {
-            throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, requestedByPIC), "Interrupt gate to non-code segment");
+            throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, source), "Interrupt gate to non-code segment");
         }
 
         if (codeDescriptor.DPL() > getCPL()) {
-            throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, requestedByPIC), QString("Interrupt gate to segment with DPL(%1)>CPL(%2)").arg(codeDescriptor.DPL()).arg(getCPL()));
+            throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, source), QString("Interrupt gate to segment with DPL(%1)>CPL(%2)").arg(codeDescriptor.DPL()).arg(getCPL()));
         }
 
         if (!codeDescriptor.present()) {
-            throw NotPresent(makeErrorCode(gate.selector(), 0, requestedByPIC), "Interrupt to non-present segment");
+            throw NotPresent(makeErrorCode(gate.selector(), 0, source), "Interrupt to non-present segment");
         }
 
         switch (gate.type()) {
@@ -152,16 +182,16 @@ void CPU::jumpToInterruptHandler(int isr, bool requestedByPIC)
         }
     } else {
         if (options.trapint)
-            vlog(LogCPU, "PE=0 Interrupt %02X,%02X trapped%s", isr, this->regs.B.AH, requestedByPIC ? " (from PIC)" : "");
+            vlog(LogCPU, "PE=0 Interrupt %02X,%02X trapped%s", isr, this->regs.B.AH, source == InterruptSource::External ? " (from PIC)" : "");
 
         vector.segment = (m_memory[isr * 4 + 3] << 8) | m_memory[isr * 4 + 2];
         vector.offset = (m_memory[isr * 4 + 1] << 8) | m_memory[isr * 4];
     }
 
     if (o16())
-        jump16(vector.segment, vector.offset, JumpType::INT, isr, getFlags(), &gate);
+        jump16(vector.segment, vector.offset, JumpType::INT, isr, getFlags(), &gate, errorCode);
     else
-        jump32(vector.segment, vector.offset, JumpType::INT, isr, getEFlags(), &gate);
+        jump32(vector.segment, vector.offset, JumpType::INT, isr, getEFlags(), &gate, errorCode);
 
     if (!isTrap)
         setIF(0);
