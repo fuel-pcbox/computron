@@ -38,7 +38,7 @@ void ct_set_drive_image(int drive_id, const char* filename)
     vlog(LogDisk, "Drive %u image changed to %s", drive_id, filename);
 }
 
-static WORD chs2lba(BYTE drive, WORD cyl, BYTE head, WORD sector)
+static DWORD chs2lba(BYTE drive, WORD cyl, BYTE head, WORD sector)
 {
     return (sector - 1) +
            (head * drv_spt[drive]) +
@@ -47,7 +47,7 @@ static WORD chs2lba(BYTE drive, WORD cyl, BYTE head, WORD sector)
 
 static void floppy_read(FILE* fp, BYTE drive, WORD cylinder, WORD head, WORD sector, WORD count, WORD segment, WORD offset)
 {
-    WORD lba = chs2lba(drive, cylinder, head, sector);
+    DWORD lba = chs2lba(drive, cylinder, head, sector);
 
     if (options.disklog)
         vlog(LogDisk, "Drive %d reading %d sectors at %d/%d/%d (LBA %d) to %04X:%04X [offset=0x%x]", drive, count, cylinder, head, sector, lba, segment, offset, lba*drv_sectsize[drive]);
@@ -58,7 +58,7 @@ static void floppy_read(FILE* fp, BYTE drive, WORD cylinder, WORD head, WORD sec
 
 static void floppy_write(FILE* fp, BYTE drive, WORD cylinder, WORD head, WORD sector, WORD count, WORD segment, WORD offset)
 {
-    WORD lba = chs2lba(drive, cylinder, head, sector);
+    DWORD lba = chs2lba(drive, cylinder, head, sector);
 
     if (options.disklog)
         vlog(LogDisk, "Drive %d writing %d sectors at %d/%d/%d (LBA %d) from %04X:%04X", drive, count, cylinder, head, sector, lba, segment, offset);
@@ -69,7 +69,7 @@ static void floppy_write(FILE* fp, BYTE drive, WORD cylinder, WORD head, WORD se
 
 static void floppy_verify(FILE* fp, BYTE drive, WORD cylinder, WORD head, WORD sector, WORD count, WORD segment, WORD offset)
 {
-    WORD lba = chs2lba(drive, cylinder, head, sector);
+    DWORD lba = chs2lba(drive, cylinder, head, sector);
 
     if (options.disklog)
         vlog(LogDisk, "Drive %d verifying %d sectors at %d/%d/%d (LBA %d)", drive, count, cylinder, head, sector, lba);
@@ -87,10 +87,10 @@ static void floppy_verify(FILE* fp, BYTE drive, WORD cylinder, WORD head, WORD s
 void bios_disk_call(DiskCallFunction function)
 {
     FILE* fp;
-    WORD lba;
+    DWORD lba;
 
-    WORD cylinder = g_cpu->getCH();
-    WORD sector = g_cpu->getCL();
+    WORD cylinder = g_cpu->getCH() | ((g_cpu->getCL() & 0xc0) << 2);
+    WORD sector = g_cpu->getCL() & 0x3f;
     BYTE drive = g_cpu->getDL();
     BYTE head = g_cpu->getDH();
     BYTE sectorCount = g_cpu->getAL();
