@@ -241,6 +241,7 @@ class CodeSegmentDescriptor : public SegmentDescriptor {
 public:
     bool readable() const { return m_type & 0x2; }
     bool conforming() const { return m_type & 0x4; }
+    bool is32Bit() const { return m_D; }
 };
 
 class DataSegmentDescriptor : public SegmentDescriptor {

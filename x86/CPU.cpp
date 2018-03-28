@@ -671,6 +671,12 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
                 offset &= 0xffff;
             }
 
+            // NOTE: A 32-bit jump into a 16-bit segment might have irrelevant higher bits set.
+            // Mask them off to make sure we don't incorrectly fail limit checks.
+            if (!codeSegment.is32Bit()) {
+                offset &= 0xffff;
+            }
+
             if (!codeSegment.present()) {
                 throw NotPresent(segment, QString("Code segment not present"));
             }
