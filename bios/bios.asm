@@ -168,6 +168,17 @@ _cpu_default_softtimer:
 
 _kbd_interrupt:
     ;int     0x1B
+    push    ax
+    mov     al, 0x20
+    out     0x20, al
+    pop     ax
+    iret
+
+_busmouse_interrupt:
+    push    ax
+    mov     al, 0x20
+    out     0x20, al
+    pop     ax
     iret
 
 _bios_ctrl_break:
@@ -386,6 +397,10 @@ _bios_setup_ints:
 
     mov     al, 0x09
     mov     dx, _kbd_interrupt
+    call    .install
+
+    mov     al, 0x0d
+    mov     dx, _busmouse_interrupt
     call    .install
 
     mov     al, 0x10
