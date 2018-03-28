@@ -28,7 +28,6 @@
 #include "debug.h"
 #include "machine.h"
 #include "palettewidget.h"
-#include "statewidget.h"
 #include "screen.h"
 #include <QtCore/QCoreApplication>
 #include <QtCore/QTimer>
@@ -65,8 +64,6 @@ MachineWidget::MachineWidget(Machine& m)
     m_screen = make<Screen>(m);
     m_machine.setWidget(this);
 
-    StateWidget* stateWidget = new StateWidget(m);
-
     d->toolBar = new QToolBar(tr("Virtual Machine"));
 
     QVBoxLayout* layout = new QVBoxLayout;
@@ -79,7 +76,6 @@ MachineWidget::MachineWidget(Machine& m)
     hLayout->setSpacing(0);
     hLayout->setMargin(0);
     hLayout->addWidget(&screen());
-    hLayout->addWidget(stateWidget);
 
     layout->addLayout(hLayout);
 

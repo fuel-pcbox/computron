@@ -28,8 +28,11 @@
 #include "machine.h"
 #include "screen.h"
 #include "keyboard.h"
+#include "CPU.h"
 #include <QLabel>
 #include <QStatusBar>
+#include <QTimer>
+#include <QTime>
 
 struct MainWindow::Private
 {
@@ -38,12 +41,18 @@ struct MainWindow::Private
     QLabel* scrollLockLabel;
     QLabel* numLockLabel;
     QLabel* capsLockLabel;
+    QTimer ipsTimer;
+    QWORD cycleCount { 0 };
+    QTime cycleTimer;
+    CPU* cpu { nullptr };
 };
 
 MainWindow::MainWindow()
     : d(make<Private>())
 {
     setWindowTitle("Computron");
+    connect(&d->ipsTimer, SIGNAL(timeout()), this, SLOT(updateIPS()));
+    d->ipsTimer.start(500);
 }
 
 MainWindow::~MainWindow()
@@ -52,6 +61,8 @@ MainWindow::~MainWindow()
 
 void MainWindow::addMachine(Machine* machine)
 {
+    d->cpu = &machine->cpu();
+
     MachineWidget* machineWidget = new MachineWidget(*machine);
     setCentralWidget(machineWidget);
     setFocusProxy(machineWidget);
@@ -94,4 +105,17 @@ void MainWindow::onLedsChanged(int leds)
     d->scrollLockLabel->setPalette(paletteForLED[scrollLock]);
     d->numLockLabel->setPalette(paletteForLED[numLock]);
     d->capsLockLabel->setPalette(paletteForLED[capsLock]);
+}
+
+void MainWindow::updateIPS()
+{
+    if (!d->cpu)
+        return;
+    auto cpuCycles = d->cpu->cycle();
+    auto cycles = cpuCycles - d->cycleCount;
+    double elapsed = d->cycleTimer.elapsed() / 1000.0;
+    double ips = cycles / elapsed;
+    statusBar()->showMessage(QString("Op/s: %1").arg((QWORD)ips));
+    d->cycleCount = cpuCycles;
+    d->cycleTimer.start();
 }

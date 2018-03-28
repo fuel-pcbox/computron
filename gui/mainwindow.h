@@ -43,6 +43,7 @@ public:
 
 private slots:
     void onLedsChanged(int);
+    void updateIPS();
 
 private:
     struct Private;
