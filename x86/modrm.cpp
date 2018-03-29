@@ -249,11 +249,10 @@ DWORD MemoryOrRegisterReference::evaluateSIB()
     case 2: index = m_cpu->getEDX(); break;
     case 3: index = m_cpu->getEBX(); break;
     case 4: index = 0; break;
-    case 5: /* FIXME: DEFAULT_TO_SS here? */ index = m_cpu->getEBP(); break;
+    case 5: index = m_cpu->getEBP(); break;
     case 6: index = m_cpu->getESI(); break;
     case 7: index = m_cpu->getEDI(); break;
     }
-    DWORD scaledIndex = index * scale;
 
     DWORD base = m_displacement32;
     switch (m_sib & 0x07) {
@@ -274,5 +273,5 @@ DWORD MemoryOrRegisterReference::evaluateSIB()
         break;
     }
 
-    return scaledIndex + base;
+    return (scale * index) + base;
 }
