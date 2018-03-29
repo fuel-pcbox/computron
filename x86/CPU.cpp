@@ -372,18 +372,23 @@ CPU::~CPU()
     m_memory = nullptr;
 }
 
+class InstructionExecutionContext {
+public:
+    InstructionExecutionContext(CPU& cpu) : m_cpu(cpu) { cpu.saveBaseAddress(); }
+    ~InstructionExecutionContext() { m_cpu.clearPrefix(); }
+private:
+    CPU& m_cpu;
+};
+
 FLATTEN void CPU::executeOneInstruction()
 {
     try {
-        saveBaseAddress();
+        InstructionExecutionContext context(*this);
         decodeNext();
-        clearPrefix();
     } catch(Exception e) {
-        clearPrefix();
         dumpDisassembled(cachedDescriptor(SegmentRegisterIndex::CS), m_baseEIP, 3);
         raiseException(e);
     } catch(HardwareInterruptDuringREP) {
-        clearPrefix();
         setEIP(getBaseEIP());
     }
 }

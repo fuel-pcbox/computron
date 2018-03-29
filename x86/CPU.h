@@ -1150,6 +1150,7 @@ protected:
 
 private:
     friend class Instruction;
+    friend class InstructionExecutionContext;
 
     BYTE readInstruction8() override;
     WORD readInstruction16() override;
