@@ -81,7 +81,7 @@ Screen::Screen(Machine& m)
     init();
     synchronizeFont();
     setTextMode(80, 25);
-    d->videoMemory = machine().cpu().memoryPointer(0xB8000);
+    d->videoMemory = machine().cpu().unmappedMemoryPointer(0xb8000);
 
     m_render04 = QImage(320, 200, QImage::Format_Indexed8);
     m_render0D = QImage(320, 200, QImage::Format_Indexed8);
@@ -251,7 +251,7 @@ void Screen::setScreenSize(int width, int height)
 
 void Screen::renderMode04(QImage& target)
 {
-    const BYTE* videoMemory = machine().cpu().memoryPointer(0xB8000);
+    const BYTE* videoMemory = machine().cpu().unmappedMemoryPointer(0xb8000);
     WORD startAddress = machine().vga().startAddress();
     videoMemory += startAddress;
     for (unsigned scanLine = 0; scanLine < 200; ++scanLine) {
@@ -480,7 +480,7 @@ void Screen::synchronizeFont()
     m_characterHeight = 16;
     const QSize s(8, 16);
 
-    fontcharbitmap_t *fbmp = (fontcharbitmap_t *)(machine().cpu().memoryPointer(0xC400, 0x0000));
+    fontcharbitmap_t *fbmp = (fontcharbitmap_t *)(machine().cpu().unmappedMemoryPointer(0xc4000));
 
     for (int i = 0; i < 256; ++i) {
         d->character[i] = QBitmap::fromData(s, (const BYTE *)fbmp[i].data, QImage::Format_MonoLSB);

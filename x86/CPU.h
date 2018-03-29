@@ -486,6 +486,7 @@ public:
     BYTE* memoryPointer(WORD segment, DWORD offset);
     BYTE* memoryPointer(SegmentRegisterIndex, DWORD offset);
     BYTE* memoryPointer(const SegmentDescriptor&, DWORD offset);
+    BYTE* unmappedMemoryPointer(DWORD address) { return &m_memory[address]; }
 
     DWORD getEFlags() const;
     WORD getFlags() const;

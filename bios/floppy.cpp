@@ -157,7 +157,5 @@ epilogue:
     }
 
     g_cpu->setAH(error);
-
-    BYTE* bda_fd_status = g_cpu->memoryPointer(0x0000, 0x0441);
-    *bda_fd_status = error;
+    g_cpu->writeUnmappedMemory8(0x441, error);
 }
