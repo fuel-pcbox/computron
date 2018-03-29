@@ -92,6 +92,7 @@ void CPU::_ENTER16(Instruction& insn)
     push16(getBP());
     WORD frameTemp = getSP();
 
+    RELEASE_ASSERT(!nestingLevel); // FIXME: I don't know if I trust this code, so let's just crash here when the time comes.
     if (nestingLevel > 0) {
         DWORD tmpEBP = currentBasePointer();
         for (WORD i = 1; i < nestingLevel; ++i) {
@@ -112,6 +113,7 @@ void CPU::_ENTER32(Instruction& insn)
     push32(getEBP());
     DWORD frameTemp = getESP();
 
+    RELEASE_ASSERT(!nestingLevel); // FIXME: I don't know if I trust this code, so let's just crash here when the time comes.
     if (nestingLevel > 0) {
         DWORD tmpEBP = currentBasePointer();
         for (WORD i = 1; i < nestingLevel; ++i) {
