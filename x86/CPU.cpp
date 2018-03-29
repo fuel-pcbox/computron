@@ -41,6 +41,7 @@
 #define A20_ENABLED
 //#define LOG_FAR_JUMPS
 //#define MEMORY_DEBUGGING
+//#define DEBUG_WARCRAFT2
 
 #ifdef MEMORY_DEBUGGING
 static bool shouldLogAllMemoryAccesses(DWORD address)
@@ -594,6 +595,12 @@ void CPU::jump32(WORD segment, DWORD offset, JumpType type, BYTE isr, DWORD flag
     }
 
     if (descriptor.isSystemDescriptor()) {
+        if (gate) {
+            dumpDescriptor(*gate);
+            dumpDescriptor(descriptor);
+            throw GeneralProtectionFault(segment, "Gate-to-gate jumps are not allowed");
+        }
+
         auto& sys = descriptor.asSystemDescriptor();
 
 #ifdef DEBUG_JUMPS
@@ -1200,11 +1207,12 @@ Exception CPU::PageFault(DWORD linearAddress, PageFaultFlags::Flags flags, CPU::
         vlog(LogAlert, "CRASH ON #PF");
         ASSERT_NOT_REACHED();
     }
+#ifdef DEBUG_WARCRAFT2
     if (getEIP() == 0x100c2f7c) {
-
         vlog(LogAlert, "CRASH ON specific #PF");
         ASSERT_NOT_REACHED();
     }
+#endif
     return Exception(0xe, error, linearAddress, "Page fault");
 }
 
