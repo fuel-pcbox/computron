@@ -553,15 +553,6 @@ public:
     void writeMemory32(DWORD address, DWORD data);
     void writeMemory32(SegmentRegisterIndex, DWORD offset, DWORD data);
 
-    BYTE readModRM8(BYTE rmbyte);
-    WORD readModRM16(BYTE rmbyte);
-    DWORD readModRM32(BYTE rmbyte);
-    void writeModRM8(BYTE rmbyte, BYTE value);
-    void writeModRM16(BYTE rmbyte, WORD value);
-    void writeModRM32(BYTE rmbyte, DWORD value);
-
-    MemoryOrRegisterReference resolveModRM(BYTE rmbyte);
-
     enum State { Dead, Alive, Halted };
     State state() const { return m_state; }
     void setState(State s) { m_state = s; }
@@ -585,7 +576,7 @@ public:
     unsigned dumpDisassembled(WORD segment, DWORD offset, unsigned count = 1);
 
     void dumpMemory(SegmentDescriptor&, DWORD offset, int rows);
-    unsigned dumpDisassembled(SegmentDescriptor&, DWORD offset, unsigned count = 1);;
+    unsigned dumpDisassembled(SegmentDescriptor&, DWORD offset, unsigned count = 1);
     unsigned dumpDisassembledInternal(SegmentDescriptor&, DWORD offset);
 
     void dumpTSS(const TSS&);
