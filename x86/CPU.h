@@ -618,7 +618,6 @@ public:
 
 protected:
     void _CPUID(Instruction&);
-    void _UNSUPP(Instruction&);
     void _ESCAPE(Instruction&);
     void _WAIT(Instruction&);
     void _NOP(Instruction&);
@@ -1153,7 +1152,6 @@ protected:
 
     void _RDTSC(Instruction&);
 
-    void _UD0(Instruction&);
     void _LOCK(Instruction&);
 
     void handleRepeatOpcode(Instruction&, bool conditionForZF);

@@ -31,7 +31,6 @@
 #include "vga_memory.h"
 #include "pic.h"
 #include "settings.h"
-#include <QtCore/QStringList>
 #include <unistd.h>
 #include "pit.h"
 #include "Tasking.h"
@@ -141,12 +140,6 @@ template DWORD CPU::readRegister<DWORD>(int);
 template void CPU::writeRegister<BYTE>(int, BYTE);
 template void CPU::writeRegister<WORD>(int, WORD);
 template void CPU::writeRegister<DWORD>(int, DWORD);
-
-void CPU::_UD0(Instruction&)
-{
-    vlog(LogAlert, "Undefined opcode 0F FF (UD0)");
-    throw InvalidOpcode();
-}
 
 FLATTEN void CPU::decodeNext()
 {
@@ -844,24 +837,6 @@ void CPU::setCPL(BYTE cpl)
 void CPU::jump16(WORD segment, WORD offset, JumpType type, BYTE isr, DWORD flags, Gate* gate, std::optional<WORD> errorCode)
 {
     jump32(segment, offset, type, isr, flags, gate, errorCode);
-}
-
-void CPU::_UNSUPP(Instruction& insn)
-{
-    // We've come across an unsupported instruction, log it, then vector to the "illegal instruction" ISR.
-    vlog(LogAlert, "Unsupported opcode %02X", insn.op());
-    QString ndis = "db ";
-    DWORD baseEIP = getBaseEIP();
-    QStringList dbs;
-    for (int i = 0; i < 16; ++i) {
-        QString s;
-        s.sprintf("0x%02X", readMemory8(SegmentRegisterIndex::CS, baseEIP + i));
-        dbs.append(s);
-    }
-    ndis.append(dbs.join(", "));
-    vlog(LogAlert, qPrintable(ndis));
-    dumpAll();
-    throw InvalidOpcode();
 }
 
 void CPU::_NOP(Instruction&)

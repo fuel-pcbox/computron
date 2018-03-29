@@ -785,12 +785,12 @@ void buildOpcodeTablesIfNeeded()
     build0F(0xB4, "LFS",   OP_reg16_mem16, &CPU::_LFS_reg16_mem16, OP_reg32_mem32, &CPU::_LFS_reg32_mem32);
     build0F(0xB5, "LGS",   OP_reg16_mem16, &CPU::_LGS_reg16_mem16, OP_reg32_mem32, &CPU::_LGS_reg32_mem32);
     build0F(0xB6, "MOVZX", OP_reg16_RM8,   &CPU::_MOVZX_reg16_RM8, OP_reg32_RM8,   &CPU::_MOVZX_reg32_RM8);
-    build0F(0xB7, "0xB7",  OP,             &CPU::_UNSUPP, "MOVZX", OP_reg32_RM16,  &CPU::_MOVZX_reg32_RM16);
+    build0F(0xB7, "0xB7",  OP,             nullptr,       "MOVZX", OP_reg32_RM16,  &CPU::_MOVZX_reg32_RM16);
     build0F(0xBB, "BTC",   OP_RM16_reg16,  &CPU::_BTC_RM16_reg16,  OP_RM32_reg32,  &CPU::_BTC_RM32_reg32);
     build0F(0xBC, "BSF",   OP_reg16_RM16,  &CPU::_BSF_reg16_RM16,  OP_reg32_RM32,  &CPU::_BSF_reg32_RM32);
     build0F(0xBD, "BSR",   OP_reg16_RM16,  &CPU::_BSR_reg16_RM16,  OP_reg32_RM32,  &CPU::_BSR_reg32_RM32);
     build0F(0xBE, "MOVSX", OP_reg16_RM8,   &CPU::_MOVSX_reg16_RM8, OP_reg32_RM8,   &CPU::_MOVSX_reg32_RM8);
-    build0F(0xBF, "0xBF",  OP,             &CPU::_UNSUPP, "MOVSX", OP_reg32_RM16,  &CPU::_MOVSX_reg32_RM16);
+    build0F(0xBF, "0xBF",  OP,             nullptr,       "MOVSX", OP_reg32_RM16,  &CPU::_MOVSX_reg32_RM16);
 
     hasBuiltTables = true;
 }
