@@ -58,7 +58,6 @@
 %define LPT1_IOBASE 0x3BC
 %define LPT2_IOBASE 0x378
 %define LPT3_IOBASE 0x278
-%define VGA_IOBASE 0x3D4
 
 %macro stub 1
     push    ax
