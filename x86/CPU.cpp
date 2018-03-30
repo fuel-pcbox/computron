@@ -27,7 +27,6 @@
 #include "Common.h"
 #include "debug.h"
 #include "debugger.h"
-#include "vga_memory.h"
 #include "pic.h"
 #include "settings.h"
 #include <unistd.h>
@@ -1128,7 +1127,7 @@ void CPU::_LEA_reg16_mem16(Instruction& insn)
     insn.reg16() = insn.modrm().offset();
 }
 
-// FIXME: Make VGAMemory into some kind of "memory mapper" thingy and put this kind of logic in there.
+// FIXME: Have VGA listen for writes to 0xB8000 somehow?
 inline void CPU::didTouchMemory(DWORD address)
 {
     bool shouldNotifyScreen = false;

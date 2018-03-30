@@ -25,7 +25,6 @@
 #include "machine.h"
 #include "settings.h"
 #include "CPU.h"
-#include "vga_memory.h"
 #include "iodevice.h"
 #include "fdc.h"
 #include "ide.h"
@@ -118,7 +117,6 @@ Machine::Machine(const QString& name, OwnPtr<Settings>&& settings, QObject* pare
     m_vomCtl = make<VomCtl>(*this);
     m_pit = make<PIT>(*this);
     m_vga = make<VGA>(*this);
-    m_vgaMemory = make<VGAMemory>(*this);
 
     if (!m_settings->isForAutotest()) {
         m_worker = make<Worker>(cpu());

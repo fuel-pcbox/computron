@@ -28,7 +28,6 @@
 #include "machine.h"
 #include "debug.h"
 #include "vga.h"
-#include "vga_memory.h"
 #include "busmouse.h"
 #include "keyboard.h"
 #include "settings.h"
@@ -272,7 +271,7 @@ void Screen::renderMode04(QImage& target)
 
 void Screen::renderMode13(QImage& target)
 {
-    const BYTE* videoMemory = machine().vgaMemory().plane(0);
+    const BYTE* videoMemory = machine().vga().plane(0);
     WORD startAddress = machine().vga().startAddress();
     videoMemory += startAddress;
 
@@ -306,10 +305,10 @@ void Screen::renderMode13(QImage& target)
 
 void Screen::renderMode12(QImage &target)
 {
-    const BYTE *p0 = machine().vgaMemory().plane(0);
-    const BYTE *p1 = machine().vgaMemory().plane(1);
-    const BYTE *p2 = machine().vgaMemory().plane(2);
-    const BYTE *p3 = machine().vgaMemory().plane(3);
+    const BYTE *p0 = machine().vga().plane(0);
+    const BYTE *p1 = machine().vga().plane(1);
+    const BYTE *p2 = machine().vga().plane(2);
+    const BYTE *p3 = machine().vga().plane(3);
 
     int offset = 0;
 
@@ -332,10 +331,10 @@ void Screen::renderMode12(QImage &target)
 
 void Screen::renderMode0D(QImage &target)
 {
-    const BYTE *p0 = machine().vgaMemory().plane(0);
-    const BYTE *p1 = machine().vgaMemory().plane(1);
-    const BYTE *p2 = machine().vgaMemory().plane(2);
-    const BYTE *p3 = machine().vgaMemory().plane(3);
+    const BYTE *p0 = machine().vga().plane(0);
+    const BYTE *p1 = machine().vga().plane(1);
+    const BYTE *p2 = machine().vga().plane(2);
+    const BYTE *p3 = machine().vga().plane(3);
 
     WORD startAddress = machine().vga().startAddress();
     p0 += startAddress;

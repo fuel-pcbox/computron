@@ -45,7 +45,6 @@ class PS2;
 class Settings;
 class CPU;
 class VGA;
-class VGAMemory;
 class VomCtl;
 class Worker;
 class MachineWidget;
@@ -76,7 +75,6 @@ public:
     PIC& slavePIC() { return *m_slavePIC; }
     CMOS& cmos() { return *m_cmos; }
     Settings& settings() { return *m_settings; }
-    VGAMemory& vgaMemory() { return *m_vgaMemory; }
 
     bool isForAutotest() PURE;
 
@@ -120,9 +118,6 @@ private:
     OwnPtr<Settings> m_settings;
     OwnPtr<CPU> m_cpu;
     OwnPtr<Worker> m_worker;
-
-    // Memory mappers
-    OwnPtr<VGAMemory> m_vgaMemory;
 
     // IODevices
     OwnPtr<VGA> m_vga;

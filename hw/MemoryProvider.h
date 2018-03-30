@@ -37,12 +37,12 @@ public:
     // pls no use :(
     virtual BYTE* memoryPointer(DWORD address);
 
-    virtual BYTE read8(DWORD address);
-    virtual WORD read16(DWORD address);
-    virtual DWORD read32(DWORD address);
-    virtual void write8(DWORD address, BYTE);
-    virtual void write16(DWORD address, WORD);
-    virtual void write32(DWORD address, DWORD);
+    virtual BYTE readMemory8(DWORD address);
+    virtual WORD readMemory16(DWORD address);
+    virtual DWORD readMemory32(DWORD address);
+    virtual void writeMemory8(DWORD address, BYTE);
+    virtual void writeMemory16(DWORD address, WORD);
+    virtual void writeMemory32(DWORD address, DWORD);
 
     const BYTE* pointerForDirectReadAccess() { return m_pointerForDirectReadAccess; }
 
@@ -62,19 +62,19 @@ private:
 template<typename T> inline T MemoryProvider::read(DWORD address)
 {
     if (sizeof(T) == 1)
-        return read8(address);
+        return readMemory8(address);
     if (sizeof(T) == 2)
-        return read16(address);
+        return readMemory16(address);
     ASSERT(sizeof(T) == 4);
-    return read32(address);
+    return readMemory32(address);
 }
 
 template<typename T> inline void MemoryProvider::write(DWORD address, T data)
 {
     if (sizeof(T) == 1)
-        return write8(address, data);
+        return writeMemory8(address, data);
     if (sizeof(T) == 2)
-        return write16(address, data);
+        return writeMemory16(address, data);
     ASSERT(sizeof(T) == 4);
-    return write32(address, data);
+    return writeMemory32(address, data);
 }

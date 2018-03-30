@@ -48,12 +48,12 @@ bool ROM::isValid() const
     return !m_data.isNull();
 }
 
-BYTE ROM::read8(DWORD address)
+BYTE ROM::readMemory8(DWORD address)
 {
     return m_data.data()[address - baseAddress().get()];
 }
 
-void ROM::write8(DWORD address, BYTE data)
+void ROM::writeMemory8(DWORD address, BYTE data)
 {
     vlog(LogAlert, "Write to ROM address %08x, data %02x", address, data);
 }

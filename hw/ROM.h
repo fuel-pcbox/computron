@@ -35,8 +35,8 @@ public:
     bool isValid() const;
 
     virtual BYTE* memoryPointer(DWORD address) override;
-    virtual BYTE read8(DWORD address) override;
-    virtual void write8(DWORD address, BYTE) override;
+    virtual BYTE readMemory8(DWORD address) override;
+    virtual void writeMemory8(DWORD address, BYTE) override;
 
 private:
     bool translateToOffset(DWORD address, DWORD& offset);

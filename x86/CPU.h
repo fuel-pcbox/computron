@@ -37,7 +37,6 @@ class Machine;
 class MemoryProvider;
 class CPU;
 class TSS;
-class VGAMemory;
 
 struct FarPointer {
     FarPointer() : segment(0), offset(0) { }

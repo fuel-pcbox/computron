@@ -24,20 +24,28 @@
 
 #pragma once
 
+#include "MemoryProvider.h"
 #include "iodevice.h"
 #include "OwnPtr.h"
 #include <QtCore/QObject>
 #include <QtGui/QColor>
 
-class VGA final : public QObject, public IODevice {
+class VGA final : public QObject, public IODevice, public MemoryProvider {
     Q_OBJECT
 public:
     explicit VGA(Machine&);
     virtual ~VGA();
 
+    // IODevice
     virtual void reset() override;
     virtual BYTE in8(WORD port) override;
     virtual void out8(WORD port, BYTE data) override;
+
+    // MemoryProvider
+    virtual void writeMemory8(DWORD address, BYTE value) override;
+    virtual BYTE readMemory8(DWORD address) override;
+
+    BYTE* plane(int index) const;
 
     void setPaletteDirty(bool);
     bool isPaletteDirty();
@@ -64,6 +72,8 @@ signals:
     void paletteChanged();
 
 private:
+    void synchronizeColors();
+
     struct Private;
     OwnPtr<Private> d;
 };
