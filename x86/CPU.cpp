@@ -1380,7 +1380,7 @@ T CPU::readMemory(DWORD linearAddress)
 #endif
     if (!validatePhysicalAddress<T>(physicalAddress, MemoryAccessType::Read))
         return 0;
-    T value = readPhysicalMemory<T>(linearAddress);
+    T value = readPhysicalMemory<T>(physicalAddress);
 #ifdef MEMORY_DEBUGGING
     if (options.memdebug || shouldLogMemoryRead(physicalAddress)) {
         if (options.novlog)
