@@ -32,6 +32,8 @@ RESOURCES = computron.qrc
 
 FORMS += gui/statewidget.ui
 
+OTHER_FILES += bios/bios.asm
+
 HEADERS += gui/machinewidget.h \
            gui/statewidget.h \
            gui/mainwindow.h \
