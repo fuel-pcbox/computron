@@ -41,8 +41,8 @@ Descriptor CPU::getDescriptor(WORD selector, SegmentRegisterIndex segmentRegiste
         descriptor.m_P = true;
         descriptor.m_isGlobal = true;
         if (segmentRegister == SegmentRegisterIndex::CS) {
-            // Code
-            descriptor.m_type |= 0x8;
+            // Code + Readable
+            descriptor.m_type |= 0x8 | 0x2;
         } else {
             // Data + Writable
             descriptor.m_type |= 0x2;
