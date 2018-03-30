@@ -71,7 +71,7 @@ static bool parseAddress(const QString& string, DWORD* address)
     if (!ok)
         return false;
 
-    *address = realModeAddressToPhysicalAddress(segment, offset);
+    *address = realModeAddressToPhysicalAddress(segment, offset).get();
     return true;
 }
 
@@ -227,7 +227,7 @@ OwnPtr<Settings> Settings::createForAutotest(const QString& fileName)
     settings->m_entryDS = autotestEntryDS;
     settings->m_entrySS = autotestEntrySS;
     settings->m_entrySP = autotestEntrySP;
-    settings->m_files.insert(realModeAddressToPhysicalAddress(autotestEntryCS, autotestEntryIP), fileName);
+    settings->m_files.insert(realModeAddressToPhysicalAddress(autotestEntryCS, autotestEntryIP).get(), fileName);
 
     settings->m_forAutotest = true;
     return settings;

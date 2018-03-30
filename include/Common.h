@@ -69,9 +69,9 @@ struct RuntimeOptions {
 
 extern RuntimeOptions options;
 
-inline DWORD realModeAddressToPhysicalAddress(WORD segment, DWORD offset)
+inline PhysicalAddress realModeAddressToPhysicalAddress(WORD segment, DWORD offset)
 {
-    return (segment << 4) + offset;
+    return PhysicalAddress((segment << 4) + offset);
 }
 
 inline void write16ToPointer(WORD* pointer, WORD value)

@@ -485,8 +485,8 @@ void Screen::synchronizeFont()
     BYTE isr = 0x43;
     WORD seg = machine().cpu().readUnmappedMemory16(isr * 4 + 2);
     WORD offset = machine().cpu().readUnmappedMemory16(isr * 4);
-    DWORD flat = realModeAddressToPhysicalAddress(seg, offset);
-    fontcharbitmap_t *fbmp = (fontcharbitmap_t *)(machine().cpu().memoryPointer(flat));
+    auto physicalAddress = realModeAddressToPhysicalAddress(seg, offset);
+    fontcharbitmap_t *fbmp = (fontcharbitmap_t *)(machine().cpu().pointerToPhysicalMemory(physicalAddress));
 
     for (int i = 0; i < 256; ++i) {
         d->character[i] = QBitmap::fromData(s, (const BYTE *)fbmp[i].data, QImage::Format_Mono);

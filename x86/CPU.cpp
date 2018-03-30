@@ -458,9 +458,10 @@ NEVER_INLINE bool CPU::mainLoopSlowStuff()
     }
 
     if (!m_breakpoints.empty()) {
-        DWORD flatPC = realModeAddressToPhysicalAddress(getCS(), getEIP());
+        // FIXME: This is totally wrong for protected mode.
+        auto flatPC = realModeAddressToPhysicalAddress(getCS(), getEIP());
         for (auto& breakpoint : m_breakpoints) {
-            if (flatPC == breakpoint) {
+            if (flatPC.get() == breakpoint) {
                 debugger().enter();
                 break;
             }
