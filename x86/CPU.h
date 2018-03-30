@@ -490,7 +490,6 @@ public:
     BYTE* memoryPointer(WORD segment, DWORD offset);
     BYTE* memoryPointer(SegmentRegisterIndex, DWORD offset);
     BYTE* memoryPointer(const SegmentDescriptor&, DWORD offset);
-    BYTE* unmappedMemoryPointer(DWORD address) { return &m_memory[address]; }
 
     DWORD getEFlags() const;
     WORD getFlags() const;
@@ -533,6 +532,9 @@ public:
     template<typename T> bool validatePhysicalAddress(DWORD, MemoryAccessType);
     template<typename T> void validateAddress(const SegmentDescriptor&, DWORD offset, MemoryAccessType);
     template<typename T> void validateAddress(SegmentRegisterIndex, DWORD offset, MemoryAccessType);
+    template<typename T> T readPhysicalMemory(DWORD physicalAddress);
+    template<typename T> void writePhysicalMemory(DWORD physicalAddress, T);
+    BYTE* pointerToPhysicalMemory(DWORD physicalAddress);
     template<typename T> T readMemory(DWORD address);
     template<typename T, MemoryAccessType accessType = MemoryAccessType::Read> T readMemory(const SegmentDescriptor&, DWORD address);
     template<typename T> T readMemory(SegmentRegisterIndex, DWORD address);

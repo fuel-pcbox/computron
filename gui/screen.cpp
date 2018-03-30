@@ -81,7 +81,7 @@ Screen::Screen(Machine& m)
     init();
     synchronizeFont();
     setTextMode(80, 25);
-    d->videoMemory = machine().cpu().unmappedMemoryPointer(0xb8000);
+    d->videoMemory = machine().cpu().pointerToPhysicalMemory(0xb8000);
 
     m_render04 = QImage(320, 200, QImage::Format_Indexed8);
     m_render0D = QImage(320, 200, QImage::Format_Indexed8);
@@ -253,7 +253,7 @@ void Screen::setScreenSize(int width, int height)
 
 void Screen::renderMode04(QImage& target)
 {
-    const BYTE* videoMemory = machine().cpu().unmappedMemoryPointer(0xb8000);
+    const BYTE* videoMemory = machine().cpu().pointerToPhysicalMemory(0xb8000);
     WORD startAddress = machine().vga().startAddress();
     videoMemory += startAddress;
     for (unsigned scanLine = 0; scanLine < 200; ++scanLine) {

@@ -1352,6 +1352,25 @@ bool CPU::validatePhysicalAddress(DWORD address, MemoryAccessType accessType)
 }
 
 template<typename T>
+T CPU::readPhysicalMemory(DWORD physicalAddress)
+{
+    if (auto* provider = memoryProviderForAddress(physicalAddress))
+        return provider->read<T>(physicalAddress);
+    return *reinterpret_cast<T*>(&m_memory[physicalAddress]);
+}
+
+template<typename T>
+void CPU::writePhysicalMemory(DWORD physicalAddress, T data)
+{
+    if (auto* provider = memoryProviderForAddress(physicalAddress)) {
+        provider->write<T>(physicalAddress, data);
+    } else {
+        *reinterpret_cast<T*>(&m_memory[physicalAddress]) = data;
+    }
+    didTouchMemory(physicalAddress);
+}
+
+template<typename T>
 T CPU::readMemory(DWORD linearAddress)
 {
     DWORD physicalAddress;
@@ -1361,11 +1380,7 @@ T CPU::readMemory(DWORD linearAddress)
 #endif
     if (!validatePhysicalAddress<T>(physicalAddress, MemoryAccessType::Read))
         return 0;
-    T value;
-    if (auto* provider = memoryProviderForAddress(physicalAddress))
-        value = provider->read<T>(physicalAddress);
-    else
-        value = *reinterpret_cast<T*>(&m_memory[physicalAddress]);
+    T value = readPhysicalMemory<T>(linearAddress);
 #ifdef MEMORY_DEBUGGING
     if (options.memdebug || shouldLogMemoryRead(physicalAddress)) {
         if (options.novlog)
@@ -1396,11 +1411,7 @@ T CPU::readMemory(const SegmentDescriptor& descriptor, DWORD offset)
     if (!validatePhysicalAddress<T>(physicalAddress, accessType))
         return 0;
 
-    T value;
-    if (auto* provider = memoryProviderForAddress(physicalAddress))
-        value = provider->read<T>(physicalAddress);
-    else
-        value = *reinterpret_cast<T*>(&m_memory[physicalAddress]);
+    T value = readPhysicalMemory<T>(physicalAddress);
 #ifdef MEMORY_DEBUGGING
     if (options.memdebug || shouldLogMemoryRead(physicalAddress)) {
         if (options.novlog)
@@ -1453,13 +1464,7 @@ void CPU::writeMemory(DWORD linearAddress, T value)
     }
 #endif
 
-    if (auto* provider = memoryProviderForAddress(physicalAddress)) {
-        provider->write<T>(physicalAddress, value);
-        return;
-    }
-
-    *reinterpret_cast<T*>(&m_memory[physicalAddress]) = value;
-    didTouchMemory(physicalAddress);
+    writePhysicalMemory(physicalAddress, value);
 }
 
 template<typename T>
@@ -1483,12 +1488,7 @@ void CPU::writeMemory(const SegmentDescriptor& descriptor, DWORD offset, T value
         vlog(LogCPU, "%zu-bit PE write [A20=%s] %04X:%08X (phys: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", descriptor.index(), offset, physicalAddress, value);
 #endif
 
-    if (auto* provider = memoryProviderForAddress(physicalAddress)) {
-        provider->write<T>(physicalAddress, value);
-        return;
-    }
-    *reinterpret_cast<T*>(&m_memory[physicalAddress]) = value;
-    didTouchMemory(physicalAddress);
+    writePhysicalMemory(physicalAddress, value);
 }
 
 template<typename T>
@@ -1578,6 +1578,14 @@ void CPU::setGS(WORD value)
     writeSegmentRegister(SegmentRegisterIndex::GS, value);
 }
 
+BYTE* CPU::pointerToPhysicalMemory(DWORD physicalAddress)
+{
+    didTouchMemory(physicalAddress);
+    if (auto* provider = memoryProviderForAddress(physicalAddress))
+        return provider->memoryPointer(physicalAddress);
+    return &m_memory[physicalAddress];
+}
+
 BYTE* CPU::memoryPointer(SegmentRegisterIndex segment, DWORD offset)
 {
     auto& descriptor = m_descriptor[(int)segment];
@@ -1602,10 +1610,7 @@ BYTE* CPU::memoryPointer(const SegmentDescriptor& descriptor, DWORD offset)
     if (options.memdebug || shouldLogMemoryPointer(physicalAddress))
         vlog(LogCPU, "MemoryPointer PE [A20=%s] %04X:%08X (phys: %08X)", isA20Enabled() ? "on" : "off", descriptor.index(), offset, physicalAddress);
 #endif
-    didTouchMemory(physicalAddress);
-    if (auto* provider = memoryProviderForAddress(physicalAddress))
-        return provider->memoryPointer(physicalAddress);
-    return &m_memory[physicalAddress];
+    return pointerToPhysicalMemory(physicalAddress);
 }
 
 BYTE* CPU::memoryPointer(WORD segmentIndex, DWORD offset)
@@ -1630,9 +1635,7 @@ BYTE* CPU::memoryPointer(DWORD linearAddress)
              physicalAddress);
     }
 #endif
-    if (auto* provider = memoryProviderForAddress(physicalAddress))
-        return provider->memoryPointer(physicalAddress);
-    return &m_memory[physicalAddress];
+    return pointerToPhysicalMemory(physicalAddress);
 }
 
 BYTE CPU::readInstruction8()
