@@ -23,6 +23,7 @@ void MemoryProvider::write32(DWORD address, DWORD data)
 
 BYTE MemoryProvider::read8(DWORD)
 {
+    return 0;
 }
 
 WORD MemoryProvider::read16(DWORD address)
