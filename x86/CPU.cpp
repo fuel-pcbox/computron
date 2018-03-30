@@ -43,7 +43,7 @@
 //#define DEBUG_WARCRAFT2
 
 #ifdef MEMORY_DEBUGGING
-static bool shouldLogAllMemoryAccesses(DWORD address)
+static bool shouldLogAllMemoryAccesses(PhysicalAddress address)
 {
     UNUSED_PARAM(address);
 #ifdef CT_DETERMINISTIC
@@ -52,21 +52,21 @@ static bool shouldLogAllMemoryAccesses(DWORD address)
     return false;
 }
 
-static bool shouldLogMemoryPointer(DWORD address)
+static bool shouldLogMemoryPointer(PhysicalAddress address)
 {
     if (shouldLogAllMemoryAccesses(address))
         return true;
     return false;
 }
 
-static bool shouldLogMemoryWrite(DWORD address)
+static bool shouldLogMemoryWrite(PhysicalAddress address)
 {
     if (shouldLogAllMemoryAccesses(address))
         return true;
     return false;
 }
 
-static bool shouldLogMemoryRead(DWORD address)
+static bool shouldLogMemoryRead(PhysicalAddress address)
 {
     if (shouldLogAllMemoryAccesses(address))
         return true;
@@ -1385,9 +1385,9 @@ T CPU::readMemory(DWORD linearAddress)
 #ifdef MEMORY_DEBUGGING
     if (options.memdebug || shouldLogMemoryRead(physicalAddress)) {
         if (options.novlog)
-            printf("%04X:%04X: %zu-bit read [A20=%s] 0x%08X, value: %08X\n", getBaseCS(), getBaseEIP(), sizeof(T) * 8, isA20Enabled() ? "on" : "off", physicalAddress, value);
+            printf("%04X:%08X: %zu-bit read [A20=%s] 0x%08X, value: %08X\n", getBaseCS(), getBaseEIP(), sizeof(T) * 8, isA20Enabled() ? "on" : "off", physicalAddress.get(), value);
         else
-            vlog(LogCPU, "%zu-bit read [A20=%s] 0x%08X, value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", physicalAddress, value);
+            vlog(LogCPU, "%zu-bit read [A20=%s] 0x%08X, value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", physicalAddress.get(), value);
     }
 #endif
     return value;
@@ -1400,28 +1400,8 @@ T CPU::readMemory(const SegmentDescriptor& descriptor, DWORD offset)
     if (!getPE()) {
         return readMemory<T>(linearAddress);
     }
-
     validateAddress<T>(descriptor, offset, accessType);
-    PhysicalAddress physicalAddress;
-    translateAddress(linearAddress, physicalAddress, accessType);
-
-#ifdef A20_ENABLED
-    physicalAddress.mask(a20Mask());
-#endif
-
-    if (!validatePhysicalAddress<T>(physicalAddress, accessType))
-        return 0;
-
-    T value = readPhysicalMemory<T>(physicalAddress);
-#ifdef MEMORY_DEBUGGING
-    if (options.memdebug || shouldLogMemoryRead(physicalAddress)) {
-        if (options.novlog)
-            printf("%04X:%08X: %zu-bit PE read [A20=%s] %04X:%08X (phys: %08X), value: %08X\n", getBaseCS(), getBaseEIP(), sizeof(T) * 8, isA20Enabled() ? "on" : "off", descriptor.index(), offset, physicalAddress, value);
-        else
-            vlog(LogCPU, "%zu-bit PE read [A20=%s] %04X:%08X (phys: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", descriptor.index(), offset, physicalAddress, value);
-    }
-#endif
-    return value;
+    return readMemory<T>(linearAddress);
 }
 
 template<typename T>
@@ -1459,9 +1439,9 @@ void CPU::writeMemory(DWORD linearAddress, T value)
 #ifdef MEMORY_DEBUGGING
     if (options.memdebug || shouldLogMemoryWrite(physicalAddress)) {
         if (options.novlog)
-            printf("%04X:%08X: %zu-bit write [A20=%s] 0x%08X, value: %08X\n", getBaseCS(), getBaseEIP(), sizeof(T) * 8, isA20Enabled() ? "on" : "off", physicalAddress, value);
+            printf("%04X:%08X: %zu-bit write [A20=%s] 0x%08X, value: %08X\n", getBaseCS(), getBaseEIP(), sizeof(T) * 8, isA20Enabled() ? "on" : "off", physicalAddress.get(), value);
         else
-            vlog(LogCPU, "%zu-bit write [A20=%s] 0x%08X, value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", physicalAddress, value);
+            vlog(LogCPU, "%zu-bit write [A20=%s] 0x%08X, value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", physicalAddress.get(), value);
     }
 #endif
 
@@ -1476,20 +1456,8 @@ void CPU::writeMemory(const SegmentDescriptor& descriptor, DWORD offset, T value
         writeMemory(linearAddress, value);
         return;
     }
-
     validateAddress<T>(descriptor, offset, MemoryAccessType::Write);
-    PhysicalAddress physicalAddress;
-    translateAddress(linearAddress, physicalAddress, MemoryAccessType::Write);
-
-    if (!validatePhysicalAddress<T>(physicalAddress, MemoryAccessType::Write))
-        return;
-
-#ifdef MEMORY_DEBUGGING
-    if (options.memdebug || shouldLogMemoryWrite(physicalAddress))
-        vlog(LogCPU, "%zu-bit PE write [A20=%s] %04X:%08X (phys: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", descriptor.index(), offset, physicalAddress, value);
-#endif
-
-    writePhysicalMemory(physicalAddress, value);
+    writeMemory(linearAddress, value);
 }
 
 template<typename T>
@@ -1633,7 +1601,7 @@ BYTE* CPU::memoryPointer(DWORD linearAddress)
              getPE(),
              isA20Enabled() ? "on" : "off",
              linearAddress,
-             physicalAddress);
+             physicalAddress.get());
     }
 #endif
     return pointerToPhysicalMemory(physicalAddress);
