@@ -1,4 +1,4 @@
-;
+; Computron x86 PC Emulator
 ; Copyright (C) 2003-2018 Andreas Kling <awesomekling@gmail.com>
 ;
 ; Redistribution and use in source and binary forms, with or without
@@ -624,11 +624,6 @@ _bios_load_bootsector:
     mov     si, msg_not_bootable
     call    put_string
     jmp     .end
-
-; Interrupt 10 is handled by VGA BIOS.
-
-_bios_interrupt10:
-    iret
 
 _bios_interrupt11:
     push    ds
