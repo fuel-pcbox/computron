@@ -193,7 +193,7 @@ bool Machine::loadROMImage(DWORD address, const QString& fileName)
         vlog(LogConfig, "Failed to load ROM image %s", qPrintable(fileName));
         return false;
     }
-    cpu().registerMemoryProvider(address, rom->length(), *rom);
+    cpu().registerMemoryProvider(PhysicalAddress(address), rom->length(), *rom);
     m_roms.append(rom.leakPtr());
     return true;
 }

@@ -52,6 +52,19 @@ enum ValueSize {
     DWordSize = 32,
 };
 
+class PhysicalAddress {
+public:
+    PhysicalAddress() { }
+    explicit PhysicalAddress(DWORD address) : m_address(address) { }
+
+    DWORD get() const { return m_address; }
+    void set(DWORD address) { m_address = address; }
+    void mask(DWORD m) { m_address &= m; }
+
+private:
+    DWORD m_address { 0 };
+};
+
 template<typename T> struct BitSizeOfType { static const int bits = sizeof(T) * 8; };
 
 template<typename T>

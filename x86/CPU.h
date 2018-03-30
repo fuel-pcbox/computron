@@ -165,8 +165,8 @@ public:
     };
     };
 
-    void registerMemoryProvider(DWORD baseAddress, DWORD length, MemoryProvider&);
-    MemoryProvider* memoryProviderForAddress(DWORD address);
+    void registerMemoryProvider(PhysicalAddress, DWORD length, MemoryProvider&);
+    MemoryProvider* memoryProviderForAddress(PhysicalAddress);
 
     void recomputeMainLoopNeedsSlowStuff();
 
@@ -529,12 +529,12 @@ public:
     inline void writeUnmappedMemory8(DWORD address, BYTE data);
     inline void writeUnmappedMemory16(DWORD address, WORD data);
 
-    template<typename T> bool validatePhysicalAddress(DWORD, MemoryAccessType);
+    template<typename T> bool validatePhysicalAddress(PhysicalAddress, MemoryAccessType);
     template<typename T> void validateAddress(const SegmentDescriptor&, DWORD offset, MemoryAccessType);
     template<typename T> void validateAddress(SegmentRegisterIndex, DWORD offset, MemoryAccessType);
-    template<typename T> T readPhysicalMemory(DWORD physicalAddress);
-    template<typename T> void writePhysicalMemory(DWORD physicalAddress, T);
-    BYTE* pointerToPhysicalMemory(DWORD physicalAddress);
+    template<typename T> T readPhysicalMemory(PhysicalAddress);
+    template<typename T> void writePhysicalMemory(PhysicalAddress, T);
+    BYTE* pointerToPhysicalMemory(PhysicalAddress);
     template<typename T> T readMemory(DWORD address);
     template<typename T, MemoryAccessType accessType = MemoryAccessType::Read> T readMemory(const SegmentDescriptor&, DWORD address);
     template<typename T> T readMemory(SegmentRegisterIndex, DWORD address);
@@ -542,7 +542,7 @@ public:
     template<typename T> void writeMemory(const SegmentDescriptor&, DWORD address, T data);
     template<typename T> void writeMemory(SegmentRegisterIndex, DWORD address, T data);
 
-    void translateAddress(DWORD linearAddress, DWORD& physicalAddress, MemoryAccessType);
+    void translateAddress(DWORD linearAddress, PhysicalAddress&, MemoryAccessType);
     void snoop(DWORD linearAddress, MemoryAccessType);
     void snoop(SegmentRegisterIndex, DWORD offset, MemoryAccessType);
 
@@ -1172,7 +1172,7 @@ private:
 
     void didTouchMemory(DWORD address);
 
-    void translateAddressSlowCase(DWORD linearAddress, DWORD& physicalAddress, MemoryAccessType);
+    void translateAddressSlowCase(DWORD linearAddress, PhysicalAddress&, MemoryAccessType);
 
     template<typename T> T doSAR(T, int steps);
     template<typename T> T doRCL(T, int steps);

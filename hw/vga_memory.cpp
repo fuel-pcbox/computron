@@ -62,7 +62,7 @@ VGAMemory::VGAMemory(Machine& m)
 
     synchronizeColors();
     machine().vga().setPaletteDirty(true);
-    machine().cpu().registerMemoryProvider(0xa0000, 0x10000, *this);
+    machine().cpu().registerMemoryProvider(PhysicalAddress(0xa0000), 0x10000, *this);
 }
 
 VGAMemory::~VGAMemory()

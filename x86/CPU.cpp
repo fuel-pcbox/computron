@@ -1149,10 +1149,10 @@ static const char* toString(CPU::MemoryAccessType type)
     }
 }
 
-ALWAYS_INLINE void CPU::translateAddress(DWORD linearAddress, DWORD& physicalAddress, MemoryAccessType accessType)
+ALWAYS_INLINE void CPU::translateAddress(DWORD linearAddress, PhysicalAddress& physicalAddress, MemoryAccessType accessType)
 {
     if (!getPE() || !getPG()) {
-        physicalAddress = linearAddress;
+        physicalAddress.set(linearAddress);
         return;
     }
     translateAddressSlowCase(linearAddress, physicalAddress, accessType);
@@ -1195,7 +1195,7 @@ Exception CPU::PageFault(DWORD linearAddress, PageFaultFlags::Flags flags, CPU::
     return Exception(0xe, error, linearAddress, "Page fault");
 }
 
-void CPU::translateAddressSlowCase(DWORD linearAddress, DWORD& physicalAddress, MemoryAccessType accessType)
+void CPU::translateAddressSlowCase(DWORD linearAddress, PhysicalAddress& physicalAddress, MemoryAccessType accessType)
 {
     ASSERT(getCR3() < m_memorySize);
 
@@ -1244,10 +1244,10 @@ void CPU::translateAddressSlowCase(DWORD linearAddress, DWORD& physicalAddress, 
     pageDirectoryEntry |= PageTableEntryFlags::Accessed;
     pageTableEntry |= PageTableEntryFlags::Accessed;
 
-    physicalAddress = (pageTableEntry & 0xfffff000) | offset;
+    physicalAddress.set((pageTableEntry & 0xfffff000) | offset);
 
 #ifdef DEBUG_PAGING
-    vlog(LogCPU, "PG=1 Translating %08x {dir=%03x, page=%03x, offset=%03x} => %08x [%08x + %08x]", linearAddress, dir, page, offset, physicalAddress, pageDirectoryEntry, pageTableEntry);
+    vlog(LogCPU, "PG=1 Translating %08x {dir=%03x, page=%03x, offset=%03x} => %08x [%08x + %08x]", linearAddress, dir, page, offset, physicalAddress.get(), pageDirectoryEntry, pageTableEntry);
 #endif
 }
 
@@ -1255,7 +1255,7 @@ void CPU::snoop(DWORD linearAddress, MemoryAccessType accessType)
 {
     if (!getPE())
         return;
-    DWORD physicalAddress;
+    PhysicalAddress physicalAddress;
     translateAddress(linearAddress, physicalAddress, accessType);
 }
 
@@ -1332,17 +1332,17 @@ void CPU::validateAddress(SegmentRegisterIndex registerIndex, DWORD offset, Memo
 }
 
 template<typename T>
-bool CPU::validatePhysicalAddress(DWORD address, MemoryAccessType accessType)
+bool CPU::validatePhysicalAddress(PhysicalAddress physicalAddress, MemoryAccessType accessType)
 {
     UNUSED_PARAM(accessType);
-    if (address < m_memorySize)
+    if (physicalAddress.get() < m_memorySize)
         return true;
 #ifdef MEMORY_DEBUGGING
     if (options.memdebug) {
         vlog(LogCPU, "OOB %zu-bit %s access @ physical %08x [A20=%s] [PG=%u]",
             sizeof(T) * 8,
             toString(accessType),
-            address,
+            physicalAddress.get(),
             isA20Enabled() ? "on" : "off",
             getPG()
         );
@@ -1352,31 +1352,31 @@ bool CPU::validatePhysicalAddress(DWORD address, MemoryAccessType accessType)
 }
 
 template<typename T>
-T CPU::readPhysicalMemory(DWORD physicalAddress)
+T CPU::readPhysicalMemory(PhysicalAddress physicalAddress)
 {
     if (auto* provider = memoryProviderForAddress(physicalAddress))
-        return provider->read<T>(physicalAddress);
-    return *reinterpret_cast<T*>(&m_memory[physicalAddress]);
+        return provider->read<T>(physicalAddress.get());
+    return *reinterpret_cast<T*>(&m_memory[physicalAddress.get()]);
 }
 
 template<typename T>
-void CPU::writePhysicalMemory(DWORD physicalAddress, T data)
+void CPU::writePhysicalMemory(PhysicalAddress physicalAddress, T data)
 {
     if (auto* provider = memoryProviderForAddress(physicalAddress)) {
-        provider->write<T>(physicalAddress, data);
+        provider->write<T>(physicalAddress.get(), data);
     } else {
-        *reinterpret_cast<T*>(&m_memory[physicalAddress]) = data;
+        *reinterpret_cast<T*>(&m_memory[physicalAddress.get()]) = data;
     }
-    didTouchMemory(physicalAddress);
+    didTouchMemory(physicalAddress.get());
 }
 
 template<typename T>
 T CPU::readMemory(DWORD linearAddress)
 {
-    DWORD physicalAddress;
+    PhysicalAddress physicalAddress;
     translateAddress(linearAddress, physicalAddress, MemoryAccessType::Read);
 #ifdef A20_ENABLED
-    physicalAddress &= a20Mask();
+    physicalAddress.mask(a20Mask());
 #endif
     if (!validatePhysicalAddress<T>(physicalAddress, MemoryAccessType::Read))
         return 0;
@@ -1401,11 +1401,11 @@ T CPU::readMemory(const SegmentDescriptor& descriptor, DWORD offset)
     }
 
     validateAddress<T>(descriptor, offset, accessType);
-    DWORD physicalAddress;
+    PhysicalAddress physicalAddress;
     translateAddress(linearAddress, physicalAddress, accessType);
 
 #ifdef A20_ENABLED
-    physicalAddress &= a20Mask();
+    physicalAddress.mask(a20Mask());
 #endif
 
     if (!validatePhysicalAddress<T>(physicalAddress, accessType))
@@ -1450,10 +1450,10 @@ DWORD CPU::readMemory32(SegmentRegisterIndex segment, DWORD offset) { return rea
 template<typename T>
 void CPU::writeMemory(DWORD linearAddress, T value)
 {
-    DWORD physicalAddress;
+    PhysicalAddress physicalAddress;
     translateAddress(linearAddress, physicalAddress, MemoryAccessType::Write);
 #ifdef A20_ENABLED
-    physicalAddress &= a20Mask();
+    physicalAddress.mask(a20Mask());
 #endif
 #ifdef MEMORY_DEBUGGING
     if (options.memdebug || shouldLogMemoryWrite(physicalAddress)) {
@@ -1477,7 +1477,7 @@ void CPU::writeMemory(const SegmentDescriptor& descriptor, DWORD offset, T value
     }
 
     validateAddress<T>(descriptor, offset, MemoryAccessType::Write);
-    DWORD physicalAddress;
+    PhysicalAddress physicalAddress;
     translateAddress(linearAddress, physicalAddress, MemoryAccessType::Write);
 
     if (!validatePhysicalAddress<T>(physicalAddress, MemoryAccessType::Write))
@@ -1578,12 +1578,12 @@ void CPU::setGS(WORD value)
     writeSegmentRegister(SegmentRegisterIndex::GS, value);
 }
 
-BYTE* CPU::pointerToPhysicalMemory(DWORD physicalAddress)
+BYTE* CPU::pointerToPhysicalMemory(PhysicalAddress physicalAddress)
 {
-    didTouchMemory(physicalAddress);
+    didTouchMemory(physicalAddress.get());
     if (auto* provider = memoryProviderForAddress(physicalAddress))
-        return provider->memoryPointer(physicalAddress);
-    return &m_memory[physicalAddress];
+        return provider->memoryPointer(physicalAddress.get());
+    return &m_memory[physicalAddress.get()];
 }
 
 BYTE* CPU::memoryPointer(SegmentRegisterIndex segment, DWORD offset)
@@ -1601,10 +1601,10 @@ BYTE* CPU::memoryPointer(const SegmentDescriptor& descriptor, DWORD offset)
         return memoryPointer(linearAddress);
 
     validateAddress<BYTE>(descriptor, offset, MemoryAccessType::InternalPointer);
-    DWORD physicalAddress;
+    PhysicalAddress physicalAddress;
     translateAddress(linearAddress, physicalAddress, MemoryAccessType::InternalPointer);
 #ifdef A20_ENABLED
-    physicalAddress &= a20Mask();
+    physicalAddress.mask(a20Mask());
 #endif
 #ifdef MEMORY_DEBUGGING
     if (options.memdebug || shouldLogMemoryPointer(physicalAddress))
@@ -1620,12 +1620,12 @@ BYTE* CPU::memoryPointer(WORD segmentIndex, DWORD offset)
 
 BYTE* CPU::memoryPointer(DWORD linearAddress)
 {
-    DWORD physicalAddress;
+    PhysicalAddress physicalAddress;
     translateAddress(linearAddress, physicalAddress, MemoryAccessType::InternalPointer);
 #ifdef A20_ENABLED
-    physicalAddress &= a20Mask();
+    physicalAddress.mask(a20Mask());
 #endif
-    didTouchMemory(physicalAddress);
+    didTouchMemory(physicalAddress.get());
 #ifdef MEMORY_DEBUGGING
     if (options.memdebug || shouldLogMemoryPointer(physicalAddress)) {
         vlog(LogCPU, "MemoryPointer PE=%u [A20=%s] linear:%08x, phys:%08x",
@@ -1690,23 +1690,22 @@ void CPU::initWatches()
 {
 }
 
-void CPU::registerMemoryProvider(DWORD baseAddress, DWORD length, MemoryProvider& provider)
+void CPU::registerMemoryProvider(PhysicalAddress baseAddress, DWORD length, MemoryProvider& provider)
 {
-    if ((baseAddress + length) > 1048576) {
+    if ((baseAddress.get() + length) > 1048576) {
         vlog(LogConfig, "Can't register mapper with length %u @ %08x", length, baseAddress);
         ASSERT_NOT_REACHED();
     }
 
-    for (unsigned i = baseAddress / memoryProviderBlockSize; i < (baseAddress + length) / memoryProviderBlockSize; ++i) {
+    for (unsigned i = baseAddress.get() / memoryProviderBlockSize; i < (baseAddress.get() + length) / memoryProviderBlockSize; ++i) {
         vlog(LogConfig, "Register memory provider %p as mapper %u", &provider, i);
-        vlog(LogConfig, "woozi %zu", sizeof(m_memoryProviders));
         m_memoryProviders[i] = &provider;
     }
 }
 
-MemoryProvider* CPU::memoryProviderForAddress(DWORD address)
+MemoryProvider* CPU::memoryProviderForAddress(PhysicalAddress address)
 {
-    if (address >= 1048576)
+    if (address.get() >= 1048576)
         return nullptr;
-    return m_memoryProviders[address / memoryProviderBlockSize];
+    return m_memoryProviders[address.get() / memoryProviderBlockSize];
 }
