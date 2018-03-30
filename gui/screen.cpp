@@ -218,6 +218,8 @@ void Screen::refresh()
         return;
     }
 
+    synchronizeFont();
+
     if (videoMode == 0x03) {
         int rows = currentRowCount();
         switch(rows)
@@ -480,10 +482,14 @@ void Screen::synchronizeFont()
     m_characterHeight = 16;
     const QSize s(8, 16);
 
-    fontcharbitmap_t *fbmp = (fontcharbitmap_t *)(machine().cpu().unmappedMemoryPointer(0xc4000));
+    BYTE isr = 0x43;
+    WORD seg = machine().cpu().readUnmappedMemory16(isr * 4 + 2);
+    WORD offset = machine().cpu().readUnmappedMemory16(isr * 4);
+    DWORD flat = realModeAddressToPhysicalAddress(seg, offset);
+    fontcharbitmap_t *fbmp = (fontcharbitmap_t *)(machine().cpu().unmappedMemoryPointer(flat));
 
     for (int i = 0; i < 256; ++i) {
-        d->character[i] = QBitmap::fromData(s, (const BYTE *)fbmp[i].data, QImage::Format_MonoLSB);
+        d->character[i] = QBitmap::fromData(s, (const BYTE *)fbmp[i].data, QImage::Format_Mono);
     }
 }
 
