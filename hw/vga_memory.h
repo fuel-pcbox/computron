@@ -23,27 +23,22 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef VGA_MEMORY_H
-#define VGA_MEMORY_H
+#pragma once
 
-#include "types.h"
+#include "MemoryProvider.h"
 #include <QtCore/QRect>
 #include <QtGui/QBrush>
 #include <QtGui/QColor>
 
 class Machine;
 
-class VGAMemory
-{
+class VGAMemory final : public MemoryProvider {
 public:
     explicit VGAMemory(Machine&);
-    ~VGAMemory();
+    virtual ~VGAMemory();
 
-    template<typename T> void write(DWORD address, T value);
-    template<typename T> T read(DWORD address);
-
-    void write8(DWORD address, BYTE value);
-    BYTE read8(DWORD address);
+    virtual void write8(DWORD address, BYTE value) override;
+    virtual BYTE read8(DWORD address) override;
 
     /*!
         Returns the specified pixel plane.
@@ -63,10 +58,3 @@ private:
     BYTE* m_plane[4];
     BYTE m_latch[4];
 };
-
-inline bool addressIsInVGAMemory(DWORD address)
-{
-    return address >= 0xA0000 && address < 0xB0000;
-}
-
-#endif

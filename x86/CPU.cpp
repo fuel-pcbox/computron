@@ -1132,9 +1132,7 @@ void CPU::_LEA_reg16_mem16(Instruction& insn)
 inline void CPU::didTouchMemory(DWORD address)
 {
     bool shouldNotifyScreen = false;
-    if (addressIsInVGAMemory(address))
-        shouldNotifyScreen = true;
-    else if (address >= 0xB8000 && address < 0xC0000)
+    if (address >= 0xB8000 && address < 0xC0000)
         shouldNotifyScreen = true;
     if (shouldNotifyScreen)
         machine().notifyScreen();
@@ -1364,9 +1362,7 @@ T CPU::readMemory(DWORD linearAddress)
     if (!validatePhysicalAddress<T>(physicalAddress, MemoryAccessType::Read))
         return 0;
     T value;
-    if (addressIsInVGAMemory(physicalAddress))
-        value = machine().vgaMemory().read<T>(physicalAddress);
-    else if (auto* provider = memoryProviderForAddress(physicalAddress))
+    if (auto* provider = memoryProviderForAddress(physicalAddress))
         value = provider->read<T>(physicalAddress);
     else
         value = *reinterpret_cast<T*>(&m_memory[physicalAddress]);
@@ -1401,9 +1397,7 @@ T CPU::readMemory(const SegmentDescriptor& descriptor, DWORD offset)
         return 0;
 
     T value;
-    if (addressIsInVGAMemory(physicalAddress))
-        value = machine().vgaMemory().read<T>(physicalAddress);
-    else if (auto* provider = memoryProviderForAddress(physicalAddress))
+    if (auto* provider = memoryProviderForAddress(physicalAddress))
         value = provider->read<T>(physicalAddress);
     else
         value = *reinterpret_cast<T*>(&m_memory[physicalAddress]);
@@ -1459,11 +1453,6 @@ void CPU::writeMemory(DWORD linearAddress, T value)
     }
 #endif
 
-    if (addressIsInVGAMemory(physicalAddress)) {
-        machine().vgaMemory().write(physicalAddress, value);
-        return;
-    }
-
     if (auto* provider = memoryProviderForAddress(physicalAddress)) {
         provider->write<T>(physicalAddress, value);
         return;
@@ -1494,10 +1483,6 @@ void CPU::writeMemory(const SegmentDescriptor& descriptor, DWORD offset, T value
         vlog(LogCPU, "%zu-bit PE write [A20=%s] %04X:%08X (phys: %08X), value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", descriptor.index(), offset, physicalAddress, value);
 #endif
 
-    if (addressIsInVGAMemory(physicalAddress)) {
-        machine().vgaMemory().write(physicalAddress, value);
-        return;
-    }
     if (auto* provider = memoryProviderForAddress(physicalAddress)) {
         provider->write<T>(physicalAddress, value);
         return;

@@ -27,6 +27,7 @@
 #include "machine.h"
 #include "screen.h"
 #include "Common.h"
+#include "CPU.h"
 #include "vga.h"
 #include "debug.h"
 #include <QtGui/QImage>
@@ -61,6 +62,7 @@ VGAMemory::VGAMemory(Machine& m)
 
     synchronizeColors();
     machine().vga().setPaletteDirty(true);
+    machine().cpu().registerMemoryProvider(0xa0000, 0x10000, *this);
 }
 
 VGAMemory::~VGAMemory()
@@ -68,32 +70,8 @@ VGAMemory::~VGAMemory()
     delete [] m_plane[0];
 }
 
-template<typename T>
-void VGAMemory::write(DWORD address, T value)
-{
-    switch (sizeof(T)) {
-    case 1:
-        write8(address, value);
-        return;
-    case 2:
-        write8(address, getLSB(value));
-        write8(address + 1, getMSB(value));
-        return;
-    case 4:
-        write8(address + 0, getLSB(getLSW(value)));
-        write8(address + 1, getMSB(getLSW(value)));
-        write8(address + 2, getLSB(getMSW(value)));
-        write8(address + 3, getMSB(getMSW(value)));
-        return;
-    }
-    // FIXME: This should be a static assert somehow.
-    ASSERT_NOT_REACHED();
-}
-
 void VGAMemory::write8(DWORD address, BYTE value)
 {
-    ASSERT(addressIsInVGAMemory(address));
-
     machine().notifyScreen();
 
     BYTE new_val[4];
@@ -247,10 +225,6 @@ BYTE VGAMemory::read8(DWORD address)
         hard_exit(1);
     }
 
-    // FIXME: We're assuming READ_MODE == 0 from here on, this can't be safe.
-
-    ASSERT(addressIsInVGAMemory(address));
-
     address -= 0xA0000;
 
     m_latch[0] = m_plane[0][address];
@@ -266,28 +240,6 @@ BYTE VGAMemory::read8(DWORD address)
 
     return m_latch[plane];
 }
-
-template<typename T>
-T VGAMemory::read(DWORD address)
-{
-    switch (sizeof(T)) {
-    case 1:
-        return read8(address);
-    case 2:
-        return makeWORD(read8(address + 1), read8(address));
-    case 4:
-        return makeDWORD(read<WORD>(address + 2), read<WORD>(address));
-    }
-    // FIXME: This should be a static assert somehow.
-    ASSERT_NOT_REACHED();
-}
-
-template BYTE VGAMemory::read<BYTE>(DWORD address);
-template WORD VGAMemory::read<WORD>(DWORD address);
-template DWORD VGAMemory::read<DWORD>(DWORD address);
-template void VGAMemory::write<BYTE>(DWORD address, BYTE value);
-template void VGAMemory::write<WORD>(DWORD address, WORD value);
-template void VGAMemory::write<DWORD>(DWORD address, DWORD value);
 
 BYTE *VGAMemory::plane(int index) const
 {
