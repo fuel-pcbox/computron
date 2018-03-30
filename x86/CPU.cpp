@@ -1355,8 +1355,12 @@ bool CPU::validatePhysicalAddress(PhysicalAddress physicalAddress, MemoryAccessT
 template<typename T>
 T CPU::readPhysicalMemory(PhysicalAddress physicalAddress)
 {
-    if (auto* provider = memoryProviderForAddress(physicalAddress))
+    if (auto* provider = memoryProviderForAddress(physicalAddress)) {
+        if (auto* directReadAccessPointer = provider->pointerForDirectReadAccess()) {
+            return *reinterpret_cast<const T*>(&directReadAccessPointer[physicalAddress.get() - provider->baseAddress().get()]);
+        }
         return provider->read<T>(physicalAddress.get());
+    }
     return *reinterpret_cast<T*>(&m_memory[physicalAddress.get()]);
 }
 
@@ -1659,20 +1663,20 @@ void CPU::initWatches()
 {
 }
 
-void CPU::registerMemoryProvider(PhysicalAddress baseAddress, DWORD length, MemoryProvider& provider)
+void CPU::registerMemoryProvider(MemoryProvider& provider)
 {
-    if ((baseAddress.get() + length) > 1048576) {
-        vlog(LogConfig, "Can't register mapper with length %u @ %08x", length, baseAddress);
+    if ((provider.baseAddress().get() + provider.size()) > 1048576) {
+        vlog(LogConfig, "Can't register mapper with length %u @ %08x", provider.size(), provider.baseAddress().get());
         ASSERT_NOT_REACHED();
     }
 
-    for (unsigned i = baseAddress.get() / memoryProviderBlockSize; i < (baseAddress.get() + length) / memoryProviderBlockSize; ++i) {
+    for (unsigned i = provider.baseAddress().get() / memoryProviderBlockSize; i < (provider.baseAddress().get() + provider.size()) / memoryProviderBlockSize; ++i) {
         vlog(LogConfig, "Register memory provider %p as mapper %u", &provider, i);
         m_memoryProviders[i] = &provider;
     }
 }
 
-MemoryProvider* CPU::memoryProviderForAddress(PhysicalAddress address)
+ALWAYS_INLINE MemoryProvider* CPU::memoryProviderForAddress(PhysicalAddress address)
 {
     if (address.get() >= 1048576)
         return nullptr;

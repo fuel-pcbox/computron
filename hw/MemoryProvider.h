@@ -30,8 +30,10 @@
 
 class MemoryProvider {
 public:
-    MemoryProvider() { }
     virtual ~MemoryProvider() { }
+
+    PhysicalAddress baseAddress() const { return m_baseAddress; }
+    DWORD size() const { return m_size; }
 
     // pls no use :(
     virtual BYTE* memoryPointer(DWORD address);
@@ -43,8 +45,19 @@ public:
     virtual void write16(DWORD address, WORD);
     virtual void write32(DWORD address, DWORD);
 
+    const BYTE* pointerForDirectReadAccess() { return m_pointerForDirectReadAccess; }
+
     template<typename T> T read(DWORD address);
     template<typename T> void write(DWORD address, T);
+
+protected:
+    MemoryProvider(PhysicalAddress baseAddress, DWORD size = 0) : m_baseAddress(baseAddress) { setSize(size); }
+    void setSize(DWORD);
+    const BYTE* m_pointerForDirectReadAccess { nullptr };
+
+private:
+    PhysicalAddress m_baseAddress;
+    DWORD m_size { 0 };
 };
 
 template<typename T> inline T MemoryProvider::read(DWORD address)

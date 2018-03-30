@@ -1,4 +1,5 @@
 #include "MemoryProvider.h"
+#include "CPU.h"
 
 BYTE* MemoryProvider::memoryPointer(DWORD)
 {
@@ -34,4 +35,10 @@ WORD MemoryProvider::read16(DWORD address)
 DWORD MemoryProvider::read32(DWORD address)
 {
     return makeDWORD(read16(address + 2), read16(address));
+}
+
+void MemoryProvider::setSize(DWORD size)
+{
+    RELEASE_ASSERT((size % 16384) == 0);
+    m_size = size;
 }

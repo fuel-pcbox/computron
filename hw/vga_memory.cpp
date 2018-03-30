@@ -46,7 +46,8 @@
 #define BIT_MASK (machine().vga().readRegister2(8))
 
 VGAMemory::VGAMemory(Machine& m)
-    : m_machine(m)
+    : MemoryProvider(PhysicalAddress(0xa0000), 0x10000)
+    , m_machine(m)
 {
     m_plane[0] = new BYTE[0x40000];
     m_plane[1] = m_plane[0] + 0x10000;
@@ -62,7 +63,7 @@ VGAMemory::VGAMemory(Machine& m)
 
     synchronizeColors();
     machine().vga().setPaletteDirty(true);
-    machine().cpu().registerMemoryProvider(PhysicalAddress(0xa0000), 0x10000, *this);
+    machine().cpu().registerMemoryProvider(*this);
 }
 
 VGAMemory::~VGAMemory()

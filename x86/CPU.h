@@ -165,7 +165,7 @@ public:
     };
     };
 
-    void registerMemoryProvider(PhysicalAddress, DWORD length, MemoryProvider&);
+    void registerMemoryProvider(MemoryProvider&);
     MemoryProvider* memoryProviderForAddress(PhysicalAddress);
 
     void recomputeMainLoopNeedsSlowStuff();

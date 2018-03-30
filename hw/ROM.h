@@ -26,27 +26,21 @@
 #pragma once
 
 #include "MemoryProvider.h"
-#include <QFile>
 #include <QString>
 
 class ROM final : public MemoryProvider {
 public:
-    ROM(DWORD baseAddress, const QString& fileName);
+    ROM(PhysicalAddress baseAddress, const QString& fileName);
     virtual ~ROM();
 
     bool isValid() const;
-    DWORD length() const;
 
     virtual BYTE* memoryPointer(DWORD address) override;
     virtual BYTE read8(DWORD address) override;
-    virtual WORD read16(DWORD address) override;
-    virtual DWORD read32(DWORD address) override;
     virtual void write8(DWORD address, BYTE) override;
 
 private:
     bool translateToOffset(DWORD address, DWORD& offset);
 
-    QFile m_file;
-    DWORD m_baseAddress { 0 };
-    BYTE* m_mmap { nullptr };
+    QByteArray m_data;
 };

@@ -188,12 +188,12 @@ bool Machine::loadFile(DWORD address, const QString& fileName)
 
 bool Machine::loadROMImage(DWORD address, const QString& fileName)
 {
-    auto rom = make<ROM>(address, fileName);
+    auto rom = make<ROM>(PhysicalAddress(address), fileName);
     if (!rom->isValid()) {
         vlog(LogConfig, "Failed to load ROM image %s", qPrintable(fileName));
         return false;
     }
-    cpu().registerMemoryProvider(PhysicalAddress(address), rom->length(), *rom);
+    cpu().registerMemoryProvider(*rom);
     m_roms.append(rom.leakPtr());
     return true;
 }
