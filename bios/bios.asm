@@ -693,29 +693,28 @@ _bios_interrupt13:
 .writeSectors:
     out     0xE3, al
     jmp     .end
-.getDriveParams:
-    mov     byte [cs:temp], al
-    mov     ax, 0x1308
+
+%macro do_legacy_vm_call 1
+    push    si
+    mov     si, ax
+    and     si, 0x00ff
+    mov     ax, %1
     out     LEGACY_VM_CALL, al
-    mov     al, byte [cs:temp]
+    xor     al, al
+    or      ax, si
+    pop     si
+%endmacro
+.getDriveParams:
+    do_legacy_vm_call 0x1308
     jmp     .end
 .readDASDType:
-    mov     byte [cs:temp], al
-    mov     ax, 0x1315
-    out     LEGACY_VM_CALL, al
-    mov     al, byte [cs:temp]
+    do_legacy_vm_call 0x1315
     jmp     .end
 .setMediaType:
-    mov     byte [cs:temp], al
-    mov     ax, 0x1318
-    out     LEGACY_VM_CALL, al
-    mov     al, byte [cs:temp]
+    do_legacy_vm_call 0x1318
     jmp     .end
 .formatTrack:
-    mov     byte [cs:temp], al
-    mov     ax, 0x1305
-    out     LEGACY_VM_CALL, al
-    mov     al, byte [cs:temp]
+    do_legacy_vm_call 0x1305
     jmp     .end
 .end:
     jmp     iret_with_carry
@@ -1370,9 +1369,6 @@ system_descriptor_table:
     db 0x01            ; BIOS revision level
     db 01100000b       ; Feature information
     dw 0
-
-    ; this pretty much violates the whole ROM concept
-    temp               dw  0x0000
 
 times 0xfff0-($-$$) nop ; pad up to fff0
 
