@@ -42,13 +42,6 @@
 %define CMOS_REG_STATUS_B 0x0B
 %define CMOS_REG_RTC_CENTURY 0x32
 
-%define VGA_PALETTE_REGISTER 0x3C0
-%define VGA_DAC_READ_ADDRESS 0x3C7
-%define VGA_DAC_WRITE_ADDRESS 0x3C8
-%define VGA_DAC_READ_DATA 0x3C9
-%define VGA_DAC_WRITE_DATA 0x3C9
-%define VGA_STATUS_REGISTER 0x3DA
-
 %define BDA_COM1_IOBASE 0x400
 %define BDA_COM2_IOBASE 0x402
 %define BDA_COM3_IOBASE 0x404
@@ -57,15 +50,6 @@
 %define BDA_LPT2_IOBASE 0x40A
 %define BDA_LPT3_IOBASE 0x40C
 %define BDA_BASE_MEMORY_SIZE 0x413
-%define BDA_CURRENT_VIDEO_MODE 0x449
-%define BDA_NUMBER_OF_SCREEN_COLUMNS 0x44A
-%define BDA_CURSOR_LOCATION_ARRAY 0x450
-%define BDA_CURSOR_ENDING_SCANLINE 0x460
-%define BDA_CURSOR_STARTING_SCANLINE 0x461
-%define BDA_CURRENT_VIDEO_PAGE 0x462
-%define BDA_VGA_IOBASE 0x463
-%define BDA_NUMBER_OF_SCREEN_ROWS 0x484
-%define BDA_VIDEO_MODE_OPTIONS 0x487
 
 %define COM1_IOBASE 0x3F8
 %define COM2_IOBASE 0x2F8
@@ -94,7 +78,7 @@
 
 reboot_on_any_key:
     mov     si, msg_press_any_key
-    call    safe_putString
+    call    put_string
 .loop:
     mov     ax, 0x1600
     out     LEGACY_VM_CALL, al
@@ -105,7 +89,7 @@ reboot_on_any_key:
 _cpux_dividebyzero:                 ; Interrupt 0x00 - Divide by zero
     push    si
     mov     si, msg_divide_by_zero
-    call    safe_putString
+    call    put_string
     pop     si
     jmp     reboot_on_any_key
 
@@ -122,21 +106,21 @@ _cpux_singlestep:                   ; Interrupt 0x01 - Single step
 _cpux_breakpoint:                   ; Interrupt 0x03 - Breakpoint
     push    si
     mov     si, msg_breakpoint
-    call    safe_putString
+    call    put_string
     pop     si
     jmp     reboot_on_any_key
 
 _cpux_overflow:                     ; Interrupt 0x04 - Overflow
     push    si
     mov     si, msg_overflow
-    call    safe_putString
+    call    put_string
     pop     si
     jmp     reboot_on_any_key
 
 _cpux_invalidop:
     push    si
     mov     si, msg_invalid_opcode
-    call    safe_putString
+    call    put_string
     pop     si
     jmp     reboot_on_any_key
 
@@ -188,7 +172,7 @@ _unimplemented_isr:
     iret
     push    si
     mov     si, msg_unimplemented
-    call    safe_putString
+    call    put_string
     pop     si
     iret
 
@@ -197,7 +181,7 @@ _bios_post:                         ; Power On Self-Test ;-)
     mov     ax, 0x9000              ; actual default
     mov     ss, ax                  ; POST stack location
     mov     sp, 0x00FF              ; (whee)
-    
+
     push    cs
     pop     ds
 
@@ -206,24 +190,22 @@ _bios_post:                         ; Power On Self-Test ;-)
 
     mov     [es:0x500], byte 0xFF   ; PrintScreen error.
 
-    call    vga_clear               ; Clear screen and move cursor to
-    xor     ax, ax                  ; upper left corner.
-    call    vga_store_cursor
+    call    _bios_setup_ints        ; Install BIOS Interrupts
+
+    call    0xc000:0003             ; Setup VGA BIOS (FIXME: This should be found automagically by scanning for blocks starting with 0x55 0xAA)
 
     mov     si, msg_version
-    call    safe_putString          ; Print BIOS Version string
-
-    call    _bios_setup_ints        ; Install BIOS Interrupts
+    call    put_string          ; Print BIOS Version string
     
     call    _bios_init_data         ; Initialize BIOS data area (0040:0000)
 
     mov     si, msg_crlf
-    call    safe_putString
+    call    put_string
 
     call    ide_init
 
     mov     si, msg_crlf
-    call    safe_putString
+    call    put_string
 
     call    _bios_find_bootdrv      ; Find a boot drive 
     jc      .nobootdrv
@@ -237,35 +219,44 @@ _bios_post:                         ; Power On Self-Test ;-)
 
 .nobootdrv:    
     mov     si, msg_no_boot_drive
-    call    safe_putString
+    call    put_string
     hlt
 
 .bootloadfail:
     mov     si, msg_boot_failed
-    call    safe_putString
+    call    put_string
     cli
     hlt
 
-safe_putString:
-    push    ds
-    push    cs
-    pop     ds
-    push    ax
-    push    bx
+put_string:
+    pusha
+    push    es
 
-    mov     bl, 0x02
-.nextchar:
-    lodsb
-    or      al, 0x00
-    jz      .end
-    pushf
     push    cs
-    call    vga_ttyecho
-    jmp     .nextchar
-.end:
-    pop     bx
-    pop     ax
-    pop     ds
+    pop     es
+    mov     di, si
+    xor     cx, cx
+    not     cx
+    xor     al, al
+    cld
+    repnz   scasb
+    not     cx
+    dec     cx
+    push    cx
+
+    mov     ax, 0x0300
+    mov     bx, 0x0000
+    int     0x10
+
+    pop     cx
+
+    mov     ax, 0x1301
+    mov     bx, 0x0007
+    mov     bp, si
+    int     0x10
+
+    pop     es
+    popa
     ret
 
 ct_console_write:
@@ -306,9 +297,9 @@ print_integer:
     jnz     .nonZero
 
     mov     al, '0'
-    pushf
-    push    cs
-    call    vga_ttyecho         ; vga_ttyecho returns via IRET
+    mov     ah, 0x0e
+    mov     bl, 0x03
+    int     0x10
 
     pop     bx
     pop     ax
@@ -332,9 +323,9 @@ print_integer:
     
     add     al, '0'
 
-    pushf
-    push    cs
-    call    vga_ttyecho         ; vga_ttyecho returns via IRET
+    mov     ah, 0x0e
+    mov     bl, 0x03
+    int     0x10
 
 .nextDigit:
     push    dx                  ; Store away remainder
@@ -401,10 +392,6 @@ _bios_setup_ints:
 
     mov     al, 0x0d
     mov     dx, _busmouse_interrupt
-    call    .install
-
-    mov     al, 0x10
-    mov     dx, _bios_interrupt10
     call    .install
 
     mov     al, 0x11
@@ -508,7 +495,6 @@ _bios_init_data:
     mov     [BDA_LPT1_IOBASE], word LPT1_IOBASE
     mov     [BDA_LPT2_IOBASE], word LPT2_IOBASE
     mov     [BDA_LPT3_IOBASE], word LPT3_IOBASE
-    mov     [BDA_VGA_IOBASE], word VGA_IOBASE
 
     call    check_for_8086
     je      .print8086
@@ -518,9 +504,9 @@ _bios_init_data:
 
     mov     si, msg_unknown
 .cCend:
-    call    safe_putString
+    call    put_string
     mov     si, msg_cpu
-    call    safe_putString
+    call    put_string
     jmp     .checkMem
 
 .print8086:
@@ -545,22 +531,13 @@ _bios_init_data:
     call    print_integer
 
     mov     si, msg_kb_memory
-    call    safe_putString
+    call    put_string
         
     mov     byte [0x0496], 0x0E ; 0x0E = CTRL & ALT depressed;
                                 ; 101/102 ext. kbd.
     mov     byte [0x0417], 0x00
     mov     byte [0x0418], 0x00
     mov     byte [0x0497], 0x00
-
-    mov     byte [BDA_CURRENT_VIDEO_MODE], 0x03
-    mov     word [BDA_NUMBER_OF_SCREEN_COLUMNS], 80
-    mov     byte [BDA_NUMBER_OF_SCREEN_ROWS], 24
-    mov     byte [BDA_CURSOR_ENDING_SCANLINE], 0x0E
-    mov     byte [BDA_CURSOR_STARTING_SCANLINE], 0x0D
-
-    ; Video displays (active: color VGA, inactive: none)
-    mov     word [0x048a], 0x0008
 
 ; EQUIPMENT LIST ---------------------------------------
 ;                                 v DMA (1 if not)
@@ -595,18 +572,18 @@ _bios_init_data:
 .setDisk00:
     or      cx, 0x01
     mov     si, msg_floppy_a
-    call    safe_putString
+    call    put_string
     inc     bp
     jmp     .check01
 .setDisk01:
     or      cx, 0x40
     mov     si, msg_floppy_b
-    call    safe_putString
+    call    put_string
     inc     bp
     jmp     .check80
 .noFloppies:
     mov     si, msg_no_floppies
-    call    safe_putString
+    call    put_string
     jmp     .end
 
 _bios_find_bootdrv:
@@ -646,853 +623,12 @@ _bios_load_bootsector:
     ret
 .noboot:
     mov     si, msg_not_bootable
-    call    safe_putString
+    call    put_string
     jmp     .end
 
-; Interrupt 10
-; BIOS Video Interrupt
+; Interrupt 10 is handled by VGA BIOS.
 
 _bios_interrupt10:
-    or      ah, 0x00
-    jz      .setVideoMode
-    cmp     ah, 0x01
-    jz      .setCursorType
-    cmp     ah, 0x02
-    je      .setCursor
-    cmp     ah, 0x03
-    je      .getCursor
-    cmp     ah, 0x05
-    je      .selectActiveDisplayPage
-    cmp     ah, 0x06
-    je      .scrollWindowUp
-    cmp     ah, 0x07
-    je      .scrollWindowDown
-    cmp     ah, 0x08
-    je      .readChar
-    cmp     ah, 0x09 ; Write Character and Attribute at Cursor Position
-    je      .outCharStill
-    cmp     ah, 0x0a ; Write Character Only at Current Cursor Position (FIXME)
-    je      .outCharStill
-    cmp     ah, 0x11
-    je      .characterGeneratorRoutine
-    cmp     ah, 0x10
-    je      .setGetPaletteRegisters
-    cmp     ah, 0x0e
-    je      .outChar
-    cmp     ah, 0x0f
-    je      .getVideoState
-    cmp     ah, 0x12
-    je      .videoSubsystemConfiguration
-    cmp     ah, 0x1a
-    je      .video_display_combination
-
-    stub    0x10
-.characterGeneratorRoutine:
-    jmp     vga_character_generator_routine
-.setGetPaletteRegisters:
-    jmp     vga_set_get_palette_registers
-.video_display_combination:
-    jmp     video_display_combination
-.readChar:
-    jmp     vga_readchr
-.outChar:
-    jmp     vga_ttyecho
-.outCharStill:
-    jmp     vga_putc
-.setVideoMode:
-    jmp     vga_set_video_mode
-.setCursorType:
-    jmp     vga_set_cursor_type
-.setCursor:
-    jmp     vga_set_cursor_position
-.getCursor:
-    jmp     vga_get_cursor_position_and_size
-.getVideoState:
-    jmp     vga_get_video_state
-.videoSubsystemConfiguration:
-    jmp     vga_video_subsystem_configuration
-.scrollWindowUp:
-    out     0xE7, al
-    jmp     .end
-.scrollWindowDown:
-    out     0xE8, al
-    jmp     .end
-.selectActiveDisplayPage:
-    jmp     vga_select_active_display_page
-.end:
-    iret
-
-video_display_combination:
-    push    ds
-    xor     bx, bx
-    mov     ds, bx
-    cmp     al, 0x01
-
-    je      .set
-
-.get:
-    mov     bx, [0x048a]
-    jmp     .end
-
-.set:
-    mov     [0x048a], bx
-
-.end:
-    pop     ds
-
-    ; XXX: HelpPC says AL contains 0x1a if valid function requested in AH.
-    ;      Needs verification.
-    mov     al, 0x1a
-
-    iret
-
-; Interrupt 10, 11
-; Character Generator Routine
-;
-; Input:
-;    AH = 11
-;    AL = function
-;
-; Functions:
-;    30 = Get current character generator information
-;    XX = Unimplemented
-
-vga_character_generator_routine:
-
-    cmp     al, 0x30
-    je      .getCurrentCharacterGeneratorInformation
-    stub    0x10
-    jmp     .end
-
-.getCurrentCharacterGeneratorInformation:
-    ; BH = Pointer desired (0=Int1F, 1=Int44, 6=8x16 chartable, X=Unimplemented)
-    ;
-    ; Output:
-    ;    ES:BP = pointer to table
-    ;    CX = bytes per character
-    ;    DL = rows (less 1)
-
-    cmp     bh, 0x00
-    je      .getInt1FPointer
-    cmp     bh, 0x01
-    je      .getInt44Pointer
-    cmp     bh, 0x06
-    je      .get8x16CharacterTablePointer
-    stub    0x10
-    jmp     .end
-
-.getInt1FPointer:
-    mov     dl, 0x1f
-    jmp     .returnInterruptPointer
-
-.getInt44Pointer:
-    mov     dl, 0x44
-    jmp     .returnInterruptPointer
-
-.returnInterruptPointer:
-    push    bx
-
-    xor     cx, cx
-    mov     es, cx
-
-    xor     bx, bx
-    mov     bl, dl
-    shl     bl, 1
-    shl     bl, 1
-
-    mov     bp, [es:bx]
-    mov     cx, [es:bx + 2]
-    mov     es, cx
-
-    xor     cx, cx
-    xor     dl, dl
-
-    pop     bx
-    jmp     .end
-
-.get8x16CharacterTablePointer:
-    mov     cx, 0xC400
-    mov     es, cx
-    xor     bp, bp
-    mov     cx, 16
-    mov     dl, 8
-
-    jmp     .end
-
-.end:
-    iret
-
-
-; Interrupt 10, 05
-; Select Active Display Page
-;
-; Input:
-;    AH = 05
-;    AL = new page number
-
-vga_select_active_display_page:
-
-    pusha
-    push    ds
-
-    xor     bx, bx
-    mov     ds, bx
-
-    mov     [BDA_CURRENT_VIDEO_PAGE], al
-
-    cmp     [BDA_CURRENT_VIDEO_MODE], byte 0x0d
-    je      .updateStartAddressForMode0D
-
-    mov     si, msg_page_changed
-    call    ct_console_write
-    jmp     .end
-
-.updateStartAddressForMode0D:
-    xor     ah, ah
-    shl     ax, 13
-    mov     bx, ax
-
-    mov     dx, 0x3d4
-    mov     al, 0x0d
-    out     dx, al
-    inc     dx
-    mov     al, bl
-    out     dx, al
-
-    dec     dx
-    mov     al, 0x0c
-    out     dx, al
-    inc     dx
-    mov     al, bh
-    out     dx, al
-
-    jmp     .end
-
-.end:
-    pop     ds
-    popa
-    iret
-
-; Interrupt 10, 10
-; Set/Get Palette Registers (EGA/VGA)
-;
-; Input:
-;    AH = 10
-;    AL = function
-;
-; Functions:
-;    00 = Set individual palette registers
-;    02 = Set all palette registers and border
-;    10 = Set DAC color register
-;    XX = Unimplemented
-
-vga_set_get_palette_registers:
-
-    cmp     al, 0x00
-    je      .setIndividualPaletteRegisters
-    cmp     al, 0x02
-    je      .setAllPaletteRegistersAndBorder
-    cmp     al, 0x10
-    je      .setDACColorRegister
-    cmp     al, 0x17
-    je      .readBlockOfDACColorRegisters
-    stub    0x10
-    jmp     .end
-
-.setIndividualPaletteRegisters:
-    ; BH = color value
-    ; BL = palette register
-
-    push    ax
-    push    dx
-
-    ; Reading from VGA_STATUS_REGISTER means that the next write
-    ; to VGA_PALETTE_REGISTER contains an index.
-    mov     dx, VGA_STATUS_REGISTER
-    in      al, dx
-
-    mov     dx, VGA_PALETTE_REGISTER
-    mov     al, bl
-    out     dx, al
-
-    mov     al, bh
-    out     dx, al
-
-    pop     dx
-    pop     ax
-    jmp     .end
-
-.setAllPaletteRegistersAndBorder:
-    ; ES:DX = pointer to 17-byte table (0-15 palette registers, 16 border color register)
-
-    push    ax
-    push    bx
-    push    dx
-
-    mov     bx, dx
-
-    ; Reading from VGA_STATUS_REGISTER means that the next write
-    ; to VGA_PALETTE_REGISTER contains an index.
-    mov     dx, VGA_STATUS_REGISTER
-    in      al, dx
-
-    mov     ah, 0
-    mov     dx, VGA_PALETTE_REGISTER
-.setAllPaletteRegistersAndBorderLoop:
-    mov     al, ah
-    out     dx, al
-
-    mov     al, [es:bx]
-    out     dx, al
-    inc     bx
-    inc     ah
-
-    cmp     ah, 16
-    jne     .setAllPaletteRegistersAndBorderLoop
-
-    pop     dx
-    pop     bx
-    pop     dx
-
-    jmp     .end
-
-.setDACColorRegister:
-    ; BX = color register
-    ; CH = green
-    ; CL = blue
-    ; DH = red
-
-    push    ax
-    push    dx
-
-    mov     dx, VGA_DAC_WRITE_ADDRESS
-    mov     al, bl
-    out     dx, al
-
-    mov     dx, VGA_DAC_WRITE_DATA
-    pop     ax
-    push    ax
-    mov     al, ah
-    out     dx, al
-    mov     al, ch
-    out     dx, al
-    mov     al, cl
-    out     dx, al
-
-    pop     dx
-    pop     ax
-    jmp     .end
-
-.readBlockOfDACColorRegisters:
-    ; BX = first color register to read
-    ; CX = number of color registers to read
-    ; ES:DX = pointer to buffer for color registers
-
-    push    ax
-    push    bx
-    push    cx
-    push    dx
-
-    mov     dx, VGA_DAC_READ_ADDRESS
-    mov     al, bl
-    pop     dx
-    push    dx
-    mov     bx, dx
-    mov     dx, VGA_DAC_READ_DATA
-.readBlockOfDACColorRegistersLoop:
-    in      al, dx
-    mov     [es:bx], al
-    inc     bx
-    in      al, dx
-    mov     [es:bx], al
-    inc     bx
-    in      al, dx
-    mov     [es:bx], al
-    inc     bx
-    dec     cx
-    jnz     .readBlockOfDACColorRegistersLoop
-
-    pop     dx
-    pop     cx
-    pop     bx
-    pop     ax
-
-    jmp     .end
-
-.end:
-    iret
-
-; Interrupt 10, 00
-; Set Video Mode
-;
-; Input:
-;    AH = 00
-;    AL = Video mode
-;
-; Notes:
-;    If AL bit 7=1, prevents EGA, MCGA & VGA from clearing display.
-
-vga_set_video_mode:
-
-    push    ds
-    push    bx
-    push    ax
-
-    mov     ah, al
-    and     al, 0x80
-    jnz     .dontClear
-    call    vga_clear
-
-.dontClear:
-    xor     bx, bx
-    mov     ds, bx
-    mov     [BDA_CURRENT_VIDEO_MODE], ah
-
-    ; Update bit 7 of BDA_VIDEO_MODE_OPTIONS
-    and     byte [BDA_VIDEO_MODE_OPTIONS], 0x7f
-    or      [BDA_VIDEO_MODE_OPTIONS], al
-
-    pop     ax
-    pop     bx
-    pop     ds
-    iret
-
-; Interrupt 10, 12
-; Video Subsystem Configuration (EGA/VGA)
-;
-; Input:
-;    AL = 12
-;    BL = function
-;
-; Functions:
-;    10 = Return video configuration information
-;    XX = Unimplemented
-
-vga_video_subsystem_configuration:
-
-    cmp     bl, 0x10
-    je      .returnVideoConfigurationInformation
-    stub    0x10
-    jmp     .end
-
-.returnVideoConfigurationInformation:
-    ; BH = color mode (0=color, 1=mono)
-    ; BL = EGA memory size (0=64k, 1=128k, 2=192k, 3=256k)
-    ; CH = feature bits
-    ; CL = switch settings
-
-    mov     bh, 0
-    mov     bl, 3
-    mov     ch, 0
-    mov     cl, 0
-    jmp     .end
-
-.end:
-    iret
-
-; Interrupt 10, 0F
-; Get Video State
-;
-; Input:
-;    AH = 0F
-;
-; Output:
-;    AH = number of screen columns
-;    AL = mode currently set
-;    BH = current display page
-
-vga_get_video_state:
-
-    push    ds
-    push    dx
-    xor     dx, dx
-    mov     ds, dx
-
-    mov     al, [BDA_CURRENT_VIDEO_MODE]
-    mov     ah, [BDA_NUMBER_OF_SCREEN_COLUMNS]
-    mov     bh, [BDA_CURRENT_VIDEO_PAGE]
-    
-    pop     dx
-    pop     ds
-    iret
-
-vga_clear:
-    push    es
-    push    di
-    push    ax
-    push    cx
-    mov     ax, 0xb800
-    mov     es, ax
-    xor     di, di
-    mov     ax, 0x0720
-    mov     cx, (80*25)
-    rep     stosw
-    pop     cx
-    pop     ax
-    pop     di
-    pop     es
-    ret
-
-vga_putc:
-    push    es
-    push    dx
-    push    di
-    push    ax
-
-    mov     dx, 0x3d4
-    mov     al, 0x0e
-    out     dx, al
-    inc     dx
-    in      al, dx
-    xchg    al, ah
-    dec     dx
-    mov     al, 0x0f
-    out     dx, al
-    inc     dx
-    in      al, dx
-    
-    shl     ax, 1
-    mov     di, ax
-
-    mov     ax, 0xb800
-    mov     es, ax
-
-    pop     ax
-    push    ax
-
-    mov     ah, bl
-
-    stosw
-    
-    pop     ax
-    pop     di
-    pop     dx
-    pop     es
-    iret
-
-; vga_ttyecho
-;
-;    Prints a character to screen and advances cursor.
-;    Handles CR, NL, TAB and backspace.
-;    Scrolls video viewport if cursor position overflows.
-;
-;    Called by POST routines and INT 10,0E
-;
-; Parameters:
-;
-;    AL = Character to write
-;    BH = Page number ( not implemented )
-;    BL = Foreground pixel color
-
-vga_ttyecho:
-    push    dx
-    push    es
-    push    di
-    push    ax
-
-    mov     ax, 0xb800              ; Point ES to video memory for STOS access.
-    mov     es, ax
-
-    call    vga_load_cursor
-    
-    shl     ax, 1
-    mov     di, ax                  ; DI = offset*2
-    
-    pop     ax                      ; original AX, outchar in AL
-    push    ax
-
-    mov     ah, 0x07                ; Gray on black (BL is only used in graphics modes.)
-
-    cmp     al, 0x0d
-    je      .cr
-    cmp     al, 0x0a
-    je      .lf
-    cmp     al, 0x08
-    je      .bs
-    cmp     al, 0x09
-    je      .tab
-.regular:
-    stosw
-    call    vga_load_cursor
-    inc     ax                      ; advance
-    call    .locate
-    jmp     .end
-
-.cr:
-    mov     ax, di
-    shr     ax, 1
-    jz      .zero               ; XXX: Necessary? Why not straight to .end?
-    xor     dx, dx
-    mov     di, 80
-    div     word di
-    mov     di, 80
-    mul     word di
-.zero:
-    call    .locate
-    jmp     .end
-.lf:
-    mov     ax, di
-    shr     ax, 1               ; AX = Normal offset
-    add     ax, 80              ; One row down
-    call    .locate
-    jmp     .end
-.bs:
-    mov     ax, di
-    shr     ax, 1
-    dec     ax
-    call    vga_store_cursor    ; so we walk around .locate (v_s_c RETs for us)
-    jmp     .end                ; Backspace isn't going to overflow the cursor,
-.tab:
-    mov     al, 0x20
-    stosw
-    stosw
-    stosw
-    stosw
-    mov     ax, di
-    shr     ax, 1
-    add     ax, 4
-    call    .locate
-    jmp     .end
-
-.locate:                        ; Move cursor to AX
-    cmp     ax, 2000
-    jl      vga_store_cursor    ; If cursor doesn't overflow, no need to scroll
-
-    push    ds
-    push    si
-    push    cx
-
-    push    es
-    pop     ds
-
-    xor     di, di              ; Scroll the contents of videomemory one row up
-    mov     si, 160
-    mov     cx, (80*24)
-    rep     movsw
-    
-    mov     ax, 0x0720
-    mov     cx, 80
-    mov     di, (4000-160)
-    rep     stosw
-    
-    pop     cx
-    pop     si
-    pop     ds
-
-    mov     ax, (80*24)         ; Go to last row, first column.
-    jmp     vga_store_cursor    ; vga_store_cursor will RET for us.
-
-.end:
-    pop     ax
-    pop     di
-    pop     es
-    pop     dx
-    
-    iret
-
-; Interrupt 10, 01
-; Set Cursor Type
-;
-; Input:
-;    AH = 01
-;    CH = cursor starting scan line (top) (low order 5 bits)
-;    CL = cursor ending scan line (bottom) (low order 5 bits)
-
-vga_set_cursor_type:
-
-    push    ds
-    push    ax
-    push    cx
-    push    dx
-
-    and     cx, 0x1f1f                      ; Mask 5 LSB's of CH and CL
-
-    mov     dx, 0x3d4                       ; Select register
-    mov     al, 0x0a                        ; 6845 register 0A: Starting scanline
-    out     dx, al
-
-    inc     dx
-    mov     al, ch
-    out     dx, al
-
-    dec     dx                              ; Select register
-    mov     al, 0x0b                        ; 6845 register 0B: End scanline
-    out     dx, al
-
-    inc     dx
-    mov     al, cl
-    out     dx, al
-
-    xor     ax, ax
-    mov     ds, ax
-    mov     [BDA_CURSOR_STARTING_SCANLINE], ch
-    mov     [BDA_CURSOR_ENDING_SCANLINE], cl
-
-    pop     dx
-    pop     cx
-    pop     ax
-    pop     ds
-
-    iret
-
-; vga_load_cursor
-;
-;    Reads the current VGA cursor location from 6845.
-;    Breaks DX.
-;
-;    6845 registers are read in reverse order and XCHG:ed to save
-;    space and time.
-;
-; Returns:
-;
-;    AX = Cursor location
-;
-
-vga_load_cursor:
-    mov     dx, 0x3d4           ; Select register
-    mov     al, 0x0e            ; (Cursor MSB)
-    out     dx, al
-    inc     dx                  ; Read register
-    in      al, dx
-    xchg    al, ah
-    dec     dx                  ; Select register
-    mov     al, 0x0f            ; (Cursor LSB)
-    out     dx, al
-    inc     dx
-    in      al, dx
-    ret
-
-; vga_store_cursor
-;
-;    Writes AL/AH to the VGA cursor location registers.
-;    Breaks AX and DX.
-;
-
-vga_store_cursor:
-    push    ax
-    push    bx
-    push    dx
-    mov     bx, ax
-
-    mov     dx, 0x3d4
-    mov     al, 0x0e
-    out     dx, al
-
-    mov     dx, 0x3d5
-    mov     al, bh
-    out     dx, al
-
-    mov     dx, 0x3d4
-    mov     al, 0x0f
-    out     dx, al
-
-    mov     dx, 0x3d5
-    mov     al, bl
-    out     dx, al
-
-    pop     dx
-    pop     bx
-    pop     ax
-    ret
-
-; Interrupt 10, 02
-; Set Cursor Position
-;
-; Input:
-;    AH = 02
-;    BH = display page
-;    DH = row
-;    DL = column
-
-vga_set_cursor_position:
-
-    push    ds
-    push    ax
-    push    bx
-    push    dx
-    push    si
-
-    xor     ax, ax
-    mov     ds, ax
-
-    mov     bl, bh
-    xor     bh, bh
-    mov     si, BDA_CURSOR_LOCATION_ARRAY
-    mov     [bx + si], dl
-    mov     [bx + si + 1], dh
-
-    mov     al, dh
-    mov     dh, 80
-    mul     byte dh             ; AX = row offset
-    xor     dh, dh
-    add     ax, dx
-
-    call    vga_store_cursor
-    
-    pop     si
-    pop     dx
-    pop     bx
-    pop     ax
-    pop     ds
-    iret 
-
-; Interrupt 10, 03
-; Get Cursor Position And Size
-;
-; Input:
-;    AH = 03
-;    BH = display page
-;
-; Output:
-;    CH = cursor starting scan line (top) (low order 5 bits)
-;    CL = cursor ending scan line (bottom) (low order 5 bits)
-;    DH = row
-;    DL = column
-    
-vga_get_cursor_position_and_size:
-
-    push    ds
-    push    ax
-    push    bx
-    push    si
-
-    xor     ax, ax
-    mov     ds, ax
-
-    mov     bl, bh
-    xor     bh, bh
-    mov     si, BDA_CURSOR_LOCATION_ARRAY
-    mov     dl, [bx + si]
-    mov     dh, [bx + si + 1]
-
-    mov     ch, [BDA_CURSOR_STARTING_SCANLINE]
-    mov     cl, [BDA_CURSOR_ENDING_SCANLINE]
-
-    pop     si
-    pop     bx
-    pop     ax
-    pop     ds
-    
-    iret
-
-vga_readchr:
-    push    ds
-    push    dx
-    push    si
-
-    call    vga_load_cursor
-
-    shl     ax, 1
-    mov     si, ax
-    
-    mov     ax, 0xb800
-    mov     ds, ax
-    lodsw
-
-    pop     si
-    pop     dx
-    pop     ds
-
     iret
 
 _bios_interrupt11:
@@ -1531,6 +667,7 @@ _bios_interrupt13:
     cmp     ah, 0x18
     je      .setMediaType
     stub    0x13
+    stc
     jmp     .end
 .resetDisk:
     and     dl, 0x80
@@ -2094,7 +1231,7 @@ ide_init:
     xor     bx, bx
 
     mov     si, msg_ide0
-    call    safe_putString
+    call    put_string
 
     mov     dx, 0x1f7
     in      al, dx
@@ -2102,7 +1239,7 @@ ide_init:
     jnz     .drive0ready
 
     mov     si, msg_not
-    call    safe_putString
+    call    put_string
 
     jmp    .drive0notready
 
@@ -2111,10 +1248,10 @@ ide_init:
 
 .drive0notready:
     mov     si, msg_ready
-    call    safe_putString
+    call    put_string
 
     mov     si, msg_ide1
-    call    safe_putString
+    call    put_string
 
     mov     dx, 0x177
     in      al, dx
@@ -2122,7 +1259,7 @@ ide_init:
     jnz     .drive1ready
 
     mov     si, msg_not
-    call    safe_putString
+    call    put_string
 
     jmp     .drive1notready
 
@@ -2131,7 +1268,7 @@ ide_init:
 
 .drive1notready:
     mov     si, msg_ready
-    call    safe_putString
+    call    put_string
 
 ; BDA:0075 - Number of hard disks attached
     push    ds

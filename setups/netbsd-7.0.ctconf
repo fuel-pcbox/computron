@@ -2,6 +2,6 @@ memory-size 8192
 keymap keymaps/mbp.vkeymap
 
 load-file F000:0000 bios/bios.bin
-load-file C000:4000 font.bin
+load-file C000:0000 bios/vgabios-lgpl.bin
 
 floppy-disk 0 1.44M images/netbsd7-1.img
