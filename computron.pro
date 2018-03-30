@@ -40,6 +40,8 @@ HEADERS += gui/machinewidget.h \
            gui/palettewidget.h \
            gui/screen.h \
            gui/worker.h \
+           hw/MemoryProvider.h \
+           hw/ROM.h \
            hw/fdc.h \
            hw/ide.h \
            hw/iodevice.h \
@@ -108,4 +110,6 @@ SOURCES += debug.cpp \
            hw/iodevice.cpp \
            hw/vga_memory.cpp \
            hw/cmos.cpp \
-           hw/PS2.cpp
+           hw/PS2.cpp \
+           hw/MemoryProvider.cpp \
+           hw/ROM.cpp

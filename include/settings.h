@@ -49,6 +49,7 @@ public:
     WORD entrySP() const { return m_entrySP; }
 
     QHash<DWORD, QString> files() const { return m_files; }
+    QHash<DWORD, QString> romImages() const { return m_romImages; }
     QString keymap() const { return m_keymap; }
 
     bool isForAutotest() const { return m_forAutotest; }
@@ -61,6 +62,7 @@ private:
     Settings(const Settings&) = delete;
     Settings& operator=(const Settings&) = delete;
 
+    bool handleROMImage(const QStringList&);
     bool handleLoadFile(const QStringList&);
     bool handleMemorySize(const QStringList&);
     bool handleFixedDisk(const QStringList&);
@@ -68,6 +70,7 @@ private:
     bool handleKeymap(const QStringList&);
 
     QHash<DWORD, QString> m_files;
+    QHash<DWORD, QString> m_romImages;
     QString m_keymap;
     unsigned m_memorySize { 0 };
     WORD m_entryCS { 0 };

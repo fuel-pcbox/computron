@@ -90,6 +90,22 @@ bool Settings::handleLoadFile(const QStringList& arguments)
     return true;
 }
 
+bool Settings::handleROMImage(const QStringList& arguments)
+{
+    // load-file <physical-address> <path/to/file>
+
+    if (arguments.count() != 2)
+        return false;
+
+    bool ok;
+    DWORD address = arguments.at(0).toUInt(&ok, 16);
+    if (!ok)
+        return false;
+
+    m_romImages.insert(address, arguments.at(1));
+    return true;
+}
+
 bool Settings::handleMemorySize(const QStringList& arguments)
 {
     // memory-size <size>
@@ -254,6 +270,8 @@ OwnPtr<Settings> Settings::createFromFile(const QString& fileName)
 
         if (command == QLatin1String("load-file"))
             success = settings->handleLoadFile(arguments);
+        else if (command == QLatin1String("rom-image"))
+            success = settings->handleROMImage(arguments);
         else if (command == QLatin1String("memory-size"))
             success = settings->handleMemorySize(arguments);
         else if (command == QLatin1String("fixed-disk"))

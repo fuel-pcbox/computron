@@ -35,6 +35,7 @@
 
 class Debugger;
 class Machine;
+class MemoryProvider;
 class CPU;
 class TSS;
 class VGAMemory;
@@ -163,6 +164,9 @@ public:
         PG = 1 << 31,
     };
     };
+
+    void registerMemoryProvider(DWORD baseAddress, DWORD length, MemoryProvider&);
+    MemoryProvider* memoryProviderForAddress(DWORD address);
 
     void recomputeMainLoopNeedsSlowStuff();
 
@@ -1348,6 +1352,10 @@ private:
     bool m_nextInstructionIsUninterruptible { false };
 
     OwnPtr<Debugger> m_debugger;
+
+    // One MemoryProvider* per 'memoryProviderBlockSize' bytes for the first MB of memory.
+    static const size_t memoryProviderBlockSize = 16384;
+    MemoryProvider* m_memoryProviders[1048576 / memoryProviderBlockSize];
 
     BYTE* m_memory { nullptr };
     size_t m_memorySize { 8192 * 1024 };

@@ -30,6 +30,7 @@
 #include "types.h"
 #include "OwnPtr.h"
 #include "Common.h"
+#include "ROM.h"
 #include <QHash>
 #include <QSet>
 
@@ -107,6 +108,7 @@ private slots:
 
 private:
     bool loadFile(DWORD address, const QString& fileName);
+    bool loadROMImage(DWORD address, const QString& fileName);
 
     void applySettings();
 
@@ -145,6 +147,8 @@ private:
 
     QHash<WORD, IODevice*> m_allInputDevices;
     QHash<WORD, IODevice*> m_allOutputDevices;
+
+    QVector<ROM*> m_roms;
 };
 
 inline IODevice* Machine::inputDeviceForPort(WORD port)

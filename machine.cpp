@@ -136,6 +136,7 @@ Machine::Machine(const QString& name, OwnPtr<Settings>&& settings, QObject* pare
 
 Machine::~Machine()
 {
+    qDeleteAll(m_roms);
 }
 
 void Machine::applySettings()
@@ -159,6 +160,10 @@ void Machine::applySettings()
             // FIXME: Should we abort if a load fails?
         }
     }
+
+    for (auto it = settings().romImages().constBegin(); it != settings().romImages().constEnd(); ++it) {
+        loadROMImage(it.key(), it.value());
+    }
 }
 
 bool Machine::loadFile(DWORD address, const QString& fileName)
@@ -178,6 +183,18 @@ bool Machine::loadFile(DWORD address, const QString& fileName)
 
     // FIXME: Don't overrun the CPU's memory buffer.
     memcpy(memoryPointer, fileContents.constData(), fileContents.size());
+    return true;
+}
+
+bool Machine::loadROMImage(DWORD address, const QString& fileName)
+{
+    auto rom = make<ROM>(address, fileName);
+    if (!rom->isValid()) {
+        vlog(LogConfig, "Failed to load ROM image %s", qPrintable(fileName));
+        return false;
+    }
+    cpu().registerMemoryProvider(address, rom->length(), *rom);
+    m_roms.append(rom.leakPtr());
     return true;
 }
 

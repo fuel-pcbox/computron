@@ -224,6 +224,7 @@ CPU::CPU(Machine& m)
     }
 
     memset(m_memory, 0x0, m_memorySize);
+    memset(m_memoryProviders, 0, sizeof(m_memoryProviders));
 
     m_debugger = make<Debugger>(*this);
 
@@ -1365,6 +1366,8 @@ T CPU::readMemory(DWORD linearAddress)
     T value;
     if (addressIsInVGAMemory(physicalAddress))
         value = machine().vgaMemory().read<T>(physicalAddress);
+    else if (auto* provider = memoryProviderForAddress(physicalAddress))
+        value = provider->read<T>(physicalAddress);
     else
         value = *reinterpret_cast<T*>(&m_memory[physicalAddress]);
 #ifdef MEMORY_DEBUGGING
@@ -1400,6 +1403,8 @@ T CPU::readMemory(const SegmentDescriptor& descriptor, DWORD offset)
     T value;
     if (addressIsInVGAMemory(physicalAddress))
         value = machine().vgaMemory().read<T>(physicalAddress);
+    else if (auto* provider = memoryProviderForAddress(physicalAddress))
+        value = provider->read<T>(physicalAddress);
     else
         value = *reinterpret_cast<T*>(&m_memory[physicalAddress]);
 #ifdef MEMORY_DEBUGGING
@@ -1459,6 +1464,11 @@ void CPU::writeMemory(DWORD linearAddress, T value)
         return;
     }
 
+    if (auto* provider = memoryProviderForAddress(physicalAddress)) {
+        provider->write<T>(physicalAddress, value);
+        return;
+    }
+
     *reinterpret_cast<T*>(&m_memory[physicalAddress]) = value;
     didTouchMemory(physicalAddress);
 }
@@ -1486,6 +1496,10 @@ void CPU::writeMemory(const SegmentDescriptor& descriptor, DWORD offset, T value
 
     if (addressIsInVGAMemory(physicalAddress)) {
         machine().vgaMemory().write(physicalAddress, value);
+        return;
+    }
+    if (auto* provider = memoryProviderForAddress(physicalAddress)) {
+        provider->write<T>(physicalAddress, value);
         return;
     }
     *reinterpret_cast<T*>(&m_memory[physicalAddress]) = value;
@@ -1604,6 +1618,8 @@ BYTE* CPU::memoryPointer(const SegmentDescriptor& descriptor, DWORD offset)
         vlog(LogCPU, "MemoryPointer PE [A20=%s] %04X:%08X (phys: %08X)", isA20Enabled() ? "on" : "off", descriptor.index(), offset, physicalAddress);
 #endif
     didTouchMemory(physicalAddress);
+    if (auto* provider = memoryProviderForAddress(physicalAddress))
+        return provider->memoryPointer(physicalAddress);
     return &m_memory[physicalAddress];
 }
 
@@ -1629,6 +1645,8 @@ BYTE* CPU::memoryPointer(DWORD linearAddress)
              physicalAddress);
     }
 #endif
+    if (auto* provider = memoryProviderForAddress(physicalAddress))
+        return provider->memoryPointer(physicalAddress);
     return &m_memory[physicalAddress];
 }
 
@@ -1682,4 +1700,25 @@ void CPU::_LOCK(Instruction&)
 
 void CPU::initWatches()
 {
+}
+
+void CPU::registerMemoryProvider(DWORD baseAddress, DWORD length, MemoryProvider& provider)
+{
+    if ((baseAddress + length) > 1048576) {
+        vlog(LogConfig, "Can't register mapper with length %u @ %08x", length, baseAddress);
+        ASSERT_NOT_REACHED();
+    }
+
+    for (unsigned i = baseAddress / memoryProviderBlockSize; i < (baseAddress + length) / memoryProviderBlockSize; ++i) {
+        vlog(LogConfig, "Register memory provider %p as mapper %u", &provider, i);
+        vlog(LogConfig, "woozi %zu", sizeof(m_memoryProviders));
+        m_memoryProviders[i] = &provider;
+    }
+}
+
+MemoryProvider* CPU::memoryProviderForAddress(DWORD address)
+{
+    if (address >= 1048576)
+        return nullptr;
+    return m_memoryProviders[address / memoryProviderBlockSize];
 }

@@ -1,8 +1,8 @@
 memory-size 8192
 keymap keymaps/mbp.vkeymap
 
-load-file F000:0000 bios/bios.bin
-load-file C000:0000 bios/vgabios-lgpl.bin
+rom-image f0000 bios/bios.bin
+rom-image c0000 bios/vgabios-lgpl.bin
 
 fixed-disk 0 images/c.img 32768
 
