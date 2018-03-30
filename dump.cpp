@@ -398,7 +398,7 @@ void CPU::dumpMemory(WORD segment, DWORD offset, int rows)
 
 static inline WORD isrSegment(const CPU& cpu, BYTE isr)
 {
-    return cpu.readUnmappedMemory16(isr * 4) + 2;
+    return cpu.readUnmappedMemory16(isr * 4 + 2);
 }
 
 static inline WORD isrOffset(const CPU& cpu, BYTE isr)
@@ -412,7 +412,7 @@ void CPU::dumpIVT()
     for (int i = 0; i < 0xFF; i += 4) {
         vlog(LogDump,
             "%02x>  %04x:%04x\t%02x>  %04x:%04x\t%02x>  %04x:%04x\t%02X>  %04x:%04x",
-            i, isrSegment(*this, i), isrOffset(*this, i),
+            i + 0, isrSegment(*this, i + 0), isrOffset(*this, i + 0),
             i + 1, isrSegment(*this, i + 1), isrOffset(*this, i + 1),
             i + 2, isrSegment(*this, i + 2), isrOffset(*this, i + 2),
             i + 3, isrSegment(*this, i + 3), isrOffset(*this, i + 3)
