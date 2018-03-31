@@ -26,55 +26,40 @@
 #include "CPU.h"
 #include "floppy.h"
 #include "debug.h"
+#include "machine.h"
+#include "DiskDrive.h"
 
-char drv_imgfile[4][MAX_FN_LENGTH];
-BYTE drv_status[4], drv_type[4];
-DWORD drv_spt[4], drv_heads[4], drv_sectors[4], drv_sectsize[4];
-
-void ct_set_drive_image(int drive_id, const char* filename)
+static void bios_disk_read(FILE* fp, DiskDrive& drive, WORD cylinder, WORD head, WORD sector, WORD count, WORD segment, WORD offset)
 {
-    strcpy(drv_imgfile[drive_id], filename);
-    vlog(LogDisk, "Drive %u image changed to %s", drive_id, filename);
-}
-
-static DWORD chs2lba(BYTE drive, WORD cyl, BYTE head, WORD sector)
-{
-    return (sector - 1) +
-           (head * drv_spt[drive]) +
-           (cyl * drv_spt[drive] * drv_heads[drive]);
-}
-
-static void floppy_read(FILE* fp, BYTE drive, WORD cylinder, WORD head, WORD sector, WORD count, WORD segment, WORD offset)
-{
-    DWORD lba = chs2lba(drive, cylinder, head, sector);
+    auto lba = drive.toLBA(cylinder, head, sector);
 
     if (options.disklog)
-        vlog(LogDisk, "Drive %d reading %d sectors at %d/%d/%d (LBA %d) to %04X:%04X [offset=0x%x]", drive, count, cylinder, head, sector, lba, segment, offset, lba*drv_sectsize[drive]);
+        vlog(LogDisk, "%s reading %u sectors at %u/%u/%u (LBA %u) to %04x:%04x", qPrintable(drive.name()), count, cylinder, head, sector, lba, segment, offset);
 
     void* destination = g_cpu->memoryPointer(segment, offset);
-    fread(destination, drv_sectsize[drive], count, fp);
+    fread(destination, drive.bytesPerSector(), count, fp);
 }
 
-static void floppy_write(FILE* fp, BYTE drive, WORD cylinder, WORD head, WORD sector, WORD count, WORD segment, WORD offset)
+static void bios_disk_write(FILE* fp, DiskDrive& drive, WORD cylinder, WORD head, WORD sector, WORD count, WORD segment, WORD offset)
 {
-    DWORD lba = chs2lba(drive, cylinder, head, sector);
+    auto lba = drive.toLBA(cylinder, head, sector);
 
     if (options.disklog)
-        vlog(LogDisk, "Drive %d writing %d sectors at %d/%d/%d (LBA %d) from %04X:%04X", drive, count, cylinder, head, sector, lba, segment, offset);
+        vlog(LogDisk, "%s writing %u sectors at %u/%u/%u (LBA %u) from %04x:%04x", qPrintable(drive.name()), count, cylinder, head, sector, lba, segment, offset);
 
     void* source = g_cpu->memoryPointer(segment, offset);
-    fwrite(source, drv_sectsize[drive], count, fp);
+    fwrite(source, drive.bytesPerSector(), count, fp);
 }
 
-static void floppy_verify(FILE* fp, BYTE drive, WORD cylinder, WORD head, WORD sector, WORD count, WORD segment, WORD offset)
+static void bios_disk_verify(FILE* fp, DiskDrive& drive, WORD cylinder, WORD head, WORD sector, WORD count, WORD segment, WORD offset)
 {
-    DWORD lba = chs2lba(drive, cylinder, head, sector);
+    auto lba = drive.toLBA(cylinder, head, sector);
 
     if (options.disklog)
-        vlog(LogDisk, "Drive %d verifying %d sectors at %d/%d/%d (LBA %d)", drive, count, cylinder, head, sector, lba);
+        vlog(LogDisk, "%s verifying %u sectors at %u/%u/%u (LBA %u)", qPrintable(drive.name()), count, cylinder, head, sector, lba);
 
-    BYTE dummy[count * drv_sectsize[drive]];
-    WORD veri = fread(dummy, drv_sectsize[drive], count, fp);
+    BYTE dummy[count * drive.bytesPerSector()];
+    WORD veri = fread(dummy, drive.bytesPerSector(), count, fp);
     if (veri != count)
         vlog(LogAlert, "veri != count, something went wrong");
 
@@ -83,64 +68,71 @@ static void floppy_verify(FILE* fp, BYTE drive, WORD cylinder, WORD head, WORD s
     Q_UNUSED(offset);
 }
 
-void bios_disk_call(DiskCallFunction function)
+void bios_disk_call(CPU& cpu, DiskCallFunction function)
 {
-    FILE* fp;
-    DWORD lba;
+    // This is a hack to support the custom Computron BIOS. We should not be here in PE=1 mode.
+    ASSERT(!cpu.getPE());
 
     WORD cylinder = g_cpu->getCH() | ((g_cpu->getCL() & 0xc0) << 2);
     WORD sector = g_cpu->getCL() & 0x3f;
-    BYTE drive = g_cpu->getDL();
+    BYTE driveIndex = g_cpu->getDL();
     BYTE head = g_cpu->getDH();
     BYTE sectorCount = g_cpu->getAL();
+    FILE* fp;
+    DWORD lba;
 
-    if (drive >= 0x80)
-        drive = drive - 0x80 + 2;
+    DiskDrive* drive { nullptr };
+    switch (driveIndex) {
+    case 0x00: drive = &cpu.machine().floppy0(); break;
+    case 0x01: drive = &cpu.machine().floppy1(); break;
+    case 0x80: drive = &cpu.machine().fixed0(); break;
+    case 0x81: drive = &cpu.machine().fixed1(); break;
+    }
 
     BYTE error = FD_NO_ERROR;
 
-    if (!drv_status[drive]) {
+    if (!drive || !drive->present()) {
         if (options.disklog)
             vlog(LogDisk, "Drive %02X not ready", drive);
-        if (drive < 2)
+        if (!(driveIndex & 0x80))
             error = FD_CHANGED_OR_REMOVED;
-        else if (drive > 1)
+        else
             error = FD_TIMEOUT;
         goto epilogue;
     }
 
-    lba = chs2lba(drive, cylinder, head, sector);
-    if (lba > drv_sectors[drive]) {
+    lba = drive->toLBA(cylinder, head, sector);
+    if (lba > drive->sectors()) {
         if (options.disklog)
-            vlog(LogDisk, "Drive %d bogus sector request (LBA %d)", drive, lba);
+            vlog(LogDisk, "%s bogus sector request (LBA %u)", qPrintable(drive->name()), lba);
         error = FD_TIMEOUT;
         goto epilogue;
     }
 
-    if ((sector > drv_spt[drive]) || (head >= drv_heads[drive])) {
+    if ((sector > drive->sectorsPerTrack()) || (head >= drive->heads())) {
         if (options.disklog)
-            vlog(LogDisk, "%04X:%04X Drive %d request out of geometrical bounds (%d/%d/%d)", g_cpu->getCS(), g_cpu->getIP(), drive, cylinder, head, sector);
+            vlog(LogDisk, "%s request out of geometrical bounds (%u/%u/%u)", qPrintable(drive->name()), cylinder, head, sector);
         error = FD_TIMEOUT;
         goto epilogue;
     }
 
-    fp = fopen(drv_imgfile[drive], function == WriteSectors ? "rb+" : "rb");
+    fp = fopen(qPrintable(drive->imagePath()), function == WriteSectors ? "rb+" : "rb");
     if (!fp) {
         vlog(LogDisk, "PANIC: Could not access drive %d image!", drive);
         hard_exit(1);
     }
 
-    fseek(fp, lba * drv_sectsize[drive], SEEK_SET);
+    fseek(fp, lba * drive->bytesPerSector(), SEEK_SET);
 
     switch (function) {
     case ReadSectors:
-        floppy_read(fp, drive, cylinder, head, sector, sectorCount, g_cpu->getES(), g_cpu->getBX());
+        bios_disk_read(fp, *drive, cylinder, head, sector, sectorCount, cpu.getES(), cpu.getBX());
         break;
     case WriteSectors:
-        floppy_write(fp, drive, cylinder, head, sector, sectorCount, g_cpu->getES(), g_cpu->getBX());
+        bios_disk_write(fp, *drive, cylinder, head, sector, sectorCount, cpu.getES(), cpu.getBX());
         break;
     case VerifySectors:
-        floppy_verify(fp, drive, cylinder, head, sector, sectorCount, g_cpu->getES(), g_cpu->getBX());
+        bios_disk_verify(fp, *drive, cylinder, head, sector, sectorCount, cpu.getES(), cpu.getBX());
         break;
     }
 
@@ -149,12 +141,12 @@ void bios_disk_call(DiskCallFunction function)
 
 epilogue:
     if (error == FD_NO_ERROR)
-        g_cpu->setCF(0);
+        cpu.setCF(0);
     else {
-        g_cpu->setCF(1);
-        g_cpu->setAL(0);
+        cpu.setCF(1);
+        cpu.setAL(0);
     }
 
-    g_cpu->setAH(error);
-    g_cpu->writeUnmappedMemory8(0x441, error);
+    cpu.setAH(error);
+    cpu.writeUnmappedMemory8(0x441, error);
 }

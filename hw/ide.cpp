@@ -26,19 +26,17 @@
 #include "debug.h"
 #include "ide.h"
 #include "floppy.h"
+#include "machine.h"
+#include "DiskDrive.h"
 
 #define IDE_DEBUG
 
-static DWORD chs2lba(BYTE drive, WORD cyl, BYTE head, WORD sector)
-{
-    return (sector - 1) +
-           (head * drv_spt[drive]) +
-           (cyl * drv_spt[drive] * drv_heads[drive]);
-}
-
 struct IDEController
 {
+    DiskDrive& drive() { return *drivePtr; }
+
     unsigned controllerIndex { 0xffffffff };
+    DiskDrive* drivePtr { nullptr };
 
     WORD cylinderIndex { 0 };
     BYTE sectorIndex { 0 };
@@ -51,13 +49,12 @@ struct IDEController
     void readSectors(IDE&);
     void writeSectors();
 
-    DWORD lba() const
+    DWORD lba()
     {
         if (inLBAMode) {
             return ((DWORD)cylinderIndex << 8) | sectorIndex;
         }
-        unsigned drive = controllerIndex + 2;
-        return chs2lba(drive, cylinderIndex, headIndex, sectorIndex);
+        return drive().toLBA(cylinderIndex, headIndex, sectorIndex);
     }
 
     template<typename T> T readFromSectorBuffer();
@@ -72,12 +69,11 @@ struct IDEController
 
 void IDEController::identify(IDE& ide)
 {
-    unsigned drive = controllerIndex + 2;
     WORD data[256];
     memset(data, 0, sizeof(data));
-    data[1] = drv_sectors[drive] / (drv_spt[drive] * drv_heads[drive]);
-    data[3] = drv_heads[drive];
-    data[6] = drv_spt[drive];
+    data[1] = drive().sectors() / (drive().sectorsPerTrack() * drive().heads());
+    data[3] = drive().heads();
+    data[6] = drive().sectorsPerTrack();
     m_readBuffer.resize(512);
     memcpy(m_readBuffer.data(), data, sizeof(data));
     strcpy(m_readBuffer.data() + 54, "oCpmtuor niDks");
@@ -87,15 +83,14 @@ void IDEController::identify(IDE& ide)
 
 void IDEController::readSectors(IDE& ide)
 {
-    unsigned drive = controllerIndex + 2;
     vlog(LogIDE, "ide%u: Read sectors (LBA: %u, count: %u)", controllerIndex, lba(), sectorCount);
-    FILE* f = fopen(drv_imgfile[drive], "rb");
+    FILE* f = fopen(qPrintable(drive().imagePath()), "rb");
     RELEASE_ASSERT(f);
-    m_readBuffer.resize(drv_sectsize[drive] * sectorCount);
+    m_readBuffer.resize(drive().bytesPerSector() * sectorCount);
     int result;
-    result = fseek(f, lba() * drv_sectsize[drive], SEEK_SET);
+    result = fseek(f, lba() * drive().bytesPerSector(), SEEK_SET);
     ASSERT(result != -1);
-    result = fread(m_readBuffer.data(), drv_sectsize[drive], sectorCount, f);
+    result = fread(m_readBuffer.data(), drive().bytesPerSector(), sectorCount, f);
     ASSERT(result != -1);
     result = fclose(f);
     ASSERT(result != -1);
@@ -105,9 +100,8 @@ void IDEController::readSectors(IDE& ide)
 
 void IDEController::writeSectors()
 {
-    unsigned drive = controllerIndex + 2;
     vlog(LogIDE, "ide%u: Write sectors (LBA: %u, count: %u)", controllerIndex, lba(), sectorCount);
-    m_writeBuffer.resize(drv_sectsize[drive] * sectorCount);
+    m_writeBuffer.resize(drive().bytesPerSector() * sectorCount);
     m_writeBufferIndex = 0;
 }
 
@@ -129,13 +123,12 @@ void IDEController::writeToSectorBuffer(IDE& ide, T data)
     if (m_writeBufferIndex < m_writeBuffer.size())
         return;
     vlog(LogIDE, "ide%u: Got all sector data, flushing to disk!", controllerIndex);
-    unsigned drive = controllerIndex + 2;
-    FILE* f = fopen(drv_imgfile[drive], "rb+");
+    FILE* f = fopen(qPrintable(drive().imagePath()), "rb+");
     RELEASE_ASSERT(f);
     int result;
-    result = fseek(f, lba() * drv_sectsize[drive], SEEK_SET);
+    result = fseek(f, lba() * drive().bytesPerSector(), SEEK_SET);
     ASSERT(result != -1);
-    result = fwrite(m_writeBuffer.data(), drv_sectsize[drive], sectorCount, f);
+    result = fwrite(m_writeBuffer.data(), drive().bytesPerSector(), sectorCount, f);
     ASSERT(result != -1);
     result = fclose(f);
     ASSERT(result != -1);
@@ -200,8 +193,10 @@ void IDE::reset()
 {
      d->controller[0] = IDEController();
      d->controller[0].controllerIndex = 0;
+     d->controller[0].drivePtr = &machine().fixed0();
      d->controller[1] = IDEController();
      d->controller[1].controllerIndex = 1;
+     d->controller[1].drivePtr = &machine().fixed1();
 }
 
 void IDE::out8(WORD port, BYTE data)

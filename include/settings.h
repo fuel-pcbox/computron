@@ -28,6 +28,7 @@
 #include <QtCore/QString>
 #include "types.h"
 #include "OwnPtr.h"
+#include "DiskDrive.h"
 
 class QStringList;
 
@@ -56,6 +57,11 @@ public:
     Settings() { }
     ~Settings() { }
 
+    const DiskDrive::Configuration& floppy0() const { return m_floppy0; }
+    const DiskDrive::Configuration& floppy1() const { return m_floppy1; }
+    const DiskDrive::Configuration& fixed0() const { return m_fixed0; }
+    const DiskDrive::Configuration& fixed1() const { return m_fixed1; }
+
 private:
     Settings(const Settings&) = delete;
     Settings& operator=(const Settings&) = delete;
@@ -66,6 +72,11 @@ private:
     bool handleFixedDisk(const QStringList&);
     bool handleFloppyDisk(const QStringList&);
     bool handleKeymap(const QStringList&);
+
+    DiskDrive::Configuration m_floppy0;
+    DiskDrive::Configuration m_floppy1;
+    DiskDrive::Configuration m_fixed0;
+    DiskDrive::Configuration m_fixed1;
 
     QHash<DWORD, QString> m_files;
     QHash<DWORD, QString> m_romImages;

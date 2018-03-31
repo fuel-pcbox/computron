@@ -27,6 +27,8 @@
 #include "fdc.h"
 #include "pic.h"
 #include "debug.h"
+#include "machine.h"
+#include "DiskDrive.h"
 
 #define FDC_NEC765
 #define FDC_DEBUG
@@ -218,7 +220,7 @@ BYTE FDC::in8(WORD port)
     BYTE data = 0;
     switch (port) {
     case 0x3F0: {
-        if (drv_status[1] != 0) {
+        if (machine().floppy1().present()) {
             /* Second drive installed */
             data |= 0x40;
         }

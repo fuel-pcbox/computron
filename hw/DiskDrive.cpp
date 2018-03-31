@@ -22,23 +22,25 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pragma once
+#include "DiskDrive.h"
 
-#include "Common.h"
+DiskDrive::DiskDrive(const QString& name)
+    : m_name(name)
+{
+}
 
-#define FD_NO_ERROR             0x00
-#define FD_BAD_COMMAND          0x01
-#define FD_BAD_ADDRESS_MARK     0x02
-#define FD_WRITE_PROTECT_ERROR  0x03
-#define FD_SECTOR_NOT_FOUND     0x04
-#define FD_FIXED_RESET_FAIL     0x05
-#define FD_CHANGED_OR_REMOVED   0x06
-#define FD_SEEK_FAIL            0x40
-#define FD_TIMEOUT              0x80
-#define FD_FIXED_NOT_READY      0xAA
+DiskDrive::~DiskDrive()
+{
+}
 
-class CPU;
+void DiskDrive::setConfiguration(Configuration config)
+{
+    m_config = std::move(config);
+    m_present = !m_config.imagePath.isEmpty();
+}
 
-enum DiskCallFunction { ReadSectors, WriteSectors, VerifySectors };
-void bios_disk_call(CPU&, DiskCallFunction);
-
+void DiskDrive::setImagePath(const QString& path)
+{
+    m_config.imagePath = path;
+    m_present = !m_config.imagePath.isEmpty();
+}

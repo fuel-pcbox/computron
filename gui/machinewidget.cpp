@@ -28,14 +28,13 @@
 #include "machine.h"
 #include "palettewidget.h"
 #include "screen.h"
+#include "DiskDrive.h"
 #include <QtCore/QCoreApplication>
 #include <QtCore/QTimer>
 #include <QtWidgets/QAction>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QToolBar>
 #include <QtWidgets/QVBoxLayout>
-
-extern void ct_set_drive_image(int driveIndex, const char* fileName);
 
 struct MachineWidget::Private
 {
@@ -126,7 +125,8 @@ void MachineWidget::onFloppyATriggered()
     QString fileName = QFileDialog::getOpenFileName(this, tr("Choose floppy A image"));
     if (fileName.isNull())
         return;
-    ct_set_drive_image(0, qPrintable(fileName));
+    machine().floppy0().setImagePath(fileName);
+    vlog(LogDisk, "floppy0 image changed to %s", qPrintable(fileName));
 }
 
 void MachineWidget::onFloppyBTriggered()
@@ -134,7 +134,8 @@ void MachineWidget::onFloppyBTriggered()
     QString fileName = QFileDialog::getOpenFileName(this, tr("Choose floppy B image"));
     if (fileName.isNull())
         return;
-    ct_set_drive_image(1, qPrintable(fileName));
+    machine().floppy1().setImagePath(fileName);
+    vlog(LogDisk, "floppy1 image changed to %s", qPrintable(fileName));
 }
 
 void MachineWidget::onPauseTriggered()

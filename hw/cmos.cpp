@@ -26,7 +26,7 @@
 #include "debug.h"
 #include "CPU.h"
 #include "machine.h"
-#include "floppy.h"
+#include "DiskDrive.h"
 #include <QtCore/QDate>
 #include <QtCore/QTime>
 
@@ -64,7 +64,7 @@ void CMOS::reset()
     m_ram[ExtendedMemoryInKilobytesAltMSB] = getMSB(cpu.extendedMemorySize() / 1024 - 1024);
 
     // FIXME: This clearly belongs elsewhere.
-    m_ram[FloppyDriveTypes] = (drv_status[0] * 0x40) | (drv_status[1] * 0x04);
+    m_ram[FloppyDriveTypes] = (machine().floppy0().floppyTypeForCMOS() << 4) | machine().floppy1().floppyTypeForCMOS();
 }
 
 bool CMOS::inBinaryClockMode() const

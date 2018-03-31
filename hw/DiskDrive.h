@@ -24,21 +24,46 @@
 
 #pragma once
 
-#include "Common.h"
+#include <QString>
+#include "types.h"
 
-#define FD_NO_ERROR             0x00
-#define FD_BAD_COMMAND          0x01
-#define FD_BAD_ADDRESS_MARK     0x02
-#define FD_WRITE_PROTECT_ERROR  0x03
-#define FD_SECTOR_NOT_FOUND     0x04
-#define FD_FIXED_RESET_FAIL     0x05
-#define FD_CHANGED_OR_REMOVED   0x06
-#define FD_SEEK_FAIL            0x40
-#define FD_TIMEOUT              0x80
-#define FD_FIXED_NOT_READY      0xAA
+class DiskDrive {
+public:
+    struct Configuration {
+        QString imagePath;
+        unsigned sectorsPerTrack { 0 };
+        unsigned heads { 0 };
+        unsigned sectors { 0 };
+        unsigned bytesPerSector { 0 };
+        BYTE floppyTypeForCMOS { 0xff };
+    };
 
-class CPU;
+    explicit DiskDrive(const QString& name);
+    ~DiskDrive();
 
-enum DiskCallFunction { ReadSectors, WriteSectors, VerifySectors };
-void bios_disk_call(CPU&, DiskCallFunction);
+    QString name() const { return m_name; }
+    void setConfiguration(Configuration);
 
+    void setImagePath(const QString&);
+    QString imagePath() const { return m_config.imagePath; }
+
+    DWORD toLBA(WORD cylinder, BYTE head, WORD sector)
+    {
+        return (sector - 1) +
+               (head * sectorsPerTrack()) +
+               (cylinder * sectorsPerTrack() * heads());
+    }
+
+    bool present() const { return m_present; }
+    unsigned cylinders() const { return (m_config.sectors / m_config.sectorsPerTrack / m_config.heads) - 2;}
+    unsigned heads() const { return m_config.heads; }
+    unsigned sectors() const { return m_config.sectors; }
+    unsigned sectorsPerTrack() const { return m_config.sectorsPerTrack; }
+    unsigned bytesPerSector() const { return m_config.bytesPerSector; }
+    BYTE floppyTypeForCMOS() const { return m_config.floppyTypeForCMOS; }
+
+//private:
+    Configuration m_config;
+    QString m_name;
+    bool m_present { false };
+};

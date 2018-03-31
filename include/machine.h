@@ -36,6 +36,7 @@
 class IODevice;
 class BusMouse;
 class CMOS;
+class DiskDrive;
 class FDC;
 class IDE;
 class Keyboard;
@@ -75,6 +76,11 @@ public:
     PIC& slavePIC() { return *m_slavePIC; }
     CMOS& cmos() { return *m_cmos; }
     Settings& settings() { return *m_settings; }
+
+    DiskDrive& floppy0();
+    DiskDrive& floppy1();
+    DiskDrive& fixed0();
+    DiskDrive& fixed1();
 
     bool isForAutotest() PURE;
 
@@ -131,6 +137,11 @@ private:
     OwnPtr<PIC> m_slavePIC;
     OwnPtr<PS2> m_ps2;
     OwnPtr<VomCtl> m_vomCtl;
+
+    OwnPtr<DiskDrive> m_floppy0;
+    OwnPtr<DiskDrive> m_floppy1;
+    OwnPtr<DiskDrive> m_fixed0;
+    OwnPtr<DiskDrive> m_fixed1;
 
     MachineWidget* m_widget { nullptr };
 

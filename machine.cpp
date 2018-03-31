@@ -25,6 +25,7 @@
 #include "machine.h"
 #include "settings.h"
 #include "CPU.h"
+#include "DiskDrive.h"
 #include "iodevice.h"
 #include "fdc.h"
 #include "ide.h"
@@ -65,6 +66,11 @@ Machine::Machine(const QString& name, OwnPtr<Settings>&& settings, QObject* pare
 {
     memset(m_fastInputDevices, 0, sizeof(m_fastInputDevices));
     memset(m_fastOutputDevices, 0, sizeof(m_fastOutputDevices));
+
+    m_floppy0 = make<DiskDrive>("floppy0");
+    m_floppy1 = make<DiskDrive>("floppy1");
+    m_fixed0 = make<DiskDrive>("fixed0");
+    m_fixed1 = make<DiskDrive>("fixed1");
 
     applySettings();
 
@@ -161,6 +167,11 @@ void Machine::applySettings()
     for (auto it = settings().romImages().constBegin(); it != settings().romImages().constEnd(); ++it) {
         loadROMImage(it.key(), it.value());
     }
+
+    m_floppy0->setConfiguration(settings().floppy0());
+    m_floppy1->setConfiguration(settings().floppy1());
+    m_fixed0->setConfiguration(settings().fixed0());
+    m_fixed1->setConfiguration(settings().fixed1());
 }
 
 bool Machine::loadFile(DWORD address, const QString& fileName)
@@ -282,3 +293,24 @@ void Machine::unregisterDevice(IODevicePass, IODevice& device)
 {
     m_allDevices.remove(&device);
 }
+
+DiskDrive& Machine::floppy0()
+{
+    return *m_floppy0;
+}
+
+DiskDrive& Machine::floppy1()
+{
+    return *m_floppy1;
+}
+
+DiskDrive& Machine::fixed0()
+{
+    return *m_fixed0;
+}
+
+DiskDrive& Machine::fixed1()
+{
+    return *m_fixed1;
+}
+

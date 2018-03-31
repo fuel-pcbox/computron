@@ -148,6 +148,8 @@ bool Settings::handleFixedDisk(const QStringList& arguments)
     unsigned index = arguments.at(0).toUInt(&ok);
     if (!ok)
         return false;
+    if (index > 1)
+        return false;
 
     QString fileName = arguments.at(1);
 
@@ -157,14 +159,12 @@ bool Settings::handleFixedDisk(const QStringList& arguments)
 
     vlog(LogConfig, "Fixed disk %u: %s (%ld KiB)", index, qPrintable(fileName), size);
 
-    // FIXME: This code sucks.
-    index += 2;
-    strcpy(drv_imgfile[index], qPrintable(fileName));
-    drv_spt[index] = 63;
-    drv_heads[index] = 16;
-    drv_sectsize[index] = 512;
-    drv_status[index] = 1;
-    drv_sectors[index] = (size * 1024) / drv_sectsize[index];
+    DiskDrive::Configuration& config = index == 0 ? m_fixed0 : m_fixed1;
+    config.imagePath = fileName;
+    config.sectorsPerTrack = 63;
+    config.heads = 16;
+    config.bytesPerSector = 512;
+    config.sectors = (size * 1024) / config.bytesPerSector;
 
     return true;
 }
@@ -179,6 +179,8 @@ bool Settings::handleFloppyDisk(const QStringList& arguments)
     bool ok;
     unsigned index = arguments.at(0).toUInt(&ok);
     if (!ok)
+        return false;
+    if (index > 1)
         return false;
 
     QString type = arguments.at(1);
@@ -195,19 +197,15 @@ bool Settings::handleFloppyDisk(const QStringList& arguments)
         return false;
     }
 
-    // FIXME: This code sucks.
-    strcpy(drv_imgfile[index], qPrintable(fileName));
-    drv_spt[index] = ft->sectorsPerTrack;
-    drv_heads[index] = ft->heads;
-    drv_sectors[index] = ft->sectors;
-    drv_sectsize[index] = ft->bytesPerSector;
-    drv_type[index] = ft->mediaType;
-    drv_status[index] = 1;
+    DiskDrive::Configuration& config = index == 0 ? m_floppy0 : m_floppy1;
+    config.imagePath = fileName;
+    config.sectorsPerTrack = ft->sectorsPerTrack;
+    config.heads = ft->heads;
+    config.sectors = ft->sectors;
+    config.floppyTypeForCMOS = ft->mediaType;
+    config.bytesPerSector = ft->bytesPerSector;
 
-    // FIXME: What should the media type be?
-    drv_type[index] = 0;
-
-    vlog(LogConfig, "Floppy %u: %s (%uspt, %uh, %us (%ub))", index, qPrintable(fileName), ft->sectorsPerTrack, ft->heads, ft->sectors, ft->bytesPerSector);
+    vlog(LogConfig, "Floppy %u: %s (%uspt, %uh, %us (%ub))", index, qPrintable(fileName), config.sectorsPerTrack, config.heads, config.sectors, config.bytesPerSector);
     return true;
 }
 

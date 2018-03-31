@@ -42,6 +42,7 @@ HEADERS += gui/machinewidget.h \
            gui/worker.h \
            hw/MemoryProvider.h \
            hw/ROM.h \
+           hw/DiskDrive.h \
            hw/fdc.h \
            hw/ide.h \
            hw/iodevice.h \
@@ -110,4 +111,5 @@ SOURCES += debug.cpp \
            hw/cmos.cpp \
            hw/PS2.cpp \
            hw/MemoryProvider.cpp \
-           hw/ROM.cpp
+           hw/ROM.cpp \
+           hw/DiskDrive.cpp

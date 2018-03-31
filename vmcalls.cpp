@@ -26,7 +26,8 @@
 #include "CPU.h"
 #include "floppy.h"
 #include "debug.h"
-
+#include "machine.h"
+#include "DiskDrive.h"
 #include <stdio.h>
 #include <time.h>
 #include <sys/time.h>
@@ -45,19 +46,30 @@ void vm_call8(CPU& cpu, WORD port, BYTE data) {
         vm_handleE6(cpu);
         break;
     case 0xE2:
-        bios_disk_call(ReadSectors);
+        bios_disk_call(cpu, ReadSectors);
         break;
     case 0xE3:
-        bios_disk_call(WriteSectors);
+        bios_disk_call(cpu, WriteSectors);
         break;
     case 0xE4:
-        bios_disk_call(VerifySectors);
+        bios_disk_call(cpu, VerifySectors);
         break;
     default:
         vlog(LogAlert, "vm_call8: Unhandled write, %02X -> %04X", data, port);
         hard_exit(0);
         break;
     }
+}
+
+static DiskDrive* diskDriveForBIOSIndex(Machine& machine, BYTE index)
+{
+    switch (index) {
+    case 0x00: return &machine.floppy0(); break;
+    case 0x01: return &machine.floppy1(); break;
+    case 0x80: return &machine.fixed0(); break;
+    case 0x81: return &machine.fixed1(); break;
+    }
+    return nullptr;
 }
 
 void vm_handleE6(CPU& cpu)
@@ -68,9 +80,8 @@ void vm_handleE6(CPU& cpu)
     struct    tm *t;
     time_t    curtime;
     struct    timeval timv;
-    DWORD    tick_count, tracks;
-    BYTE    drive;
-    FILE    *fpdrv;
+    DWORD tick_count;
+    DiskDrive* drive;
 
     switch (cpu.getAX()) {
     case 0x1601:
@@ -99,63 +110,55 @@ void vm_handleE6(CPU& cpu)
         cpu.writeUnmappedMemory16(0x046D, tick_count >> 16);
         break;
     case 0x1300:
-        drive = cpu.getDL();
-        if (drive >= 0x80)
-            drive = drive - 0x80 + 2;
-        if (drv_status[drive] != 0) {
+        drive = diskDriveForBIOSIndex(cpu.machine(), cpu.getDL());
+        if (drive && drive->present()) {
             cpu.setAH(FD_NO_ERROR);
             cpu.setCF(0);
         } else {
             cpu.setAH(FD_CHANGED_OR_REMOVED);
             cpu.setCF(1);
         }
-        cpu.writeUnmappedMemory8(drive < 2 ? 0x0441 : 0x0474, cpu.getAH());
+        cpu.writeUnmappedMemory8(cpu.getDL() < 2 ? 0x0441 : 0x0474, cpu.getAH());
         break;
     case 0x1308:
-        drive = cpu.getDL();
-        if(drive>=0x80) drive = drive - 0x80 + 2;
-        if(drv_status[drive]!=0) {
-            tracks = (drv_sectors[drive] / drv_spt[drive] / drv_heads[drive]) - 2;
+        drive = diskDriveForBIOSIndex(cpu.machine(), cpu.getDL());
+        if (drive && drive->present()) {
             cpu.setAL(0);
             cpu.setAH(FD_NO_ERROR);
-            cpu.setBL(drv_type[drive]);
+            cpu.setBL(drive->floppyTypeForCMOS());
             cpu.setBH(0);
-            cpu.setCH(tracks & 0xFF); // Tracks.
-            cpu.setCL(((tracks >> 2) & 0xC0) | (drv_spt[drive] & 0x3F)); // Sectors per track.
-            cpu.setDH(drv_heads[drive] - 1); // Sides.
+            cpu.setCH(drive->cylinders() & 0xFF); // Tracks.
+            cpu.setCL(((drive->cylinders() >> 2) & 0xC0) | (drive->sectorsPerTrack() & 0x3F)); // Sectors per track.
+            cpu.setDH(drive->heads() - 1); // Sides.
 
-            if (drive < 2)
-                cpu.setDL(drv_status[0] + drv_status[1]);
-            else
-                cpu.setDL(drv_status[2] + drv_status[3]);
+            if (cpu.getDL() < 2) {
+                cpu.setDL(cpu.machine().floppy0().present() + cpu.machine().floppy1().present());
+            } else {
+                cpu.setDL(cpu.machine().fixed0().present() + cpu.machine().fixed1().present());
+            }
 
-            vlog(LogDisk, "Reporting disk%d geo: %d tracks, %d spt, %d sides", drive, tracks, drv_spt[drive], drv_heads[drive]);
-
-            cpu.setCH(tracks & 0xFF);
-            cpu.setCL(cpu.getCL() | (tracks & 0x00030000) >> 10);
+            vlog(LogDisk, "Reporting %s geometry: %u tracks, %u spt, %u heads", qPrintable(drive->name()), drive->cylinders(), drive->sectorsPerTrack(), drive->heads());
 
             // FIXME: ES:DI should points to some wacky Disk Base Table.
             cpu.setCF(0);
         } else {
-            if (drive < 2)
+            if (cpu.getDL() < 2)
                 cpu.setAH(FD_CHANGED_OR_REMOVED);
-            else if(drive > 1)
+            else if (cpu.getDL() > 1)
                 cpu.setAH(FD_FIXED_NOT_READY);
             cpu.setCF(1);
         }
 
         break;
     case 0x1315:
-        drive = cpu.getDL();
-        if (drive >= 0x80)
-            drive = drive - 0x80 + 2;
-        if (drv_status[drive] != 0) {
+        drive = diskDriveForBIOSIndex(cpu.machine(), cpu.getDL());
+        if (drive && drive->present()) {
             cpu.setAH(0x01); // Diskette, no change detection present.
-            if (drive > 1) {
+            if (cpu.getDL() > 1) {
                 cpu.setAH(0x03); // FIXED DISK :-)
                 // If fixed disk, CX:DX = sectors.
-                cpu.setDX(drv_sectors[drive]);
-                cpu.setCX((drv_sectors[drive] << 16));
+                cpu.setDX(drive->sectors());
+                cpu.setCX(drive->sectors() >> 16);
             }
             cpu.setCF(0);
         } else {
@@ -165,17 +168,13 @@ void vm_handleE6(CPU& cpu)
         }
         break;
     case 0x1318:
-        drive = cpu.getDL();
-        if (drive >= 0x80)
-            drive = drive - 0x80 + 2;
-        if (drv_status[drive]) {
-            vlog(LogDisk, "Setting media type for drive %d:", drive);
+        drive = diskDriveForBIOSIndex(cpu.machine(), cpu.getDL());
+        if (drive && drive->present()) {
+            vlog(LogDisk, "Setting media type for %s:", qPrintable(drive->name()));
             vlog(LogDisk, "%d sectors per track", cpu.getCL());
             vlog(LogDisk, "%d tracks", cpu.getCH());
 
-            /* Wacky DBT. */
-            cpu.setES(0x820E);
-            cpu.setDI(0x0503);
+            // FIXME: ES:DI should point to a Wacky DBT
             cpu.setAH(0);
             cpu.setCF(0);
         } else {
@@ -193,7 +192,7 @@ void vm_handleE6(CPU& cpu)
         {
             char tmp[80];
             sprintf(tmp, "prn%d.txt", cpu.getDX());
-            fpdrv = fopen(tmp, "a");
+            FILE* fpdrv = fopen(tmp, "a");
             fputc(cpu.getCL(), fpdrv);
             fclose(fpdrv);
         }
@@ -219,10 +218,8 @@ void vm_handleE6(CPU& cpu)
      * CF = !AL
      */
     case 0x3333:
-        drive = cpu.getDL();
-        if (drive >= 0x80)
-            drive = drive - 0x80 + 2;
-        if (drv_status[drive] != 0) {
+        drive = diskDriveForBIOSIndex(cpu.machine(), cpu.getDL());
+        if (drive && drive->present()) {
             cpu.setAL(1);
             cpu.setCF(0);
         } else {
