@@ -23,7 +23,6 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Common.h"
-#include "floppy.h"
 #include "fdc.h"
 #include "pic.h"
 #include "debug.h"

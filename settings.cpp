@@ -26,7 +26,6 @@
 #include <stdio.h>
 #include <string.h>
 #include "Common.h"
-#include "floppy.h"
 #include "debug.h"
 #include "settings.h"
 #include <QFile>

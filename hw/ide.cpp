@@ -25,7 +25,6 @@
 #include "Common.h"
 #include "debug.h"
 #include "ide.h"
-#include "floppy.h"
 #include "machine.h"
 #include "DiskDrive.h"
 

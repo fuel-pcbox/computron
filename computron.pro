@@ -56,7 +56,6 @@ HEADERS += gui/machinewidget.h \
            include/debugger.h \
            include/types.h \
            include/debug.h \
-           include/floppy.h \
            include/machine.h \
            include/settings.h \
            include/templates.h \
@@ -91,7 +90,6 @@ SOURCES += debug.cpp \
            x86/stack.cpp \
            x86/string.cpp \
            x86/Tasking.cpp \
-           bios/floppy.cpp \
            gui/machinewidget.cpp \
            gui/main.cpp \
            gui/mainwindow.cpp \
