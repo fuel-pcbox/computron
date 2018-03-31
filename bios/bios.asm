@@ -472,8 +472,18 @@ check_for_80186:
     not    ah
     test   ah, 0xf0
     ret
-    
-    
+
+check_for_80386:
+    pushfd
+    pop    eax
+    mov    ecx, eax
+    xor    eax, 0x40000 ; Check if AC flag can be turned on
+    push   eax
+    popfd
+    pushfd
+    pop    eax
+    xor    eax, ecx
+    ret
 
 ; INITALIZE BIOS DATA AREA -----------------------------
 ;
@@ -501,6 +511,9 @@ _bios_init_data:
     call    check_for_80186
     je      .print80186
 
+    call    check_for_80386
+    je      .print80386
+
     mov     si, msg_unknown
 .cCend:
     call    put_string
@@ -513,6 +526,9 @@ _bios_init_data:
     jmp     .cCend
 .print80186:
     mov     si, msg_80186
+    jmp     .cCend
+.print80386:
+    mov     si, msg_80386
     jmp     .cCend
 
 .checkMem:
@@ -1326,6 +1342,7 @@ iret_with_carry:
 
     msg_8086           db "8086", 0
     msg_80186          db "80186", 0
+    msg_80386          db "80386", 0
     msg_unknown        db "Unknown", 0
     msg_cpu            db " CPU", 0x0d, 0x0a, 0
 
