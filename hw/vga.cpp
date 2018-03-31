@@ -44,6 +44,7 @@ struct VGA::Private
 {
     QColor color[16];
     QBrush brush[16];
+    BYTE* memory { nullptr };
     BYTE* plane[4];
     BYTE latch[4];
 
@@ -120,7 +121,7 @@ VGA::VGA(Machine& m)
 
 VGA::~VGA()
 {
-    delete [] d->plane[0];
+    delete [] d->memory;
 }
 
 void VGA::reset()
@@ -142,6 +143,8 @@ void VGA::reset()
     // FIXME: This kind of stuff should be done by a VGA BIOS..
     d->ioRegister2[0x8] = 0xff;
 
+    d->ioRegister[0x13] = 80;
+
     d->dac_data_read_index = 0;
     d->dac_data_read_subindex = 0;
     d->dac_data_write_index = 0;
@@ -160,12 +163,13 @@ void VGA::reset()
 
     d->miscellaneousOutputRegister = 0xff;
 
-    d->plane[0] = new BYTE[0x40000];
+    d->memory = new BYTE[0x40000];
+    d->plane[0] = d->memory;
     d->plane[1] = d->plane[0] + 0x10000;
     d->plane[2] = d->plane[1] + 0x10000;
     d->plane[3] = d->plane[2] + 0x10000;
 
-    memset(d->plane[0], 0x00, 0x40000);
+    memset(d->memory, 0x00, 0x40000);
 
     d->latch[0] = 0;
     d->latch[1] = 0;
@@ -474,7 +478,6 @@ bool VGA::inChain4Mode() const
     return d->ioSequencer[0x4] & 0x8;
 }
 
-
 #define WRITE_MODE (machine().vga().readRegister2(5) & 0x03)
 #define READ_MODE ((machine().vga().readRegister2(5) >> 3) & 1)
 #define ODD_EVEN ((machine().vga().readRegister2(5) >> 4) & 1)
@@ -489,10 +492,14 @@ bool VGA::inChain4Mode() const
 void VGA::writeMemory8(DWORD address, BYTE value)
 {
     machine().notifyScreen();
+    address -= 0xa0000;
+
+    if (inChain4Mode()) {
+        d->memory[(address & ~0x03) + (address % 4)*65536] = value;
+        return;
+    }
 
     BYTE new_val[4];
-
-    address -= 0xA0000;
 
     if (WRITE_MODE == 2) {
 
@@ -614,34 +621,30 @@ void VGA::writeMemory8(DWORD address, BYTE value)
     }
 
     BYTE plane = 0xf;
-
-    if (machine().vga().inChain4Mode()) {
-        plane = 1 << (address & 0x3);
-        address &= ~0x3;
-    }
-
     plane &= machine().vga().readSequencer(2) & 0x0f;
 
-    if (plane) {
-        if (plane & 0x01)
-            d->plane[0][address] = new_val[0];
-        if (plane & 0x02)
-            d->plane[1][address] = new_val[1];
-        if (plane & 0x04)
-            d->plane[2][address] = new_val[2];
-        if (plane & 0x08)
-            d->plane[3][address] = new_val[3];
-    }
+    if (plane & 0x01)
+        d->plane[0][address] = new_val[0];
+    if (plane & 0x02)
+        d->plane[1][address] = new_val[1];
+    if (plane & 0x04)
+        d->plane[2][address] = new_val[2];
+    if (plane & 0x08)
+        d->plane[3][address] = new_val[3];
 }
 
 BYTE VGA::readMemory8(DWORD address)
 {
+    address -= 0xa0000;
+
+    if (inChain4Mode()) {
+        return d->memory[(address & ~3) + (address % 4) * 65536];
+    }
+
     if (READ_MODE != 0) {
         vlog(LogVGA, "ZOMG! READ_MODE = %u", READ_MODE);
         hard_exit(1);
     }
-
-    address -= 0xA0000;
 
     d->latch[0] = d->plane[0][address];
     d->latch[1] = d->plane[1][address];
@@ -649,11 +652,6 @@ BYTE VGA::readMemory8(DWORD address)
     d->latch[3] = d->plane[3][address];
 
     BYTE plane = machine().vga().readRegister2(4) & 0xf;
-    if (machine().vga().inChain4Mode()) {
-        plane = address & 3;
-        address &= ~3;
-    }
-
     return d->latch[plane];
 }
 
