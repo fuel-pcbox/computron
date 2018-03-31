@@ -204,6 +204,20 @@ void CPU::_VKILL(Instruction&)
     hard_exit(0);
 }
 
+void CPU::setMemorySizeAndReallocateIfNeeded(DWORD size)
+{
+    if (m_memorySize == size)
+        return;
+    delete [] m_memory;
+    m_memorySize = size;
+    m_memory = new BYTE[m_memorySize];
+    if (!m_memory) {
+        vlog(LogInit, "Insufficient memory available.");
+        hard_exit(1);
+    }
+    memset(m_memory, 0x0, m_memorySize);
+}
+
 CPU::CPU(Machine& m)
     : m_machine(m)
     , m_shouldBreakOutOfMainLoop(false)
@@ -215,13 +229,8 @@ CPU::CPU(Machine& m)
     ASSERT(!g_cpu);
     g_cpu = this;
 
-    m_memory = new BYTE[m_memorySize];
-    if (!m_memory) {
-        vlog(LogInit, "Insufficient memory available.");
-        hard_exit(1);
-    }
+    setMemorySizeAndReallocateIfNeeded(8192 * 1024);
 
-    memset(m_memory, 0x0, m_memorySize);
     memset(m_memoryProviders, 0, sizeof(m_memoryProviders));
 
     m_debugger = make<Debugger>(*this);

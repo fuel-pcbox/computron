@@ -246,6 +246,8 @@ public:
     DWORD baseMemorySize() const { return m_baseMemorySize; }
     void setBaseMemorySize(DWORD size) { m_baseMemorySize = size; }
 
+    void setMemorySizeAndReallocateIfNeeded(DWORD);
+
     void kill();
 
     void setA20Enabled(bool value) { m_a20Enabled = value; }
@@ -1358,7 +1360,7 @@ private:
     MemoryProvider* m_memoryProviders[1048576 / memoryProviderBlockSize];
 
     BYTE* m_memory { nullptr };
-    size_t m_memorySize { 8192 * 1024 };
+    size_t m_memorySize { 0 };
 
     WORD* m_segmentMap[8];
     DWORD* m_controlRegisterMap[8];

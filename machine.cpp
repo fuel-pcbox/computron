@@ -145,7 +145,7 @@ Machine::~Machine()
 void Machine::applySettings()
 {
     cpu().setExtendedMemorySize(settings().memorySize());
-    // FIXME: Apply memory-size setting.
+    cpu().setMemorySizeAndReallocateIfNeeded(settings().memorySize());
 
     cpu().setCS(settings().entryCS());
     cpu().setIP(settings().entryIP());
