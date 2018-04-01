@@ -201,7 +201,7 @@ void IDE::reset()
 void IDE::out8(WORD port, BYTE data)
 {
 #ifdef IDE_DEBUG
-    vlog(LogFDC, "out8 %03x, %02x", port, data);
+    vlog(LogIDE, "out8 %03x, %02x", port, data);
 #endif
 
     const int controllerIndex = (((port) & 0x1F0) == 0x170);
@@ -314,7 +314,7 @@ DWORD IDE::in32(WORD port)
 void IDE::out16(WORD port, WORD data)
 {
 #ifdef IDE_DEBUG
-    vlog(LogFDC, "out16 %03x, %04x", port, data);
+    vlog(LogIDE, "out16 %03x, %04x", port, data);
 #endif
 
     const int controllerIndex = (((port) & 0x1F0) == 0x170);
@@ -332,7 +332,7 @@ void IDE::out16(WORD port, WORD data)
 void IDE::out32(WORD port, DWORD data)
 {
 #ifdef IDE_DEBUG
-    vlog(LogFDC, "out32 %03x, %08x", port, data);
+    vlog(LogIDE, "out32 %03x, %08x", port, data);
 #endif
 
     const int controllerIndex = (((port) & 0x1F0) == 0x170);
