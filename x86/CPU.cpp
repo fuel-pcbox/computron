@@ -1157,8 +1157,8 @@ void CPU::doLxS(Instruction& insn, SegmentRegisterIndex segreg)
     }
     auto offset = readMemory<T>(insn.modrm().segment(), insn.modrm().offset());
     WORD selector = readMemory16(insn.modrm().segment(), insn.modrm().offset() + sizeof(T));
-    insn.reg<T>() = offset;
     writeSegmentRegister(segreg, selector);
+    insn.reg<T>() = offset;
 }
 
 void CPU::_LDS_reg16_mem16(Instruction& insn)
