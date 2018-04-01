@@ -572,7 +572,7 @@ void CPU::farJump(LogicalAddress address, JumpType type, BYTE isr, DWORD flags, 
 {
     WORD selector = address.selector();
     DWORD offset = address.offset();
-    bool pushSize16 = !getPE() || o16();
+    bool pushSize16 = o16() || (!getPE() && type == JumpType::INT);
 
     if (getPE() && gate) {
         // Coming through a gate; respect bit size of gate descriptor!
