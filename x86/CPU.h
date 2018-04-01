@@ -157,6 +157,7 @@ public:
     struct CR0 {
     enum Bits {
         PE = 1 << 0,
+        EM = 1 << 2,
         TS = 1 << 3,
         WP = 1 << 16,
         PG = 1 << 31,
