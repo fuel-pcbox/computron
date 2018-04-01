@@ -1453,6 +1453,8 @@ bool CPU::validatePhysicalAddress(PhysicalAddress physicalAddress, MemoryAccessT
 template<typename T>
 T CPU::readPhysicalMemory(PhysicalAddress physicalAddress)
 {
+    if (!validatePhysicalAddress<T>(physicalAddress, MemoryAccessType::Read))
+        return 0;
     if (auto* provider = memoryProviderForAddress(physicalAddress)) {
         if (auto* directReadAccessPointer = provider->pointerForDirectReadAccess()) {
             return *reinterpret_cast<const T*>(&directReadAccessPointer[physicalAddress.get() - provider->baseAddress().get()]);
@@ -1465,6 +1467,8 @@ T CPU::readPhysicalMemory(PhysicalAddress physicalAddress)
 template<typename T>
 void CPU::writePhysicalMemory(PhysicalAddress physicalAddress, T data)
 {
+    if (!validatePhysicalAddress<T>(physicalAddress, MemoryAccessType::Read))
+        return;
     if (auto* provider = memoryProviderForAddress(physicalAddress)) {
         provider->write<T>(physicalAddress.get(), data);
     } else {
@@ -1481,8 +1485,6 @@ T CPU::readMemory(DWORD linearAddress)
 #ifdef A20_ENABLED
     physicalAddress.mask(a20Mask());
 #endif
-    if (!validatePhysicalAddress<T>(physicalAddress, MemoryAccessType::Read))
-        return 0;
     T value = readPhysicalMemory<T>(physicalAddress);
 #ifdef MEMORY_DEBUGGING
     if (options.memdebug || shouldLogMemoryRead(physicalAddress)) {
