@@ -36,11 +36,6 @@ void CPU::_ESCAPE(Instruction& insn)
     vlog(LogFPU, "FPU escape via %02X %02X (or %02X /%u)",
         insn.op(), insn.rm(), insn.op(), insn.slash());
 
-    return;
-    // FIXME: If the code below is enabled, MSD.EXE hangs on startup trying to
-    //        communicate with the FPU.
-#if 0
-    // 80286+: Coprocessor not available exception.
-    throw Exception(7, "No FPU");
-#endif
+    if (getCR0() & CR0::EM || getCR0() & CR0::TS)
+        throw Exception(7, "No FPU");
 }
