@@ -169,10 +169,7 @@ void CPU::jumpToInterruptHandler(int isr, InterruptSource source, std::optional<
         vector.offset = (m_memory[isr * 4 + 1] << 8) | m_memory[isr * 4];
     }
 
-    if (o16())
-        jump16(vector.segment, vector.offset, JumpType::INT, isr, getFlags(), &gate, errorCode);
-    else
-        jump32(vector.segment, vector.offset, JumpType::INT, isr, getEFlags(), &gate, errorCode);
+    jump32(vector.segment, vector.offset, JumpType::INT, isr, getEFlags(), &gate, errorCode);
 
     if (!isTrap)
         setIF(0);

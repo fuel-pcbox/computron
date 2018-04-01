@@ -570,7 +570,7 @@ static const char* toString(JumpType type)
 
 void CPU::jump32(WORD selector, DWORD offset, JumpType type, BYTE isr, DWORD flags, Gate* gate, std::optional<WORD> errorCode)
 {
-    bool pushSize16 = o16();
+    bool pushSize16 = !getPE() || o16();
 
     if (getPE() && gate) {
         // Coming through a gate; respect bit size of gate descriptor!
