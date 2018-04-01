@@ -1653,6 +1653,8 @@ void CPU::setGS(WORD value)
 
 BYTE* CPU::pointerToPhysicalMemory(PhysicalAddress physicalAddress)
 {
+    if (!validatePhysicalAddress<BYTE>(physicalAddress, MemoryAccessType::InternalPointer))
+        return nullptr;
     didTouchMemory(physicalAddress.get());
     if (auto* provider = memoryProviderForAddress(physicalAddress))
         return provider->memoryPointer(physicalAddress.get());
