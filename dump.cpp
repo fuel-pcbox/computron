@@ -280,13 +280,13 @@ void CPU::dumpAll()
          x16() ? 16 : 32);
 
     vlog(LogDump, "cr0: %08x  cr3: %08x", getCR0(), getCR3());
-    vlog(LogDump, "idtr: {base=%08x, limit=%04x}", IDTR.base, IDTR.limit);
-    vlog(LogDump, "gdtr: {base=%08x, limit=%04x}", GDTR.base, GDTR.limit);
-    vlog(LogDump, "ldtr: {base=%08x, limit=%04x, (selector=%04x)}", LDTR.base, LDTR.limit, LDTR.segment);
-    vlog(LogDump, "  tr: {base=%08x, limit=%04x, (selector=%04x, %u-bit)}", TR.base, TR.limit, TR.segment, TR.is32Bit ? 32 : 16);
+    vlog(LogDump, "idtr: {base=%08x, limit=%04x}", IDTR.base.get(), IDTR.limit);
+    vlog(LogDump, "gdtr: {base=%08x, limit=%04x}", GDTR.base.get(), GDTR.limit);
+    vlog(LogDump, "ldtr: {base=%08x, limit=%04x, (selector=%04x)}", LDTR.base.get(), LDTR.limit, LDTR.selector);
+    vlog(LogDump, "  tr: {base=%08x, limit=%04x, (selector=%04x, %u-bit)}", TR.base.get(), TR.limit, TR.selector, TR.is32Bit ? 32 : 16);
 
-    if (getPE() && TR.segment != 0) {
-        auto descriptor = getDescriptor(TR.segment);
+    if (getPE() && TR.selector != 0) {
+        auto descriptor = getDescriptor(TR.selector);
         if (descriptor.isTSS()) {
             auto& tssDescriptor = descriptor.asTSSDescriptor();
             TSS tss(*this, LinearAddress(tssDescriptor.base()), tssDescriptor.is32Bit());

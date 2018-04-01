@@ -168,7 +168,7 @@ public:
 // Note: TSSDescriptor uses segment base+limit despite being a system descriptor.
 class TSSDescriptor : public SystemDescriptor {
 public:
-    DWORD base() const { return m_segmentBase; }
+    LinearAddress base() const { return LinearAddress(m_segmentBase); }
     DWORD limit() const { return m_segmentLimit; }
     DWORD effectiveLimit() const { return m_effectiveLimit; }
 
@@ -184,7 +184,7 @@ public:
 // Note: LDTDescriptor uses segment base+limit despite being a system descriptor.
 class LDTDescriptor : public SystemDescriptor {
 public:
-    DWORD base() const { return m_segmentBase; }
+    LinearAddress base() const { return LinearAddress(m_segmentBase); }
     DWORD limit() const { return m_segmentLimit; }
     DWORD effectiveLimit() const { return m_effectiveLimit; }
 };
@@ -227,7 +227,7 @@ inline const LDTDescriptor& Descriptor::asLDTDescriptor() const
 
 class SegmentDescriptor : public Descriptor {
 public:
-    DWORD base() const { return m_segmentBase; }
+    LinearAddress base() const { return LinearAddress(m_segmentBase); }
     DWORD limit() const { return m_segmentLimit; }
 
     bool isCode() const { return (m_type & 0x8) != 0; }
@@ -237,7 +237,7 @@ public:
     DWORD effectiveLimit() const { return m_effectiveLimit; }
     bool granularity() const { return m_G; }
 
-    LinearAddress linearAddress(DWORD offset) const { return LinearAddress(base() + offset); }
+    LinearAddress linearAddress(DWORD offset) const { return LinearAddress(m_segmentBase + offset); }
 };
 
 class CodeSegmentDescriptor : public SegmentDescriptor {

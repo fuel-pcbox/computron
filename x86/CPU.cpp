@@ -325,16 +325,16 @@ void CPU::reset()
     this->AC = 0;
     this->ID = 0;
 
-    this->GDTR.base = 0;
+    this->GDTR.base = LinearAddress();
     this->GDTR.limit = 0;
-    this->IDTR.base = 0;
+    this->IDTR.base = LinearAddress();
     this->IDTR.limit = 0;
-    this->LDTR.base = 0;
+    this->LDTR.base = LinearAddress();
     this->LDTR.limit = 0;
-    this->LDTR.segment = 0;
-    this->TR.segment = 0;
+    this->LDTR.selector = 0;
+    this->TR.selector = 0;
     this->TR.limit = 0;
-    this->TR.base = 0;
+    this->TR.base = LinearAddress();
     this->TR.is32Bit = false;
 
     memset(m_descriptor, 0, sizeof(m_descriptor));
@@ -1461,6 +1461,8 @@ T CPU::readPhysicalMemory(PhysicalAddress physicalAddress)
     }
     return *reinterpret_cast<T*>(&m_memory[physicalAddress.get()]);
 }
+
+template WORD CPU::readPhysicalMemory<WORD>(PhysicalAddress);
 
 template<typename T>
 void CPU::writePhysicalMemory(PhysicalAddress physicalAddress, T data)

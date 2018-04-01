@@ -28,7 +28,7 @@
 
 void CPU::_STR_RM16(Instruction& insn)
 {
-    insn.modrm().writeClearing16(TR.segment, o32());
+    insn.modrm().writeClearing16(TR.selector, o32());
 }
 
 void CPU::_LTR_RM16(Instruction& insn)
@@ -60,12 +60,12 @@ void CPU::_LTR_RM16(Instruction& insn)
     tssDescriptor.setBusy();
     writeToGDT(tssDescriptor);
 
-    TR.segment = selector;
+    TR.selector = selector;
     TR.base = tssDescriptor.base();
     TR.limit = tssDescriptor.limit();
     TR.is32Bit = tssDescriptor.is32Bit();
 #ifdef DEBUG_TASK_SWITCH
-    vlog(LogAlert, "LTR { segment: %04x => base:%08x, limit:%08x }", TR.segment, TR.base, TR.limit);
+    vlog(LogAlert, "LTR { segment: %04x => base:%08x, limit:%08x }", TR.selector, TR.base.get(), TR.limit);
 #endif
 }
 
@@ -92,7 +92,7 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
         EXCEPTION_ON(GeneralProtectionFault, 0, incomingTSSDescriptor.isBusy(), "Incoming TSS descriptor is busy");
     }
 
-    auto outgoingDescriptor = getDescriptor(TR.segment);
+    auto outgoingDescriptor = getDescriptor(TR.selector);
     if (!outgoingDescriptor.isTSS()) {
         // Hmm, what have we got ourselves into now?
         vlog(LogCPU, "Switching tasks and outgoing TSS is not a TSS:");
@@ -132,7 +132,7 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
     outgoingTSS.setFS(getFS());
     outgoingTSS.setGS(getGS());
     outgoingTSS.setSS(getSS());
-    outgoingTSS.setLDT(LDTR.segment);
+    outgoingTSS.setLDT(LDTR.selector);
     outgoingTSS.setEIP(getEIP());
 
     if (getPG())
@@ -186,10 +186,10 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
     setEDI(incomingTSS.getEDI());
 
     if (source == JumpType::CALL || source == JumpType::INT) {
-        incomingTSS.setBacklink(TR.segment);
+        incomingTSS.setBacklink(TR.selector);
     }
 
-    TR.segment = incomingTSSDescriptor.index();
+    TR.selector = incomingTSSDescriptor.index();
     TR.base = incomingTSSDescriptor.base();
     TR.limit = incomingTSSDescriptor.limit();
     TR.is32Bit = incomingTSSDescriptor.is32Bit();

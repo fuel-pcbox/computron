@@ -214,7 +214,7 @@ public:
     Descriptor getDescriptor(WORD selector, SegmentRegisterIndex = SegmentRegisterIndex::None);
     SegmentDescriptor getSegmentDescriptor(WORD selector, SegmentRegisterIndex = SegmentRegisterIndex::None);
     Gate getInterruptGate(WORD index);
-    Descriptor getDescriptor(const char* tableName, DWORD tableBase, DWORD tableLimit, WORD index, bool indexIsSelector);
+    Descriptor getDescriptor(const char* tableName, LinearAddress tableBase, DWORD tableLimit, WORD index, bool indexIsSelector);
 
     SegmentRegisterIndex currentSegment() const { return m_segmentPrefix == SegmentRegisterIndex::None ? SegmentRegisterIndex::DS : m_segmentPrefix; }
     bool hasSegmentPrefix() const { return m_segmentPrefix != SegmentRegisterIndex::None; }
@@ -1307,18 +1307,18 @@ private:
     bool ID;
 
     struct {
-        DWORD base;
+        LinearAddress base;
         DWORD limit;
     } GDTR;
 
     struct {
-        DWORD base;
+        LinearAddress base;
         DWORD limit;
     } IDTR;
 
     struct {
-        WORD segment { 0 };
-        DWORD base { 0 };
+        WORD selector { 0 };
+        LinearAddress base { 0 };
         DWORD limit { 0 };
     } LDTR;
 
@@ -1337,8 +1337,8 @@ private:
     };
 
     struct {
-        WORD segment { 0 };
-        DWORD base { 0 };
+        WORD selector { 0 };
+        LinearAddress base { 0 };
         DWORD limit { 0 };
         bool is32Bit { false };
     } TR;

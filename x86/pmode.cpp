@@ -36,7 +36,7 @@ void CPU::_SGDT(Instruction& insn)
     }
     snoop(insn.modrm().segment(), insn.modrm().offset(), MemoryAccessType::Write);
     snoop(insn.modrm().segment(), insn.modrm().offset() + 6, MemoryAccessType::Write);
-    DWORD maskedBase = o16() ? (GDTR.base & 0x00ffffff) : GDTR.base;
+    DWORD maskedBase = o16() ? (GDTR.base.get() & 0x00ffffff) : GDTR.base.get();
     writeMemory16(insn.modrm().segment(), insn.modrm().offset(), GDTR.limit);
     writeMemory32(insn.modrm().segment(), insn.modrm().offset() + 2, maskedBase);
 }
@@ -48,20 +48,20 @@ void CPU::_SIDT(Instruction& insn)
     }
     snoop(insn.modrm().segment(), insn.modrm().offset(), MemoryAccessType::Write);
     snoop(insn.modrm().segment(), insn.modrm().offset() + 6, MemoryAccessType::Write);
-    DWORD maskedBase = o16() ? (IDTR.base & 0x00ffffff) : IDTR.base;
+    DWORD maskedBase = o16() ? (IDTR.base.get() & 0x00ffffff) : IDTR.base.get();
     writeMemory16(insn.modrm().segment(), insn.modrm().offset(), IDTR.limit);
     writeMemory32(insn.modrm().segment(), insn.modrm().offset() + 2, maskedBase);
 }
 
 void CPU::_SLDT_RM16(Instruction& insn)
 {
-    insn.modrm().writeClearing16(LDTR.segment, o32());
+    insn.modrm().writeClearing16(LDTR.selector, o32());
 }
 
 void CPU::setLDT(WORD selector)
 {
     auto descriptor = getDescriptor(selector);
-    DWORD base = 0;
+    LinearAddress base;
     DWORD limit = 0;
     if (!descriptor.isNull()) {
         if (descriptor.isLDT()) {
@@ -75,12 +75,12 @@ void CPU::setLDT(WORD selector)
             throw GeneralProtectionFault(selector, "Not an LDT descriptor");
         }
     }
-    LDTR.segment = selector;
+    LDTR.selector = selector;
     LDTR.base = base;
     LDTR.limit = limit;
 
 #ifdef DEBUG_LDT
-    vlog(LogAlert, "setLDT { segment: %04X => base:%08X, limit:%08X }", LDTR.segment, LDTR.base, LDTR.limit);
+    vlog(LogAlert, "setLDT { segment: %04X => base:%08X, limit:%08X }", LDTR.selector, LDTR.base(), LDTR.limit);
 #endif
 }
 
@@ -115,10 +115,10 @@ void CPU::_LGDT(Instruction& insn)
     DWORD base = readMemory32(insn.modrm().segment(), insn.modrm().offset() + 2);
     WORD limit = readMemory16(insn.modrm().segment(), insn.modrm().offset());
     DWORD baseMask = o32() ? 0xffffffff : 0x00ffffff;
-    GDTR.base = base & baseMask;
+    GDTR.base = LinearAddress(base & baseMask);
     GDTR.limit = limit;
 #ifdef DEBUG_GDT
-    vlog(LogAlert, "LGDT { base:%08X, limit:%08X }", GDTR.base, GDTR.limit);
+    vlog(LogAlert, "LGDT { base:%08X, limit:%08X }", GDTR.base.get(), GDTR.limit);
     dumpGDT();
 #endif
 }
@@ -132,7 +132,7 @@ void CPU::dumpGDT()
 
 void CPU::dumpIDT()
 {
-    vlog(LogDump, "IDT { base:%08X, limit:%08X }", IDTR.base, IDTR.limit);
+    vlog(LogDump, "IDT { base:%08X, limit:%08X }", IDTR.base.get(), IDTR.limit);
     if (getPE()) {
         for (DWORD isr = 0; isr < (IDTR.limit / 16); ++isr) {
             dumpDescriptor(getInterruptGate(isr));
@@ -152,7 +152,7 @@ void CPU::_LIDT(Instruction& insn)
     DWORD base = readMemory32(insn.modrm().segment(), insn.modrm().offset() + 2);
     WORD limit = readMemory16(insn.modrm().segment(), insn.modrm().offset());
     DWORD baseMask = o32() ? 0xffffffff : 0x00ffffff;
-    IDTR.base = base & baseMask;
+    IDTR.base = LinearAddress(base & baseMask);
     IDTR.limit = limit;
 #if DEBUG_IDT
     dumpIDT();

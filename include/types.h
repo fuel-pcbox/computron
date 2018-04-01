@@ -71,6 +71,7 @@ public:
 
     DWORD get() const { return m_address; }
     void set(DWORD address) { m_address = address; }
+    void mask(DWORD m) { m_address &= m; }
 
 private:
     DWORD m_address { 0 };
