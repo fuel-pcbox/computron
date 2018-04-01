@@ -477,6 +477,9 @@ public:
     void push16(WORD value);
     WORD pop16();
 
+    template<typename T> T pop();
+    template<typename T> void push(T);
+
     void pushSegmentRegisterValue(WORD);
 
     Debugger& debugger() { return *m_debugger; }
@@ -948,11 +951,16 @@ protected:
     void _wrap_0xD3_32(Instruction&);
 
     void _BOUND(Instruction&);
+
+    template<typename T> void doENTER(Instruction&);
+    template<typename T> void doLEAVE();
     void _ENTER16(Instruction&);
     void _ENTER32(Instruction&);
     void _LEAVE16(Instruction&);
     void _LEAVE32(Instruction&);
 
+    template<typename T> void doPUSHA();
+    template<typename T> void doPOPA();
     void _PUSHA(Instruction&);
     void _POPA(Instruction&);
     void _PUSH_imm8(Instruction&);
@@ -1518,6 +1526,23 @@ inline void CPU::updateFlags(T result)
         updateFlags32(result);
         break;
     }
+}
+
+template<typename T>
+inline T CPU::pop()
+{
+    if (sizeof(T) == 4)
+        return pop32();
+    return pop16();
+}
+
+template<typename T>
+inline void CPU::push(T data)
+{
+    if (sizeof(T) == 4)
+        push32(data);
+    else
+        push16(data);
 }
 
 ALWAYS_INLINE void Instruction::execute(CPU& cpu)
