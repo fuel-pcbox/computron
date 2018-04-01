@@ -99,8 +99,8 @@ Descriptor CPU::getDescriptor(const char* tableName, DWORD tableBase, DWORD tabl
         return ErrorDescriptor(Descriptor::LimitExceeded);
     }
 
-    DWORD hi = readMemory32(tableBase + tableIndex + 4);
-    DWORD lo = readMemory32(tableBase + tableIndex);
+    DWORD hi = readMemory32(LinearAddress(tableBase + tableIndex + 4));
+    DWORD lo = readMemory32(LinearAddress(tableBase + tableIndex));
 
     descriptor.m_G = (hi >> 23) & 1; // Limit granularity, 0=1b, 1=4kB
     descriptor.m_D = (hi >> 22) & 1;
@@ -164,6 +164,6 @@ void TSSDescriptor::setAvailable()
 void CPU::writeToGDT(Descriptor& descriptor)
 {
     ASSERT(descriptor.isGlobal());
-    writeMemory32(GDTR.base + descriptor.index() + 4, descriptor.m_high);
-    writeMemory32(GDTR.base + descriptor.index(), descriptor.m_low);
+    writeMemory32(LinearAddress(GDTR.base + descriptor.index() + 4), descriptor.m_high);
+    writeMemory32(LinearAddress(GDTR.base + descriptor.index()), descriptor.m_low);
 }

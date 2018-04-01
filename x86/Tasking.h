@@ -71,7 +71,7 @@ struct TSS16 {
 
 class TSS {
 public:
-    TSS(CPU&, DWORD linearAddress, bool is32Bit);
+    TSS(CPU&, LinearAddress, bool is32Bit);
 
     bool is32Bit() const { return m_is32Bit; }
 

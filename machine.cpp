@@ -186,7 +186,7 @@ bool Machine::loadFile(DWORD address, const QString& fileName)
 
     vlog(LogConfig, "Loading %s at 0x%08X", qPrintable(fileName), address);
 
-    BYTE* memoryPointer = cpu().memoryPointer(address);
+    BYTE* memoryPointer = cpu().memoryPointer(LinearAddress(address));
     ASSERT(memoryPointer);
 
     // FIXME: Don't overrun the CPU's memory buffer.

@@ -234,6 +234,8 @@ public:
 
     DWORD effectiveLimit() const { return m_effectiveLimit; }
     bool granularity() const { return m_G; }
+
+    LinearAddress linearAddress(DWORD offset) const { return LinearAddress(base() + offset); }
 };
 
 class CodeSegmentDescriptor : public SegmentDescriptor {

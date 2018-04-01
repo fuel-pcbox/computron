@@ -289,7 +289,7 @@ void CPU::dumpAll()
         auto descriptor = getDescriptor(TR.segment);
         if (descriptor.isTSS()) {
             auto& tssDescriptor = descriptor.asTSSDescriptor();
-            TSS tss(*this, tssDescriptor.base(), tssDescriptor.is32Bit());
+            TSS tss(*this, LinearAddress(tssDescriptor.base()), tssDescriptor.is32Bit());
             dumpTSS(tss);
         }
     }

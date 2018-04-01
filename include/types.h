@@ -64,6 +64,18 @@ private:
     DWORD m_address { 0 };
 };
 
+class LinearAddress {
+public:
+    LinearAddress() { }
+    explicit LinearAddress(DWORD address) : m_address(address) { }
+
+    DWORD get() const { return m_address; }
+    void set(DWORD address) { m_address = address; }
+
+private:
+    DWORD m_address { 0 };
+};
+
 template<typename T> struct BitSizeOfType { static const int bits = sizeof(T) * 8; };
 
 template<typename T>

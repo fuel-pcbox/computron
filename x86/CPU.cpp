@@ -1248,10 +1248,10 @@ static const char* toString(CPU::MemoryAccessType type)
     }
 }
 
-ALWAYS_INLINE void CPU::translateAddress(DWORD linearAddress, PhysicalAddress& physicalAddress, MemoryAccessType accessType)
+ALWAYS_INLINE void CPU::translateAddress(LinearAddress linearAddress, PhysicalAddress& physicalAddress, MemoryAccessType accessType)
 {
     if (!getPE() || !getPG()) {
-        physicalAddress.set(linearAddress);
+        physicalAddress.set(linearAddress.get());
         return;
     }
     translateAddressSlowCase(linearAddress, physicalAddress, accessType);
@@ -1265,7 +1265,7 @@ static WORD makePFErrorCode(PageFaultFlags::Flags flags, CPU::MemoryAccessType a
          | (accessType == CPU::MemoryAccessType::Execute ? PageFaultFlags::InstructionFetch : 0);
 }
 
-Exception CPU::PageFault(DWORD linearAddress, PageFaultFlags::Flags flags, CPU::MemoryAccessType accessType, bool inUserMode, const char* faultTable, DWORD pde, DWORD pte)
+Exception CPU::PageFault(LinearAddress linearAddress, PageFaultFlags::Flags flags, CPU::MemoryAccessType accessType, bool inUserMode, const char* faultTable, DWORD pde, DWORD pte)
 {
     WORD error = makePFErrorCode(flags, accessType, inUserMode);
     vlog(LogCPU, "Exception: #PF(%04x) %s in %s for %s %s @%08x, PDBR=%08x, PDE=%08x, PTE=%08x",
@@ -1274,12 +1274,12 @@ Exception CPU::PageFault(DWORD linearAddress, PageFaultFlags::Flags flags, CPU::
          faultTable,
          inUserMode ? "User" : "Supervisor",
          toString(accessType),
-         linearAddress,
+         linearAddress.get(),
          getCR3(),
          pde,
          pte
     );
-    m_CR2 = linearAddress;
+    m_CR2 = linearAddress.get();
     if (options.crashOnPF) {
         dumpAll();
         vlog(LogAlert, "CRASH ON #PF");
@@ -1291,16 +1291,16 @@ Exception CPU::PageFault(DWORD linearAddress, PageFaultFlags::Flags flags, CPU::
         ASSERT_NOT_REACHED();
     }
 #endif
-    return Exception(0xe, error, linearAddress, "Page fault");
+    return Exception(0xe, error, linearAddress.get(), "Page fault");
 }
 
-void CPU::translateAddressSlowCase(DWORD linearAddress, PhysicalAddress& physicalAddress, MemoryAccessType accessType)
+void CPU::translateAddressSlowCase(LinearAddress linearAddress, PhysicalAddress& physicalAddress, MemoryAccessType accessType)
 {
     ASSERT(getCR3() < m_memorySize);
 
-    DWORD dir = (linearAddress >> 22) & 0x3FF;
-    DWORD page = (linearAddress >> 12) & 0x3FF;
-    DWORD offset = linearAddress & 0xFFF;
+    DWORD dir = (linearAddress.get() >> 22) & 0x3FF;
+    DWORD page = (linearAddress.get() >> 12) & 0x3FF;
+    DWORD offset = linearAddress.get() & 0xFFF;
 
     DWORD* PDBR = reinterpret_cast<DWORD*>(&m_memory[getCR3()]);
     ASSERT(!(getCR3() & 0x03ff));
@@ -1346,11 +1346,11 @@ void CPU::translateAddressSlowCase(DWORD linearAddress, PhysicalAddress& physica
     physicalAddress.set((pageTableEntry & 0xfffff000) | offset);
 
 #ifdef DEBUG_PAGING
-    vlog(LogCPU, "PG=1 Translating %08x {dir=%03x, page=%03x, offset=%03x} => %08x [%08x + %08x]", linearAddress, dir, page, offset, physicalAddress.get(), pageDirectoryEntry, pageTableEntry);
+    vlog(LogCPU, "PG=1 Translating %08x {dir=%03x, page=%03x, offset=%03x} => %08x [%08x + %08x]", linearAddress.get(), dir, page, offset, physicalAddress.get(), pageDirectoryEntry, pageTableEntry);
 #endif
 }
 
-void CPU::snoop(DWORD linearAddress, MemoryAccessType accessType)
+void CPU::snoop(LinearAddress linearAddress, MemoryAccessType accessType)
 {
     if (!getPE())
         return;
@@ -1362,7 +1362,7 @@ void CPU::snoop(SegmentRegisterIndex segreg, DWORD offset, MemoryAccessType acce
 {
     if (!getPE())
         return;
-    DWORD linearAddress = cachedDescriptor(segreg).base() + offset;
+    auto linearAddress = cachedDescriptor(segreg).linearAddress(offset);
     snoop(linearAddress, accessType);
 }
 
@@ -1478,7 +1478,7 @@ void CPU::writePhysicalMemory(PhysicalAddress physicalAddress, T data)
 }
 
 template<typename T>
-T CPU::readMemory(DWORD linearAddress)
+T CPU::readMemory(LinearAddress linearAddress)
 {
     PhysicalAddress physicalAddress;
     translateAddress(linearAddress, physicalAddress, MemoryAccessType::Read);
@@ -1500,7 +1500,7 @@ T CPU::readMemory(DWORD linearAddress)
 template<typename T, CPU::MemoryAccessType accessType>
 T CPU::readMemory(const SegmentDescriptor& descriptor, DWORD offset)
 {
-    DWORD linearAddress = descriptor.base() + offset;
+    LinearAddress linearAddress = descriptor.linearAddress(offset);
     if (!getPE()) {
         return readMemory<T>(linearAddress);
     }
@@ -1513,7 +1513,7 @@ T CPU::readMemory(SegmentRegisterIndex segment, DWORD offset)
 {
     auto& descriptor = m_descriptor[(int)segment];
     if (!getPE())
-        return readMemory<T>(descriptor.base() + offset);
+        return readMemory<T>(descriptor.linearAddress(offset));
     return readMemory<T>(descriptor, offset);
 }
 
@@ -1525,15 +1525,15 @@ template void CPU::writeMemory<BYTE>(SegmentRegisterIndex, DWORD, BYTE);
 template void CPU::writeMemory<WORD>(SegmentRegisterIndex, DWORD, WORD);
 template void CPU::writeMemory<DWORD>(SegmentRegisterIndex, DWORD, DWORD);
 
-BYTE CPU::readMemory8(DWORD address) { return readMemory<BYTE>(address); }
-WORD CPU::readMemory16(DWORD address) { return readMemory<WORD>(address); }
-DWORD CPU::readMemory32(DWORD address) { return readMemory<DWORD>(address); }
+BYTE CPU::readMemory8(LinearAddress address) { return readMemory<BYTE>(address); }
+WORD CPU::readMemory16(LinearAddress address) { return readMemory<WORD>(address); }
+DWORD CPU::readMemory32(LinearAddress address) { return readMemory<DWORD>(address); }
 BYTE CPU::readMemory8(SegmentRegisterIndex segment, DWORD offset) { return readMemory<BYTE>(segment, offset); }
 WORD CPU::readMemory16(SegmentRegisterIndex segment, DWORD offset) { return readMemory<WORD>(segment, offset); }
 DWORD CPU::readMemory32(SegmentRegisterIndex segment, DWORD offset) { return readMemory<DWORD>(segment, offset); }
 
 template<typename T>
-void CPU::writeMemory(DWORD linearAddress, T value)
+void CPU::writeMemory(LinearAddress linearAddress, T value)
 {
     PhysicalAddress physicalAddress;
     translateAddress(linearAddress, physicalAddress, MemoryAccessType::Write);
@@ -1555,7 +1555,7 @@ void CPU::writeMemory(DWORD linearAddress, T value)
 template<typename T>
 void CPU::writeMemory(const SegmentDescriptor& descriptor, DWORD offset, T value)
 {
-    DWORD linearAddress = descriptor.base() + offset;
+    auto linearAddress = descriptor.linearAddress(offset);
     if (!getPE()) {
         writeMemory(linearAddress, value);
         return;
@@ -1569,13 +1569,13 @@ void CPU::writeMemory(SegmentRegisterIndex segment, DWORD offset, T value)
 {
     auto& descriptor = m_descriptor[(int)segment];
     if (!getPE())
-        return writeMemory<T>(descriptor.base() + offset, value);
+        return writeMemory<T>(descriptor.linearAddress(offset), value);
     return writeMemory<T>(descriptor, offset, value);
 }
 
-void CPU::writeMemory8(DWORD address, BYTE value) { writeMemory(address, value); }
-void CPU::writeMemory16(DWORD address, WORD value) { writeMemory(address, value); }
-void CPU::writeMemory32(DWORD address, DWORD value) { writeMemory(address, value); }
+void CPU::writeMemory8(LinearAddress address, BYTE value) { writeMemory(address, value); }
+void CPU::writeMemory16(LinearAddress address, WORD value) { writeMemory(address, value); }
+void CPU::writeMemory32(LinearAddress address, DWORD value) { writeMemory(address, value); }
 void CPU::writeMemory8(SegmentRegisterIndex segment, DWORD offset, BYTE value) { writeMemory(segment, offset, value); }
 void CPU::writeMemory16(SegmentRegisterIndex segment, DWORD offset, WORD value) { writeMemory(segment, offset, value); }
 void CPU::writeMemory32(SegmentRegisterIndex segment, DWORD offset, DWORD value) { writeMemory(segment, offset, value); }
@@ -1665,13 +1665,13 @@ BYTE* CPU::memoryPointer(SegmentRegisterIndex segment, DWORD offset)
 {
     auto& descriptor = m_descriptor[(int)segment];
     if (!getPE())
-        return memoryPointer(descriptor.base() + offset);
+        return memoryPointer(descriptor.linearAddress(offset));
     return memoryPointer(descriptor, offset);
 }
 
 BYTE* CPU::memoryPointer(const SegmentDescriptor& descriptor, DWORD offset)
 {
-    DWORD linearAddress = descriptor.base() + offset;
+    auto linearAddress = descriptor.linearAddress(offset);
     if (!getPE())
         return memoryPointer(linearAddress);
 
@@ -1693,7 +1693,7 @@ BYTE* CPU::memoryPointer(WORD segmentIndex, DWORD offset)
     return memoryPointer(getSegmentDescriptor(segmentIndex), offset);
 }
 
-BYTE* CPU::memoryPointer(DWORD linearAddress)
+BYTE* CPU::memoryPointer(LinearAddress linearAddress)
 {
     PhysicalAddress physicalAddress;
     translateAddress(linearAddress, physicalAddress, MemoryAccessType::InternalPointer);
@@ -1706,7 +1706,7 @@ BYTE* CPU::memoryPointer(DWORD linearAddress)
         vlog(LogCPU, "MemoryPointer PE=%u [A20=%s] linear:%08x, phys:%08x",
              getPE(),
              isA20Enabled() ? "on" : "off",
-             linearAddress,
+             linearAddress.get(),
              physicalAddress.get());
     }
 #endif
