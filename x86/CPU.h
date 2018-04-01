@@ -38,14 +38,6 @@ class MemoryProvider;
 class CPU;
 class TSS;
 
-struct FarPointer {
-    FarPointer() : segment(0), offset(0) { }
-    FarPointer(WORD s, DWORD o) : segment(s), offset(o) { }
-
-    WORD segment;
-    DWORD offset;
-};
-
 struct WatchedAddress {
     WatchedAddress() { }
     WatchedAddress(QString n, DWORD a, ValueSize s, bool b = false) : name(n), address(a), size(s), breakOnChange(b) { }
@@ -448,11 +440,10 @@ public:
     }
 
     void farReturn(JumpType, WORD stackAdjustment = 0);
-    void protectedFarReturn(WORD selector, DWORD offset, JumpType);
-    void clearSegmentRegisterAfterReturnIfNeeded(SegmentRegisterIndex segreg, JumpType type);
+    void protectedFarReturn(LogicalAddress, JumpType);
+    void clearSegmentRegisterAfterReturnIfNeeded(SegmentRegisterIndex, JumpType);
 
-    void jump32(WORD selector, DWORD offset, JumpType, BYTE isr = 0, DWORD flags = 0, Gate* = nullptr, std::optional<WORD> errorCode = std::nullopt);
-    void jump16(WORD selector, WORD offset, JumpType, BYTE isr = 0, DWORD flags = 0, Gate* = nullptr, std::optional<WORD> errorCode = std::nullopt);
+    void farJump(LogicalAddress, JumpType, BYTE isr = 0, DWORD flags = 0, Gate* = nullptr, std::optional<WORD> errorCode = std::nullopt);
     void jumpRelative8(SIGNED_BYTE displacement);
     void jumpRelative16(SIGNED_WORD displacement);
     void jumpRelative32(SIGNED_DWORD displacement);
@@ -495,7 +486,7 @@ public:
     void out32(WORD port, DWORD value);
 
     BYTE* memoryPointer(LinearAddress);
-    BYTE* memoryPointer(WORD segment, DWORD offset);
+    BYTE* memoryPointer(LogicalAddress);
     BYTE* memoryPointer(SegmentRegisterIndex, DWORD offset);
     BYTE* memoryPointer(const SegmentDescriptor&, DWORD offset);
 
@@ -536,6 +527,8 @@ public:
     inline DWORD readUnmappedMemory32(DWORD address) const;
     inline void writeUnmappedMemory8(DWORD address, BYTE data);
     inline void writeUnmappedMemory16(DWORD address, WORD data);
+
+    template<typename T> LogicalAddress readLogicalAddress(SegmentRegisterIndex, DWORD offset);
 
     template<typename T> bool validatePhysicalAddress(PhysicalAddress, MemoryAccessType);
     template<typename T> void validateAddress(const SegmentDescriptor&, DWORD offset, MemoryAccessType);
@@ -584,10 +577,10 @@ public:
     void dumpLDT();
     void dumpGDT();
 
-    void dumpMemory(WORD segment, DWORD offset, int rows);
+    void dumpMemory(LogicalAddress, int rows);
     void dumpFlatMemory(DWORD address);
     void dumpRawMemory(BYTE*);
-    unsigned dumpDisassembled(WORD segment, DWORD offset, unsigned count = 1);
+    unsigned dumpDisassembled(LogicalAddress, unsigned count = 1);
 
     void dumpMemory(SegmentDescriptor&, DWORD offset, int rows);
     unsigned dumpDisassembled(SegmentDescriptor&, DWORD offset, unsigned count = 1);

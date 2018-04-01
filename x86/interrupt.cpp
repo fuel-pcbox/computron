@@ -99,7 +99,7 @@ void CPU::interruptToTaskGate(int, InterruptSource source, std::optional<WORD> e
 void CPU::jumpToInterruptHandler(int isr, InterruptSource source, std::optional<WORD> errorCode)
 {
     bool isTrap = false;
-    FarPointer vector;
+    LogicalAddress entry;
 
     Gate gate;
 
@@ -120,11 +120,10 @@ void CPU::jumpToInterruptHandler(int isr, InterruptSource source, std::optional<
             throw GeneralProtectionFault(makeErrorCode(isr, 1, source), "Interrupt gate is null");
         }
 
-        vector.segment = gate.selector();
-        vector.offset = gate.offset();
+        entry = gate.entry();
 
         if (options.trapint)
-            vlog(LogCPU, "PE=1 Interrupt %02x trapped%s, type: %s (%1x), %04x:%08x", isr, source == InterruptSource::External ? " (from PIC)" : "", gate.typeName(), gate.type(), vector.segment, vector.offset);
+            vlog(LogCPU, "PE=1 Interrupt %02x trapped%s, type: %s (%1x), %04x:%08x", isr, source == InterruptSource::External ? " (from PIC)" : "", gate.typeName(), gate.type(), entry.selector(), entry.offset());
 
         if (gate.isTaskGate()) {
             interruptToTaskGate(isr, source, errorCode, gate);
@@ -165,11 +164,11 @@ void CPU::jumpToInterruptHandler(int isr, InterruptSource source, std::optional<
         if (options.trapint)
             vlog(LogCPU, "PE=0 Interrupt %02X,%02X trapped%s", isr, this->regs.B.AH, source == InterruptSource::External ? " (from PIC)" : "");
 
-        vector.segment = (m_memory[isr * 4 + 3] << 8) | m_memory[isr * 4 + 2];
-        vector.offset = (m_memory[isr * 4 + 1] << 8) | m_memory[isr * 4];
+        entry.setSelector(readPhysicalMemory<WORD>(PhysicalAddress(isr * 4 + 2)));
+        entry.setOffset(readPhysicalMemory<WORD>(PhysicalAddress(isr * 4 + 0)));
     }
 
-    jump32(vector.segment, vector.offset, JumpType::INT, isr, getEFlags(), &gate, errorCode);
+    farJump(entry, JumpType::INT, isr, getEFlags(), &gate, errorCode);
 
     if (!isTrap)
         setIF(0);

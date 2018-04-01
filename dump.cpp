@@ -77,10 +77,10 @@ unsigned CPU::dumpDisassembled(SegmentDescriptor& descriptor, DWORD offset, unsi
     return bytes;
 }
 
-unsigned CPU::dumpDisassembled(WORD segment, DWORD offset, unsigned count)
+unsigned CPU::dumpDisassembled(LogicalAddress address, unsigned count)
 {
-    auto descriptor = getSegmentDescriptor(segment);
-    return dumpDisassembled(descriptor, offset, count);
+    auto descriptor = getSegmentDescriptor(address.selector());
+    return dumpDisassembled(descriptor, address.offset(), count);
 }
 
 #ifdef CT_TRACE
@@ -389,10 +389,10 @@ void CPU::dumpMemory(SegmentDescriptor& descriptor, DWORD offset, int rows)
     }
 }
 
-void CPU::dumpMemory(WORD segment, DWORD offset, int rows)
+void CPU::dumpMemory(LogicalAddress address, int rows)
 {
-    auto descriptor = getSegmentDescriptor(segment);
-    return dumpMemory(descriptor, offset, rows);
+    auto descriptor = getSegmentDescriptor(address.selector());
+    return dumpMemory(descriptor, address.offset(), rows);
 }
 
 static inline WORD isrSegment(const CPU& cpu, BYTE isr)

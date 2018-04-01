@@ -349,9 +349,9 @@ void CPU::reset()
     setGS(0);
 
     if (m_isForAutotest)
-        jump32(machine().settings().entryCS(), machine().settings().entryIP(), JumpType::Internal);
+        farJump(LogicalAddress(machine().settings().entryCS(), machine().settings().entryIP()), JumpType::Internal);
     else
-        jump32(0xF000, 0x00000000, JumpType::Internal);
+        farJump(LogicalAddress(0xf000, 0x0000), JumpType::Internal);
 
     setFlags(0x0200);
 
@@ -568,8 +568,10 @@ static const char* toString(JumpType type)
     }
 }
 
-void CPU::jump32(WORD selector, DWORD offset, JumpType type, BYTE isr, DWORD flags, Gate* gate, std::optional<WORD> errorCode)
+void CPU::farJump(LogicalAddress address, JumpType type, BYTE isr, DWORD flags, Gate* gate, std::optional<WORD> errorCode)
 {
+    WORD selector = address.selector();
+    DWORD offset = address.offset();
     bool pushSize16 = !getPE() || o16();
 
     if (getPE() && gate) {
@@ -630,7 +632,7 @@ void CPU::jump32(WORD selector, DWORD offset, JumpType type, BYTE isr, DWORD fla
             }
 
             // NOTE: We recurse here, jumping to the gate entry point.
-            jump32(gate.selector(), gate.offset(), type, isr, flags, &gate);
+            farJump(gate.entry(), type, isr, flags, &gate);
             return;
         } else if (sys.isTSS()) {
             auto& tssDescriptor = sys.asTSSDescriptor();
@@ -793,7 +795,7 @@ void CPU::jump32(WORD selector, DWORD offset, JumpType type, BYTE isr, DWORD fla
     }
 }
 
-void CPU::protectedFarReturn(WORD selector, DWORD offset, JumpType type)
+void CPU::protectedFarReturn(LogicalAddress address, JumpType type)
 {
     ASSERT(getPE());
     ASSERT(type == JumpType::RETF || type == JumpType::IRET);
@@ -804,6 +806,8 @@ void CPU::protectedFarReturn(WORD selector, DWORD offset, JumpType type)
     DWORD originalEIP = getEIP();
 #endif
 
+    WORD selector = address.selector();
+    DWORD offset = address.offset();
     WORD originalCPL = getCPL();
     BYTE selectorRPL = selector & 3;
 
@@ -919,7 +923,7 @@ void CPU::farReturn(JumpType type, WORD stackAdjustment)
     }
 
     if (getPE()) {
-        protectedFarReturn(selector, offset, type);
+        protectedFarReturn(LogicalAddress(selector, offset), type);
         if (getCPL() != originalCPL)
             adjustStackPointer(stackAdjustment);
     } else {
@@ -937,11 +941,6 @@ void CPU::setCPL(BYTE cpl)
     ASSERT(getPE());
     CS = (CS & ~3) | cpl;
     cachedDescriptor(SegmentRegisterIndex::CS).m_RPL = cpl;
-}
-
-void CPU::jump16(WORD selector, WORD offset, JumpType type, BYTE isr, DWORD flags, Gate* gate, std::optional<WORD> errorCode)
-{
-    jump32(selector, offset, type, isr, flags, gate, errorCode);
 }
 
 void CPU::_NOP(Instruction&)
@@ -1155,10 +1154,9 @@ void CPU::doLxS(Instruction& insn, SegmentRegisterIndex segreg)
     if (insn.modrm().isRegister()) {
         throw InvalidOpcode("LxS with register operand");
     }
-    auto offset = readMemory<T>(insn.modrm().segment(), insn.modrm().offset());
-    WORD selector = readMemory16(insn.modrm().segment(), insn.modrm().offset() + sizeof(T));
-    writeSegmentRegister(segreg, selector);
-    insn.reg<T>() = offset;
+    auto address = readLogicalAddress<T>(insn.modrm().segment(), insn.modrm().offset());
+    writeSegmentRegister(segreg, address.selector());
+    insn.reg<T>() = address.offset();
 }
 
 void CPU::_LDS_reg16_mem16(Instruction& insn)
@@ -1533,6 +1531,19 @@ WORD CPU::readMemory16(SegmentRegisterIndex segment, DWORD offset) { return read
 DWORD CPU::readMemory32(SegmentRegisterIndex segment, DWORD offset) { return readMemory<DWORD>(segment, offset); }
 
 template<typename T>
+LogicalAddress CPU::readLogicalAddress(SegmentRegisterIndex segreg, DWORD offset)
+{
+    LogicalAddress address;
+    address.setOffset(readMemory<T>(segreg, offset));
+    address.setSelector(readMemory16(segreg, offset + sizeof(T)));
+    return address;
+}
+
+template LogicalAddress CPU::readLogicalAddress<WORD>(SegmentRegisterIndex, DWORD);
+template LogicalAddress CPU::readLogicalAddress<DWORD>(SegmentRegisterIndex, DWORD);
+
+
+template<typename T>
 void CPU::writeMemory(LinearAddress linearAddress, T value)
 {
     PhysicalAddress physicalAddress;
@@ -1688,9 +1699,9 @@ BYTE* CPU::memoryPointer(const SegmentDescriptor& descriptor, DWORD offset)
     return pointerToPhysicalMemory(physicalAddress);
 }
 
-BYTE* CPU::memoryPointer(WORD segmentIndex, DWORD offset)
+BYTE* CPU::memoryPointer(LogicalAddress address)
 {
-    return memoryPointer(getSegmentDescriptor(segmentIndex), offset);
+    return memoryPointer(getSegmentDescriptor(address.selector()), address.offset());
 }
 
 BYTE* CPU::memoryPointer(LinearAddress linearAddress)

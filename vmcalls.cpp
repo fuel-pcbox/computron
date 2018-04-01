@@ -255,7 +255,7 @@ static void bios_disk_read(FILE* fp, DiskDrive& drive, WORD cylinder, WORD head,
     if (options.disklog)
         vlog(LogDisk, "%s reading %u sectors at %u/%u/%u (LBA %u) to %04x:%04x", qPrintable(drive.name()), count, cylinder, head, sector, lba, segment, offset);
 
-    void* destination = g_cpu->memoryPointer(segment, offset);
+    void* destination = g_cpu->memoryPointer(LogicalAddress(segment, offset));
     fread(destination, drive.bytesPerSector(), count, fp);
 }
 
@@ -266,7 +266,7 @@ static void bios_disk_write(FILE* fp, DiskDrive& drive, WORD cylinder, WORD head
     if (options.disklog)
         vlog(LogDisk, "%s writing %u sectors at %u/%u/%u (LBA %u) from %04x:%04x", qPrintable(drive.name()), count, cylinder, head, sector, lba, segment, offset);
 
-    void* source = g_cpu->memoryPointer(segment, offset);
+    void* source = g_cpu->memoryPointer(LogicalAddress(segment, offset));
     fwrite(source, drive.bytesPerSector(), count, fp);
 }
 

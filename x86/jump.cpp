@@ -49,14 +49,14 @@ void CPU::_JMP_imm16_imm16(Instruction& insn)
 {
     WORD newCS = insn.imm16_1();
     WORD newIP = insn.imm16_2();
-    jump16(newCS, newIP, JumpType::JMP);
+    farJump(LogicalAddress(newCS, newIP), JumpType::JMP);
 }
 
 void CPU::_JMP_imm16_imm32(Instruction& insn)
 {
     WORD newCS = insn.imm16_1();
     DWORD newEIP = insn.imm32_2();
-    jump32(newCS, newEIP, JumpType::JMP);
+    farJump(LogicalAddress(newCS, newEIP), JumpType::JMP);
 }
 
 void CPU::_JMP_short_imm8(Instruction& insn)
@@ -77,9 +77,8 @@ void CPU::_JMP_RM32(Instruction& insn)
 template<typename T>
 void CPU::doFarJump(Instruction& insn, JumpType jumpType)
 {
-    T offset = readMemory<T>(insn.modrm().segment(), insn.modrm().offset());
-    WORD selector = readMemory16(insn.modrm().segment(), insn.modrm().offset() + sizeof(T));
-    jump32(selector, offset, jumpType);
+    auto address = readLogicalAddress<T>(insn.modrm().segment(), insn.modrm().offset());
+    farJump(address, jumpType);
 }
 
 void CPU::_JMP_FAR_mem16(Instruction& insn)
@@ -137,12 +136,12 @@ void CPU::_CALL_imm32(Instruction& insn)
 
 void CPU::_CALL_imm16_imm16(Instruction& insn)
 {
-    jump16(insn.imm16_1(), insn.imm16_2(), JumpType::CALL);
+    farJump(LogicalAddress(insn.imm16_1(), insn.imm16_2()), JumpType::CALL);
 }
 
 void CPU::_CALL_imm16_imm32(Instruction& insn)
 {
-    jump32(insn.imm16_1(), insn.imm32_2(), JumpType::CALL);
+    farJump(LogicalAddress(insn.imm16_1(), insn.imm32_2()), JumpType::CALL);
 }
 
 void CPU::_CALL_RM16(Instruction& insn)

@@ -160,6 +160,8 @@ public:
     DWORD offset() const { return m_gateOffset; }
     WORD parameterCount() const { return m_gateParameterCount; }
 
+    LogicalAddress entry() const { return LogicalAddress(selector(), offset()); }
+
     bool is32Bit() const { return type() == InterruptGate_32bit || type() == CallGate_32bit || type() == TrapGate_32bit; }
 };
 

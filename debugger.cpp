@@ -313,32 +313,32 @@ void Debugger::handleStack(const QStringList& arguments)
 
 void Debugger::handleDumpMemory(const QStringList& arguments)
 {
-    WORD segment = cpu().getCS();
+    WORD selector = cpu().getCS();
     DWORD offset = cpu().getEIP();
 
     if (arguments.size() == 1)
         offset = arguments.at(0).toUInt(0, 16);
     else if (arguments.size() == 2) {
-        segment = arguments.at(0).toUInt(0, 16);
+        selector = arguments.at(0).toUInt(0, 16);
         offset = arguments.at(1).toUInt(0, 16);
     }
 
-    cpu().dumpMemory(segment, offset, 16);
+    cpu().dumpMemory(LogicalAddress(selector, offset), 16);
 }
 
 void Debugger::handleDumpUnassembled(const QStringList& arguments)
 {
-    WORD segment = cpu().getCS();
+    WORD selector = cpu().getCS();
     DWORD offset = cpu().getEIP();
 
     if (arguments.size() == 1)
         offset = arguments.at(0).toUInt(0, 16);
     else if (arguments.size() == 2) {
-        segment = arguments.at(0).toUInt(0, 16);
+        selector = arguments.at(0).toUInt(0, 16);
         offset = arguments.at(1).toUInt(0, 16);
     }
 
-    DWORD bytesDisassembled = cpu().dumpDisassembled(segment, offset, 20);
+    DWORD bytesDisassembled = cpu().dumpDisassembled(LogicalAddress(selector, offset), 20);
     vlog(LogDump, "Next offset: %08x", offset + bytesDisassembled);
 }
 
