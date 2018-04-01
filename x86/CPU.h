@@ -447,8 +447,12 @@ public:
         setCurrentStackPointer(currentStackPointer() + delta);
     }
 
-    void jump32(WORD segment, DWORD offset, JumpType, BYTE isr = 0, DWORD flags = 0, Gate* = nullptr, std::optional<WORD> errorCode = std::nullopt);
-    void jump16(WORD segment, WORD offset, JumpType, BYTE isr = 0, DWORD flags = 0, Gate* = nullptr, std::optional<WORD> errorCode = std::nullopt);
+    void farReturn(JumpType, WORD stackAdjustment = 0);
+    void protectedFarReturn(WORD selector, DWORD offset, JumpType);
+    void clearSegmentRegisterAfterReturnIfNeeded(SegmentRegisterIndex segreg, JumpType type);
+
+    void jump32(WORD selector, DWORD offset, JumpType, BYTE isr = 0, DWORD flags = 0, Gate* = nullptr, std::optional<WORD> errorCode = std::nullopt);
+    void jump16(WORD selector, WORD offset, JumpType, BYTE isr = 0, DWORD flags = 0, Gate* = nullptr, std::optional<WORD> errorCode = std::nullopt);
     void jumpRelative8(SIGNED_BYTE displacement);
     void jumpRelative16(SIGNED_WORD displacement);
     void jumpRelative32(SIGNED_DWORD displacement);

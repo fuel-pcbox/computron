@@ -176,34 +176,12 @@ void CPU::_RET_imm16(Instruction& insn)
 
 void CPU::_RETF(Instruction&)
 {
-    if (o32()) {
-        DWORD nip = pop32();
-        WORD ncs = pop32();
-        jump32(ncs, nip, JumpType::RETF);
-    } else {
-        WORD nip = pop16();
-        WORD ncs = pop16();
-        jump16(ncs, nip, JumpType::RETF);
-    }
+    farReturn(JumpType::RETF);
 }
 
 void CPU::_RETF_imm16(Instruction& insn)
 {
-    BYTE originalCPL = getCPL();
-    if (o32()) {
-        DWORD nip = pop32();
-        WORD ncs = pop32();
-        adjustStackPointer(insn.imm16());
-        jump32(ncs, nip, JumpType::RETF);
-    } else {
-        WORD nip = pop16();
-        WORD ncs = pop16();
-        adjustStackPointer(insn.imm16());
-        jump16(ncs, nip, JumpType::RETF);
-    }
-    if (getCPL() != originalCPL) {
-        ASSERT_NOT_REACHED();
-    }
+    farReturn(JumpType::RETF, insn.imm16());
 }
 
 void CPU::doLOOP(Instruction& insn, bool condition)
