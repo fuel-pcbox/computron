@@ -35,7 +35,7 @@ public:
         unsigned heads { 0 };
         unsigned sectors { 0 };
         unsigned bytesPerSector { 0 };
-        BYTE floppyTypeForCMOS { 0xff };
+        BYTE floppyTypeForCMOS { 0 };
     };
 
     explicit DiskDrive(const QString& name);
