@@ -241,3 +241,134 @@ void CPU::setEFlagsRespectfully(DWORD newFlags)
     newFlags &= ~Flag::RF;
     setEFlags(newFlags);
 }
+
+void CPU::_PUSH_imm8(Instruction& insn)
+{
+    if (o32())
+        push32(signExtend<DWORD>(insn.imm8()));
+    else
+        push16(signExtend<WORD>(insn.imm8()));
+}
+
+void CPU::_PUSH_imm16(Instruction& insn)
+{
+    push16(insn.imm16());
+}
+
+void CPU::_ENTER16(Instruction& insn)
+{
+    WORD size = insn.imm16_2();
+    BYTE nestingLevel = insn.imm8_1() & 31;
+    push16(getBP());
+    WORD frameTemp = getSP();
+
+    RELEASE_ASSERT(!nestingLevel); // FIXME: I don't know if I trust this code, so let's just crash here when the time comes.
+    if (nestingLevel > 0) {
+        DWORD tmpEBP = currentBasePointer();
+        for (WORD i = 1; i < nestingLevel; ++i) {
+            tmpEBP -= 2;
+            push16(readMemory16(SegmentRegisterIndex::SS, tmpEBP));
+        }
+        push16(frameTemp);
+    }
+    setBP(frameTemp);
+    adjustStackPointer(-size);
+    snoop(SegmentRegisterIndex::SS, currentStackPointer(), MemoryAccessType::Write);
+}
+
+void CPU::_ENTER32(Instruction& insn)
+{
+    WORD size = insn.imm16_2();
+    BYTE nestingLevel = insn.imm8_1() & 31;
+    push32(getEBP());
+    DWORD frameTemp = getESP();
+
+    RELEASE_ASSERT(!nestingLevel); // FIXME: I don't know if I trust this code, so let's just crash here when the time comes.
+    if (nestingLevel > 0) {
+        DWORD tmpEBP = currentBasePointer();
+        for (WORD i = 1; i < nestingLevel; ++i) {
+            tmpEBP -= 4;
+            push32(readMemory32(SegmentRegisterIndex::SS, tmpEBP));
+        }
+        push32(frameTemp);
+    }
+    setEBP(frameTemp);
+    adjustStackPointer(-size);
+    snoop(SegmentRegisterIndex::SS, currentStackPointer(), MemoryAccessType::Write);
+}
+
+void CPU::_LEAVE16(Instruction&)
+{
+    WORD newBP = readMemory16(SegmentRegisterIndex::SS, currentBasePointer());
+    setCurrentStackPointer(currentBasePointer() + 2);
+    setCurrentBasePointer(newBP);
+}
+
+void CPU::_LEAVE32(Instruction&)
+{
+    DWORD newBP = readMemory32(SegmentRegisterIndex::SS, currentBasePointer());
+    setCurrentStackPointer(currentBasePointer() + 4);
+    setCurrentBasePointer(newBP);
+}
+
+void CPU::_PUSHA(Instruction&)
+{
+    snoop(SegmentRegisterIndex::SS, currentStackPointer(), MemoryAccessType::Write);
+    snoop(SegmentRegisterIndex::SS, currentStackPointer() - 16, MemoryAccessType::Write);
+
+    WORD oldSP = getSP();
+    push16(getAX());
+    push16(getCX());
+    push16(getDX());
+    push16(getBX());
+    push16(oldSP);
+    push16(getBP());
+    push16(getSI());
+    push16(getDI());
+}
+
+void CPU::_PUSHAD(Instruction&)
+{
+    snoop(SegmentRegisterIndex::SS, currentStackPointer(), MemoryAccessType::Write);
+    snoop(SegmentRegisterIndex::SS, currentStackPointer() - 32, MemoryAccessType::Write);
+
+    DWORD oldESP = getESP();
+    push32(getEAX());
+    push32(getECX());
+    push32(getEDX());
+    push32(getEBX());
+    push32(oldESP);
+    push32(getEBP());
+    push32(getESI());
+    push32(getEDI());
+}
+
+void CPU::_POPA(Instruction&)
+{
+    snoop(SegmentRegisterIndex::SS, currentStackPointer(), MemoryAccessType::Read);
+    snoop(SegmentRegisterIndex::SS, currentStackPointer() + 16, MemoryAccessType::Read);
+
+    setDI(pop16());
+    setSI(pop16());
+    setBP(pop16());
+    (void) pop16();
+    setBX(pop16());
+    setDX(pop16());
+    setCX(pop16());
+    setAX(pop16());
+}
+
+void CPU::_POPAD(Instruction&)
+{
+    snoop(SegmentRegisterIndex::SS, currentStackPointer(), MemoryAccessType::Read);
+    snoop(SegmentRegisterIndex::SS, currentStackPointer() + 32, MemoryAccessType::Read);
+
+    setEDI(pop32());
+    setESI(pop32());
+    setEBP(pop32());
+    (void) pop32();
+    setEBX(pop32());
+    setEDX(pop32());
+    setECX(pop32());
+    setEAX(pop32());
+}

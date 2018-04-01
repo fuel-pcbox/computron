@@ -72,7 +72,6 @@ SOURCES += debug.cpp \
            machine.cpp \
            settings.cpp \
            vmcalls.cpp \
-           x86/186.cpp \
            x86/bcd.cpp \
            x86/bitwise.cpp \
            x86/CPU.cpp \

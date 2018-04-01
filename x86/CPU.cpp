@@ -39,6 +39,7 @@
 //#define LOG_FAR_JUMPS
 //#define MEMORY_DEBUGGING
 //#define DEBUG_WARCRAFT2
+//#define DEBUG_BOUND
 
 #ifdef MEMORY_DEBUGGING
 static bool shouldLogAllMemoryAccesses(PhysicalAddress address)
@@ -1778,4 +1779,47 @@ ALWAYS_INLINE MemoryProvider* CPU::memoryProviderForAddress(PhysicalAddress addr
     if (address.get() >= 1048576)
         return nullptr;
     return m_memoryProviders[address.get() / memoryProviderBlockSize];
+}
+
+void CPU::_BOUND(Instruction& insn)
+{
+    if (insn.modrm().isRegister()) {
+        throw InvalidOpcode("BOUND with register operand");
+    }
+    QString reason;
+    bool isWithinBounds;
+    if (o32()) {
+        SIGNED_DWORD arrayIndex = insn.reg32();
+        SIGNED_DWORD lowerBound = readMemory32(insn.modrm().segment(), insn.modrm().offset());
+        SIGNED_DWORD upperBound = readMemory32(insn.modrm().segment(), insn.modrm().offset() + 4);
+        isWithinBounds = arrayIndex >= lowerBound && arrayIndex <= upperBound;
+#ifdef DEBUG_BOUND
+        vlog(LogCPU, "BOUND32 checking if %d is within [%d, %d]: %s",
+            arrayIndex,
+            lowerBound,
+            upperBound,
+            isWithinBounds ? "yes" : "no");
+#endif
+        if (!isWithinBounds) {
+            reason = QString("%1 not within [%2, %3]").arg(arrayIndex).arg(lowerBound).arg(upperBound);
+        }
+    } else {
+        SIGNED_WORD arrayIndex = insn.reg16();
+        SIGNED_WORD lowerBound = readMemory16(insn.modrm().segment(), insn.modrm().offset());
+        SIGNED_WORD upperBound = readMemory16(insn.modrm().segment(), insn.modrm().offset() + 2);
+        isWithinBounds = arrayIndex >= lowerBound && arrayIndex <= upperBound;
+#ifdef DEBUG_BOUND
+        vlog(LogCPU, "BOUND16 checking if %d is within [%d, %d]: %s",
+            arrayIndex,
+            lowerBound,
+            upperBound,
+            isWithinBounds ? "yes" : "no");
+#endif
+        if (!isWithinBounds) {
+            reason = QString("%1 not within [%2, %3]").arg(arrayIndex).arg(lowerBound).arg(upperBound);
+        }
+    }
+    if (!isWithinBounds) {
+        throw BoundRangeExceeded(reason);
+    }
 }
