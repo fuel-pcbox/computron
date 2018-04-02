@@ -37,6 +37,7 @@ struct MainWindow::Private
 {
     Keyboard* keyboard;
     QStatusBar* statusBar;
+    QLabel* messageLabel;
     QLabel* scrollLockLabel;
     QLabel* numLockLabel;
     QLabel* capsLockLabel;
@@ -83,7 +84,8 @@ void MainWindow::addMachine(Machine* machine)
 
     connect(d->keyboard, SIGNAL(ledsChanged(int)), this, SLOT(onLedsChanged(int)), Qt::QueuedConnection);
 
-    d->statusBar->addWidget(new QLabel, 1);
+    d->messageLabel = new QLabel;
+    d->statusBar->addWidget(d->messageLabel, 1);
     d->statusBar->addWidget(d->capsLockLabel);
     d->statusBar->addWidget(d->numLockLabel);
     d->statusBar->addWidget(d->scrollLockLabel);
@@ -114,7 +116,7 @@ void MainWindow::updateIPS()
     auto cycles = cpuCycles - d->cycleCount;
     double elapsed = d->cycleTimer.elapsed() / 1000.0;
     double ips = cycles / elapsed;
-    statusBar()->showMessage(QString("Op/s: %1").arg((QWORD)ips));
+    d->messageLabel->setText(QString("Op/s: %1").arg((QWORD)ips));
     d->cycleCount = cpuCycles;
     d->cycleTimer.start();
 }
