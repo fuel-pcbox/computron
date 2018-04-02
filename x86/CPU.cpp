@@ -326,14 +326,14 @@ void CPU::reset()
     this->ID = 0;
 
     this->GDTR.base = LinearAddress();
-    this->GDTR.limit = 0;
+    this->GDTR.limit = 0xffff;
     this->IDTR.base = LinearAddress();
-    this->IDTR.limit = 0;
+    this->IDTR.limit = 0xffff;
     this->LDTR.base = LinearAddress();
-    this->LDTR.limit = 0;
+    this->LDTR.limit = 0xffff;
     this->LDTR.selector = 0;
     this->TR.selector = 0;
-    this->TR.limit = 0;
+    this->TR.limit = 0xffff;
     this->TR.base = LinearAddress();
     this->TR.is32Bit = false;
 
