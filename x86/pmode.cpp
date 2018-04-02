@@ -62,7 +62,7 @@ void CPU::setLDT(WORD selector)
 {
     auto descriptor = getDescriptor(selector);
     LinearAddress base;
-    DWORD limit = 0;
+    WORD limit = 0;
     if (!descriptor.isNull()) {
         if (descriptor.isLDT()) {
             auto& ldtDescriptor = descriptor.asLDTDescriptor();

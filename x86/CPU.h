@@ -1312,18 +1312,18 @@ private:
 
     struct {
         LinearAddress base;
-        DWORD limit;
+        WORD limit;
     } GDTR;
 
     struct {
         LinearAddress base;
-        DWORD limit;
+        WORD limit;
     } IDTR;
 
     struct {
         WORD selector { 0 };
         LinearAddress base { 0 };
-        DWORD limit { 0 };
+        WORD limit { 0 };
     } LDTR;
 
     DWORD m_CR0, m_CR1, m_CR2, m_CR3, m_CR4, m_CR5, m_CR6, m_CR7;
@@ -1343,7 +1343,7 @@ private:
     struct {
         WORD selector { 0 };
         LinearAddress base { 0 };
-        DWORD limit { 0 };
+        WORD limit { 0 };
         bool is32Bit { false };
     } TR;
 
