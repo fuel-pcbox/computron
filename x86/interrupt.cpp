@@ -73,7 +73,10 @@ static WORD makeErrorCode(WORD num, bool idt, CPU::InterruptSource source)
 
 void CPU::interruptToTaskGate(BYTE, InterruptSource source, std::optional<WORD> errorCode, Gate& gate)
 {
-    Descriptor descriptor = getDescriptor(gate.selector());
+    auto descriptor = getDescriptor(gate.selector());
+    if (options.trapint) {
+        dumpDescriptor(descriptor);
+    }
     if (!descriptor.isGlobal()) {
         throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, source), "Interrupt to task gate referencing local descriptor");
     }
@@ -126,7 +129,7 @@ void CPU::realModeInterrupt(BYTE isr, InterruptSource source)
 void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, std::optional<WORD> errorCode)
 {
     ASSERT(getPE());
-    Gate gate = getInterruptGate(isr);
+    auto gate = getInterruptGate(isr);
 
     if (source == InterruptSource::Internal) {
         if (gate.DPL() < getCPL()) {
@@ -144,8 +147,10 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, std::optional
 
     auto entry = gate.entry();
 
-    if (options.trapint)
+    if (options.trapint) {
         vlog(LogCPU, "PE=1 interrupt %02x,%04x%s, type: %s (%1x), %04x:%08x", isr, getAX(), source == InterruptSource::External ? " (from PIC)" : "", gate.typeName(), gate.type(), entry.selector(), entry.offset());
+        dumpDescriptor(gate);
+    }
 
     if (gate.isTaskGate()) {
         interruptToTaskGate(isr, source, errorCode, gate);
@@ -153,6 +158,11 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, std::optional
     }
 
     auto descriptor = getDescriptor(gate.selector());
+
+    if (options.trapint) {
+        dumpDescriptor(descriptor);
+    }
+
     if (descriptor.isError()) {
         throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, source), "Interrupt gate to segment outside table limit");
     }

@@ -114,6 +114,7 @@ Descriptor CPU::getDescriptor(const char* tableName, LinearAddress tableBase, DW
         descriptor.m_gateSelector = lo >> 16;
         descriptor.m_gateParameterCount = hi & 0x1f;
         descriptor.m_gateOffset = (hi & 0xffff0000) | (lo & 0xffff);
+        descriptor.m_D = descriptor.asGate().is32Bit();
     } else {
         descriptor.m_segmentBase = (hi & 0xFF000000) | ((hi & 0xFF) << 16) | ((lo >> 16) & 0xFFFF);
         descriptor.m_segmentLimit = (hi & 0xF0000) | (lo & 0xFFFF);
