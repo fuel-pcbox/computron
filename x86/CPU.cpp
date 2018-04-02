@@ -600,16 +600,16 @@ void CPU::realModeFarJump(LogicalAddress address, JumpType type)
     }
 }
 
-void CPU::farJump(LogicalAddress address, JumpType type, BYTE isr, DWORD flags, Gate* gate, std::optional<WORD> errorCode)
+void CPU::farJump(LogicalAddress address, JumpType type, Gate* gate)
 {
     if (!getPE()) {
         realModeFarJump(address, type);
     } else {
-        protectedModeFarJump(address, type, isr, flags, gate, errorCode);
+        protectedModeFarJump(address, type, gate);
     }
 }
 
-void CPU::protectedModeFarJump(LogicalAddress address, JumpType type, BYTE isr, DWORD flags, Gate* gate, std::optional<WORD> errorCode)
+void CPU::protectedModeFarJump(LogicalAddress address, JumpType type, Gate* gate)
 {
     ASSERT(getPE());
     WORD selector = address.selector();
@@ -639,107 +639,99 @@ void CPU::protectedModeFarJump(LogicalAddress address, JumpType type, BYTE isr, 
         throw GeneralProtectionFault(selector, QString("%1 to null selector").arg(toString(type)));
     }
 
-    if (descriptor.isSystemDescriptor()) {
-        if (gate) {
-            dumpDescriptor(*gate);
-            dumpDescriptor(descriptor);
-            throw GeneralProtectionFault(selector, "Gate-to-gate jumps are not allowed");
-        }
-
-        auto& sys = descriptor.asSystemDescriptor();
-
-#ifdef DEBUG_JUMPS
-        vlog(LogCPU, "%s to %04x:%08x hit system descriptor type %s (%x)", toString(type), selector, offset, sys.typeName(), (unsigned)sys.type());
+    if (descriptor.isGate() && gate) {
+        dumpDescriptor(*gate);
         dumpDescriptor(descriptor);
-#endif
-        if (sys.isGate()) {
-            auto& gate = sys.asGate();
+        throw GeneralProtectionFault(selector, "Gate-to-gate jumps are not allowed");
+    }
 
+    if (descriptor.isGate()) {
+        auto& gate = descriptor.asGate();
 #ifdef DEBUG_JUMPS
-            vlog(LogCPU, "Gate (%s) to %04x:%08x (count=%u)", gate.typeName(), gate.selector(), gate.offset(), gate.parameterCount());
+        vlog(LogCPU, "Gate (%s) to %04x:%08x (count=%u)", gate.typeName(), gate.selector(), gate.offset(), gate.parameterCount());
 #endif
-            ASSERT(gate.isCallGate());
-            ASSERT(!gate.parameterCount()); // FIXME: Implement
+        ASSERT(gate.isCallGate());
+        ASSERT(!gate.parameterCount()); // FIXME: Implement
 
-            if (gate.DPL() < getCPL()) {
-                throw GeneralProtectionFault(selector, QString("%1 to gate with DPL(%2) < CPL(%3)").arg(toString(type)).arg(gate.DPL()).arg(getCPL()));
-            }
+        if (gate.DPL() < getCPL()) {
+            throw GeneralProtectionFault(selector, QString("%1 to gate with DPL(%2) < CPL(%3)").arg(toString(type)).arg(gate.DPL()).arg(getCPL()));
+        }
 
-            if (gate.DPL() < selectorRPL) {
-                throw GeneralProtectionFault(selector, QString("%1 to gate with DPL(%2) < RPL(%3)").arg(toString(type)).arg(gate.DPL()).arg(selectorRPL));
-            }
+        if (gate.DPL() < selectorRPL) {
+            throw GeneralProtectionFault(selector, QString("%1 to gate with DPL(%2) < RPL(%3)").arg(toString(type)).arg(gate.DPL()).arg(selectorRPL));
+        }
 
-            if (!gate.present()) {
-                throw NotPresent(selector, QString("Gate not present"));
-            }
+        if (!gate.present()) {
+            throw NotPresent(selector, QString("Gate not present"));
+        }
 
-            // NOTE: We recurse here, jumping to the gate entry point.
-            farJump(gate.entry(), type, isr, flags, &gate);
-            return;
-        } else if (sys.isTSS()) {
-            auto& tssDescriptor = sys.asTSSDescriptor();
+        // NOTE: We recurse here, jumping to the gate entry point.
+        farJump(gate.entry(), type, &gate);
+        return;
+    }
+
+    if (descriptor.isTSS()) {
+        auto& tssDescriptor = descriptor.asTSSDescriptor();
 #ifdef DEBUG_JUMPS
-            vlog(LogCPU, "CS is this:");
-            dumpDescriptor(cachedDescriptor(SegmentRegisterIndex::CS));
-            vlog(LogCPU, "%s to TSS descriptor (%s) -> %08x", toString(type), tssDescriptor.typeName(), tssDescriptor.base());
+        vlog(LogCPU, "CS is this:");
+        dumpDescriptor(cachedDescriptor(SegmentRegisterIndex::CS));
+        vlog(LogCPU, "%s to TSS descriptor (%s) -> %08x", toString(type), tssDescriptor.typeName(), tssDescriptor.base());
 #endif
-            taskSwitch(tssDescriptor, type);
+        taskSwitch(tssDescriptor, type);
+        return;
+    }
+
+    if (!descriptor.isCode()) {
+        dumpDescriptor(descriptor);
+        ASSERT(getPE());
+        throw GeneralProtectionFault(selector, "Not a code segment");
+    }
+
+    auto& codeSegment = descriptor.asCodeSegmentDescriptor();
+
+    if ((type == JumpType::CALL || type == JumpType::JMP) && !gate) {
+        if (codeSegment.conforming()) {
+            if (codeSegment.DPL() > getCPL()) {
+                throw GeneralProtectionFault(selector, QString("%1 -> Code segment DPL(%2) > CPL(%3)").arg(toString(type)).arg(codeSegment.DPL()).arg(getCPL()));
+            }
         } else {
-            vlog(LogCPU, "%s to %04x:%08x hit unhandled descriptor type %s (%x)", toString(type), selector, offset, sys.typeName(), (unsigned)sys.type());
-            dumpDescriptor(descriptor);
-            ASSERT_NOT_REACHED();
-        }
-    } else { // it's a segment descriptor
-        if (!descriptor.isCode()) {
-            dumpDescriptor(descriptor);
-            ASSERT(getPE());
-            throw GeneralProtectionFault(selector, "Not a code segment");
-        }
-        auto& codeSegment = descriptor.asCodeSegmentDescriptor();
-
-        if ((type == JumpType::CALL || type == JumpType::JMP) && !gate) {
-            if (codeSegment.conforming()) {
-                if (codeSegment.DPL() > getCPL()) {
-                    throw GeneralProtectionFault(selector, QString("%1 -> Code segment DPL(%2) > CPL(%3)").arg(toString(type)).arg(codeSegment.DPL()).arg(getCPL()));
-                }
-            } else {
-                if (codeSegment.DPL() > selectorRPL) {
-                    throw GeneralProtectionFault(selector, QString("%1 -> Code segment DPL(%2) > RPL(%3)").arg(toString(type)).arg(codeSegment.DPL()).arg(selectorRPL));
-                }
-                if (codeSegment.DPL() != getCPL()) {
-                    throw GeneralProtectionFault(selector, QString("%1 -> Code segment DPL(%2) != CPL(%3)").arg(toString(type)).arg(codeSegment.DPL()).arg(getCPL()));
-                }
+            if (codeSegment.DPL() > selectorRPL) {
+                throw GeneralProtectionFault(selector, QString("%1 -> Code segment DPL(%2) > RPL(%3)").arg(toString(type)).arg(codeSegment.DPL()).arg(selectorRPL));
             }
-        }
-
-        if (gate && !gate->is32Bit()) {
-            offset &= 0xffff;
-        }
-
-        // NOTE: A 32-bit jump into a 16-bit segment might have irrelevant higher bits set.
-        // Mask them off to make sure we don't incorrectly fail limit checks.
-        if (!codeSegment.is32Bit()) {
-            offset &= 0xffff;
-        }
-
-        if (!codeSegment.present()) {
-            throw NotPresent(selector, QString("Code segment not present"));
-        }
-
-        if (offset > codeSegment.effectiveLimit()) {
-            vlog(LogCPU, "%s to eip(%08x) outside limit(%08x)", toString(type), offset, codeSegment.effectiveLimit());
-            dumpDescriptor(codeSegment);
-            throw GeneralProtectionFault(0, "Offset outside segment limit");
-        }
-
-        setCS(selector);
-        setEIP(offset);
-        if ((type == JumpType::CALL || type == JumpType::JMP) && !gate) {
-            setCPL(originalCPL);
+            if (codeSegment.DPL() != getCPL()) {
+                throw GeneralProtectionFault(selector, QString("%1 -> Code segment DPL(%2) != CPL(%3)").arg(toString(type)).arg(codeSegment.DPL()).arg(getCPL()));
+            }
         }
     }
 
-    if ((type == JumpType::CALL || type == JumpType::INT) && gate) {
+    if (gate && !gate->is32Bit()) {
+        offset &= 0xffff;
+    }
+
+    // NOTE: A 32-bit jump into a 16-bit segment might have irrelevant higher bits set.
+    // Mask them off to make sure we don't incorrectly fail limit checks.
+    if (!codeSegment.is32Bit()) {
+        offset &= 0xffff;
+    }
+
+    if (!codeSegment.present()) {
+        throw NotPresent(selector, QString("Code segment not present"));
+    }
+
+    if (offset > codeSegment.effectiveLimit()) {
+        vlog(LogCPU, "%s to eip(%08x) outside limit(%08x)", toString(type), offset, codeSegment.effectiveLimit());
+        dumpDescriptor(codeSegment);
+        throw GeneralProtectionFault(0, "Offset outside segment limit");
+    }
+
+    setCS(selector);
+    setEIP(offset);
+
+    if ((type == JumpType::CALL || type == JumpType::JMP) && !gate) {
+        setCPL(originalCPL);
+    }
+
+    if (type == JumpType::CALL && gate) {
     if (descriptor.DPL() < originalCPL) {
 #ifdef DEBUG_JUMPS
         vlog(LogCPU, "%s escalating privilege from ring%u to ring%u", toString(type), originalCPL, descriptor.DPL(), descriptor);
@@ -798,21 +790,7 @@ void CPU::protectedModeFarJump(LogicalAddress address, JumpType type, BYTE isr, 
     }
     }
 
-    if (type == JumpType::INT) {
-        if (pushSize16) {
-#ifdef DEBUG_JUMPS
-            vlog(LogCPU, "Push 16-bit flags %04x @stack{%04x:%08x}", flags, getSS(), getESP());
-#endif
-            push16(flags);
-        } else {
-#ifdef DEBUG_JUMPS
-            vlog(LogCPU, "Push 32-bit flags %08x @stack{%04x:%08x}", flags, getSS(), getESP());
-#endif
-            push32(flags);
-        }
-    }
-
-    if (type == JumpType::CALL || type == JumpType::INT) {
+    if (type == JumpType::CALL) {
         if (pushSize16) {
 #ifdef DEBUG_JUMPS
             vlog(LogCPU, "Push 16-bit cs:ip %04x:%04x @stack{%04x:%08x}", originalCS, originalEIP, getSS(), getESP());
@@ -826,13 +804,6 @@ void CPU::protectedModeFarJump(LogicalAddress address, JumpType type, BYTE isr, 
             push32(originalCS);
             push32(originalEIP);
         }
-    }
-
-    if (errorCode.has_value()) {
-        if (pushSize16)
-            push16(errorCode.value());
-        else
-            push32(errorCode.value());
     }
 }
 

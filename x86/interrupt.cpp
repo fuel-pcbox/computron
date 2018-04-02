@@ -152,15 +152,16 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, std::optional
         return;
     }
 
-    auto codeDescriptor = getDescriptor(gate.selector());
-    if (codeDescriptor.isError()) {
+    auto descriptor = getDescriptor(gate.selector());
+    if (descriptor.isError()) {
         throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, source), "Interrupt gate to segment outside table limit");
     }
 
-    if (!codeDescriptor.isCode()) {
+    if (!descriptor.isCode()) {
         throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, source), "Interrupt gate to non-code segment");
     }
 
+    auto& codeDescriptor = descriptor.asCodeSegmentDescriptor();
     if (codeDescriptor.DPL() > getCPL()) {
         throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, source), QString("Interrupt gate to segment with DPL(%1)>CPL(%2)").arg(codeDescriptor.DPL()).arg(getCPL()));
     }
@@ -183,13 +184,115 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, std::optional
         throw GeneralProtectionFault(isr, "Interrupt to bad gate type");
     }
 
-    protectedModeFarJump(entry, JumpType::INT, isr, getEFlags(), &gate, errorCode);
+    DWORD offset = gate.offset();
+    DWORD flags = getEFlags();
+
+    WORD originalSS = getSS();
+    DWORD originalESP = getESP();
+    WORD originalCPL = getCPL();
+    WORD originalCS = getCS();
+    DWORD originalEIP = getEIP();
+
+    if (!gate.is32Bit() || !codeDescriptor.is32Bit()) {
+        offset &= 0xffff;
+    }
+
+    // FIXME: Stack-related exceptions should come before this.
+    if (offset > codeDescriptor.effectiveLimit()) {
+        throw GeneralProtectionFault(0, "Offset outside segment limit");
+    }
+
+    if (!codeDescriptor.conforming() && descriptor.DPL() < originalCPL) {
+#ifdef DEBUG_JUMPS
+        vlog(LogCPU, "%s escalating privilege from ring%u to ring%u", toString(type), originalCPL, descriptor.DPL(), descriptor);
+#endif
+        auto tss = currentTSS();
+
+        WORD newSS = tss.getRingSS(descriptor.DPL());
+        DWORD newESP = tss.getRingESP(descriptor.DPL());
+        auto newSSDescriptor = getDescriptor(newSS, SegmentRegisterIndex::SS);
+
+        if (newSSDescriptor.isNull()) {
+            throw InvalidTSS(source == InterruptSource::External, "New ss is null");
+        }
+
+        if (newSSDescriptor.isError()) {
+            throw InvalidTSS(makeErrorCode(newSS, 0, source), "New ss outside table limits");
+        }
+
+        if (newSSDescriptor.DPL() != descriptor.DPL()) {
+            throw InvalidTSS(makeErrorCode(newSS, 0, source), QString("New ss DPL(%1) != code segment DPL(%2)").arg(newSSDescriptor.DPL()).arg(descriptor.DPL()));
+        }
+
+        if (!newSSDescriptor.isData() || !newSSDescriptor.asDataSegmentDescriptor().writable()) {
+            throw InvalidTSS(makeErrorCode(newSS, 0, source), "New ss not a writable data segment");
+        }
+
+        if (!newSSDescriptor.present()) {
+            throw StackFault(makeErrorCode(newSS, 0, source), "New ss not present");
+        }
+
+        setSS(newSS);
+        setESP(newESP);
+        if (gate.is32Bit()) {
+#ifdef DEBUG_JUMPS
+            vlog(LogCPU, "INT to inner ring, ss:esp %04x:%08x -> %04x:%08x", originalSS, originalESP, getSS(), getESP());
+            vlog(LogCPU, "Push 32-bit ss:esp %04x:%08x @stack{%04x:%08x}", originalSS, originalESP, getSS(), getESP());
+#endif
+            push32(originalSS);
+            push32(originalESP);
+        } else {
+#ifdef DEBUG_JUMPS
+            vlog(LogCPU, "INT to inner ring, ss:sp %04x:%04x -> %04x:%04x", originalSS, originalESP, getSS(), getSP());
+            vlog(LogCPU, "Push 16-bit ss:sp %04x:%04x @stack{%04x:%08x}", originalSS, originalESP, getSS(), getESP());
+#endif
+            push16(originalSS);
+            push16(originalESP);
+        }
+        setCPL(descriptor.DPL());
+    } else if (codeDescriptor.conforming() || codeDescriptor.DPL() == originalCPL) {
+#ifdef DEBUG_JUMPS
+        vlog(LogCPU, "INT same privilege from ring%u to ring%u", originalCPL, descriptor.DPL());
+#endif
+        setCPL(originalCPL);
+    } else {
+        ASSERT_NOT_REACHED();
+        throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, source), "Interrupt to non-conforming code segment with DPL > CPL");
+    }
+
+    if (gate.is32Bit()) {
+#ifdef DEBUG_JUMPS
+        vlog(LogCPU, "Push 32-bit flags %08x @stack{%04x:%08x}", flags, getSS(), getESP());
+        vlog(LogCPU, "Push 32-bit cs:eip %04x:%08x @stack{%04x:%08x}", originalCS, originalEIP, getSS(), getESP());
+#endif
+        push32(flags);
+        push32(originalCS);
+        push32(originalEIP);
+    } else {
+#ifdef DEBUG_JUMPS
+        vlog(LogCPU, "Push 16-bit flags %04x @stack{%04x:%08x}", flags, getSS(), getESP());
+        vlog(LogCPU, "Push 16-bit cs:ip %04x:%04x @stack{%04x:%08x}", originalCS, originalEIP, getSS(), getESP());
+#endif
+        push16(flags);
+        push16(originalCS);
+        push16(originalEIP);
+    }
+
+    if (errorCode.has_value()) {
+        if (gate.is32Bit())
+            push32(errorCode.value());
+        else
+            push16(errorCode.value());
+    }
 
     if (!isTrap)
         setIF(0);
     setTF(0);
     setRF(0);
     setNT(0);
+
+    setCS(gate.selector());
+    setEIP(offset);
 }
 
 void CPU::interrupt(BYTE isr, InterruptSource source, std::optional<WORD> errorCode)

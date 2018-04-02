@@ -446,8 +446,8 @@ public:
     void clearSegmentRegisterAfterReturnIfNeeded(SegmentRegisterIndex, JumpType);
 
     void realModeFarJump(LogicalAddress, JumpType);
-    void protectedModeFarJump(LogicalAddress, JumpType, BYTE isr = 0, DWORD flags = 0, Gate* = nullptr, std::optional<WORD> errorCode = std::nullopt);
-    void farJump(LogicalAddress, JumpType, BYTE isr = 0, DWORD flags = 0, Gate* = nullptr, std::optional<WORD> errorCode = std::nullopt);
+    void protectedModeFarJump(LogicalAddress, JumpType, Gate* = nullptr);
+    void farJump(LogicalAddress, JumpType, Gate* = nullptr);
     void jumpRelative8(SIGNED_BYTE displacement);
     void jumpRelative16(SIGNED_WORD displacement);
     void jumpRelative32(SIGNED_DWORD displacement);
