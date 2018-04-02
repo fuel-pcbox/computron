@@ -1418,7 +1418,7 @@ ALWAYS_INLINE void CPU::validateAddress(const SegmentDescriptor& descriptor, DWO
     }
 #endif
 
-    if (offset > descriptor.effectiveLimit()) {
+    if (UNLIKELY(offset > descriptor.effectiveLimit())) {
         vlog(LogAlert, "FUG! %s offset %08X outside limit (selector index: %04X, effective limit: %08X [%08X x %s])",
              toString(accessType),
              offset,
