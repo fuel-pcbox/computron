@@ -568,13 +568,55 @@ static const char* toString(JumpType type)
     }
 }
 
-void CPU::farJump(LogicalAddress address, JumpType type, BYTE isr, DWORD flags, Gate* gate, std::optional<WORD> errorCode)
+void CPU::realModeFarJump(LogicalAddress address, JumpType type)
 {
+    ASSERT(!getPE());
     WORD selector = address.selector();
     DWORD offset = address.offset();
-    bool pushSize16 = o16() || (!getPE() && type == JumpType::INT);
+    WORD originalCS = getCS();
+    DWORD originalEIP = getEIP();
 
-    if (getPE() && gate) {
+#ifdef LOG_FAR_JUMPS
+    vlog(LogCPU, "[PE=0] %s from %04x:%08x to %04x:%08x", toString(type), getBaseCS(), getBaseEIP(), selector, offset);
+#endif
+
+    setCS(selector);
+    setEIP(offset);
+
+    if (type == JumpType::CALL) {
+        if (o16()) {
+#ifdef DEBUG_JUMPS
+            vlog(LogCPU, "Push 16-bit cs:ip %04x:%04x @stack{%04x:%08x}", originalCS, originalEIP, getSS(), getESP());
+#endif
+            push16(originalCS);
+            push16(originalEIP);
+        } else {
+#ifdef DEBUG_JUMPS
+            vlog(LogCPU, "Push 32-bit cs:eip %04x:%08x @stack{%04x:%08x}", originalCS, originalEIP, getSS(), getESP());
+#endif
+            push32(originalCS);
+            push32(originalEIP);
+        }
+    }
+}
+
+void CPU::farJump(LogicalAddress address, JumpType type, BYTE isr, DWORD flags, Gate* gate, std::optional<WORD> errorCode)
+{
+    if (!getPE()) {
+        realModeFarJump(address, type);
+    } else {
+        protectedModeFarJump(address, type, isr, flags, gate, errorCode);
+    }
+}
+
+void CPU::protectedModeFarJump(LogicalAddress address, JumpType type, BYTE isr, DWORD flags, Gate* gate, std::optional<WORD> errorCode)
+{
+    ASSERT(getPE());
+    WORD selector = address.selector();
+    DWORD offset = address.offset();
+    bool pushSize16 = o16();
+
+    if (gate) {
         // Coming through a gate; respect bit size of gate descriptor!
         pushSize16 = !gate->is32Bit();
     }
@@ -593,7 +635,7 @@ void CPU::farJump(LogicalAddress address, JumpType type, BYTE isr, DWORD flags, 
 
     auto descriptor = getDescriptor(selector, SegmentRegisterIndex::CS);
 
-    if (getPE() && descriptor.isNull()) {
+    if (descriptor.isNull()) {
         throw GeneralProtectionFault(selector, QString("%1 to null selector").arg(toString(type)));
     }
 
@@ -655,50 +697,49 @@ void CPU::farJump(LogicalAddress address, JumpType type, BYTE isr, DWORD flags, 
         }
         auto& codeSegment = descriptor.asCodeSegmentDescriptor();
 
-        if (getPE()) {
-            if ((type == JumpType::CALL || type == JumpType::JMP) && !gate) {
-                if (codeSegment.conforming()) {
-                    if (codeSegment.DPL() > getCPL()) {
-                        throw GeneralProtectionFault(selector, QString("%1 -> Code segment DPL(%2) > CPL(%3)").arg(toString(type)).arg(codeSegment.DPL()).arg(getCPL()));
-                    }
-                } else {
-                    if (codeSegment.DPL() > selectorRPL) {
-                        throw GeneralProtectionFault(selector, QString("%1 -> Code segment DPL(%2) > RPL(%3)").arg(toString(type)).arg(codeSegment.DPL()).arg(selectorRPL));
-                    }
-                    if (codeSegment.DPL() != getCPL()) {
-                        throw GeneralProtectionFault(selector, QString("%1 -> Code segment DPL(%2) != CPL(%3)").arg(toString(type)).arg(codeSegment.DPL()).arg(getCPL()));
-                    }
+        if ((type == JumpType::CALL || type == JumpType::JMP) && !gate) {
+            if (codeSegment.conforming()) {
+                if (codeSegment.DPL() > getCPL()) {
+                    throw GeneralProtectionFault(selector, QString("%1 -> Code segment DPL(%2) > CPL(%3)").arg(toString(type)).arg(codeSegment.DPL()).arg(getCPL()));
+                }
+            } else {
+                if (codeSegment.DPL() > selectorRPL) {
+                    throw GeneralProtectionFault(selector, QString("%1 -> Code segment DPL(%2) > RPL(%3)").arg(toString(type)).arg(codeSegment.DPL()).arg(selectorRPL));
+                }
+                if (codeSegment.DPL() != getCPL()) {
+                    throw GeneralProtectionFault(selector, QString("%1 -> Code segment DPL(%2) != CPL(%3)").arg(toString(type)).arg(codeSegment.DPL()).arg(getCPL()));
                 }
             }
-
-            if (gate && !gate->is32Bit()) {
-                offset &= 0xffff;
-            }
-
-            // NOTE: A 32-bit jump into a 16-bit segment might have irrelevant higher bits set.
-            // Mask them off to make sure we don't incorrectly fail limit checks.
-            if (!codeSegment.is32Bit()) {
-                offset &= 0xffff;
-            }
-
-            if (!codeSegment.present()) {
-                throw NotPresent(selector, QString("Code segment not present"));
-            }
-
-            if (offset > codeSegment.effectiveLimit()) {
-                vlog(LogCPU, "%s to eip(%08x) outside limit(%08x)", toString(type), offset, codeSegment.effectiveLimit());
-                dumpDescriptor(codeSegment);
-                throw GeneralProtectionFault(0, "Offset outside segment limit");
-            }
         }
+
+        if (gate && !gate->is32Bit()) {
+            offset &= 0xffff;
+        }
+
+        // NOTE: A 32-bit jump into a 16-bit segment might have irrelevant higher bits set.
+        // Mask them off to make sure we don't incorrectly fail limit checks.
+        if (!codeSegment.is32Bit()) {
+            offset &= 0xffff;
+        }
+
+        if (!codeSegment.present()) {
+            throw NotPresent(selector, QString("Code segment not present"));
+        }
+
+        if (offset > codeSegment.effectiveLimit()) {
+            vlog(LogCPU, "%s to eip(%08x) outside limit(%08x)", toString(type), offset, codeSegment.effectiveLimit());
+            dumpDescriptor(codeSegment);
+            throw GeneralProtectionFault(0, "Offset outside segment limit");
+        }
+
         setCS(selector);
         setEIP(offset);
-        if (getPE() && (type == JumpType::CALL || type == JumpType::JMP) && !gate) {
+        if ((type == JumpType::CALL || type == JumpType::JMP) && !gate) {
             setCPL(originalCPL);
         }
     }
 
-    if (getPE() && (type == JumpType::CALL || type == JumpType::INT) && gate) {
+    if ((type == JumpType::CALL || type == JumpType::INT) && gate) {
     if (descriptor.DPL() < originalCPL) {
 #ifdef DEBUG_JUMPS
         vlog(LogCPU, "%s escalating privilege from ring%u to ring%u", toString(type), originalCPL, descriptor.DPL(), descriptor);

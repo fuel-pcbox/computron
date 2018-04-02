@@ -99,14 +99,25 @@ void CPU::interruptToTaskGate(BYTE, InterruptSource source, std::optional<WORD> 
 void CPU::realModeInterrupt(BYTE isr, InterruptSource source)
 {
     ASSERT(!getPE());
+    WORD originalCS = getCS();
+    WORD originalIP = getIP();
+    WORD flags = getFlags();
+    WORD selector = readPhysicalMemory<WORD>(PhysicalAddress(isr * 4 + 2));
+    WORD offset = readPhysicalMemory<WORD>(PhysicalAddress(isr * 4));
+
     if (options.trapint)
-        vlog(LogCPU, "PE=0 Interrupt %02X,%02X trapped%s", isr, this->regs.B.AH, source == InterruptSource::External ? " (from PIC)" : "");
+        vlog(LogCPU, "PE=0 interrupt %02x,%04x%s -> %04x:%04x", isr, getAX(), source == InterruptSource::External ? " (external)" : "", selector, offset);
 
-    LogicalAddress entry;
-    entry.setSelector(readPhysicalMemory<WORD>(PhysicalAddress(isr * 4 + 2)));
-    entry.setOffset(readPhysicalMemory<WORD>(PhysicalAddress(isr * 4 + 0)));
+#ifdef LOG_FAR_JUMPS
+    vlog(LogCPU, "[PE=0] INT from %04x:%08x to %04x:%08x", getBaseCS(), getBaseEIP(), entry.selector, entry.offset);
+#endif
 
-    farJump(entry, JumpType::INT, isr, getEFlags());
+    setCS(selector);
+    setEIP(offset);
+
+    push16(flags);
+    push16(originalCS);
+    push16(originalIP);
 
     setIF(0);
     setTF(0);
@@ -134,7 +145,7 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, std::optional
     auto entry = gate.entry();
 
     if (options.trapint)
-        vlog(LogCPU, "PE=1 Interrupt %02x trapped%s, type: %s (%1x), %04x:%08x", isr, source == InterruptSource::External ? " (from PIC)" : "", gate.typeName(), gate.type(), entry.selector(), entry.offset());
+        vlog(LogCPU, "PE=1 interrupt %02x,%04x%s, type: %s (%1x), %04x:%08x", isr, getAX(), source == InterruptSource::External ? " (from PIC)" : "", gate.typeName(), gate.type(), entry.selector(), entry.offset());
 
     if (gate.isTaskGate()) {
         interruptToTaskGate(isr, source, errorCode, gate);
@@ -172,7 +183,7 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, std::optional
         throw GeneralProtectionFault(isr, "Interrupt to bad gate type");
     }
 
-    farJump(entry, JumpType::INT, isr, getEFlags(), &gate, errorCode);
+    protectedModeFarJump(entry, JumpType::INT, isr, getEFlags(), &gate, errorCode);
 
     if (!isTrap)
         setIF(0);
