@@ -250,8 +250,10 @@ public:
 
     enum class InterruptSource { Internal = 0, External = 1 };
 
-    void jumpToInterruptHandler(int isr, InterruptSource, std::optional<WORD> errorCode = std::nullopt);
-    void interruptToTaskGate(int isr, InterruptSource, std::optional<WORD> errorCode, Gate&);
+    void realModeInterrupt(BYTE isr, InterruptSource);
+    void protectedModeInterrupt(BYTE isr, InterruptSource, std::optional<WORD> errorCode);
+    void interrupt(BYTE isr, InterruptSource, std::optional<WORD> errorCode = std::nullopt);
+    void interruptToTaskGate(BYTE isr, InterruptSource, std::optional<WORD> errorCode, Gate&);
 
     Exception GeneralProtectionFault(WORD selector, const QString& reason);
     Exception StackFault(WORD selector, const QString& reason);

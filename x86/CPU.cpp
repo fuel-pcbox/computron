@@ -513,7 +513,7 @@ FLATTEN void CPU::mainLoop()
             //
             // This is used by tools like DEBUG to implement step-by-step
             // execution :-)
-            jumpToInterruptHandler(1, InterruptSource::Internal);
+            interrupt(1, InterruptSource::Internal);
         }
 
         if (PIC::hasPendingIRQ() && getIF())

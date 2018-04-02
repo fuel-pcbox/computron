@@ -313,9 +313,9 @@ void CPU::raiseException(const Exception& e)
     try {
         setEIP(getBaseEIP());
         if (e.hasCode()) {
-            jumpToInterruptHandler(e.num(), InterruptSource::Internal, e.code());
+            interrupt(e.num(), InterruptSource::Internal, e.code());
         } else {
-            jumpToInterruptHandler(e.num(), InterruptSource::Internal);
+            interrupt(e.num(), InterruptSource::Internal);
         }
     } catch (Exception e) {
         ASSERT_NOT_REACHED();

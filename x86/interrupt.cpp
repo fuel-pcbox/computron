@@ -30,12 +30,12 @@
 
 void CPU::_INT_imm8(Instruction& insn)
 {
-    jumpToInterruptHandler(insn.imm8(), InterruptSource::Internal);
+    interrupt(insn.imm8(), InterruptSource::Internal);
 }
 
 void CPU::_INT3(Instruction&)
 {
-    jumpToInterruptHandler(3, InterruptSource::Internal);
+    interrupt(3, InterruptSource::Internal);
 }
 
 void CPU::_INTO(Instruction&)
@@ -44,7 +44,7 @@ void CPU::_INTO(Instruction&)
     vlog(LogAlert, "INTO used, can you believe it?");
 
     if (getOF())
-        jumpToInterruptHandler(4, InterruptSource::Internal);
+        interrupt(4, InterruptSource::Internal);
 }
 
 void CPU::_IRET(Instruction&)
@@ -71,7 +71,7 @@ static WORD makeErrorCode(WORD num, bool idt, CPU::InterruptSource source)
     return num & 0xfc;
 }
 
-void CPU::interruptToTaskGate(int, InterruptSource source, std::optional<WORD> errorCode, Gate& gate)
+void CPU::interruptToTaskGate(BYTE, InterruptSource source, std::optional<WORD> errorCode, Gate& gate)
 {
     Descriptor descriptor = getDescriptor(gate.selector());
     if (!descriptor.isGlobal()) {
@@ -96,76 +96,80 @@ void CPU::interruptToTaskGate(int, InterruptSource source, std::optional<WORD> e
     }
 }
 
-void CPU::jumpToInterruptHandler(int isr, InterruptSource source, std::optional<WORD> errorCode)
+void CPU::realModeInterrupt(BYTE isr, InterruptSource source)
 {
-    bool isTrap = false;
+    ASSERT(!getPE());
+    if (options.trapint)
+        vlog(LogCPU, "PE=0 Interrupt %02X,%02X trapped%s", isr, this->regs.B.AH, source == InterruptSource::External ? " (from PIC)" : "");
+
     LogicalAddress entry;
+    entry.setSelector(readPhysicalMemory<WORD>(PhysicalAddress(isr * 4 + 2)));
+    entry.setOffset(readPhysicalMemory<WORD>(PhysicalAddress(isr * 4 + 0)));
 
-    Gate gate;
+    farJump(entry, JumpType::INT, isr, getEFlags());
 
-    if (getPE()) {
-        gate = getInterruptGate(isr);
+    setIF(0);
+    setTF(0);
+}
 
-        if (source == InterruptSource::Internal) {
-            if (gate.DPL() < getCPL()) {
-                throw GeneralProtectionFault(makeErrorCode(isr, 1, source), "Software interrupt trying to escalate privilege");
-            }
+void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, std::optional<WORD> errorCode)
+{
+    ASSERT(getPE());
+    Gate gate = getInterruptGate(isr);
+
+    if (source == InterruptSource::Internal) {
+        if (gate.DPL() < getCPL()) {
+            throw GeneralProtectionFault(makeErrorCode(isr, 1, source), "Software interrupt trying to escalate privilege");
         }
+    }
 
-        if (!gate.present()) {
-            throw NotPresent(makeErrorCode(isr, 1, source), "Interrupt gate not present");
-        }
+    if (!gate.present()) {
+        throw NotPresent(makeErrorCode(isr, 1, source), "Interrupt gate not present");
+    }
 
-        if (gate.isNull()) {
-            throw GeneralProtectionFault(makeErrorCode(isr, 1, source), "Interrupt gate is null");
-        }
+    if (gate.isNull()) {
+        throw GeneralProtectionFault(makeErrorCode(isr, 1, source), "Interrupt gate is null");
+    }
 
-        entry = gate.entry();
+    auto entry = gate.entry();
 
-        if (options.trapint)
-            vlog(LogCPU, "PE=1 Interrupt %02x trapped%s, type: %s (%1x), %04x:%08x", isr, source == InterruptSource::External ? " (from PIC)" : "", gate.typeName(), gate.type(), entry.selector(), entry.offset());
+    if (options.trapint)
+        vlog(LogCPU, "PE=1 Interrupt %02x trapped%s, type: %s (%1x), %04x:%08x", isr, source == InterruptSource::External ? " (from PIC)" : "", gate.typeName(), gate.type(), entry.selector(), entry.offset());
 
-        if (gate.isTaskGate()) {
-            interruptToTaskGate(isr, source, errorCode, gate);
-            return;
-        }
+    if (gate.isTaskGate()) {
+        interruptToTaskGate(isr, source, errorCode, gate);
+        return;
+    }
 
-        Descriptor codeDescriptor = getDescriptor(gate.selector());
-        if (codeDescriptor.isError()) {
-            throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, source), "Interrupt gate to segment outside table limit");
-        }
+    auto codeDescriptor = getDescriptor(gate.selector());
+    if (codeDescriptor.isError()) {
+        throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, source), "Interrupt gate to segment outside table limit");
+    }
 
-        if (!codeDescriptor.isCode()) {
-            throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, source), "Interrupt gate to non-code segment");
-        }
+    if (!codeDescriptor.isCode()) {
+        throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, source), "Interrupt gate to non-code segment");
+    }
 
-        if (codeDescriptor.DPL() > getCPL()) {
-            throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, source), QString("Interrupt gate to segment with DPL(%1)>CPL(%2)").arg(codeDescriptor.DPL()).arg(getCPL()));
-        }
+    if (codeDescriptor.DPL() > getCPL()) {
+        throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, source), QString("Interrupt gate to segment with DPL(%1)>CPL(%2)").arg(codeDescriptor.DPL()).arg(getCPL()));
+    }
 
-        if (!codeDescriptor.present()) {
-            throw NotPresent(makeErrorCode(gate.selector(), 0, source), "Interrupt to non-present segment");
-        }
+    if (!codeDescriptor.present()) {
+        throw NotPresent(makeErrorCode(gate.selector(), 0, source), "Interrupt to non-present segment");
+    }
 
-        switch (gate.type()) {
-        case 0x7: // 80286 Trap Gate (16-bit)
-        case 0xf: // 80386 Trap Gate (32-bit)
-            isTrap = true;
-            break;
-        case 0x6: // 80286 Interrupt Gate (16-bit)
-        case 0xe: // 80386 Interrupt Gate (32-bit)
-            break;
-        default:
-            // FIXME: What should be the error code here?
-            throw GeneralProtectionFault(isr, "Interrupt to bad gate type");
-            break;
-        }
-    } else {
-        if (options.trapint)
-            vlog(LogCPU, "PE=0 Interrupt %02X,%02X trapped%s", isr, this->regs.B.AH, source == InterruptSource::External ? " (from PIC)" : "");
-
-        entry.setSelector(readPhysicalMemory<WORD>(PhysicalAddress(isr * 4 + 2)));
-        entry.setOffset(readPhysicalMemory<WORD>(PhysicalAddress(isr * 4 + 0)));
+    bool isTrap = false;
+    switch (gate.type()) {
+    case 0x7: // 80286 Trap Gate (16-bit)
+    case 0xf: // 80386 Trap Gate (32-bit)
+        isTrap = true;
+        break;
+    case 0x6: // 80286 Interrupt Gate (16-bit)
+    case 0xe: // 80386 Interrupt Gate (32-bit)
+        break;
+    default:
+        // FIXME: What should be the error code here?
+        throw GeneralProtectionFault(isr, "Interrupt to bad gate type");
     }
 
     farJump(entry, JumpType::INT, isr, getEFlags(), &gate, errorCode);
@@ -175,4 +179,12 @@ void CPU::jumpToInterruptHandler(int isr, InterruptSource source, std::optional<
     setTF(0);
     setRF(0);
     setNT(0);
+}
+
+void CPU::interrupt(BYTE isr, InterruptSource source, std::optional<WORD> errorCode)
+{
+    if (getPE())
+        protectedModeInterrupt(isr, source, errorCode);
+    else
+        realModeInterrupt(isr, source);
 }
