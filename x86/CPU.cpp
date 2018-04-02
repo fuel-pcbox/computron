@@ -1377,14 +1377,16 @@ void CPU::snoop(SegmentRegisterIndex segreg, DWORD offset, MemoryAccessType acce
 }
 
 template<typename T>
-void CPU::validateAddress(const SegmentDescriptor& descriptor, DWORD offset, MemoryAccessType accessType)
+ALWAYS_INLINE void CPU::validateAddress(const SegmentDescriptor& descriptor, DWORD offset, MemoryAccessType accessType)
 {
-    if (descriptor.isNull()) {
-        vlog(LogAlert, "NULL! %s offset %08X into null selector (selector index: %04X)",
-             toString(accessType),
-             offset,
-             descriptor.index());
-        throw GeneralProtectionFault(0, "Access through null selector");
+    if (accessType != MemoryAccessType::Execute) {
+        if (descriptor.isNull()) {
+            vlog(LogAlert, "NULL! %s offset %08X into null selector (selector index: %04X)",
+                 toString(accessType),
+                 offset,
+                 descriptor.index());
+            throw GeneralProtectionFault(0, "Access through null selector");
+        }
     }
 
     switch (accessType) {
@@ -1402,9 +1404,8 @@ void CPU::validateAddress(const SegmentDescriptor& descriptor, DWORD offset, Mem
         }
         break;
     case MemoryAccessType::Execute:
-        if (!descriptor.isCode()) {
-            throw GeneralProtectionFault(0, "Attempt to execute non-code segment");
-        }
+        // CS should never point to a non-code segment.
+        ASSERT(descriptor.isCode());
         break;
     default:
         break;
@@ -1435,7 +1436,7 @@ void CPU::validateAddress(const SegmentDescriptor& descriptor, DWORD offset, Mem
 }
 
 template<typename T>
-void CPU::validateAddress(SegmentRegisterIndex registerIndex, DWORD offset, MemoryAccessType accessType)
+ALWAYS_INLINE void CPU::validateAddress(SegmentRegisterIndex registerIndex, DWORD offset, MemoryAccessType accessType)
 {
     validateAddress<T>(m_descriptor[(int)registerIndex], offset, accessType);
 }
