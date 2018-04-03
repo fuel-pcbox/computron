@@ -102,15 +102,20 @@ struct MasksForType
     static const T allBits = std::numeric_limits<typename std::make_unsigned<T>::type>::max();
 };
 
-static_assert(MasksForType<BYTE>::allBits == 0xff, "MasksForType<BYTE>::allBits");
-static_assert(MasksForType<WORD>::allBits == 0xffff, "MasksForType<WORD>::allBits");
-static_assert(MasksForType<DWORD>::allBits == 0xffffffff, "MasksForType<DWORD>::allBits");
-static_assert(MasksForType<QWORD>::allBits == 0xffffffffffffffff, "MasksForType<QWORD>::allBits");
-
 template<typename T> struct TypeDoubler { };
 template<> struct TypeDoubler<BYTE> { typedef WORD type; };
 template<> struct TypeDoubler<WORD> { typedef DWORD type; };
 template<> struct TypeDoubler<DWORD> { typedef QWORD type; };
+
+template<typename T> struct TypeHalver { };
+template<> struct TypeHalver<WORD> { typedef BYTE type; };
+template<> struct TypeHalver<DWORD> { typedef WORD type; };
+template<> struct TypeHalver<QWORD> { typedef DWORD type; };
+
+template<typename DT> constexpr DT weld(typename TypeHalver<DT>::type high, typename TypeHalver<DT>::type low)
+{
+    return (((DT)high) << BitSizeOfType<typename TypeHalver<DT>::type>::bits) | low;
+}
 
 template<typename T>
 inline T signExtend(BYTE value)

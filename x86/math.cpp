@@ -268,58 +268,38 @@ void CPU::_IMUL_RM32(Instruction& insn)
     }
 }
 
-void CPU::_DIV_RM8(Instruction& insn)
+template<typename T>
+void CPU::doDIV(T dividendHigh, T dividendLow, T divisor, T& quotient, T& remainder)
 {
-    auto value = insn.modrm().read8();
-    WORD tAX = regs.W.AX;
-
-    if (value == 0) {
+    if (divisor == 0) {
         throw DivideError("Divide by zero");
     }
 
-    WORD result = tAX / value;
-    if (result > 0xff) {
-        throw DivideError(QString("Unsigned divide overflow (%1 / %2 = %3)").arg(tAX).arg(value).arg(result));
+    typedef typename TypeDoubler<T>::type DT;
+    DT dividend = weld<DT>(dividendHigh, dividendLow);
+
+    DT result = dividend / divisor;
+    if (result > MasksForType<T>::allBits) {
+        throw DivideError(QString("Unsigned divide overflow (%1 / %2 = %3)").arg(dividend).arg(divisor).arg(result));
     }
 
-    regs.B.AL = result;
-    regs.B.AH = tAX % value;
+    quotient = result;
+    remainder = dividend % divisor;
+}
+
+void CPU::_DIV_RM8(Instruction& insn)
+{
+    doDIV<BYTE>(getAH(), getAL(), insn.modrm().read8(), regs.B.AL, regs.B.AH);
 }
 
 void CPU::_DIV_RM16(Instruction& insn)
 {
-    auto value = insn.modrm().read16();
-    DWORD tDXAX = regs.W.AX + (regs.W.DX << 16);
-
-    if (value == 0) {
-        throw DivideError("Divide by zero");
-    }
-
-    DWORD result = tDXAX / value;
-    if (result > 0xffff) {
-        throw DivideError(QString("Unsigned divide overflow (%1 / %2 = %3)").arg(tDXAX).arg(value).arg(result));
-    }
-
-    regs.W.AX = result;
-    regs.W.DX = tDXAX % value;
+    doDIV<WORD>(getDX(), getAX(), insn.modrm().read16(), regs.W.AX, regs.W.DX);
 }
 
 void CPU::_DIV_RM32(Instruction& insn)
 {
-    DWORD value = insn.modrm().read32();
-    QWORD tEDXEAX = getEAX() | ((QWORD)getEDX() << 32);
-
-    if (value == 0) {
-        throw DivideError("Divide by zero");
-    }
-
-    QWORD result = tEDXEAX / value;
-    if (result > 0xffffffff) {
-        throw DivideError(QString("Unsigned divide overflow (%1 / %2 = %3)").arg(tEDXEAX).arg(value).arg(result));
-    }
-
-    setEAX(result);
-    setEDX(tEDXEAX % value);
+    doDIV<DWORD>(getEDX(), getEAX(), insn.modrm().read32(), regs.D.EAX, regs.D.EDX);
 }
 
 void CPU::_IDIV_RM8(Instruction& insn)

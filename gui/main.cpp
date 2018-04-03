@@ -162,3 +162,11 @@ void parseArguments(const QStringList& arguments)
     }
 #endif
 }
+
+static_assert(MasksForType<BYTE>::allBits == 0xff, "MasksForType<BYTE>::allBits");
+static_assert(MasksForType<WORD>::allBits == 0xffff, "MasksForType<WORD>::allBits");
+static_assert(MasksForType<DWORD>::allBits == 0xffffffff, "MasksForType<DWORD>::allBits");
+static_assert(MasksForType<QWORD>::allBits == 0xffffffffffffffff, "MasksForType<QWORD>::allBits");
+static_assert(weld<WORD>(0xf0, 0x0f) == 0xf00f, "weld<WORD>");
+static_assert(weld<DWORD>(0xbeef, 0xbabe) == 0xbeefbabe, "weld<DWORD>");
+static_assert(weld<QWORD>(0xcafebabe, 0xdeadbeef) == 0xcafebabedeadbeef, "weld<QWORD>");
