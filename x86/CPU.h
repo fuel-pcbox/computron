@@ -1212,8 +1212,8 @@ private:
     template<typename T> QWORD doADC(T, T);
     template<typename T> QWORD doSUB(T, T);
     template<typename T> QWORD doSBB(T, T);
-    template<typename T> QWORD doMUL(T, T);
     template<typename T> SIGNED_QWORD doIMUL(T, T);
+    template<typename T> void doMUL(T f1, T f2, T& resultHigh, T& resultLow);
 
     void saveBaseAddress()
     {

@@ -78,14 +78,6 @@ QWORD CPU::doSBB(T dest, T src)
 }
 
 template<typename T>
-QWORD CPU::doMUL(T acc, T multi)
-{
-    QWORD result = (QWORD)acc * (QWORD)multi;
-    updateCpuMathFlags(*this, result, acc, multi);
-    return result;
-}
-
-template<typename T>
 SIGNED_QWORD CPU::doIMUL(T acc, T multi)
 {
     // FIXME: This function should protect against T being an unsigned type.
@@ -99,47 +91,36 @@ DEFINE_INSTRUCTION_HANDLERS_GRP1(SUB)
 DEFINE_INSTRUCTION_HANDLERS_GRP1(SBB)
 DEFINE_INSTRUCTION_HANDLERS_GRP4_READONLY(SUB, CMP)
 
-void CPU::_MUL_RM8(Instruction& insn)
+template<typename T>
+void CPU::doMUL(T f1, T f2, T& resultHigh, T& resultLow)
 {
-    regs.W.AX = doMUL(regs.B.AL, insn.modrm().read8());
+    typedef typename TypeDoubler<T>::type DT;
+    DT result = (DT)f1 * (DT)f2;
+    resultLow = result & MasksForType<T>::allBits;
+    resultHigh = (result >> BitSizeOfType<T>::bits) & MasksForType<T>::allBits;
 
-    if (regs.B.AH == 0x00) {
+    if (resultHigh == 0) {
         setCF(0);
         setOF(0);
     } else {
         setCF(1);
         setOF(1);
     }
+}
+
+void CPU::_MUL_RM8(Instruction& insn)
+{
+    doMUL<BYTE>(getAL(), insn.modrm().read8(), regs.B.AH, regs.B.AL);
 }
 
 void CPU::_MUL_RM16(Instruction& insn)
 {
-    DWORD result = doMUL(regs.W.AX, insn.modrm().read16());
-    regs.W.AX = result & 0xFFFF;
-    regs.W.DX = (result >> 16) & 0xFFFF;
-
-    if (regs.W.DX == 0x0000) {
-        setCF(0);
-        setOF(0);
-    } else {
-        setCF(1);
-        setOF(1);
-    }
+    doMUL<WORD>(getAX(), insn.modrm().read16(), regs.W.DX, regs.W.AX);
 }
 
 void CPU::_MUL_RM32(Instruction& insn)
 {
-    QWORD result = doMUL(regs.D.EAX, insn.modrm().read32());
-    setEAX(result & 0xFFFFFFFF);
-    setEDX((result >> 32) & 0xFFFFFFFF);
-
-    if (getEDX() == 0x00000000) {
-        setCF(0);
-        setOF(0);
-    } else {
-        setCF(1);
-        setOF(1);
-    }
+    doMUL<DWORD>(getEAX(), insn.modrm().read32(), regs.D.EDX, regs.D.EAX);
 }
 
 void CPU::_IMUL_RM8(Instruction& insn)

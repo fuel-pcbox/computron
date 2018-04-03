@@ -24,7 +24,9 @@
 
 #pragma once
 
+#include <limits>
 #include <stdint.h>
+#include <type_traits>
 
 typedef uint8_t BYTE;
 typedef uint16_t WORD;
@@ -93,6 +95,22 @@ private:
 };
 
 template<typename T> struct BitSizeOfType { static const int bits = sizeof(T) * 8; };
+
+template<typename T>
+struct MasksForType
+{
+    static const T allBits = std::numeric_limits<typename std::make_unsigned<T>::type>::max();
+};
+
+static_assert(MasksForType<BYTE>::allBits == 0xff, "MasksForType<BYTE>::allBits");
+static_assert(MasksForType<WORD>::allBits == 0xffff, "MasksForType<WORD>::allBits");
+static_assert(MasksForType<DWORD>::allBits == 0xffffffff, "MasksForType<DWORD>::allBits");
+static_assert(MasksForType<QWORD>::allBits == 0xffffffffffffffff, "MasksForType<QWORD>::allBits");
+
+template<typename T> struct TypeDoubler { };
+template<> struct TypeDoubler<BYTE> { typedef WORD type; };
+template<> struct TypeDoubler<WORD> { typedef DWORD type; };
+template<> struct TypeDoubler<DWORD> { typedef QWORD type; };
 
 template<typename T>
 inline T signExtend(BYTE value)
