@@ -1197,23 +1197,23 @@ private:
     template<typename T> T doROL(T, int steps);
     template<typename T> T doROR(T, int steps);
 
-    template<typename T> T doXor(T, T);
-    template<typename T> T doOr(T, T);
-    template<typename T> T doAnd(T, T);
+    template<typename T> T doXOR(T, T);
+    template<typename T> T doOR(T, T);
+    template<typename T> T doAND(T, T);
 
-    template<typename T> T doBt(T, int bitIndex);
-    template<typename T> T doBtr(T, int bitIndex);
-    template<typename T> T doBtc(T, int bitIndex);
-    template<typename T> T doBts(T, int bitIndex);
+    template<typename T> T doBT(T, int bitIndex);
+    template<typename T> T doBTR(T, int bitIndex);
+    template<typename T> T doBTC(T, int bitIndex);
+    template<typename T> T doBTS(T, int bitIndex);
     template<typename T> T doBSF(T);
     template<typename T> T doBSR(T);
 
-    template<typename T> QWORD doAdd(T, T);
-    template<typename T> QWORD doAdc(T, T);
-    template<typename T> QWORD doSub(T, T);
-    template<typename T> QWORD doSbb(T, T);
-    template<typename T> QWORD doMul(T, T);
-    template<typename T> SIGNED_QWORD doImul(T, T);
+    template<typename T> QWORD doADD(T, T);
+    template<typename T> QWORD doADC(T, T);
+    template<typename T> QWORD doSUB(T, T);
+    template<typename T> QWORD doSBB(T, T);
+    template<typename T> QWORD doMUL(T, T);
+    template<typename T> SIGNED_QWORD doIMUL(T, T);
 
     void saveBaseAddress()
     {

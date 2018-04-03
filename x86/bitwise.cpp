@@ -25,130 +25,18 @@
 #include "CPU.h"
 #include "templates.h"
 
-DEFAULT_RM8_reg8(doAnd, _AND_RM8_reg8)
-DEFAULT_RM16_reg16(doAnd, _AND_RM16_reg16)
-DEFAULT_RM32_reg32(doAnd, _AND_RM32_reg32)
-DEFAULT_reg8_RM8(doAnd, _AND_reg8_RM8)
-DEFAULT_reg16_RM16(doAnd, _AND_reg16_RM16)
-DEFAULT_reg32_RM32(doAnd, _AND_reg32_RM32)
-DEFAULT_RM8_imm8(doAnd, _AND_RM8_imm8)
-DEFAULT_RM16_imm16(doAnd, _AND_RM16_imm16)
-DEFAULT_RM32_imm32(doAnd, _AND_RM32_imm32)
-DEFAULT_RM32_imm8(doAnd, _AND_RM32_imm8)
-DEFAULT_RM16_imm8(doAnd, _AND_RM16_imm8)
-DEFAULT_AL_imm8(doAnd, _AND_AL_imm8)
-DEFAULT_AX_imm16(doAnd, _AND_AX_imm16)
-DEFAULT_EAX_imm32(doAnd, _AND_EAX_imm32)
+DEFINE_INSTRUCTION_HANDLERS_GRP1(AND)
+DEFINE_INSTRUCTION_HANDLERS_GRP1(XOR)
+DEFINE_INSTRUCTION_HANDLERS_GRP1(OR)
+DEFINE_INSTRUCTION_HANDLERS_GRP5_READONLY(AND, TEST)
 
-DEFAULT_RM8_reg8(doXor, _XOR_RM8_reg8)
-DEFAULT_RM16_reg16(doXor, _XOR_RM16_reg16)
-DEFAULT_RM32_reg32(doXor, _XOR_RM32_reg32)
-DEFAULT_reg8_RM8(doXor, _XOR_reg8_RM8)
-DEFAULT_reg16_RM16(doXor, _XOR_reg16_RM16)
-DEFAULT_reg32_RM32(doXor, _XOR_reg32_RM32)
-DEFAULT_RM8_imm8(doXor, _XOR_RM8_imm8)
-DEFAULT_RM16_imm16(doXor, _XOR_RM16_imm16)
-DEFAULT_RM32_imm32(doXor, _XOR_RM32_imm32)
-DEFAULT_RM16_imm8(doXor, _XOR_RM16_imm8)
-DEFAULT_RM32_imm8(doXor, _XOR_RM32_imm8)
-DEFAULT_AL_imm8(doXor, _XOR_AL_imm8)
-DEFAULT_AX_imm16(doXor, _XOR_AX_imm16)
-DEFAULT_EAX_imm32(doXor, _XOR_EAX_imm32)
-
-DEFAULT_RM8_reg8(doOr, _OR_RM8_reg8)
-DEFAULT_RM16_reg16(doOr, _OR_RM16_reg16)
-DEFAULT_RM32_reg32(doOr, _OR_RM32_reg32)
-DEFAULT_reg8_RM8(doOr, _OR_reg8_RM8)
-DEFAULT_reg16_RM16(doOr, _OR_reg16_RM16)
-DEFAULT_reg32_RM32(doOr, _OR_reg32_RM32)
-DEFAULT_RM8_imm8(doOr, _OR_RM8_imm8)
-DEFAULT_RM16_imm16(doOr, _OR_RM16_imm16)
-DEFAULT_RM32_imm32(doOr, _OR_RM32_imm32)
-DEFAULT_RM16_imm8(doOr, _OR_RM16_imm8)
-DEFAULT_RM32_imm8(doOr, _OR_RM32_imm8)
-DEFAULT_AL_imm8(doOr, _OR_AL_imm8)
-DEFAULT_AX_imm16(doOr, _OR_AX_imm16)
-DEFAULT_EAX_imm32(doOr, _OR_EAX_imm32)
-
-READONLY_RM8_reg8(doAnd, _TEST_RM8_reg8)
-READONLY_RM16_reg16(doAnd, _TEST_RM16_reg16)
-READONLY_RM32_reg32(doAnd, _TEST_RM32_reg32)
-READONLY_RM8_imm8(doAnd, _TEST_RM8_imm8)
-READONLY_RM16_imm16(doAnd, _TEST_RM16_imm16)
-READONLY_RM32_imm32(doAnd, _TEST_RM32_imm32)
-READONLY_AL_imm8(doAnd, _TEST_AL_imm8)
-READONLY_AX_imm16(doAnd, _TEST_AX_imm16)
-READONLY_EAX_imm32(doAnd, _TEST_EAX_imm32)
-
-DEFAULT_RM8_imm8(doROL, _ROL_RM8_imm8)
-DEFAULT_RM16_imm8(doROL, _ROL_RM16_imm8)
-DEFAULT_RM32_imm8(doROL, _ROL_RM32_imm8)
-DEFAULT_RM8_1(doROL, _ROL_RM8_1)
-DEFAULT_RM16_1(doROL, _ROL_RM16_1)
-DEFAULT_RM32_1(doROL, _ROL_RM32_1)
-DEFAULT_RM8_CL(doROL, _ROL_RM8_CL)
-DEFAULT_RM16_CL(doROL, _ROL_RM16_CL)
-DEFAULT_RM32_CL(doROL, _ROL_RM32_CL)
-
-DEFAULT_RM8_imm8(doROR, _ROR_RM8_imm8)
-DEFAULT_RM16_imm8(doROR, _ROR_RM16_imm8)
-DEFAULT_RM32_imm8(doROR, _ROR_RM32_imm8)
-DEFAULT_RM8_1(doROR, _ROR_RM8_1)
-DEFAULT_RM16_1(doROR, _ROR_RM16_1)
-DEFAULT_RM32_1(doROR, _ROR_RM32_1)
-DEFAULT_RM8_CL(doROR, _ROR_RM8_CL)
-DEFAULT_RM16_CL(doROR, _ROR_RM16_CL)
-DEFAULT_RM32_CL(doROR, _ROR_RM32_CL)
-
-DEFAULT_RM8_imm8(doSHL, _SHL_RM8_imm8)
-DEFAULT_RM16_imm8(doSHL, _SHL_RM16_imm8)
-DEFAULT_RM32_imm8(doSHL, _SHL_RM32_imm8)
-DEFAULT_RM8_1(doSHL, _SHL_RM8_1)
-DEFAULT_RM16_1(doSHL, _SHL_RM16_1)
-DEFAULT_RM32_1(doSHL, _SHL_RM32_1)
-DEFAULT_RM8_CL(doSHL, _SHL_RM8_CL)
-DEFAULT_RM16_CL(doSHL, _SHL_RM16_CL)
-DEFAULT_RM32_CL(doSHL, _SHL_RM32_CL)
-
-DEFAULT_RM8_imm8(doSHR, _SHR_RM8_imm8)
-DEFAULT_RM16_imm8(doSHR, _SHR_RM16_imm8)
-DEFAULT_RM32_imm8(doSHR, _SHR_RM32_imm8)
-DEFAULT_RM8_1(doSHR, _SHR_RM8_1)
-DEFAULT_RM16_1(doSHR, _SHR_RM16_1)
-DEFAULT_RM32_1(doSHR, _SHR_RM32_1)
-DEFAULT_RM8_CL(doSHR, _SHR_RM8_CL)
-DEFAULT_RM16_CL(doSHR, _SHR_RM16_CL)
-DEFAULT_RM32_CL(doSHR, _SHR_RM32_CL)
-
-DEFAULT_RM8_imm8(doSAR, _SAR_RM8_imm8)
-DEFAULT_RM16_imm8(doSAR, _SAR_RM16_imm8)
-DEFAULT_RM32_imm8(doSAR, _SAR_RM32_imm8)
-DEFAULT_RM8_1(doSAR, _SAR_RM8_1)
-DEFAULT_RM16_1(doSAR, _SAR_RM16_1)
-DEFAULT_RM32_1(doSAR, _SAR_RM32_1)
-DEFAULT_RM8_CL(doSAR, _SAR_RM8_CL)
-DEFAULT_RM16_CL(doSAR, _SAR_RM16_CL)
-DEFAULT_RM32_CL(doSAR, _SAR_RM32_CL)
-
-DEFAULT_RM8_imm8(doRCL, _RCL_RM8_imm8)
-DEFAULT_RM16_imm8(doRCL, _RCL_RM16_imm8)
-DEFAULT_RM32_imm8(doRCL, _RCL_RM32_imm8)
-DEFAULT_RM8_1(doRCL, _RCL_RM8_1)
-DEFAULT_RM16_1(doRCL, _RCL_RM16_1)
-DEFAULT_RM32_1(doRCL, _RCL_RM32_1)
-DEFAULT_RM8_CL(doRCL, _RCL_RM8_CL)
-DEFAULT_RM16_CL(doRCL, _RCL_RM16_CL)
-DEFAULT_RM32_CL(doRCL, _RCL_RM32_CL)
-
-DEFAULT_RM8_imm8(doRCR, _RCR_RM8_imm8)
-DEFAULT_RM16_imm8(doRCR, _RCR_RM16_imm8)
-DEFAULT_RM32_imm8(doRCR, _RCR_RM32_imm8)
-DEFAULT_RM8_1(doRCR, _RCR_RM8_1)
-DEFAULT_RM16_1(doRCR, _RCR_RM16_1)
-DEFAULT_RM32_1(doRCR, _RCR_RM32_1)
-DEFAULT_RM8_CL(doRCR, _RCR_RM8_CL)
-DEFAULT_RM16_CL(doRCR, _RCR_RM16_CL)
-DEFAULT_RM32_CL(doRCR, _RCR_RM32_CL)
+DEFINE_INSTRUCTION_HANDLERS_GRP3(ROL)
+DEFINE_INSTRUCTION_HANDLERS_GRP3(ROR)
+DEFINE_INSTRUCTION_HANDLERS_GRP3(SHL)
+DEFINE_INSTRUCTION_HANDLERS_GRP3(SHR)
+DEFINE_INSTRUCTION_HANDLERS_GRP3(SAR)
+DEFINE_INSTRUCTION_HANDLERS_GRP3(RCL)
+DEFINE_INSTRUCTION_HANDLERS_GRP3(RCR)
 
 void CPU::_CBW(Instruction&)
 {
@@ -188,7 +76,7 @@ void CPU::_SALC(Instruction&)
 }
 
 template <typename T>
-T CPU::doOr(T dest, T src)
+T CPU::doOR(T dest, T src)
 {
     T result = dest | src;
     updateFlags<T>(result);
@@ -198,7 +86,7 @@ T CPU::doOr(T dest, T src)
 }
 
 template<typename T>
-T CPU::doXor(T dest, T src)
+T CPU::doXOR(T dest, T src)
 {
     T result = dest ^ src;
     updateFlags<T>(result);
@@ -208,7 +96,7 @@ T CPU::doXor(T dest, T src)
 }
 
 template<typename T>
-T CPU::doAnd(T dest, T src)
+T CPU::doAND(T dest, T src)
 {
     T result = dest & src;
     updateFlags<T>(result);
@@ -373,25 +261,13 @@ void CPU::_NOT_RM32(Instruction& insn)
     doNOT<DWORD>(insn);
 }
 
-DEFAULT_RM16_imm8(doBt, _BT_RM16_imm8)
-DEFAULT_RM32_imm8(doBt, _BT_RM32_imm8)
-DEFAULT_RM16_reg16(doBt, _BT_RM16_reg16)
-DEFAULT_RM32_reg32(doBt, _BT_RM32_reg32)
-DEFAULT_RM16_imm8(doBtr, _BTR_RM16_imm8)
-DEFAULT_RM32_imm8(doBtr, _BTR_RM32_imm8)
-DEFAULT_RM16_reg16(doBtr, _BTR_RM16_reg16)
-DEFAULT_RM32_reg32(doBtr, _BTR_RM32_reg32)
-DEFAULT_RM16_imm8(doBtc, _BTC_RM16_imm8)
-DEFAULT_RM32_imm8(doBtc, _BTC_RM32_imm8)
-DEFAULT_RM16_reg16(doBtc, _BTC_RM16_reg16)
-DEFAULT_RM32_reg32(doBtc, _BTC_RM32_reg32)
-DEFAULT_RM16_imm8(doBts, _BTS_RM16_imm8)
-DEFAULT_RM32_imm8(doBts, _BTS_RM32_imm8)
-DEFAULT_RM16_reg16(doBts, _BTS_RM16_reg16)
-DEFAULT_RM32_reg32(doBts, _BTS_RM32_reg32)
+DEFINE_INSTRUCTION_HANDLERS_GRP2(BT)
+DEFINE_INSTRUCTION_HANDLERS_GRP2(BTR)
+DEFINE_INSTRUCTION_HANDLERS_GRP2(BTC)
+DEFINE_INSTRUCTION_HANDLERS_GRP2(BTS)
 
 template<typename T>
-T CPU::doBt(T src, int bitIndex)
+T CPU::doBT(T src, int bitIndex)
 {
     bitIndex &= BitSizeOfType<T>::bits - 1;
     setCF((src >> bitIndex) & 1);
@@ -399,7 +275,7 @@ T CPU::doBt(T src, int bitIndex)
 }
 
 template<typename T>
-T CPU::doBtr(T dest, int bitIndex)
+T CPU::doBTR(T dest, int bitIndex)
 {
     bitIndex &= BitSizeOfType<T>::bits - 1;
     T bitMask = 1 << bitIndex;
@@ -409,7 +285,7 @@ T CPU::doBtr(T dest, int bitIndex)
 }
 
 template<typename T>
-T CPU::doBts(T dest, int bitIndex)
+T CPU::doBTS(T dest, int bitIndex)
 {
     bitIndex &= BitSizeOfType<T>::bits - 1;
     T bitMask = 1 << bitIndex;
@@ -419,7 +295,7 @@ T CPU::doBts(T dest, int bitIndex)
 }
 
 template<typename T>
-T CPU::doBtc(T dest, int bitIndex)
+T CPU::doBTC(T dest, int bitIndex)
 {
     bitIndex &= BitSizeOfType<T>::bits - 1;
     T bitMask = 1 << bitIndex;

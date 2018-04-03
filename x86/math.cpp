@@ -37,7 +37,7 @@ inline void updateCpuMathFlags(CPU& cpu, QWORD result, T dest, T src)
 }
 
 template<typename T>
-QWORD CPU::doAdd(T dest, T src)
+QWORD CPU::doADD(T dest, T src)
 {
     QWORD result = (QWORD)dest + (QWORD)src;
     updateCpuMathFlags(*this, result, dest, src);
@@ -49,7 +49,7 @@ QWORD CPU::doAdd(T dest, T src)
 }
 
 template<typename T>
-QWORD CPU::doAdc(T dest, T src)
+QWORD CPU::doADC(T dest, T src)
 {
     QWORD result = (QWORD)dest + (QWORD)src + (QWORD)getCF();
 
@@ -62,7 +62,7 @@ QWORD CPU::doAdc(T dest, T src)
 }
 
 template<typename T>
-QWORD CPU::doSub(T dest, T src)
+QWORD CPU::doSUB(T dest, T src)
 {
     QWORD result = (QWORD)dest - (QWORD)src;
     cmpFlags<T>(result, dest, src);
@@ -70,7 +70,7 @@ QWORD CPU::doSub(T dest, T src)
 }
 
 template<typename T>
-QWORD CPU::doSbb(T dest, T src)
+QWORD CPU::doSBB(T dest, T src)
 {
     QWORD result = (QWORD)dest - (QWORD)src - (QWORD)getCF();
     cmpFlags<T>(result, dest, src);
@@ -78,7 +78,7 @@ QWORD CPU::doSbb(T dest, T src)
 }
 
 template<typename T>
-QWORD CPU::doMul(T acc, T multi)
+QWORD CPU::doMUL(T acc, T multi)
 {
     QWORD result = (QWORD)acc * (QWORD)multi;
     updateCpuMathFlags(*this, result, acc, multi);
@@ -86,91 +86,22 @@ QWORD CPU::doMul(T acc, T multi)
 }
 
 template<typename T>
-SIGNED_QWORD CPU::doImul(T acc, T multi)
+SIGNED_QWORD CPU::doIMUL(T acc, T multi)
 {
     // FIXME: This function should protect against T being an unsigned type.
     SIGNED_QWORD result = (SIGNED_QWORD)acc * (SIGNED_QWORD)multi;
     return result;
 }
 
-DEFAULT_RM8_reg8(doAdd, _ADD_RM8_reg8)
-DEFAULT_RM16_reg16(doAdd, _ADD_RM16_reg16)
-DEFAULT_RM32_reg32(doAdd, _ADD_RM32_reg32)
-DEFAULT_reg8_RM8(doAdd, _ADD_reg8_RM8)
-DEFAULT_reg16_RM16(doAdd, _ADD_reg16_RM16)
-DEFAULT_reg32_RM32(doAdd, _ADD_reg32_RM32)
-DEFAULT_RM8_imm8(doAdd, _ADD_RM8_imm8)
-DEFAULT_RM16_imm16(doAdd, _ADD_RM16_imm16)
-DEFAULT_RM32_imm32(doAdd, _ADD_RM32_imm32)
-DEFAULT_RM16_imm8(doAdd, _ADD_RM16_imm8)
-DEFAULT_RM32_imm8(doAdd, _ADD_RM32_imm8)
-DEFAULT_AL_imm8(doAdd, _ADD_AL_imm8)
-DEFAULT_AX_imm16(doAdd, _ADD_AX_imm16)
-DEFAULT_EAX_imm32(doAdd, _ADD_EAX_imm32)
-
-DEFAULT_RM8_reg8(doAdc, _ADC_RM8_reg8)
-DEFAULT_RM16_reg16(doAdc, _ADC_RM16_reg16)
-DEFAULT_RM32_reg32(doAdc, _ADC_RM32_reg32)
-DEFAULT_reg8_RM8(doAdc, _ADC_reg8_RM8)
-DEFAULT_reg16_RM16(doAdc, _ADC_reg16_RM16)
-DEFAULT_reg32_RM32(doAdc, _ADC_reg32_RM32)
-DEFAULT_RM8_imm8(doAdc, _ADC_RM8_imm8)
-DEFAULT_RM16_imm16(doAdc, _ADC_RM16_imm16)
-DEFAULT_RM32_imm32(doAdc, _ADC_RM32_imm32)
-DEFAULT_RM16_imm8(doAdc, _ADC_RM16_imm8)
-DEFAULT_RM32_imm8(doAdc, _ADC_RM32_imm8)
-DEFAULT_AL_imm8(doAdc, _ADC_AL_imm8)
-DEFAULT_AX_imm16(doAdc, _ADC_AX_imm16)
-DEFAULT_EAX_imm32(doAdc, _ADC_EAX_imm32)
-
-DEFAULT_RM8_reg8(doSub, _SUB_RM8_reg8)
-DEFAULT_RM16_reg16(doSub, _SUB_RM16_reg16)
-DEFAULT_RM32_reg32(doSub, _SUB_RM32_reg32)
-DEFAULT_reg8_RM8(doSub, _SUB_reg8_RM8)
-DEFAULT_reg16_RM16(doSub, _SUB_reg16_RM16)
-DEFAULT_reg32_RM32(doSub, _SUB_reg32_RM32)
-DEFAULT_RM8_imm8(doSub, _SUB_RM8_imm8)
-DEFAULT_RM16_imm16(doSub, _SUB_RM16_imm16)
-DEFAULT_RM32_imm32(doSub, _SUB_RM32_imm32)
-DEFAULT_RM16_imm8(doSub, _SUB_RM16_imm8)
-DEFAULT_RM32_imm8(doSub, _SUB_RM32_imm8)
-DEFAULT_AL_imm8(doSub, _SUB_AL_imm8)
-DEFAULT_AX_imm16(doSub, _SUB_AX_imm16)
-DEFAULT_EAX_imm32(doSub, _SUB_EAX_imm32)
-
-DEFAULT_RM8_reg8(doSbb, _SBB_RM8_reg8)
-DEFAULT_RM16_reg16(doSbb, _SBB_RM16_reg16)
-DEFAULT_RM32_reg32(doSbb, _SBB_RM32_reg32)
-DEFAULT_reg8_RM8(doSbb, _SBB_reg8_RM8)
-DEFAULT_reg16_RM16(doSbb, _SBB_reg16_RM16)
-DEFAULT_reg32_RM32(doSbb, _SBB_reg32_RM32)
-DEFAULT_RM8_imm8(doSbb, _SBB_RM8_imm8)
-DEFAULT_RM16_imm16(doSbb, _SBB_RM16_imm16)
-DEFAULT_RM32_imm32(doSbb, _SBB_RM32_imm32)
-DEFAULT_RM16_imm8(doSbb, _SBB_RM16_imm8)
-DEFAULT_RM32_imm8(doSbb, _SBB_RM32_imm8)
-DEFAULT_AL_imm8(doSbb, _SBB_AL_imm8)
-DEFAULT_AX_imm16(doSbb, _SBB_AX_imm16)
-DEFAULT_EAX_imm32(doSbb, _SBB_EAX_imm32)
-
-READONLY_RM8_reg8(doSub, _CMP_RM8_reg8)
-READONLY_RM16_reg16(doSub, _CMP_RM16_reg16)
-READONLY_RM32_reg32(doSub, _CMP_RM32_reg32)
-READONLY_reg8_RM8(doSub, _CMP_reg8_RM8)
-READONLY_reg16_RM16(doSub, _CMP_reg16_RM16)
-READONLY_reg32_RM32(doSub, _CMP_reg32_RM32)
-READONLY_RM8_imm8(doSub, _CMP_RM8_imm8)
-READONLY_RM16_imm16(doSub, _CMP_RM16_imm16)
-READONLY_RM32_imm32(doSub, _CMP_RM32_imm32)
-READONLY_RM16_imm8(doSub, _CMP_RM16_imm8)
-READONLY_RM32_imm8(doSub, _CMP_RM32_imm8)
-READONLY_AL_imm8(doSub, _CMP_AL_imm8)
-READONLY_AX_imm16(doSub, _CMP_AX_imm16)
-READONLY_EAX_imm32(doSub, _CMP_EAX_imm32)
+DEFINE_INSTRUCTION_HANDLERS_GRP1(ADD)
+DEFINE_INSTRUCTION_HANDLERS_GRP1(ADC)
+DEFINE_INSTRUCTION_HANDLERS_GRP1(SUB)
+DEFINE_INSTRUCTION_HANDLERS_GRP1(SBB)
+DEFINE_INSTRUCTION_HANDLERS_GRP4_READONLY(SUB, CMP)
 
 void CPU::_MUL_RM8(Instruction& insn)
 {
-    regs.W.AX = doMul(regs.B.AL, insn.modrm().read8());
+    regs.W.AX = doMUL(regs.B.AL, insn.modrm().read8());
 
     if (regs.B.AH == 0x00) {
         setCF(0);
@@ -183,7 +114,7 @@ void CPU::_MUL_RM8(Instruction& insn)
 
 void CPU::_MUL_RM16(Instruction& insn)
 {
-    DWORD result = doMul(regs.W.AX, insn.modrm().read16());
+    DWORD result = doMUL(regs.W.AX, insn.modrm().read16());
     regs.W.AX = result & 0xFFFF;
     regs.W.DX = (result >> 16) & 0xFFFF;
 
@@ -198,7 +129,7 @@ void CPU::_MUL_RM16(Instruction& insn)
 
 void CPU::_MUL_RM32(Instruction& insn)
 {
-    QWORD result = doMul(regs.D.EAX, insn.modrm().read32());
+    QWORD result = doMUL(regs.D.EAX, insn.modrm().read32());
     setEAX(result & 0xFFFFFFFF);
     setEDX((result >> 32) & 0xFFFFFFFF);
 
@@ -214,7 +145,7 @@ void CPU::_MUL_RM32(Instruction& insn)
 void CPU::_IMUL_RM8(Instruction& insn)
 {
     SIGNED_BYTE value = insn.modrm().read8();
-    SIGNED_WORD result = doImul(static_cast<SIGNED_BYTE>(getAL()), value);
+    SIGNED_WORD result = doIMUL(static_cast<SIGNED_BYTE>(getAL()), value);
     regs.W.AX = result;
 
     if (result > 0x7F || result < -0x80) {
@@ -229,7 +160,7 @@ void CPU::_IMUL_RM8(Instruction& insn)
 void CPU::_IMUL_reg32_RM32_imm8(Instruction& insn)
 {
     SIGNED_DWORD value = insn.modrm().read32();
-    SIGNED_QWORD result = doImul(value, signExtend<SIGNED_DWORD>(insn.imm8()));
+    SIGNED_QWORD result = doIMUL(value, signExtend<SIGNED_DWORD>(insn.imm8()));
 
     insn.reg32() = result;
 
@@ -245,7 +176,7 @@ void CPU::_IMUL_reg32_RM32_imm8(Instruction& insn)
 void CPU::_IMUL_reg32_RM32_imm32(Instruction& insn)
 {
     SIGNED_DWORD value = insn.modrm().read32();
-    SIGNED_QWORD result = doImul(value, static_cast<SIGNED_DWORD>(insn.imm32()));
+    SIGNED_QWORD result = doIMUL(value, static_cast<SIGNED_DWORD>(insn.imm32()));
 
     insn.reg32() = result;
 
@@ -261,7 +192,7 @@ void CPU::_IMUL_reg32_RM32_imm32(Instruction& insn)
 void CPU::_IMUL_reg16_RM16_imm16(Instruction& insn)
 {
     SIGNED_WORD value = insn.modrm().read16();
-    SIGNED_DWORD result = doImul(value, static_cast<SIGNED_WORD>(insn.imm16()));
+    SIGNED_DWORD result = doIMUL(value, static_cast<SIGNED_WORD>(insn.imm16()));
 
     insn.reg16() = result;
 
@@ -278,7 +209,7 @@ void CPU::_IMUL_reg16_RM16(Instruction& insn)
 {
     SIGNED_WORD src = insn.modrm().read16();
     SIGNED_WORD dest = insn.reg16();
-    SIGNED_DWORD result = doImul(dest, src);
+    SIGNED_DWORD result = doIMUL(dest, src);
 
     insn.reg16() = result;
 
@@ -295,7 +226,7 @@ void CPU::_IMUL_reg32_RM32(Instruction& insn)
 {
     SIGNED_DWORD src = insn.modrm().read32();
     SIGNED_DWORD dest = insn.reg32();
-    SIGNED_QWORD result = doImul(dest, src);
+    SIGNED_QWORD result = doIMUL(dest, src);
 
     insn.reg32() = result;
 
@@ -311,7 +242,7 @@ void CPU::_IMUL_reg32_RM32(Instruction& insn)
 void CPU::_IMUL_reg16_RM16_imm8(Instruction& insn)
 {
     SIGNED_WORD value = insn.modrm().read16();
-    SIGNED_DWORD result = doImul(value, signExtend<SIGNED_WORD>(insn.imm8()));
+    SIGNED_DWORD result = doIMUL(value, signExtend<SIGNED_WORD>(insn.imm8()));
 
     insn.reg16() = result;
 
@@ -327,7 +258,7 @@ void CPU::_IMUL_reg16_RM16_imm8(Instruction& insn)
 void CPU::_IMUL_RM16(Instruction& insn)
 {
     SIGNED_WORD value = insn.modrm().read16();
-    SIGNED_DWORD result = doImul(static_cast<SIGNED_WORD>(getAX()), value);
+    SIGNED_DWORD result = doIMUL(static_cast<SIGNED_WORD>(getAX()), value);
     regs.W.AX = result;
     regs.W.DX = result >> 16;
 
@@ -343,7 +274,7 @@ void CPU::_IMUL_RM16(Instruction& insn)
 void CPU::_IMUL_RM32(Instruction& insn)
 {
     SIGNED_DWORD value = insn.modrm().read32();
-    SIGNED_QWORD result = doImul(static_cast<SIGNED_DWORD>(getEAX()), value);
+    SIGNED_QWORD result = doIMUL(static_cast<SIGNED_DWORD>(getEAX()), value);
     regs.D.EAX = result;
     regs.D.EDX = result >> 32;
 
@@ -467,7 +398,7 @@ void CPU::_IDIV_RM32(Instruction& insn)
 template<typename T>
 void CPU::doNEG(Instruction& insn)
 {
-    insn.modrm().write<T>(doSub((T)0, insn.modrm().read<T>()));
+    insn.modrm().write<T>(doSUB((T)0, insn.modrm().read<T>()));
 }
 
 void CPU::_NEG_RM8(Instruction& insn)
