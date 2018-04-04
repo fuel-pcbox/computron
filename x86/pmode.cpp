@@ -135,7 +135,7 @@ void CPU::dumpIDT()
     vlog(LogDump, "IDT { base:%08X, limit:%08X }", IDTR.base.get(), IDTR.limit);
     if (getPE()) {
         for (DWORD isr = 0; isr < (IDTR.limit / 16); ++isr) {
-            dumpDescriptor(getInterruptGate(isr));
+            dumpDescriptor(getInterruptDescriptor(isr));
         }
     }
 }

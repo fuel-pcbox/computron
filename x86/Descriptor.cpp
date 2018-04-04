@@ -58,18 +58,10 @@ Descriptor CPU::getDescriptor(WORD selector, SegmentRegisterIndex segmentRegiste
     return getDescriptor("LDT", LDTR.base, LDTR.limit, selector, true);
 }
 
-Gate CPU::getInterruptGate(WORD index)
+Descriptor CPU::getInterruptDescriptor(BYTE number)
 {
     ASSERT(getPE());
-    auto descriptor = getDescriptor("IDT", IDTR.base, IDTR.limit, index, false);
-    if (descriptor.isNull())
-        return Gate();
-    if (!descriptor.isGate()) {
-        vlog(LogCPU, "FUCK! IDT entry %02x is not a gate, but this:", index);
-        dumpDescriptor(descriptor);
-        return Gate();
-    }
-    return descriptor.asGate();
+    return getDescriptor("IDT", IDTR.base, IDTR.limit, number, false);
 }
 
 SegmentDescriptor CPU::getSegmentDescriptor(WORD selector, SegmentRegisterIndex segmentRegister)

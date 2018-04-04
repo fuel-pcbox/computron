@@ -213,7 +213,7 @@ public:
     void dumpDescriptor(const DataSegmentDescriptor&, const char* prefix = "");
     Descriptor getDescriptor(WORD selector, SegmentRegisterIndex = SegmentRegisterIndex::None);
     SegmentDescriptor getSegmentDescriptor(WORD selector, SegmentRegisterIndex = SegmentRegisterIndex::None);
-    Gate getInterruptGate(WORD index);
+    Descriptor getInterruptDescriptor(BYTE number);
     Descriptor getDescriptor(const char* tableName, LinearAddress tableBase, DWORD tableLimit, WORD index, bool indexIsSelector);
 
     SegmentRegisterIndex currentSegment() const { return m_segmentPrefix == SegmentRegisterIndex::None ? SegmentRegisterIndex::DS : m_segmentPrefix; }

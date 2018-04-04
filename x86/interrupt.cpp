@@ -129,7 +129,11 @@ void CPU::realModeInterrupt(BYTE isr, InterruptSource source)
 void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, std::optional<WORD> errorCode)
 {
     ASSERT(getPE());
-    auto gate = getInterruptGate(isr);
+    auto idtEntry = getInterruptDescriptor(isr);
+    if (!idtEntry.isTaskGate() && !idtEntry.isTrapGate() && !idtEntry.isInterruptGate()) {
+        throw GeneralProtectionFault(makeErrorCode(isr, 1, source), "Interrupt to invalid gate type");
+    }
+    auto& gate = idtEntry.asGate();
 
     if (source == InterruptSource::Internal) {
         if (gate.DPL() < getCPL()) {
@@ -163,8 +167,12 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, std::optional
         dumpDescriptor(descriptor);
     }
 
+    if (descriptor.isNull()) {
+        throw GeneralProtectionFault(source == InterruptSource::External, "Interrupt gate to null descriptor");
+    }
+
     if (descriptor.isError()) {
-        throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, source), "Interrupt gate to segment outside table limit");
+        throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, source), "Interrupt gate to descriptor outside table limit");
     }
 
     if (!descriptor.isCode()) {
@@ -180,20 +188,6 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, std::optional
         throw NotPresent(makeErrorCode(gate.selector(), 0, source), "Interrupt to non-present segment");
     }
 
-    bool isTrap = false;
-    switch (gate.type()) {
-    case 0x7: // 80286 Trap Gate (16-bit)
-    case 0xf: // 80386 Trap Gate (32-bit)
-        isTrap = true;
-        break;
-    case 0x6: // 80286 Interrupt Gate (16-bit)
-    case 0xe: // 80386 Interrupt Gate (32-bit)
-        break;
-    default:
-        // FIXME: What should be the error code here?
-        throw GeneralProtectionFault(isr, "Interrupt to bad gate type");
-    }
-
     DWORD offset = gate.offset();
     DWORD flags = getEFlags();
 
@@ -204,6 +198,9 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, std::optional
     DWORD originalEIP = getEIP();
 
     if (!gate.is32Bit() || !codeDescriptor.is32Bit()) {
+        if (offset & 0xffff0000) {
+            vlog(LogCPU, "Truncating interrupt entry offset from %04x:%08x to %04x:%08x", gate.selector(), offset, gate.selector(), offset & 0xffff);
+        }
         offset &= 0xffff;
     }
 
@@ -278,6 +275,9 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, std::optional
         push32(flags);
         push32(originalCS);
         push32(originalEIP);
+        if (errorCode.has_value()) {
+            push32(errorCode.value());
+        }
     } else {
 #ifdef DEBUG_JUMPS
         vlog(LogCPU, "Push 16-bit flags %04x @stack{%04x:%08x}", flags, getSS(), getESP());
@@ -286,16 +286,12 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, std::optional
         push16(flags);
         push16(originalCS);
         push16(originalEIP);
-    }
-
-    if (errorCode.has_value()) {
-        if (gate.is32Bit())
-            push32(errorCode.value());
-        else
+        if (errorCode.has_value()) {
             push16(errorCode.value());
+        }
     }
 
-    if (!isTrap)
+    if (!gate.isTrapGate())
         setIF(0);
     setTF(0);
     setRF(0);

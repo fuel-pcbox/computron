@@ -71,6 +71,9 @@ public:
     bool isNull() const { return m_DT == 0 && m_type == 0; }
 
     bool isNonconformingCode() const;
+    bool isTaskGate() const;
+    bool isTrapGate() const;
+    bool isInterruptGate() const;
 
     SegmentDescriptor& asSegmentDescriptor();
     SystemDescriptor& asSystemDescriptor();
@@ -329,4 +332,19 @@ inline bool Descriptor::isData() const
 inline bool Descriptor::isNonconformingCode() const
 {
     return isCode() && !asCodeSegmentDescriptor().conforming();
+}
+
+inline bool Descriptor::isTrapGate() const
+{
+    return isSystemDescriptor() && asSystemDescriptor().isTrapGate();
+}
+
+inline bool Descriptor::isInterruptGate() const
+{
+    return isSystemDescriptor() && asSystemDescriptor().isInterruptGate();
+}
+
+inline bool Descriptor::isTaskGate() const
+{
+    return isSystemDescriptor() && asSystemDescriptor().isTaskGate();
 }
