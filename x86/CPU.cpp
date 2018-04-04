@@ -1020,144 +1020,72 @@ void CPU::_XCHG_reg32_RM32(Instruction& insn)
     modrm.write32(tmp);
 }
 
+template<typename T, class Accessor>
+void CPU::doDEC(Accessor value)
+{
+    setOF(value == (T)std::numeric_limits<typename std::make_signed<T>::type>::min());
+    value.set(value - 1);
+    adjustFlag32(value, value + 1, 1);
+    updateFlags<T>(value);
+}
+
+template<typename T, class Accessor>
+void CPU::doINC(Accessor value)
+{
+    setOF(value == (T)std::numeric_limits<typename std::make_signed<T>::type>::max());
+    value.set(value + 1);
+    adjustFlag32(value, value - 1, 1);
+    updateFlags<T>(value);
+}
+
 void CPU::_DEC_reg16(Instruction& insn)
 {
-    auto& reg = insn.reg16();
-    DWORD i = reg;
-
-    /* Overflow if we'll wrap. */
-    setOF(reg == 0x8000);
-
-    --i;
-    adjustFlag32(i, reg, 1);
-    updateFlags16(i);
-    --reg;
+    doDEC<WORD>(RegisterAccessor(insn.reg16()));
 }
 
 void CPU::_DEC_reg32(Instruction& insn)
 {
-    auto& reg = insn.reg32();
-    QWORD i = reg;
-
-    /* Overflow if we'll wrap. */
-    setOF(reg == 0x80000000);
-
-    --i;
-    adjustFlag32(i, reg, 1);
-    updateFlags32(i);
-    --reg;
+    doDEC<DWORD>(RegisterAccessor(insn.reg32()));
 }
 
 void CPU::_INC_reg16(Instruction& insn)
 {
-    auto& reg = insn.reg16();
-    DWORD i = reg;
-
-    /* Overflow if we'll wrap. */
-    setOF(i == 0x7FFF);
-
-    ++i;
-    adjustFlag32(i, reg, 1);
-    updateFlags16(i);
-    ++reg;
+    doINC<WORD>(RegisterAccessor(insn.reg16()));
 }
 
 void CPU::_INC_reg32(Instruction& insn)
 {
-    auto& reg = insn.reg32();
-    QWORD i = reg;
-
-    /* Overflow if we'll wrap. */
-    setOF(i == 0x7FFFFFFF);
-
-    ++i;
-    adjustFlag32(i, reg, 1);
-    updateFlags32(i);
-    ++reg;
+    doINC<DWORD>(RegisterAccessor(insn.reg32()));
 }
 
 void CPU::_INC_RM16(Instruction& insn)
 {
-    auto& modrm = insn.modrm();
-    auto value = modrm.read16();
-    DWORD i = value;
-
-    /* Overflow if we'll wrap. */
-    setOF(value == 0x7FFF);
-
-    ++i;
-    adjustFlag32(i, value, 1);
-    updateFlags16(i);
-    modrm.write16(value + 1);
+    doINC<WORD>(insn.modrm().accessor16());
 }
 
 void CPU::_INC_RM32(Instruction& insn)
 {
-    auto& modrm = insn.modrm();
-    auto value = modrm.read32();
-    QWORD i = value;
-
-    /* Overflow if we'll wrap. */
-    setOF(value == 0x7FFFFFFF);
-
-    ++i;
-    adjustFlag32(i, value, 1);
-    updateFlags32(i);
-    modrm.write32(value + 1);
+    doINC<DWORD>(insn.modrm().accessor32());
 }
 
 void CPU::_DEC_RM16(Instruction& insn)
 {
-    auto& modrm = insn.modrm();
-    auto value = modrm.read16();
-    DWORD i = value;
-
-    /* Overflow if we'll wrap. */
-    setOF(value == 0x8000);
-
-    --i;
-    adjustFlag32(i, value, 1); // XXX: i can be (dword)(-1)...
-    updateFlags16(i);
-    modrm.write16(value - 1);
+    doDEC<WORD>(insn.modrm().accessor16());
 }
 
 void CPU::_DEC_RM32(Instruction& insn)
 {
-    auto& modrm = insn.modrm();
-    auto value = modrm.read32();
-    QWORD i = value;
-
-    /* Overflow if we'll wrap. */
-    setOF(value == 0x80000000);
-
-    --i;
-    adjustFlag32(i, value, 1); // XXX: i can be (dword)(-1)...
-    updateFlags32(i);
-    modrm.write32(value - 1);
+    doDEC<DWORD>(insn.modrm().accessor32());
 }
 
 void CPU::_INC_RM8(Instruction& insn)
 {
-    auto& modrm = insn.modrm();
-    auto value = modrm.read8();
-    WORD i = value;
-    setOF(value == 0x7F);
-    i++;
-    adjustFlag32(i, value, 1);
-    updateFlags8(i);
-    modrm.write8(value + 1);
+    doINC<BYTE>(insn.modrm().accessor8());
 }
 
 void CPU::_DEC_RM8(Instruction& insn)
 {
-    auto& modrm = insn.modrm();
-    auto value = modrm.read8();
-    WORD i = value;
-    setOF(value == 0x80);
-    i--;
-    adjustFlag32(i, value, 1);
-    updateFlags8(i);
-    modrm.write8(value - 1);
+    doDEC<BYTE>(insn.modrm().accessor8());
 }
 
 template<typename T>

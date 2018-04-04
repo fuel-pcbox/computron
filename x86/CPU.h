@@ -907,6 +907,9 @@ protected:
     void _NEG_RM16(Instruction&);
     void _NEG_RM32(Instruction&);
 
+    template<typename T, class Accessor> void doDEC(Accessor);
+    template<typename T, class Accessor> void doINC(Accessor);
+
     void _INC_RM8(Instruction&);
     void _INC_RM16(Instruction&);
     void _INC_RM32(Instruction&);

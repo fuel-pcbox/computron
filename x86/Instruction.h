@@ -67,6 +67,17 @@ private:
     const BYTE* m_data { nullptr };
 };
 
+template<typename T>
+class RegisterAccessor {
+public:
+    RegisterAccessor(T& reg) : m_reg(reg) { }
+    operator T() const { return m_reg; }
+    void set(T value) { m_reg = value; }
+
+private:
+    T& m_reg;
+};
+
 class MemoryOrRegisterReference {
     friend class CPU;
     friend class Instruction;
@@ -81,6 +92,11 @@ public:
     void write16(WORD);
     void write32(DWORD);
     void writeClearing16(WORD, bool o32);
+
+    template<typename T> class Accessor;
+    Accessor<BYTE> accessor8();
+    Accessor<WORD> accessor16();
+    Accessor<DWORD> accessor32();
 
     QString toStringO8() const;
     QString toStringO16() const;
@@ -219,5 +235,21 @@ private:
     InstructionDescriptor* m_descriptor { nullptr };
     CPU* m_cpu { nullptr };
 };
+
+template<typename T>
+class MemoryOrRegisterReference::Accessor {
+public:
+    operator T() const { return m_modrm.read<T>(); }
+    void set(T value) { m_modrm.write<T>(value); }
+
+private:
+    friend class MemoryOrRegisterReference;
+    explicit Accessor(MemoryOrRegisterReference& modrm) : m_modrm(modrm) { }
+    MemoryOrRegisterReference& m_modrm;
+};
+
+inline MemoryOrRegisterReference::Accessor<BYTE> MemoryOrRegisterReference::accessor8() { return Accessor<BYTE>(*this); }
+inline MemoryOrRegisterReference::Accessor<WORD> MemoryOrRegisterReference::accessor16() { return Accessor<WORD>(*this); }
+inline MemoryOrRegisterReference::Accessor<DWORD> MemoryOrRegisterReference::accessor32() { return Accessor<DWORD>(*this); }
 
 void buildOpcodeTablesIfNeeded();
