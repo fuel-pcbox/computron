@@ -1021,19 +1021,21 @@ void CPU::_XCHG_reg32_RM32(Instruction& insn)
 }
 
 template<typename T, class Accessor>
-void CPU::doDEC(Accessor value)
+void CPU::doDEC(Accessor accessor)
 {
+    T value = accessor.get();
     setOF(value == (T)std::numeric_limits<typename std::make_signed<T>::type>::min());
-    value.set(value - 1);
+    accessor.set(--value);
     adjustFlag32(value, value + 1, 1);
     updateFlags<T>(value);
 }
 
 template<typename T, class Accessor>
-void CPU::doINC(Accessor value)
+void CPU::doINC(Accessor accessor)
 {
+    T value = accessor.get();
     setOF(value == (T)std::numeric_limits<typename std::make_signed<T>::type>::max());
-    value.set(value + 1);
+    accessor.set(++value);
     adjustFlag32(value, value - 1, 1);
     updateFlags<T>(value);
 }

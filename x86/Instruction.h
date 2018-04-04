@@ -71,7 +71,7 @@ template<typename T>
 class RegisterAccessor {
 public:
     RegisterAccessor(T& reg) : m_reg(reg) { }
-    operator T() const { return m_reg; }
+    T get() const { return m_reg; }
     void set(T value) { m_reg = value; }
 
 private:
@@ -239,7 +239,7 @@ private:
 template<typename T>
 class MemoryOrRegisterReference::Accessor {
 public:
-    operator T() const { return m_modrm.read<T>(); }
+    T get() const { return m_modrm.read<T>(); }
     void set(T value) { m_modrm.write<T>(value); }
 
 private:
