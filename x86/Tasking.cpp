@@ -102,7 +102,7 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
     TSSDescriptor outgoingTSSDescriptor = outgoingDescriptor.asTSSDescriptor();
     ASSERT(outgoingTSSDescriptor.isTSS());
 
-    TSS outgoingTSS(*this, LinearAddress(TR.base), outgoingTSSDescriptor.is32Bit());
+    TSS outgoingTSS(*this, TR.base, outgoingTSSDescriptor.is32Bit());
 
     outgoingTSS.setEAX(getEAX());
     outgoingTSS.setEBX(getEBX());
@@ -138,7 +138,7 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
     if (getPG())
         outgoingTSS.setCR3(getCR3());
 
-    TSS incomingTSS(*this, LinearAddress(incomingTSSDescriptor.base()), incomingTSSDescriptor.is32Bit());
+    TSS incomingTSS(*this, incomingTSSDescriptor.base(), incomingTSSDescriptor.is32Bit());
 
 #ifdef DEBUG_TASK_SWITCH
     vlog(LogCPU, "Outgoing TSS @ %08x:", outgoingTSSDescriptor.base());
@@ -243,7 +243,7 @@ void CPU::taskSwitch(WORD task, JumpType source)
 
 TSS CPU::currentTSS()
 {
-    return TSS(*this, LinearAddress(TR.base), TR.is32Bit);
+    return TSS(*this, TR.base, TR.is32Bit);
 }
 
 TSS::TSS(CPU& cpu, LinearAddress linearAddress, bool is32Bit)
