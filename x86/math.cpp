@@ -77,14 +77,6 @@ QWORD CPU::doSBB(T dest, T src)
     return result;
 }
 
-template<typename T>
-SIGNED_QWORD CPU::doIMUL(T acc, T multi)
-{
-    // FIXME: This function should protect against T being an unsigned type.
-    SIGNED_QWORD result = (SIGNED_QWORD)acc * (SIGNED_QWORD)multi;
-    return result;
-}
-
 DEFINE_INSTRUCTION_HANDLERS_GRP1(ADD)
 DEFINE_INSTRUCTION_HANDLERS_GRP1(ADC)
 DEFINE_INSTRUCTION_HANDLERS_GRP1(SUB)
@@ -123,149 +115,72 @@ void CPU::_MUL_RM32(Instruction& insn)
     doMUL<DWORD>(getEAX(), insn.modrm().read32(), regs.D.EDX, regs.D.EAX);
 }
 
-void CPU::_IMUL_RM8(Instruction& insn)
+template<typename T>
+void CPU::doIMUL(T f1, T f2, T& resultHigh, T& resultLow)
 {
-    SIGNED_BYTE value = insn.modrm().read8();
-    SIGNED_WORD result = doIMUL(static_cast<SIGNED_BYTE>(getAL()), value);
-    regs.W.AX = result;
+    typedef typename TypeDoubler<T>::type DT;
+    DT result = (DT)f1 * (DT)f2;
+    resultLow = result & MasksForType<T>::allBits;
+    resultHigh = (result >> BitSizeOfType<T>::bits) & MasksForType<T>::allBits;
 
-    if (result > 0x7F || result < -0x80) {
+    if (result > std::numeric_limits<T>::max() || result < std::numeric_limits<T>::min()) {
         setCF(1);
         setOF(1);
     } else {
         setCF(0);
         setOF(0);
     }
+}
+
+void CPU::_IMUL_RM8(Instruction& insn)
+{
+    doIMUL<SIGNED_BYTE>(insn.modrm().read8(), getAL(), (SIGNED_BYTE&)regs.B.AH, (SIGNED_BYTE&)regs.B.AL);
 }
 
 void CPU::_IMUL_reg32_RM32_imm8(Instruction& insn)
 {
-    SIGNED_DWORD value = insn.modrm().read32();
-    SIGNED_QWORD result = doIMUL(value, signExtend<SIGNED_DWORD>(insn.imm8()));
-
-    insn.reg32() = result;
-
-    if (result > 0x7FFFFFFFLL || result < -0x80000000LL) {
-        setCF(1);
-        setOF(1);
-    } else {
-        setCF(0);
-        setOF(0);
-    }
+    SIGNED_DWORD resultHigh;
+    doIMUL<SIGNED_DWORD>(insn.modrm().read32(), signExtend<SIGNED_DWORD>(insn.imm8()), resultHigh, (SIGNED_DWORD&)insn.reg32());
 }
 
 void CPU::_IMUL_reg32_RM32_imm32(Instruction& insn)
 {
-    SIGNED_DWORD value = insn.modrm().read32();
-    SIGNED_QWORD result = doIMUL(value, static_cast<SIGNED_DWORD>(insn.imm32()));
-
-    insn.reg32() = result;
-
-    if (result > 0x7FFFFFFFLL || result < -0x80000000LL) {
-        setCF(1);
-        setOF(1);
-    } else {
-        setCF(0);
-        setOF(0);
-    }
+    SIGNED_DWORD resultHigh;
+    doIMUL<SIGNED_DWORD>(insn.modrm().read32(), insn.imm32(), resultHigh, (SIGNED_DWORD&)insn.reg32());
 }
 
 void CPU::_IMUL_reg16_RM16_imm16(Instruction& insn)
 {
-    SIGNED_WORD value = insn.modrm().read16();
-    SIGNED_DWORD result = doIMUL(value, static_cast<SIGNED_WORD>(insn.imm16()));
-
-    insn.reg16() = result;
-
-    if (result > 0x7FFF || result < -0x8000) {
-        setCF(1);
-        setOF(1);
-    } else {
-        setCF(0);
-        setOF(0);
-    }
+    SIGNED_WORD resultHigh;
+    doIMUL<SIGNED_WORD>(insn.modrm().read16(), insn.imm16(), resultHigh, (SIGNED_WORD&)insn.reg16());
 }
 
 void CPU::_IMUL_reg16_RM16(Instruction& insn)
 {
-    SIGNED_WORD src = insn.modrm().read16();
-    SIGNED_WORD dest = insn.reg16();
-    SIGNED_DWORD result = doIMUL(dest, src);
-
-    insn.reg16() = result;
-
-    if (result > 0x7FFF || result < -0x8000) {
-        setCF(1);
-        setOF(1);
-    } else {
-        setCF(0);
-        setOF(0);
-    }
+    SIGNED_WORD resultHigh;
+    doIMUL<SIGNED_WORD>(insn.reg16(), insn.modrm().read16(), resultHigh, (SIGNED_WORD&)insn.reg16());
 }
 
 void CPU::_IMUL_reg32_RM32(Instruction& insn)
 {
-    SIGNED_DWORD src = insn.modrm().read32();
-    SIGNED_DWORD dest = insn.reg32();
-    SIGNED_QWORD result = doIMUL(dest, src);
-
-    insn.reg32() = result;
-
-    if (result > 0x7FFFFFFFLL || result < -0x80000000LL) {
-        setCF(1);
-        setOF(1);
-    } else {
-        setCF(0);
-        setOF(0);
-    }
+    SIGNED_DWORD resultHigh;
+    doIMUL<SIGNED_DWORD>(insn.reg32(), insn.modrm().read32(), resultHigh, (SIGNED_DWORD&)insn.reg32());
 }
 
 void CPU::_IMUL_reg16_RM16_imm8(Instruction& insn)
 {
-    SIGNED_WORD value = insn.modrm().read16();
-    SIGNED_DWORD result = doIMUL(value, signExtend<SIGNED_WORD>(insn.imm8()));
-
-    insn.reg16() = result;
-
-    if (result > 0x7FFF || result < -0x8000) {
-        setCF(1);
-        setOF(1);
-    } else {
-        setCF(0);
-        setOF(0);
-    }
+    SIGNED_WORD resultHigh;
+    doIMUL<SIGNED_WORD>(insn.modrm().read16(), signExtend<SIGNED_WORD>(insn.imm8()), resultHigh, (SIGNED_WORD&)insn.reg16());
 }
 
 void CPU::_IMUL_RM16(Instruction& insn)
 {
-    SIGNED_WORD value = insn.modrm().read16();
-    SIGNED_DWORD result = doIMUL(static_cast<SIGNED_WORD>(getAX()), value);
-    regs.W.AX = result;
-    regs.W.DX = result >> 16;
-
-    if (result > 0x7FFF || result < -0x8000) {
-        setCF(1);
-        setOF(1);
-    } else {
-        setCF(0);
-        setOF(0);
-    }
+    doIMUL<SIGNED_WORD>(insn.modrm().read16(), getAX(), (SIGNED_WORD&)regs.W.DX, (SIGNED_WORD&)regs.W.AX);
 }
 
 void CPU::_IMUL_RM32(Instruction& insn)
 {
-    SIGNED_DWORD value = insn.modrm().read32();
-    SIGNED_QWORD result = doIMUL(static_cast<SIGNED_DWORD>(getEAX()), value);
-    regs.D.EAX = result;
-    regs.D.EDX = result >> 32;
-
-    if (result > 0x7FFFFFFFLL || result < -0x80000000LL) {
-        setCF(1);
-        setOF(1);
-    } else {
-        setCF(0);
-        setOF(0);
-    }
+    doIMUL<SIGNED_DWORD>(insn.modrm().read32(), getEAX(), (SIGNED_DWORD&)regs.D.EDX, (SIGNED_DWORD&)regs.D.EAX);
 }
 
 template<typename T>

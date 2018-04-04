@@ -1212,7 +1212,7 @@ private:
     template<typename T> QWORD doADC(T, T);
     template<typename T> QWORD doSUB(T, T);
     template<typename T> QWORD doSBB(T, T);
-    template<typename T> SIGNED_QWORD doIMUL(T, T);
+    template<typename T> void doIMUL(T f1, T f2, T& resultHigh, T& resultLow);
     template<typename T> void doMUL(T f1, T f2, T& resultHigh, T& resultLow);
     template<typename T> void doDIV(T dividendHigh, T dividendLow, T divisor, T& quotient, T& remainder);
     template<typename T> void doIDIV(T dividendHigh, T dividendLow, T divisor, T& quotient, T& remainder);
