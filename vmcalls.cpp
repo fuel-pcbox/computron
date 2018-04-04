@@ -248,29 +248,29 @@ void vm_handleE6(CPU& cpu)
 }
 
 
-static void bios_disk_read(FILE* fp, DiskDrive& drive, WORD cylinder, WORD head, WORD sector, WORD count, WORD segment, WORD offset)
+static void bios_disk_read(CPU& cpu, FILE* fp, DiskDrive& drive, WORD cylinder, WORD head, WORD sector, WORD count, WORD segment, WORD offset)
 {
     auto lba = drive.toLBA(cylinder, head, sector);
 
     if (options.disklog)
         vlog(LogDisk, "%s reading %u sectors at %u/%u/%u (LBA %u) to %04x:%04x", qPrintable(drive.name()), count, cylinder, head, sector, lba, segment, offset);
 
-    void* destination = g_cpu->memoryPointer(LogicalAddress(segment, offset));
+    void* destination = cpu.memoryPointer(LogicalAddress(segment, offset));
     fread(destination, drive.bytesPerSector(), count, fp);
 }
 
-static void bios_disk_write(FILE* fp, DiskDrive& drive, WORD cylinder, WORD head, WORD sector, WORD count, WORD segment, WORD offset)
+static void bios_disk_write(CPU& cpu, FILE* fp, DiskDrive& drive, WORD cylinder, WORD head, WORD sector, WORD count, WORD segment, WORD offset)
 {
     auto lba = drive.toLBA(cylinder, head, sector);
 
     if (options.disklog)
         vlog(LogDisk, "%s writing %u sectors at %u/%u/%u (LBA %u) from %04x:%04x", qPrintable(drive.name()), count, cylinder, head, sector, lba, segment, offset);
 
-    void* source = g_cpu->memoryPointer(LogicalAddress(segment, offset));
+    void* source = cpu.memoryPointer(LogicalAddress(segment, offset));
     fwrite(source, drive.bytesPerSector(), count, fp);
 }
 
-static void bios_disk_verify(FILE* fp, DiskDrive& drive, WORD cylinder, WORD head, WORD sector, WORD count, WORD segment, WORD offset)
+static void bios_disk_verify(CPU&, FILE* fp, DiskDrive& drive, WORD cylinder, WORD head, WORD sector, WORD count, WORD segment, WORD offset)
 {
     auto lba = drive.toLBA(cylinder, head, sector);
 
@@ -292,11 +292,11 @@ void bios_disk_call(CPU& cpu, DiskCallFunction function)
     // This is a hack to support the custom Computron BIOS. We should not be here in PE=1 mode.
     ASSERT(!cpu.getPE());
 
-    WORD cylinder = g_cpu->getCH() | ((g_cpu->getCL() & 0xc0) << 2);
-    WORD sector = g_cpu->getCL() & 0x3f;
-    BYTE driveIndex = g_cpu->getDL();
-    BYTE head = g_cpu->getDH();
-    BYTE sectorCount = g_cpu->getAL();
+    WORD cylinder = cpu.getCH() | ((cpu.getCL() & 0xc0) << 2);
+    WORD sector = cpu.getCL() & 0x3f;
+    BYTE driveIndex = cpu.getDL();
+    BYTE head = cpu.getDH();
+    BYTE sectorCount = cpu.getAL();
     FILE* fp;
     DWORD lba;
 
@@ -345,13 +345,13 @@ void bios_disk_call(CPU& cpu, DiskCallFunction function)
 
     switch (function) {
     case ReadSectors:
-        bios_disk_read(fp, *drive, cylinder, head, sector, sectorCount, cpu.getES(), cpu.getBX());
+        bios_disk_read(cpu, fp, *drive, cylinder, head, sector, sectorCount, cpu.getES(), cpu.getBX());
         break;
     case WriteSectors:
-        bios_disk_write(fp, *drive, cylinder, head, sector, sectorCount, cpu.getES(), cpu.getBX());
+        bios_disk_write(cpu, fp, *drive, cylinder, head, sector, sectorCount, cpu.getES(), cpu.getBX());
         break;
     case VerifySectors:
-        bios_disk_verify(fp, *drive, cylinder, head, sector, sectorCount, cpu.getES(), cpu.getBX());
+        bios_disk_verify(cpu, fp, *drive, cylinder, head, sector, sectorCount, cpu.getES(), cpu.getBX());
         break;
     }
 
