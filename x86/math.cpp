@@ -277,10 +277,9 @@ void CPU::doDIV(T dividendHigh, T dividendLow, T divisor, T& quotient, T& remain
 
     typedef typename TypeDoubler<T>::type DT;
     DT dividend = weld<DT>(dividendHigh, dividendLow);
-
     DT result = dividend / divisor;
-    if (result > MasksForType<T>::allBits) {
-        throw DivideError(QString("Unsigned divide overflow (%1 / %2 = %3)").arg(dividend).arg(divisor).arg(result));
+    if (result > std::numeric_limits<T>::max() || result < std::numeric_limits<T>::min()) {
+        throw DivideError(QString("Divide overflow (%1 / %2 = %3 { range = %4 - %5 })").arg(dividend).arg(divisor).arg(result).arg(std::numeric_limits<T>::min()).arg(std::numeric_limits<T>::max()));
     }
 
     quotient = result;
@@ -304,56 +303,17 @@ void CPU::_DIV_RM32(Instruction& insn)
 
 void CPU::_IDIV_RM8(Instruction& insn)
 {
-    SIGNED_BYTE value = (SIGNED_BYTE)insn.modrm().read8();
-    SIGNED_WORD tAX = (SIGNED_WORD)regs.W.AX;
-
-    if (value == 0) {
-        throw DivideError("Divide by zero");
-    }
-
-    SIGNED_WORD result = tAX / value;
-    if (result > 0x7f || result < -0x80) {
-        throw DivideError(QString("Signed divide overflow (%1 / %2 = %3)").arg(tAX).arg(value).arg(result));
-    }
-
-    regs.B.AL = (SIGNED_BYTE)(result);
-    regs.B.AH = (SIGNED_BYTE)(tAX % value);
+    doDIV<SIGNED_BYTE>(getAH(), getAL(), insn.modrm().read8(), (SIGNED_BYTE&)regs.B.AL, (SIGNED_BYTE&)regs.B.AH);
 }
 
 void CPU::_IDIV_RM16(Instruction& insn)
 {
-    SIGNED_WORD value = insn.modrm().read16();
-    SIGNED_DWORD tDXAX = (regs.W.AX + (regs.W.DX << 16));
-
-    if (value == 0) {
-        throw DivideError("Divide by zero");
-    }
-
-    SIGNED_DWORD result = tDXAX / value;
-    if (result > 0x7fff || result < -0x8000) {
-        throw DivideError(QString("Signed divide overflow (%1 / %2 = %3)").arg(tDXAX).arg(value).arg(result));
-    }
-
-    regs.W.AX = (SIGNED_WORD)(result);
-    regs.W.DX = (SIGNED_WORD)(tDXAX % value);
+    doDIV<SIGNED_WORD>(getDX(), getAX(), insn.modrm().read16(), (SIGNED_WORD&)regs.W.AX, (SIGNED_WORD&)regs.W.DX);
 }
 
 void CPU::_IDIV_RM32(Instruction& insn)
 {
-    SIGNED_DWORD value = insn.modrm().read32();
-    SIGNED_QWORD tEDXEAX = ((QWORD)regs.D.EAX + ((QWORD)regs.D.EDX << 32));
-
-    if (value == 0) {
-        throw DivideError("Divide by zero");
-    }
-
-    SIGNED_QWORD result = tEDXEAX / value;
-    if (result > 0x7fffffffLL || result < -0x80000000LL) {
-        throw DivideError(QString("Signed divide overflow (%1 / %2 = %3)").arg(tEDXEAX).arg(value).arg(result));
-    }
-
-    regs.D.EAX = (SIGNED_DWORD)(result);
-    regs.D.EDX = (SIGNED_DWORD)(tEDXEAX % value);
+    doDIV<SIGNED_DWORD>(getEDX(), getEAX(), insn.modrm().read32(), (SIGNED_DWORD&)regs.D.EAX, (SIGNED_DWORD&)regs.D.EDX);
 }
 
 template<typename T>

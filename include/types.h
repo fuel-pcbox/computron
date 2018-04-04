@@ -106,15 +106,24 @@ template<typename T> struct TypeDoubler { };
 template<> struct TypeDoubler<BYTE> { typedef WORD type; };
 template<> struct TypeDoubler<WORD> { typedef DWORD type; };
 template<> struct TypeDoubler<DWORD> { typedef QWORD type; };
+template<> struct TypeDoubler<SIGNED_BYTE> { typedef SIGNED_WORD type; };
+template<> struct TypeDoubler<SIGNED_WORD> { typedef SIGNED_DWORD type; };
+template<> struct TypeDoubler<SIGNED_DWORD> { typedef SIGNED_QWORD type; };
 
 template<typename T> struct TypeHalver { };
 template<> struct TypeHalver<WORD> { typedef BYTE type; };
 template<> struct TypeHalver<DWORD> { typedef WORD type; };
 template<> struct TypeHalver<QWORD> { typedef DWORD type; };
+template<> struct TypeHalver<SIGNED_WORD> { typedef SIGNED_BYTE type; };
+template<> struct TypeHalver<SIGNED_DWORD> { typedef SIGNED_WORD type; };
+template<> struct TypeHalver<SIGNED_QWORD> { typedef SIGNED_DWORD type; };
 
 template<typename DT> constexpr DT weld(typename TypeHalver<DT>::type high, typename TypeHalver<DT>::type low)
 {
-    return (((DT)high) << BitSizeOfType<typename TypeHalver<DT>::type>::bits) | low;
+    typedef typename std::make_unsigned<typename TypeHalver<DT>::type>::type UnsignedT;
+    typedef typename std::make_unsigned<DT>::type UnsignedDT;
+    const int bitsPerPart = BitSizeOfType<typename TypeHalver<DT>::type>::bits;
+    return (((UnsignedDT)high) << bitsPerPart) | (UnsignedT)low;
 }
 
 template<typename T>

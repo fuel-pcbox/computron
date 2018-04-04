@@ -170,3 +170,9 @@ static_assert(MasksForType<QWORD>::allBits == 0xffffffffffffffff, "MasksForType<
 static_assert(weld<WORD>(0xf0, 0x0f) == 0xf00f, "weld<WORD>");
 static_assert(weld<DWORD>(0xbeef, 0xbabe) == 0xbeefbabe, "weld<DWORD>");
 static_assert(weld<QWORD>(0xcafebabe, 0xdeadbeef) == 0xcafebabedeadbeef, "weld<QWORD>");
+static_assert(std::numeric_limits<SIGNED_BYTE>::min() == -0x80, "min SIGNED_BYTE");
+static_assert(std::numeric_limits<SIGNED_BYTE>::max() == 0x7f, "max SIGNED_BYTE");
+static_assert(std::numeric_limits<SIGNED_WORD>::min() == -0x8000, "min SIGNED_WORD");
+static_assert(std::numeric_limits<SIGNED_WORD>::max() == 0x7fff, "max SIGNED_WORD");
+static_assert(std::numeric_limits<SIGNED_DWORD>::min() == -0x80000000L, "min SIGNED_DWORD");
+static_assert(std::numeric_limits<SIGNED_DWORD>::max() == 0x7fffffff, "max SIGNED_WORD");
