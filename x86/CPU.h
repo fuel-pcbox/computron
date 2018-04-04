@@ -440,6 +440,14 @@ public:
     {
         setCurrentStackPointer(currentStackPointer() + delta);
     }
+    DWORD currentInstructionPointer() const
+    {
+        return x32() ? getEIP() : getIP();
+    }
+    void adjustInstructionPointer(int delta)
+    {
+        EIP += delta;
+    }
 
     void farReturn(JumpType, WORD stackAdjustment = 0);
     void protectedFarReturn(LogicalAddress, JumpType);
@@ -540,9 +548,9 @@ public:
     template<typename T> T readPhysicalMemory(PhysicalAddress);
     template<typename T> void writePhysicalMemory(PhysicalAddress, T);
     BYTE* pointerToPhysicalMemory(PhysicalAddress);
-    template<typename T> T readMemory(LinearAddress address);
-    template<typename T, MemoryAccessType accessType = MemoryAccessType::Read> T readMemory(const SegmentDescriptor&, DWORD offset);
-    template<typename T> T readMemory(SegmentRegisterIndex, DWORD offset);
+    template<typename T> T readMemory(LinearAddress address, MemoryAccessType accessType = MemoryAccessType::Read);
+    template<typename T> T readMemory(const SegmentDescriptor&, DWORD offset, MemoryAccessType accessType = MemoryAccessType::Read);
+    template<typename T> T readMemory(SegmentRegisterIndex, DWORD offset, MemoryAccessType accessType = MemoryAccessType::Read);
     template<typename T> void writeMemory(LinearAddress, T);
     template<typename T> void writeMemory(const SegmentDescriptor&, DWORD offset, T);
     template<typename T> void writeMemory(SegmentRegisterIndex, DWORD offset, T);
@@ -1171,6 +1179,7 @@ private:
     friend class Instruction;
     friend class InstructionExecutionContext;
 
+    template<typename T> T readInstructionStream();
     BYTE readInstruction8() override;
     WORD readInstruction16() override;
     DWORD readInstruction32() override;

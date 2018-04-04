@@ -1421,10 +1421,10 @@ void CPU::writePhysicalMemory(PhysicalAddress physicalAddress, T data)
 }
 
 template<typename T>
-T CPU::readMemory(LinearAddress linearAddress)
+T CPU::readMemory(LinearAddress linearAddress, MemoryAccessType accessType)
 {
     PhysicalAddress physicalAddress;
-    translateAddress(linearAddress, physicalAddress, MemoryAccessType::Read);
+    translateAddress(linearAddress, physicalAddress, accessType);
 #ifdef A20_ENABLED
     physicalAddress.mask(a20Mask());
 #endif
@@ -1440,29 +1440,29 @@ T CPU::readMemory(LinearAddress linearAddress)
     return value;
 }
 
-template<typename T, CPU::MemoryAccessType accessType>
-T CPU::readMemory(const SegmentDescriptor& descriptor, DWORD offset)
+template<typename T>
+T CPU::readMemory(const SegmentDescriptor& descriptor, DWORD offset, MemoryAccessType accessType)
 {
     LinearAddress linearAddress = descriptor.linearAddress(offset);
     if (!getPE()) {
-        return readMemory<T>(linearAddress);
+        return readMemory<T>(linearAddress, accessType);
     }
     validateAddress<T>(descriptor, offset, accessType);
-    return readMemory<T>(linearAddress);
+    return readMemory<T>(linearAddress, accessType);
 }
 
 template<typename T>
-T CPU::readMemory(SegmentRegisterIndex segment, DWORD offset)
+T CPU::readMemory(SegmentRegisterIndex segment, DWORD offset, MemoryAccessType accessType)
 {
     auto& descriptor = m_descriptor[(int)segment];
     if (!getPE())
-        return readMemory<T>(descriptor.linearAddress(offset));
-    return readMemory<T>(descriptor, offset);
+        return readMemory<T>(descriptor.linearAddress(offset), accessType);
+    return readMemory<T>(descriptor, offset, accessType);
 }
 
-template BYTE CPU::readMemory<BYTE>(SegmentRegisterIndex, DWORD);
-template WORD CPU::readMemory<WORD>(SegmentRegisterIndex, DWORD);
-template DWORD CPU::readMemory<DWORD>(SegmentRegisterIndex, DWORD);
+template BYTE CPU::readMemory<BYTE>(SegmentRegisterIndex, DWORD, MemoryAccessType);
+template WORD CPU::readMemory<WORD>(SegmentRegisterIndex, DWORD, MemoryAccessType);
+template DWORD CPU::readMemory<DWORD>(SegmentRegisterIndex, DWORD, MemoryAccessType);
 
 template void CPU::writeMemory<BYTE>(SegmentRegisterIndex, DWORD, BYTE);
 template void CPU::writeMemory<WORD>(SegmentRegisterIndex, DWORD, WORD);
@@ -1669,38 +1669,27 @@ BYTE* CPU::memoryPointer(LinearAddress linearAddress)
     return pointerToPhysicalMemory(physicalAddress);
 }
 
+template<typename T>
+T CPU::readInstructionStream()
+{
+    T data = readMemory<T>(SegmentRegisterIndex::CS, currentInstructionPointer(), MemoryAccessType::Execute);
+    adjustInstructionPointer(sizeof(T));
+    return data;
+}
+
 BYTE CPU::readInstruction8()
 {
-    if (x32())
-        return readMemory<BYTE, MemoryAccessType::Execute>(cachedDescriptor(SegmentRegisterIndex::CS), EIP++);
-    else
-        return readMemory<BYTE, MemoryAccessType::Execute>(cachedDescriptor(SegmentRegisterIndex::CS), IP++);
+    return readInstructionStream<BYTE>();
 }
 
 WORD CPU::readInstruction16()
 {
-    WORD w;
-    if (x32()) {
-        w = readMemory<WORD, MemoryAccessType::Execute>(cachedDescriptor(SegmentRegisterIndex::CS), getEIP());
-        this->EIP += 2;
-    } else {
-        w = readMemory<WORD, MemoryAccessType::Execute>(cachedDescriptor(SegmentRegisterIndex::CS), getIP());
-        this->IP += 2;
-    }
-    return w;
+    return readInstructionStream<WORD>();
 }
 
 DWORD CPU::readInstruction32()
 {
-    DWORD d;
-    if (x32()) {
-        d = readMemory<DWORD, MemoryAccessType::Execute>(cachedDescriptor(SegmentRegisterIndex::CS), getEIP());
-        this->EIP += 4;
-    } else {
-        d = readMemory<DWORD, MemoryAccessType::Execute>(cachedDescriptor(SegmentRegisterIndex::CS), getIP());
-        this->IP += 4;
-    }
-    return d;
+    return readInstructionStream<DWORD>();
 }
 
 void CPU::_CPUID(Instruction&)
