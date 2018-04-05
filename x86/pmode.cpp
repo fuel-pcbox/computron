@@ -472,7 +472,10 @@ void CPU::writeSegmentRegister(SegmentRegisterIndex segreg, WORD selector)
     switch (segreg) {
     case SegmentRegisterIndex::CS:
         if (getPE()) {
-            setCPL(descriptor.DPL());
+            if (getVM())
+                setCPL(3);
+            else
+                setCPL(descriptor.DPL());
         }
         updateDefaultSizes();
         updateCodeSegmentCache();

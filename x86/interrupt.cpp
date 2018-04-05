@@ -324,8 +324,6 @@ void CPU::interruptFromVM86Mode(Gate& gate, DWORD offset, CodeSegmentDescriptor&
         throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, source), "Interrupt from VM86 mode to descriptor with CPL != 0");
     }
 
-    setCPL(0);
-
     auto tss = currentTSS();
 
     WORD newSS = tss.getSS0();
@@ -352,6 +350,7 @@ void CPU::interruptFromVM86Mode(Gate& gate, DWORD offset, CodeSegmentDescriptor&
         throw StackFault(makeErrorCode(newSS, 0, source), "New ss not present");
     }
 
+    setCPL(0);
     setVM(0);
     setTF(0);
     setRF(0);
