@@ -142,7 +142,7 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, std::optional
 
     if (source == InterruptSource::Internal) {
         if (gate.DPL() < getCPL()) {
-            //throw GeneralProtectionFault(makeErrorCode(isr, 1, source), "Software interrupt trying to escalate privilege");
+            throw GeneralProtectionFault(makeErrorCode(isr, 1, source), "Software interrupt trying to escalate privilege");
         }
     }
 
