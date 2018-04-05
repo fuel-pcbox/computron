@@ -297,7 +297,7 @@ void CPU::dumpAll()
     vlog(LogDump, "ldtr: {base=%08x, limit=%04x, (selector=%04x)}", LDTR.base.get(), LDTR.limit, LDTR.selector);
     vlog(LogDump, "  tr: {base=%08x, limit=%04x, (selector=%04x, %u-bit)}", TR.base.get(), TR.limit, TR.selector, TR.is32Bit ? 32 : 16);
 
-    vlog(LogDump, "cf=%u pf=%u af=%u zf=%u sf=%u if=%u df=%u of=%u tf=%u nt=%u", getCF(), getPF(), getAF(), getZF(), getSF(), getIF(), getDF(), getOF(), getTF(), getNT());
+    vlog(LogDump, "cf=%u pf=%u af=%u zf=%u sf=%u if=%u df=%u of=%u tf=%u nt=%u vm=%u", getCF(), getPF(), getAF(), getZF(), getSF(), getIF(), getDF(), getOF(), getTF(), getNT(), getVM());
 
     dumpDisassembled(cachedDescriptor(SegmentRegisterIndex::CS), getBaseEIP());
 }
