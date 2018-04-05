@@ -207,6 +207,10 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
         vlog(LogCPU, "Leaving task switch with TF=1");
     }
 
+    if (getVM()) {
+        vlog(LogCPU, "Leaving task switch with VM=1");
+    }
+
 #ifdef DEBUG_TASK_SWITCH
     vlog(LogCPU, "Task switched to %08x, cpl=%u, iopl=%u", incomingTSSDescriptor.base(), getCPL(), getIOPL());
 #endif
