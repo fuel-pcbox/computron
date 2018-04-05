@@ -216,7 +216,7 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, QVariant erro
     }
 
     if (getVM()) {
-        interruptFromVM86Mode(gate, offset, codeDescriptor, source);
+        interruptFromVM86Mode(gate, offset, codeDescriptor, source, errorCode);
         return;
     }
 
@@ -312,7 +312,7 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, QVariant erro
     setEIP(offset);
 }
 
-void CPU::interruptFromVM86Mode(Gate& gate, DWORD offset, CodeSegmentDescriptor& codeDescriptor, InterruptSource source)
+void CPU::interruptFromVM86Mode(Gate& gate, DWORD offset, CodeSegmentDescriptor& codeDescriptor, InterruptSource source, QVariant errorCode)
 {
     vlog(LogCPU, "INT from VM86 mode -> %04x:%08x", gate.selector(), offset);
 
@@ -378,6 +378,9 @@ void CPU::interruptFromVM86Mode(Gate& gate, DWORD offset, CodeSegmentDescriptor&
     pushForGateSize(originalFlags);
     pushForGateSize(getCS());
     pushForGateSize(getEIP());
+    if (errorCode.isValid()) {
+        pushForGateSize(errorCode.value<WORD>());
+    }
     setGS(0);
     setFS(0);
     setDS(0);

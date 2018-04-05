@@ -257,7 +257,7 @@ public:
     void interrupt(BYTE isr, InterruptSource, QVariant errorCode = QVariant());
     void interruptToTaskGate(BYTE isr, InterruptSource, QVariant errorCode, Gate&);
 
-    void interruptFromVM86Mode(Gate&, DWORD offset, CodeSegmentDescriptor&, InterruptSource);
+    void interruptFromVM86Mode(Gate&, DWORD offset, CodeSegmentDescriptor&, InterruptSource, QVariant errorCode);
     void iretToVM86Mode(LogicalAddress, DWORD flags);
 
     Exception GeneralProtectionFault(WORD selector, const QString& reason);
