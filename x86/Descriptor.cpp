@@ -26,31 +26,35 @@
 #include "CPU.h"
 #include "debugger.h"
 
-Descriptor CPU::getDescriptor(WORD selector, SegmentRegisterIndex segmentRegister)
+SegmentDescriptor CPU::getRealModeOrVM86Descriptor(WORD selector, SegmentRegisterIndex segmentRegister)
 {
-    if (!getPE()) {
-        Descriptor descriptor;
-        descriptor.m_index = selector;
-        descriptor.m_segmentBase = (DWORD)selector << 4;
-        descriptor.m_segmentLimit = 0xFFFFF;
-        descriptor.m_effectiveLimit = 0xFFFFF;
-        descriptor.m_RPL = 0;
-        descriptor.m_D = false;
-        descriptor.m_DT = true;
-        descriptor.m_P = true;
-        descriptor.m_isGlobal = true;
-        if (segmentRegister == SegmentRegisterIndex::CS) {
-            // Code + Readable
-            descriptor.m_type |= 0x8 | 0x2;
-        } else {
-            // Data + Writable
-            descriptor.m_type |= 0x2;
-        }
-        return descriptor;
+    ASSERT(!getPE() || getVM());
+    SegmentDescriptor descriptor;
+    descriptor.m_index = selector;
+    descriptor.m_segmentBase = (DWORD)selector << 4;
+    descriptor.m_segmentLimit = 0xfffff;
+    descriptor.m_effectiveLimit = 0xfffff;
+    descriptor.m_RPL = 0;
+    descriptor.m_D = false;
+    descriptor.m_DT = true;
+    descriptor.m_P = true;
+    descriptor.m_isGlobal = true;
+    if (segmentRegister == SegmentRegisterIndex::CS) {
+        // Code + Readable
+        descriptor.m_type |= 0x8 | 0x2;
+    } else {
+        // Data + Writable
+        descriptor.m_type |= 0x2;
     }
+    return descriptor;
+}
 
-    if (selector == 0)
+Descriptor CPU::getDescriptor(WORD selector, SegmentRegisterIndex)
+{
+    if (selector == 0) {
+        ASSERT(getPE() && !getVM());
         return Descriptor();
+    }
 
     bool isGlobal = (selector & 0x04) == 0;
     if (isGlobal)
@@ -64,9 +68,11 @@ Descriptor CPU::getInterruptDescriptor(BYTE number)
     return getDescriptor("IDT", IDTR.base, IDTR.limit, number, false);
 }
 
-SegmentDescriptor CPU::getSegmentDescriptor(WORD selector, SegmentRegisterIndex segmentRegister)
+SegmentDescriptor CPU::getSegmentDescriptor(WORD selector, SegmentRegisterIndex segreg)
 {
-    auto descriptor = getDescriptor(selector, segmentRegister);
+    if (!getPE() || getVM())
+        return getRealModeOrVM86Descriptor(selector, segreg);
+    auto descriptor = getDescriptor(selector, segreg);
     if (descriptor.isNull())
         return SegmentDescriptor();
     return descriptor.asSegmentDescriptor();

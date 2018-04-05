@@ -34,7 +34,6 @@
 #include "Tasking.h"
 
 #define CRASH_ON_OPCODE_00_00
-#define CRASH_ON_VM
 #define A20_ENABLED
 //#define LOG_FAR_JUMPS
 //#define MEMORY_DEBUGGING
@@ -155,13 +154,6 @@ FLATTEN void CPU::decodeNext()
 
 FLATTEN void CPU::execute(Instruction& insn)
 {
-#ifdef CRASH_ON_VM
-    if (UNLIKELY(getVM())) {
-        dumpTrace();
-        ASSERT_NOT_REACHED();
-    }
-#endif
-
 #ifdef CRASH_ON_OPCODE_00_00
     if (UNLIKELY(insn.op() == 0 && insn.rm() == 0)) {
         dumpTrace();
@@ -570,7 +562,7 @@ static const char* toString(JumpType type)
 
 void CPU::realModeFarJump(LogicalAddress address, JumpType type)
 {
-    ASSERT(!getPE());
+    ASSERT(!getPE() || getVM());
     WORD selector = address.selector();
     DWORD offset = address.offset();
     WORD originalCS = getCS();
@@ -602,7 +594,7 @@ void CPU::realModeFarJump(LogicalAddress address, JumpType type)
 
 void CPU::farJump(LogicalAddress address, JumpType type, Gate* gate)
 {
-    if (!getPE()) {
+    if (!getPE() || getVM()) {
         realModeFarJump(address, type);
     } else {
         protectedModeFarJump(address, type, gate);
@@ -909,7 +901,7 @@ void CPU::farReturn(JumpType type, WORD stackAdjustment)
 {
     WORD selector;
     DWORD offset;
-    DWORD flags;
+    DWORD flags = 0;
     BYTE originalCPL = getCPL();
 
     if (o16()) {
@@ -934,11 +926,18 @@ void CPU::farReturn(JumpType type, WORD stackAdjustment)
         }
     }
 
-    if (getPE()) {
+    if (getPE() && !getVM()) {
+        if (type == JumpType::IRET && flags & Flag::VM && getCPL() == 0) {
+            return iretToVM86Mode(LogicalAddress(selector, offset), flags);
+        }
         protectedFarReturn(LogicalAddress(selector, offset), type);
         if (getCPL() != originalCPL)
             adjustStackPointer(stackAdjustment);
     } else {
+        if (type == JumpType::IRET && getVM() && getIOPL() != 3) {
+            dumpAll();
+            throw GeneralProtectionFault(0, "IRET in VM86 mode with IOPL != 3");
+        }
         setCS(selector);
         setEIP(offset);
     }
@@ -948,10 +947,31 @@ void CPU::farReturn(JumpType type, WORD stackAdjustment)
     }
 }
 
+void CPU::iretToVM86Mode(LogicalAddress entry, DWORD flags)
+{
+    vlog(LogCPU, "IRET (o%u) to VM86 mode -> %04x:%04x", o16() ? 16 : 32, entry.selector(), entry.offset());
+
+    setVM(true);
+    // FIXME: Raise #GP(0) if offset outside CS limits.
+    setCS(entry.selector());
+    setEIP(entry.offset());
+
+    setEFlags(flags);
+    DWORD newESP = pop32();
+    WORD newSS = pop32();
+    setES(pop32());
+    setDS(pop32());
+    setFS(pop32());
+    setGS(pop32());
+    setCPL(3);
+    setESP(newESP);
+    setSS(newSS);
+}
+
 void CPU::setCPL(BYTE cpl)
 {
-    ASSERT(getPE());
-    CS = (CS & ~3) | cpl;
+    if (getPE() && !getVM())
+        CS = (CS & ~3) | cpl;
     cachedDescriptor(SegmentRegisterIndex::CS).m_RPL = cpl;
 }
 
@@ -1309,6 +1329,7 @@ void CPU::snoop(SegmentRegisterIndex segreg, DWORD offset, MemoryAccessType acce
 template<typename T>
 ALWAYS_INLINE void CPU::validateAddress(const SegmentDescriptor& descriptor, DWORD offset, MemoryAccessType accessType)
 {
+    if (!getVM()) {
     if (accessType != MemoryAccessType::Execute) {
         if (descriptor.isNull()) {
             vlog(LogAlert, "NULL! %s offset %08X into null selector (selector index: %04X)",
@@ -1339,6 +1360,7 @@ ALWAYS_INLINE void CPU::validateAddress(const SegmentDescriptor& descriptor, DWO
         break;
     default:
         break;
+    }
     }
 
 #if 0

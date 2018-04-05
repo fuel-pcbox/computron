@@ -313,9 +313,9 @@ void CPU::raiseException(const Exception& e)
     try {
         setEIP(getBaseEIP());
         if (e.hasCode()) {
-            interrupt(e.num(), InterruptSource::Internal, e.code());
+            interrupt(e.num(), InterruptSource::External, e.code());
         } else {
-            interrupt(e.num(), InterruptSource::Internal);
+            interrupt(e.num(), InterruptSource::External);
         }
     } catch (Exception e) {
         ASSERT_NOT_REACHED();
@@ -375,7 +375,7 @@ Exception CPU::DivideError(const QString& reason)
 
 void CPU::validateSegmentLoad(SegmentRegisterIndex reg, WORD selector, const Descriptor& descriptor)
 {
-    if (!getPE())
+    if (!getPE() || getVM())
         return;
 
     BYTE selectorRPL = selector & 3;
@@ -439,7 +439,12 @@ void CPU::writeSegmentRegister(SegmentRegisterIndex segreg, WORD selector)
     }
 
     auto& descriptorCache = static_cast<Descriptor&>(m_descriptor[(int)segreg]);
-    auto descriptor = getDescriptor(selector, segreg);
+    Descriptor descriptor;
+
+    if (!getPE() || getVM())
+        descriptor = getRealModeOrVM86Descriptor(selector, segreg);
+    else
+        descriptor = getDescriptor(selector, segreg);
 
     validateSegmentLoad(segreg, selector, descriptor);
 

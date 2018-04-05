@@ -220,16 +220,20 @@ void CPU::_POPF(Instruction&)
 
 void CPU::_POPFD(Instruction&)
 {
+    if (getVM() && getIOPL() < 3) {
+        throw GeneralProtectionFault(0, "POPFD with IOPL < 3");
+    }
     setEFlagsRespectfully(pop32());
 }
 
 void CPU::setEFlagsRespectfully(DWORD newFlags)
 {
-    RELEASE_ASSERT(!getVM());
     DWORD oldFlags = getEFlags();
     DWORD flagsToKeep = Flag::VIP | Flag::VIF | Flag::RF;
     if (o16())
         flagsToKeep |= 0xffff0000;
+    if (getVM())
+        flagsToKeep |= Flag::IOPL;
     if (getPE() && getCPL() != 0) {
         flagsToKeep |= Flag::IOPL;
         if (getCPL() > getIOPL()) {

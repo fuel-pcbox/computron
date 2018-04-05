@@ -211,6 +211,8 @@ public:
     void dumpDescriptor(const SystemDescriptor&, const char* prefix = "");
     void dumpDescriptor(const CodeSegmentDescriptor&, const char* prefix = "");
     void dumpDescriptor(const DataSegmentDescriptor&, const char* prefix = "");
+
+    SegmentDescriptor getRealModeOrVM86Descriptor(WORD selector, SegmentRegisterIndex = SegmentRegisterIndex::None);
     Descriptor getDescriptor(WORD selector, SegmentRegisterIndex = SegmentRegisterIndex::None);
     SegmentDescriptor getSegmentDescriptor(WORD selector, SegmentRegisterIndex = SegmentRegisterIndex::None);
     Descriptor getInterruptDescriptor(BYTE number);
@@ -254,6 +256,9 @@ public:
     void protectedModeInterrupt(BYTE isr, InterruptSource, std::optional<WORD> errorCode);
     void interrupt(BYTE isr, InterruptSource, std::optional<WORD> errorCode = std::nullopt);
     void interruptToTaskGate(BYTE isr, InterruptSource, std::optional<WORD> errorCode, Gate&);
+
+    void interruptFromVM86Mode(Gate&, DWORD offset, CodeSegmentDescriptor&, InterruptSource);
+    void iretToVM86Mode(LogicalAddress, DWORD flags);
 
     Exception GeneralProtectionFault(WORD selector, const QString& reason);
     Exception StackFault(WORD selector, const QString& reason);

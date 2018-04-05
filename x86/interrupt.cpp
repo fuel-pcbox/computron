@@ -129,6 +129,11 @@ void CPU::realModeInterrupt(BYTE isr, InterruptSource source)
 void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, std::optional<WORD> errorCode)
 {
     ASSERT(getPE());
+
+    if (getVM() && getIOPL() < 3) {
+        throw GeneralProtectionFault(0, "Interrupt in VM86 mode with IOPL < 3");
+    }
+
     auto idtEntry = getInterruptDescriptor(isr);
     if (!idtEntry.isTaskGate() && !idtEntry.isTrapGate() && !idtEntry.isInterruptGate()) {
         throw GeneralProtectionFault(makeErrorCode(isr, 1, source), "Interrupt to invalid gate type");
@@ -137,7 +142,7 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, std::optional
 
     if (source == InterruptSource::Internal) {
         if (gate.DPL() < getCPL()) {
-            throw GeneralProtectionFault(makeErrorCode(isr, 1, source), "Software interrupt trying to escalate privilege");
+            //throw GeneralProtectionFault(makeErrorCode(isr, 1, source), "Software interrupt trying to escalate privilege");
         }
     }
 
@@ -161,7 +166,7 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, std::optional
         return;
     }
 
-    auto descriptor = getDescriptor(gate.selector());
+    auto descriptor = getDescriptor(gate.selector(), SegmentRegisterIndex::CS);
 
     if (options.trapint) {
         dumpDescriptor(descriptor);
@@ -176,6 +181,7 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, std::optional
     }
 
     if (!descriptor.isCode()) {
+        dumpDescriptor(descriptor);
         throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, source), "Interrupt gate to non-code segment");
     }
 
@@ -207,6 +213,11 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, std::optional
     // FIXME: Stack-related exceptions should come before this.
     if (offset > codeDescriptor.effectiveLimit()) {
         throw GeneralProtectionFault(0, "Offset outside segment limit");
+    }
+
+    if (getVM()) {
+        interruptFromVM86Mode(gate, offset, codeDescriptor, source);
+        return;
     }
 
     if (!codeDescriptor.conforming() && descriptor.DPL() < originalCPL) {
@@ -291,13 +302,85 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, std::optional
         }
     }
 
-    if (!gate.isTrapGate())
+    if (gate.isInterruptGate())
         setIF(0);
     setTF(0);
     setRF(0);
     setNT(0);
-
+    setVM(0);
     setCS(gate.selector());
+    setEIP(offset);
+}
+
+void CPU::interruptFromVM86Mode(Gate& gate, DWORD offset, CodeSegmentDescriptor& codeDescriptor, InterruptSource source)
+{
+    vlog(LogCPU, "INT from VM86 mode -> %04x:%08x", gate.selector(), offset);
+
+    DWORD originalFlags = getEFlags();
+    WORD originalSS = getSS();
+    DWORD originalESP = getESP();
+
+    if (codeDescriptor.DPL() != 0) {
+        throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, source), "Interrupt from VM86 mode to descriptor with CPL != 0");
+    }
+
+    setCPL(0);
+
+    auto tss = currentTSS();
+
+    WORD newSS = tss.getSS0();
+    DWORD newESP = tss.getESP0();
+    auto newSSDescriptor = getDescriptor(newSS, SegmentRegisterIndex::SS);
+
+    if (newSSDescriptor.isNull()) {
+        throw InvalidTSS(source == InterruptSource::External, "New ss is null");
+    }
+
+    if (newSSDescriptor.isError()) {
+        throw InvalidTSS(makeErrorCode(newSS, 0, source), "New ss outside table limits");
+    }
+
+    if (newSSDescriptor.DPL() != codeDescriptor.DPL()) {
+        throw InvalidTSS(makeErrorCode(newSS, 0, source), QString("New ss DPL(%1) != code segment DPL(%2)").arg(newSSDescriptor.DPL()).arg(codeDescriptor.DPL()));
+    }
+
+    if (!newSSDescriptor.isData() || !newSSDescriptor.asDataSegmentDescriptor().writable()) {
+        throw InvalidTSS(makeErrorCode(newSS, 0, source), "New ss not a writable data segment");
+    }
+
+    if (!newSSDescriptor.present()) {
+        throw StackFault(makeErrorCode(newSS, 0, source), "New ss not present");
+    }
+
+    setVM(0);
+    setTF(0);
+    setRF(0);
+    setNT(0);
+    if (gate.isInterruptGate())
+        setIF(0);
+    setSS(newSS);
+    setESP(newESP);
+    auto pushForGateSize = [this, &gate] (DWORD data) {
+        if (gate.is32Bit())
+            push32(data);
+        else
+            push16(data);
+    };
+    pushForGateSize(getGS());
+    pushForGateSize(getFS());
+    pushForGateSize(getDS());
+    pushForGateSize(getES());
+    pushForGateSize(originalSS);
+    pushForGateSize(originalESP);
+    pushForGateSize(originalFlags);
+    pushForGateSize(getCS());
+    pushForGateSize(getEIP());
+    setGS(0);
+    setFS(0);
+    setDS(0);
+    setES(0);
+    setCS(gate.selector());
+    setCPL(0);
     setEIP(offset);
 }
 

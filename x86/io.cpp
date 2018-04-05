@@ -96,8 +96,9 @@ void CPU::_IN_EAX_DX(Instruction&)
 template<typename T>
 void CPU::out(WORD port, T data)
 {
-    if (getPE() && getCPL() > getIOPL()) {
-        throw GeneralProtectionFault(0, QString("I/O write attempt with CPL(%1) > IOPL(%2)").arg(getCPL()).arg(getIOPL()));
+    if (getPE() && ((getCPL() > getIOPL()) || getVM())) {
+        // FIXME: Check IO permissions table.
+        //throw GeneralProtectionFault(0, QString("I/O write attempt with CPL(%1) > IOPL(%2)").arg(getCPL()).arg(getIOPL()));
     }
 
     if (options.iopeek) {
@@ -118,8 +119,9 @@ void CPU::out(WORD port, T data)
 
 template<typename T> T CPU::in(WORD port)
 {
-    if (getPE() && getCPL() > getIOPL()) {
-        throw GeneralProtectionFault(0, QString("I/O read attempt with CPL(%1) > IOPL(%2)").arg(getCPL()).arg(getIOPL()));
+    if (getPE() && ((getCPL() > getIOPL()) || getVM())) {
+        // FIXME: Check IO permissions table.
+        //throw GeneralProtectionFault(0, QString("I/O read attempt with CPL(%1) > IOPL(%2)").arg(getCPL()).arg(getIOPL()));
     }
 
     T data;
