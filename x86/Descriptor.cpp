@@ -52,7 +52,6 @@ SegmentDescriptor CPU::getRealModeOrVM86Descriptor(WORD selector, SegmentRegiste
 Descriptor CPU::getDescriptor(WORD selector, SegmentRegisterIndex)
 {
     if (selector == 0) {
-        ASSERT(getPE() && !getVM());
         return Descriptor();
     }
 

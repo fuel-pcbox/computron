@@ -289,8 +289,8 @@ static void bios_disk_verify(CPU&, FILE* fp, DiskDrive& drive, WORD cylinder, WO
 
 void bios_disk_call(CPU& cpu, DiskCallFunction function)
 {
-    // This is a hack to support the custom Computron BIOS. We should not be here in PE=1 mode.
-    ASSERT(!cpu.getPE());
+    // This is a hack to support the custom Computron BIOS. We should not be here in (PE=1 && VM=0) mode.
+    ASSERT(!cpu.getPE() || cpu.getVM());
 
     WORD cylinder = cpu.getCH() | ((cpu.getCL() & 0xc0) << 2);
     WORD sector = cpu.getCL() & 0x3f;
