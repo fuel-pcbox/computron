@@ -338,8 +338,12 @@ void CPU::interruptFromVM86Mode(Gate& gate, DWORD offset, CodeSegmentDescriptor&
         throw InvalidTSS(makeErrorCode(newSS, 0, source), "New ss outside table limits");
     }
 
-    if (newSSDescriptor.DPL() != codeDescriptor.DPL()) {
-        throw InvalidTSS(makeErrorCode(newSS, 0, source), QString("New ss DPL(%1) != code segment DPL(%2)").arg(newSSDescriptor.DPL()).arg(codeDescriptor.DPL()));
+    if ((newSS & 3) != 0) {
+        throw InvalidTSS(makeErrorCode(newSS, 0, source), QString("New ss RPL(%1) != 0").arg(newSS & 3));
+    }
+
+    if (newSSDescriptor.DPL() != 0) {
+        throw InvalidTSS(makeErrorCode(newSS, 0, source), QString("New ss DPL(%1) != 0").arg(newSSDescriptor.DPL()));
     }
 
     if (!newSSDescriptor.isData() || !newSSDescriptor.asDataSegmentDescriptor().writable()) {
