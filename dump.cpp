@@ -106,21 +106,24 @@ void CPU::dumpTrace()
     printf(
         "%04X:%08X %02X "
         "EAX=%08X EBX=%08X ECX=%08X EDX=%08X ESP=%08X EBP=%08X ESI=%08X EDI=%08X "
-        "CR0=%08X A20=%u "
+        "CR0=%08X CR3=%08X CPL=%u IOPL=%u A20=%u "
         "DS=%04X ES=%04X SS=%04X FS=%04X GS=%04X "
         "C=%u P=%u A=%u Z=%u S=%u I=%u D=%u O=%u "
-        "A%u O%u X%u\n",
+        "NT=%u VM=%u "
+        "A%u O%u X%u S%u\n",
         getCS(), getEIP(),
         readMemory8(SegmentRegisterIndex::CS, getEIP()),
         getEAX(), getEBX(), getECX(), getEDX(), getESP(), getEBP(), getESI(), getEDI(),
-        getCR0(),
+        getCR0(), getCR3(), getCPL(), getIOPL(),
         isA20Enabled(),
         getDS(), getES(), getSS(), getFS(), getGS(),
         getCF(), getPF(), getAF(), getZF(),
         getSF(), getIF(), getDF(), getOF(),
+        getNT(), getVM(),
         a16() ? 16 : 32,
         o16() ? 16 : 32,
-        x16() ? 16 : 32
+        x16() ? 16 : 32,
+        s16() ? 16 : 32
     );
 #endif
 }
@@ -255,6 +258,15 @@ void CPU::dumpWatches()
 
 void CPU::dumpAll()
 {
+    if (getPE() && TR.selector != 0) {
+        auto descriptor = getDescriptor(TR.selector);
+        if (descriptor.isTSS()) {
+            auto& tssDescriptor = descriptor.asTSSDescriptor();
+            TSS tss(*this, tssDescriptor.base(), tssDescriptor.is32Bit());
+            dumpTSS(tss);
+        }
+    }
+
     vlog(LogDump, "eax: %08x  ebx: %08x  ecx: %08x  edx: %08x", getEAX(), getEBX(), getECX(), getEDX());
     vlog(LogDump, "ebp: %08x  esp: %08x  esi: %08x  edi: %08x", getEBP(), getESP(), getESI(), getEDI());
 
@@ -284,15 +296,6 @@ void CPU::dumpAll()
     vlog(LogDump, "gdtr: {base=%08x, limit=%04x}", GDTR.base.get(), GDTR.limit);
     vlog(LogDump, "ldtr: {base=%08x, limit=%04x, (selector=%04x)}", LDTR.base.get(), LDTR.limit, LDTR.selector);
     vlog(LogDump, "  tr: {base=%08x, limit=%04x, (selector=%04x, %u-bit)}", TR.base.get(), TR.limit, TR.selector, TR.is32Bit ? 32 : 16);
-
-    if (getPE() && TR.selector != 0) {
-        auto descriptor = getDescriptor(TR.selector);
-        if (descriptor.isTSS()) {
-            auto& tssDescriptor = descriptor.asTSSDescriptor();
-            TSS tss(*this, tssDescriptor.base(), tssDescriptor.is32Bit());
-            dumpTSS(tss);
-        }
-    }
 
     vlog(LogDump, "cf=%u pf=%u af=%u zf=%u sf=%u if=%u df=%u of=%u tf=%u nt=%u", getCF(), getPF(), getAF(), getZF(), getSF(), getIF(), getDF(), getOF(), getTF(), getNT());
 
