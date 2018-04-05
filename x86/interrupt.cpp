@@ -68,7 +68,7 @@ static WORD makeErrorCode(WORD num, bool idt, CPU::InterruptSource source)
 {
     if (idt)
         return (num << 3) | 2 | (WORD)source;
-    return num & 0xfc;
+    return (num & 0xfc) | (WORD)source;
 }
 
 void CPU::interruptToTaskGate(BYTE, InterruptSource source, std::optional<WORD> errorCode, Gate& gate)
