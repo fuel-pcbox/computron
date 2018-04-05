@@ -53,6 +53,7 @@ HEADERS += gui/machinewidget.h \
            hw/pit.h \
            hw/vga.h \
            hw/PS2.h \
+           hw/busmouse.h \
            include/debugger.h \
            include/types.h \
            include/debug.h \
