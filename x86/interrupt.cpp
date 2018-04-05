@@ -130,8 +130,8 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, std::optional
 {
     ASSERT(getPE());
 
-    if (getVM() && getIOPL() < 3) {
-        throw GeneralProtectionFault(0, "Interrupt in VM86 mode with IOPL < 3");
+    if (source == InterruptSource::Internal && getVM() && getIOPL() != 3) {
+        throw GeneralProtectionFault(0, "Software INT in VM86 mode with IOPL != 3");
     }
 
     auto idtEntry = getInterruptDescriptor(isr);
