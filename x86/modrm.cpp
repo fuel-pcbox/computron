@@ -232,7 +232,7 @@ ALWAYS_INLINE void MemoryOrRegisterReference::resolve32()
     }
 }
 
-DWORD MemoryOrRegisterReference::evaluateSIB()
+ALWAYS_INLINE DWORD MemoryOrRegisterReference::evaluateSIB()
 {
     DWORD scale;
     switch (m_sib & 0xC0) {

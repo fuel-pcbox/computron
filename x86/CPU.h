@@ -253,9 +253,9 @@ public:
     enum class InterruptSource { Internal = 0, External = 1 };
 
     void realModeInterrupt(BYTE isr, InterruptSource);
-    void protectedModeInterrupt(BYTE isr, InterruptSource, std::optional<WORD> errorCode);
-    void interrupt(BYTE isr, InterruptSource, std::optional<WORD> errorCode = std::nullopt);
-    void interruptToTaskGate(BYTE isr, InterruptSource, std::optional<WORD> errorCode, Gate&);
+    void protectedModeInterrupt(BYTE isr, InterruptSource, QVariant errorCode);
+    void interrupt(BYTE isr, InterruptSource, QVariant errorCode = QVariant());
+    void interruptToTaskGate(BYTE isr, InterruptSource, QVariant errorCode, Gate&);
 
     void interruptFromVM86Mode(Gate&, DWORD offset, CodeSegmentDescriptor&, InterruptSource);
     void iretToVM86Mode(LogicalAddress, DWORD flags);
@@ -1559,6 +1559,31 @@ inline void CPU::push(T data)
         push32(data);
     else
         push16(data);
+}
+
+template<typename T>
+ALWAYS_INLINE T CPU::readRegister(int registerIndex)
+{
+    if (sizeof(T) == 1)
+        return *treg8[registerIndex];
+    if (sizeof(T) == 2)
+        return *treg16[registerIndex];
+    if (sizeof(T) == 4)
+        return *treg32[registerIndex];
+    ASSERT_NOT_REACHED();
+}
+
+template<typename T>
+ALWAYS_INLINE void CPU::writeRegister(int registerIndex, T value)
+{
+    if (sizeof(T) == 1)
+        *treg8[registerIndex] = value;
+    else if (sizeof(T) == 2)
+        *treg16[registerIndex] = value;
+    else if (sizeof(T) == 4)
+        *treg32[registerIndex] = value;
+    else
+        ASSERT_NOT_REACHED();
 }
 
 ALWAYS_INLINE void Instruction::execute(CPU& cpu)

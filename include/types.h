@@ -122,8 +122,7 @@ template<typename DT> constexpr DT weld(typename TypeHalver<DT>::type high, type
 {
     typedef typename std::make_unsigned<typename TypeHalver<DT>::type>::type UnsignedT;
     typedef typename std::make_unsigned<DT>::type UnsignedDT;
-    const int bitsPerPart = BitSizeOfType<typename TypeHalver<DT>::type>::bits;
-    return (((UnsignedDT)high) << bitsPerPart) | (UnsignedT)low;
+    return (((UnsignedDT)high) << BitSizeOfType<typename TypeHalver<DT>::type>::bits) | (UnsignedT)low;
 }
 
 template<typename T>

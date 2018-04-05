@@ -71,7 +71,7 @@ static WORD makeErrorCode(WORD num, bool idt, CPU::InterruptSource source)
     return (num & 0xfc) | (WORD)source;
 }
 
-void CPU::interruptToTaskGate(BYTE, InterruptSource source, std::optional<WORD> errorCode, Gate& gate)
+void CPU::interruptToTaskGate(BYTE, InterruptSource source, QVariant errorCode, Gate& gate)
 {
     auto descriptor = getDescriptor(gate.selector());
     if (options.trapint) {
@@ -91,11 +91,11 @@ void CPU::interruptToTaskGate(BYTE, InterruptSource source, std::optional<WORD> 
         throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, source), "Interrupt to task gate referencing non-present TSS descriptor");
     }
     taskSwitch(tssDescriptor, JumpType::INT);
-    if (errorCode.has_value()) {
+    if (errorCode.isValid()) {
         if (tssDescriptor.is32Bit())
-            push32(errorCode.value());
+            push32(errorCode.value<WORD>());
         else
-            push16(errorCode.value());
+            push16(errorCode.value<WORD>());
     }
 }
 
@@ -126,7 +126,7 @@ void CPU::realModeInterrupt(BYTE isr, InterruptSource source)
     setTF(0);
 }
 
-void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, std::optional<WORD> errorCode)
+void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, QVariant errorCode)
 {
     ASSERT(getPE());
 
@@ -286,8 +286,8 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, std::optional
         push32(flags);
         push32(originalCS);
         push32(originalEIP);
-        if (errorCode.has_value()) {
-            push32(errorCode.value());
+        if (errorCode.isValid()) {
+            push32(errorCode.value<WORD>());
         }
     } else {
 #ifdef DEBUG_JUMPS
@@ -297,8 +297,8 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, std::optional
         push16(flags);
         push16(originalCS);
         push16(originalEIP);
-        if (errorCode.has_value()) {
-            push16(errorCode.value());
+        if (errorCode.isValid()) {
+            push16(errorCode.value<WORD>());
         }
     }
 
@@ -383,7 +383,7 @@ void CPU::interruptFromVM86Mode(Gate& gate, DWORD offset, CodeSegmentDescriptor&
     setEIP(offset);
 }
 
-void CPU::interrupt(BYTE isr, InterruptSource source, std::optional<WORD> errorCode)
+void CPU::interrupt(BYTE isr, InterruptSource source, QVariant errorCode)
 {
     if (getPE())
         protectedModeInterrupt(isr, source, errorCode);

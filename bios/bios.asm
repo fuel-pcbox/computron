@@ -668,14 +668,14 @@ _bios_interrupt13:
     je      .writeSectors
     cmp     ah, 0x04
     je      .verifySectors
-    cmp     ah, 0x05
-    je      .formatTrack
     cmp     ah, 0x08
     je      .getDriveParams
     cmp     ah, 0x15
     je      .readDASDType
     cmp     ah, 0x18
     je      .setMediaType
+    cmp     ah, 0x05
+    je      .formatTrack
     stub    0x13
     stc
     jmp     .end

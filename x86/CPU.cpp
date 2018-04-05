@@ -74,18 +74,6 @@ static bool shouldLogMemoryRead(PhysicalAddress address)
 
 CPU* g_cpu = 0;
 
-template<typename T>
-T CPU::readRegister(int registerIndex)
-{
-    if (sizeof(T) == 1)
-        return *treg8[registerIndex];
-    if (sizeof(T) == 2)
-        return *treg16[registerIndex];
-    if (sizeof(T) == 4)
-        return *treg32[registerIndex];
-    ASSERT_NOT_REACHED();
-}
-
 DWORD CPU::readRegisterForAddressSize(int registerIndex)
 {
     if (a32())
@@ -117,19 +105,6 @@ bool CPU::decrementCXForAddressSize()
     }
     setCX(getCX() - 1);
     return getCX() == 0;
-}
-
-template<typename T>
-void CPU::writeRegister(int registerIndex, T value)
-{
-    if (sizeof(T) == 1)
-        *treg8[registerIndex] = value;
-    else if (sizeof(T) == 2)
-        *treg16[registerIndex] = value;
-    else if (sizeof(T) == 4)
-        *treg32[registerIndex] = value;
-    else
-        ASSERT_NOT_REACHED();
 }
 
 template BYTE CPU::readRegister<BYTE>(int);
@@ -1062,22 +1037,22 @@ void CPU::doINC(Accessor accessor)
 
 void CPU::_DEC_reg16(Instruction& insn)
 {
-    doDEC<WORD>(RegisterAccessor(insn.reg16()));
+    doDEC<WORD>(RegisterAccessor<WORD>(insn.reg16()));
 }
 
 void CPU::_DEC_reg32(Instruction& insn)
 {
-    doDEC<DWORD>(RegisterAccessor(insn.reg32()));
+    doDEC<DWORD>(RegisterAccessor<DWORD>(insn.reg32()));
 }
 
 void CPU::_INC_reg16(Instruction& insn)
 {
-    doINC<WORD>(RegisterAccessor(insn.reg16()));
+    doINC<WORD>(RegisterAccessor<WORD>(insn.reg16()));
 }
 
 void CPU::_INC_reg32(Instruction& insn)
 {
-    doINC<DWORD>(RegisterAccessor(insn.reg32()));
+    doINC<DWORD>(RegisterAccessor<DWORD>(insn.reg32()));
 }
 
 void CPU::_INC_RM16(Instruction& insn)
@@ -1443,7 +1418,7 @@ void CPU::writePhysicalMemory(PhysicalAddress physicalAddress, T data)
 }
 
 template<typename T>
-T CPU::readMemory(LinearAddress linearAddress, MemoryAccessType accessType)
+ALWAYS_INLINE T CPU::readMemory(LinearAddress linearAddress, MemoryAccessType accessType)
 {
     PhysicalAddress physicalAddress;
     translateAddress(linearAddress, physicalAddress, accessType);
@@ -1463,7 +1438,7 @@ T CPU::readMemory(LinearAddress linearAddress, MemoryAccessType accessType)
 }
 
 template<typename T>
-T CPU::readMemory(const SegmentDescriptor& descriptor, DWORD offset, MemoryAccessType accessType)
+ALWAYS_INLINE T CPU::readMemory(const SegmentDescriptor& descriptor, DWORD offset, MemoryAccessType accessType)
 {
     LinearAddress linearAddress = descriptor.linearAddress(offset);
     if (!getPE()) {
@@ -1474,7 +1449,7 @@ T CPU::readMemory(const SegmentDescriptor& descriptor, DWORD offset, MemoryAcces
 }
 
 template<typename T>
-T CPU::readMemory(SegmentRegisterIndex segment, DWORD offset, MemoryAccessType accessType)
+ALWAYS_INLINE T CPU::readMemory(SegmentRegisterIndex segment, DWORD offset, MemoryAccessType accessType)
 {
     auto& descriptor = m_descriptor[(int)segment];
     if (!getPE())
@@ -1692,7 +1667,7 @@ BYTE* CPU::memoryPointer(LinearAddress linearAddress)
 }
 
 template<typename T>
-T CPU::readInstructionStream()
+ALWAYS_INLINE T CPU::readInstructionStream()
 {
     T data = readMemory<T>(SegmentRegisterIndex::CS, currentInstructionPointer(), MemoryAccessType::Execute);
     adjustInstructionPointer(sizeof(T));

@@ -829,7 +829,7 @@ static SegmentRegisterIndex toSegmentPrefix(BYTE op)
     }
 }
 
-Instruction::Instruction(InstructionStream& stream, bool o32, bool a32)
+ALWAYS_INLINE Instruction::Instruction(InstructionStream& stream, bool o32, bool a32)
     : m_a32(a32)
     , m_o32(o32)
 {
