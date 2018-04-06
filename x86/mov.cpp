@@ -161,6 +161,10 @@ void CPU::_MOV_CR_reg32(Instruction& insn)
         }
     }
 
+    if (crIndex == 4) {
+        vlog(LogCPU, "cr4 written but not supported!");
+        ASSERT_NOT_REACHED();
+    }
     setControlRegister(crIndex, readRegister<DWORD>(static_cast<CPU::RegisterIndex32>(insn.rm() & 7)));
 
     if (crIndex == 0 || crIndex == 3)
