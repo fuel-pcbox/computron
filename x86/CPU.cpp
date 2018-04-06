@@ -34,6 +34,7 @@
 #include "Tasking.h"
 
 #define CRASH_ON_OPCODE_00_00
+#define CRASH_ON_EXECUTE_0000_00000000
 #define A20_ENABLED
 //#define LOG_FAR_JUMPS
 //#define MEMORY_DEBUGGING
@@ -119,6 +120,14 @@ FLATTEN void CPU::decodeNext()
 #ifdef CT_TRACE
     if (UNLIKELY(m_isForAutotest))
         dumpTrace();
+#endif
+
+#ifdef CRASH_ON_EXECUTE_0000_00000000
+    if (UNLIKELY(getBaseCS() == 0 && getBaseEIP() == 0)) {
+        dumpAll();
+        vlog(LogCPU, "It seems like we've jumped to 0000:00000000 :(");
+        ASSERT_NOT_REACHED();
+    }
 #endif
 
     auto insn = Instruction::fromStream(*this, m_operandSize32, m_addressSize32);
