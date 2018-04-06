@@ -75,6 +75,8 @@ public:
 
     bool is32Bit() const { return m_is32Bit; }
 
+    WORD getIOMapBase() const;
+
     DWORD getRingESP(BYTE) const;
     WORD getRingSS(BYTE) const;
 

@@ -66,8 +66,13 @@ void CPU::_IRET(Instruction&)
     DWORD flags = popOperandSizedValue();
 
     if (getPE() && !getVM()) {
-        if (flags & Flag::VM && getCPL() == 0) {
-            return iretToVM86Mode(LogicalAddress(selector, offset), flags);
+        if (flags & Flag::VM) {
+            if (getCPL() == 0) {
+                return iretToVM86Mode(LogicalAddress(selector, offset), flags);
+            } else {
+                vlog(LogCPU, "IRET to VM86 but CPL = %u!?", getCPL());
+                ASSERT_NOT_REACHED();
+            }
         }
         protectedFarReturn(LogicalAddress(selector, offset), JumpType::IRET);
     } else if (getVM() && getIOPL() != 3) {
@@ -173,7 +178,7 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, QVariant erro
     auto entry = gate.entry();
 
     if (options.trapint) {
-        vlog(LogCPU, "PE=1 interrupt %02x,%04x%s, type: %s (%1x), %04x:%08x", isr, getAX(), source == InterruptSource::External ? " (from PIC)" : "", gate.typeName(), gate.type(), entry.selector(), entry.offset());
+        vlog(LogCPU, "PE=1 interrupt %02x,%04x%s, type: %s (%1x), %04x:%08x", isr, getAX(), source == InterruptSource::External ? " (external)" : "", gate.typeName(), gate.type(), entry.selector(), entry.offset());
         dumpDescriptor(gate);
     }
 

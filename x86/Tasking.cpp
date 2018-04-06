@@ -650,3 +650,9 @@ WORD TSS::getRingSS(BYTE ring) const
     ASSERT_NOT_REACHED();
     return 0;
 }
+
+WORD TSS::getIOMapBase() const
+{
+    ASSERT(m_is32Bit);
+    return tss32().iomapbase;
+}

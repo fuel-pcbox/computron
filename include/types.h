@@ -79,21 +79,6 @@ private:
     DWORD m_address { 0 };
 };
 
-class LogicalAddress {
-public:
-    LogicalAddress() { }
-    LogicalAddress(WORD selector, DWORD offset) : m_selector(selector), m_offset(offset) { }
-
-    WORD selector() const { return m_selector; }
-    DWORD offset() const { return m_offset; }
-    void setSelector(WORD selector) { m_selector = selector; }
-    void setOffset(DWORD offset) { m_offset = offset; }
-
-private:
-    WORD m_selector { 0 };
-    DWORD m_offset { 0 };
-};
-
 template<typename T> struct BitSizeOfType { static const int bits = sizeof(T) * 8; };
 
 template<typename T>
@@ -184,3 +169,20 @@ inline QWORD makeQWORD(DWORD msw, DWORD lsw)
     return ((QWORD)msw << 32) | lsw;
 }
 
+
+class LogicalAddress {
+public:
+    LogicalAddress() { }
+    LogicalAddress(WORD selector, DWORD offset) : m_selector(selector), m_offset(offset) { }
+
+    WORD selector() const { return m_selector; }
+    DWORD offset() const { return m_offset; }
+    void setSelector(WORD selector) { m_selector = selector; }
+    void setOffset(DWORD offset) { m_offset = offset; }
+
+    bool operator<(const LogicalAddress& other) const { return weld<QWORD>(selector(), offset()) < weld<QWORD>(other.selector(), other.offset()); }
+
+private:
+    WORD m_selector { 0 };
+    DWORD m_offset { 0 };
+};

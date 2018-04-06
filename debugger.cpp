@@ -226,23 +226,22 @@ void Debugger::handleBreakpoint(const QStringList& arguments)
         if (!cpu().breakpoints().empty()) {
             printf("\nCurrent breakpoints:\n");
             for (auto& breakpoint : cpu().breakpoints()) {
-                printf("    @0x%08X\n", breakpoint);
+                printf("    %04x:%08x\n", breakpoint.selector(), breakpoint.offset());
             }
             printf("\n");
         }
         return;
     }
-    // FIXME: This is totally wrong for protected mode.
-    WORD segment = arguments.at(1).toUInt(0, 16);
+    WORD selector = arguments.at(1).toUInt(0, 16);
     DWORD offset = arguments.at(2).toUInt(0, 16);
-    PhysicalAddress physicalAddress = realModeAddressToPhysicalAddress(segment, offset);
+    LogicalAddress address(selector, offset);
     if (arguments[0] == "add") {
-        printf("add breakpoint: %04X:%08X -> @0x%08X\n", segment, offset, physicalAddress.get());
-        cpu().breakpoints().insert(physicalAddress.get());
+        printf("add breakpoint: %04x:%08x\n", selector, offset);
+        cpu().breakpoints().insert(address);
     }
     if (arguments[0] == "del") {
-        printf("delete breakpoint: %04X:%08X -> @0x%08X\n", segment, offset, physicalAddress.get());
-        cpu().breakpoints().erase(physicalAddress.get());
+        printf("delete breakpoint: %04x:%08x\n", selector, offset);
+        cpu().breakpoints().erase(address);
     }
     cpu().recomputeMainLoopNeedsSlowStuff();
 }

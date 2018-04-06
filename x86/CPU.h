@@ -167,7 +167,7 @@ public:
 
     Machine& machine() const { return m_machine; }
 
-    std::set<DWORD>& breakpoints() { return m_breakpoints; }
+    std::set<LogicalAddress>& breakpoints() { return m_breakpoints; }
 
     enum class MemoryAccessType { Read, Write, Execute, InternalPointer };
 
@@ -565,6 +565,8 @@ public:
     void translateAddress(LinearAddress, PhysicalAddress&, MemoryAccessType);
     void snoop(LinearAddress, MemoryAccessType);
     void snoop(SegmentRegisterIndex, DWORD offset, MemoryAccessType);
+
+    template<typename T> void validateIOAccess(WORD port);
 
     BYTE readMemory8(LinearAddress);
     BYTE readMemory8(SegmentRegisterIndex, DWORD offset);
@@ -1379,7 +1381,7 @@ private:
     DWORD m_baseMemorySize { 0 };
     DWORD m_extendedMemorySize { 0 };
 
-    std::set<DWORD> m_breakpoints;
+    std::set<LogicalAddress> m_breakpoints;
 
     bool m_a20Enabled { false };
     bool m_nextInstructionIsUninterruptible { false };

@@ -27,6 +27,7 @@
 #include "debug.h"
 #include "iodevice.h"
 #include "machine.h"
+#include "Tasking.h"
 
 void CPU::_OUT_imm8_AL(Instruction& insn)
 {
@@ -88,6 +89,35 @@ void CPU::_IN_EAX_DX(Instruction&)
     setEAX(in32(getDX()));
 }
 
+template<typename T>
+void CPU::validateIOAccess(WORD port)
+{
+    if (!getPE())
+        return;
+    if (!getVM() && !(getCPL() > getIOPL()))
+        return;
+    auto tss = currentTSS();
+    if (!tss.is32Bit()) {
+        vlog(LogCPU, "validateIOAccess for 16-bit TSS, what do?");
+        ASSERT_NOT_REACHED();
+    }
+
+    if (TR.limit < 103)
+        throw GeneralProtectionFault(0, "TSS too small, I/O map missing");
+
+    WORD iomapBase = tss.getIOMapBase();
+    WORD highPort = port + sizeof(T) - 1;
+
+    if (TR.limit < (iomapBase + highPort / 8))
+        throw GeneralProtectionFault(0, "TSS I/O map too small");
+
+    WORD mask = (1 << (sizeof(T) - 1)) << (port & 7);
+    LinearAddress address(TR.base.get() + iomapBase + (port / 8));
+    WORD perm = mask & 0xff00 ? readMemory16(address) : readMemory8(address);
+    if (perm & mask)
+        throw GeneralProtectionFault(0, "I/O map disallowed access");
+}
+
 // Important note from IA32 manual, regarding string I/O instructions:
 // "These instructions may read from the I/O port without writing to the memory location if an exception or VM exit
 // occurs due to the write (e.g. #PF). If this would be problematic, for example because the I/O port read has side-
@@ -96,10 +126,7 @@ void CPU::_IN_EAX_DX(Instruction&)
 template<typename T>
 void CPU::out(WORD port, T data)
 {
-    if (getPE() && ((getCPL() > getIOPL()) || getVM())) {
-        // FIXME: Check IO permissions table.
-        //throw GeneralProtectionFault(0, QString("I/O write attempt with CPL(%1) > IOPL(%2)").arg(getCPL()).arg(getIOPL()));
-    }
+    validateIOAccess<T>(port);
 
     if (options.iopeek) {
         if (port != 0x00E6 && port != 0x0020 && port != 0x3D4 && port != 0x03d5 && port != 0xe2 && port != 0xe0 && port != 0x92) {
@@ -119,10 +146,7 @@ void CPU::out(WORD port, T data)
 
 template<typename T> T CPU::in(WORD port)
 {
-    if (getPE() && ((getCPL() > getIOPL()) || getVM())) {
-        // FIXME: Check IO permissions table.
-        //throw GeneralProtectionFault(0, QString("I/O read attempt with CPL(%1) > IOPL(%2)").arg(getCPL()).arg(getIOPL()));
-    }
+    validateIOAccess<T>(port);
 
     T data;
     if (auto* device = machine().inputDeviceForPort(port)) {

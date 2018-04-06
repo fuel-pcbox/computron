@@ -442,10 +442,8 @@ NEVER_INLINE bool CPU::mainLoopSlowStuff()
     }
 
     if (!m_breakpoints.empty()) {
-        // FIXME: This is totally wrong for protected mode.
-        auto flatPC = realModeAddressToPhysicalAddress(getCS(), getEIP());
         for (auto& breakpoint : m_breakpoints) {
-            if (flatPC.get() == breakpoint) {
+            if (getCS() == breakpoint.selector() && getEIP() == breakpoint.offset()) {
                 debugger().enter();
                 break;
             }
@@ -903,17 +901,21 @@ void CPU::farReturn(JumpType type, WORD stackAdjustment)
 void CPU::iretToVM86Mode(LogicalAddress entry, DWORD flags)
 {
     vlog(LogCPU, "IRET (o%u) to VM86 mode -> %04x:%04x", o16() ? 16 : 32, entry.selector(), entry.offset());
+    WORD offset = entry.offset();
     if (!o32()) {
         vlog(LogCPU, "Hmm, o16 IRET to VM86!?");
         ASSERT_NOT_REACHED();
     }
-
-    setVM(true);
-    // FIXME: Raise #GP(0) if offset outside CS limits.
-    setCS(entry.selector());
-    setEIP(entry.offset());
+    if (offset & 0xffff0000) {
+        vlog(LogCPU, "IRET to VM86 with offset %08x, truncating.", offset);
+        offset &= 0xffff;
+    }
 
     setEFlags(flags);
+    // FIXME: Raise #GP(0) if offset outside CS limits.
+    setCS(entry.selector());
+    setEIP(offset);
+
     DWORD newESP = pop32();
     WORD newSS = pop32();
     setES(pop32());
