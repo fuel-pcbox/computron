@@ -883,57 +883,30 @@ void CPU::protectedFarReturn(LogicalAddress address, JumpType type)
 
 void CPU::farReturn(JumpType type, WORD stackAdjustment)
 {
-    WORD selector;
-    DWORD offset;
-    DWORD flags = 0;
+    // FIXME: Needs stack checks.
+    DWORD offset = popOperandSizedValue();
+    WORD selector = popOperandSizedValue();
     BYTE originalCPL = getCPL();
 
-    if (o16()) {
-        offset = pop16();
-        selector = pop16();
-        adjustStackPointer(stackAdjustment);
-        if (type == JumpType::IRET) {
-            flags = pop16();
-#ifdef DEBUG_JUMPS
-            vlog(LogCPU, "Popped 16-bit cs:ip!flags %04x:%04x!%04x @stack{%04x:%08x}", selector, offset, flags, getSS(), getESP());
-#endif
-        }
-    } else {
-        offset = pop32();
-        selector = pop32();
-        adjustStackPointer(stackAdjustment);
-        if (type == JumpType::IRET) {
-            flags = pop32();
-#ifdef DEBUG_JUMPS
-            vlog(LogCPU, "Popped 32-bit cs:eip!flags %04x:%08x!%08x @stack{%04x:%08x}", selector, offset, flags, getSS(), getESP());
-#endif
-        }
-    }
+    adjustStackPointer(stackAdjustment);
 
     if (getPE() && !getVM()) {
-        if (type == JumpType::IRET && flags & Flag::VM && getCPL() == 0) {
-            return iretToVM86Mode(LogicalAddress(selector, offset), flags);
-        }
         protectedFarReturn(LogicalAddress(selector, offset), type);
         if (getCPL() != originalCPL)
             adjustStackPointer(stackAdjustment);
     } else {
-        if (type == JumpType::IRET && getVM() && getIOPL() != 3) {
-            dumpAll();
-            throw GeneralProtectionFault(0, "IRET in VM86 mode with IOPL != 3");
-        }
         setCS(selector);
         setEIP(offset);
-    }
-
-    if (type == JumpType::IRET) {
-        setEFlagsRespectfully(flags);
     }
 }
 
 void CPU::iretToVM86Mode(LogicalAddress entry, DWORD flags)
 {
     vlog(LogCPU, "IRET (o%u) to VM86 mode -> %04x:%04x", o16() ? 16 : 32, entry.selector(), entry.offset());
+    if (!o32()) {
+        vlog(LogCPU, "Hmm, o16 IRET to VM86!?");
+        ASSERT_NOT_REACHED();
+    }
 
     setVM(true);
     // FIXME: Raise #GP(0) if offset outside CS limits.

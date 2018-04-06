@@ -488,6 +488,8 @@ public:
     template<typename T> T pop();
     template<typename T> void push(T);
 
+    DWORD popOperandSizedValue() { return o16() ? pop16() : pop32(); }
+
     void pushSegmentRegisterValue(WORD);
 
     Debugger& debugger() { return *m_debugger; }

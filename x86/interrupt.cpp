@@ -60,8 +60,25 @@ void CPU::_IRET(Instruction&)
         }
     }
 
-    farReturn(JumpType::IRET);
-}
+    // FIXME: Needs stack checks.
+    DWORD offset = popOperandSizedValue();
+    WORD selector = popOperandSizedValue();
+    DWORD flags = popOperandSizedValue();
+
+    if (getPE() && !getVM()) {
+        if (flags & Flag::VM && getCPL() == 0) {
+            return iretToVM86Mode(LogicalAddress(selector, offset), flags);
+        }
+        protectedFarReturn(LogicalAddress(selector, offset), JumpType::IRET);
+    } else if (getVM() && getIOPL() != 3) {
+        dumpAll();
+        throw GeneralProtectionFault(0, "IRET in VM86 mode with IOPL != 3");
+    } else {
+        setCS(selector);
+        setEIP(offset);
+    }
+
+    setEFlagsRespectfully(flags);}
 
 static WORD makeErrorCode(WORD num, bool idt, CPU::InterruptSource source)
 {
