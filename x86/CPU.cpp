@@ -1265,18 +1265,15 @@ void CPU::translateAddressSlowCase(LinearAddress linearAddress, PhysicalAddress&
 
 void CPU::snoop(LinearAddress linearAddress, MemoryAccessType accessType)
 {
-    if (!getPE())
-        return;
     PhysicalAddress physicalAddress;
     translateAddress(linearAddress, physicalAddress, accessType);
 }
 
 void CPU::snoop(SegmentRegisterIndex segreg, DWORD offset, MemoryAccessType accessType)
 {
-    if (!getPE())
-        return;
     // FIXME: Support multi-byte snoops.
-    validateAddress<BYTE>(segreg, offset, accessType);
+    if (getPE() && !getVM())
+        validateAddress<BYTE>(segreg, offset, accessType);
     auto linearAddress = cachedDescriptor(segreg).linearAddress(offset);
     snoop(linearAddress, accessType);
 }
@@ -1489,21 +1486,15 @@ template<typename T>
 void CPU::writeMemory(const SegmentDescriptor& descriptor, DWORD offset, T value)
 {
     auto linearAddress = descriptor.linearAddress(offset);
-    if (!getPE()) {
-        writeMemory(linearAddress, value);
-        return;
-    }
-    validateAddress<T>(descriptor, offset, MemoryAccessType::Write);
+    if (getPE() && !getVM())
+        validateAddress<T>(descriptor, offset, MemoryAccessType::Write);
     writeMemory(linearAddress, value);
 }
 
 template<typename T>
-void CPU::writeMemory(SegmentRegisterIndex segment, DWORD offset, T value)
+void CPU::writeMemory(SegmentRegisterIndex segreg, DWORD offset, T value)
 {
-    auto& descriptor = m_descriptor[(int)segment];
-    if (!getPE())
-        return writeMemory<T>(descriptor.linearAddress(offset), value);
-    return writeMemory<T>(descriptor, offset, value);
+    return writeMemory<T>(cachedDescriptor(segreg), offset, value);
 }
 
 void CPU::writeMemory8(LinearAddress address, BYTE value) { writeMemory(address, value); }
@@ -1605,7 +1596,7 @@ BYTE* CPU::memoryPointer(SegmentRegisterIndex segment, DWORD offset)
 BYTE* CPU::memoryPointer(const SegmentDescriptor& descriptor, DWORD offset)
 {
     auto linearAddress = descriptor.linearAddress(offset);
-    if (!getPE())
+    if (!getPE() || getVM())
         return memoryPointer(linearAddress);
 
     validateAddress<BYTE>(descriptor, offset, MemoryAccessType::InternalPointer);
