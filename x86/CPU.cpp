@@ -901,20 +901,17 @@ void CPU::farReturn(JumpType type, WORD stackAdjustment)
 void CPU::iretToVM86Mode(LogicalAddress entry, DWORD flags)
 {
     vlog(LogCPU, "IRET (o%u) to VM86 mode -> %04x:%04x", o16() ? 16 : 32, entry.selector(), entry.offset());
-    WORD offset = entry.offset();
     if (!o32()) {
         vlog(LogCPU, "Hmm, o16 IRET to VM86!?");
         ASSERT_NOT_REACHED();
     }
-    if (offset & 0xffff0000) {
-        vlog(LogCPU, "IRET to VM86 with offset %08x, truncating.", offset);
-        offset &= 0xffff;
-    }
+
+    if (entry.offset() & 0xffff0000)
+        throw GeneralProtectionFault(0, "IRET to VM86 with offset > 0xffff");
 
     setEFlags(flags);
-    // FIXME: Raise #GP(0) if offset outside CS limits.
     setCS(entry.selector());
-    setEIP(offset);
+    setEIP(entry.offset());
 
     DWORD newESP = pop32();
     WORD newSS = pop32();
