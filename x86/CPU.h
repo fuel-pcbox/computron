@@ -338,59 +338,59 @@ public:
     DWORD getDebugRegister(int registerIndex) const { return *m_debugRegisterMap[registerIndex]; }
     void setDebugRegister(int registerIndex, DWORD value) { *m_debugRegisterMap[registerIndex] = value; }
 
-    DWORD getEAX() const { return this->regs.D.EAX; }
-    DWORD getEBX() const { return this->regs.D.EBX; }
-    DWORD getECX() const { return this->regs.D.ECX; }
-    DWORD getEDX() const { return this->regs.D.EDX; }
-    DWORD getESI() const { return this->regs.D.ESI; }
-    DWORD getEDI() const { return this->regs.D.EDI; }
-    DWORD getESP() const { return this->regs.D.ESP; }
-    DWORD getEBP() const { return this->regs.D.EBP; }
+    DWORD getEAX() const { return readRegister<DWORD>(RegisterEAX); }
+    DWORD getEBX() const { return readRegister<DWORD>(RegisterEBX); }
+    DWORD getECX() const { return readRegister<DWORD>(RegisterECX); }
+    DWORD getEDX() const { return readRegister<DWORD>(RegisterEDX); }
+    DWORD getESI() const { return readRegister<DWORD>(RegisterESI); }
+    DWORD getEDI() const { return readRegister<DWORD>(RegisterEDI); }
+    DWORD getESP() const { return readRegister<DWORD>(RegisterESP); }
+    DWORD getEBP() const { return readRegister<DWORD>(RegisterEBP); }
 
-    WORD getAX() const { return this->regs.W.AX; }
-    WORD getBX() const { return this->regs.W.BX; }
-    WORD getCX() const { return this->regs.W.CX; }
-    WORD getDX() const { return this->regs.W.DX; }
-    WORD getSI() const { return this->regs.W.SI; }
-    WORD getDI() const { return this->regs.W.DI; }
-    WORD getSP() const { return this->regs.W.SP; }
-    WORD getBP() const { return this->regs.W.BP; }
+    WORD getAX() const { return readRegister<WORD>(RegisterAX); }
+    WORD getBX() const { return readRegister<WORD>(RegisterBX); }
+    WORD getCX() const { return readRegister<WORD>(RegisterCX); }
+    WORD getDX() const { return readRegister<WORD>(RegisterDX); }
+    WORD getSI() const { return readRegister<WORD>(RegisterSI); }
+    WORD getDI() const { return readRegister<WORD>(RegisterDI); }
+    WORD getSP() const { return readRegister<WORD>(RegisterSP); }
+    WORD getBP() const { return readRegister<WORD>(RegisterBP); }
 
-    BYTE getAL() const { return this->regs.B.AL; }
-    BYTE getBL() const { return this->regs.B.BL; }
-    BYTE getCL() const { return this->regs.B.CL; }
-    BYTE getDL() const { return this->regs.B.DL; }
-    BYTE getAH() const { return this->regs.B.AH; }
-    BYTE getBH() const { return this->regs.B.BH; }
-    BYTE getCH() const { return this->regs.B.CH; }
-    BYTE getDH() const { return this->regs.B.DH; }
+    BYTE getAL() const { return readRegister<BYTE>(RegisterAL); }
+    BYTE getBL() const { return readRegister<BYTE>(RegisterBL); }
+    BYTE getCL() const { return readRegister<BYTE>(RegisterCL); }
+    BYTE getDL() const { return readRegister<BYTE>(RegisterDL); }
+    BYTE getAH() const { return readRegister<BYTE>(RegisterAH); }
+    BYTE getBH() const { return readRegister<BYTE>(RegisterBH); }
+    BYTE getCH() const { return readRegister<BYTE>(RegisterCH); }
+    BYTE getDH() const { return readRegister<BYTE>(RegisterDH); }
 
-    void setAL(BYTE value) { this->regs.B.AL = value; }
-    void setBL(BYTE value) { this->regs.B.BL = value; }
-    void setCL(BYTE value) { this->regs.B.CL = value; }
-    void setDL(BYTE value) { this->regs.B.DL = value; }
-    void setAH(BYTE value) { this->regs.B.AH = value; }
-    void setBH(BYTE value) { this->regs.B.BH = value; }
-    void setCH(BYTE value) { this->regs.B.CH = value; }
-    void setDH(BYTE value) { this->regs.B.DH = value; }
+    void setAL(BYTE value) { writeRegister<BYTE>(RegisterAL, value); }
+    void setBL(BYTE value) { writeRegister<BYTE>(RegisterBL, value); }
+    void setCL(BYTE value) { writeRegister<BYTE>(RegisterCL, value); }
+    void setDL(BYTE value) { writeRegister<BYTE>(RegisterDL, value); }
+    void setAH(BYTE value) { writeRegister<BYTE>(RegisterAH, value); }
+    void setBH(BYTE value) { writeRegister<BYTE>(RegisterBH, value); }
+    void setCH(BYTE value) { writeRegister<BYTE>(RegisterCH, value); }
+    void setDH(BYTE value) { writeRegister<BYTE>(RegisterDH, value); }
 
-    void setAX(WORD value) { this->regs.W.AX = value; }
-    void setBX(WORD value) { this->regs.W.BX = value; }
-    void setCX(WORD value) { this->regs.W.CX = value; }
-    void setDX(WORD value) { this->regs.W.DX = value; }
-    void setSP(WORD value) { this->regs.W.SP = value; }
-    void setBP(WORD value) { this->regs.W.BP = value; }
-    void setSI(WORD value) { this->regs.W.SI = value; }
-    void setDI(WORD value) { this->regs.W.DI = value; }
+    void setAX(WORD value) { writeRegister<WORD>(RegisterAX, value); }
+    void setBX(WORD value) { writeRegister<WORD>(RegisterBX, value); }
+    void setCX(WORD value) { writeRegister<WORD>(RegisterCX, value); }
+    void setDX(WORD value) { writeRegister<WORD>(RegisterDX, value); }
+    void setSP(WORD value) { writeRegister<WORD>(RegisterSP, value); }
+    void setBP(WORD value) { writeRegister<WORD>(RegisterBP, value); }
+    void setSI(WORD value) { writeRegister<WORD>(RegisterSI, value); }
+    void setDI(WORD value) { writeRegister<WORD>(RegisterDI, value); }
 
-    void setEAX(DWORD value) { this->regs.D.EAX = value; }
-    void setEBX(DWORD value) { this->regs.D.EBX = value; }
-    void setECX(DWORD value) { this->regs.D.ECX = value; }
-    void setEDX(DWORD value) { this->regs.D.EDX = value; }
-    void setESP(DWORD value) { this->regs.D.ESP = value; }
-    void setEBP(DWORD value) { this->regs.D.EBP = value; }
-    void setESI(DWORD value) { this->regs.D.ESI = value; }
-    void setEDI(DWORD value) { this->regs.D.EDI = value; }
+    void setEAX(DWORD value) { writeRegister<DWORD>(RegisterEAX, value); }
+    void setEBX(DWORD value) { writeRegister<DWORD>(RegisterEBX, value); }
+    void setECX(DWORD value) { writeRegister<DWORD>(RegisterECX, value); }
+    void setEDX(DWORD value) { writeRegister<DWORD>(RegisterEDX, value); }
+    void setESP(DWORD value) { writeRegister<DWORD>(RegisterESP, value); }
+    void setEBP(DWORD value) { writeRegister<DWORD>(RegisterEBP, value); }
+    void setESI(DWORD value) { writeRegister<DWORD>(RegisterESI, value); }
+    void setEDI(DWORD value) { writeRegister<DWORD>(RegisterEDI, value); }
 
     DWORD getCR0() const { return m_CR0; }
     DWORD getCR1() const { return m_CR1; }
@@ -532,7 +532,7 @@ public:
 
     template<typename T> void cmpFlags(QWORD result, T, T);
 
-    template<typename T> T readRegister(int registerIndex);
+    template<typename T> T readRegister(int registerIndex) const;
     template<typename T> void writeRegister(int registerIndex, T value);
 
     DWORD readRegisterForAddressSize(int registerIndex);
@@ -1570,7 +1570,7 @@ inline void CPU::push(T data)
 }
 
 template<typename T>
-ALWAYS_INLINE T CPU::readRegister(int registerIndex)
+ALWAYS_INLINE T CPU::readRegister(int registerIndex) const
 {
     if (sizeof(T) == 1)
         return *treg8[registerIndex];

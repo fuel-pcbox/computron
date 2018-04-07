@@ -108,9 +108,9 @@ bool CPU::decrementCXForAddressSize()
     return getCX() == 0;
 }
 
-template BYTE CPU::readRegister<BYTE>(int);
-template WORD CPU::readRegister<WORD>(int);
-template DWORD CPU::readRegister<DWORD>(int);
+template BYTE CPU::readRegister<BYTE>(int) const;
+template WORD CPU::readRegister<WORD>(int) const;
+template DWORD CPU::readRegister<DWORD>(int) const;
 template void CPU::writeRegister<BYTE>(int, BYTE);
 template void CPU::writeRegister<WORD>(int, WORD);
 template void CPU::writeRegister<DWORD>(int, DWORD);

@@ -26,15 +26,15 @@
 
 void CPU::_AAA(Instruction&)
 {
-    if (((regs.B.AL & 0x0F)>9) || getAF()) {
-        regs.W.AX += 0x0106;
+    if (((getAL() & 0x0f) > 9) || getAF()) {
+        setAX(getAX() + 0x0106);
         setAF(1);
         setCF(1);
     } else {
         setAF(0);
         setCF(0);
     }
-    regs.B.AL &= 0x0F;
+    setAL(getAL() & 0x0f);
 }
 
 void CPU::_AAM(Instruction& insn)
@@ -43,48 +43,48 @@ void CPU::_AAM(Instruction& insn)
         throw DivideError("AAM with 0 immediate");
     }
 
-    BYTE tempAL = regs.B.AL;
-    regs.B.AH = tempAL / insn.imm8();
-    regs.B.AL = tempAL % insn.imm8();
-    updateFlags8(regs.B.AL);
+    BYTE tempAL = getAL();
+    setAH(tempAL / insn.imm8());
+    setAL(tempAL % insn.imm8());
+    updateFlags8(getAL());
     setAF(0);
 }
 
 void CPU::_AAD(Instruction& insn)
 {
-    BYTE tempAL = regs.B.AL;
-    BYTE tempAH = regs.B.AH;
+    BYTE tempAL = getAL();
+    BYTE tempAH = getAH();
 
-    regs.B.AL = (tempAL + (tempAH * insn.imm8())) & 0xFF;
-    regs.B.AH = 0x00;
-    updateFlags8(regs.B.AL);
+    setAL((tempAL + (tempAH * insn.imm8())) & 0xff);
+    setAH(0x00);
+    updateFlags8(getAL());
     setAF(0);
 }
 
 void CPU::_AAS(Instruction&)
 {
-    if (((regs.B.AL & 0x0F) > 9) || getAF()) {
-        regs.W.AX -= 6;
-        regs.B.AH -= 1;
+    if (((getAL() & 0x0f) > 9) || getAF()) {
+        setAX(getAX() - 6);
+        setAH(getAH() - 1);
         setAF(1);
         setCF(1);
     } else {
         setAF(0);
         setCF(0);
     }
-    regs.B.AL &= 0x0F;
+    setAL(getAL() & 0x0f);
 }
 
 void CPU::_DAS(Instruction&)
 {
     bool oldCF = getCF();
-    BYTE oldAL = regs.B.AL;
+    BYTE oldAL = getAL();
 
     setCF(0);
 
-    if (((regs.B.AL & 0x0F) > 0x09) || getAF()) {
-        setCF(((regs.B.AL - 6) >> 8) & 1);
-        regs.B.AL -= 0x06;
+    if (((getAL() & 0x0f) > 0x09) || getAF()) {
+        setCF(((getAL() - 6) >> 8) & 1);
+        setAL(getAL() - 0x06);
         setCF(oldCF | getCF());
         setAF(1);
     } else {
@@ -92,7 +92,7 @@ void CPU::_DAS(Instruction&)
     }
 
     if (oldAL > 0x99 || oldCF == 1) {
-        regs.B.AL -= 0x60;
+        setAL(getAL() - 0x60);
         setCF(1);
     }
 
@@ -102,13 +102,13 @@ void CPU::_DAS(Instruction&)
 void CPU::_DAA(Instruction&)
 {
     bool oldCF = getCF();
-    BYTE oldAL = regs.B.AL;
+    BYTE oldAL = getAL();
 
     setCF(0);
 
-    if (((regs.B.AL & 0x0F) > 0x09) || getAF()) {
-        setCF(((regs.B.AL + 6) >> 8) & 1);
-        regs.B.AL += 6;
+    if (((getAL() & 0x0f) > 0x09) || getAF()) {
+        setCF(((getAL() + 6) >> 8) & 1);
+        setAL(getAL() + 6);
         setCF(oldCF | getCF());
         setAF(1);
     } else {
@@ -116,7 +116,7 @@ void CPU::_DAA(Instruction&)
     }
 
     if (oldAL > 0x99 || oldCF == 1) {
-        regs.B.AL += 0x60;
+        setAL(getAL() + 0x60);
         setCF(1);
     } else {
         setCF(0);

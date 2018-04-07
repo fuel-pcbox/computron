@@ -56,10 +56,7 @@ void CPU::_CWD(Instruction&)
 
 void CPU::_CWDE(Instruction&)
 {
-    if (getAX() & 0x8000)
-        regs.W.__EAX_high_word = 0xFFFF;
-    else
-        regs.W.__EAX_high_word = 0x0000;
+    setEAX(signExtendedTo<DWORD>(getAX()));
 }
 
 void CPU::_CDQ(Instruction&)
