@@ -53,12 +53,12 @@ BYTE MemoryProvider::readMemory8(DWORD)
 
 WORD MemoryProvider::readMemory16(DWORD address)
 {
-    return makeWORD(readMemory8(address + 1), readMemory8(address));
+    return weld<WORD>(readMemory8(address + 1), readMemory8(address));
 }
 
 DWORD MemoryProvider::readMemory32(DWORD address)
 {
-    return makeDWORD(readMemory16(address + 2), readMemory16(address));
+    return weld<DWORD>(readMemory16(address + 2), readMemory16(address));
 }
 
 void MemoryProvider::setSize(DWORD size)

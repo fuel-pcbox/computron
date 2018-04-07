@@ -463,7 +463,7 @@ QColor VGA::color(int index) const
 
 WORD VGA::startAddress() const
 {
-    return makeWORD(d->ioRegister[0x0C], d->ioRegister[0x0D]);
+    return weld<WORD>(d->ioRegister[0x0C], d->ioRegister[0x0D]);
 }
 
 BYTE VGA::currentVideoMode() const

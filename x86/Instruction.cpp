@@ -1348,12 +1348,12 @@ WORD SimpleInstructionStream::readInstruction16()
 {
     BYTE lsb = *(m_data++);
     BYTE msb = *(m_data++);
-    return makeWORD(msb, lsb);
+    return weld<WORD>(msb, lsb);
 }
 
 DWORD SimpleInstructionStream::readInstruction32()
 {
     WORD lsw = readInstruction16();
     WORD msw = readInstruction16();
-    return makeDWORD(msw, lsw);
+    return weld<DWORD>(msw, lsw);
 }

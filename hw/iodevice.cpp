@@ -102,7 +102,7 @@ WORD IODevice::in16(WORD port)
 #ifdef IODEVICE_DEBUG
     vlog(LogIO, "IODevice[%s]::in16(%04x) fallback to multiple in8() calls", m_name, port);
 #endif
-    return makeWORD(in8(port + 1), in8(port));
+    return weld<WORD>(in8(port + 1), in8(port));
 }
 
 DWORD IODevice::in32(WORD port)
@@ -110,7 +110,7 @@ DWORD IODevice::in32(WORD port)
 #ifdef IODEVICE_DEBUG
     vlog(LogIO, "IODevice[%s]::in32(%04x) fallback to multiple in8() calls", m_name, port);
 #endif
-    return makeDWORD(makeWORD(in8(port + 3), in8(port + 2)), makeWORD(in8(port + 1), in8(port)));
+    return weld<DWORD>(in16(port + 2), in16(port));
 }
 
 void IODevice::ignorePort(WORD port)

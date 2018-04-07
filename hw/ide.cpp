@@ -221,11 +221,11 @@ void IDE::out8(WORD port, BYTE data)
         break;
     case 0x4:
         vlog(LogIDE, "Controller %d cylinder LSB set: %u", controllerIndex, data);
-        controller.cylinderIndex = makeWORD(getMSB(controller.cylinderIndex), data);
+        controller.cylinderIndex = weld<WORD>(getMSB(controller.cylinderIndex), data);
         break;
     case 0x5:
         vlog(LogIDE, "Controller %d cylinder MSB set: %u", controllerIndex, data);
-        controller.cylinderIndex = makeWORD(data, getLSB(controller.cylinderIndex));
+        controller.cylinderIndex = weld<WORD>(data, getLSB(controller.cylinderIndex));
         break;
     case 0x6:
         controller.headIndex = data & 0xf;

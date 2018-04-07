@@ -154,22 +154,6 @@ inline BYTE getLSB(WORD w)
     return w & 0xFF;
 }
 
-inline WORD makeWORD(BYTE msb, BYTE lsb)
-{
-    return (msb << 8) | lsb;
-}
-
-inline DWORD makeDWORD(WORD msw, WORD lsw)
-{
-    return (msw << 16) | lsw;
-}
-
-inline QWORD makeQWORD(DWORD msw, DWORD lsw)
-{
-    return ((QWORD)msw << 32) | lsw;
-}
-
-
 class LogicalAddress {
 public:
     LogicalAddress() { }

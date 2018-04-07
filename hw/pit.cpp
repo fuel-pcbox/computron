@@ -186,19 +186,19 @@ void PIT::writeCounter(BYTE index, BYTE data)
     case ReadLatchedMSB:
         break;
     case AccessLSBOnly:
-        counter.reload = makeWORD(getMSB(counter.reload), data);
+        counter.reload = weld<WORD>(getMSB(counter.reload), data);
         reconfigureTimer(index);
         break;
     case AccessMSBOnly:
-        counter.reload = makeWORD(data, getLSB(counter.reload));
+        counter.reload = weld<WORD>(data, getLSB(counter.reload));
         reconfigureTimer(index);
         break;
     case AccessLSBThenMSB:
-        counter.reload = makeWORD(getMSB(counter.reload), data);
+        counter.reload = weld<WORD>(getMSB(counter.reload), data);
         counter.accessState = AccessMSBThenLSB;
         break;
     case AccessMSBThenLSB:
-        counter.reload = makeWORD(data, getLSB(counter.reload));
+        counter.reload = weld<WORD>(data, getLSB(counter.reload));
         counter.accessState = AccessLSBThenMSB;
         reconfigureTimer(index);
         break;
