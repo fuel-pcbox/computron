@@ -1275,6 +1275,8 @@ void CPU::snoop(SegmentRegisterIndex segreg, DWORD offset, MemoryAccessType acce
 {
     if (!getPE())
         return;
+    // FIXME: Support multi-byte snoops.
+    validateAddress<BYTE>(segreg, offset, accessType);
     auto linearAddress = cachedDescriptor(segreg).linearAddress(offset);
     snoop(linearAddress, accessType);
 }
@@ -1341,9 +1343,9 @@ ALWAYS_INLINE void CPU::validateAddress(const SegmentDescriptor& descriptor, DWO
 }
 
 template<typename T>
-ALWAYS_INLINE void CPU::validateAddress(SegmentRegisterIndex registerIndex, DWORD offset, MemoryAccessType accessType)
+ALWAYS_INLINE void CPU::validateAddress(SegmentRegisterIndex segreg, DWORD offset, MemoryAccessType accessType)
 {
-    validateAddress<T>(m_descriptor[(int)registerIndex], offset, accessType);
+    validateAddress<T>(cachedDescriptor(segreg), offset, accessType);
 }
 
 template<typename T>
