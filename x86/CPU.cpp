@@ -1672,45 +1672,32 @@ ALWAYS_INLINE MemoryProvider* CPU::memoryProviderForAddress(PhysicalAddress addr
     return m_memoryProviders[address.get() / memoryProviderBlockSize];
 }
 
-void CPU::_BOUND(Instruction& insn)
+template<typename T>
+void CPU::doBOUND(Instruction& insn)
 {
     if (insn.modrm().isRegister()) {
         throw InvalidOpcode("BOUND with register operand");
     }
-    QString reason;
-    bool isWithinBounds;
-    if (o32()) {
-        SIGNED_DWORD arrayIndex = insn.reg32();
-        SIGNED_DWORD lowerBound = readMemory32(insn.modrm().segment(), insn.modrm().offset());
-        SIGNED_DWORD upperBound = readMemory32(insn.modrm().segment(), insn.modrm().offset() + 4);
-        isWithinBounds = arrayIndex >= lowerBound && arrayIndex <= upperBound;
+    T arrayIndex = insn.reg32();
+    T lowerBound = readMemory<T>(insn.modrm().segment(), insn.modrm().offset());
+    T upperBound = readMemory<T>(insn.modrm().segment(), insn.modrm().offset() + sizeof(T));
+    bool isWithinBounds = arrayIndex >= lowerBound && arrayIndex <= upperBound;
 #ifdef DEBUG_BOUND
-        vlog(LogCPU, "BOUND32 checking if %d is within [%d, %d]: %s",
-            arrayIndex,
-            lowerBound,
-            upperBound,
-            isWithinBounds ? "yes" : "no");
+    vlog(LogCPU, "BOUND<%u> checking if %d is within [%d, %d]: %s",
+        sizeof(T) * 8,
+        arrayIndex,
+        lowerBound,
+        upperBound,
+        isWithinBounds ? "yes" : "no");
 #endif
-        if (!isWithinBounds) {
-            reason = QString("%1 not within [%2, %3]").arg(arrayIndex).arg(lowerBound).arg(upperBound);
-        }
-    } else {
-        SIGNED_WORD arrayIndex = insn.reg16();
-        SIGNED_WORD lowerBound = readMemory16(insn.modrm().segment(), insn.modrm().offset());
-        SIGNED_WORD upperBound = readMemory16(insn.modrm().segment(), insn.modrm().offset() + 2);
-        isWithinBounds = arrayIndex >= lowerBound && arrayIndex <= upperBound;
-#ifdef DEBUG_BOUND
-        vlog(LogCPU, "BOUND16 checking if %d is within [%d, %d]: %s",
-            arrayIndex,
-            lowerBound,
-            upperBound,
-            isWithinBounds ? "yes" : "no");
-#endif
-        if (!isWithinBounds) {
-            reason = QString("%1 not within [%2, %3]").arg(arrayIndex).arg(lowerBound).arg(upperBound);
-        }
-    }
-    if (!isWithinBounds) {
-        throw BoundRangeExceeded(reason);
-    }
+    if (!isWithinBounds)
+        throw BoundRangeExceeded(QString("%1 not within [%2, %3]").arg(arrayIndex).arg(lowerBound).arg(upperBound));
+}
+
+void CPU::_BOUND(Instruction& insn)
+{
+    if (o16())
+        doBOUND<SIGNED_WORD>(insn);
+    else
+        doBOUND<SIGNED_DWORD>(insn);
 }

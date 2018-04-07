@@ -970,6 +970,7 @@ protected:
     void _wrap_0xD3_16(Instruction&);
     void _wrap_0xD3_32(Instruction&);
 
+    template<typename T> void doBOUND(Instruction&);
     void _BOUND(Instruction&);
 
     template<typename T> void doENTER(Instruction&);
