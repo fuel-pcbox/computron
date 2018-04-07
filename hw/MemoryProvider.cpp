@@ -36,14 +36,14 @@ void MemoryProvider::writeMemory8(DWORD, BYTE)
 
 void MemoryProvider::writeMemory16(DWORD address, WORD data)
 {
-    writeMemory8(address, getLSB(data));
-    writeMemory8(address + 1, getMSB(data));
+    writeMemory8(address, leastSignificant<BYTE>(data));
+    writeMemory8(address + 1, mostSignificant<BYTE>(data));
 }
 
 void MemoryProvider::writeMemory32(DWORD address, DWORD data)
 {
-    writeMemory16(address, getLSW(data));
-    writeMemory16(address + 2, getMSW(data));
+    writeMemory16(address, leastSignificant<WORD>(data));
+    writeMemory16(address + 2, mostSignificant<WORD>(data));
 }
 
 BYTE MemoryProvider::readMemory8(DWORD)

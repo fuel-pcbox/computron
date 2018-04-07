@@ -106,47 +106,47 @@ T CPU::doAND(T dest, T src)
 }
 
 template<typename T>
-T CPU::doROL(T data, int steps)
+T CPU::doROL(T data, unsigned steps)
 {
     T result = data;
     steps &= 0x1f;
     if (!steps)
         return data;
 
-    steps &= BitSizeOfType<T>::bits - 1;
-    result = (data << steps) | (data >> (BitSizeOfType<T>::bits - steps));
+    steps &= TypeTrivia<T>::bits - 1;
+    result = (data << steps) | (data >> (TypeTrivia<T>::bits - steps));
     setCF(result & 1);
-    setOF(((result >> (BitSizeOfType<T>::bits - 1)) & 1) ^ getCF());
+    setOF(((result >> (TypeTrivia<T>::bits - 1)) & 1) ^ getCF());
 
     return result;
 }
 
 template<typename T>
-T CPU::doROR(T data, int steps)
+T CPU::doROR(T data, unsigned steps)
 {
     steps &= 0x1f;
     if (!steps)
         return data;
 
     T result = data;
-    steps &= BitSizeOfType<T>::bits - 1;
-    result = (data >> steps) | (data << (BitSizeOfType<T>::bits - steps));
-    setCF((result >> (BitSizeOfType<T>::bits - 1)) & 1);
-    setOF((result >> (BitSizeOfType<T>::bits - 1)) ^ ((result >> (BitSizeOfType<T>::bits - 2) & 1)));
+    steps &= TypeTrivia<T>::bits - 1;
+    result = (data >> steps) | (data << (TypeTrivia<T>::bits - steps));
+    setCF((result >> (TypeTrivia<T>::bits - 1)) & 1);
+    setOF((result >> (TypeTrivia<T>::bits - 1)) ^ ((result >> (TypeTrivia<T>::bits - 2) & 1)));
     return result;
 }
 
 template<typename T>
-T CPU::doSHR(T data, int steps)
+T CPU::doSHR(T data, unsigned steps)
 {
     T result = data;
     steps &= 0x1F;
     if (!steps)
         return data;
 
-    if (steps <= BitSizeOfType<T>::bits) {
+    if (steps <= TypeTrivia<T>::bits) {
         setCF((result >> (steps - 1)) & 1);
-        setOF((data >> (BitSizeOfType<T>::bits - 1)) & 1);
+        setOF((data >> (TypeTrivia<T>::bits - 1)) & 1);
     }
     result >>= steps;
 
@@ -155,24 +155,24 @@ T CPU::doSHR(T data, int steps)
 }
 
 template<typename T>
-T CPU::doSHL(T data, int steps)
+T CPU::doSHL(T data, unsigned steps)
 {
     T result = data;
     steps &= 0x1F;
     if (!steps)
         return data;
 
-    if (steps <= BitSizeOfType<T>::bits) {
-        setCF(result >> (BitSizeOfType<T>::bits - steps) & 1);
+    if (steps <= TypeTrivia<T>::bits) {
+        setCF(result >> (TypeTrivia<T>::bits - steps) & 1);
     }
     result <<= steps;
-    setOF((result >> (BitSizeOfType<T>::bits - 1)) ^ getCF());
+    setOF((result >> (TypeTrivia<T>::bits - 1)) ^ getCF());
     updateFlags<T>(result);
     return result;
 }
 
 template<typename T>
-T CPU::doSAR(T data, int steps)
+T CPU::doSAR(T data, unsigned steps)
 {
     // FIXME: This is painfully unoptimized.
     steps &= 0x1f;
@@ -180,9 +180,9 @@ T CPU::doSAR(T data, int steps)
         return data;
 
     T result = data;
-    T mask = 1 << (BitSizeOfType<T>::bits - 1);
+    T mask = 1 << (TypeTrivia<T>::bits - 1);
 
-    for (int i = 0; i < steps; ++i) {
+    for (unsigned i = 0; i < steps; ++i) {
         T n = result;
         result = (result >> 1) | (n & mask);
         setCF(n & 1);
@@ -195,16 +195,16 @@ T CPU::doSAR(T data, int steps)
 template<typename T>
 inline T allOnes()
 {
-    if (BitSizeOfType<T>::bits == 8)
+    if (TypeTrivia<T>::bits == 8)
         return 0xff;
-    if (BitSizeOfType<T>::bits == 16)
+    if (TypeTrivia<T>::bits == 16)
         return 0xffff;
-    if (BitSizeOfType<T>::bits == 32)
+    if (TypeTrivia<T>::bits == 32)
         return 0xffffffff;
 }
 
 template<typename T>
-T CPU::doRCL(T data, int steps)
+T CPU::doRCL(T data, unsigned steps)
 {
     // FIXME: This is painfully unoptimized.
     T result = data;
@@ -213,17 +213,17 @@ T CPU::doRCL(T data, int steps)
     if (!steps)
         return data;
 
-    for (int i = 0; i < steps; ++i) {
+    for (unsigned i = 0; i < steps; ++i) {
         T n = result;
         result = ((result << 1) & mask) | getCF();
-        setCF((n >> (BitSizeOfType<T>::bits - 1)) & 1);
+        setCF((n >> (TypeTrivia<T>::bits - 1)) & 1);
     }
-    setOF((result >> (BitSizeOfType<T>::bits - 1)) ^ getCF());
+    setOF((result >> (TypeTrivia<T>::bits - 1)) ^ getCF());
     return result;
 }
 
 template<typename T>
-T CPU::doRCR(T data, int steps)
+T CPU::doRCR(T data, unsigned steps)
 {
     // FIXME: This is painfully unoptimized.
     T result = data;
@@ -231,12 +231,12 @@ T CPU::doRCR(T data, int steps)
     if (!steps)
         return data;
 
-    for (int i = 0; i < steps; ++i) {
+    for (unsigned i = 0; i < steps; ++i) {
         T n = result;
-        result = (result >> 1) | (getCF() << (BitSizeOfType<T>::bits - 1));
+        result = (result >> 1) | (getCF() << (TypeTrivia<T>::bits - 1));
         setCF(n & 1);
     }
-    setOF((result >> (BitSizeOfType<T>::bits - 1)) ^ ((result >> (BitSizeOfType<T>::bits - 2) & 1)));
+    setOF((result >> (TypeTrivia<T>::bits - 1)) ^ ((result >> (TypeTrivia<T>::bits - 2) & 1)));
     return result;
 }
 
@@ -269,7 +269,7 @@ DEFINE_INSTRUCTION_HANDLERS_GRP2(BTS)
 template<typename T>
 T CPU::doBT(T src, int bitIndex)
 {
-    bitIndex &= BitSizeOfType<T>::bits - 1;
+    bitIndex &= TypeTrivia<T>::bits - 1;
     setCF((src >> bitIndex) & 1);
     return src;
 }
@@ -277,7 +277,7 @@ T CPU::doBT(T src, int bitIndex)
 template<typename T>
 T CPU::doBTR(T dest, int bitIndex)
 {
-    bitIndex &= BitSizeOfType<T>::bits - 1;
+    bitIndex &= TypeTrivia<T>::bits - 1;
     T bitMask = 1 << bitIndex;
     T result = dest & ~bitMask;
     setCF((dest & bitMask) != 0);
@@ -287,7 +287,7 @@ T CPU::doBTR(T dest, int bitIndex)
 template<typename T>
 T CPU::doBTS(T dest, int bitIndex)
 {
-    bitIndex &= BitSizeOfType<T>::bits - 1;
+    bitIndex &= TypeTrivia<T>::bits - 1;
     T bitMask = 1 << bitIndex;
     T result = dest | bitMask;
     setCF((dest & bitMask) != 0);
@@ -297,7 +297,7 @@ T CPU::doBTS(T dest, int bitIndex)
 template<typename T>
 T CPU::doBTC(T dest, int bitIndex)
 {
-    bitIndex &= BitSizeOfType<T>::bits - 1;
+    bitIndex &= TypeTrivia<T>::bits - 1;
     T bitMask = 1 << bitIndex;
     T result;
     if (dest & bitMask)
@@ -313,7 +313,7 @@ T CPU::doBSF(T src)
 {
     ASSERT(src != 0);
     setZF(0);
-    for (int i = 0; i < BitSizeOfType<T>::bits; ++i) {
+    for (unsigned i = 0; i < TypeTrivia<T>::bits; ++i) {
         T mask = 1 << i;
         if (src & mask)
             return i;
@@ -327,7 +327,7 @@ T CPU::doBSR(T src)
 {
     ASSERT(src != 0);
     setZF(0);
-    for (int i = BitSizeOfType<T>::bits - 1; i >= 0; --i) {
+    for (int i = TypeTrivia<T>::bits - 1; i >= 0; --i) {
         T mask = 1 << i;
         if (src & mask)
             return i;
@@ -377,7 +377,7 @@ void CPU::_BSR_reg32_RM32(Instruction& insn)
 }
 
 template<typename T>
-T CPU::doSHLD(T leftData, T rightData, int steps)
+T CPU::doSHLD(T leftData, T rightData, unsigned steps)
 {
     steps &= 31;
     if (!steps)
@@ -385,15 +385,15 @@ T CPU::doSHLD(T leftData, T rightData, int steps)
 
     T result;
 
-    if (steps > BitSizeOfType<T>::bits) {
-        result = (leftData >> ((BitSizeOfType<T>::bits * 2) - steps) | (rightData << (steps - BitSizeOfType<T>::bits)));
-        setCF((rightData >> ((BitSizeOfType<T>::bits * 2) - steps)) & 1);
+    if (steps > TypeTrivia<T>::bits) {
+        result = (leftData >> ((TypeTrivia<T>::bits * 2) - steps) | (rightData << (steps - TypeTrivia<T>::bits)));
+        setCF((rightData >> ((TypeTrivia<T>::bits * 2) - steps)) & 1);
     } else {
-        result = (leftData << steps) | (rightData >> (BitSizeOfType<T>::bits - steps));
-        setCF((leftData >> (BitSizeOfType<T>::bits - steps)) & 1);
+        result = (leftData << steps) | (rightData >> (TypeTrivia<T>::bits - steps));
+        setCF((leftData >> (TypeTrivia<T>::bits - steps)) & 1);
     }
 
-    setOF(getCF() ^ (result >> (BitSizeOfType<T>::bits - 1) & 1));
+    setOF(getCF() ^ (result >> (TypeTrivia<T>::bits - 1) & 1));
     updateFlags<T>(result);
     return result;
 }
@@ -419,22 +419,22 @@ void CPU::_SHLD_RM32_reg32_CL(Instruction& insn)
 }
 
 template<typename T>
-T CPU::doSHRD(T leftData, T rightData, int steps)
+T CPU::doSHRD(T leftData, T rightData, unsigned steps)
 {
     steps &= 31;
     if (!steps)
         return rightData;
 
     T result;
-    if (steps > BitSizeOfType<T>::bits) {
-        result = (rightData << (32 - steps)) | (leftData >> (steps - BitSizeOfType<T>::bits));
-        setCF((leftData >> (steps - (BitSizeOfType<T>::bits + 1))) & 1);
+    if (steps > TypeTrivia<T>::bits) {
+        result = (rightData << (32 - steps)) | (leftData >> (steps - TypeTrivia<T>::bits));
+        setCF((leftData >> (steps - (TypeTrivia<T>::bits + 1))) & 1);
     } else {
-        result = (rightData >> steps) | (leftData << (BitSizeOfType<T>::bits - steps));
+        result = (rightData >> steps) | (leftData << (TypeTrivia<T>::bits - steps));
         setCF((rightData >> (steps - 1)) & 1);
     }
 
-    setOF((result ^ rightData) >> (BitSizeOfType<T>::bits - 1) & 1);
+    setOF((result ^ rightData) >> (TypeTrivia<T>::bits - 1) & 1);
     updateFlags<T>(result);
     return result;
 }

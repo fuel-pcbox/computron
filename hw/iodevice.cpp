@@ -76,8 +76,8 @@ void IODevice::out16(WORD port, WORD data)
 #ifdef IODEVICE_DEBUG
     vlog(LogIO, "IODevice[%s]::out16(%04x) fallback to multiple out8() calls", m_name, port);
 #endif
-    out8(port, getLSB(data));
-    out8(port + 1, getMSB(data));
+    out8(port, leastSignificant<BYTE>(data));
+    out8(port + 1, mostSignificant<BYTE>(data));
 }
 
 void IODevice::out32(WORD port, DWORD data)
@@ -85,10 +85,10 @@ void IODevice::out32(WORD port, DWORD data)
 #ifdef IODEVICE_DEBUG
     vlog(LogIO, "IODevice[%s]::out32(%04x) fallback to multiple out8() calls", m_name, port);
 #endif
-    out8(port + 0, getLSB(getLSW(data)));
-    out8(port + 1, getMSB(getLSW(data)));
-    out8(port + 2, getLSB(getMSW(data)));
-    out8(port + 3, getMSB(getMSW(data)));
+    out8(port + 0, leastSignificant<BYTE>(leastSignificant<WORD>(data)));
+    out8(port + 1, mostSignificant<BYTE>(leastSignificant<WORD>(data)));
+    out8(port + 2, leastSignificant<BYTE>(mostSignificant<WORD>(data)));
+    out8(port + 3, mostSignificant<BYTE>(mostSignificant<WORD>(data)));
 }
 
 BYTE IODevice::in8(WORD port)

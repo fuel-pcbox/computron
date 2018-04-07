@@ -221,11 +221,11 @@ void IDE::out8(WORD port, BYTE data)
         break;
     case 0x4:
         vlog(LogIDE, "Controller %d cylinder LSB set: %u", controllerIndex, data);
-        controller.cylinderIndex = weld<WORD>(getMSB(controller.cylinderIndex), data);
+        controller.cylinderIndex = weld<WORD>(mostSignificant<BYTE>(controller.cylinderIndex), data);
         break;
     case 0x5:
         vlog(LogIDE, "Controller %d cylinder MSB set: %u", controllerIndex, data);
-        controller.cylinderIndex = weld<WORD>(data, getLSB(controller.cylinderIndex));
+        controller.cylinderIndex = weld<WORD>(data, leastSignificant<BYTE>(controller.cylinderIndex));
         break;
     case 0x6:
         controller.headIndex = data & 0xf;
@@ -267,11 +267,11 @@ BYTE IDE::in8(WORD port)
         vlog(LogIDE, "Controller %d sector index queried: %u", controllerIndex, controller.sectorIndex);
         return controller.sectorIndex;
     case 0x4:
-        vlog(LogIDE, "Controller %d cylinder LSB queried: %02X", controllerIndex, getLSB(controller.cylinderIndex));
-        return getLSB(controller.cylinderIndex);
+        vlog(LogIDE, "Controller %d cylinder LSB queried: %02X", controllerIndex, leastSignificant<BYTE>(controller.cylinderIndex));
+        return leastSignificant<BYTE>(controller.cylinderIndex);
     case 0x5:
-        vlog(LogIDE, "Controller %d cylinder MSB queried: %02X", controllerIndex, getMSB(controller.cylinderIndex));
-        return getMSB(controller.cylinderIndex);
+        vlog(LogIDE, "Controller %d cylinder MSB queried: %02X", controllerIndex, mostSignificant<BYTE>(controller.cylinderIndex));
+        return mostSignificant<BYTE>(controller.cylinderIndex);
     case 0x6:
         vlog(LogIDE, "Controller %d head index queried: %u", controllerIndex, controller.headIndex);
         return controller.headIndex;

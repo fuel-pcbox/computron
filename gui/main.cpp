@@ -163,10 +163,10 @@ void parseArguments(const QStringList& arguments)
 #endif
 }
 
-static_assert(MasksForType<BYTE>::allBits == 0xff, "MasksForType<BYTE>::allBits");
-static_assert(MasksForType<WORD>::allBits == 0xffff, "MasksForType<WORD>::allBits");
-static_assert(MasksForType<DWORD>::allBits == 0xffffffff, "MasksForType<DWORD>::allBits");
-static_assert(MasksForType<QWORD>::allBits == 0xffffffffffffffff, "MasksForType<QWORD>::allBits");
+static_assert(TypeTrivia<BYTE>::mask == 0xff, "TypeTrivia<BYTE>::mask");
+static_assert(TypeTrivia<WORD>::mask == 0xffff, "TypeTrivia<WORD>::mask");
+static_assert(TypeTrivia<DWORD>::mask == 0xffffffff, "TypeTrivia<DWORD>::mask");
+static_assert(TypeTrivia<QWORD>::mask == 0xffffffffffffffff, "TypeTrivia<QWORD>::mask");
 static_assert(weld<WORD>(0xf0, 0x0f) == 0xf00f, "weld<WORD>");
 static_assert(weld<DWORD>(0xbeef, 0xbabe) == 0xbeefbabe, "weld<DWORD>");
 static_assert(weld<QWORD>(0xcafebabe, 0xdeadbeef) == 0xcafebabedeadbeef, "weld<QWORD>");
@@ -175,4 +175,4 @@ static_assert(std::numeric_limits<SIGNED_BYTE>::max() == 0x7f, "max SIGNED_BYTE"
 static_assert(std::numeric_limits<SIGNED_WORD>::min() == -0x8000, "min SIGNED_WORD");
 static_assert(std::numeric_limits<SIGNED_WORD>::max() == 0x7fff, "max SIGNED_WORD");
 static_assert(std::numeric_limits<SIGNED_DWORD>::min() == -0x80000000L, "min SIGNED_DWORD");
-static_assert(std::numeric_limits<SIGNED_DWORD>::max() == 0x7fffffff, "max SIGNED_WORD");
+static_assert(std::numeric_limits<SIGNED_DWORD>::max() == 0x7fffffff, "max SIGNED_DWORD");

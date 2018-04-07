@@ -1205,18 +1205,18 @@ private:
 
     void translateAddressSlowCase(LinearAddress, PhysicalAddress&, MemoryAccessType);
 
-    template<typename T> T doSAR(T, int steps);
-    template<typename T> T doRCL(T, int steps);
-    template<typename T> T doRCR(T, int steps);
+    template<typename T> T doSAR(T, unsigned steps);
+    template<typename T> T doRCL(T, unsigned steps);
+    template<typename T> T doRCR(T, unsigned steps);
 
-    template<typename T> T doSHL(T, int steps);
-    template<typename T> T doSHR(T, int steps);
+    template<typename T> T doSHL(T, unsigned steps);
+    template<typename T> T doSHR(T, unsigned steps);
 
-    template<typename T> T doSHLD(T, T, int steps);
-    template<typename T> T doSHRD(T, T, int steps);
+    template<typename T> T doSHLD(T, T, unsigned steps);
+    template<typename T> T doSHRD(T, T, unsigned steps);
 
-    template<typename T> T doROL(T, int steps);
-    template<typename T> T doROR(T, int steps);
+    template<typename T> T doROL(T, unsigned steps);
+    template<typename T> T doROR(T, unsigned steps);
 
     template<typename T> T doXOR(T, T);
     template<typename T> T doOR(T, T);
@@ -1459,11 +1459,11 @@ void CPU::writeUnmappedMemory16(DWORD address, WORD value)
 template<typename T>
 inline void CPU::cmpFlags(QWORD result, T dest, T src)
 {
-    if (BitSizeOfType<T>::bits == 8)
+    if (TypeTrivia<T>::bits == 8)
         cmpFlags8(result, dest, src);
-    else if (BitSizeOfType<T>::bits == 16)
+    else if (TypeTrivia<T>::bits == 16)
         cmpFlags16(result, dest, src);
-    else if (BitSizeOfType<T>::bits == 32)
+    else if (TypeTrivia<T>::bits == 32)
         cmpFlags32(result, dest, src);
 }
 
@@ -1535,7 +1535,7 @@ template<> ALWAYS_INLINE DWORD& Instruction::reg<DWORD>() { return reg32(); }
 template<typename T>
 inline void CPU::updateFlags(T result)
 {
-    switch (BitSizeOfType<T>::bits) {
+    switch (TypeTrivia<T>::bits) {
     case 8:
         updateFlags8(result);
         break;

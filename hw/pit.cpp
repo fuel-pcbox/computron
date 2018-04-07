@@ -153,25 +153,25 @@ BYTE PIT::readCounter(BYTE index)
     BYTE data = 0;
     switch (counter.accessState) {
     case ReadLatchedLSB:
-        data = getLSB(counter.latchedValue);
+        data = leastSignificant<BYTE>(counter.latchedValue);
         counter.accessState = ReadLatchedMSB;
         break;
     case ReadLatchedMSB:
-        data = getMSB(counter.latchedValue);
+        data = mostSignificant<BYTE>(counter.latchedValue);
         counter.accessState = ReadLatchedLSB;
         break;
     case AccessLSBOnly:
-        data = getLSB(counter.latchedValue);
+        data = leastSignificant<BYTE>(counter.latchedValue);
         break;
     case AccessMSBOnly:
-        data = getMSB(counter.latchedValue);
+        data = mostSignificant<BYTE>(counter.latchedValue);
         break;
     case AccessLSBThenMSB:
-        data = getLSB(counter.value());
+        data = leastSignificant<BYTE>(counter.value());
         counter.accessState = AccessMSBThenLSB;
         break;
     case AccessMSBThenLSB:
-        data = getMSB(counter.value());
+        data = mostSignificant<BYTE>(counter.value());
         counter.accessState = AccessLSBThenMSB;
         break;
     }
@@ -186,19 +186,19 @@ void PIT::writeCounter(BYTE index, BYTE data)
     case ReadLatchedMSB:
         break;
     case AccessLSBOnly:
-        counter.reload = weld<WORD>(getMSB(counter.reload), data);
+        counter.reload = weld<WORD>(mostSignificant<BYTE>(counter.reload), data);
         reconfigureTimer(index);
         break;
     case AccessMSBOnly:
-        counter.reload = weld<WORD>(data, getLSB(counter.reload));
+        counter.reload = weld<WORD>(data, leastSignificant<BYTE>(counter.reload));
         reconfigureTimer(index);
         break;
     case AccessLSBThenMSB:
-        counter.reload = weld<WORD>(getMSB(counter.reload), data);
+        counter.reload = weld<WORD>(mostSignificant<BYTE>(counter.reload), data);
         counter.accessState = AccessMSBThenLSB;
         break;
     case AccessMSBThenLSB:
-        counter.reload = weld<WORD>(data, getLSB(counter.reload));
+        counter.reload = weld<WORD>(data, leastSignificant<BYTE>(counter.reload));
         counter.accessState = AccessLSBThenMSB;
         reconfigureTimer(index);
         break;

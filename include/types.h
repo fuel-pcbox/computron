@@ -79,12 +79,10 @@ private:
     DWORD m_address { 0 };
 };
 
-template<typename T> struct BitSizeOfType { static const int bits = sizeof(T) * 8; };
-
 template<typename T>
-struct MasksForType
-{
-    static const T allBits = std::numeric_limits<typename std::make_unsigned<T>::type>::max();
+struct TypeTrivia {
+    static const unsigned bits = sizeof(T) * 8;
+    static const T mask = std::numeric_limits<typename std::make_unsigned<T>::type>::max();
 };
 
 template<typename T> struct TypeDoubler { };
@@ -107,7 +105,7 @@ template<typename DT> constexpr DT weld(typename TypeHalver<DT>::type high, type
 {
     typedef typename std::make_unsigned<typename TypeHalver<DT>::type>::type UnsignedT;
     typedef typename std::make_unsigned<DT>::type UnsignedDT;
-    return (((UnsignedDT)high) << BitSizeOfType<typename TypeHalver<DT>::type>::bits) | (UnsignedT)low;
+    return (((UnsignedDT)high) << TypeTrivia<typename TypeHalver<DT>::type>::bits) | (UnsignedT)low;
 }
 
 template<typename T>
@@ -115,11 +113,11 @@ inline T signExtend(BYTE value)
 {
     if (!(value & 0x80))
         return value;
-    if (BitSizeOfType<T>::bits == 16)
+    if (TypeTrivia<T>::bits == 16)
         return value | 0xFF00;
-    if (BitSizeOfType<T>::bits == 32)
+    if (TypeTrivia<T>::bits == 32)
         return value | 0xFFFFFF00;
-    if (BitSizeOfType<T>::bits == 64)
+    if (TypeTrivia<T>::bits == 64)
         return value | 0xFFFFFFFFFFFFFF00;
 }
 
@@ -128,30 +126,22 @@ inline T signExtend(WORD value)
 {
     if (!(value & 0x8000))
         return value;
-    if (BitSizeOfType<T>::bits == 32)
+    if (TypeTrivia<T>::bits == 32)
         return value | 0xFFFF0000;
-    if (BitSizeOfType<T>::bits == 64)
+    if (TypeTrivia<T>::bits == 64)
         return value | 0xFFFFFFFFFFFF0000;
 }
 
-inline WORD getMSW(DWORD d)
+template<typename T>
+inline T leastSignificant(typename TypeDoubler<T>::type whole)
 {
-    return (d >> 16) & 0xFFFF;
+    return whole & TypeTrivia<T>::mask;
 }
 
-inline WORD getLSW(DWORD d)
+template<typename T>
+inline T mostSignificant(typename TypeDoubler<T>::type whole)
 {
-    return d & 0xFFFF;
-}
-
-inline BYTE getMSB(WORD w)
-{
-    return (w >> 8) & 0xFF;
-}
-
-inline BYTE getLSB(WORD w)
-{
-    return w & 0xFF;
+    return (whole >> TypeTrivia<T>::bits) & TypeTrivia<T>::mask;
 }
 
 class LogicalAddress {

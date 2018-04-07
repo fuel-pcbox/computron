@@ -28,11 +28,11 @@
 template<typename T>
 inline void updateCpuMathFlags(CPU& cpu, QWORD result, T dest, T src)
 {
-    if (BitSizeOfType<T>::bits == 8)
+    if (TypeTrivia<T>::bits == 8)
         cpu.mathFlags8(result, dest, src);
-    else if (BitSizeOfType<T>::bits == 16)
+    else if (TypeTrivia<T>::bits == 16)
         cpu.mathFlags16(result, dest, src);
-    else if (BitSizeOfType<T>::bits == 32)
+    else if (TypeTrivia<T>::bits == 32)
         cpu.mathFlags32(result, dest, src);
 }
 
@@ -44,7 +44,7 @@ QWORD CPU::doADD(T dest, T src)
     setOF(((
           ((result)^(dest)) &
           ((result)^(src))
-         )>>(BitSizeOfType<T>::bits - 1))&1);
+         )>>(TypeTrivia<T>::bits - 1))&1);
     return result;
 }
 
@@ -57,7 +57,7 @@ QWORD CPU::doADC(T dest, T src)
     setOF(((
           ((result)^(dest)) &
           ((result)^(src))
-         )>>(BitSizeOfType<T>::bits - 1))&1);
+         )>>(TypeTrivia<T>::bits - 1))&1);
     return result;
 }
 
@@ -88,8 +88,8 @@ void CPU::doMUL(T f1, T f2, T& resultHigh, T& resultLow)
 {
     typedef typename TypeDoubler<T>::type DT;
     DT result = (DT)f1 * (DT)f2;
-    resultLow = result & MasksForType<T>::allBits;
-    resultHigh = (result >> BitSizeOfType<T>::bits) & MasksForType<T>::allBits;
+    resultLow = result & TypeTrivia<T>::mask;
+    resultHigh = (result >> TypeTrivia<T>::bits) & TypeTrivia<T>::mask;
 
     if (resultHigh == 0) {
         setCF(0);
@@ -120,8 +120,8 @@ void CPU::doIMUL(T f1, T f2, T& resultHigh, T& resultLow)
 {
     typedef typename TypeDoubler<T>::type DT;
     DT result = (DT)f1 * (DT)f2;
-    resultLow = result & MasksForType<T>::allBits;
-    resultHigh = (result >> BitSizeOfType<T>::bits) & MasksForType<T>::allBits;
+    resultLow = result & TypeTrivia<T>::mask;
+    resultHigh = (result >> TypeTrivia<T>::bits) & TypeTrivia<T>::mask;
 
     if (result > std::numeric_limits<T>::max() || result < std::numeric_limits<T>::min()) {
         setCF(1);

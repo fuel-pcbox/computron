@@ -56,12 +56,12 @@ void CMOS::reset()
 
     m_ram[StatusRegisterB] = 0x02;
 
-    m_ram[BaseMemoryInKilobytesLSB] = getLSB(cpu.baseMemorySize() / 1024);
-    m_ram[BaseMemoryInKilobytesMSB] = getMSB(cpu.baseMemorySize() / 1024);
-    m_ram[ExtendedMemoryInKilobytesLSB] = getLSB(cpu.extendedMemorySize() / 1024 - 1024);
-    m_ram[ExtendedMemoryInKilobytesMSB] = getMSB(cpu.extendedMemorySize() / 1024 - 1024);
-    m_ram[ExtendedMemoryInKilobytesAltLSB] = getLSB(cpu.extendedMemorySize() / 1024 - 1024);
-    m_ram[ExtendedMemoryInKilobytesAltMSB] = getMSB(cpu.extendedMemorySize() / 1024 - 1024);
+    m_ram[BaseMemoryInKilobytesLSB] = leastSignificant<BYTE>(cpu.baseMemorySize() / 1024);
+    m_ram[BaseMemoryInKilobytesMSB] = mostSignificant<BYTE>(cpu.baseMemorySize() / 1024);
+    m_ram[ExtendedMemoryInKilobytesLSB] = leastSignificant<BYTE>(cpu.extendedMemorySize() / 1024 - 1024);
+    m_ram[ExtendedMemoryInKilobytesMSB] = mostSignificant<BYTE>(cpu.extendedMemorySize() / 1024 - 1024);
+    m_ram[ExtendedMemoryInKilobytesAltLSB] = leastSignificant<BYTE>(cpu.extendedMemorySize() / 1024 - 1024);
+    m_ram[ExtendedMemoryInKilobytesAltMSB] = mostSignificant<BYTE>(cpu.extendedMemorySize() / 1024 - 1024);
 
     // FIXME: This clearly belongs elsewhere.
     m_ram[FloppyDriveTypes] = (machine().floppy0().floppyTypeForCMOS() << 4) | machine().floppy1().floppyTypeForCMOS();
