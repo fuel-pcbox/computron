@@ -111,7 +111,7 @@ void CPU::_Jcc_NEAR_imm(Instruction& insn)
 {
     if (!evaluate(insn.cc()))
         return;
-    jumpRelative16(insn.immAddress());
+    jumpRelative32(insn.immAddress());
 }
 
 void CPU::_CALL_imm16(Instruction& insn)
