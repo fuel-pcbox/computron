@@ -618,7 +618,7 @@ public:
 
     // Current execution mode (16 or 32 bit)
     bool x16() const { return !x32(); }
-    bool x32() const { return m_descriptor[(int)SegmentRegisterIndex::CS].D(); }
+    bool x32() const { return cachedDescriptor(SegmentRegisterIndex::CS).D(); }
 
     bool a16() const { return !m_effectiveAddressSize32; }
     bool a32() const { return m_effectiveAddressSize32; }

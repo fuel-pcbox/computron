@@ -258,7 +258,7 @@ public:
 
 inline SegmentDescriptor& Descriptor::asSegmentDescriptor()
 {
-    ASSERT(isSegmentDescriptor());
+    ASSERT(isSegmentDescriptor() || isNull());
     return static_cast<SegmentDescriptor&>(*this);
 }
 
@@ -282,7 +282,7 @@ inline DataSegmentDescriptor& Descriptor::asDataSegmentDescriptor()
 
 inline const SegmentDescriptor& Descriptor::asSegmentDescriptor() const
 {
-    ASSERT(isSegmentDescriptor());
+    ASSERT(isSegmentDescriptor() || isNull());
     return static_cast<const SegmentDescriptor&>(*this);
 }
 

@@ -441,9 +441,7 @@ void CPU::writeSegmentRegister(SegmentRegisterIndex segreg, WORD selector)
         throw InvalidOpcode("Write to invalid segment register");
     }
 
-    auto& descriptorCache = static_cast<Descriptor&>(m_descriptor[(int)segreg]);
     Descriptor descriptor;
-
     if (!getPE() || getVM())
         descriptor = getRealModeOrVM86Descriptor(selector, segreg);
     else
@@ -454,12 +452,12 @@ void CPU::writeSegmentRegister(SegmentRegisterIndex segreg, WORD selector)
     *m_segmentMap[(int)segreg] = selector;
 
     if (descriptor.isNull()) {
-        descriptorCache = descriptor;
+        cachedDescriptor(segreg) = descriptor.asSegmentDescriptor();
         return;
     }
 
     ASSERT(descriptor.isSegmentDescriptor());
-    descriptorCache = descriptor.asSegmentDescriptor();
+    cachedDescriptor(segreg) = descriptor.asSegmentDescriptor();
     if (options.pedebug) {
         if (getPE()) {
             vlog(LogCPU, "%s loaded with %04x { type:%02X, base:%08X, limit:%08X }",

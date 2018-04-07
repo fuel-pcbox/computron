@@ -1420,12 +1420,9 @@ ALWAYS_INLINE T CPU::readMemory(const SegmentDescriptor& descriptor, DWORD offse
 }
 
 template<typename T>
-ALWAYS_INLINE T CPU::readMemory(SegmentRegisterIndex segment, DWORD offset, MemoryAccessType accessType)
+ALWAYS_INLINE T CPU::readMemory(SegmentRegisterIndex segreg, DWORD offset, MemoryAccessType accessType)
 {
-    auto& descriptor = m_descriptor[(int)segment];
-    if (!getPE())
-        return readMemory<T>(descriptor.linearAddress(offset), accessType);
-    return readMemory<T>(descriptor, offset, accessType);
+    return readMemory<T>(cachedDescriptor(segreg), offset, accessType);
 }
 
 template BYTE CPU::readMemory<BYTE>(SegmentRegisterIndex, DWORD, MemoryAccessType);
@@ -1471,7 +1468,6 @@ void CPU::writeMemory(LinearAddress linearAddress, T value)
             vlog(LogCPU, "%zu-bit write [A20=%s] 0x%08X, value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", physicalAddress.get(), value);
     }
 #endif
-
     writePhysicalMemory(physicalAddress, value);
 }
 
@@ -1504,7 +1500,7 @@ void CPU::updateDefaultSizes()
     bool oldA32 = m_addressSize32;
 #endif
 
-    auto& csDescriptor = m_descriptor[(int)SegmentRegisterIndex::CS];
+    auto& csDescriptor = cachedDescriptor(SegmentRegisterIndex::CS);
     m_addressSize32 = csDescriptor.D();
     m_operandSize32 = csDescriptor.D();
 
@@ -1522,7 +1518,7 @@ void CPU::updateStackSize()
     bool oldS32 = m_stackSize32;
 #endif
 
-    auto& ssDescriptor = m_descriptor[(int)SegmentRegisterIndex::SS];
+    auto& ssDescriptor = cachedDescriptor(SegmentRegisterIndex::SS);
     m_stackSize32 = ssDescriptor.D();
 
 #ifdef VERBOSE_DEBUG
