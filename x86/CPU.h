@@ -748,6 +748,9 @@ protected:
     void _MOV_reg16_imm16(Instruction&);
     void _MOV_reg32_imm32(Instruction&);
 
+    template<typename T> void doMOV_moff_Areg(Instruction&);
+    template<typename T> void doMOV_Areg_moff(Instruction&);
+
     void _MOV_seg_RM16(Instruction&);
     void _MOV_RM16_seg(Instruction&);
     void _MOV_AL_moff8(Instruction&);

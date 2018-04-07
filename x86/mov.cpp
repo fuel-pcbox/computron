@@ -228,52 +228,46 @@ void CPU::_MOV_reg32_imm32(Instruction& insn)
     writeRegister<DWORD>(insn.registerIndex(), insn.imm32());
 }
 
+template<typename T>
+void CPU::doMOV_Areg_moff(Instruction& insn)
+{
+    writeRegister<T>(RegisterAL, readMemory<T>(currentSegment(), insn.immAddress()));
+}
+
 void CPU::_MOV_AL_moff8(Instruction& insn)
 {
-    if (a16())
-        regs.B.AL = readMemory8(currentSegment(), insn.imm16());
-    else
-        regs.B.AL = readMemory8(currentSegment(), insn.imm32());
+    doMOV_Areg_moff<BYTE>(insn);
 }
 
 void CPU::_MOV_AX_moff16(Instruction& insn)
 {
-    if (a16())
-        regs.W.AX = readMemory16(currentSegment(), insn.imm16());
-    else
-        regs.W.AX = readMemory16(currentSegment(), insn.imm32());
+    doMOV_Areg_moff<WORD>(insn);
 }
 
 void CPU::_MOV_EAX_moff32(Instruction& insn)
 {
-    if (a16())
-        regs.D.EAX = readMemory32(currentSegment(), insn.imm16());
-    else
-        regs.D.EAX = readMemory32(currentSegment(), insn.imm32());
+    doMOV_Areg_moff<DWORD>(insn);
+}
+
+template<typename T>
+void CPU::doMOV_moff_Areg(Instruction& insn)
+{
+    writeMemory<T>(currentSegment(), insn.immAddress(), readRegister<T>(RegisterAL));
 }
 
 void CPU::_MOV_moff8_AL(Instruction& insn)
 {
-    if (a16())
-        writeMemory8(currentSegment(), insn.imm16(), getAL());
-    else
-        writeMemory8(currentSegment(), insn.imm32(), getAL());
+    doMOV_moff_Areg<BYTE>(insn);
 }
 
 void CPU::_MOV_moff16_AX(Instruction& insn)
 {
-    if (a16())
-        writeMemory16(currentSegment(), insn.imm16(), getAX());
-    else
-        writeMemory16(currentSegment(), insn.imm32(), getAX());
+    doMOV_moff_Areg<WORD>(insn);
 }
 
 void CPU::_MOV_moff32_EAX(Instruction& insn)
 {
-    if (a16())
-        writeMemory32(currentSegment(), insn.imm16(), getEAX());
-    else
-        writeMemory32(currentSegment(), insn.imm32(), getEAX());
+    doMOV_moff_Areg<DWORD>(insn);
 }
 
 void CPU::_MOVZX_reg16_RM8(Instruction& insn)

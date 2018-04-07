@@ -956,10 +956,7 @@ void CPU::_HLT(Instruction&)
 
 void CPU::_XLAT(Instruction&)
 {
-    if (a32())
-        setAL(readMemory8(currentSegment(), getEBX() + getAL()));
-    else
-        setAL(readMemory8(currentSegment(), getBX() + getAL()));
+    setAL(readMemory8(currentSegment(), readRegisterForAddressSize(RegisterBX) + getAL()));
 }
 
 void CPU::_XCHG_AX_reg16(Instruction& insn)

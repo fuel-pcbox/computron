@@ -26,12 +26,7 @@
 
 void CPU::_JCXZ_imm8(Instruction& insn)
 {
-    bool shouldJump;
-    if (a16())
-        shouldJump = getCX() == 0;
-    else
-        shouldJump = getECX() == 0;
-    if (shouldJump)
+    if (readRegisterForAddressSize(RegisterCX) == 0)
         jumpRelative8(insn.imm8());
 }
 
@@ -116,10 +111,7 @@ void CPU::_Jcc_NEAR_imm(Instruction& insn)
 {
     if (!evaluate(insn.cc()))
         return;
-    if (a16())
-        jumpRelative16(insn.imm16());
-    else
-        jumpRelative32(insn.imm32());
+    jumpRelative16(insn.immAddress());
 }
 
 void CPU::_CALL_imm16(Instruction& insn)

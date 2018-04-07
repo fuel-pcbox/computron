@@ -182,6 +182,8 @@ public:
     DWORD imm32_1() const { return imm32(); }
     DWORD imm32_2() const { ASSERT(m_imm2Bytes == 4); return m_imm2; }
 
+    DWORD immAddress() const { return m_a32 ? imm32() : imm16(); }
+
     // These functions assume that the Instruction is bound to a CPU.
     BYTE& reg8();
     WORD& reg16();
