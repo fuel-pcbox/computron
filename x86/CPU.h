@@ -562,7 +562,7 @@ public:
     template<typename T> void writeMemory(const SegmentDescriptor&, DWORD offset, T);
     template<typename T> void writeMemory(SegmentRegisterIndex, DWORD offset, T);
 
-    void translateAddress(LinearAddress, PhysicalAddress&, MemoryAccessType);
+    PhysicalAddress translateAddress(LinearAddress, MemoryAccessType);
     void snoop(LinearAddress, MemoryAccessType);
     void snoop(SegmentRegisterIndex, DWORD offset, MemoryAccessType);
 
@@ -1206,7 +1206,7 @@ private:
 
     void didTouchMemory(DWORD address);
 
-    void translateAddressSlowCase(LinearAddress, PhysicalAddress&, MemoryAccessType);
+    PhysicalAddress translateAddressSlowCase(LinearAddress, MemoryAccessType);
 
     template<typename T> T doSAR(T, unsigned steps);
     template<typename T> T doRCL(T, unsigned steps);

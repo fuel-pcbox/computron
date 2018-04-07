@@ -1161,13 +1161,11 @@ static const char* toString(CPU::MemoryAccessType type)
     }
 }
 
-ALWAYS_INLINE void CPU::translateAddress(LinearAddress linearAddress, PhysicalAddress& physicalAddress, MemoryAccessType accessType)
+ALWAYS_INLINE PhysicalAddress CPU::translateAddress(LinearAddress linearAddress, MemoryAccessType accessType)
 {
-    if (!getPE() || !getPG()) {
-        physicalAddress.set(linearAddress.get());
-        return;
-    }
-    translateAddressSlowCase(linearAddress, physicalAddress, accessType);
+    if (!getPE() || !getPG())
+        return PhysicalAddress(linearAddress.get());
+    return translateAddressSlowCase(linearAddress, accessType);
 }
 
 static WORD makePFErrorCode(PageFaultFlags::Flags flags, CPU::MemoryAccessType accessType, bool inUserMode)
@@ -1207,7 +1205,7 @@ Exception CPU::PageFault(LinearAddress linearAddress, PageFaultFlags::Flags flag
     return Exception(0xe, error, linearAddress.get(), "Page fault");
 }
 
-void CPU::translateAddressSlowCase(LinearAddress linearAddress, PhysicalAddress& physicalAddress, MemoryAccessType accessType)
+PhysicalAddress CPU::translateAddressSlowCase(LinearAddress linearAddress, MemoryAccessType accessType)
 {
     ASSERT(getCR3() < m_memorySize);
 
@@ -1256,17 +1254,16 @@ void CPU::translateAddressSlowCase(LinearAddress linearAddress, PhysicalAddress&
     pageDirectoryEntry |= PageTableEntryFlags::Accessed;
     pageTableEntry |= PageTableEntryFlags::Accessed;
 
-    physicalAddress.set((pageTableEntry & 0xfffff000) | offset);
-
+    PhysicalAddress physicalAddress((pageTableEntry & 0xfffff000) | offset);
 #ifdef DEBUG_PAGING
     vlog(LogCPU, "PG=1 Translating %08x {dir=%03x, page=%03x, offset=%03x} => %08x [%08x + %08x]", linearAddress.get(), dir, page, offset, physicalAddress.get(), pageDirectoryEntry, pageTableEntry);
 #endif
+    return physicalAddress;
 }
 
 void CPU::snoop(LinearAddress linearAddress, MemoryAccessType accessType)
 {
-    PhysicalAddress physicalAddress;
-    translateAddress(linearAddress, physicalAddress, accessType);
+    translateAddress(linearAddress, accessType);
 }
 
 void CPU::snoop(SegmentRegisterIndex segreg, DWORD offset, MemoryAccessType accessType)
@@ -1397,8 +1394,7 @@ void CPU::writePhysicalMemory(PhysicalAddress physicalAddress, T data)
 template<typename T>
 ALWAYS_INLINE T CPU::readMemory(LinearAddress linearAddress, MemoryAccessType accessType)
 {
-    PhysicalAddress physicalAddress;
-    translateAddress(linearAddress, physicalAddress, accessType);
+    auto physicalAddress = translateAddress(linearAddress, accessType);
 #ifdef A20_ENABLED
     physicalAddress.mask(a20Mask());
 #endif
@@ -1417,11 +1413,9 @@ ALWAYS_INLINE T CPU::readMemory(LinearAddress linearAddress, MemoryAccessType ac
 template<typename T>
 ALWAYS_INLINE T CPU::readMemory(const SegmentDescriptor& descriptor, DWORD offset, MemoryAccessType accessType)
 {
-    LinearAddress linearAddress = descriptor.linearAddress(offset);
-    if (!getPE()) {
-        return readMemory<T>(linearAddress, accessType);
-    }
-    validateAddress<T>(descriptor, offset, accessType);
+    auto linearAddress = descriptor.linearAddress(offset);
+    if (getPE() && !getVM())
+        validateAddress<T>(descriptor, offset, accessType);
     return readMemory<T>(linearAddress, accessType);
 }
 
@@ -1465,8 +1459,7 @@ template LogicalAddress CPU::readLogicalAddress<DWORD>(SegmentRegisterIndex, DWO
 template<typename T>
 void CPU::writeMemory(LinearAddress linearAddress, T value)
 {
-    PhysicalAddress physicalAddress;
-    translateAddress(linearAddress, physicalAddress, MemoryAccessType::Write);
+    auto physicalAddress = translateAddress(linearAddress, MemoryAccessType::Write);
 #ifdef A20_ENABLED
     physicalAddress.mask(a20Mask());
 #endif
@@ -1585,31 +1578,17 @@ BYTE* CPU::pointerToPhysicalMemory(PhysicalAddress physicalAddress)
     return &m_memory[physicalAddress.get()];
 }
 
-BYTE* CPU::memoryPointer(SegmentRegisterIndex segment, DWORD offset)
+BYTE* CPU::memoryPointer(SegmentRegisterIndex segreg, DWORD offset)
 {
-    auto& descriptor = m_descriptor[(int)segment];
-    if (!getPE())
-        return memoryPointer(descriptor.linearAddress(offset));
-    return memoryPointer(descriptor, offset);
+    return memoryPointer(cachedDescriptor(segreg), offset);
 }
 
 BYTE* CPU::memoryPointer(const SegmentDescriptor& descriptor, DWORD offset)
 {
     auto linearAddress = descriptor.linearAddress(offset);
-    if (!getPE() || getVM())
-        return memoryPointer(linearAddress);
-
-    validateAddress<BYTE>(descriptor, offset, MemoryAccessType::InternalPointer);
-    PhysicalAddress physicalAddress;
-    translateAddress(linearAddress, physicalAddress, MemoryAccessType::InternalPointer);
-#ifdef A20_ENABLED
-    physicalAddress.mask(a20Mask());
-#endif
-#ifdef MEMORY_DEBUGGING
-    if (options.memdebug || shouldLogMemoryPointer(physicalAddress))
-        vlog(LogCPU, "MemoryPointer PE [A20=%s] %04X:%08X (phys: %08X)", isA20Enabled() ? "on" : "off", descriptor.index(), offset, physicalAddress);
-#endif
-    return pointerToPhysicalMemory(physicalAddress);
+    if (getPE() && !getVM())
+        validateAddress<BYTE>(descriptor, offset, MemoryAccessType::InternalPointer);
+    return memoryPointer(linearAddress);
 }
 
 BYTE* CPU::memoryPointer(LogicalAddress address)
@@ -1619,8 +1598,7 @@ BYTE* CPU::memoryPointer(LogicalAddress address)
 
 BYTE* CPU::memoryPointer(LinearAddress linearAddress)
 {
-    PhysicalAddress physicalAddress;
-    translateAddress(linearAddress, physicalAddress, MemoryAccessType::InternalPointer);
+    auto physicalAddress = translateAddress(linearAddress, MemoryAccessType::InternalPointer);
 #ifdef A20_ENABLED
     physicalAddress.mask(a20Mask());
 #endif
