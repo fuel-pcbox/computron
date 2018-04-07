@@ -55,6 +55,9 @@ void CPU::_SIDT(Instruction& insn)
 
 void CPU::_SLDT_RM16(Instruction& insn)
 {
+    if (!getPE() || getVM()) {
+        throw InvalidOpcode("SLDT not recognized in real/VM86 mode");
+    }
     insn.modrm().writeClearing16(LDTR.selector, o32());
 }
 
@@ -86,8 +89,8 @@ void CPU::setLDT(WORD selector)
 
 void CPU::_LLDT_RM16(Instruction& insn)
 {
-    if (!getPE()) {
-        throw InvalidOpcode("LLDT not recognized in real mode");
+    if (!getPE() || getVM()) {
+        throw InvalidOpcode("LLDT not recognized in real/VM86 mode");
     }
 
     setLDT(insn.modrm().read16());
@@ -520,8 +523,8 @@ void CPU::_VERW_RM16(Instruction&)
 
 void CPU::_ARPL(Instruction& insn)
 {
-    if (!getPE()) {
-        throw InvalidOpcode("ARPL not recognized in real mode");
+    if (!getPE() || getVM()) {
+        throw InvalidOpcode("ARPL not recognized in real/VM86 mode");
     }
     WORD dest = insn.modrm().read16();
     WORD src = insn.reg16();
