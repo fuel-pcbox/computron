@@ -106,7 +106,7 @@ FLATTEN void MemoryOrRegisterReference::decode(InstructionStream& stream, bool a
         decode32(stream);
         switch (m_displacementBytes) {
         case 0: break;
-        case 1: m_displacement32 = signExtend<DWORD>(stream.readInstruction8()); break;
+        case 1: m_displacement32 = signExtendedTo<DWORD>(stream.readInstruction8()); break;
         case 4: m_displacement32 = stream.readInstruction32(); break;
         default: ASSERT_NOT_REACHED(); break;
         }
@@ -114,7 +114,7 @@ FLATTEN void MemoryOrRegisterReference::decode(InstructionStream& stream, bool a
         decode16(stream);
         switch (m_displacementBytes) {
         case 0: break;
-        case 1: m_displacement16 = signExtend<WORD>(stream.readInstruction8()); break;
+        case 1: m_displacement16 = signExtendedTo<WORD>(stream.readInstruction8()); break;
         case 2: m_displacement16 = stream.readInstruction16(); break;
         default: ASSERT_NOT_REACHED(); break;
         }

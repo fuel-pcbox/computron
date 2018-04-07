@@ -293,15 +293,15 @@ void CPU::_MOVZX_reg32_RM16(Instruction& insn)
 
 void CPU::_MOVSX_reg16_RM8(Instruction& insn)
 {
-    insn.reg16() = signExtend<WORD>(insn.modrm().read8());
+    insn.reg16() = signExtendedTo<WORD>(insn.modrm().read8());
 }
 
 void CPU::_MOVSX_reg32_RM8(Instruction& insn)
 {
-    insn.reg32() = signExtend<DWORD>(insn.modrm().read8());
+    insn.reg32() = signExtendedTo<DWORD>(insn.modrm().read8());
 }
 
 void CPU::_MOVSX_reg32_RM16(Instruction& insn)
 {
-    insn.reg32() = signExtend<DWORD>(insn.modrm().read16());
+    insn.reg32() = signExtendedTo<DWORD>(insn.modrm().read16());
 }

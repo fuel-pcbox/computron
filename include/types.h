@@ -83,6 +83,7 @@ template<typename T>
 struct TypeTrivia {
     static const unsigned bits = sizeof(T) * 8;
     static const T mask = std::numeric_limits<typename std::make_unsigned<T>::type>::max();
+    static const T signBit = 1 << (bits - 1);
 };
 
 template<typename T> struct TypeDoubler { };
@@ -108,38 +109,22 @@ template<typename DT> constexpr DT weld(typename TypeHalver<DT>::type high, type
     return (((UnsignedDT)high) << TypeTrivia<typename TypeHalver<DT>::type>::bits) | (UnsignedT)low;
 }
 
-template<typename T>
-inline T signExtend(BYTE value)
+template<typename T, typename U>
+inline constexpr T signExtendedTo(U value)
 {
-    if (!(value & 0x80))
+    if (!(value & TypeTrivia<U>::signBit))
         return value;
-    if (TypeTrivia<T>::bits == 16)
-        return value | 0xFF00;
-    if (TypeTrivia<T>::bits == 32)
-        return value | 0xFFFFFF00;
-    if (TypeTrivia<T>::bits == 64)
-        return value | 0xFFFFFFFFFFFFFF00;
+    return (TypeTrivia<T>::mask & ~TypeTrivia<U>::mask) | value;
 }
 
 template<typename T>
-inline T signExtend(WORD value)
-{
-    if (!(value & 0x8000))
-        return value;
-    if (TypeTrivia<T>::bits == 32)
-        return value | 0xFFFF0000;
-    if (TypeTrivia<T>::bits == 64)
-        return value | 0xFFFFFFFFFFFF0000;
-}
-
-template<typename T>
-inline T leastSignificant(typename TypeDoubler<T>::type whole)
+inline constexpr T leastSignificant(typename TypeDoubler<T>::type whole)
 {
     return whole & TypeTrivia<T>::mask;
 }
 
 template<typename T>
-inline T mostSignificant(typename TypeDoubler<T>::type whole)
+inline constexpr T mostSignificant(typename TypeDoubler<T>::type whole)
 {
     return (whole >> TypeTrivia<T>::bits) & TypeTrivia<T>::mask;
 }

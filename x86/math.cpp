@@ -140,7 +140,7 @@ void CPU::_IMUL_RM8(Instruction& insn)
 void CPU::_IMUL_reg32_RM32_imm8(Instruction& insn)
 {
     SIGNED_DWORD resultHigh;
-    doIMUL<SIGNED_DWORD>(insn.modrm().read32(), signExtend<SIGNED_DWORD>(insn.imm8()), resultHigh, (SIGNED_DWORD&)insn.reg32());
+    doIMUL<SIGNED_DWORD>(insn.modrm().read32(), signExtendedTo<SIGNED_DWORD>(insn.imm8()), resultHigh, (SIGNED_DWORD&)insn.reg32());
 }
 
 void CPU::_IMUL_reg32_RM32_imm32(Instruction& insn)
@@ -170,7 +170,7 @@ void CPU::_IMUL_reg32_RM32(Instruction& insn)
 void CPU::_IMUL_reg16_RM16_imm8(Instruction& insn)
 {
     SIGNED_WORD resultHigh;
-    doIMUL<SIGNED_WORD>(insn.modrm().read16(), signExtend<SIGNED_WORD>(insn.imm8()), resultHigh, (SIGNED_WORD&)insn.reg16());
+    doIMUL<SIGNED_WORD>(insn.modrm().read16(), signExtendedTo<SIGNED_WORD>(insn.imm8()), resultHigh, (SIGNED_WORD&)insn.reg16());
 }
 
 void CPU::_IMUL_RM16(Instruction& insn)

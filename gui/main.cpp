@@ -176,3 +176,7 @@ static_assert(std::numeric_limits<SIGNED_WORD>::min() == -0x8000, "min SIGNED_WO
 static_assert(std::numeric_limits<SIGNED_WORD>::max() == 0x7fff, "max SIGNED_WORD");
 static_assert(std::numeric_limits<SIGNED_DWORD>::min() == -0x80000000L, "min SIGNED_DWORD");
 static_assert(std::numeric_limits<SIGNED_DWORD>::max() == 0x7fffffff, "max SIGNED_DWORD");
+static_assert(signExtendedTo<SIGNED_WORD>(BYTE(0x80)) == -128, "signExtendedTo<SIGNED_WORD> -");
+static_assert(signExtendedTo<SIGNED_DWORD>(BYTE(0x80)) == -128, "signExtendedTo<SIGNED_DWORD> -");
+static_assert(signExtendedTo<SIGNED_WORD>(BYTE(0x7f)) == 127, "signExtendedTo<SIGNED_WORD> +");
+static_assert(signExtendedTo<SIGNED_DWORD>(BYTE(0x7f)) == 127, "signExtendedTo<SIGNED_DWORD> +");

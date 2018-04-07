@@ -249,9 +249,9 @@ void CPU::setEFlagsRespectfully(DWORD newFlags)
 void CPU::_PUSH_imm8(Instruction& insn)
 {
     if (o32())
-        push32(signExtend<DWORD>(insn.imm8()));
+        push32(signExtendedTo<DWORD>(insn.imm8()));
     else
-        push16(signExtend<WORD>(insn.imm8()));
+        push16(signExtendedTo<WORD>(insn.imm8()));
 }
 
 void CPU::_PUSH_imm16(Instruction& insn)
