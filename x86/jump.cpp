@@ -72,6 +72,9 @@ void CPU::_JMP_RM32(Instruction& insn)
 template<typename T>
 void CPU::doFarJump(Instruction& insn, JumpType jumpType)
 {
+    if (insn.modrm().isRegister())
+        throw InvalidOpcode("Far JMP/CALL with register operand");
+
     auto address = readLogicalAddress<T>(insn.modrm().segment(), insn.modrm().offset());
     farJump(address, jumpType);
 }
