@@ -765,15 +765,14 @@ _bios_interrupt15:
     jmp     iret_with_carry
 
 .getSystemConfigurationParameters:
-    call     bios_get_system_configuration_parameters
-    jmp     .end
+    push    iret_with_carry
+    jmp     bios_get_system_configuration_parameters
 
 .moveExtendedBlock:
-    call    bios_move_extended_block
-    jmp     .end
+    push    iret_with_carry
+    jmp     bios_move_extended_block
 
 .queryExtendedMemorySize:
-
     mov     al, 0x31            ; CMOS[31] = Extended memory size MSB
     out     CMOS_REGISTER, al
     in      al, CMOS_DATA
@@ -794,6 +793,7 @@ bios_move_extended_block:
     mov     bp, sp
 
     pusha
+    push    ds
 
     stub 0x15 ; FIXME: remove this when no longer needed for debugging
 
@@ -942,9 +942,12 @@ bios_move_extended_block:
 
     sti
 
+    pop     ds
     popa
 
     pop     bp
+    mov     ah, 0x00
+    clc
     ret
 
 pmode_idt_info:
@@ -958,28 +961,28 @@ dw 0x0000  ;; base  15:00
 db 0x00    ;; base  23:16
 
 a20_set:
-    push    dx
     xchg    ah, al      ; AH = value to set
 
-    mov     dx, 0x92
-    in      al, dx
+    in      al, 0x92
     shr     al, 1       ; AL = A20 enabled? (0/1)
 
     xchg    ah, al      ; AL = value to set
 
     shl     al, 1
-    out     dx, al
+    out     0x92, al
     xchg    ah, al      ; AL = prev value
 
-    pop     dx
     ret
 
 bios_a20_control:
+    cmp     al, 0x00
+    je      .disableA20
+
     cmp     al, 0x01
     je      .enableA20
 
     cmp     al, 0x02
-    je      .disableA20
+    je      .getA20Status
 
     cmp     al, 0x03
     je      .querySupport
@@ -995,14 +998,24 @@ bios_a20_control:
     call    a20_set
     pop     ax
     xor     ah, ah
+    clc
     jmp     .end
 
 .disableA20:
     push    ax
-    xor     ax, ax
+    mov     ax, 0
     call    a20_set
     pop     ax
     xor     ah, ah
+    clc
+    jmp     .end
+
+.getA20Status:
+    in      al, 0x92
+    and     al, 0x02
+    shr     al, 1
+    xor     ah, ah
+    clc
     jmp     .end
 
 .querySupport:

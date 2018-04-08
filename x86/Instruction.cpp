@@ -586,8 +586,8 @@ void buildOpcodeTablesIfNeeded()
     build(0xF9, "STC",    OP,                  &CPU::_STC);
     build(0xFA, "CLI",    OP,                  &CPU::_CLI);
     build(0xFB, "STI",    OP,                  &CPU::_STI);
-    build(0xFC, "CLI",    OP,                  &CPU::_CLD);
-    build(0xFD, "STI",    OP,                  &CPU::_STD);
+    build(0xFC, "CLD",    OP,                  &CPU::_CLD);
+    build(0xFD, "STD",    OP,                  &CPU::_STD);
 
     buildSlash(0x80, 0, "ADD",   OP_RM8_imm8,   &CPU::_ADD_RM8_imm8);
     buildSlash(0x80, 1, "OR",    OP_RM8_imm8,   &CPU::_OR_RM8_imm8);
