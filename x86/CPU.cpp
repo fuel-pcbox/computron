@@ -78,24 +78,24 @@ CPU* g_cpu = 0;
 DWORD CPU::readRegisterForAddressSize(int registerIndex)
 {
     if (a32())
-        return *treg32[registerIndex];
-    return *treg16[registerIndex];
+        return m_generalPurposeRegister[registerIndex].fullDWORD;
+    return m_generalPurposeRegister[registerIndex].lowWORD;
 }
 
 void CPU::writeRegisterForAddressSize(int registerIndex, DWORD data)
 {
     if (a32())
-        *treg32[registerIndex] = data;
+        m_generalPurposeRegister[registerIndex].fullDWORD = data;
     else
-        *treg16[registerIndex] = data;
+        m_generalPurposeRegister[registerIndex].lowWORD = data;
 }
 
 void CPU::stepRegisterForAddressSize(int registerIndex, DWORD stepSize)
 {
     if (a32())
-        *treg32[registerIndex] += getDF() ? -stepSize : stepSize;
+        m_generalPurposeRegister[registerIndex].fullDWORD += getDF() ? -stepSize : stepSize;
     else
-        *treg16[registerIndex] += getDF() ? -stepSize : stepSize;
+        m_generalPurposeRegister[registerIndex].lowWORD += getDF() ? -stepSize : stepSize;
 }
 
 bool CPU::decrementCXForAddressSize()
@@ -230,32 +230,14 @@ CPU::CPU(Machine& m)
     m_debugRegisterMap[6] = &m_DR6;
     m_debugRegisterMap[7] = &m_DR7;
 
-    this->treg32[RegisterEAX] = &this->regs.D.EAX;
-    this->treg32[RegisterEBX] = &this->regs.D.EBX;
-    this->treg32[RegisterECX] = &this->regs.D.ECX;
-    this->treg32[RegisterEDX] = &this->regs.D.EDX;
-    this->treg32[RegisterESP] = &this->regs.D.ESP;
-    this->treg32[RegisterEBP] = &this->regs.D.EBP;
-    this->treg32[RegisterESI] = &this->regs.D.ESI;
-    this->treg32[RegisterEDI] = &this->regs.D.EDI;
-
-    this->treg16[RegisterAX] = &this->regs.W.AX;
-    this->treg16[RegisterBX] = &this->regs.W.BX;
-    this->treg16[RegisterCX] = &this->regs.W.CX;
-    this->treg16[RegisterDX] = &this->regs.W.DX;
-    this->treg16[RegisterSP] = &this->regs.W.SP;
-    this->treg16[RegisterBP] = &this->regs.W.BP;
-    this->treg16[RegisterSI] = &this->regs.W.SI;
-    this->treg16[RegisterDI] = &this->regs.W.DI;
-
-    this->treg8[RegisterAH] = &this->regs.B.AH;
-    this->treg8[RegisterBH] = &this->regs.B.BH;
-    this->treg8[RegisterCH] = &this->regs.B.CH;
-    this->treg8[RegisterDH] = &this->regs.B.DH;
-    this->treg8[RegisterAL] = &this->regs.B.AL;
-    this->treg8[RegisterBL] = &this->regs.B.BL;
-    this->treg8[RegisterCL] = &this->regs.B.CL;
-    this->treg8[RegisterDL] = &this->regs.B.DL;
+    m_byteRegisters[RegisterAH] = &m_generalPurposeRegister[RegisterEAX].highBYTE;
+    m_byteRegisters[RegisterBH] = &m_generalPurposeRegister[RegisterEBX].highBYTE;
+    m_byteRegisters[RegisterCH] = &m_generalPurposeRegister[RegisterECX].highBYTE;
+    m_byteRegisters[RegisterDH] = &m_generalPurposeRegister[RegisterEDX].highBYTE;
+    m_byteRegisters[RegisterAL] = &m_generalPurposeRegister[RegisterEAX].lowBYTE;
+    m_byteRegisters[RegisterBL] = &m_generalPurposeRegister[RegisterEBX].lowBYTE;
+    m_byteRegisters[RegisterCL] = &m_generalPurposeRegister[RegisterECX].lowBYTE;
+    m_byteRegisters[RegisterDL] = &m_generalPurposeRegister[RegisterEDX].lowBYTE;
 
     m_segmentMap[(int)SegmentRegisterIndex::CS] = &this->CS;
     m_segmentMap[(int)SegmentRegisterIndex::DS] = &this->DS;
@@ -274,7 +256,7 @@ void CPU::reset()
     m_a20Enabled = false;
     m_nextInstructionIsUninterruptible = false;
 
-    memset(&regs, 0, sizeof(regs));
+    memset(&m_generalPurposeRegister, 0, sizeof(m_generalPurposeRegister));
     m_CR0 = 0;
     m_CR1 = 0;
     m_CR2 = 0;
@@ -503,28 +485,28 @@ FLATTEN void CPU::mainLoop()
 
 void CPU::jumpRelative8(SIGNED_BYTE displacement)
 {
-    EIP += displacement;
+    m_EIP += displacement;
 }
 
 void CPU::jumpRelative16(SIGNED_WORD displacement)
 {
-    EIP += displacement;
+    m_EIP += displacement;
 }
 
 void CPU::jumpRelative32(SIGNED_DWORD displacement)
 {
-    EIP += displacement;
+    m_EIP += displacement;
 }
 
 void CPU::jumpAbsolute16(WORD address)
 {
-    EIP = address;
+    m_EIP = address;
 }
 
 void CPU::jumpAbsolute32(DWORD address)
 {
 //    vlog(LogCPU, "[PE=%u] Abs jump to %08X", getPE(), address);
-    EIP = address;
+    m_EIP = address;
 }
 
 static const char* toString(JumpType type)

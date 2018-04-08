@@ -118,6 +118,33 @@ private:
     QString m_reason;
 };
 
+union PartAddressableRegister {
+    struct {
+        DWORD fullDWORD;
+    };
+#ifdef CT_BIG_ENDIAN
+    struct {
+        WORD __highWORD;
+        WORD lowWORD;
+    };
+    struct {
+        WORD __highWORD2;
+        BYTE highBYTE;
+        BYTE lowBYTE;
+    };
+#else
+    struct {
+        WORD lowWORD;
+        WORD __highWORD;
+    };
+    struct {
+        BYTE lowBYTE;
+        BYTE highBYTE;
+        BYTE __highWORD2;
+    };
+#endif
+};
+
 class CPU final : public InstructionStream {
     friend void buildOpcodeTablesIfNeeded();
 public:
@@ -311,8 +338,8 @@ public:
     bool getPVI() const { return m_CR4 & 0x02; }
 
     WORD getCS() const { return this->CS; }
-    WORD getIP() const { return this->IP; }
-    DWORD getEIP() const { return this->EIP; }
+    WORD getIP() const { return m_EIP & 0xffff; }
+    DWORD getEIP() const { return m_EIP; }
 
     WORD getDS() const { return this->DS; }
     WORD getES() const { return this->ES; }
@@ -327,8 +354,8 @@ public:
     void setFS(WORD fs);
     void setGS(WORD gs);
 
-    void setIP(WORD ip) { this->IP = ip; }
-    void setEIP(DWORD eip) { this->EIP = eip; }
+    void setIP(WORD ip) { setEIP(ip); }
+    void setEIP(DWORD eip) { m_EIP = eip; }
 
     WORD readSegmentRegister(SegmentRegisterIndex segreg) const { return *m_segmentMap[static_cast<int>(segreg)]; }
 
@@ -337,6 +364,10 @@ public:
 
     DWORD getDebugRegister(int registerIndex) const { return *m_debugRegisterMap[registerIndex]; }
     void setDebugRegister(int registerIndex, DWORD value) { *m_debugRegisterMap[registerIndex] = value; }
+
+    BYTE& mutableReg8(RegisterIndex8 index) { return *m_byteRegisters[index]; }
+    WORD& mutableReg16(RegisterIndex16 index) { return m_generalPurposeRegister[index].lowWORD; }
+    DWORD& mutableReg32(RegisterIndex32 index) { return m_generalPurposeRegister[index].fullDWORD; }
 
     DWORD getEAX() const { return readRegister<DWORD>(RegisterEAX); }
     DWORD getEBX() const { return readRegister<DWORD>(RegisterEBX); }
@@ -451,7 +482,7 @@ public:
     }
     void adjustInstructionPointer(int delta)
     {
-        EIP += delta;
+        m_EIP += delta;
     }
 
     void farReturn(JumpType, WORD stackAdjustment = 0);
@@ -1261,68 +1292,10 @@ private:
 
     SegmentDescriptor m_descriptor[6];
 
-    union {
-        struct {
-            DWORD EAX, EBX, ECX, EDX;
-            DWORD EBP, ESP, ESI, EDI;
-            DWORD EIP;
-        } D;
-#ifdef CT_BIG_ENDIAN
-        struct {
-            WORD __EAX_high_word, AX;
-            WORD __EBX_high_word, BX;
-            WORD __ECX_high_word, CX;
-            WORD __EDX_high_word, DX;
-            WORD __EBP_high_word, BP;
-            WORD __ESP_high_word, SP;
-            WORD __ESI_high_word, SI;
-            WORD __EDI_high_word, DI;
-            WORD __EIP_high_word, IP;
-        } W;
-        struct {
-            WORD __EAX_high_word;
-            BYTE AH, AL;
-            WORD __EBX_high_word;
-            BYTE BH, BL;
-            WORD __ECX_high_word;
-            BYTE CH, CL;
-            WORD __EDX_high_word;
-            BYTE DH, DL;
-            DWORD EBP;
-            DWORD ESP;
-            DWORD ESI;
-            DWORD EDI;
-            DWORD EIP;
-        } B;
-#else
-        struct {
-            WORD AX, __EAX_high_word;
-            WORD BX, __EBX_high_word;
-            WORD CX, __ECX_high_word;
-            WORD DX, __EDX_high_word;
-            WORD BP, __EBP_high_word;
-            WORD SP, __ESP_high_word;
-            WORD SI, __ESI_high_word;
-            WORD DI, __EDI_high_word;
-            WORD IP, __EIP_high_word;
-        } W;
-        struct {
-            BYTE AL, AH;
-            WORD __EAX_high_word;
-            BYTE BL, BH;
-            WORD __EBX_high_word;
-            BYTE CL, CH;
-            WORD __ECX_high_word;
-            BYTE DL, DH;
-            WORD __EDX_high_word;
-            DWORD EBP;
-            DWORD ESP;
-            DWORD ESI;
-            DWORD EDI;
-            DWORD EIP;
-        } B;
-#endif
-    } regs;
+    PartAddressableRegister m_generalPurposeRegister[8];
+    BYTE* m_byteRegisters[8];
+
+    DWORD m_EIP { 0 };
 
     WORD CS, DS, ES, SS, FS, GS;
     mutable bool CF, PF, AF, ZF, SF, OF;
@@ -1355,17 +1328,6 @@ private:
 
     DWORD m_CR0, m_CR1, m_CR2, m_CR3, m_CR4, m_CR5, m_CR6, m_CR7;
     DWORD m_DR0, m_DR1, m_DR2, m_DR3, m_DR4, m_DR5, m_DR6, m_DR7;
-
-    union {
-        struct {
-#ifdef CT_BIG_ENDIAN
-            WORD __EIP_high_word, IP;
-#else
-            WORD IP, __EIP_high_word;
-#endif
-        };
-        DWORD EIP;
-    };
 
     struct {
         WORD selector { 0 };
@@ -1402,11 +1364,6 @@ private:
     WORD* m_segmentMap[8];
     DWORD* m_controlRegisterMap[8];
     DWORD* m_debugRegisterMap[8];
-
-    // ID-to-Register maps
-    DWORD* treg32[8];
-    WORD* treg16[8];
-    BYTE* treg8[8];
 
     Machine& m_machine;
 
@@ -1503,7 +1460,7 @@ ALWAYS_INLINE BYTE& Instruction::reg8()
 #ifdef DEBUG_INSTRUCTION
     ASSERT(m_cpu);
 #endif
-    return *m_cpu->treg8[registerIndex()];
+    return *m_cpu->m_byteRegisters[registerIndex()];
 }
 
 ALWAYS_INLINE WORD& Instruction::reg16()
@@ -1511,7 +1468,7 @@ ALWAYS_INLINE WORD& Instruction::reg16()
 #ifdef DEBUG_INSTRUCTION
     ASSERT(m_cpu);
 #endif
-    return *m_cpu->treg16[registerIndex()];
+    return m_cpu->m_generalPurposeRegister[registerIndex()].lowWORD;
 }
 
 ALWAYS_INLINE WORD& Instruction::segreg()
@@ -1529,7 +1486,7 @@ ALWAYS_INLINE DWORD& Instruction::reg32()
     ASSERT(m_cpu);
     ASSERT(m_cpu->o32());
 #endif
-    return *m_cpu->treg32[registerIndex()];
+    return m_cpu->m_generalPurposeRegister[registerIndex()].fullDWORD;
 }
 
 template<> ALWAYS_INLINE BYTE& Instruction::reg<BYTE>() { return reg8(); }
@@ -1573,11 +1530,11 @@ template<typename T>
 ALWAYS_INLINE T CPU::readRegister(int registerIndex) const
 {
     if (sizeof(T) == 1)
-        return *treg8[registerIndex];
+        return *m_byteRegisters[registerIndex];
     if (sizeof(T) == 2)
-        return *treg16[registerIndex];
+        return m_generalPurposeRegister[registerIndex].lowWORD;
     if (sizeof(T) == 4)
-        return *treg32[registerIndex];
+        return m_generalPurposeRegister[registerIndex].fullDWORD;
     ASSERT_NOT_REACHED();
 }
 
@@ -1585,11 +1542,11 @@ template<typename T>
 ALWAYS_INLINE void CPU::writeRegister(int registerIndex, T value)
 {
     if (sizeof(T) == 1)
-        *treg8[registerIndex] = value;
+        *m_byteRegisters[registerIndex] = value;
     else if (sizeof(T) == 2)
-        *treg16[registerIndex] = value;
+        m_generalPurposeRegister[registerIndex].lowWORD = value;
     else if (sizeof(T) == 4)
-        *treg32[registerIndex] = value;
+        m_generalPurposeRegister[registerIndex].fullDWORD = value;
     else
         ASSERT_NOT_REACHED();
 }

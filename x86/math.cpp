@@ -102,17 +102,17 @@ void CPU::doMUL(T f1, T f2, T& resultHigh, T& resultLow)
 
 void CPU::_MUL_RM8(Instruction& insn)
 {
-    doMUL<BYTE>(getAL(), insn.modrm().read8(), regs.B.AH, regs.B.AL);
+    doMUL<BYTE>(getAL(), insn.modrm().read8(), mutableReg8(RegisterAH), mutableReg8(RegisterAL));
 }
 
 void CPU::_MUL_RM16(Instruction& insn)
 {
-    doMUL<WORD>(getAX(), insn.modrm().read16(), regs.W.DX, regs.W.AX);
+    doMUL<WORD>(getAX(), insn.modrm().read16(), mutableReg16(RegisterDX), mutableReg16(RegisterAX));
 }
 
 void CPU::_MUL_RM32(Instruction& insn)
 {
-    doMUL<DWORD>(getEAX(), insn.modrm().read32(), regs.D.EDX, regs.D.EAX);
+    doMUL<DWORD>(getEAX(), insn.modrm().read32(), mutableReg32(RegisterEDX), mutableReg32(RegisterEAX));
 }
 
 template<typename T>
@@ -134,7 +134,7 @@ void CPU::doIMUL(T f1, T f2, T& resultHigh, T& resultLow)
 
 void CPU::_IMUL_RM8(Instruction& insn)
 {
-    doIMUL<SIGNED_BYTE>(insn.modrm().read8(), getAL(), (SIGNED_BYTE&)regs.B.AH, (SIGNED_BYTE&)regs.B.AL);
+    doIMUL<SIGNED_BYTE>(insn.modrm().read8(), getAL(), (SIGNED_BYTE&)mutableReg8(RegisterAH), (SIGNED_BYTE&)mutableReg8(RegisterAL));
 }
 
 void CPU::_IMUL_reg32_RM32_imm8(Instruction& insn)
@@ -175,12 +175,12 @@ void CPU::_IMUL_reg16_RM16_imm8(Instruction& insn)
 
 void CPU::_IMUL_RM16(Instruction& insn)
 {
-    doIMUL<SIGNED_WORD>(insn.modrm().read16(), getAX(), (SIGNED_WORD&)regs.W.DX, (SIGNED_WORD&)regs.W.AX);
+    doIMUL<SIGNED_WORD>(insn.modrm().read16(), getAX(), (SIGNED_WORD&)mutableReg16(RegisterDX), (SIGNED_WORD&)mutableReg16(RegisterAX));
 }
 
 void CPU::_IMUL_RM32(Instruction& insn)
 {
-    doIMUL<SIGNED_DWORD>(insn.modrm().read32(), getEAX(), (SIGNED_DWORD&)regs.D.EDX, (SIGNED_DWORD&)regs.D.EAX);
+    doIMUL<SIGNED_DWORD>(insn.modrm().read32(), getEAX(), (SIGNED_DWORD&)mutableReg32(RegisterEDX), (SIGNED_DWORD&)mutableReg32(RegisterEAX));
 }
 
 template<typename T>
@@ -203,32 +203,32 @@ void CPU::doDIV(T dividendHigh, T dividendLow, T divisor, T& quotient, T& remain
 
 void CPU::_DIV_RM8(Instruction& insn)
 {
-    doDIV<BYTE>(getAH(), getAL(), insn.modrm().read8(), regs.B.AL, regs.B.AH);
+    doDIV<BYTE>(getAH(), getAL(), insn.modrm().read8(), mutableReg8(RegisterAL), mutableReg8(RegisterAH));
 }
 
 void CPU::_DIV_RM16(Instruction& insn)
 {
-    doDIV<WORD>(getDX(), getAX(), insn.modrm().read16(), regs.W.AX, regs.W.DX);
+    doDIV<WORD>(getDX(), getAX(), insn.modrm().read16(), mutableReg16(RegisterAX), mutableReg16(RegisterDX));
 }
 
 void CPU::_DIV_RM32(Instruction& insn)
 {
-    doDIV<DWORD>(getEDX(), getEAX(), insn.modrm().read32(), regs.D.EAX, regs.D.EDX);
+    doDIV<DWORD>(getEDX(), getEAX(), insn.modrm().read32(), mutableReg32(RegisterEAX), mutableReg32(RegisterEDX));
 }
 
 void CPU::_IDIV_RM8(Instruction& insn)
 {
-    doDIV<SIGNED_BYTE>(getAH(), getAL(), insn.modrm().read8(), (SIGNED_BYTE&)regs.B.AL, (SIGNED_BYTE&)regs.B.AH);
+    doDIV<SIGNED_BYTE>(getAH(), getAL(), insn.modrm().read8(), (SIGNED_BYTE&)mutableReg8(RegisterAL), (SIGNED_BYTE&)mutableReg8(RegisterAH));
 }
 
 void CPU::_IDIV_RM16(Instruction& insn)
 {
-    doDIV<SIGNED_WORD>(getDX(), getAX(), insn.modrm().read16(), (SIGNED_WORD&)regs.W.AX, (SIGNED_WORD&)regs.W.DX);
+    doDIV<SIGNED_WORD>(getDX(), getAX(), insn.modrm().read16(), (SIGNED_WORD&)mutableReg16(RegisterAX), (SIGNED_WORD&)mutableReg16(RegisterDX));
 }
 
 void CPU::_IDIV_RM32(Instruction& insn)
 {
-    doDIV<SIGNED_DWORD>(getEDX(), getEAX(), insn.modrm().read32(), (SIGNED_DWORD&)regs.D.EAX, (SIGNED_DWORD&)regs.D.EDX);
+    doDIV<SIGNED_DWORD>(getEDX(), getEAX(), insn.modrm().read32(), (SIGNED_DWORD&)mutableReg32(RegisterEAX), (SIGNED_DWORD&)mutableReg32(RegisterEDX));
 }
 
 template<typename T>
