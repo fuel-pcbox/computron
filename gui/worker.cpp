@@ -28,7 +28,6 @@
 Worker::Worker(CPU& cpu)
     : QThread(0)
     , m_cpu(cpu)
-    , m_active(false)
 {
 }
 
@@ -38,29 +37,27 @@ Worker::~Worker()
 
 void Worker::run()
 {
-    while (m_active) {
+    while (true) {
         m_cpu.mainLoop();
-        while (!m_active)
-            msleep(50);
+        msleep(50);
     }
 }
 
 void Worker::shutdown()
 {
-    stopMachine();
+    // FIXME: Implement shutdown
+    enterDebugger();
     hard_exit(0);
 }
 
-void Worker::startMachine()
+void Worker::exitDebugger()
 {
-    m_cpu.queueCommand(CPU::EnterMainLoop);
-    m_active = true;
+    m_cpu.queueCommand(CPU::ExitDebugger);
 }
 
-void Worker::stopMachine()
+void Worker::enterDebugger()
 {
-    m_active = false;
-    m_cpu.queueCommand(CPU::ExitMainLoop);
+    m_cpu.queueCommand(CPU::EnterDebugger);
 }
 
 void Worker::rebootMachine()

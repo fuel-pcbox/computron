@@ -132,7 +132,7 @@ Machine::Machine(const QString& name, OwnPtr<Settings>&& settings, QObject* pare
         // Why are we booting the PIT slightly later anyway? I smell a race.
         pit().boot();
 
-        worker().startMachine();
+        worker().exitDebugger();
         worker().start();
     }
 }
@@ -210,19 +210,19 @@ void Machine::start()
 {
     if (widget())
         widget()->screen().setTinted(false);
-    worker().startMachine();
+    worker().exitDebugger();
 }
 
 void Machine::pause()
 {
     if (widget())
         widget()->screen().setTinted(true);
-    worker().stopMachine();
+    worker().enterDebugger();
 }
 
 void Machine::stop()
 {
-    worker().stopMachine();
+    worker().shutdown();
 }
 
 void Machine::reboot()

@@ -28,8 +28,7 @@ class CPU;
 class QString;
 class QStringList;
 
-class Debugger
-{
+class Debugger {
 public:
     explicit Debugger(CPU&);
     ~Debugger();

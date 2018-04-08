@@ -36,8 +36,8 @@ public:
     explicit Worker(CPU&);
     virtual ~Worker();
 
-    void startMachine();
-    void stopMachine();
+    void enterDebugger();
+    void exitDebugger();
     void rebootMachine();
 
 public slots:

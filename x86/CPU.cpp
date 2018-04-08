@@ -125,7 +125,9 @@ FLATTEN void CPU::decodeNext()
     if (UNLIKELY(getBaseCS() == 0 && currentBaseInstructionPointer() == 0)) {
         dumpAll();
         vlog(LogCPU, "It seems like we've jumped to 0000:00000000 :(");
-        ASSERT_NOT_REACHED();
+        debugger().enter();
+        return;
+        //ASSERT_NOT_REACHED();
     }
 #endif
 
@@ -196,7 +198,6 @@ void CPU::setMemorySizeAndReallocateIfNeeded(DWORD size)
 
 CPU::CPU(Machine& m)
     : m_machine(m)
-    , m_shouldBreakOutOfMainLoop(false)
 {
     m_isForAutotest = machine().isForAutotest();
 
@@ -377,11 +378,11 @@ void CPU::haltedLoop()
 void CPU::queueCommand(Command command)
 {
     switch (command) {
-    case ExitMainLoop:
-        m_shouldBreakOutOfMainLoop = true;
+    case EnterDebugger:
+        m_debuggerRequest = PleaseEnterDebugger;
         break;
-    case EnterMainLoop:
-        m_shouldBreakOutOfMainLoop = false;
+    case ExitDebugger:
+        m_debuggerRequest = PleaseExitDebugger;
         break;
     case HardReboot:
         m_shouldHardReboot = true;
@@ -404,7 +405,7 @@ void CPU::makeNextInstructionUninterruptible()
 
 void CPU::recomputeMainLoopNeedsSlowStuff()
 {
-    m_mainLoopNeedsSlowStuff = m_shouldBreakOutOfMainLoop ||
+    m_mainLoopNeedsSlowStuff = m_debuggerRequest != NoDebuggerRequest ||
                                m_shouldHardReboot ||
                                options.trace ||
                                !m_breakpoints.empty() ||
@@ -414,9 +415,6 @@ void CPU::recomputeMainLoopNeedsSlowStuff()
 
 NEVER_INLINE bool CPU::mainLoopSlowStuff()
 {
-    if (m_shouldBreakOutOfMainLoop)
-        return false;
-
     if (m_shouldHardReboot) {
         hardReboot();
         return true;
@@ -429,6 +427,14 @@ NEVER_INLINE bool CPU::mainLoopSlowStuff()
                 break;
             }
         }
+    }
+
+    if (m_debuggerRequest == PleaseEnterDebugger) {
+        debugger().enter();
+        m_debuggerRequest = NoDebuggerRequest;
+    } else if (m_debuggerRequest == PleaseExitDebugger) {
+        debugger().exit();
+        m_debuggerRequest = NoDebuggerRequest;
     }
 
     if (debugger().isActive()) {

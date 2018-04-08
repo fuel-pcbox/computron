@@ -147,6 +147,7 @@ union PartAddressableRegister {
 
 class CPU final : public InstructionStream {
     friend void buildOpcodeTablesIfNeeded();
+    friend class Debugger;
 public:
     explicit CPU(Machine&);
     ~CPU();
@@ -665,7 +666,7 @@ public:
     bool s16() const { return !m_stackSize32; }
     bool s32() const { return m_stackSize32; }
 
-    enum Command { EnterMainLoop, ExitMainLoop, HardReboot };
+    enum Command { ExitDebugger, EnterDebugger, HardReboot };
     void queueCommand(Command);
 
     static const char* registerName(CPU::RegisterIndex8) PURE;
@@ -1379,8 +1380,10 @@ private:
     bool m_effectiveOperandSize32 { false };
     bool m_stackSize32 { false };
 
+    enum DebuggerRequest { NoDebuggerRequest, PleaseEnterDebugger, PleaseExitDebugger };
+
     std::atomic<bool> m_mainLoopNeedsSlowStuff { false };
-    std::atomic<bool> m_shouldBreakOutOfMainLoop { false };
+    std::atomic<DebuggerRequest> m_debuggerRequest { NoDebuggerRequest };
     std::atomic<bool> m_shouldHardReboot { false };
 
     QVector<WatchedAddress> m_watches;
