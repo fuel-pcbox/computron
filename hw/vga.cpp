@@ -49,7 +49,7 @@ struct VGA::Private
     BYTE latch[4];
 
     BYTE currentRegister;
-    BYTE currentRegister2;
+    BYTE graphicsControllerAddressRegister;
     BYTE currentSequencer;
     BYTE ioRegister[0x20];
     BYTE ioRegister2[0x20];
@@ -110,7 +110,7 @@ VGA::VGA(Machine& m)
     listen(0x3C9, IODevice::ReadWrite);
     listen(0x3CA, IODevice::ReadOnly);
     listen(0x3CC, IODevice::ReadOnly);
-    listen(0x3CE, IODevice::WriteOnly);
+    listen(0x3ce, IODevice::ReadWrite);
     listen(0x3CF, IODevice::ReadWrite);
     listen(0x3D4, IODevice::ReadWrite);
     listen(0x3D5, IODevice::ReadWrite);
@@ -130,7 +130,7 @@ void VGA::reset()
     d->rows = 0;
 
     d->currentRegister = 0;
-    d->currentRegister2 = 0;
+    d->graphicsControllerAddressRegister = 0;
     d->currentSequencer = 0;
 
     memset(d->ioRegister, 0, sizeof(d->ioRegister));
@@ -278,13 +278,13 @@ void VGA::out8(WORD port, BYTE data)
 
     case 0x3CE:
         // FIXME: Find the number of valid registers and do something for OOB access.
-        d->currentRegister2 = data;
+        d->graphicsControllerAddressRegister = data;
         break;
 
     case 0x3CF:
         // FIXME: Find the number of valid registers and do something for OOB access.
         //vlog(LogVGA, "Writing to reg2 %02x, data is %02x", d->currentRegister2, data);
-        d->ioRegister2[d->currentRegister2] = data;
+        d->ioRegister2[d->graphicsControllerAddressRegister] = data;
         break;
 
     default:
@@ -395,10 +395,13 @@ BYTE VGA::in8(WORD port)
         vlog(LogVGA, "Read MOR (Miscellaneous Output Register): %02x", d->miscellaneousOutputRegister);
         return d->miscellaneousOutputRegister;
 
+    case 0x3ce:
+        return d->graphicsControllerAddressRegister;
+
     case 0x3CF:
         // FIXME: Find the number of valid registers and do something for OOB access.
         // vlog(LogVGA, "reading reg2 %d, data is %02X", current_register2, io_register2[current_register2]);
-        return d->ioRegister2[d->currentRegister2];
+        return d->ioRegister2[d->graphicsControllerAddressRegister];
 
     default:
         return IODevice::in8(port);
