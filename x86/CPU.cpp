@@ -711,6 +711,7 @@ void CPU::protectedModeFarJump(LogicalAddress address, JumpType type, Gate* gate
             throw StackFault(newSS, "New ss not present");
         }
 
+        setCPL(descriptor.DPL());
         setSS(newSS);
         setESP(newESP);
 
@@ -720,7 +721,6 @@ void CPU::protectedModeFarJump(LogicalAddress address, JumpType type, Gate* gate
 #endif
         pushValueWithSize(originalSS, pushSize);
         pushValueWithSize(originalESP, pushSize);
-        setCPL(descriptor.DPL());
     } else {
 #ifdef DEBUG_JUMPS
         vlog(LogCPU, "%s same privilege from ring%u to ring%u", toString(type), originalCPL, descriptor.DPL());
