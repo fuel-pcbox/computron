@@ -70,6 +70,7 @@ public:
     bool isLDT() const;
     bool isNull() const { return m_DT == 0 && m_type == 0; }
 
+    bool isConformingCode() const;
     bool isNonconformingCode() const;
     bool isTaskGate() const;
     bool isTrapGate() const;
@@ -237,6 +238,8 @@ public:
     bool isCode() const { return (m_type & 0x8) != 0; }
     bool isData() const { return (m_type & 0x8) == 0; }
     bool accessed() const { return m_type & 0x1; }
+    bool readable() const;
+    bool writable() const;
 
     DWORD effectiveLimit() const { return m_effectiveLimit; }
     bool granularity() const { return m_G; }
@@ -335,6 +338,11 @@ inline bool Descriptor::isNonconformingCode() const
     return isCode() && !asCodeSegmentDescriptor().conforming();
 }
 
+inline bool Descriptor::isConformingCode() const
+{
+    return isCode() && asCodeSegmentDescriptor().conforming();
+}
+
 inline bool Descriptor::isTrapGate() const
 {
     return isSystemDescriptor() && asSystemDescriptor().isTrapGate();
@@ -348,4 +356,18 @@ inline bool Descriptor::isInterruptGate() const
 inline bool Descriptor::isTaskGate() const
 {
     return isSystemDescriptor() && asSystemDescriptor().isTaskGate();
+}
+
+inline bool SegmentDescriptor::readable() const
+{
+    if (isCode())
+        return asCodeSegmentDescriptor().readable();
+    return true;
+}
+
+inline bool SegmentDescriptor::writable() const
+{
+    if (isData())
+        return asDataSegmentDescriptor().writable();
+    return false;
 }

@@ -491,32 +491,47 @@ void CPU::writeSegmentRegister(SegmentRegisterIndex segreg, WORD selector)
 
 void CPU::_VERR_RM16(Instruction& insn)
 {
-    if (!getPE()) {
-        throw InvalidOpcode("VERR not recognized in real mode");
-    }
+    if (!getPE() || getVM())
+        throw InvalidOpcode("VERR not recognized in real/VM86 mode");
+
     WORD selector = insn.modrm().read16();
-    auto descriptor = getDescriptor(selector);
-    if (descriptor.isError() || descriptor.isSystemDescriptor()) {
-        setZF(0);
-        return;
-    }
     WORD RPL = selector & 3;
+    auto descriptor = getDescriptor(selector);
 
-    if (descriptor.isNonconformingCode() && (getCPL() > descriptor.DPL() || RPL > descriptor.DPL())) {
+    if (descriptor.isNull() ||
+        descriptor.isError() ||
+        descriptor.isSystemDescriptor() ||
+        !descriptor.asSegmentDescriptor().readable() ||
+        (!descriptor.isConformingCode() && (descriptor.DPL() < getCPL() || descriptor.DPL() < RPL)))
+    {
         setZF(0);
         return;
     }
 
-    if (descriptor.isCode()) {
-        setZF(descriptor.asCodeSegmentDescriptor().readable());
-    } else {
-        setZF(1);
-    }
+    setZF(1);
 }
 
-void CPU::_VERW_RM16(Instruction&)
+void CPU::_VERW_RM16(Instruction& insn)
 {
-    ASSERT_NOT_REACHED();
+    if (!getPE() || getVM())
+        throw InvalidOpcode("VERW not recognized in real/VM86 mode");
+
+    WORD selector = insn.modrm().read16();
+    WORD RPL = selector & 3;
+    auto descriptor = getDescriptor(selector);
+
+    if (descriptor.isNull() ||
+        descriptor.isError() ||
+        descriptor.isSystemDescriptor() ||
+        descriptor.DPL() < getCPL() ||
+        descriptor.DPL() < RPL ||
+        !descriptor.asSegmentDescriptor().writable())
+    {
+        setZF(0);
+        return;
+    }
+
+    setZF(1);
 }
 
 void CPU::_ARPL(Instruction& insn)
