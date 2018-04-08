@@ -82,7 +82,7 @@ void StateWidget::sync()
         DO_LABEL_N(ESP, ESP, "esp", "%08x");
         DO_LABEL_N(ESI, ESI, "esi", "%08x");
         DO_LABEL_N(EDI, EDI, "edi", "%08x");
-        d->ui.lblPC->setText(s.sprintf("%04X:%08X", cpu.getBaseCS(), cpu.getBaseEIP()));
+        d->ui.lblPC->setText(s.sprintf("%04X:%08X", cpu.getBaseCS(), cpu.currentBaseInstructionPointer()));
     } else {
         DO_LABEL_N(EBX, BX, "bx", "%04x");
         DO_LABEL_N(EAX, AX, "ax", "%04x");

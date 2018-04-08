@@ -299,7 +299,7 @@ void CPU::dumpAll()
 
     vlog(LogDump, "cf=%u pf=%u af=%u zf=%u sf=%u if=%u df=%u of=%u tf=%u nt=%u vm=%u", getCF(), getPF(), getAF(), getZF(), getSF(), getIF(), getDF(), getOF(), getTF(), getNT(), getVM());
 
-    dumpDisassembled(cachedDescriptor(SegmentRegisterIndex::CS), getBaseEIP());
+    dumpDisassembled(cachedDescriptor(SegmentRegisterIndex::CS), currentBaseInstructionPointer());
 }
 
 static inline BYTE n(BYTE b)

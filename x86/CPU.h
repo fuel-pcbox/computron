@@ -481,6 +481,10 @@ public:
     {
         return x32() ? getEIP() : getIP();
     }
+    DWORD currentBaseInstructionPointer() const
+    {
+        return x32() ? getBaseEIP() : getBaseIP();
+    }
     void adjustInstructionPointer(int delta)
     {
         m_EIP += delta;

@@ -278,6 +278,8 @@ void VGA::out8(WORD port, BYTE data)
 
     case 0x3CE:
         // FIXME: Find the number of valid registers and do something for OOB access.
+        if (data > 0x20)
+            ASSERT_NOT_REACHED();
         d->graphicsControllerAddressRegister = data;
         break;
 

@@ -252,7 +252,7 @@ void Debugger::doConsole()
 
     printf("\n");
     cpu().dumpAll();
-    printf(">>> Entering debugger @ %04X:%08X\n", cpu().getBaseCS(), cpu().getBaseEIP());
+    printf(">>> Entering Computron debugger @ %04x:%08x\n", cpu().getBaseCS(), cpu().currentBaseInstructionPointer());
 
     while (isActive()) {
         QString rawCommand = doPrompt(cpu());

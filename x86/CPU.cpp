@@ -122,7 +122,7 @@ FLATTEN void CPU::decodeNext()
 #endif
 
 #ifdef CRASH_ON_EXECUTE_0000_00000000
-    if (UNLIKELY(getBaseCS() == 0 && getBaseEIP() == 0)) {
+    if (UNLIKELY(getBaseCS() == 0 && currentBaseInstructionPointer() == 0)) {
         dumpAll();
         vlog(LogCPU, "It seems like we've jumped to 0000:00000000 :(");
         ASSERT_NOT_REACHED();
@@ -355,7 +355,7 @@ FLATTEN void CPU::executeOneInstruction()
         dumpDisassembled(cachedDescriptor(SegmentRegisterIndex::CS), m_baseEIP, 3);
         raiseException(e);
     } catch(HardwareInterruptDuringREP) {
-        setEIP(getBaseEIP());
+        setEIP(currentBaseInstructionPointer());
     }
 }
 
@@ -532,7 +532,7 @@ void CPU::realModeFarJump(LogicalAddress address, JumpType type)
     DWORD originalEIP = getEIP();
 
 #ifdef LOG_FAR_JUMPS
-    vlog(LogCPU, "[PE=0] %s from %04x:%08x to %04x:%08x", toString(type), getBaseCS(), getBaseEIP(), selector, offset);
+    vlog(LogCPU, "[PE=0] %s from %04x:%08x to %04x:%08x", toString(type), getBaseCS(), currentBaseInstructionPointer(), selector, offset);
 #endif
 
     setCS(selector);
@@ -577,7 +577,7 @@ void CPU::protectedModeFarJump(LogicalAddress address, JumpType type, Gate* gate
     BYTE selectorRPL = selector & 3;
 
 #ifdef LOG_FAR_JUMPS
-    vlog(LogCPU, "[PE=%u, PG=%u] %s from %04x:%08x to %04x:%08x", getPE(), getPG(), toString(type), getBaseCS(), getBaseEIP(), selector, offset);
+    vlog(LogCPU, "[PE=%u, PG=%u] %s from %04x:%08x to %04x:%08x", getPE(), getPG(), toString(type), getBaseCS(), currentBaseInstructionPointer(), selector, offset);
 #endif
 
     auto descriptor = getDescriptor(selector, SegmentRegisterIndex::CS);
@@ -755,7 +755,7 @@ void CPU::protectedFarReturn(LogicalAddress address, JumpType type)
     BYTE selectorRPL = selector & 3;
 
 #ifdef LOG_FAR_JUMPS
-    vlog(LogCPU, "[PE=%u, PG=%u] %s from %04x:%08x to %04x:%08x", getPE(), getPG(), toString(type), getBaseCS(), getBaseEIP(), selector, offset);
+    vlog(LogCPU, "[PE=%u, PG=%u] %s from %04x:%08x to %04x:%08x", getPE(), getPG(), toString(type), getBaseCS(), currentBaseInstructionPointer(), selector, offset);
 #endif
 
     auto descriptor = getDescriptor(selector, SegmentRegisterIndex::CS);
@@ -1363,7 +1363,7 @@ ALWAYS_INLINE T CPU::readMemory(LinearAddress linearAddress, MemoryAccessType ac
 #ifdef MEMORY_DEBUGGING
     if (options.memdebug || shouldLogMemoryRead(physicalAddress)) {
         if (options.novlog)
-            printf("%04X:%08X: %zu-bit read [A20=%s] 0x%08X, value: %08X\n", getBaseCS(), getBaseEIP(), sizeof(T) * 8, isA20Enabled() ? "on" : "off", physicalAddress.get(), value);
+            printf("%04X:%08X: %zu-bit read [A20=%s] 0x%08X, value: %08X\n", getBaseCS(), currentBaseInstructionPointer(), sizeof(T) * 8, isA20Enabled() ? "on" : "off", physicalAddress.get(), value);
         else
             vlog(LogCPU, "%zu-bit read [A20=%s] 0x%08X, value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", physicalAddress.get(), value);
     }
@@ -1424,7 +1424,7 @@ void CPU::writeMemory(LinearAddress linearAddress, T value)
 #ifdef MEMORY_DEBUGGING
     if (options.memdebug || shouldLogMemoryWrite(physicalAddress)) {
         if (options.novlog)
-            printf("%04X:%08X: %zu-bit write [A20=%s] 0x%08X, value: %08X\n", getBaseCS(), getBaseEIP(), sizeof(T) * 8, isA20Enabled() ? "on" : "off", physicalAddress.get(), value);
+            printf("%04X:%08X: %zu-bit write [A20=%s] 0x%08X, value: %08X\n", getBaseCS(), currentBaseInstructionPointer(), sizeof(T) * 8, isA20Enabled() ? "on" : "off", physicalAddress.get(), value);
         else
             vlog(LogCPU, "%zu-bit write [A20=%s] 0x%08X, value: %08X", sizeof(T) * 8, isA20Enabled() ? "on" : "off", physicalAddress.get(), value);
     }

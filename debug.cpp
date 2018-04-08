@@ -80,10 +80,7 @@ void vlog(VLogChannel channel, const char* format, ...)
         fprintf(s_logfile, "(%8s) ", prefix);
 
     if (g_cpu) {
-        if (g_cpu->x32())
-            fprintf(s_logfile, "[%04X:%08X] ", g_cpu->getBaseCS(), g_cpu->getBaseEIP());
-        else
-            fprintf(s_logfile, "[%04X:%04X] ", g_cpu->getBaseCS(), g_cpu->getBaseIP());
+        fprintf(s_logfile, "[%04x:%08x] ", g_cpu->getBaseCS(), g_cpu->currentBaseInstructionPointer());
     }
 
     va_start(ap, format);
@@ -97,7 +94,7 @@ void vlog(VLogChannel channel, const char* format, ...)
         if (prefix)
             printf("[\033[31;1m%8s\033[0m] ", prefix);
         if (g_cpu) {
-            printf("(\033[37;1m%u\033[0m)\033[32;1m%04x:%08x\033[0m ", g_cpu->x32() ? 32 : 16, g_cpu->getBaseCS(), g_cpu->getBaseEIP());
+            printf("(\033[37;1m%u\033[0m)\033[32;1m%04x:%08x\033[0m ", g_cpu->x32() ? 32 : 16, g_cpu->getBaseCS(), g_cpu->currentBaseInstructionPointer());
         }
         va_start(ap, format);
         vprintf(format, ap);
