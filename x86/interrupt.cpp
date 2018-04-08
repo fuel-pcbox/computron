@@ -49,10 +49,8 @@ void CPU::_INTO(Instruction&)
 
 void CPU::iretFromVM86Mode()
 {
-    if (getIOPL() != 3) {
-        dumpAll();
+    if (getIOPL() != 3)
         throw GeneralProtectionFault(0, "IRET in VM86 mode with IOPL != 3");
-    }
 
     // FIXME: Needs stack checks.
     DWORD offset = popOperandSizedValue();
@@ -157,7 +155,7 @@ void CPU::realModeInterrupt(BYTE isr, InterruptSource source)
         vlog(LogCPU, "PE=0 interrupt %02x,%04x%s -> %04x:%04x", isr, getAX(), source == InterruptSource::External ? " (external)" : "", selector, offset);
 
 #ifdef LOG_FAR_JUMPS
-    vlog(LogCPU, "[PE=0] Interrupt from %04x:%08x to %04x:%08x", getBaseCS(), getBaseEIP(), selector, offset);
+    vlog(LogCPU, "[PE=0] Interrupt from %04x:%08x to %04x:%08x", getBaseCS(), currentBaseInstructionPointer(), selector, offset);
 #endif
 
     setCS(selector);
@@ -295,6 +293,7 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, QVariant erro
             throw StackFault(makeErrorCode(newSS, 0, source), "New ss not present");
         }
 
+        setCPL(descriptor.DPL());
         setSS(newSS);
         setESP(newESP);
 
@@ -304,7 +303,6 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, QVariant erro
 #endif
         pushValueWithSize(originalSS, gate.size());
         pushValueWithSize(originalESP, gate.size());
-        setCPL(descriptor.DPL());
     } else if (codeDescriptor.conforming() || codeDescriptor.DPL() == originalCPL) {
 #ifdef DEBUG_JUMPS
         vlog(LogCPU, "Interrupt same privilege from ring%u to ring%u", originalCPL, descriptor.DPL());
