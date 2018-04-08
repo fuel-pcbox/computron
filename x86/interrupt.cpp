@@ -55,9 +55,15 @@ void CPU::iretFromVM86Mode()
     }
 
     // FIXME: Needs stack checks.
-    WORD offset = popOperandSizedValue();
+    DWORD offset = popOperandSizedValue();
     WORD selector = popOperandSizedValue();
-    WORD flags = popOperandSizedValue();
+    DWORD flags = popOperandSizedValue();
+
+    if (offset & 0xffff0000) {
+        // FIXME: This should raise #GP and leave the stack pointer intact.
+        vlog(LogCPU, "IRET in VM86 mode to EIP > 0xffff");
+        ASSERT_NOT_REACHED();
+    }
 
     setCS(selector);
     setEIP(offset);
