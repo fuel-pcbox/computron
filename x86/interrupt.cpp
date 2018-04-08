@@ -52,6 +52,7 @@ void CPU::iretFromVM86Mode()
     if (getIOPL() != 3)
         throw GeneralProtectionFault(0, "IRET in VM86 mode with IOPL != 3");
 
+    BEGIN_ASSERT_NO_EXCEPTIONS
     // FIXME: Needs stack checks.
     DWORD offset = popOperandSizedValue();
     WORD selector = popOperandSizedValue();
@@ -66,6 +67,7 @@ void CPU::iretFromVM86Mode()
     setCS(selector);
     setEIP(offset);
     setEFlagsRespectfully(flags);
+    END_ASSERT_NO_EXCEPTIONS
 }
 
 void CPU::_IRET(Instruction&)
@@ -185,7 +187,7 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, QVariant erro
 
     if (source == InterruptSource::Internal) {
         if (gate.DPL() < getCPL()) {
-            throw GeneralProtectionFault(makeErrorCode(isr, 1, source), "Software interrupt trying to escalate privilege");
+            throw GeneralProtectionFault(makeErrorCode(isr, 1, source), QString("Software interrupt trying to escalate privilege (CPL=%1, DPL=%2, VM=%3)").arg(getCPL()).arg(gate.DPL()).arg(getVM()));
         }
     }
 
@@ -293,6 +295,7 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, QVariant erro
             throw StackFault(makeErrorCode(newSS, 0, source), "New ss not present");
         }
 
+        BEGIN_ASSERT_NO_EXCEPTIONS
         setCPL(descriptor.DPL());
         setSS(newSS);
         setESP(newESP);
@@ -303,6 +306,7 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, QVariant erro
 #endif
         pushValueWithSize(originalSS, gate.size());
         pushValueWithSize(originalESP, gate.size());
+        END_ASSERT_NO_EXCEPTIONS
     } else if (codeDescriptor.conforming() || codeDescriptor.DPL() == originalCPL) {
 #ifdef DEBUG_JUMPS
         vlog(LogCPU, "Interrupt same privilege from ring%u to ring%u", originalCPL, descriptor.DPL());
@@ -317,6 +321,7 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, QVariant erro
     vlog(LogCPU, "Push %u-bit flags %08x @stack{%04x:%08x}", gate.size(), flags, getSS(), getESP());
     vlog(LogCPU, "Push %u-bit cs:eip %04x:%08x @stack{%04x:%08x}", gate.size(), originalCS, originalEIP, getSS(), getESP());
 #endif
+    BEGIN_ASSERT_NO_EXCEPTIONS
     pushValueWithSize(flags, gate.size());
     pushValueWithSize(originalCS, gate.size());
     pushValueWithSize(originalEIP, gate.size());
@@ -332,6 +337,7 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, QVariant erro
     setVM(0);
     setCS(gate.selector());
     setEIP(offset);
+    END_ASSERT_NO_EXCEPTIONS
 }
 
 void CPU::interruptFromVM86Mode(Gate& gate, DWORD offset, CodeSegmentDescriptor& codeDescriptor, InterruptSource source, QVariant errorCode)
@@ -376,6 +382,7 @@ void CPU::interruptFromVM86Mode(Gate& gate, DWORD offset, CodeSegmentDescriptor&
         throw StackFault(makeErrorCode(newSS, 0, source), "New ss not present");
     }
 
+    BEGIN_ASSERT_NO_EXCEPTIONS
     setCPL(0);
     setVM(0);
     setTF(0);
@@ -404,6 +411,7 @@ void CPU::interruptFromVM86Mode(Gate& gate, DWORD offset, CodeSegmentDescriptor&
     setCS(gate.selector());
     setCPL(0);
     setEIP(offset);
+    END_ASSERT_NO_EXCEPTIONS
 }
 
 void CPU::interrupt(BYTE isr, InterruptSource source, QVariant errorCode)

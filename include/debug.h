@@ -36,6 +36,9 @@
 #define RELEASE_ASSERT(x) do { if (!(x)) { CRASH(); } while(0)
 #endif
 
+#define BEGIN_ASSERT_NO_EXCEPTIONS try {
+#define END_ASSERT_NO_EXCEPTIONS } catch (...) { ASSERT_NOT_REACHED(); }
+
 enum VLogChannel {
     LogInit,
     LogError,
