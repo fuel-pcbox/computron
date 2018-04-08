@@ -153,18 +153,12 @@ void CPU::_CALL_RM32(Instruction& insn)
 
 void CPU::_RET(Instruction&)
 {
-    if (o32())
-        jumpAbsolute32(pop32());
-    else
-        jumpAbsolute16(pop16());
+    jumpAbsolute32(popOperandSizedValue());
 }
 
 void CPU::_RET_imm16(Instruction& insn)
 {
-    if (o32())
-        jumpAbsolute32(pop32());
-    else
-        jumpAbsolute16(pop16());
+    jumpAbsolute32(popOperandSizedValue());
     adjustStackPointer(insn.imm16());
 }
 

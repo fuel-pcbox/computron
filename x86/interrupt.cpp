@@ -133,7 +133,7 @@ void CPU::realModeInterrupt(BYTE isr, InterruptSource source)
         vlog(LogCPU, "PE=0 interrupt %02x,%04x%s -> %04x:%04x", isr, getAX(), source == InterruptSource::External ? " (external)" : "", selector, offset);
 
 #ifdef LOG_FAR_JUMPS
-    vlog(LogCPU, "[PE=0] INT from %04x:%08x to %04x:%08x", getBaseCS(), getBaseEIP(), entry.selector, entry.offset);
+    vlog(LogCPU, "[PE=0] Interrupt from %04x:%08x to %04x:%08x", getBaseCS(), getBaseEIP(), entry.selector, entry.offset);
 #endif
 
     setCS(selector);
@@ -243,7 +243,7 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, QVariant erro
 
     if (!codeDescriptor.conforming() && descriptor.DPL() < originalCPL) {
 #ifdef DEBUG_JUMPS
-        vlog(LogCPU, "%s escalating privilege from ring%u to ring%u", toString(type), originalCPL, descriptor.DPL(), descriptor);
+        vlog(LogCPU, "Interrupt escalating privilege from ring%u to ring%u", originalCPL, descriptor.DPL(), descriptor);
 #endif
         auto tss = currentTSS();
 
@@ -273,25 +273,17 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, QVariant erro
 
         setSS(newSS);
         setESP(newESP);
-        if (gate.is32Bit()) {
+
 #ifdef DEBUG_JUMPS
-            vlog(LogCPU, "INT to inner ring, ss:esp %04x:%08x -> %04x:%08x", originalSS, originalESP, getSS(), getESP());
-            vlog(LogCPU, "Push 32-bit ss:esp %04x:%08x @stack{%04x:%08x}", originalSS, originalESP, getSS(), getESP());
+        vlog(LogCPU, "Interrupt to inner ring, ss:esp %04x:%08x -> %04x:%08x", originalSS, originalESP, getSS(), getESP());
+        vlog(LogCPU, "Push %u-bit ss:esp %04x:%08x @stack{%04x:%08x}", gate.size(), originalSS, originalESP, getSS(), getESP());
 #endif
-            push32(originalSS);
-            push32(originalESP);
-        } else {
-#ifdef DEBUG_JUMPS
-            vlog(LogCPU, "INT to inner ring, ss:sp %04x:%04x -> %04x:%04x", originalSS, originalESP, getSS(), getSP());
-            vlog(LogCPU, "Push 16-bit ss:sp %04x:%04x @stack{%04x:%08x}", originalSS, originalESP, getSS(), getESP());
-#endif
-            push16(originalSS);
-            push16(originalESP);
-        }
+        pushValueWithSize(originalSS, gate.size());
+        pushValueWithSize(originalESP, gate.size());
         setCPL(descriptor.DPL());
     } else if (codeDescriptor.conforming() || codeDescriptor.DPL() == originalCPL) {
 #ifdef DEBUG_JUMPS
-        vlog(LogCPU, "INT same privilege from ring%u to ring%u", originalCPL, descriptor.DPL());
+        vlog(LogCPU, "Interrupt same privilege from ring%u to ring%u", originalCPL, descriptor.DPL());
 #endif
         setCPL(originalCPL);
     } else {
@@ -299,28 +291,15 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, QVariant erro
         throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, source), "Interrupt to non-conforming code segment with DPL > CPL");
     }
 
-    if (gate.is32Bit()) {
 #ifdef DEBUG_JUMPS
-        vlog(LogCPU, "Push 32-bit flags %08x @stack{%04x:%08x}", flags, getSS(), getESP());
-        vlog(LogCPU, "Push 32-bit cs:eip %04x:%08x @stack{%04x:%08x}", originalCS, originalEIP, getSS(), getESP());
+    vlog(LogCPU, "Push %u-bit flags %08x @stack{%04x:%08x}", gate.size(), flags, getSS(), getESP());
+    vlog(LogCPU, "Push %u-bit cs:eip %04x:%08x @stack{%04x:%08x}", gate.size(), originalCS, originalEIP, getSS(), getESP());
 #endif
-        push32(flags);
-        push32(originalCS);
-        push32(originalEIP);
-        if (errorCode.isValid()) {
-            push32(errorCode.value<WORD>());
-        }
-    } else {
-#ifdef DEBUG_JUMPS
-        vlog(LogCPU, "Push 16-bit flags %04x @stack{%04x:%08x}", flags, getSS(), getESP());
-        vlog(LogCPU, "Push 16-bit cs:ip %04x:%04x @stack{%04x:%08x}", originalCS, originalEIP, getSS(), getESP());
-#endif
-        push16(flags);
-        push16(originalCS);
-        push16(originalEIP);
-        if (errorCode.isValid()) {
-            push16(errorCode.value<WORD>());
-        }
+    pushValueWithSize(flags, gate.size());
+    pushValueWithSize(originalCS, gate.size());
+    pushValueWithSize(originalEIP, gate.size());
+    if (errorCode.isValid()) {
+        pushValueWithSize(errorCode.value<WORD>(), gate.size());
     }
 
     if (gate.isInterruptGate())
@@ -335,7 +314,7 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, QVariant erro
 
 void CPU::interruptFromVM86Mode(Gate& gate, DWORD offset, CodeSegmentDescriptor& codeDescriptor, InterruptSource source, QVariant errorCode)
 {
-    vlog(LogCPU, "INT from VM86 mode -> %04x:%08x", gate.selector(), offset);
+    vlog(LogCPU, "Interrupt from VM86 mode -> %04x:%08x", gate.selector(), offset);
 
     DWORD originalFlags = getEFlags();
     WORD originalSS = getSS();
@@ -384,23 +363,17 @@ void CPU::interruptFromVM86Mode(Gate& gate, DWORD offset, CodeSegmentDescriptor&
         setIF(0);
     setSS(newSS);
     setESP(newESP);
-    auto pushForGateSize = [this, &gate] (DWORD data) {
-        if (gate.is32Bit())
-            push32(data);
-        else
-            push16(data);
-    };
-    pushForGateSize(getGS());
-    pushForGateSize(getFS());
-    pushForGateSize(getDS());
-    pushForGateSize(getES());
-    pushForGateSize(originalSS);
-    pushForGateSize(originalESP);
-    pushForGateSize(originalFlags);
-    pushForGateSize(getCS());
-    pushForGateSize(getEIP());
+    pushValueWithSize(getGS(), gate.size());
+    pushValueWithSize(getFS(), gate.size());
+    pushValueWithSize(getDS(), gate.size());
+    pushValueWithSize(getES(), gate.size());
+    pushValueWithSize(originalSS, gate.size());
+    pushValueWithSize(originalESP, gate.size());
+    pushValueWithSize(originalFlags, gate.size());
+    pushValueWithSize(getCS(), gate.size());
+    pushValueWithSize(getEIP(), gate.size());
     if (errorCode.isValid()) {
-        pushForGateSize(errorCode.value<WORD>());
+        pushValueWithSize(errorCode.value<WORD>(), gate.size());
     }
     setGS(0);
     setFS(0);

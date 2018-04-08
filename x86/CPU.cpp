@@ -540,19 +540,11 @@ void CPU::realModeFarJump(LogicalAddress address, JumpType type)
     setEIP(offset);
 
     if (type == JumpType::CALL) {
-        if (o16()) {
 #ifdef DEBUG_JUMPS
-            vlog(LogCPU, "Push 16-bit cs:ip %04x:%04x @stack{%04x:%08x}", originalCS, originalEIP, getSS(), getESP());
+        vlog(LogCPU, "Push %u-bit cs:eip %04x:%08x @stack{%04x:%08x}", o16() ? 16 : 32, originalCS, originalEIP, getSS(), getESP());
 #endif
-            push16(originalCS);
-            push16(originalEIP);
-        } else {
-#ifdef DEBUG_JUMPS
-            vlog(LogCPU, "Push 32-bit cs:eip %04x:%08x @stack{%04x:%08x}", originalCS, originalEIP, getSS(), getESP());
-#endif
-            push32(originalCS);
-            push32(originalEIP);
-        }
+        pushOperandSizedValue(originalCS);
+        pushOperandSizedValue(originalEIP);
     }
 }
 
@@ -570,11 +562,11 @@ void CPU::protectedModeFarJump(LogicalAddress address, JumpType type, Gate* gate
     ASSERT(getPE());
     WORD selector = address.selector();
     DWORD offset = address.offset();
-    bool pushSize16 = o16();
+    ValueSize pushSize = o32() ? DWordSize : WordSize;
 
     if (gate) {
         // Coming through a gate; respect bit size of gate descriptor!
-        pushSize16 = !gate->is32Bit();
+        pushSize = gate->is32Bit() ? DWordSize : WordSize;
     }
 
     WORD originalSS = getSS();
@@ -722,21 +714,13 @@ void CPU::protectedModeFarJump(LogicalAddress address, JumpType type, Gate* gate
 
         setSS(newSS);
         setESP(newESP);
-        if (pushSize16) {
+
 #ifdef DEBUG_JUMPS
-            vlog(LogCPU, "%s to inner ring, ss:sp %04x:%04x -> %04x:%04x", toString(type), originalSS, originalESP, getSS(), getSP());
-            vlog(LogCPU, "Push 16-bit ss:sp %04x:%04x @stack{%04x:%08x}", originalSS, originalESP, getSS(), getESP());
+        vlog(LogCPU, "%s to inner ring, ss:sp %04x:%04x -> %04x:%04x", toString(type), originalSS, originalESP, getSS(), getSP());
+        vlog(LogCPU, "Push %u-bit ss:sp %04x:%04x @stack{%04x:%08x}", pushSize, originalSS, originalESP, getSS(), getESP());
 #endif
-            push16(originalSS);
-            push16(originalESP);
-        } else {
-#ifdef DEBUG_JUMPS
-            vlog(LogCPU, "%s to inner ring, ss:esp %04x:%08x -> %04x:%08x", toString(type), originalSS, originalESP, getSS(), getESP());
-            vlog(LogCPU, "Push 32-bit ss:esp %04x:%08x @stack{%04x:%08x}", originalSS, originalESP, getSS(), getESP());
-#endif
-            push32(originalSS);
-            push32(originalESP);
-        }
+        pushValueWithSize(originalSS, pushSize);
+        pushValueWithSize(originalESP, pushSize);
         setCPL(descriptor.DPL());
     } else {
 #ifdef DEBUG_JUMPS
@@ -747,19 +731,11 @@ void CPU::protectedModeFarJump(LogicalAddress address, JumpType type, Gate* gate
     }
 
     if (type == JumpType::CALL) {
-        if (pushSize16) {
 #ifdef DEBUG_JUMPS
-            vlog(LogCPU, "Push 16-bit cs:ip %04x:%04x @stack{%04x:%08x}", originalCS, originalEIP, getSS(), getESP());
+        vlog(LogCPU, "Push %u-bit cs:ip %04x:%04x @stack{%04x:%08x}", pushSize, originalCS, originalEIP, getSS(), getESP());
 #endif
-            push16(originalCS);
-            push16(originalEIP);
-        } else {
-#ifdef DEBUG_JUMPS
-            vlog(LogCPU, "Push 32-bit cs:eip %04x:%08x @stack{%04x:%08x}", originalCS, originalEIP, getSS(), getESP());
-#endif
-            push32(originalCS);
-            push32(originalEIP);
-        }
+        pushValueWithSize(originalCS, pushSize);
+        pushValueWithSize(originalEIP, pushSize);
     }
 }
 

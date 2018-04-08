@@ -24,7 +24,7 @@
 
 #pragma once
 
-//#define DEBUG_JUMPS
+#define DEBUG_JUMPS
 //#define DEBUG_TASK_SWITCH
 //#define DISASSEMBLE_EVERYTHING
 

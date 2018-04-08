@@ -166,6 +166,7 @@ public:
     LogicalAddress entry() const { return LogicalAddress(selector(), offset()); }
 
     bool is32Bit() const { return type() == InterruptGate_32bit || type() == CallGate_32bit || type() == TrapGate_32bit; }
+    ValueSize size() const { return is32Bit() ? DWordSize : WordSize; }
 };
 
 // Note: TSSDescriptor uses segment base+limit despite being a system descriptor.

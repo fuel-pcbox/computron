@@ -512,13 +512,14 @@ public:
 
     void push32(DWORD value);
     DWORD pop32();
-
     void push16(WORD value);
     WORD pop16();
 
     template<typename T> T pop();
     template<typename T> void push(T);
 
+    void pushValueWithSize(DWORD value, ValueSize size) { if (size == WordSize) push16(value); else push32(value); }
+    void pushOperandSizedValue(DWORD value) { if (o16()) push16(value); else push32(value); }
     DWORD popOperandSizedValue() { return o16() ? pop16() : pop32(); }
 
     void pushSegmentRegisterValue(WORD);
