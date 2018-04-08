@@ -87,19 +87,16 @@ void vlog(VLogChannel channel, const char* format, ...)
     va_end(ap);
 #endif
 
-    if (!g_cpu || g_cpu->debugger().isActive()) {
-        if (g_cpu && options.vlogcycle)
-            printf("\033[30;1m%20zu\033[0m ", g_cpu->cycle());
-        if (prefix)
-            printf("[\033[31;1m%8s\033[0m] ", prefix);
-        if (g_cpu) {
-            printf("(\033[37;1m%u\033[0m)\033[32;1m%04x:%08x\033[0m ", g_cpu->x32() ? 32 : 16, g_cpu->getBaseCS(), g_cpu->currentBaseInstructionPointer());
-        }
-        va_start(ap, format);
-        vprintf(format, ap);
-        va_end(ap);
-        puts("");
-    }
+    if (g_cpu && options.vlogcycle)
+        printf("\033[30;1m%20zu\033[0m ", g_cpu->cycle());
+    if (prefix)
+        printf("[\033[31;1m%8s\033[0m] ", prefix);
+    if (g_cpu)
+        printf("(\033[37;1m%u\033[0m)\033[32;1m%04x:%08x\033[0m ", g_cpu->x32() ? 32 : 16, g_cpu->getBaseCS(), g_cpu->currentBaseInstructionPointer());
+    va_start(ap, format);
+    vprintf(format, ap);
+    va_end(ap);
+    puts("");
 
  #ifdef LOG_TO_FILE
     fputc('\n', s_logfile);
