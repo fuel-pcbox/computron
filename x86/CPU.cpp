@@ -803,25 +803,15 @@ void CPU::protectedFarReturn(LogicalAddress address, JumpType type)
     setEIP(offset);
 
     if (selectorRPL > originalCPL) {
-        if (o16()) {
-            WORD newSP = pop16();
-            WORD newSS = pop16();
+        BEGIN_ASSERT_NO_EXCEPTIONS
+        DWORD newESP = popOperandSizedValue();
+        WORD newSS = popOperandSizedValue();
 #ifdef DEBUG_JUMPS
-            vlog(LogCPU, "Popped 16-bit ss:sp %04x:%04x @stack{%04x:%08x}", newSS, newSP, getSS(), getESP());
-            vlog(LogCPU, "%s from ring%u to ring%u, ss:sp %04x:%04x -> %04x:%04x", toString(type), originalCPL, getCPL(), originalSS, originalESP, newSS, newSP);
+        vlog(LogCPU, "Popped %u-bit ss:esp %04x:%08x @stack{%04x:%08x}", o16() ? 16 : 32, newSS, newESP, getSS(), getESP());
+        vlog(LogCPU, "%s from ring%u to ring%u, ss:esp %04x:%08x -> %04x:%08x", toString(type), originalCPL, getCPL(), originalSS, originalESP, newSS, newESP);
 #endif
-            setESP(newSP);
-            setSS(newSS);
-        } else {
-            DWORD newESP = pop32();
-            WORD newSS = pop32();
-#ifdef DEBUG_JUMPS
-            vlog(LogCPU, "Popped 32-bit ss:esp %04x:%08x @stack{%04x:%08x}", newSS, newESP, getSS(), getESP());
-            vlog(LogCPU, "%s from ring%u to ring%u, ss:esp %04x:%08x -> %04x:%08x", toString(type), originalCPL, getCPL(), originalSS, originalESP, newSS, newESP);
-#endif
-            setESP(newESP);
-            setSS(newSS);
-        }
+        setESP(newESP);
+        setSS(newSS);
 
         auto clearSegmentRegisterIfNeeded = [this, type] (SegmentRegisterIndex segreg) {
             if (readSegmentRegister(segreg) == 0)
@@ -837,6 +827,7 @@ void CPU::protectedFarReturn(LogicalAddress address, JumpType type)
         clearSegmentRegisterIfNeeded(SegmentRegisterIndex::FS);
         clearSegmentRegisterIfNeeded(SegmentRegisterIndex::GS);
         clearSegmentRegisterIfNeeded(SegmentRegisterIndex::DS);
+        END_ASSERT_NO_EXCEPTIONS
     }
 }
 
