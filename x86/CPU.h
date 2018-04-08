@@ -286,6 +286,7 @@ public:
 
     void interruptFromVM86Mode(Gate&, DWORD offset, CodeSegmentDescriptor&, InterruptSource, QVariant errorCode);
     void iretToVM86Mode(LogicalAddress, DWORD flags);
+    void iretFromVM86Mode();
 
     Exception GeneralProtectionFault(WORD selector, const QString& reason);
     Exception StackFault(WORD selector, const QString& reason);

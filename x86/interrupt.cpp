@@ -47,6 +47,23 @@ void CPU::_INTO(Instruction&)
         interrupt(4, InterruptSource::Internal);
 }
 
+void CPU::iretFromVM86Mode()
+{
+    if (getIOPL() != 3) {
+        dumpAll();
+        throw GeneralProtectionFault(0, "IRET in VM86 mode with IOPL != 3");
+    }
+
+    // FIXME: Needs stack checks.
+    WORD offset = popOperandSizedValue();
+    WORD selector = popOperandSizedValue();
+    WORD flags = popOperandSizedValue();
+
+    setCS(selector);
+    setEIP(offset);
+    setEFlagsRespectfully(flags);
+}
+
 void CPU::_IRET(Instruction&)
 {
     if (getPE()) {
@@ -58,6 +75,10 @@ void CPU::_IRET(Instruction&)
             taskSwitch(tss.getBacklink(), JumpType::IRET);
             return;
         }
+    }
+
+    if (getPE() && getVM()) {
+        return iretFromVM86Mode();
     }
 
     // FIXME: Needs stack checks.
@@ -75,9 +96,6 @@ void CPU::_IRET(Instruction&)
             }
         }
         protectedFarReturn(LogicalAddress(selector, offset), JumpType::IRET);
-    } else if (getVM() && getIOPL() != 3) {
-        dumpAll();
-        throw GeneralProtectionFault(0, "IRET in VM86 mode with IOPL != 3");
     } else {
         setCS(selector);
         setEIP(offset);
@@ -133,7 +151,7 @@ void CPU::realModeInterrupt(BYTE isr, InterruptSource source)
         vlog(LogCPU, "PE=0 interrupt %02x,%04x%s -> %04x:%04x", isr, getAX(), source == InterruptSource::External ? " (external)" : "", selector, offset);
 
 #ifdef LOG_FAR_JUMPS
-    vlog(LogCPU, "[PE=0] Interrupt from %04x:%08x to %04x:%08x", getBaseCS(), getBaseEIP(), entry.selector, entry.offset);
+    vlog(LogCPU, "[PE=0] Interrupt from %04x:%08x to %04x:%08x", getBaseCS(), getBaseEIP(), selector, offset);
 #endif
 
     setCS(selector);
