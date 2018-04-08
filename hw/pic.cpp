@@ -28,6 +28,8 @@
 #include "debug.h"
 #include "machine.h"
 
+//#define PIC_DEBUG
+
 // FIXME: This should not be global.
 std::atomic<WORD> PIC::s_pendingRequests;
 static bool s_ignoringIRQs = false;
@@ -77,8 +79,10 @@ void PIC::reset()
 
 void PIC::dumpMask()
 {
+#ifdef PIC_DEBUG
     for (int i = 0; i < 8; ++i)
         vlog(LogPIC, " - IRQ %u: %s", m_irqBase + i, (m_imr & (1 << i)) ? "masked" : "service");
+#endif
 }
 
 void PIC::unmaskAll()
@@ -95,24 +99,27 @@ void PIC::out8(WORD port, BYTE data)
             return;
         }
         if ((data & 0x18) == 0x08) {
-            // OCW3
+#ifdef PIC_DEBUG
             vlog(LogPIC, "Got OCW3 %02X on port %02X", data, port);
+#endif
             if (data & 0x02)
                 m_readISR = data & 0x01;
             return;
         }
         if ((data & 0x18) == 0x00) {
-            // OCW2
+#ifdef PIC_DEBUG
             vlog(LogPIC, "Got OCW2 %02X on port %02X", data, port);
+#endif
             return;
         }
         if (data & 0x10) {
-            // ICW1
+#ifdef PIC_DEBUG
             vlog(LogPIC, "Got ICW1 %02X on port %02X", data, port);
             vlog(LogPIC, "[ICW1] ICW4 needed = %s", (data & 1) ? "yes" : "no");
             vlog(LogPIC, "[ICW1] Cascade = %s", (data & 2) ? "yes" : "no");
             vlog(LogPIC, "[ICW1] Vector size = %u", (data & 4) ? 4 : 8);
             vlog(LogPIC, "[ICW1] Level triggered = %s", (data & 8) ? "yes" : "no");
+#endif
             m_imr = 0;
             m_isr = 0;
             m_irr = 0;
@@ -125,17 +132,20 @@ void PIC::out8(WORD port, BYTE data)
 
     } else {
         if (((data & 0x07) == 0x00) && m_icw2Expected) {
-            // ICW2
+#ifdef PIC_DEBUG
             vlog(LogPIC, "Got ICW2 %02X on port %02X", data, port);
+#endif
             m_isrBase = data & 0xF8;
             m_icw2Expected = false;
             return;
         }
 
         // OCW1 - IMR write
+#ifdef PIC_DEBUG
         vlog(LogPIC, "New IRQ mask set: %02X", data);
         for (int i = 0; i < 8; ++i)
             vlog(LogPIC, " - IRQ %u: %s", m_irqBase + i, (data & (1 << i)) ? "masked" : "service");
+#endif
         m_imr = data;
         updatePendingRequests(machine());
         return;
@@ -150,14 +160,19 @@ BYTE PIC::in8(WORD port)
 {
     if ((port & 1) == 0) {
         if (m_readISR) {
+#ifdef PIC_DEBUG
             vlog(LogPIC, "Read ISR (%02x)", m_isr);
+#endif
             return m_isr;
         }
+#ifdef PIC_DEBUG
         vlog(LogPIC, "Read IRR (%02x)", m_irr);
+#endif
         return m_irr;
     }
-
+#ifdef PIC_DEBUG
     vlog(LogPIC, "Read IMR (%02x)", m_imr);
+#endif
     return m_imr;
 }
 

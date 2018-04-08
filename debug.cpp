@@ -43,7 +43,6 @@ void vlog(VLogChannel channel, const char* format, ...)
 
     va_list ap;
     const char* prefix = 0L;
-    bool show_on_stdout = true;
 
     switch (channel) {
     case LogInit: prefix = "init"; break;
@@ -55,7 +54,7 @@ void vlog(VLogChannel channel, const char* format, ...)
     case LogConfig: prefix = "config"; break;
     case LogCPU: prefix = "cpu"; break;
     case LogMouse: prefix = "mouse"; break;
-    case LogPIC: prefix = "pic"; show_on_stdout = false; break;
+    case LogPIC: prefix = "pic"; break;
     case LogKeyboard: prefix = "keyb"; break;
     case LogFDC: prefix = "fdc"; break;
     case LogDump: prefix = "dump"; break;
@@ -88,7 +87,7 @@ void vlog(VLogChannel channel, const char* format, ...)
     va_end(ap);
 #endif
 
-    if (!g_cpu || g_cpu->debugger().isActive() || show_on_stdout) {
+    if (!g_cpu || g_cpu->debugger().isActive()) {
         if (g_cpu && options.vlogcycle)
             printf("\033[30;1m%20zu\033[0m ", g_cpu->cycle());
         if (prefix)
