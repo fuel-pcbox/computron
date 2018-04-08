@@ -961,12 +961,16 @@ void CPU::_XLAT(Instruction&)
 
 void CPU::_XCHG_AX_reg16(Instruction& insn)
 {
-    qSwap(insn.reg16(), regs.W.AX);
+    auto tmp = insn.reg16();
+    insn.reg16() = getAX();
+    setAX(tmp);
 }
 
 void CPU::_XCHG_EAX_reg32(Instruction& insn)
 {
-    qSwap(insn.reg32(), regs.D.EAX);
+    auto tmp = insn.reg32();
+    insn.reg32() = getEAX();
+    setEAX(tmp);
 }
 
 void CPU::_XCHG_reg8_RM8(Instruction& insn)
