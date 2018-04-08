@@ -364,11 +364,11 @@ void Screen::renderMode0D(QImage &target)
     }
 }
 
-void Screen::resizeEvent(QResizeEvent *e)
+void Screen::resizeEvent(QResizeEvent* e)
 {
     QOpenGLWidget::resizeEvent(e);
 
-    vlog(LogScreen, "Resizing viewport");
+    vlog(LogScreen, "Resized viewport from %dx%d to %dx%d", e->oldSize().width(), e->oldSize().height(), e->size().width(), e->size().height());
     update();
 }
 
