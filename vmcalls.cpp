@@ -135,15 +135,17 @@ void vm_handleE6(CPU& cpu)
     case 0x1308:
         drive = diskDriveForBIOSIndex(cpu.machine(), cpu.getDL());
         if (drive && drive->present()) {
+            bool isFloppy = cpu.getDL() < 2;
+            DWORD trax = drive->cylinders() - 1;
             cpu.setAL(0);
             cpu.setAH(FD_NO_ERROR);
             cpu.setBL(drive->floppyTypeForCMOS());
             cpu.setBH(0);
-            cpu.setCH(drive->cylinders() & 0xFF); // Tracks.
-            cpu.setCL(((drive->cylinders() >> 2) & 0xC0) | (drive->sectorsPerTrack() & 0x3F)); // Sectors per track.
+            cpu.setCH(trax & 0xFF); // Tracks.
+            cpu.setCL(((trax >> 2) & 0xC0) | (drive->sectorsPerTrack() & 0x3F)); // Sectors per track.
             cpu.setDH(drive->heads() - 1); // Sides.
 
-            if (cpu.getDL() < 2) {
+            if (isFloppy) {
                 cpu.setDL(cpu.machine().floppy0().present() + cpu.machine().floppy1().present());
             } else {
                 cpu.setDL(cpu.machine().fixed0().present() + cpu.machine().fixed1().present());
@@ -152,6 +154,10 @@ void vm_handleE6(CPU& cpu)
             vlog(LogDisk, "Reporting %s geometry: %u tracks, %u spt, %u heads", qPrintable(drive->name()), drive->cylinders(), drive->sectorsPerTrack(), drive->heads());
 
             // FIXME: ES:DI should points to some wacky Disk Base Table.
+            if (isFloppy) {
+                cpu.setES(0);
+                cpu.setDI(0);
+            }
             cpu.setCF(0);
         } else {
             if (cpu.getDL() < 2)
@@ -292,11 +298,11 @@ void bios_disk_call(CPU& cpu, DiskCallFunction function)
     // This is a hack to support the custom Computron BIOS. We should not be here in (PE=1 && VM=0) mode.
     ASSERT(!cpu.getPE() || cpu.getVM());
 
-    WORD cylinder = cpu.getCH() | ((cpu.getCL() & 0xc0) << 2);
+    WORD cylinder = cpu.getCH() | (((WORD)cpu.getCL() << 2) & 0x300);
     WORD sector = cpu.getCL() & 0x3f;
     BYTE driveIndex = cpu.getDL();
     BYTE head = cpu.getDH();
-    BYTE sectorCount = cpu.getAL();
+    WORD sectorCount = cpu.getAL();
     FILE* fp;
     DWORD lba;
 
@@ -312,7 +318,7 @@ void bios_disk_call(CPU& cpu, DiskCallFunction function)
 
     if (!drive || !drive->present()) {
         if (options.disklog)
-            vlog(LogDisk, "Drive %02X not ready", drive);
+            vlog(LogDisk, "Drive %02X not ready", driveIndex);
         if (!(driveIndex & 0x80))
             error = FD_CHANGED_OR_REMOVED;
         else
@@ -359,9 +365,10 @@ void bios_disk_call(CPU& cpu, DiskCallFunction function)
     fclose(fp);
 
 epilogue:
-    if (error == FD_NO_ERROR)
+    if (error == FD_NO_ERROR) {
         cpu.setCF(0);
-    else {
+        cpu.setAL(sectorCount);
+    } else {
         cpu.setCF(1);
         cpu.setAL(0);
     }
