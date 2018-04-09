@@ -1560,6 +1560,42 @@ ALWAYS_INLINE void CPU::writeRegister(int registerIndex, T value)
         ASSERT_NOT_REACHED();
 }
 
+inline DWORD MemoryOrRegisterReference::offset()
+{
+    ASSERT(!isRegister());
+    if (m_a32)
+        return m_offset32;
+    else
+        return m_offset16;
+}
+
+template<typename T>
+inline T MemoryOrRegisterReference::read()
+{
+    ASSERT(m_cpu);
+    if (isRegister())
+        return m_cpu->readRegister<T>(m_registerIndex);
+    return m_cpu->readMemory<T>(segment(), offset());
+}
+
+template<typename T>
+inline void MemoryOrRegisterReference::write(T data)
+{
+    ASSERT(m_cpu);
+    if (isRegister()) {
+        m_cpu->writeRegister<T>(m_registerIndex, data);
+        return;
+    }
+    m_cpu->writeMemory<T>(segment(), offset(), data);
+}
+
+inline BYTE MemoryOrRegisterReference::read8() { return read<BYTE>(); }
+inline WORD MemoryOrRegisterReference::read16() { return read<WORD>(); }
+inline DWORD MemoryOrRegisterReference::read32() { ASSERT(m_cpu->o32()); return read<DWORD>(); }
+inline void MemoryOrRegisterReference::write8(BYTE data) { return write(data); }
+inline void MemoryOrRegisterReference::write16(WORD data) { return write(data); }
+inline void MemoryOrRegisterReference::write32(DWORD data) { ASSERT(m_cpu->o32()); return write(data); }
+
 ALWAYS_INLINE void Instruction::execute(CPU& cpu)
 {
     m_cpu = &cpu;

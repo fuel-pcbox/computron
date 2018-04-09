@@ -103,7 +103,7 @@ public:
     QString toStringO32() const;
 
     bool isRegister() const { return m_registerIndex != 0xffffffff; }
-    SegmentRegisterIndex segment();
+    SegmentRegisterIndex segment() const { ASSERT(!isRegister()); return m_segment; }
     DWORD offset();
 
 private:

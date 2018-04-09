@@ -29,56 +29,6 @@
 
 #define DEFAULT_TO_SS if (!m_cpu->hasSegmentPrefix()) { m_segment = SegmentRegisterIndex::SS; }
 
-SegmentRegisterIndex MemoryOrRegisterReference::segment()
-{
-    ASSERT(!isRegister());
-    return m_segment;
-}
-
-DWORD MemoryOrRegisterReference::offset()
-{
-    ASSERT(!isRegister());
-    if (m_a32)
-        return m_offset32;
-    else
-        return m_offset16;
-}
-
-template<typename T>
-T MemoryOrRegisterReference::read()
-{
-    ASSERT(m_cpu);
-    if (isRegister())
-        return m_cpu->readRegister<T>(m_registerIndex);
-    return m_cpu->readMemory<T>(segment(), offset());
-}
-
-template BYTE MemoryOrRegisterReference::read<BYTE>();
-template WORD MemoryOrRegisterReference::read<WORD>();
-template DWORD MemoryOrRegisterReference::read<DWORD>();
-
-template<typename T>
-void MemoryOrRegisterReference::write(T data)
-{
-    ASSERT(m_cpu);
-    if (isRegister()) {
-        m_cpu->writeRegister<T>(m_registerIndex, data);
-        return;
-    }
-    m_cpu->writeMemory<T>(segment(), offset(), data);
-}
-
-template void MemoryOrRegisterReference::write<BYTE>(BYTE);
-template void MemoryOrRegisterReference::write<WORD>(WORD);
-template void MemoryOrRegisterReference::write<DWORD>(DWORD);
-
-BYTE MemoryOrRegisterReference::read8() { return read<BYTE>(); }
-WORD MemoryOrRegisterReference::read16() { return read<WORD>(); }
-DWORD MemoryOrRegisterReference::read32() { ASSERT(m_cpu->o32()); return read<DWORD>(); }
-void MemoryOrRegisterReference::write8(BYTE data) { return write(data); }
-void MemoryOrRegisterReference::write16(WORD data) { return write(data); }
-void MemoryOrRegisterReference::write32(DWORD data) { ASSERT(m_cpu->o32()); return write(data); }
-
 void MemoryOrRegisterReference::writeClearing16(WORD data, bool o32)
 {
     if (o32 && isRegister()) {
