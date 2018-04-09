@@ -432,9 +432,11 @@ NEVER_INLINE bool CPU::mainLoopSlowStuff()
     if (m_debuggerRequest == PleaseEnterDebugger) {
         debugger().enter();
         m_debuggerRequest = NoDebuggerRequest;
+        recomputeMainLoopNeedsSlowStuff();
     } else if (m_debuggerRequest == PleaseExitDebugger) {
         debugger().exit();
         m_debuggerRequest = NoDebuggerRequest;
+        recomputeMainLoopNeedsSlowStuff();
     }
 
     if (debugger().isActive()) {
