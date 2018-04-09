@@ -98,7 +98,7 @@ BYTE Keyboard::in8(WORD port)
         if (m_hasCommand && m_command <= 0x3F) {
             BYTE ramIndex = m_command & 0x3F;
             m_hasCommand = false;
-            vlog(LogKeyboard, "Reading 8042 RAM [%02] = %02X", ramIndex, m_ram[ramIndex]);
+            vlog(LogKeyboard, "Reading 8042 RAM [%02x] = %02x", ramIndex, m_ram[ramIndex]);
             data = m_ram[ramIndex];
         } else if (m_lastWasCommand && m_command == CMD_SET_LEDS) {
             data = 0xFA; // ACK
@@ -209,7 +209,7 @@ void Keyboard::out8(WORD port, BYTE data)
                 vlog(LogKeyboard, "  Translation:        %s", data & CCB_TRANSLATE ? "enabled" : "disabled");
                 break;
             default:
-                vlog(LogKeyboard, "Writing 8042 RAM [%02] = %02X", ramIndex, data);
+                vlog(LogKeyboard, "Writing 8042 RAM [%02x] = %02x", ramIndex, data);
             }
             return;
         }
