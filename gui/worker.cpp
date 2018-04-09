@@ -46,7 +46,6 @@ void Worker::run()
 void Worker::shutdown()
 {
     // FIXME: Implement shutdown
-    enterDebugger();
     hard_exit(0);
 }
 
