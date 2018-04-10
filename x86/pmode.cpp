@@ -128,7 +128,7 @@ void CPU::_LGDT(Instruction& insn)
 
 void CPU::dumpGDT()
 {
-    for (unsigned i = 0; i < LDTR.limit; i += 8) {
+    for (unsigned i = 0; i < GDTR.limit; i += 8) {
         dumpDescriptor(getDescriptor(i));
     }
 }

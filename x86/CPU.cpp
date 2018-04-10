@@ -370,6 +370,10 @@ void CPU::haltedLoop()
             hardReboot();
             return;
         }
+        if (debugger().isActive()) {
+            saveBaseAddress();
+            debugger().doConsole();
+        }
         if (PIC::hasPendingIRQ() && getIF())
             PIC::serviceIRQ(*this);
     }
