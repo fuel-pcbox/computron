@@ -201,7 +201,7 @@ void CPU::_LAR_reg16_RM16(Instruction& insn)
     WORD selector = insn.modrm().read16() & 0xffff;
     WORD selectorRPL = selector & 3;
     auto descriptor = getDescriptor(selector);
-    if (descriptor.isNull() || descriptor.isError() || descriptor.DPL() < getCPL() || descriptor.DPL() < selectorRPL) {
+    if (descriptor.isNull() || descriptor.isOutsideTableLimits() || descriptor.DPL() < getCPL() || descriptor.DPL() < selectorRPL) {
         setZF(0);
         return;
     }
@@ -215,7 +215,7 @@ void CPU::_LAR_reg32_RM32(Instruction& insn)
     WORD selector = insn.modrm().read32() & 0xffff;
     WORD selectorRPL = selector & 3;
     auto descriptor = getDescriptor(selector);
-    if (descriptor.isNull() || descriptor.isError() || descriptor.DPL() < getCPL() || descriptor.DPL() < selectorRPL) {
+    if (descriptor.isNull() || descriptor.isOutsideTableLimits() || descriptor.DPL() < getCPL() || descriptor.DPL() < selectorRPL) {
         setZF(0);
         return;
     }
@@ -227,7 +227,7 @@ static bool isValidDescriptorForLSL(const Descriptor& descriptor)
 {
     if (descriptor.isNull())
         return true;
-    if (descriptor.isError())
+    if (descriptor.isOutsideTableLimits())
         return true;
     if (descriptor.isSegmentDescriptor())
         return true;
@@ -276,7 +276,7 @@ void CPU::_LSL_reg32_RM32(Instruction& insn)
     WORD selector = insn.modrm().read16() & 0xffff;
     auto descriptor = getDescriptor(selector);
     // FIXME: This should also fail for conforming code segments somehow.
-    if (descriptor.isError()) {
+    if (descriptor.isOutsideTableLimits()) {
         setZF(0);
         return;
     }
@@ -383,7 +383,7 @@ void CPU::validateSegmentLoad(SegmentRegisterIndex reg, WORD selector, const Des
 
     BYTE selectorRPL = selector & 3;
 
-    if (descriptor.isError()) {
+    if (descriptor.isOutsideTableLimits()) {
         throw GeneralProtectionFault(selector, "Selector outside table limits");
     }
 
@@ -499,7 +499,7 @@ void CPU::_VERR_RM16(Instruction& insn)
     auto descriptor = getDescriptor(selector);
 
     if (descriptor.isNull() ||
-        descriptor.isError() ||
+        descriptor.isOutsideTableLimits() ||
         descriptor.isSystemDescriptor() ||
         !descriptor.asSegmentDescriptor().readable() ||
         (!descriptor.isConformingCode() && (descriptor.DPL() < getCPL() || descriptor.DPL() < RPL)))
@@ -521,7 +521,7 @@ void CPU::_VERW_RM16(Instruction& insn)
     auto descriptor = getDescriptor(selector);
 
     if (descriptor.isNull() ||
-        descriptor.isError() ||
+        descriptor.isOutsideTableLimits() ||
         descriptor.isSystemDescriptor() ||
         descriptor.DPL() < getCPL() ||
         descriptor.DPL() < RPL ||

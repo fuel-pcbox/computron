@@ -221,7 +221,7 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, QVariant erro
         throw GeneralProtectionFault(source == InterruptSource::External, "Interrupt gate to null descriptor");
     }
 
-    if (descriptor.isError()) {
+    if (descriptor.isOutsideTableLimits()) {
         throw GeneralProtectionFault(makeErrorCode(gate.selector(), 0, source), "Interrupt gate to descriptor outside table limit");
     }
 
@@ -279,7 +279,7 @@ void CPU::protectedModeInterrupt(BYTE isr, InterruptSource source, QVariant erro
             throw InvalidTSS(source == InterruptSource::External, "New ss is null");
         }
 
-        if (newSSDescriptor.isError()) {
+        if (newSSDescriptor.isOutsideTableLimits()) {
             throw InvalidTSS(makeErrorCode(newSS, 0, source), "New ss outside table limits");
         }
 
@@ -362,7 +362,7 @@ void CPU::interruptFromVM86Mode(Gate& gate, DWORD offset, CodeSegmentDescriptor&
         throw InvalidTSS(source == InterruptSource::External, "New ss is null");
     }
 
-    if (newSSDescriptor.isError()) {
+    if (newSSDescriptor.isOutsideTableLimits()) {
         throw InvalidTSS(makeErrorCode(newSS, 0, source), "New ss outside table limits");
     }
 

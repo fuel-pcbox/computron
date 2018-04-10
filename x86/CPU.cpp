@@ -703,7 +703,7 @@ void CPU::protectedModeFarJump(LogicalAddress address, JumpType type, Gate* gate
             throw InvalidTSS(newSS, "New ss is null");
         }
 
-        if (newSSDescriptor.isError()) {
+        if (newSSDescriptor.isOutsideTableLimits()) {
             throw InvalidTSS(newSS, "New ss outside table limits");
         }
 

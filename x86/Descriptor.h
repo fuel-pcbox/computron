@@ -53,8 +53,7 @@ public:
     bool isSegmentDescriptor() const { return m_DT; }
     bool isSystemDescriptor() const { return !m_DT; }
 
-    bool isError() const { return m_error != NoError; }
-    Error error() const { return m_error; }
+    bool isOutsideTableLimits() const { return m_error == LimitExceeded; }
 
     unsigned DPL() const { return m_DPL; }
     bool present() const { return m_P; }
