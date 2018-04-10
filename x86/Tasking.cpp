@@ -82,7 +82,6 @@ void CPU::_LTR_RM16(Instruction& insn)
 void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
 {
     ASSERT(incomingTSSDescriptor.is32Bit());
-    //ASSERT(incomingTSSDescriptor.isAvailable());
 
     EXCEPTION_ON(GeneralProtectionFault, 0, incomingTSSDescriptor.isNull(), "Incoming TSS descriptor is null");
     EXCEPTION_ON(GeneralProtectionFault, 0, !incomingTSSDescriptor.isGlobal(), "Incoming TSS descriptor is not from GDT");
@@ -150,26 +149,29 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
     dumpTSS(incomingTSS);
 #endif
 
+    // First, load all registers from TSS without validating contents.
     if (getPG()) {
         m_CR3 = incomingTSS.getCR3();
     }
 
-    auto ldtDescriptor = getDescriptor(incomingTSS.getLDT());
-    if (!ldtDescriptor.isNull()) {
-        EXCEPTION_ON(InvalidTSS, incomingTSS.getLDT() & 0xfffc, !ldtDescriptor.isLDT(), "Incoming TSS LDT is not an LDT");
-        EXCEPTION_ON(InvalidTSS, incomingTSS.getLDT() & 0xfffc, !ldtDescriptor.present(), "Incoming TSS LDT is not present");
-    }
+    LDTR.selector = incomingTSS.getLDT();
+    LDTR.base = LinearAddress();
+    LDTR.limit = 0;
 
-    setLDT(incomingTSS.getLDT());
-    setCS(incomingTSS.getCS());
-    setES(incomingTSS.getES());
-    setDS(incomingTSS.getDS());
-    setFS(incomingTSS.getFS());
-    setGS(incomingTSS.getGS());
-    setSS(incomingTSS.getSS());
-    setEIP(incomingTSS.getEIP());
+    CS = incomingTSS.getCS();
+    DS = incomingTSS.getDS();
+    ES = incomingTSS.getES();
+    FS = incomingTSS.getFS();
+    GS = incomingTSS.getGS();
+    SS = incomingTSS.getSS();
 
     DWORD incomingEFlags = incomingTSS.getEFlags();
+
+    if (incomingEFlags & Flag::VM) {
+        vlog(LogCPU, "Incoming task is in VM86 mode, this needs work!");
+        ASSERT_NOT_REACHED();
+    }
+
     if (source == JumpType::CALL || source == JumpType::INT) {
         incomingEFlags |= Flag::NT;
     }
@@ -204,7 +206,84 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
 
     m_CR0 |= CR0::TS; // Task Switched
 
+    // Now, let's validate!
+    auto ldtDescriptor = getDescriptor(LDTR.selector);
+    if (!ldtDescriptor.isNull()) {
+        if (!ldtDescriptor.isGlobal())
+            throw InvalidTSS(LDTR.selector & 0xfffc, "Incoming LDT is not in GDT");
+        if (!ldtDescriptor.isLDT())
+            throw InvalidTSS(LDTR.selector & 0xfffc, "Incoming LDT is not an LDT");
+    }
+
+    unsigned incomingCPL = getCS() & 3;
+
+    auto csDescriptor = getDescriptor(CS);
+    if (csDescriptor.isCode()) {
+        if (csDescriptor.isNonconformingCode()) {
+            if (csDescriptor.DPL() != (getCS() & 3))
+                throw InvalidTSS(getCS(), "CS is non-conforming with DPL != RPL");
+        } else if (csDescriptor.isConformingCode()) {
+            if (csDescriptor.DPL() > (getCS() & 3))
+                throw InvalidTSS(getCS(), "CS is conforming with DPL > RPL");
+        }
+    }
+    auto ssDescriptor = getDescriptor(getSS());
+    if (!ssDescriptor.isNull()) {
+        if (ssDescriptor.isOutsideTableLimits())
+            throw InvalidTSS(getSS(), "SS outside table limits");
+        if (!ssDescriptor.isData())
+            throw InvalidTSS(getSS(), "SS is not a data segment");
+        if (!ssDescriptor.asDataSegmentDescriptor().writable())
+            throw InvalidTSS(getSS(), "SS is not writable");
+        if (!ssDescriptor.present())
+            throw StackFault(getSS(), "SS is not present");
+        if (ssDescriptor.DPL() != incomingCPL)
+            throw InvalidTSS(getSS(), "SS DPL != CPL");
+    }
+
+    if (!ldtDescriptor.isNull()) {
+        if (!ldtDescriptor.present())
+            throw InvalidTSS(LDTR.selector & 0xfffc, "Incoming LDT is not present");
+    }
+
+    if (!csDescriptor.isCode())
+        throw InvalidTSS(getCS(), "CS is not a code segment");
+    if (!csDescriptor.present())
+        throw InvalidTSS(getCS(), "CS is not present");
+
+    if (ssDescriptor.DPL() != (getSS() & 3))
+        throw InvalidTSS(getSS(), "SS DPL != RPL");
+
+    auto validateDataSegment = [&] (SegmentRegisterIndex segreg) {
+        WORD selector = readSegmentRegister(segreg);
+        auto descriptor = getDescriptor(selector);
+        if (descriptor.isNull())
+            return;
+        if (descriptor.isOutsideTableLimits())
+            throw InvalidTSS(selector, "DS/ES/FS/GS outside table limits");
+        if (!descriptor.isSegmentDescriptor())
+            throw InvalidTSS(selector, "DS/ES/FS/GS is a system segment");
+        if (!descriptor.present())
+            throw NotPresent(selector, "DS/ES/FS/GS is not present");
+        if (!descriptor.isConformingCode() && descriptor.DPL() < incomingCPL)
+            throw InvalidTSS(selector, "DS/ES/FS/GS has DPL < CPL and is not a conforming code segment");
+    };
+
+    validateDataSegment(SegmentRegisterIndex::DS);
+    validateDataSegment(SegmentRegisterIndex::ES);
+    validateDataSegment(SegmentRegisterIndex::FS);
+    validateDataSegment(SegmentRegisterIndex::GS);
+
     EXCEPTION_ON(GeneralProtectionFault, 0, getEIP() > cachedDescriptor(SegmentRegisterIndex::CS).effectiveLimit(), "Task switch to EIP outside CS limit");
+
+    setLDT(incomingTSS.getLDT());
+    setCS(incomingTSS.getCS());
+    setES(incomingTSS.getES());
+    setDS(incomingTSS.getDS());
+    setFS(incomingTSS.getFS());
+    setGS(incomingTSS.getGS());
+    setSS(incomingTSS.getSS());
+    setEIP(incomingTSS.getEIP());
 
     if (getTF()) {
         vlog(LogCPU, "Leaving task switch with TF=1");
