@@ -462,20 +462,31 @@ void CPU::dumpDescriptor(const Gate& gate, const char* prefix)
     }
 }
 
-void CPU::dumpDescriptor(const SystemDescriptor& segment, const char* prefix)
+void CPU::dumpDescriptor(const SystemDescriptor& descriptor, const char* prefix)
 {
-    if (segment.isGate()) {
-        dumpDescriptor(segment.asGate(), prefix);
+    if (descriptor.isGate()) {
+        dumpDescriptor(descriptor.asGate(), prefix);
+        return;
+    }
+    if (descriptor.isLDT()) {
+        vlog(LogCPU, "%s%04x (system segment) { type: LDT (%02x), base:%08x e-limit:%08x, p:%u }",
+            prefix,
+            descriptor.index(),
+            (BYTE)descriptor.type(),
+            descriptor.asLDTDescriptor().base(),
+            descriptor.asLDTDescriptor().effectiveLimit(),
+            descriptor.present()
+        );
         return;
     }
     vlog(LogCPU, "%s%04x (system segment) { type: %s (%02x), bits:%u, p:%u, dpl:%u }",
         prefix,
-        segment.index(),
-        segment.typeName(),
-        (BYTE)segment.type(),
-        segment.D() ? 32 : 16,
-        segment.present(),
-        segment.DPL()
+        descriptor.index(),
+        descriptor.typeName(),
+        (BYTE)descriptor.type(),
+        descriptor.D() ? 32 : 16,
+        descriptor.present(),
+        descriptor.DPL()
     );
 }
 
@@ -484,7 +495,7 @@ void CPU::dumpDescriptor(const CodeSegmentDescriptor& segment, const char* prefi
     vlog(LogCPU, "%s%04x (%s segment) { type: code, base:%08x, e-limit:%08x, bits:%u, p:%u, g:%s, dpl:%u, a:%u, readable:%u, conforming:%u }",
         prefix,
         segment.index(),
-        segment.isGlobal() ? "global" : "local",
+        segment.isGlobal() ? "global" : " local",
         segment.base(),
         segment.effectiveLimit(),
         segment.D() ? 32 : 16,
@@ -502,7 +513,7 @@ void CPU::dumpDescriptor(const DataSegmentDescriptor& segment, const char* prefi
     vlog(LogCPU, "%s%04x (%s segment) { type: data, base:%08x, e-limit:%08x, bits:%u, p:%u, g:%s, dpl:%u, a:%u, writable:%u, expandDown:%u }",
         prefix,
         segment.index(),
-        segment.isGlobal() ? "global" : "local",
+        segment.isGlobal() ? "global" : " local",
         segment.base(),
         segment.effectiveLimit(),
         segment.D() ? 32 : 16,
