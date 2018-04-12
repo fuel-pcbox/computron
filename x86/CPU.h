@@ -551,7 +551,7 @@ public:
     WORD getFlags() const;
     void setEFlags(DWORD flags);
     void setFlags(WORD flags);
-    void setEFlagsRespectfully(DWORD flags);
+    void setEFlagsRespectfully(DWORD flags, BYTE effectiveCPL);
 
     bool evaluate(BYTE) const;
 

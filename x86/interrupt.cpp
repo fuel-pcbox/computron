@@ -52,6 +52,8 @@ void CPU::iretFromVM86Mode()
     if (getIOPL() != 3)
         throw GeneralProtectionFault(0, "IRET in VM86 mode with IOPL != 3");
 
+    BYTE originalCPL = getCPL();
+
     BEGIN_ASSERT_NO_EXCEPTIONS
     // FIXME: Needs stack checks.
     DWORD offset = popOperandSizedValue();
@@ -66,12 +68,14 @@ void CPU::iretFromVM86Mode()
 
     setCS(selector);
     setEIP(offset);
-    setEFlagsRespectfully(flags);
+    setEFlagsRespectfully(flags, originalCPL);
     END_ASSERT_NO_EXCEPTIONS
 }
 
 void CPU::_IRET(Instruction&)
 {
+    WORD originalCPL = getCPL();
+
     if (getPE()) {
         if (getNT() && !getVM()) {
             auto tss = currentTSS();
@@ -91,6 +95,9 @@ void CPU::_IRET(Instruction&)
     DWORD offset = popOperandSizedValue();
     WORD selector = popOperandSizedValue();
     DWORD flags = popOperandSizedValue();
+#ifdef DEBUG_JUMPS
+    vlog(LogCPU, "Popped %u-bit cs:eip:eflags %04x:%08x:%08x @stack{%04x:%08x}", o16() ? 16 : 32, selector, offset, flags, getSS(), getESP());
+#endif
 
     if (getPE() && !getVM()) {
         if (flags & Flag::VM) {
@@ -107,7 +114,8 @@ void CPU::_IRET(Instruction&)
         setEIP(offset);
     }
 
-    setEFlagsRespectfully(flags);}
+    setEFlagsRespectfully(flags, originalCPL);
+}
 
 static WORD makeErrorCode(WORD num, bool idt, CPU::InterruptSource source)
 {

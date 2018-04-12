@@ -221,7 +221,7 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
     if (csDescriptor.isCode()) {
         if (csDescriptor.isNonconformingCode()) {
             if (csDescriptor.DPL() != (getCS() & 3))
-                throw InvalidTSS(getCS(), "CS is non-conforming with DPL != RPL");
+                throw InvalidTSS(getCS(), QString("CS is non-conforming with DPL(%1) != RPL(%2)").arg(csDescriptor.DPL()).arg(getCS() & 3));
         } else if (csDescriptor.isConformingCode()) {
             if (csDescriptor.DPL() > (getCS() & 3))
                 throw InvalidTSS(getCS(), "CS is conforming with DPL > RPL");

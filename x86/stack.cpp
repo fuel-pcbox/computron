@@ -215,7 +215,7 @@ void CPU::_PUSHF(Instruction&)
 
 void CPU::_POPF(Instruction&)
 {
-    setEFlagsRespectfully(pop16());
+    setEFlagsRespectfully(pop16(), getCPL());
 }
 
 void CPU::_POPFD(Instruction&)
@@ -223,10 +223,10 @@ void CPU::_POPFD(Instruction&)
     if (getVM() && getIOPL() < 3) {
         throw GeneralProtectionFault(0, "POPFD with IOPL < 3");
     }
-    setEFlagsRespectfully(pop32());
+    setEFlagsRespectfully(pop32(), getCPL());
 }
 
-void CPU::setEFlagsRespectfully(DWORD newFlags)
+void CPU::setEFlagsRespectfully(DWORD newFlags, BYTE effectiveCPL)
 {
     DWORD oldFlags = getEFlags();
     DWORD flagsToKeep = Flag::VIP | Flag::VIF | Flag::RF;
@@ -234,9 +234,9 @@ void CPU::setEFlagsRespectfully(DWORD newFlags)
         flagsToKeep |= 0xffff0000;
     if (getVM())
         flagsToKeep |= Flag::IOPL;
-    if (getPE() && getCPL() != 0) {
+    if (getPE() && effectiveCPL != 0) {
         flagsToKeep |= Flag::IOPL;
-        if (getCPL() > getIOPL()) {
+        if (effectiveCPL > getIOPL()) {
             flagsToKeep |= Flag::IF;
         }
     }

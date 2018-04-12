@@ -75,14 +75,13 @@ void PIC::reset()
     m_icw2Expected = false;
     m_icw4Expected = false;
     m_readISR = false;
+    s_pendingRequests = 0;
 }
 
 void PIC::dumpMask()
 {
-#ifdef PIC_DEBUG
     for (int i = 0; i < 8; ++i)
         vlog(LogPIC, " - IRQ %u: %s", m_irqBase + i, (m_imr & (1 << i)) ? "masked" : "service");
-#endif
 }
 
 void PIC::unmaskAll()

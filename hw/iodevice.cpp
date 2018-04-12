@@ -29,6 +29,7 @@
 #include <QList>
 
 //#define IODEVICE_DEBUG
+//#define IRQ_DEBUG
 
 QSet<WORD> IODevice::s_ignorePorts;
 
@@ -127,6 +128,10 @@ void IODevice::raiseIRQ()
 {
     ASSERT(m_irq != -1);
     ASSERT(m_irq < 256);
+#ifdef IRQ_DEBUG
+    if (!isIRQRaised())
+        vlog(LogPIC, "Raise IRQ %d", m_irq);
+#endif
     PIC::raiseIRQ(machine(), m_irq);
 }
 
@@ -134,6 +139,10 @@ void IODevice::lowerIRQ()
 {
     ASSERT(m_irq != -1);
     ASSERT(m_irq < 256);
+#ifdef IRQ_DEBUG
+    if (isIRQRaised())
+        vlog(LogPIC, "Lower IRQ %d", m_irq);
+#endif
     PIC::lowerIRQ(machine(), m_irq);
 }
 
