@@ -75,6 +75,8 @@ public:
     void set(DWORD address) { m_address = address; }
     void mask(DWORD m) { m_address &= m; }
 
+    bool operator==(const LinearAddress& other) const { return m_address == other.m_address; }
+
 private:
     DWORD m_address { 0 };
 };
