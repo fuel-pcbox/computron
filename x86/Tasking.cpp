@@ -238,7 +238,7 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
         if (!ssDescriptor.present())
             throw StackFault(getSS(), "SS is not present");
         if (ssDescriptor.DPL() != incomingCPL)
-            throw InvalidTSS(getSS(), "SS DPL != CPL");
+            throw InvalidTSS(getSS(), QString("SS DPL(%1) != CPL(%2)").arg(ssDescriptor.DPL()).arg(incomingCPL));
     }
 
     if (!ldtDescriptor.isNull()) {

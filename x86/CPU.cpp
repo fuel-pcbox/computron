@@ -36,6 +36,9 @@
 #define CRASH_ON_OPCODE_00_00
 #define CRASH_ON_EXECUTE_0000_00000000
 #define A20_ENABLED
+//#define DEBUG_ON_UD0
+#define DEBUG_ON_UD1
+//#define DEBUG_ON_UD2
 //#define MEMORY_DEBUGGING
 //#define DEBUG_WARCRAFT2
 //#define DEBUG_BOUND
@@ -1668,4 +1671,35 @@ void CPU::_BOUND(Instruction& insn)
         doBOUND<SIGNED_WORD>(insn);
     else
         doBOUND<SIGNED_DWORD>(insn);
+}
+
+void CPU::_UD0(Instruction&)
+{
+    vlog(LogCPU, "UD0");
+#ifdef DEBUG_ON_UD0
+    debugger().enter();
+#else
+    throw InvalidOpcode("UD0");
+#endif
+}
+
+
+void CPU::_UD1(Instruction&)
+{
+    vlog(LogCPU, "UD1");
+#ifdef DEBUG_ON_UD1
+    debugger().enter();
+#else
+    throw InvalidOpcode("UD1");
+#endif
+}
+
+void CPU::_UD2(Instruction&)
+{
+    vlog(LogCPU, "UD2");
+#ifdef DEBUG_ON_UD2
+    debugger().enter();
+#else
+    throw InvalidOpcode("UD2");
+#endif
 }

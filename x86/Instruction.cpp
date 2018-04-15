@@ -725,6 +725,7 @@ void buildOpcodeTablesIfNeeded()
     build0F(0x03, "LSL",   OP_reg16_RM16,  &CPU::_LSL_reg16_RM16,  OP_reg32_RM32,  &CPU::_LSL_reg32_RM32);
     build0F(0x06, "CLTS",  OP,             &CPU::_CLTS);
     build0F(0x09, "WBINVD", OP,            &CPU::_WBINVD);
+    build0F(0x0B, "UD2",   OP,             &CPU::_UD2);
 
     build0F(0x20, "MOV",   OP_reg32_CR,    &CPU::_MOV_reg32_CR);
     build0F(0x21, "MOV",   OP_reg32_DR,    &CPU::_MOV_reg32_DR);
@@ -785,11 +786,13 @@ void buildOpcodeTablesIfNeeded()
     build0F(0xB5, "LGS",   OP_reg16_mem16, &CPU::_LGS_reg16_mem16, OP_reg32_mem32, &CPU::_LGS_reg32_mem32);
     build0F(0xB6, "MOVZX", OP_reg16_RM8,   &CPU::_MOVZX_reg16_RM8, OP_reg32_RM8,   &CPU::_MOVZX_reg32_RM8);
     build0F(0xB7, "0xB7",  OP,             nullptr,       "MOVZX", OP_reg32_RM16,  &CPU::_MOVZX_reg32_RM16);
+    build0F(0xB9, "UD1",   OP,             &CPU::_UD1);
     build0F(0xBB, "BTC",   OP_RM16_reg16,  &CPU::_BTC_RM16_reg16,  OP_RM32_reg32,  &CPU::_BTC_RM32_reg32);
     build0F(0xBC, "BSF",   OP_reg16_RM16,  &CPU::_BSF_reg16_RM16,  OP_reg32_RM32,  &CPU::_BSF_reg32_RM32);
     build0F(0xBD, "BSR",   OP_reg16_RM16,  &CPU::_BSR_reg16_RM16,  OP_reg32_RM32,  &CPU::_BSR_reg32_RM32);
     build0F(0xBE, "MOVSX", OP_reg16_RM8,   &CPU::_MOVSX_reg16_RM8, OP_reg32_RM8,   &CPU::_MOVSX_reg32_RM8);
     build0F(0xBF, "0xBF",  OP,             nullptr,       "MOVSX", OP_reg32_RM16,  &CPU::_MOVSX_reg32_RM16);
+    build0F(0xFF, "UD0",   OP,             &CPU::_UD0);
 
     hasBuiltTables = true;
 }

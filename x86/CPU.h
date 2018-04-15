@@ -1224,6 +1224,10 @@ protected:
 
     void _LOCK(Instruction&);
 
+    void _UD0(Instruction&);
+    void _UD1(Instruction&);
+    void _UD2(Instruction&);
+
     void handleRepeatOpcode(Instruction&, bool conditionForZF);
 
 private:
