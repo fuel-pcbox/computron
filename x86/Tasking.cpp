@@ -104,6 +104,9 @@ void CPU::taskSwitch(TSSDescriptor& incomingTSSDescriptor, JumpType source)
     TSSDescriptor outgoingTSSDescriptor = outgoingDescriptor.asTSSDescriptor();
     ASSERT(outgoingTSSDescriptor.isTSS());
 
+    if (outgoingTSSDescriptor.base() == incomingTSSDescriptor.base())
+        vlog(LogCPU, "Switching to same TSS (%08x)", incomingTSSDescriptor.base().get());
+
     TSS outgoingTSS(*this, TR.base, outgoingTSSDescriptor.is32Bit());
 
     outgoingTSS.setEAX(getEAX());
