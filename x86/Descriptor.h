@@ -71,6 +71,7 @@ public:
 
     bool isConformingCode() const;
     bool isNonconformingCode() const;
+    bool isCallGate() const;
     bool isTaskGate() const;
     bool isTrapGate() const;
     bool isInterruptGate() const;
@@ -350,6 +351,11 @@ inline bool Descriptor::isTrapGate() const
 inline bool Descriptor::isInterruptGate() const
 {
     return isSystemDescriptor() && asSystemDescriptor().isInterruptGate();
+}
+
+inline bool Descriptor::isCallGate() const
+{
+    return isSystemDescriptor() && asSystemDescriptor().isCallGate();
 }
 
 inline bool Descriptor::isTaskGate() const

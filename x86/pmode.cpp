@@ -197,6 +197,9 @@ void CPU::_SMSW_RM16(Instruction& insn)
 
 void CPU::_LAR_reg16_RM16(Instruction& insn)
 {
+    if (!getPE() || getVM())
+        throw InvalidOpcode("LAR not recognized in real/VM86 mode");
+
     // FIXME: This has various ways it can fail, implement them.
     WORD selector = insn.modrm().read16() & 0xffff;
     WORD selectorRPL = selector & 3;
@@ -211,6 +214,9 @@ void CPU::_LAR_reg16_RM16(Instruction& insn)
 
 void CPU::_LAR_reg32_RM32(Instruction& insn)
 {
+    if (!getPE() || getVM())
+        throw InvalidOpcode("LAR not recognized in real/VM86 mode");
+
     // FIXME: This has various ways it can fail, implement them.
     WORD selector = insn.modrm().read32() & 0xffff;
     WORD selectorRPL = selector & 3;
@@ -246,9 +252,9 @@ static bool isValidDescriptorForLSL(const Descriptor& descriptor)
 
 void CPU::_LSL_reg16_RM16(Instruction& insn)
 {
-    if (!getPE()) {
-        throw InvalidOpcode("LSL not recognized in real mode");
-    }
+    if (!getPE() || getVM())
+        throw InvalidOpcode("LSL not recognized in real/VM86 mode");
+
     WORD selector = insn.modrm().read16() & 0xffff;
     auto descriptor = getDescriptor(selector);
     // FIXME: This should also fail for conforming code segments somehow.
@@ -270,9 +276,9 @@ void CPU::_LSL_reg16_RM16(Instruction& insn)
 
 void CPU::_LSL_reg32_RM32(Instruction& insn)
 {
-    if (!getPE()) {
-        throw InvalidOpcode("LSL not recognized in real mode");
-    }
+    if (!getPE() || getVM())
+        throw InvalidOpcode("LSL not recognized in real/VM86 mode");
+
     WORD selector = insn.modrm().read16() & 0xffff;
     auto descriptor = getDescriptor(selector);
     // FIXME: This should also fail for conforming code segments somehow.
@@ -421,7 +427,7 @@ void CPU::validateSegmentLoad(SegmentRegisterIndex reg, WORD selector, const Des
                 throw GeneralProtectionFault(selector, QString("%1 loaded with data or non-conforming code segment and RPL > DPL").arg(registerName(reg)));
             }
             if (getCPL() > descriptor.DPL()) {
-                throw GeneralProtectionFault(selector, QString("%1 loaded with data or non-conforming code segment and RPL > DPL").arg(registerName(reg)));
+                throw GeneralProtectionFault(selector, QString("%1 loaded with data or non-conforming code segment and CPL > DPL").arg(registerName(reg)));
             }
         }
         if (!descriptor.present()) {

@@ -598,8 +598,14 @@ void CPU::protectedModeFarJump(LogicalAddress address, JumpType type, Gate* gate
     auto descriptor = getDescriptor(selector, SegmentRegisterIndex::CS);
 
     if (descriptor.isNull()) {
-        throw GeneralProtectionFault(selector, QString("%1 to null selector").arg(toString(type)));
+        throw GeneralProtectionFault(0, QString("%1 to null selector").arg(toString(type)));
     }
+
+    if (descriptor.isOutsideTableLimits())
+        throw GeneralProtectionFault(selector, QString("%1 to selector outside table limit").arg(toString(type)));
+
+    if (!descriptor.isCode() && !descriptor.isCallGate() && !descriptor.isTaskGate() && !descriptor.isTSS())
+        throw GeneralProtectionFault(selector, QString("%1 to invalid descriptor type").arg(toString(type)));
 
     if (descriptor.isGate() && gate) {
         dumpDescriptor(*gate);
@@ -615,13 +621,11 @@ void CPU::protectedModeFarJump(LogicalAddress address, JumpType type, Gate* gate
         ASSERT(gate.isCallGate());
         ASSERT(!gate.parameterCount()); // FIXME: Implement
 
-        if (gate.DPL() < getCPL()) {
+        if (gate.DPL() < getCPL())
             throw GeneralProtectionFault(selector, QString("%1 to gate with DPL(%2) < CPL(%3)").arg(toString(type)).arg(gate.DPL()).arg(getCPL()));
-        }
 
-        if (gate.DPL() < selectorRPL) {
-            throw GeneralProtectionFault(selector, QString("%1 to gate with DPL(%2) < RPL(%3)").arg(toString(type)).arg(gate.DPL()).arg(selectorRPL));
-        }
+        if (selectorRPL > gate.DPL())
+            throw GeneralProtectionFault(selector, QString("%1 to gate with RPL(%2) > DPL(%3)").arg(toString(type)).arg(selectorRPL).arg(gate.DPL()));
 
         if (!gate.present()) {
             throw NotPresent(selector, QString("Gate not present"));
@@ -639,16 +643,17 @@ void CPU::protectedModeFarJump(LogicalAddress address, JumpType type, Gate* gate
         dumpDescriptor(cachedDescriptor(SegmentRegisterIndex::CS));
         vlog(LogCPU, "%s to TSS descriptor (%s) -> %08x", toString(type), tssDescriptor.typeName(), tssDescriptor.base());
 #endif
+        if (tssDescriptor.DPL() < getCPL())
+            throw GeneralProtectionFault(selector, QString("%1 to TSS descriptor with DPL < CPL").arg(toString(type)));
+        if (tssDescriptor.DPL() < selectorRPL)
+            throw GeneralProtectionFault(selector, QString("%1 to TSS descriptor with DPL < RPL").arg(toString(type)));
+        if (!tssDescriptor.present())
+            throw NotPresent(selector, "TSS not present");
         taskSwitch(tssDescriptor, type);
         return;
     }
 
-    if (!descriptor.isCode()) {
-        dumpDescriptor(descriptor);
-        ASSERT(getPE());
-        throw GeneralProtectionFault(selector, "Not a code segment");
-    }
-
+    // Okay, so it's a code segment then.
     auto& codeSegment = descriptor.asCodeSegmentDescriptor();
 
     if ((type == JumpType::CALL || type == JumpType::JMP) && !gate) {
@@ -688,10 +693,6 @@ void CPU::protectedModeFarJump(LogicalAddress address, JumpType type, Gate* gate
 
     setCS(selector);
     setEIP(offset);
-
-    if ((type == JumpType::CALL || type == JumpType::JMP) && !gate) {
-        setCPL(originalCPL);
-    }
 
     if (type == JumpType::CALL && gate) {
     if (descriptor.DPL() < originalCPL) {
