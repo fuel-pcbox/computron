@@ -32,8 +32,8 @@ SegmentDescriptor CPU::getRealModeOrVM86Descriptor(WORD selector, SegmentRegiste
     SegmentDescriptor descriptor;
     descriptor.m_index = selector;
     descriptor.m_segmentBase = (DWORD)selector << 4;
-    descriptor.m_segmentLimit = 0xfffff;
-    descriptor.m_effectiveLimit = 0xfffff;
+    descriptor.m_segmentLimit = 0xffff;
+    descriptor.m_effectiveLimit = 0xffff;
     descriptor.m_RPL = 0;
     descriptor.m_D = false;
     descriptor.m_DT = true;

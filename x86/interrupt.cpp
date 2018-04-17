@@ -68,23 +68,43 @@ void CPU::iretFromVM86Mode()
     popper.commit();
 }
 
+void CPU::iretFromRealMode()
+{
+    DWORD offset = popOperandSizedValue();
+    WORD selector = popOperandSizedValue();
+    DWORD flags = popOperandSizedValue();
+
+#ifdef DEBUG_JUMPS
+    vlog(LogCPU, "Popped %u-bit cs:eip:eflags %04x:%08x:%08x @stack{%04x:%08x}", o16() ? 16 : 32, selector, offset, flags, getSS(), currentStackPointer());
+#endif
+
+    setCS(selector);
+    setEIP(offset);
+
+    setEFlagsRespectfully(flags, 0);
+}
+
 void CPU::_IRET(Instruction&)
 {
-    WORD originalCPL = getCPL();
-
-    if (getPE()) {
-        if (getNT() && !getVM()) {
-            auto tss = currentTSS();
-#ifdef DEBUG_TASK_SWITCH
-            vlog(LogCPU, "IRET with NT=1 switching tasks. Inner TSS @ %08X -> Outer TSS sel %04X...", TR.base, tss.getBacklink());
-#endif
-            taskSwitch(tss.getBacklink(), JumpType::IRET);
-            return;
-        }
+    if (!getPE()) {
+        iretFromRealMode();
+        return;
     }
 
-    if (getPE() && getVM()) {
-        return iretFromVM86Mode();
+    if (getVM()) {
+        iretFromVM86Mode();
+        return;
+    }
+
+    WORD originalCPL = getCPL();
+
+    if (getNT()) {
+        auto tss = currentTSS();
+#ifdef DEBUG_TASK_SWITCH
+        vlog(LogCPU, "IRET with NT=1 switching tasks. Inner TSS @ %08X -> Outer TSS sel %04X...", TR.base, tss.getBacklink());
+#endif
+        taskSwitch(tss.getBacklink(), JumpType::IRET);
+        return;
     }
 
     TransactionalPopper popper(*this);
@@ -96,21 +116,15 @@ void CPU::_IRET(Instruction&)
     vlog(LogCPU, "Popped %u-bit cs:eip:eflags %04x:%08x:%08x @stack{%04x:%08x}", o16() ? 16 : 32, selector, offset, flags, getSS(), popper.adjustedStackPointer());
 #endif
 
-    if (getPE() && !getVM()) {
-        if (flags & Flag::VM) {
-            if (getCPL() == 0) {
-                return iretToVM86Mode(popper, LogicalAddress(selector, offset), flags);
-            } else {
-                vlog(LogCPU, "IRET to VM86 but CPL = %u!?", getCPL());
-                ASSERT_NOT_REACHED();
-            }
+    if (flags & Flag::VM) {
+        if (getCPL() == 0) {
+            iretToVM86Mode(popper, LogicalAddress(selector, offset), flags);
+            return;
         }
-        protectedIRET(popper, LogicalAddress(selector, offset));
-    } else {
-        setCS(selector);
-        setEIP(offset);
-        popper.commit();
+        vlog(LogCPU, "IRET to VM86 but CPL = %u!?", getCPL());
+        ASSERT_NOT_REACHED();
     }
+    protectedIRET(popper, LogicalAddress(selector, offset));
 
     setEFlagsRespectfully(flags, originalCPL);
 }
@@ -426,4 +440,111 @@ void CPU::interrupt(BYTE isr, InterruptSource source, QVariant errorCode)
         protectedModeInterrupt(isr, source, errorCode);
     else
         realModeInterrupt(isr, source);
+}
+
+void CPU::protectedIRET(TransactionalPopper& popper, LogicalAddress address)
+{
+    ASSERT(getPE());
+#ifdef DEBUG_JUMPS
+    WORD originalSS = getSS();
+    DWORD originalESP = getESP();
+    WORD originalCS = getCS();
+    DWORD originalEIP = getEIP();
+#endif
+
+    WORD selector = address.selector();
+    DWORD offset = address.offset();
+    WORD originalCPL = getCPL();
+    BYTE selectorRPL = selector & 3;
+
+#ifdef LOG_FAR_JUMPS
+    vlog(LogCPU, "[PE=%u, PG=%u] IRET from %04x:%08x to %04x:%08x", getPE(), getPG(), getBaseCS(), currentBaseInstructionPointer(), selector, offset);
+#endif
+
+    auto descriptor = getDescriptor(selector, SegmentRegisterIndex::CS);
+
+    if (!(selectorRPL >= getCPL())) {
+        throw GeneralProtectionFault(selector, QString("IRET with !(RPL(%1) >= CPL(%2))").arg(selectorRPL).arg(getCPL()));
+    }
+    if (descriptor.isNull()) {
+        throw GeneralProtectionFault(selector, "IRET to null selector");
+    }
+
+    if (descriptor.isSystemDescriptor()) {
+        ASSERT_NOT_REACHED();
+        throw GeneralProtectionFault(selector, "IRET to system descriptor!?");
+    }
+
+    if (!descriptor.isCode()) {
+        dumpDescriptor(descriptor);
+        throw GeneralProtectionFault(selector, "Not a code segment");
+    }
+
+    auto& codeSegment = descriptor.asCodeSegmentDescriptor();
+
+    // NOTE: A 32-bit jump into a 16-bit segment might have irrelevant higher bits set.
+    // Mask them off to make sure we don't incorrectly fail limit checks.
+    if (!codeSegment.is32Bit()) {
+        offset &= 0xffff;
+    }
+
+    if (!codeSegment.present()) {
+        throw NotPresent(selector, "Code segment not present");
+    }
+
+    if (offset > codeSegment.effectiveLimit()) {
+        vlog(LogCPU, "IRET to eip(%08x) outside limit(%08x)", offset, codeSegment.effectiveLimit());
+        dumpDescriptor(codeSegment);
+        throw GeneralProtectionFault(0, "Offset outside segment limit");
+    }
+
+    setCS(selector);
+    setEIP(offset);
+
+    if (selectorRPL > originalCPL) {
+        BEGIN_ASSERT_NO_EXCEPTIONS
+        DWORD newESP = popper.popOperandSizedValue();
+        WORD newSS = popper.popOperandSizedValue();
+#ifdef DEBUG_JUMPS
+        vlog(LogCPU, "Popped %u-bit ss:esp %04x:%08x @stack{%04x:%08x}", o16() ? 16 : 32, newSS, newESP, getSS(), popper.adjustedStackPointer());
+        vlog(LogCPU, "IRET from ring%u to ring%u, ss:esp %04x:%08x -> %04x:%08x", originalCPL, getCPL(), originalSS, originalESP, newSS, newESP);
+#endif
+
+        setSS(newSS);
+        setESP(newESP);
+
+        clearSegmentRegisterAfterReturnIfNeeded(SegmentRegisterIndex::ES, JumpType::IRET);
+        clearSegmentRegisterAfterReturnIfNeeded(SegmentRegisterIndex::FS, JumpType::IRET);
+        clearSegmentRegisterAfterReturnIfNeeded(SegmentRegisterIndex::GS, JumpType::IRET);
+        clearSegmentRegisterAfterReturnIfNeeded(SegmentRegisterIndex::DS, JumpType::IRET);
+        END_ASSERT_NO_EXCEPTIONS
+    } else {
+        popper.commit();
+    }
+}
+
+void CPU::iretToVM86Mode(TransactionalPopper& popper, LogicalAddress entry, DWORD flags)
+{
+    vlog(LogCPU, "IRET (o%u) to VM86 mode -> %04x:%04x", o16() ? 16 : 32, entry.selector(), entry.offset());
+    if (!o32()) {
+        vlog(LogCPU, "Hmm, o16 IRET to VM86!?");
+        ASSERT_NOT_REACHED();
+    }
+
+    if (entry.offset() & 0xffff0000)
+        throw GeneralProtectionFault(0, "IRET to VM86 with offset > 0xffff");
+
+    setEFlags(flags);
+    setCS(entry.selector());
+    setEIP(entry.offset());
+
+    DWORD newESP = popper.pop32();
+    WORD newSS = popper.pop32();
+    setES(popper.pop32());
+    setDS(popper.pop32());
+    setFS(popper.pop32());
+    setGS(popper.pop32());
+    setCPL(3);
+    setESP(newESP);
+    setSS(newSS);
 }

@@ -307,6 +307,7 @@ public:
     void interruptFromVM86Mode(Gate&, DWORD offset, CodeSegmentDescriptor&, InterruptSource, QVariant errorCode);
     void iretToVM86Mode(TransactionalPopper&, LogicalAddress, DWORD flags);
     void iretFromVM86Mode();
+    void iretFromRealMode();
 
     Exception GeneralProtectionFault(WORD selector, const QString& reason);
     Exception StackFault(WORD selector, const QString& reason);
@@ -510,8 +511,8 @@ public:
         m_EIP += delta;
     }
 
-    void farReturn(JumpType, WORD stackAdjustment = 0);
-    void protectedFarReturn(TransactionalPopper&, LogicalAddress, JumpType);
+    void farReturn(WORD stackAdjustment = 0);
+    void protectedFarReturn(TransactionalPopper&, LogicalAddress);
     void protectedIRET(TransactionalPopper&, LogicalAddress);
     void clearSegmentRegisterAfterReturnIfNeeded(SegmentRegisterIndex, JumpType);
 

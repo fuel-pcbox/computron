@@ -768,10 +768,20 @@ void CPU::protectedModeFarJump(LogicalAddress address, JumpType type, Gate* gate
         setCPL(originalCPL);
 }
 
-void CPU::protectedFarReturn(TransactionalPopper& popper, LogicalAddress address, JumpType type)
+void CPU::clearSegmentRegisterAfterReturnIfNeeded(SegmentRegisterIndex segreg, JumpType type)
+{
+    if (readSegmentRegister(segreg) == 0)
+        return;
+    auto& cached = cachedDescriptor(segreg);
+    if (cached.isNull() || (cached.DPL() < getCPL() && (cached.isData() || cached.isNonconformingCode()))) {
+        vlog(LogCPU, "%s clearing %s(%04x) with DPL=%u (CPL now %u)", toString(type), registerName(segreg), readSegmentRegister(segreg), cached.DPL(), getCPL());
+        writeSegmentRegister(segreg, 0);
+    }
+}
+
+void CPU::protectedFarReturn(TransactionalPopper& popper, LogicalAddress address)
 {
     ASSERT(getPE());
-    ASSERT(type == JumpType::RETF || type == JumpType::IRET);
 #ifdef DEBUG_JUMPS
     WORD originalSS = getSS();
     DWORD originalESP = getESP();
@@ -790,16 +800,15 @@ void CPU::protectedFarReturn(TransactionalPopper& popper, LogicalAddress address
 
     auto descriptor = getDescriptor(selector, SegmentRegisterIndex::CS);
 
-    if (!(selectorRPL >= getCPL())) {
-        throw GeneralProtectionFault(selector, QString("%1 with !(RPL(%2) >= CPL(%3))").arg(toString(type)).arg(selectorRPL).arg(getCPL()));
-    }
-    if (descriptor.isNull()) {
-        throw GeneralProtectionFault(selector, QString("%1 to null selector").arg(toString(type)));
-    }
+    if (!(selectorRPL >= getCPL()))
+        throw GeneralProtectionFault(selector, QString("RETF with !(RPL(%1) >= CPL(%2))").arg(selectorRPL).arg(getCPL()));
+
+    if (descriptor.isNull())
+        throw GeneralProtectionFault(selector, "RETF to null selector");
 
     if (descriptor.isSystemDescriptor()) {
         ASSERT_NOT_REACHED();
-        throw GeneralProtectionFault(selector, QString("%1 to system descriptor!?").arg(toString(type)));
+        throw GeneralProtectionFault(selector, "RETF to system descriptor!?");
     }
 
     if (!descriptor.isCode()) {
@@ -815,12 +824,11 @@ void CPU::protectedFarReturn(TransactionalPopper& popper, LogicalAddress address
         offset &= 0xffff;
     }
 
-    if (!codeSegment.present()) {
-        throw NotPresent(selector, QString("Code segment not present"));
-    }
+    if (!codeSegment.present())
+        throw NotPresent(selector, "Code segment not present");
 
     if (offset > codeSegment.effectiveLimit()) {
-        vlog(LogCPU, "%s to eip(%08x) outside limit(%08x)", toString(type), offset, codeSegment.effectiveLimit());
+        vlog(LogCPU, "RETF to eip(%08x) outside limit(%08x)", offset, codeSegment.effectiveLimit());
         dumpDescriptor(codeSegment);
         throw GeneralProtectionFault(0, "Offset outside segment limit");
     }
@@ -840,116 +848,16 @@ void CPU::protectedFarReturn(TransactionalPopper& popper, LogicalAddress address
         setSS(newSS);
         setESP(newESP);
 
-        auto clearSegmentRegisterIfNeeded = [this, type] (SegmentRegisterIndex segreg) {
-            if (readSegmentRegister(segreg) == 0)
-                return;
-            auto& cached = cachedDescriptor(segreg);
-            if (cached.isNull() || (cached.DPL() < getCPL() && (cached.isData() || cached.isNonconformingCode()))) {
-                vlog(LogCPU, "%s clearing %s(%04x) with DPL=%u (CPL now %u)", toString(type), registerName(segreg), readSegmentRegister(segreg), cached.DPL(), getCPL());
-                writeSegmentRegister(segreg, 0);
-            }
-        };
-
-        clearSegmentRegisterIfNeeded(SegmentRegisterIndex::ES);
-        clearSegmentRegisterIfNeeded(SegmentRegisterIndex::FS);
-        clearSegmentRegisterIfNeeded(SegmentRegisterIndex::GS);
-        clearSegmentRegisterIfNeeded(SegmentRegisterIndex::DS);
+        clearSegmentRegisterAfterReturnIfNeeded(SegmentRegisterIndex::ES, JumpType::RETF);
+        clearSegmentRegisterAfterReturnIfNeeded(SegmentRegisterIndex::FS, JumpType::RETF);
+        clearSegmentRegisterAfterReturnIfNeeded(SegmentRegisterIndex::GS, JumpType::RETF);
+        clearSegmentRegisterAfterReturnIfNeeded(SegmentRegisterIndex::DS, JumpType::RETF);
         END_ASSERT_NO_EXCEPTIONS
     }
 }
 
-void CPU::protectedIRET(TransactionalPopper& popper, LogicalAddress address)
-{
-    ASSERT(getPE());
-#ifdef DEBUG_JUMPS
-    WORD originalSS = getSS();
-    DWORD originalESP = getESP();
-    WORD originalCS = getCS();
-    DWORD originalEIP = getEIP();
-#endif
 
-    WORD selector = address.selector();
-    DWORD offset = address.offset();
-    WORD originalCPL = getCPL();
-    BYTE selectorRPL = selector & 3;
-
-#ifdef LOG_FAR_JUMPS
-    vlog(LogCPU, "[PE=%u, PG=%u] IRET from %04x:%08x to %04x:%08x", getPE(), getPG(), getBaseCS(), currentBaseInstructionPointer(), selector, offset);
-#endif
-
-    auto descriptor = getDescriptor(selector, SegmentRegisterIndex::CS);
-
-    if (!(selectorRPL >= getCPL())) {
-        throw GeneralProtectionFault(selector, QString("IRET with !(RPL(%1) >= CPL(%2))").arg(selectorRPL).arg(getCPL()));
-    }
-    if (descriptor.isNull()) {
-        throw GeneralProtectionFault(selector, "IRET to null selector");
-    }
-
-    if (descriptor.isSystemDescriptor()) {
-        ASSERT_NOT_REACHED();
-        throw GeneralProtectionFault(selector, "IRET to system descriptor!?");
-    }
-
-    if (!descriptor.isCode()) {
-        dumpDescriptor(descriptor);
-        throw GeneralProtectionFault(selector, "Not a code segment");
-    }
-
-    auto& codeSegment = descriptor.asCodeSegmentDescriptor();
-
-    // NOTE: A 32-bit jump into a 16-bit segment might have irrelevant higher bits set.
-    // Mask them off to make sure we don't incorrectly fail limit checks.
-    if (!codeSegment.is32Bit()) {
-        offset &= 0xffff;
-    }
-
-    if (!codeSegment.present()) {
-        throw NotPresent(selector, QString("Code segment not present"));
-    }
-
-    if (offset > codeSegment.effectiveLimit()) {
-        vlog(LogCPU, "IRET to eip(%08x) outside limit(%08x)", offset, codeSegment.effectiveLimit());
-        dumpDescriptor(codeSegment);
-        throw GeneralProtectionFault(0, "Offset outside segment limit");
-    }
-
-    setCS(selector);
-    setEIP(offset);
-
-    if (selectorRPL > originalCPL) {
-        BEGIN_ASSERT_NO_EXCEPTIONS
-        DWORD newESP = popper.popOperandSizedValue();
-        WORD newSS = popper.popOperandSizedValue();
-#ifdef DEBUG_JUMPS
-        vlog(LogCPU, "Popped %u-bit ss:esp %04x:%08x @stack{%04x:%08x}", o16() ? 16 : 32, newSS, newESP, getSS(), getESP());
-        vlog(LogCPU, "IRET from ring%u to ring%u, ss:esp %04x:%08x -> %04x:%08x", originalCPL, getCPL(), originalSS, originalESP, newSS, newESP);
-#endif
-
-        setSS(newSS);
-        setESP(newESP);
-
-        auto clearSegmentRegisterIfNeeded = [this] (SegmentRegisterIndex segreg) {
-            if (readSegmentRegister(segreg) == 0)
-                return;
-            auto& cached = cachedDescriptor(segreg);
-            if (cached.isNull() || (cached.DPL() < getCPL() && (cached.isData() || cached.isNonconformingCode()))) {
-                vlog(LogCPU, "IRET clearing %s(%04x) with DPL=%u (CPL now %u)", registerName(segreg), readSegmentRegister(segreg), cached.DPL(), getCPL());
-                writeSegmentRegister(segreg, 0);
-            }
-        };
-
-        clearSegmentRegisterIfNeeded(SegmentRegisterIndex::ES);
-        clearSegmentRegisterIfNeeded(SegmentRegisterIndex::FS);
-        clearSegmentRegisterIfNeeded(SegmentRegisterIndex::GS);
-        clearSegmentRegisterIfNeeded(SegmentRegisterIndex::DS);
-        END_ASSERT_NO_EXCEPTIONS
-    } else {
-        popper.commit();
-    }
-}
-
-void CPU::farReturn(JumpType type, WORD stackAdjustment)
+void CPU::farReturn(WORD stackAdjustment)
 {
     TransactionalPopper popper(*this);
 
@@ -960,7 +868,7 @@ void CPU::farReturn(JumpType type, WORD stackAdjustment)
     popper.adjustStackPointer(stackAdjustment);
 
     if (getPE() && !getVM()) {
-        protectedFarReturn(popper, LogicalAddress(selector, offset), type);
+        protectedFarReturn(popper, LogicalAddress(selector, offset));
         popper.commit();
         if (getCPL() != originalCPL)
             adjustStackPointer(stackAdjustment);
@@ -969,32 +877,6 @@ void CPU::farReturn(JumpType type, WORD stackAdjustment)
         setEIP(offset);
         popper.commit();
     }
-}
-
-void CPU::iretToVM86Mode(TransactionalPopper& popper, LogicalAddress entry, DWORD flags)
-{
-    vlog(LogCPU, "IRET (o%u) to VM86 mode -> %04x:%04x", o16() ? 16 : 32, entry.selector(), entry.offset());
-    if (!o32()) {
-        vlog(LogCPU, "Hmm, o16 IRET to VM86!?");
-        ASSERT_NOT_REACHED();
-    }
-
-    if (entry.offset() & 0xffff0000)
-        throw GeneralProtectionFault(0, "IRET to VM86 with offset > 0xffff");
-
-    setEFlags(flags);
-    setCS(entry.selector());
-    setEIP(entry.offset());
-
-    DWORD newESP = popper.pop32();
-    WORD newSS = popper.pop32();
-    setES(popper.pop32());
-    setDS(popper.pop32());
-    setFS(popper.pop32());
-    setGS(popper.pop32());
-    setCPL(3);
-    setESP(newESP);
-    setSS(newSS);
 }
 
 void CPU::setCPL(BYTE cpl)

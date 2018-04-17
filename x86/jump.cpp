@@ -160,12 +160,12 @@ void CPU::_RET_imm16(Instruction& insn)
 
 void CPU::_RETF(Instruction&)
 {
-    farReturn(JumpType::RETF);
+    farReturn();
 }
 
 void CPU::_RETF_imm16(Instruction& insn)
 {
-    farReturn(JumpType::RETF, insn.imm16());
+    farReturn(insn.imm16());
 }
 
 void CPU::doLOOP(Instruction& insn, bool condition)
