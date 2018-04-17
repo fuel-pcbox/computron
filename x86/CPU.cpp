@@ -768,7 +768,7 @@ void CPU::protectedModeFarJump(LogicalAddress address, JumpType type, Gate* gate
         setCPL(originalCPL);
 }
 
-void CPU::protectedFarReturn(LogicalAddress address, JumpType type)
+void CPU::protectedFarReturn(TransactionalPopper& popper, LogicalAddress address, JumpType type)
 {
     ASSERT(getPE());
     ASSERT(type == JumpType::RETF || type == JumpType::IRET);
@@ -830,14 +830,15 @@ void CPU::protectedFarReturn(LogicalAddress address, JumpType type)
 
     if (selectorRPL > originalCPL) {
         BEGIN_ASSERT_NO_EXCEPTIONS
-        DWORD newESP = popOperandSizedValue();
-        WORD newSS = popOperandSizedValue();
+        DWORD newESP = popper.popOperandSizedValue();
+        WORD newSS = popper.popOperandSizedValue();
 #ifdef DEBUG_JUMPS
-        vlog(LogCPU, "Popped %u-bit ss:esp %04x:%08x @stack{%04x:%08x}", o16() ? 16 : 32, newSS, newESP, getSS(), getESP());
+        vlog(LogCPU, "Popped %u-bit ss:esp %04x:%08x @stack{%04x:%08x}", o16() ? 16 : 32, newSS, newESP, getSS(), popper.adjustedStackPointer());
         vlog(LogCPU, "%s from ring%u to ring%u, ss:esp %04x:%08x -> %04x:%08x", toString(type), originalCPL, getCPL(), originalSS, originalESP, newSS, newESP);
 #endif
-        setESP(newESP);
+
         setSS(newSS);
+        setESP(newESP);
 
         auto clearSegmentRegisterIfNeeded = [this, type] (SegmentRegisterIndex segreg) {
             if (readSegmentRegister(segreg) == 0)
@@ -857,26 +858,120 @@ void CPU::protectedFarReturn(LogicalAddress address, JumpType type)
     }
 }
 
+void CPU::protectedIRET(TransactionalPopper& popper, LogicalAddress address)
+{
+    ASSERT(getPE());
+#ifdef DEBUG_JUMPS
+    WORD originalSS = getSS();
+    DWORD originalESP = getESP();
+    WORD originalCS = getCS();
+    DWORD originalEIP = getEIP();
+#endif
+
+    WORD selector = address.selector();
+    DWORD offset = address.offset();
+    WORD originalCPL = getCPL();
+    BYTE selectorRPL = selector & 3;
+
+#ifdef LOG_FAR_JUMPS
+    vlog(LogCPU, "[PE=%u, PG=%u] IRET from %04x:%08x to %04x:%08x", getPE(), getPG(), getBaseCS(), currentBaseInstructionPointer(), selector, offset);
+#endif
+
+    auto descriptor = getDescriptor(selector, SegmentRegisterIndex::CS);
+
+    if (!(selectorRPL >= getCPL())) {
+        throw GeneralProtectionFault(selector, QString("IRET with !(RPL(%1) >= CPL(%2))").arg(selectorRPL).arg(getCPL()));
+    }
+    if (descriptor.isNull()) {
+        throw GeneralProtectionFault(selector, "IRET to null selector");
+    }
+
+    if (descriptor.isSystemDescriptor()) {
+        ASSERT_NOT_REACHED();
+        throw GeneralProtectionFault(selector, "IRET to system descriptor!?");
+    }
+
+    if (!descriptor.isCode()) {
+        dumpDescriptor(descriptor);
+        throw GeneralProtectionFault(selector, "Not a code segment");
+    }
+
+    auto& codeSegment = descriptor.asCodeSegmentDescriptor();
+
+    // NOTE: A 32-bit jump into a 16-bit segment might have irrelevant higher bits set.
+    // Mask them off to make sure we don't incorrectly fail limit checks.
+    if (!codeSegment.is32Bit()) {
+        offset &= 0xffff;
+    }
+
+    if (!codeSegment.present()) {
+        throw NotPresent(selector, QString("Code segment not present"));
+    }
+
+    if (offset > codeSegment.effectiveLimit()) {
+        vlog(LogCPU, "IRET to eip(%08x) outside limit(%08x)", offset, codeSegment.effectiveLimit());
+        dumpDescriptor(codeSegment);
+        throw GeneralProtectionFault(0, "Offset outside segment limit");
+    }
+
+    setCS(selector);
+    setEIP(offset);
+
+    if (selectorRPL > originalCPL) {
+        BEGIN_ASSERT_NO_EXCEPTIONS
+        DWORD newESP = popper.popOperandSizedValue();
+        WORD newSS = popper.popOperandSizedValue();
+#ifdef DEBUG_JUMPS
+        vlog(LogCPU, "Popped %u-bit ss:esp %04x:%08x @stack{%04x:%08x}", o16() ? 16 : 32, newSS, newESP, getSS(), getESP());
+        vlog(LogCPU, "IRET from ring%u to ring%u, ss:esp %04x:%08x -> %04x:%08x", originalCPL, getCPL(), originalSS, originalESP, newSS, newESP);
+#endif
+
+        setSS(newSS);
+        setESP(newESP);
+
+        auto clearSegmentRegisterIfNeeded = [this] (SegmentRegisterIndex segreg) {
+            if (readSegmentRegister(segreg) == 0)
+                return;
+            auto& cached = cachedDescriptor(segreg);
+            if (cached.isNull() || (cached.DPL() < getCPL() && (cached.isData() || cached.isNonconformingCode()))) {
+                vlog(LogCPU, "IRET clearing %s(%04x) with DPL=%u (CPL now %u)", registerName(segreg), readSegmentRegister(segreg), cached.DPL(), getCPL());
+                writeSegmentRegister(segreg, 0);
+            }
+        };
+
+        clearSegmentRegisterIfNeeded(SegmentRegisterIndex::ES);
+        clearSegmentRegisterIfNeeded(SegmentRegisterIndex::FS);
+        clearSegmentRegisterIfNeeded(SegmentRegisterIndex::GS);
+        clearSegmentRegisterIfNeeded(SegmentRegisterIndex::DS);
+        END_ASSERT_NO_EXCEPTIONS
+    } else {
+        popper.commit();
+    }
+}
+
 void CPU::farReturn(JumpType type, WORD stackAdjustment)
 {
-    // FIXME: Needs stack checks.
-    DWORD offset = popOperandSizedValue();
-    WORD selector = popOperandSizedValue();
+    TransactionalPopper popper(*this);
+
+    DWORD offset = popper.popOperandSizedValue();
+    WORD selector = popper.popOperandSizedValue();
     BYTE originalCPL = getCPL();
 
-    adjustStackPointer(stackAdjustment);
+    popper.adjustStackPointer(stackAdjustment);
 
     if (getPE() && !getVM()) {
-        protectedFarReturn(LogicalAddress(selector, offset), type);
+        protectedFarReturn(popper, LogicalAddress(selector, offset), type);
+        popper.commit();
         if (getCPL() != originalCPL)
             adjustStackPointer(stackAdjustment);
     } else {
         setCS(selector);
         setEIP(offset);
+        popper.commit();
     }
 }
 
-void CPU::iretToVM86Mode(LogicalAddress entry, DWORD flags)
+void CPU::iretToVM86Mode(TransactionalPopper& popper, LogicalAddress entry, DWORD flags)
 {
     vlog(LogCPU, "IRET (o%u) to VM86 mode -> %04x:%04x", o16() ? 16 : 32, entry.selector(), entry.offset());
     if (!o32()) {
@@ -891,12 +986,12 @@ void CPU::iretToVM86Mode(LogicalAddress entry, DWORD flags)
     setCS(entry.selector());
     setEIP(entry.offset());
 
-    DWORD newESP = pop32();
-    WORD newSS = pop32();
-    setES(pop32());
-    setDS(pop32());
-    setFS(pop32());
-    setGS(pop32());
+    DWORD newESP = popper.pop32();
+    WORD newSS = popper.pop32();
+    setES(popper.pop32());
+    setDS(popper.pop32());
+    setFS(popper.pop32());
+    setGS(popper.pop32());
     setCPL(3);
     setESP(newESP);
     setSS(newSS);

@@ -54,22 +54,18 @@ void CPU::iretFromVM86Mode()
 
     BYTE originalCPL = getCPL();
 
-    BEGIN_ASSERT_NO_EXCEPTIONS
-    // FIXME: Needs stack checks.
-    DWORD offset = popOperandSizedValue();
-    WORD selector = popOperandSizedValue();
-    DWORD flags = popOperandSizedValue();
+    TransactionalPopper popper(*this);
+    DWORD offset = popper.popOperandSizedValue();
+    WORD selector = popper.popOperandSizedValue();
+    DWORD flags = popper.popOperandSizedValue();
 
-    if (offset & 0xffff0000) {
-        // FIXME: This should raise #GP and leave the stack pointer intact.
-        vlog(LogCPU, "IRET in VM86 mode to EIP > 0xffff");
-        ASSERT_NOT_REACHED();
-    }
+    if (offset & 0xffff0000)
+        throw GeneralProtectionFault(0, "IRET in VM86 mode to EIP > 0xffff");
 
     setCS(selector);
     setEIP(offset);
     setEFlagsRespectfully(flags, originalCPL);
-    END_ASSERT_NO_EXCEPTIONS
+    popper.commit();
 }
 
 void CPU::_IRET(Instruction&)
@@ -91,27 +87,29 @@ void CPU::_IRET(Instruction&)
         return iretFromVM86Mode();
     }
 
-    // FIXME: Needs stack checks.
-    DWORD offset = popOperandSizedValue();
-    WORD selector = popOperandSizedValue();
-    DWORD flags = popOperandSizedValue();
+    TransactionalPopper popper(*this);
+
+    DWORD offset = popper.popOperandSizedValue();
+    WORD selector = popper.popOperandSizedValue();
+    DWORD flags = popper.popOperandSizedValue();
 #ifdef DEBUG_JUMPS
-    vlog(LogCPU, "Popped %u-bit cs:eip:eflags %04x:%08x:%08x @stack{%04x:%08x}", o16() ? 16 : 32, selector, offset, flags, getSS(), getESP());
+    vlog(LogCPU, "Popped %u-bit cs:eip:eflags %04x:%08x:%08x @stack{%04x:%08x}", o16() ? 16 : 32, selector, offset, flags, getSS(), popper.adjustedStackPointer());
 #endif
 
     if (getPE() && !getVM()) {
         if (flags & Flag::VM) {
             if (getCPL() == 0) {
-                return iretToVM86Mode(LogicalAddress(selector, offset), flags);
+                return iretToVM86Mode(popper, LogicalAddress(selector, offset), flags);
             } else {
                 vlog(LogCPU, "IRET to VM86 but CPL = %u!?", getCPL());
                 ASSERT_NOT_REACHED();
             }
         }
-        protectedFarReturn(LogicalAddress(selector, offset), JumpType::IRET);
+        protectedIRET(popper, LogicalAddress(selector, offset));
     } else {
         setCS(selector);
         setEIP(offset);
+        popper.commit();
     }
 
     setEFlagsRespectfully(flags, originalCPL);

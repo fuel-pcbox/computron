@@ -232,6 +232,25 @@ public:
         RegisterEDI
     };
 
+    class TransactionalPopper {
+    public:
+        TransactionalPopper(CPU& cpu) : m_cpu(cpu) { }
+        ~TransactionalPopper() { }
+
+        // FIXME: Check SS limits as we go.
+        void commit() { m_cpu.adjustStackPointer(m_offset); }
+
+        DWORD pop32() { auto data = m_cpu.readMemory32(SegmentRegisterIndex::SS, m_cpu.currentStackPointer() + m_offset); m_offset += 4; return data; }
+        WORD pop16() { auto data = m_cpu.readMemory16(SegmentRegisterIndex::SS, m_cpu.currentStackPointer() + m_offset); m_offset += 2; return data; }
+        DWORD popOperandSizedValue() { return m_cpu.o16() ? pop16() : pop32(); }
+        void adjustStackPointer(int adjustment) { m_offset += adjustment; }
+        DWORD adjustedStackPointer() const { return m_cpu.currentStackPointer() + m_offset; }
+
+    private:
+        CPU& m_cpu;
+        int m_offset { 0 };
+    };
+
     void dumpSegment(WORD index);
     void dumpDescriptor(const Descriptor&, const char* prefix = "");
     void dumpDescriptor(const Gate&, const char* prefix = "");
@@ -286,7 +305,7 @@ public:
     void interruptToTaskGate(BYTE isr, InterruptSource, QVariant errorCode, Gate&);
 
     void interruptFromVM86Mode(Gate&, DWORD offset, CodeSegmentDescriptor&, InterruptSource, QVariant errorCode);
-    void iretToVM86Mode(LogicalAddress, DWORD flags);
+    void iretToVM86Mode(TransactionalPopper&, LogicalAddress, DWORD flags);
     void iretFromVM86Mode();
 
     Exception GeneralProtectionFault(WORD selector, const QString& reason);
@@ -492,7 +511,8 @@ public:
     }
 
     void farReturn(JumpType, WORD stackAdjustment = 0);
-    void protectedFarReturn(LogicalAddress, JumpType);
+    void protectedFarReturn(TransactionalPopper&, LogicalAddress, JumpType);
+    void protectedIRET(TransactionalPopper&, LogicalAddress);
     void clearSegmentRegisterAfterReturnIfNeeded(SegmentRegisterIndex, JumpType);
 
     void realModeFarJump(LogicalAddress, JumpType);
