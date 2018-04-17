@@ -184,6 +184,9 @@ public:
 
     DWORD immAddress() const { return m_a32 ? imm32() : imm16(); }
 
+    LogicalAddress immAddress16_16() const { return LogicalAddress(imm16_1(), imm16_2()); }
+    LogicalAddress immAddress16_32() const { return LogicalAddress(imm16_1(), imm32_2()); }
+
     // These functions assume that the Instruction is bound to a CPU.
     BYTE& reg8();
     WORD& reg16();

@@ -42,16 +42,12 @@ void CPU::_JMP_imm32(Instruction& insn)
 
 void CPU::_JMP_imm16_imm16(Instruction& insn)
 {
-    WORD newCS = insn.imm16_1();
-    WORD newIP = insn.imm16_2();
-    farJump(LogicalAddress(newCS, newIP), JumpType::JMP);
+    farJump(insn.immAddress16_16(), JumpType::JMP);
 }
 
 void CPU::_JMP_imm16_imm32(Instruction& insn)
 {
-    WORD newCS = insn.imm16_1();
-    DWORD newEIP = insn.imm32_2();
-    farJump(LogicalAddress(newCS, newEIP), JumpType::JMP);
+    farJump(insn.immAddress16_32(), JumpType::JMP);
 }
 
 void CPU::_JMP_short_imm8(Instruction& insn)
@@ -131,12 +127,12 @@ void CPU::_CALL_imm32(Instruction& insn)
 
 void CPU::_CALL_imm16_imm16(Instruction& insn)
 {
-    farJump(LogicalAddress(insn.imm16_1(), insn.imm16_2()), JumpType::CALL);
+    farJump(insn.immAddress16_16(), JumpType::CALL);
 }
 
 void CPU::_CALL_imm16_imm32(Instruction& insn)
 {
-    farJump(LogicalAddress(insn.imm16_1(), insn.imm32_2()), JumpType::CALL);
+    farJump(insn.immAddress16_32(), JumpType::CALL);
 }
 
 void CPU::_CALL_RM16(Instruction& insn)

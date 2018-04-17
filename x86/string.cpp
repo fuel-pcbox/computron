@@ -181,8 +181,8 @@ void CPU::doOUTS(Instruction& insn)
 {
     doOnceOrRepeatedly(insn, false, [this] () {
         T data = readMemory<T>(currentSegment(), readRegisterForAddressSize(RegisterSI));
-        stepRegisterForAddressSize(RegisterSI, sizeof(T));
         out<T>(getDX(), data);
+        stepRegisterForAddressSize(RegisterSI, sizeof(T));
     });
 }
 

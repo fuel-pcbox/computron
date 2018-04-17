@@ -613,13 +613,20 @@ void CPU::protectedModeFarJump(LogicalAddress address, JumpType type, Gate* gate
         throw GeneralProtectionFault(selector, "Gate-to-gate jumps are not allowed");
     }
 
-    if (descriptor.isGate()) {
+    if (descriptor.isTaskGate()) {
+        // FIXME: Implement JMP/CALL thorough task gate.
+        ASSERT_NOT_REACHED();
+    }
+
+    if (descriptor.isCallGate()) {
         auto& gate = descriptor.asGate();
 #ifdef DEBUG_JUMPS
         vlog(LogCPU, "Gate (%s) to %04x:%08x (count=%u)", gate.typeName(), gate.selector(), gate.offset(), gate.parameterCount());
 #endif
-        ASSERT(gate.isCallGate());
-        ASSERT(!gate.parameterCount()); // FIXME: Implement
+        if (gate.parameterCount() != 0) {
+            // FIXME: Implement gate parameter counts.
+            ASSERT_NOT_REACHED();
+        }
 
         if (gate.DPL() < getCPL())
             throw GeneralProtectionFault(selector, QString("%1 to gate with DPL(%2) < CPL(%3)").arg(toString(type)).arg(gate.DPL()).arg(getCPL()));
@@ -662,8 +669,8 @@ void CPU::protectedModeFarJump(LogicalAddress address, JumpType type, Gate* gate
                 throw GeneralProtectionFault(selector, QString("%1 -> Code segment DPL(%2) > CPL(%3)").arg(toString(type)).arg(codeSegment.DPL()).arg(getCPL()));
             }
         } else {
-            if (codeSegment.DPL() > selectorRPL) {
-                throw GeneralProtectionFault(selector, QString("%1 -> Code segment DPL(%2) > RPL(%3)").arg(toString(type)).arg(codeSegment.DPL()).arg(selectorRPL));
+            if (selectorRPL > codeSegment.DPL()) {
+                throw GeneralProtectionFault(selector, QString("%1 -> Code segment RPL(%2) > CPL(%3)").arg(toString(type)).arg(selectorRPL).arg(codeSegment.DPL()));
             }
             if (codeSegment.DPL() != getCPL()) {
                 throw GeneralProtectionFault(selector, QString("%1 -> Code segment DPL(%2) != CPL(%3)").arg(toString(type)).arg(codeSegment.DPL()).arg(getCPL()));
@@ -756,6 +763,9 @@ void CPU::protectedModeFarJump(LogicalAddress address, JumpType type, Gate* gate
         pushValueWithSize(originalEIP, pushSize);
         END_ASSERT_NO_EXCEPTIONS
     }
+
+    if (!gate)
+        setCPL(originalCPL);
 }
 
 void CPU::protectedFarReturn(LogicalAddress address, JumpType type)
@@ -1615,6 +1625,7 @@ void CPU::_CPUID(Instruction&)
 
 void CPU::_LOCK(Instruction&)
 {
+    ASSERT_NOT_REACHED();
 }
 
 void CPU::initWatches()
