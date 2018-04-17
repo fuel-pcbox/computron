@@ -943,26 +943,23 @@ void CPU::_XCHG_EAX_reg32(Instruction& insn)
 
 void CPU::_XCHG_reg8_RM8(Instruction& insn)
 {
-    auto& modrm = insn.modrm();
-    auto tmp = insn.reg8();
-    insn.reg8() = modrm.read8();
-    modrm.write8(tmp);
+    auto tmp = insn.modrm().read8();
+    insn.modrm().write8(insn.reg8());
+    insn.reg8() = tmp;
 }
 
 void CPU::_XCHG_reg16_RM16(Instruction& insn)
 {
-    auto& modrm = insn.modrm();
-    auto tmp = insn.reg16();
-    insn.reg16() = modrm.read16();
-    modrm.write16(tmp);
+    auto tmp = insn.modrm().read16();
+    insn.modrm().write16(insn.reg16());
+    insn.reg16() = tmp;
 }
 
 void CPU::_XCHG_reg32_RM32(Instruction& insn)
 {
-    auto& modrm = insn.modrm();
-    auto tmp = insn.reg32();
-    insn.reg32() = modrm.read32();
-    modrm.write32(tmp);
+    auto tmp = insn.modrm().read32();
+    insn.modrm().write32(insn.reg32());
+    insn.reg32() = tmp;
 }
 
 template<typename T, class Accessor>
