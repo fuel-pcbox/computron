@@ -512,7 +512,8 @@ public:
     }
 
     void farReturn(WORD stackAdjustment = 0);
-    void protectedFarReturn(TransactionalPopper&, LogicalAddress);
+    void realModeFarReturn(WORD stackAdjustment);
+    void protectedFarReturn(WORD stackAdjustment);
     void protectedIRET(TransactionalPopper&, LogicalAddress);
     void clearSegmentRegisterAfterReturnIfNeeded(SegmentRegisterIndex, JumpType);
 

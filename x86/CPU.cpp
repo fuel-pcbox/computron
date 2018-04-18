@@ -779,7 +779,7 @@ void CPU::clearSegmentRegisterAfterReturnIfNeeded(SegmentRegisterIndex segreg, J
     }
 }
 
-void CPU::protectedFarReturn(TransactionalPopper& popper, LogicalAddress address)
+void CPU::protectedFarReturn(WORD stackAdjustment)
 {
     ASSERT(getPE());
 #ifdef DEBUG_JUMPS
@@ -789,10 +789,14 @@ void CPU::protectedFarReturn(TransactionalPopper& popper, LogicalAddress address
     DWORD originalEIP = getEIP();
 #endif
 
-    WORD selector = address.selector();
-    DWORD offset = address.offset();
+    TransactionalPopper popper(*this);
+
+    DWORD offset = popper.popOperandSizedValue();
+    WORD selector = popper.popOperandSizedValue();
     WORD originalCPL = getCPL();
     BYTE selectorRPL = selector & 3;
+
+    popper.adjustStackPointer(stackAdjustment);
 
 #ifdef LOG_FAR_JUMPS
     vlog(LogCPU, "[PE=%u, PG=%u] %s from %04x:%08x to %04x:%08x", getPE(), getPG(), toString(type), getBaseCS(), currentBaseInstructionPointer(), selector, offset);
@@ -800,23 +804,30 @@ void CPU::protectedFarReturn(TransactionalPopper& popper, LogicalAddress address
 
     auto descriptor = getDescriptor(selector, SegmentRegisterIndex::CS);
 
-    if (!(selectorRPL >= getCPL()))
-        throw GeneralProtectionFault(selector, QString("RETF with !(RPL(%1) >= CPL(%2))").arg(selectorRPL).arg(getCPL()));
-
     if (descriptor.isNull())
-        throw GeneralProtectionFault(selector, "RETF to null selector");
+        throw GeneralProtectionFault(0, "RETF to null selector");
 
-    if (descriptor.isSystemDescriptor()) {
-        ASSERT_NOT_REACHED();
-        throw GeneralProtectionFault(selector, "RETF to system descriptor!?");
-    }
+    if (descriptor.isOutsideTableLimits())
+        throw GeneralProtectionFault(selector, "RETF to selector outside table limit");
 
     if (!descriptor.isCode()) {
         dumpDescriptor(descriptor);
         throw GeneralProtectionFault(selector, "Not a code segment");
     }
 
+    if (selectorRPL < getCPL())
+        throw GeneralProtectionFault(selector, QString("RETF with RPL(%1) < CPL(%2)").arg(selectorRPL).arg(getCPL()));
+
     auto& codeSegment = descriptor.asCodeSegmentDescriptor();
+
+    if (codeSegment.conforming() && codeSegment.DPL() > selectorRPL)
+        throw GeneralProtectionFault(selector, "RETF to conforming code segment with DPL > RPL");
+
+    if (!codeSegment.conforming() && codeSegment.DPL() != selectorRPL)
+        throw GeneralProtectionFault(selector, "RETF to non-conforming code segment with DPL != RPL");
+
+    if (!codeSegment.present())
+        throw NotPresent(selector, "Code segment not present");
 
     // NOTE: A 32-bit jump into a 16-bit segment might have irrelevant higher bits set.
     // Mask them off to make sure we don't incorrectly fail limit checks.
@@ -824,17 +835,11 @@ void CPU::protectedFarReturn(TransactionalPopper& popper, LogicalAddress address
         offset &= 0xffff;
     }
 
-    if (!codeSegment.present())
-        throw NotPresent(selector, "Code segment not present");
-
     if (offset > codeSegment.effectiveLimit()) {
         vlog(LogCPU, "RETF to eip(%08x) outside limit(%08x)", offset, codeSegment.effectiveLimit());
         dumpDescriptor(codeSegment);
         throw GeneralProtectionFault(0, "Offset outside segment limit");
     }
-
-    setCS(selector);
-    setEIP(offset);
 
     if (selectorRPL > originalCPL) {
         BEGIN_ASSERT_NO_EXCEPTIONS
@@ -848,35 +853,41 @@ void CPU::protectedFarReturn(TransactionalPopper& popper, LogicalAddress address
         setSS(newSS);
         setESP(newESP);
 
+        setCS(selector);
+        setEIP(offset);
+
         clearSegmentRegisterAfterReturnIfNeeded(SegmentRegisterIndex::ES, JumpType::RETF);
         clearSegmentRegisterAfterReturnIfNeeded(SegmentRegisterIndex::FS, JumpType::RETF);
         clearSegmentRegisterAfterReturnIfNeeded(SegmentRegisterIndex::GS, JumpType::RETF);
         clearSegmentRegisterAfterReturnIfNeeded(SegmentRegisterIndex::DS, JumpType::RETF);
         END_ASSERT_NO_EXCEPTIONS
-    }
-}
-
-
-void CPU::farReturn(WORD stackAdjustment)
-{
-    TransactionalPopper popper(*this);
-
-    DWORD offset = popper.popOperandSizedValue();
-    WORD selector = popper.popOperandSizedValue();
-    BYTE originalCPL = getCPL();
-
-    popper.adjustStackPointer(stackAdjustment);
-
-    if (getPE() && !getVM()) {
-        protectedFarReturn(popper, LogicalAddress(selector, offset));
-        popper.commit();
-        if (getCPL() != originalCPL)
-            adjustStackPointer(stackAdjustment);
     } else {
         setCS(selector);
         setEIP(offset);
         popper.commit();
     }
+
+    if (getCPL() != originalCPL)
+        adjustStackPointer(stackAdjustment);
+}
+
+void CPU::realModeFarReturn(WORD stackAdjustment)
+{
+    DWORD offset = popOperandSizedValue();
+    WORD selector = popOperandSizedValue();
+    setCS(selector);
+    setEIP(offset);
+    adjustStackPointer(stackAdjustment);
+}
+
+void CPU::farReturn(WORD stackAdjustment)
+{
+    if (!getPE() || getVM()) {
+        realModeFarReturn(stackAdjustment);
+        return;
+    }
+
+    protectedFarReturn(stackAdjustment);
 }
 
 void CPU::setCPL(BYTE cpl)
